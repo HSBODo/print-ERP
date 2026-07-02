@@ -15,7 +15,7 @@ import java.util.Map;
 @Service
 @Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class SurgeryListService {
+public class SurgeryListService implements SurgeryListReader {
 
     private final SurgeryListRepository repository;
 

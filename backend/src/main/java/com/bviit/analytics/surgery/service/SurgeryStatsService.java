@@ -32,7 +32,7 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 @Service
 @Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class SurgeryStatsService {
+public class SurgeryStatsService implements SurgeryStatsReader {
 
     private static final Map<Integer, Map<Integer, Integer>> LEGACY_VISION_SURGERY = Map.of(
             2024, Map.of(1, 1617, 2, 1578, 3, 799, 4, 688),

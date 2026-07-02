@@ -9,7 +9,7 @@ import com.bviit.analytics.surgery.dto.SurgeryDailyItem;
 import com.bviit.analytics.surgery.dto.SurgeryMonthlyItem;
 import com.bviit.analytics.surgery.dto.SurgerySnapshot;
 import com.bviit.analytics.surgery.service.SurgeryCompositionQueryService;
-import com.bviit.analytics.surgery.service.SurgeryStatsService;
+import com.bviit.analytics.surgery.service.SurgeryStatsReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +35,7 @@ public class SurgeryStatsController {
 
     private static final int MAX_RANGE_DAYS = 366;
 
-    private final Optional<SurgeryStatsService> surgeryService;
+    private final Optional<SurgeryStatsReader> surgeryService;
     private final SurgeryCompositionQueryService compositionQueryService;
 
     /**
