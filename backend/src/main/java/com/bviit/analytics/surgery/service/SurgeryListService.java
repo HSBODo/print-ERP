@@ -13,7 +13,7 @@ import java.util.Map;
  * 수술자 리스트 조회 서비스. 날짜 범위(수술일) 기준으로 행 목록을 반환한다.
  */
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
 public class SurgeryListService {
 

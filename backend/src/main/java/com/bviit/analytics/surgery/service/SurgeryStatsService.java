@@ -30,7 +30,7 @@ import java.util.TreeMap;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
 public class SurgeryStatsService {
 

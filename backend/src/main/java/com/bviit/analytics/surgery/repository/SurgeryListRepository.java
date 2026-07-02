@@ -20,7 +20,7 @@ import java.util.Map;
  * MSSQL 2014 호환: STRING_AGG, TRIM 사용 금지.
  */
 @Repository
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 public class SurgeryListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;

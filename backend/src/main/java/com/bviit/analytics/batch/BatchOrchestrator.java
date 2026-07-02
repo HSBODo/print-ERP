@@ -1,6 +1,7 @@
 package com.bviit.analytics.batch;
 
 import com.bviit.analytics.batch.dto.BatchRunLog;
+import com.bviit.analytics.batch.job.SurgeryMartJob;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +14,9 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 
 /**
- * 배치 진입점. 매일/매월 스케줄로 마트 잡을 순차 실행한다.
+ * 배치 진입점. 매일/매월 스케줄로 각 도메인 잡을 순차 실행한다.
  *
- * 현재는 뼈대 — 실제 도메인 잡(SurgeryDailyMartJob 등)은 후속 PR에서 추가한다.
- * PR-1 시점에는 스케줄러가 켜져 있는지, 실행 이력이 batch_run_log에 남는지만 확인.
- *
+ * PR-2 시점: 수술 도메인만 활성. 후속 PR에서 예약/검사/… 잡을 추가한다.
  * 관련 문서: docs/databatch/strategy.md §6
  */
 @Slf4j
@@ -29,6 +28,7 @@ public class BatchOrchestrator {
     static final String ORCHESTRATOR_JOB = "orchestrator";
 
     private final BatchRunLogRepository runLogRepository;
+    private final SurgeryMartJob surgeryMartJob;
 
     @Value("${batch.mart.enabled:true}")
     private boolean enabled;
@@ -44,11 +44,8 @@ public class BatchOrchestrator {
             return;
         }
         LocalDate yesterday = LocalDate.now().minusDays(1);
-        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday, () -> {
-            // TODO(PR-2+): 도메인 잡 순차 실행 (surgery → reservation → exam → ...)
-            log.info("[daily] target={} — no jobs registered yet", yesterday);
-            return 0;
-        });
+        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday,
+                () -> runAllDomains(yesterday, yesterday));
     }
 
     /**
@@ -63,22 +60,27 @@ public class BatchOrchestrator {
         YearMonth prev = YearMonth.now().minusMonths(1);
         LocalDate from = prev.atDay(1);
         LocalDate to = prev.atEndOfMonth();
-        runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to, () -> {
-            // TODO(PR-2+): 도메인 잡 전월 재계산 (upsert)
-            log.info("[monthly-reconcile] range={}..{} — no jobs registered yet", from, to);
-            return 0;
-        });
+        runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to,
+                () -> runAllDomains(from, to));
     }
 
     /**
      * 관리자 수동 실행 진입점 (Admin API에서 호출). run_type=MANUAL 로 기록.
      */
     public void runManual(LocalDate from, LocalDate to) {
-        runWithLog(BatchRunLog.RunType.MANUAL, from, to, () -> {
-            // TODO(PR-2+): 지정 범위 잡 실행
-            log.info("[manual] range={}..{} — no jobs registered yet", from, to);
-            return 0;
-        });
+        runWithLog(BatchRunLog.RunType.MANUAL, from, to,
+                () -> runAllDomains(from, to));
+    }
+
+    /**
+     * 도메인 잡 순차 실행. 하나가 실패하면 즉시 예외 전파(전체 run_log는 FAILED로 기록됨).
+     * 향후 도메인이 추가되면 여기 등록.
+     */
+    private int runAllDomains(LocalDate from, LocalDate to) {
+        int total = 0;
+        total += surgeryMartJob.run(from, to);
+        // TODO(PR-3+): reservation, exam, consultation, ...
+        return total;
     }
 
     private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to, Job job) {

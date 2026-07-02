@@ -28,6 +28,7 @@ public class MartSchemaInitializer implements org.springframework.beans.factory.
     @Override
     public void afterPropertiesSet() {
         applyScript("sql/mart/V1__batch_meta.sql");
+        applyScript("sql/mart/V2__surgery_mart.sql");
     }
 
     private void applyScript(String classpathLocation) {
