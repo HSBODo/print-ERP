@@ -24,16 +24,17 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  */
 @Service
 @RequiredArgsConstructor
-public class OutpatientCountStatsService {
+public class OutpatientCountStatsService implements OutpatientCountStatsReader {
 
     private static final Map<Integer, int[]> LEGACY_OUTPATIENT_COUNT = Map.of(
             2024, new int[] {5257, 5080, 4721, 4133, 4159, 4092, 4760, 4720, 3696, 4201, 3948, 4711},
             2025, new int[] {5389, 5389, 4933, 4349, 4451, 4000, 4275, 4354, 3332, 3724, 3639, 4086}
     );
 
-    /** mssql 프로파일에서만 주입됨. 없으면(H2 개발) 2026 이후는 데이터 없음(null). */
+    /** mssql·postgres-mart 프로파일에서만 주입됨. 없으면(H2 개발) 2026 이후는 데이터 없음(null). */
     private final Optional<OutpatientCountStatsRepository> repository;
 
+    @Override
     public List<OutpatientCountMonthlyItem> getMonthlyStats(List<Integer> years) {
         List<Integer> normalizedYears = years.stream().distinct().sorted().toList();
 
