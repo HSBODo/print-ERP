@@ -19,9 +19,9 @@ import static com.bviit.analytics.common.util.NumberUtils.roundToOneDecimal;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class ReservationStatsService {
+public class ReservationStatsService implements ReservationStatsReader {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -133,6 +133,7 @@ public class ReservationStatsService {
                 .build();
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<ReservationMonthlyItem> getMonthlyStats(List<Integer> years) {
         List<Map<String, Object>> rows = repository.findMonthlyByType(years);

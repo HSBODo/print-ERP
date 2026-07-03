@@ -35,6 +35,7 @@ public class BatchAdminController {
 
     private final BatchOrchestrator orchestrator;
     private final SurgeryReconcileService reconcileService;
+    private final ReservationReconcileService reservationReconcileService;
 
     @PostMapping("/surgery/rerun")
     public Map<String, Object> rerunSurgery(
@@ -65,5 +66,24 @@ public class BatchAdminController {
     @GetMapping("/surgery/reconcile-list")
     public Map<String, Object> reconcileList(@RequestParam String from, @RequestParam String to) {
         return reconcileService.reconcileList(from, to);
+    }
+
+    // ─── 예약 도메인 ─────────────────────────────────────────
+    // orchestrator.runManual은 전체 도메인 잡을 순차 실행하므로 별도 예약 전용 rerun 엔드포인트는
+    // 두지 않는다(다른 도메인까지 함께 실행됨). 필요 시 각 잡을 직접 주입해 분리 가능.
+
+    @GetMapping("/reservation/reconcile-monthly")
+    public Map<String, Object> reconcileReservationMonthly(@RequestParam List<Integer> years) {
+        return reservationReconcileService.reconcileMonthly(years);
+    }
+
+    @GetMapping("/reservation/reconcile-list")
+    public Map<String, Object> reconcileReservationList(@RequestParam String from, @RequestParam String to) {
+        return reservationReconcileService.reconcileList(from, to);
+    }
+
+    @GetMapping("/reservation/reconcile-kakao")
+    public Map<String, Object> reconcileReservationKakao(@RequestParam String from, @RequestParam String to) {
+        return reservationReconcileService.reconcileKakao(from, to);
     }
 }
