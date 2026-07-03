@@ -5,7 +5,7 @@ import com.bviit.analytics.common.stats.StatsPanelSupport;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.consultation.repository.MockConsultationRateRepository;
-import com.bviit.analytics.consultation.service.ConsultationRateService;
+import com.bviit.analytics.consultation.service.ConsultationRateReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ import java.util.Optional;
 public class ConsultationRatePanelController {
 
     private final MockConsultationRateRepository mockRepository;
-    private final Optional<ConsultationRateService> realService;
+    private final Optional<ConsultationRateReader> realService;
 
     @GetMapping("/kpi")
     public ResponseEntity<ApiResponse<List<?>>> getKpi(
