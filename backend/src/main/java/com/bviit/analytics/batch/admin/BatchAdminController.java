@@ -37,6 +37,7 @@ public class BatchAdminController {
     private final SurgeryReconcileService reconcileService;
     private final ReservationReconcileService reservationReconcileService;
     private final ExamReconcileService examReconcileService;
+    private final ConsultationReconcileService consultationReconcileService;
 
     @PostMapping("/surgery/rerun")
     public Map<String, Object> rerunSurgery(
@@ -108,5 +109,25 @@ public class BatchAdminController {
     @GetMapping("/exam/reconcile-cataract-exam-list")
     public Map<String, Object> reconcileCataractExamList(@RequestParam String from, @RequestParam String to) {
         return examReconcileService.reconcileCataractExamList(from, to);
+    }
+
+    // ─── 전환·성공률 도메인 ──────────────────────────────────
+
+    @GetMapping("/consultation/reconcile-consultation-rate")
+    public Map<String, Object> reconcileConsultationRate(@RequestParam List<Integer> years) {
+        return consultationReconcileService.reconcileConsultationRate(years);
+    }
+
+    @GetMapping("/consultation/reconcile-stop-reason")
+    public Map<String, Object> reconcileStopReason(@RequestParam List<Integer> years) {
+        return consultationReconcileService.reconcileStopReason(years);
+    }
+
+    @GetMapping("/consultation/reconcile-reservation-rate")
+    public Map<String, Object> reconcileReservationRate(
+            @RequestParam List<Integer> years,
+            @RequestParam(defaultValue = "cataract") String category
+    ) {
+        return consultationReconcileService.reconcileReservationRate(years, category);
     }
 }

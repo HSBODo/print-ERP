@@ -23,7 +23,7 @@ import java.util.Map;
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
  */
 @Repository
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 public class StopReasonStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
