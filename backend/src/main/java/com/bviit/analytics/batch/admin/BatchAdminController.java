@@ -39,6 +39,7 @@ public class BatchAdminController {
     private final ExamReconcileService examReconcileService;
     private final ConsultationReconcileService consultationReconcileService;
     private final OutpatientReconcileService outpatientReconcileService;
+    private final OverallReconcileService overallReconcileService;
 
     @PostMapping("/surgery/rerun")
     public Map<String, Object> rerunSurgery(
@@ -137,5 +138,12 @@ public class BatchAdminController {
     @GetMapping("/outpatient/reconcile-monthly")
     public Map<String, Object> reconcileOutpatient(@RequestParam List<Integer> years) {
         return outpatientReconcileService.reconcileMonthly(years);
+    }
+
+    // ─── 전체지표 도메인 ─────────────────────────────────────
+
+    @GetMapping("/overall/reconcile-weekly")
+    public Map<String, Object> reconcileOverallWeekly(@RequestParam List<Integer> years) {
+        return overallReconcileService.reconcileWeekly(years);
     }
 }
