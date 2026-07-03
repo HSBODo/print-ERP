@@ -2,6 +2,7 @@ package com.bviit.analytics.batch;
 
 import com.bviit.analytics.batch.dto.BatchRunLog;
 import com.bviit.analytics.batch.job.ConsultationMartJob;
+import com.bviit.analytics.batch.job.EtcMartJob;
 import com.bviit.analytics.batch.job.ExamMartJob;
 import com.bviit.analytics.batch.job.OutpatientMartJob;
 import com.bviit.analytics.batch.job.OverallMartJob;
@@ -39,6 +40,7 @@ public class BatchOrchestrator {
     private final ConsultationMartJob consultationMartJob;
     private final OutpatientMartJob outpatientMartJob;
     private final OverallMartJob overallMartJob;
+    private final EtcMartJob etcMartJob;
 
     @Value("${batch.mart.enabled:true}")
     private boolean enabled;
@@ -94,7 +96,8 @@ public class BatchOrchestrator {
         total += consultationMartJob.run(from, to);
         total += outpatientMartJob.run(from, to);
         total += overallMartJob.run(from, to);
-        // TODO(PR-14+): etc(B2B), ...
+        total += etcMartJob.run(from, to);
+        // 모든 도메인 마트 완료. 후속은 스냅샷 파일→마트 이관(strategy.md §7).
         return total;
     }
 

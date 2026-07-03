@@ -40,6 +40,7 @@ public class BatchAdminController {
     private final ConsultationReconcileService consultationReconcileService;
     private final OutpatientReconcileService outpatientReconcileService;
     private final OverallReconcileService overallReconcileService;
+    private final EtcReconcileService etcReconcileService;
 
     @PostMapping("/surgery/rerun")
     public Map<String, Object> rerunSurgery(
@@ -145,5 +146,12 @@ public class BatchAdminController {
     @GetMapping("/overall/reconcile-weekly")
     public Map<String, Object> reconcileOverallWeekly(@RequestParam List<Integer> years) {
         return overallReconcileService.reconcileWeekly(years);
+    }
+
+    // ─── 기타 도메인 ─────────────────────────────────────────
+
+    @GetMapping("/etc/reconcile-b2b-revenue")
+    public Map<String, Object> reconcileB2bRevenue(@RequestParam List<Integer> years) {
+        return etcReconcileService.reconcileB2bRevenue(years);
     }
 }
