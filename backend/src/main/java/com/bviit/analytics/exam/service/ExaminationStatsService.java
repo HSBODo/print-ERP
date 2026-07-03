@@ -25,9 +25,9 @@ import java.util.Optional;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class ExaminationStatsService {
+public class ExaminationStatsService implements ExaminationStatsReader {
 
     private static final Map<Integer, int[]> LEGACY_VISION_CORRECTION = Map.of(
             2024, new int[] {2134, 1799, 1045, 928, 1171, 1254, 1512, 1570, 1219, 1127, 1431, 2073},
@@ -52,6 +52,7 @@ public class ExaminationStatsService {
      * 연도별 월간 검사 유형별 건수 (시력교정=사람, 드림렌즈=사람, 백내장=눈).
      * 빈 달은 0. total은 화면 전체 검사건수와 같은 값.
      */
+    @Override
     @Transactional(readOnly = true)
     public List<ExaminationMonthlyItem> getMonthlyStats(List<Integer> years) {
         List<Integer> normalizedYears = years.stream().distinct().sorted().toList();

@@ -22,7 +22,7 @@ import java.util.Map;
  * MSSQL 2014 호환: STRING_AGG/TRIM 미사용.
  */
 @Repository
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 public class ProcedureExamStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;

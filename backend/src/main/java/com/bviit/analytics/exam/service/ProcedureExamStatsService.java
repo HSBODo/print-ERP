@@ -27,9 +27,9 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  * 2026 값은 EXAM 스냅샷 특성상 조회 시점마다 미세 변동할 수 있어 캐시하지 않는다(항상 라이브).
  */
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class ProcedureExamStatsService {
+public class ProcedureExamStatsService implements ProcedureExamStatsReader {
 
     /** 레거시 "검사수" 차트 확정값 (월별, 1~12월). 검사수 = 시력교정+드림렌즈(EXAM) + 백내장 세션. */
     private static final Map<Integer, int[]> LEGACY_EXAM_COUNT = Map.of(
@@ -49,6 +49,7 @@ public class ProcedureExamStatsService {
      * 연도별 월간 검사수. 빈 달은 0.
      * 2024/2025는 레거시 확정값, 그 외 연도는 DB 계산값.
      */
+    @Override
     @Transactional(readOnly = true)
     public List<ProcedureExamMonthlyItem> getMonthlyStats(List<Integer> years) {
         List<Integer> normalizedYears = years.stream().distinct().sorted().toList();

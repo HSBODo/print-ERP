@@ -1,6 +1,7 @@
 package com.bviit.analytics.batch;
 
 import com.bviit.analytics.batch.dto.BatchRunLog;
+import com.bviit.analytics.batch.job.ExamMartJob;
 import com.bviit.analytics.batch.job.ReservationMartJob;
 import com.bviit.analytics.batch.job.SurgeryMartJob;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;
@@ -31,6 +32,7 @@ public class BatchOrchestrator {
     private final BatchRunLogRepository runLogRepository;
     private final SurgeryMartJob surgeryMartJob;
     private final ReservationMartJob reservationMartJob;
+    private final ExamMartJob examMartJob;
 
     @Value("${batch.mart.enabled:true}")
     private boolean enabled;
@@ -82,7 +84,8 @@ public class BatchOrchestrator {
         int total = 0;
         total += surgeryMartJob.run(from, to);
         total += reservationMartJob.run(from, to);
-        // TODO(PR-5+): exam, consultation, ...
+        total += examMartJob.run(from, to);
+        // TODO(PR-7+): consultation, outpatient, overall, ...
         return total;
     }
 

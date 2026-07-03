@@ -36,6 +36,7 @@ public class BatchAdminController {
     private final BatchOrchestrator orchestrator;
     private final SurgeryReconcileService reconcileService;
     private final ReservationReconcileService reservationReconcileService;
+    private final ExamReconcileService examReconcileService;
 
     @PostMapping("/surgery/rerun")
     public Map<String, Object> rerunSurgery(
@@ -85,5 +86,27 @@ public class BatchAdminController {
     @GetMapping("/reservation/reconcile-kakao")
     public Map<String, Object> reconcileReservationKakao(@RequestParam String from, @RequestParam String to) {
         return reservationReconcileService.reconcileKakao(from, to);
+    }
+
+    // ─── 검사 도메인 ─────────────────────────────────────────
+
+    @GetMapping("/exam/reconcile-examination")
+    public Map<String, Object> reconcileExamination(@RequestParam List<Integer> years) {
+        return examReconcileService.reconcileExamination(years);
+    }
+
+    @GetMapping("/exam/reconcile-procedure-exam")
+    public Map<String, Object> reconcileProcedureExam(@RequestParam List<Integer> years) {
+        return examReconcileService.reconcileProcedureExam(years);
+    }
+
+    @GetMapping("/exam/reconcile-exam-list")
+    public Map<String, Object> reconcileExamList(@RequestParam String from, @RequestParam String to) {
+        return examReconcileService.reconcileExamList(from, to);
+    }
+
+    @GetMapping("/exam/reconcile-cataract-exam-list")
+    public Map<String, Object> reconcileCataractExamList(@RequestParam String from, @RequestParam String to) {
+        return examReconcileService.reconcileCataractExamList(from, to);
     }
 }
