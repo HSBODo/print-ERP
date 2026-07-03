@@ -5,7 +5,7 @@ import com.bviit.analytics.common.stats.StatsPanelSupport;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.etc.dto.B2bRevenueMonthlyItem;
-import com.bviit.analytics.etc.service.B2bRevenueStatsService;
+import com.bviit.analytics.etc.service.B2bRevenueStatsReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class B2bRevenueStatsController {
 
-    private final Optional<B2bRevenueStatsService> b2bRevenueStatsService;
+    private final Optional<B2bRevenueStatsReader> b2bRevenueStatsService;
 
     @GetMapping("/b2b-revenue")
     public ResponseEntity<ApiResponse<List<B2bRevenueMonthlyItem>>> getMonthlyRevenue(
