@@ -5,7 +5,7 @@ import com.bviit.analytics.common.stats.StatsPanelSupport;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.overall.dto.OverallExamWeeklyItem;
-import com.bviit.analytics.overall.service.OverallExamWeeklyService;
+import com.bviit.analytics.overall.service.OverallExamWeeklyReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,14 +18,15 @@ import java.util.Optional;
 
 /**
  * 검사자 종합표 주간 집계 API.
- * 실 데이터 서비스는 mssql 프로파일에서만 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * postgres-mart 프로파일에서는 OverallExamWeeklyMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  */
 @RestController
 @RequestMapping("/api/stats")
 @RequiredArgsConstructor
 public class OverallExamWeeklyController {
 
-    private final Optional<OverallExamWeeklyService> overallExamWeeklyService;
+    private final Optional<OverallExamWeeklyReader> overallExamWeeklyService;
 
     /**
      * 연도별 주간 검사자 종합지표 (프론트 주간 검사자 종합지표 페이지용).
