@@ -5,7 +5,7 @@ import com.bviit.analytics.common.stats.StatsPanelSupport;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.exam.repository.MockExaminationRepository;
-import com.bviit.analytics.exam.service.ExaminationStatsService;
+import com.bviit.analytics.exam.service.ExaminationStatsReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +20,7 @@ import java.util.Optional;
 public class ExaminationPanelController {
 
     private final MockExaminationRepository mockRepository;
-    private final Optional<ExaminationStatsService> realService;
+    private final Optional<ExaminationStatsReader> realService;
 
     @GetMapping("/kpi")
     public ResponseEntity<ApiResponse<List<?>>> getKpi(
