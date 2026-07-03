@@ -5,6 +5,7 @@ import com.bviit.analytics.common.stats.StatsPanelSupport;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
+import com.bviit.analytics.reservation.service.ReservationStatsReader;
 import com.bviit.analytics.reservation.service.ReservationStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,7 +21,9 @@ import java.util.Optional;
 
 /**
  * 예약 통계 API.
- * 실 데이터 서비스는 mssql 프로파일에서만 주입된다. 미연결 시 503으로 응답한다.
+ * - getStats(기간 요약): 마트에 없어 concrete ReservationStatsService(MSSQL 직결)만 사용.
+ * - getMonthlyStats(월별): Reader 인터페이스 → postgres-mart 프로파일에선 마트 조회로 자동 스위치.
+ * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  */
 @RestController
 @RequestMapping("/api/stats")
@@ -29,7 +32,10 @@ public class ReservationStatsController {
 
     private static final int MAX_RANGE_DAYS = 366;
 
+    // 기간 요약(getStats)은 마트 미대응이라 MSSQL 직결 concrete 서비스만 사용.
     private final Optional<ReservationStatsService> statsService;
+    // 월별(getMonthlyStats)은 마트 대응 — postgres-mart에선 ReservationMartQueryService(@Primary) 선택.
+    private final Optional<ReservationStatsReader> statsReader;
 
     /**
      * 기간 기반 예약 요약 (일별 추이, 채널별, 시간대별)
@@ -61,8 +67,8 @@ public class ReservationStatsController {
 
         return StatsPanelSupport.resolve(
                 false,
-                statsService,
-                service -> service.getMonthlyStats(years),
+                statsReader,
+                reader -> reader.getMonthlyStats(years),
                 List::of
         );
     }
