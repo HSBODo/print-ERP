@@ -46,8 +46,17 @@ public class BatchOrchestrator {
     private boolean enabled;
 
     /**
+     * 스케줄러가 덮어쓰지 않는 연도 하한. 2024·2025 는 확정값(하드코딩 or 수동 seed)이므로
+     * 자동 배치가 실수로 재계산·덮어쓰기 하지 않도록 방어한다.
+     * 관리자 수동 실행(runManual)은 이 가드를 우회 — 초기 backfill/보정 시 필요.
+     */
+    @Value("${batch.mart.min-year:2026}")
+    private int minYear;
+
+    /**
      * 매일 03:00 — 어제(D-1) 하루치 append.
      * cron="-"이면 스케줄러가 등록되지 않음(관리자 수동 실행만 사용하고 싶을 때).
+     * D-1의 연도가 min-year 미만이면 skip (년말·년초 경계 안전).
      */
     @Scheduled(cron = "${batch.mart.daily-cron:0 0 3 * * *}", zone = "Asia/Seoul")
     public void runDaily() {
@@ -56,12 +65,17 @@ public class BatchOrchestrator {
             return;
         }
         LocalDate yesterday = LocalDate.now().minusDays(1);
+        if (yesterday.getYear() < minYear) {
+            log.info("Batch skip daily — target year {} < min-year {}", yesterday.getYear(), minYear);
+            return;
+        }
         runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday,
                 () -> runAllDomains(yesterday, yesterday));
     }
 
     /**
      * 매월 1일 03:30 — 전월 전체 재계산 (소급 수정 흡수).
+     * 전월의 연도가 min-year 미만이면 skip.
      */
     @Scheduled(cron = "${batch.mart.monthly-reconcile-cron:0 30 3 1 * *}", zone = "Asia/Seoul")
     public void runMonthlyReconcile() {
@@ -70,6 +84,10 @@ public class BatchOrchestrator {
             return;
         }
         YearMonth prev = YearMonth.now().minusMonths(1);
+        if (prev.getYear() < minYear) {
+            log.info("Batch skip monthly reconcile — target year {} < min-year {}", prev.getYear(), minYear);
+            return;
+        }
         LocalDate from = prev.atDay(1);
         LocalDate to = prev.atEndOfMonth();
         runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to,
@@ -78,6 +96,7 @@ public class BatchOrchestrator {
 
     /**
      * 관리자 수동 실행 진입점 (Admin API에서 호출). run_type=MANUAL 로 기록.
+     * min-year 가드를 따르지 않는다 — 24·25 초기 backfill/보정 시 자유롭게 사용.
      */
     public void runManual(LocalDate from, LocalDate to) {
         runWithLog(BatchRunLog.RunType.MANUAL, from, to,
