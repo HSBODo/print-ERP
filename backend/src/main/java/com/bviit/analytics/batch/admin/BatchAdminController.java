@@ -1,6 +1,7 @@
 package com.bviit.analytics.batch.admin;
 
 import com.bviit.analytics.batch.BatchOrchestrator;
+import com.bviit.analytics.batch.BatchOrchestrator.Domain;
 import com.bviit.analytics.batch.dto.BatchRunLog;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +13,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 관리자 배치 트리거 (local/dev 전용 — prod 프로파일에선 활성화되지 않음).
- *
- * PR-8에서 정식 Admin API로 확장 예정. 지금은 마트 실 데이터 스모크 테스트용 shim.
+ * 관리자 배치 트리거. 모든 프로파일(local·dev·prod)에서 활성.
+ * 접근 제어는 Spring Security(/api/admin/** → hasRole('ADMIN'))에 위임.
  *
  * 사용 예:
  *   1) 로그인해서 JWT 획득
@@ -26,12 +27,12 @@ import java.util.Map;
  *           -H "Content-Type: application/json" \
  *           -d '{"loginId":"admin","password":"1234"}'
  *   2) 배치 트리거
- *      curl -X POST 'http://localhost:18080/api/dev/mart/surgery/rerun?from=2026-06-01&to=2026-06-30' \
+ *      curl -X POST 'http://localhost:18080/api/admin/batch/rerun?from=2026-06-01&to=2026-06-30' \
  *           -H "Authorization: Bearer <TOKEN>"
  */
 @RestController
-@RequestMapping("/api/dev/mart")
-@Profile({"local", "dev"})
+@RequestMapping("/api/admin/batch")
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class BatchAdminController {
 
@@ -46,21 +47,35 @@ public class BatchAdminController {
     private final EtcReconcileService etcReconcileService;
 
     /**
-     * 전체 도메인 재실행 (orchestrator.runManual). 별칭: /rerun.
-     * 엔드포인트 이름이 surgery지만 실제로는 surgery·reservation·exam·consultation·outpatient·overall·etc 전 도메인이 순차 실행된다.
+     * 재실행. domain=ALL 이거나 미지정이면 전체 도메인 순차 실행,
+     * SURGERY/RESERVATION/EXAM/CONSULTATION/OUTPATIENT/OVERALL/ETC 지정 시 해당 도메인만.
+     * 별칭 경로: /rerun, /surgery/rerun.
      */
     @PostMapping({"/surgery/rerun", "/rerun"})
     public Map<String, Object> rerunAll(
             @RequestParam String from,
-            @RequestParam String to
+            @RequestParam String to,
+            @RequestParam(required = false, defaultValue = "ALL") String domain
     ) {
         LocalDate fromDate = LocalDate.parse(from);
         LocalDate toDate = LocalDate.parse(to);
-        orchestrator.runManual(fromDate, toDate);
+        String normalized = domain == null ? "ALL" : domain.trim().toUpperCase();
+        if ("ALL".equals(normalized)) {
+            orchestrator.runManual(fromDate, toDate);
+        } else {
+            Domain target;
+            try {
+                target = Domain.valueOf(normalized);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Unknown batch domain: " + domain);
+            }
+            orchestrator.runManual(fromDate, toDate, EnumSet.of(target));
+        }
         return Map.of(
                 "ok", true,
                 "from", from,
                 "to", to,
+                "domain", normalized,
                 "note", "check batch_run_log for details"
         );
     }

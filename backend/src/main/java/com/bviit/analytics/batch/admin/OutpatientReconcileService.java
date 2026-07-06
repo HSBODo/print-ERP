@@ -19,7 +19,7 @@ import java.util.Objects;
  * outpatientCount/total은 nullable — null vs null은 일치로 취급.
  */
 @Service
-@Profile({"local", "dev"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class OutpatientReconcileService {
 

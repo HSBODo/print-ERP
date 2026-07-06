@@ -17,7 +17,7 @@ import java.util.Map;
  * 기타 도메인 마트값 vs MSSQL 직결값 대사. local/dev 전용.
  */
 @Service
-@Profile({"local", "dev"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class EtcReconcileService {
 

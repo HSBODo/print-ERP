@@ -3,19 +3,54 @@ import { Loader2, Play, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useBatchRerun, useBatchRunLogs } from '@/hooks/admin/useBatchAdmin'
-import type { BatchRunLog } from '@/api/admin/batchAdmin'
+import type { BatchDomain, BatchRunLog } from '@/api/admin/batchAdmin'
 
 type BatchJobOption = {
-  value: string
+  value: BatchDomain
   label: string
   description: string
 }
 
 const JOB_OPTIONS: BatchJobOption[] = [
   {
-    value: 'rerun-all',
+    value: 'ALL',
     label: '전체 도메인 재실행',
     description: '기간 내 전 도메인(수술·예약·검사·전환·외래·전체지표·기타)을 순차 재실행합니다. min-year 가드 우회.',
+  },
+  {
+    value: 'SURGERY',
+    label: '수술 도메인만',
+    description: 'mart_surgery_* 관련 잡만 재실행합니다.',
+  },
+  {
+    value: 'RESERVATION',
+    label: '예약 도메인만',
+    description: 'mart_reservation_* 관련 잡만 재실행합니다.',
+  },
+  {
+    value: 'EXAM',
+    label: '검사 도메인만',
+    description: 'mart_exam_*·검사 리스트 관련 잡만 재실행합니다.',
+  },
+  {
+    value: 'CONSULTATION',
+    label: '전환·성공률 도메인만',
+    description: 'mart_consultation_rate·stop_reason·cataract_reservation_rate 잡만 재실행합니다.',
+  },
+  {
+    value: 'OUTPATIENT',
+    label: '외래 도메인만',
+    description: 'mart_outpatient_count_* 잡만 재실행합니다.',
+  },
+  {
+    value: 'OVERALL',
+    label: '전체지표 도메인만',
+    description: 'mart_overall_exam_* 잡만 재실행합니다.',
+  },
+  {
+    value: 'ETC',
+    label: '기타 도메인만',
+    description: 'mart_b2b_revenue_* 등 기타 잡만 재실행합니다.',
   },
 ]
 
@@ -46,7 +81,7 @@ const formatDuration = (ms: number | null) => {
 }
 
 export function BatchManagementPage() {
-  const [jobType, setJobType] = useState<string>(JOB_OPTIONS[0].value)
+  const [jobType, setJobType] = useState<BatchDomain>(JOB_OPTIONS[0].value)
   const [from, setFrom] = useState<string>(daysAgo(30))
   const [to, setTo] = useState<string>(daysAgo(1))
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true)
@@ -62,7 +97,7 @@ export function BatchManagementPage() {
 
   const handleRun = () => {
     if (!from || !to) return
-    rerun.mutate({ from, to })
+    rerun.mutate({ from, to, domain: jobType })
   }
 
   return (
@@ -70,7 +105,7 @@ export function BatchManagementPage() {
       <div>
         <h1 className="text-2xl font-semibold">데이터 배치 관리</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          마트 재적재 배치를 수동 실행하고 실행 이력을 확인합니다. (local/dev 환경 전용)
+          마트 재적재 배치를 수동 실행하고 실행 이력을 확인합니다. ADMIN 롤 전용.
         </p>
       </div>
 
@@ -85,7 +120,7 @@ export function BatchManagementPage() {
               <span className="text-muted-foreground">배치 종류</span>
               <select
                 value={jobType}
-                onChange={(event) => setJobType(event.target.value)}
+                onChange={(event) => setJobType(event.target.value as BatchDomain)}
                 disabled={isRunning}
                 className="h-9 rounded-md border border-input bg-background px-3 text-sm"
               >

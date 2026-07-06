@@ -23,15 +23,26 @@ const rerunResponseSchema = z.object({
   ok: z.boolean(),
   from: z.string(),
   to: z.string(),
+  domain: z.string().optional(),
   note: z.string().optional(),
 })
 
+export type BatchDomain =
+  | 'ALL'
+  | 'SURGERY'
+  | 'RESERVATION'
+  | 'EXAM'
+  | 'CONSULTATION'
+  | 'OUTPATIENT'
+  | 'OVERALL'
+  | 'ETC'
+
 export const batchAdminApi = {
   listRunLogs: async (limit = 50): Promise<BatchRunLog[]> =>
-    runLogsResponseSchema.parse(await api.get<unknown>(withQuery('/dev/mart/run-logs', { limit }))),
+    runLogsResponseSchema.parse(await api.get<unknown>(withQuery('/admin/batch/run-logs', { limit }))),
 
-  rerunAll: async (from: string, to: string) =>
+  rerun: async (from: string, to: string, domain: BatchDomain = 'ALL') =>
     rerunResponseSchema.parse(
-      await api.post<unknown>(withQuery('/dev/mart/rerun', { from, to }), null),
+      await api.post<unknown>(withQuery('/admin/batch/rerun', { from, to, domain }), null),
     ),
 }

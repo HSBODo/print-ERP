@@ -73,7 +73,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/h2-console/**").permitAll();
                 }
                 // 관리자 전용 API (배치 트리거·로그) — ADMIN 롤 필수
-                auth.requestMatchers("/api/dev/**").hasRole("ADMIN");
+                auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
                 auth.anyRequest().authenticated();
             })
             .exceptionHandling(ex -> ex

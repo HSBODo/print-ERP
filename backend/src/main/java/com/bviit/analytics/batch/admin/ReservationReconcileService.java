@@ -26,7 +26,7 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  *       diff가 나오면 배치/서비스/마트 셋 중 하나가 어긋난 것.
  */
 @Service
-@Profile({"local", "dev"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ReservationReconcileService {
 

@@ -382,7 +382,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/admin/batch',
     'admin',
     '관리자',
-    '마트 재적재 배치를 수동 실행하고 실행 이력을 확인합니다. local/dev 환경 전용.',
-    '/api/dev/mart/rerun'
+    '마트 재적재 배치를 수동 실행하고 실행 이력을 확인합니다. ADMIN 롤 전용.',
+    '/api/admin/batch/rerun'
   ),
 ]

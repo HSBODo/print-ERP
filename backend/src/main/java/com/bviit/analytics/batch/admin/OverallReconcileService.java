@@ -19,7 +19,7 @@ import java.util.Map;
  * 키: (yr, mo, wk). 서비스가 데이터가 있는 주만 반환하므로 마트도 동일 집합이어야 정합.
  */
 @Service
-@Profile({"local", "dev"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class OverallReconcileService {
 

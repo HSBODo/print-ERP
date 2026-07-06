@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * 배치 진입점. 매일/매월 스케줄로 각 도메인 잡을 순차 실행한다.
@@ -32,6 +34,9 @@ import java.time.YearMonth;
 public class BatchOrchestrator {
 
     static final String ORCHESTRATOR_JOB = "orchestrator";
+
+    /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
+    public enum Domain { SURGERY, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, ETC }
 
     private final BatchRunLogRepository runLogRepository;
     private final SurgeryMartJob surgeryMartJob;
@@ -99,25 +104,38 @@ public class BatchOrchestrator {
      * min-year 가드를 따르지 않는다 — 24·25 초기 backfill/보정 시 자유롭게 사용.
      */
     public void runManual(LocalDate from, LocalDate to) {
-        runWithLog(BatchRunLog.RunType.MANUAL, from, to,
-                () -> runAllDomains(from, to));
+        runManual(from, to, EnumSet.allOf(Domain.class));
     }
 
     /**
-     * 도메인 잡 순차 실행. 하나가 실패하면 즉시 예외 전파(전체 run_log는 FAILED로 기록됨).
-     * 향후 도메인이 추가되면 여기 등록.
+     * 도메인 부분 실행. 빈/null 이면 전체 실행.
      */
-    private int runAllDomains(LocalDate from, LocalDate to) {
+    public void runManual(LocalDate from, LocalDate to, Set<Domain> targets) {
+        Set<Domain> resolved = (targets == null || targets.isEmpty())
+                ? EnumSet.allOf(Domain.class) : EnumSet.copyOf(targets);
+        runWithLog(BatchRunLog.RunType.MANUAL, from, to,
+                () -> runDomains(from, to, resolved));
+    }
+
+    /**
+     * 지정 도메인 잡 순차 실행. 하나가 실패하면 즉시 예외 전파(전체 run_log는 FAILED로 기록됨).
+     */
+    private int runDomains(LocalDate from, LocalDate to, Set<Domain> targets) {
         int total = 0;
-        total += surgeryMartJob.run(from, to);
-        total += reservationMartJob.run(from, to);
-        total += examMartJob.run(from, to);
-        total += consultationMartJob.run(from, to);
-        total += outpatientMartJob.run(from, to);
-        total += overallMartJob.run(from, to);
-        total += etcMartJob.run(from, to);
+        if (targets.contains(Domain.SURGERY))       total += surgeryMartJob.run(from, to);
+        if (targets.contains(Domain.RESERVATION))   total += reservationMartJob.run(from, to);
+        if (targets.contains(Domain.EXAM))          total += examMartJob.run(from, to);
+        if (targets.contains(Domain.CONSULTATION))  total += consultationMartJob.run(from, to);
+        if (targets.contains(Domain.OUTPATIENT))    total += outpatientMartJob.run(from, to);
+        if (targets.contains(Domain.OVERALL))       total += overallMartJob.run(from, to);
+        if (targets.contains(Domain.ETC))           total += etcMartJob.run(from, to);
         // 모든 도메인 마트 완료. 후속은 스냅샷 파일→마트 이관(strategy.md §7).
         return total;
+    }
+
+    /** 스케줄러(전체 도메인) 진입점 — 기존 시그니처 유지. */
+    private int runAllDomains(LocalDate from, LocalDate to) {
+        return runDomains(from, to, EnumSet.allOf(Domain.class));
     }
 
     private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to, Job job) {
