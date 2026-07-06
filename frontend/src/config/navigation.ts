@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Home, Table2, CalendarCheck, Microscope, Stethoscope, Syringe,
-  Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText,
+  Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
 } from 'lucide-react'
 
 import { getStatsPageById } from './statsPages'
@@ -69,6 +69,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'designated-doctor': 'pending',
   'visit-reason': 'pending',
   'daily-reception': 'pending',
+  'batch-management': 'complete',
 }
 
 /** 메뉴 구현 상태 조회 (router의 운영 빌드 pending 라우트 차단 등에 사용). */
@@ -188,6 +189,13 @@ const rawMenuItems: MenuItem[] = [
       'prp-rate', 'reoperation-rate', 'same-day-op',
       'designated-doctor', 'visit-reason', 'daily-reception',
     ),
+  },
+  {
+    id: 'admin-group',
+    label: '관리자',
+    href: '#',
+    icon: Wrench,
+    children: kids('batch-management'),
   },
 ]
 

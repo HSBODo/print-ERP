@@ -1,6 +1,8 @@
 package com.bviit.analytics.batch.admin;
 
 import com.bviit.analytics.batch.BatchOrchestrator;
+import com.bviit.analytics.batch.dto.BatchRunLog;
+import com.bviit.analytics.batch.repository.BatchRunLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +36,7 @@ import java.util.Map;
 public class BatchAdminController {
 
     private final BatchOrchestrator orchestrator;
+    private final BatchRunLogRepository batchRunLogRepository;
     private final SurgeryReconcileService reconcileService;
     private final ReservationReconcileService reservationReconcileService;
     private final ExamReconcileService examReconcileService;
@@ -42,8 +45,12 @@ public class BatchAdminController {
     private final OverallReconcileService overallReconcileService;
     private final EtcReconcileService etcReconcileService;
 
-    @PostMapping("/surgery/rerun")
-    public Map<String, Object> rerunSurgery(
+    /**
+     * 전체 도메인 재실행 (orchestrator.runManual). 별칭: /rerun.
+     * 엔드포인트 이름이 surgery지만 실제로는 surgery·reservation·exam·consultation·outpatient·overall·etc 전 도메인이 순차 실행된다.
+     */
+    @PostMapping({"/surgery/rerun", "/rerun"})
+    public Map<String, Object> rerunAll(
             @RequestParam String from,
             @RequestParam String to
     ) {
@@ -56,6 +63,13 @@ public class BatchAdminController {
                 "to", to,
                 "note", "check batch_run_log for details"
         );
+    }
+
+    /** 최근 배치 실행 이력 조회 (관리자 화면용). */
+    @GetMapping("/run-logs")
+    public List<BatchRunLog> recentRunLogs(@RequestParam(defaultValue = "50") int limit) {
+        int capped = Math.min(Math.max(limit, 1), 200);
+        return batchRunLogRepository.findRecent(capped);
     }
 
     @GetMapping("/surgery/reconcile-monthly")

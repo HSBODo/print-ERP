@@ -11,6 +11,7 @@ import { marketingPageRoutes } from './marketing/routes'
 import { cancelNoshowPageRoutes } from './cancel-noshow/routes'
 import { unitPricePageRoutes } from './unit-price/routes'
 import { etcPageRoutes } from './etc/routes'
+import { adminPageRoutes } from './admin/routes'
 
 // 도메인별 페이지 컴포넌트 레지스트리 — 각 pages/<domain>/routes.ts 가 자기 도메인을 소유.
 // 새 페이지 연결 = navigation.ts에 정의 + 해당 도메인 routes.ts에 한 줄 추가 (router.tsx 수정 불필요).
@@ -26,6 +27,7 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
   ...cancelNoshowPageRoutes,
   ...unitPricePageRoutes,
   ...etcPageRoutes,
+  ...adminPageRoutes,
 }
 
 /**

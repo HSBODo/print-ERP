@@ -376,4 +376,13 @@ export const statsPages: StatsPageDefinition[] = [
     '일일 접수 및 응대 건수와 시간대별 분포를 확인하는 화면입니다.',
     '/api/stats/daily-reception'
   ),
+  statsPage(
+    'batch-management',
+    '데이터 배치 관리',
+    '/admin/batch',
+    'admin',
+    '관리자',
+    '마트 재적재 배치를 수동 실행하고 실행 이력을 확인합니다. local/dev 환경 전용.',
+    '/api/dev/mart/rerun'
+  ),
 ]

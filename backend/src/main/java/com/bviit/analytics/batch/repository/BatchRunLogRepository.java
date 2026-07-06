@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -35,6 +36,7 @@ public class BatchRunLogRepository {
     private static final String INSERT_SQL  = SqlLoader.load("sql/mart/insert-batch-run-log.sql");
     private static final String SUCCESS_SQL = SqlLoader.load("sql/mart/update-batch-run-log-success.sql");
     private static final String FAIL_SQL    = SqlLoader.load("sql/mart/update-batch-run-log-fail.sql");
+    private static final String SELECT_RECENT_SQL = SqlLoader.load("sql/mart/select-batch-run-logs.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -66,5 +68,27 @@ public class BatchRunLogRepository {
                 .addValue("id", id)
                 .addValue("finishedAt", LocalDateTime.now())
                 .addValue("err", truncated));
+    }
+
+    public List<BatchRunLog> findRecent(int limit) {
+        return jdbc.query(SELECT_RECENT_SQL, new MapSqlParameterSource("limit", limit), (rs, i) -> {
+            LocalDate from = rs.getObject("target_from", LocalDate.class);
+            LocalDate to = rs.getObject("target_to", LocalDate.class);
+            LocalDateTime finishedAt = rs.getObject("finished_at", LocalDateTime.class);
+            Long duration = rs.getObject("duration_ms", Long.class);
+            return BatchRunLog.builder()
+                    .id(rs.getLong("id"))
+                    .jobName(rs.getString("job_name"))
+                    .runType(BatchRunLog.RunType.valueOf(rs.getString("run_type")))
+                    .targetFrom(from)
+                    .targetTo(to)
+                    .status(BatchRunLog.Status.valueOf(rs.getString("status")))
+                    .rowsUpserted(rs.getInt("rows_upserted"))
+                    .startedAt(rs.getObject("started_at", LocalDateTime.class))
+                    .finishedAt(finishedAt)
+                    .durationMs(duration)
+                    .errorMessage(rs.getString("error_message"))
+                    .build();
+        });
     }
 }
