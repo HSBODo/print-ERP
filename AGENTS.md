@@ -11,7 +11,7 @@
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
-- **DB**: H2 (개발, 기본) / PostgreSQL (`application-postgres.properties`) / MSSQL 통계 운영 연동 (`application-mssql.properties`)
+- **DB**: H2 (개발, 기본) / PostgreSQL (`application-postgres.yml`) / MSSQL 통계 운영 연동 (`application-mssql.yml`)
 - **인증**: Spring Security + JWT (jjwt, HMAC-SHA256)
 - **언어**: 한국어 UI
 
@@ -44,8 +44,8 @@ project-root/
 │   │   ├── overall/                     # 종합 주간 지표
 │   │   └── etc/                         # B2B 등 기타 통계
 │   ├── src/main/resources/
-│   │   ├── application.properties           # H2 인메모리 (개발 기본)
-│   │   └── application-postgres.properties  # PostgreSQL (운영)
+│   │   ├── application.yml                  # H2 인메모리 (개발 기본)
+│   │   └── application-postgres.yml         # PostgreSQL (운영)
 │   └── build.gradle
 │
 ├── frontend/
@@ -279,7 +279,7 @@ cd frontend && npm run test              # Vitest
 
 ### 환경 설정
 
-- `application-local.properties` → `.gitignore`
+- `application-local.yml`은 환경변수 참조만 담음 — 시크릿은 `backend/.env`(gitignored)에 두고 실행 스크립트가 주입
 - 프론트 환경변수: `VITE_` 접두사 사용
 - Vite 프록시: `/api` → `http://localhost:8080` (`vite.config.ts`)
 

@@ -19,32 +19,45 @@
 # 배치 스케줄러            | OFF                          | OFF                     | ON(03:00 D-1, 매월 1일 03:30)
 # Admin 수동 배치          | OFF(CRM 없음)                | ON                      | ON
 # app.seed.enabled         | 상위 기본값(false)           | 상위 기본값             | 명시적 false
-# 필수 env                 | POSTGRES_* (기본값 가능)     | POSTGRES_*, STATS_DB_*| POSTGRES_*, STATS_DB_*, APP_JWT_SECRET
+# 필수 env                 | POSTGRES_* (기본값 가능)     | POSTGRES_*, STATS_DB_*  | POSTGRES_*, STATS_DB_*, APP_JWT_SECRET
 # ================================================================
-# ========================================
 
-# --- Primary (Dev Postgres, 별도 인스턴스) ---
-spring.datasource.url=${POSTGRES_URL:}
-spring.datasource.username=${POSTGRES_USER:}
-spring.datasource.password=${POSTGRES_PASSWORD:}
-spring.datasource.driver-class-name=org.postgresql.Driver
+spring:
+  # --- Primary (Dev Postgres, 별도 인스턴스) ---
+  datasource:
+    url: ${POSTGRES_URL:}
+    username: ${POSTGRES_USER:}
+    password: ${POSTGRES_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=false
-spring.jpa.properties.hibernate.format_sql=true
-spring.h2.console.enabled=false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: false
 
 # --- Batch source (실 CRM MSSQL, 읽기 전용) ---
-stats.datasource.url=${STATS_DB_URL:}
-stats.datasource.username=${STATS_DB_USERNAME:}
-stats.datasource.password=${STATS_DB_PASSWORD:}
-stats.datasource.driver-class-name=net.sourceforge.jtds.jdbc.Driver
-stats.datasource.hikari.maximum-pool-size=3
-stats.datasource.hikari.read-only=true
-stats.datasource.hikari.connection-timeout=10000
+stats:
+  datasource:
+    url: ${STATS_DB_URL:}
+    username: ${STATS_DB_USERNAME:}
+    password: ${STATS_DB_PASSWORD:}
+    driver-class-name: net.sourceforge.jtds.jdbc.Driver
+    hikari:
+      maximum-pool-size: 3
+      read-only: true
+      connection-timeout: 10000
 
 # --- Batch scheduling (OFF — Admin 트리거로만 실행) ---
 # runManual()은 enabled 무시하므로 관리자 API는 정상 동작.
-batch.mart.enabled=false
-batch.mart.daily-cron=-
-batch.mart.monthly-reconcile-cron=-
+batch:
+  mart:
+    enabled: false
+    daily-cron: "-"
+    monthly-reconcile-cron: "-"
