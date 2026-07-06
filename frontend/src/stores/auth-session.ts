@@ -1,8 +1,11 @@
+export type UserRole = 'ADMIN' | 'USER'
+
 export interface AuthUser {
   id: number
   loginId: string
   email: string
   name: string
+  role: UserRole
 }
 
 export interface StoredAuthSession {
@@ -14,6 +17,7 @@ export interface StoredAuthSession {
 interface JwtPayload {
   exp?: number
   sub?: string
+  role?: string
 }
 
 const TOKEN_STORAGE_KEY = 'token'
@@ -79,6 +83,9 @@ const deriveLoginId = (value: string) => {
   return candidate
 }
 
+const normalizeRole = (value: unknown): UserRole =>
+  value === 'ADMIN' ? 'ADMIN' : 'USER'
+
 export const normalizeAuthUser = (user: AuthUser): AuthUser => {
   const loginId = deriveLoginId(user.loginId || user.email || user.name)
   const email = user.email.trim().toLowerCase()
@@ -90,6 +97,7 @@ export const normalizeAuthUser = (user: AuthUser): AuthUser => {
     loginId,
     email,
     name,
+    role: normalizeRole(user.role),
   }
 }
 
@@ -141,6 +149,7 @@ const normalizeStoredUser = (value: unknown): AuthUser | null => {
     loginId,
     email,
     name,
+    role: normalizeRole(record.role),
   })
 }
 
@@ -183,6 +192,7 @@ const buildFallbackUser = (payload: JwtPayload): AuthUser | null => {
     loginId,
     email: payload.sub.includes('@') ? payload.sub.trim().toLowerCase() : '',
     name: loginId,
+    role: normalizeRole(payload.role),
   }
 }
 

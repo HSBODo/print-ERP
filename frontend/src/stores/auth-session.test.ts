@@ -52,6 +52,7 @@ describe('auth session storage', () => {
     loginId: 'admin',
     email: 'admin@bviit.com',
     name: '관리자',
+    role: 'ADMIN',
   }
 
   beforeEach(() => {
@@ -111,6 +112,7 @@ describe('auth session storage', () => {
         loginId: 'viewer',
         email: '',
         name: 'viewer',
+        role: 'USER',
       },
       isAuthenticated: true,
     })
@@ -129,6 +131,7 @@ describe('auth session storage', () => {
         id: 1,
         email: 'admin@bviit.com',
         name: '관리자',
+        role: 'ADMIN',
       }),
     )
 
@@ -153,6 +156,7 @@ describe('auth session storage', () => {
         loginId: 'admin',
         email: 'admin@bviit.com',
         name: 'ê´ë¦¬ì',
+        role: 'ADMIN',
       }),
     )
 

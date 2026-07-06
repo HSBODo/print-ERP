@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { UserRole } from '@/stores/auth-session'
 
 export interface LoginRequest {
   loginId: string
@@ -10,6 +11,7 @@ export interface LoginUser {
   loginId: string
   email: string
   name: string
+  role: UserRole
 }
 
 export interface LoginData {

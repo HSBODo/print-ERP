@@ -11,6 +11,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { StatsPlaceholderPage } from './pages/StatsPlaceholderPage'
 import { requireAuth } from './auth-guard'
 import { PAGE_COMPONENTS, isRouteBlocked } from './pages/pageRegistry'
+import { useAuthStore } from './stores/authStore'
 
 // Root
 const rootRoute = createRootRoute({
@@ -43,15 +44,19 @@ const dashboardRoute = createRoute({
 const isProd = !import.meta.env.DEV
 
 // 통계 페이지 라우트는 navigation.ts 정의로부터 자동 생성한다.
-// 레지스트리에 컴포넌트가 있고 차단 대상이 아니면 전용 페이지, 아니면 StatsPlaceholderPage.
+// role 기반 차단(예: ADMIN 전용)이 실시간으로 반영되도록 렌더 시점에 isRouteBlocked를 호출한다.
 const statsRoutes = statsPages.map((page) => {
-  const fallback = () => <StatsPlaceholderPage page={page} />
-  const blocked = isRouteBlocked(page.id, isProd)
-  const component = blocked ? fallback : (PAGE_COMPONENTS[page.id] ?? fallback)
+  const PageComponent = PAGE_COMPONENTS[page.id]
+  const RenderPage = () => {
+    const role = useAuthStore((s) => s.user?.role)
+    const blocked = isRouteBlocked(page.id, isProd, role)
+    if (blocked || !PageComponent) return <StatsPlaceholderPage page={page} />
+    return <PageComponent />
+  }
   return createRoute({
     getParentRoute: () => authLayout,
     path: page.path,
-    component,
+    component: RenderPage,
   })
 })
 

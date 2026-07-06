@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
 import {
@@ -7,6 +7,7 @@ import {
   type MenuLink,
   type MenuStatus,
 } from '@/config/navigation'
+import { useAuthStore } from '@/stores/authStore'
 
 // 운영 빌드(PROD)에서는 pending(미완성) 메뉴를 숨긴다. 개발에서는 빨강으로 표시한다.
 const isProd = !import.meta.env.DEV
@@ -22,14 +23,8 @@ const hidePendingForProd = (items: MenuItem[]): MenuItem[] => {
     .filter((item) => (item.children ? item.children.length > 0 : item.status !== 'pending'))
 }
 
-const visibleMenuItems = hidePendingForProd(menuItems)
-
-const getOpenMenus = (pathname: string) =>
-  new Set(
-    visibleMenuItems
-      .filter((item) => item.children?.some((child) => child.href === pathname))
-      .map((item) => item.id)
-  )
+const hideAdminForNonAdmin = (items: MenuItem[], isAdmin: boolean): MenuItem[] =>
+  isAdmin ? items : items.filter((item) => !item.adminOnly)
 
 // 구현 상태별 텍스트 색상 (활성 상태가 아닐 때만 적용)
 const statusTextClass = (status?: MenuStatus): string => {
@@ -73,6 +68,17 @@ function SidebarChildLinks({
 
 export function Sidebar({ collapsed, onToggleSidebar, onNavigate }: { collapsed: boolean; onToggleSidebar: () => void; onNavigate?: () => void }) {
   const location = useLocation()
+  const role = useAuthStore((s) => s.user?.role)
+  const visibleMenuItems = useMemo(
+    () => hideAdminForNonAdmin(hidePendingForProd(menuItems), role === 'ADMIN'),
+    [role],
+  )
+  const getOpenMenus = (pathname: string) =>
+    new Set(
+      visibleMenuItems
+        .filter((item) => item.children?.some((child) => child.href === pathname))
+        .map((item) => item.id),
+    )
   const [openMenus, setOpenMenus] = useState<Set<string>>(() => {
     try { const saved = localStorage.getItem('sidebar-open-menus'); return saved ? new Set(JSON.parse(saved)) : new Set() }
     catch { return new Set() }

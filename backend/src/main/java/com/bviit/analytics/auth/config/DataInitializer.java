@@ -1,5 +1,6 @@
 package com.bviit.analytics.auth.config;
 
+import com.bviit.analytics.auth.entity.Role;
 import com.bviit.analytics.auth.entity.User;
 import com.bviit.analytics.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class DataInitializer implements CommandLineRunner {
                 .email(normalizedEmail)
                 .password(passwordEncoder.encode(seedPassword))
                 .name(normalizedName)
+                .role(Role.ADMIN)
                 .build());
     }
 

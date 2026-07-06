@@ -1,5 +1,6 @@
 import type { FC } from 'react'
-import { getMenuStatus } from '../config/navigation'
+import { getMenuStatus, isAdminOnlyPage } from '../config/navigation'
+import type { UserRole } from '../stores/auth-session'
 import { reportPageRoutes } from './report/routes'
 import { overallPageRoutes } from './overall/routes'
 import { reservationPageRoutes } from './reservation/routes'
@@ -35,8 +36,17 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
  * backend-only 페이지는 프론트 화면 미완성이므로 모든 환경에서 placeholder로 렌더.
  * 개발(DEV)에서는 WIP 페이지를 미리보기로 허용한다.
  * 정책: "개발에는 페이지가 존재하지만 운영에서는 숨김/차단" (Sidebar 숨김 + 이 라우트 차단 이중 가드).
+ *
+ * ADMIN 전용 페이지는 role !== 'ADMIN' 이면 환경 무관하게 차단.
  */
-export const isRouteBlocked = (pageId: string, isProd: boolean): boolean => {
+export const isRouteBlocked = (
+  pageId: string,
+  isProd: boolean,
+  role: UserRole | undefined = undefined,
+): boolean => {
   const status = getMenuStatus(pageId)
-  return status === 'backend-only' || (isProd && status === 'pending')
+  if (status === 'backend-only') return true
+  if (isProd && status === 'pending') return true
+  if (isAdminOnlyPage(pageId) && role !== 'ADMIN') return true
+  return false
 }

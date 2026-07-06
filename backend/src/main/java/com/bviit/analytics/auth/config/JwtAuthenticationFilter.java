@@ -1,5 +1,6 @@
 package com.bviit.analytics.auth.config;
 
+import com.bviit.analytics.auth.entity.Role;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,13 +9,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -49,8 +51,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String subject;
+        Role role;
         try {
             subject = jwtUtil.getSubjectFromToken(token);
+            role = jwtUtil.getRoleFromToken(token);
         } catch (JwtException | IllegalArgumentException e) {
             log.debug("JWT 인증 정보를 복원하지 못했습니다: {}", request.getRequestURI(), e);
             filterChain.doFilter(request, response);
@@ -60,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var authentication = new UsernamePasswordAuthenticationToken(
                 subject,
                 null,
-                Collections.emptyList()
+                List.of(new SimpleGrantedAuthority(role.authority()))
         );
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
