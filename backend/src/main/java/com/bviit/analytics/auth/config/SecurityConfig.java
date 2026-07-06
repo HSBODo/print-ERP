@@ -58,6 +58,8 @@ public class SecurityConfig {
                         "/",
                         "/login",
                         "/stats/**",
+                        "/admin/**",
+                        "/report/**",
                         "/index.html",
                         "/assets/**",
                         "/favicon.ico",
