@@ -25,7 +25,7 @@ import java.util.List;
  * READ-ONLY · MSSQL 2014 호환(TRIM 금지, WITH(NOLOCK)).
  */
 @Repository
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 public class ReservationStatsSystemRepository {
 
     private static final String SQL_LOCATION = "sql/reservation-stats/system-daily-counts.sql";
