@@ -9,6 +9,7 @@ import com.bviit.analytics.exam.service.ExaminationStatsService;
 import com.bviit.analytics.exam.service.ProcedureExamStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,13 +25,15 @@ import java.util.stream.Stream;
  *
  * 네 개의 마트를 채운다:
  *   - mart_examination_monthly     — 범위에 걸친 각 (yr,mo) upsert
- *   - mart_procedure_exam_monthly  — 동일하게 (yr,mo) upsert
+ *   - mart_procedure_exam_monthly  — 동일하게 (yr,mo) upsert (min-year 가드로 24·25 write 차단)
  *   - list_exam                    — from..to 검사일 범위 delete+insert
  *   - list_cataract_exam           — from..to 검사일 범위 delete+insert
  *
  * MSSQL 소스에서 읽기는 기존 서비스(ExaminationStatsService, ProcedureExamStatsService,
  * ExamListService, CataractExamListService) 재사용.
- * 월별은 각 서비스의 레거시 보정치(2024·2025)가 적용된 값으로 저장됨(현재 UI 값과 일치).
+ *
+ * procedure_exam 24·25 확정값은 V9 seed가 mart에 넣은 값을 유일 원천으로 유지한다.
+ * runManual로 24·25 범위를 실행해도 procedure_exam monthly upsert는 min-year 이상 연도만 수행.
  */
 @Slf4j
 @Component
@@ -46,6 +49,9 @@ public class ExamMartJob {
     private final CataractExamListService cataractExamListService;
     private final ExamMartWriter writer;
     private final WatermarkRepository watermarkRepository;
+
+    @Value("${batch.mart.min-year:2026}")
+    private int minYear;
 
     /**
      * from..to 범위를 적재한다. 반환값은 upsert/insert된 총 행 수 (관측용).
@@ -65,9 +71,10 @@ public class ExamMartJob {
                         .toList();
         int examinationRows = writer.upsertExaminationMonthly(examinationMonthly);
 
-        // 2) Procedure exam monthly upsert
+        // 2) Procedure exam monthly upsert — min-year 미만 연도는 V9 seed 값 보존 (write 차단)
         List<ProcedureExamMonthlyItem> procedureMonthly =
                 procedureExamStatsService.getMonthlyStats(years).stream()
+                        .filter(m -> m.getYear() >= minYear)
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int procedureRows = writer.upsertProcedureExamMonthly(procedureMonthly);

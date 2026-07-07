@@ -1,21 +1,20 @@
 -- =========================================================
--- 24·25 레거시 값 seed (V9) — PR-17
+-- 24·25 레거시 값 seed (V9)
 -- Profile: postgres-mart
 --
--- 완전 커버 마트만 초기 데이터 삽입 (INSERT ... ON CONFLICT DO NOTHING):
---   - mart_procedure_exam_monthly     : exam_count + one_day_exam_count (전 컬럼 LEGACY 커버)
---   - mart_outpatient_count_monthly   : outpatient_count + total (LEGACY 커버)
+-- 24·25 확정값의 유일 원천. 이 파일이 mart 24·25 데이터의 SSOT(Single Source of Truth).
+-- 애플리케이션 기동 시 MartSchemaInitializer 가 실행 → 이미 존재하는 행은 skip(ON CONFLICT DO NOTHING).
 --
--- 이미 배치가 채운 행은 건드리지 않는다(ON CONFLICT DO NOTHING). 신규 환경에서 배치 없이도
--- API 조회가 가능하도록 안전망 역할. 값 수정은 배치 이후 UPDATE 로 처리한다.
+-- 완전 커버 마트만 초기 데이터 삽입:
+--   - mart_procedure_exam_monthly     : exam_count + one_day_exam_count
+--   - mart_outpatient_count_monthly   : outpatient_count + total
+--
+-- 배치 잡(ExamMartJob, OutpatientMartJob)에는 min-year 가드가 있어 24·25 범위로 runManual
+-- 을 실행해도 이 seed 값은 덮어쓰지 않는다. 값 수정이 필요하면 이 파일을 수정하고 mart 를
+-- 초기화하거나, mart 에 직접 UPDATE 를 실행한다.
 --
 -- 부분 커버 마트(mart_examination_monthly, mart_surgery_monthly 등)는 dreamlens/lasek 등
 -- 라이브 컬럼이 있어 SQL seed 로 완전한 행을 만들 수 없음 → 관리자 수동 배치(runManual)로 backfill.
---
--- 값 원천 (Java 상수와 동기화 유지):
---   - ProcedureExamStatsService.LEGACY_EXAM_COUNT
---   - ProcedureExamStatsService.LEGACY_ONE_DAY_EXAM_COUNT
---   - OutpatientCountStatsService.LEGACY_OUTPATIENT_COUNT
 -- =========================================================
 
 -- ─── mart_procedure_exam_monthly (2024·2025) ─────────────
