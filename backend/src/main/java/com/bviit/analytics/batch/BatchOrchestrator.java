@@ -22,10 +22,10 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * 배치 진입점. 매일/매월 스케줄로 각 도메인 잡을 순차 실행한다.
+ * 배치 진입점. 매일/매월 스케줄로 각 도메인 잡(surgery·reservation·exam·consultation·
+ * outpatient·overall·etc)을 순차 실행한다.
  *
- * PR-2 시점: 수술 도메인만 활성. 후속 PR에서 예약/검사/… 잡을 추가한다.
- * 관련 문서: docs/databatch/strategy.md §6
+ * 관련 문서: docs/databatch/strategy.md §5, §6
  */
 @Slf4j
 @Component
@@ -81,6 +81,14 @@ public class BatchOrchestrator {
     /**
      * 매월 1일 03:30 — 전월 전체 재계산 (소급 수정 흡수).
      * 전월의 연도가 min-year 미만이면 skip.
+     *
+     * 별개 잡 클래스(MonthlyReconcileJob)가 아니라 daily와 동일한 도메인 잡을 넓은 범위로
+     * 재실행하는 방식이다. 소급 수정은 각 잡이 자연스럽게 흡수:
+     *   - Monthly 마트: ON CONFLICT DO UPDATE 로 값 덮어쓰기
+     *   - Daily 마트:   해당 날짜 upsert (덮어쓰기)
+     *   - List 마트:    범위 delete + 재조회 insert → 취소·삭제분까지 반영
+     * daily와의 차이는 오직 (a) 처리 범위, (b) batch_run_log.run_type 값.
+     * 관련: strategy.md §2 결정 1 완화책
      */
     @Scheduled(cron = "${batch.mart.monthly-reconcile-cron:0 30 3 1 * *}", zone = "Asia/Seoul")
     public void runMonthlyReconcile() {
