@@ -8,13 +8,14 @@
 -- 완전 커버 마트만 초기 데이터 삽입:
 --   - mart_procedure_exam_monthly     : exam_count + one_day_exam_count
 --   - mart_outpatient_count_monthly   : outpatient_count + total
+--   - mart_examination_monthly        : vision_correction + dreamlens + cataract + exam_total + total
 --
 -- 배치 잡(ExamMartJob, OutpatientMartJob)에는 min-year 가드가 있어 24·25 범위로 runManual
 -- 을 실행해도 이 seed 값은 덮어쓰지 않는다. 값 수정이 필요하면 이 파일을 수정하고 mart 를
 -- 초기화하거나, mart 에 직접 UPDATE 를 실행한다.
 --
--- 부분 커버 마트(mart_examination_monthly, mart_surgery_monthly 등)는 dreamlens/lasek 등
--- 라이브 컬럼이 있어 SQL seed 로 완전한 행을 만들 수 없음 → 관리자 수동 배치(runManual)로 backfill.
+-- 남은 부분 커버 마트(mart_surgery_monthly 등)는 렌즈/레이저 세부 컬럼이 많아 완전한 행을
+-- 만들기 어려움 → 별도 이관 논의 필요 (Phase 3).
 -- =========================================================
 
 -- ─── mart_procedure_exam_monthly (2024·2025) ─────────────
@@ -78,4 +79,38 @@ INSERT INTO mart_outpatient_count_monthly (yr, mo, outpatient_count, total) VALU
     (2025, 10, 3724, 3724),
     (2025, 11, 3639, 3639),
     (2025, 12, 4086, 4086)
+ON CONFLICT (yr, mo) DO NOTHING;
+
+
+-- ─── mart_examination_monthly (2024·2025) ────────────────
+-- vision_correction / cataract 는 레거시 확정치.
+-- dreamlens 는 배치 소스(MSSQL) 최근 스냅샷을 고정(SSOT). 이후 라이브 재계산 금지.
+-- exam_total = total = vision_correction + dreamlens + cataract.
+INSERT INTO mart_examination_monthly (yr, mo, vision_correction, dreamlens, cataract, exam_total, total) VALUES
+    -- 2024
+    (2024,  1, 2134, 21, 76, 2231, 2231),
+    (2024,  2, 1799, 26, 64, 1889, 1889),
+    (2024,  3, 1045, 24, 53, 1122, 1122),
+    (2024,  4,  928, 22, 50, 1000, 1000),
+    (2024,  5, 1171, 24, 65, 1260, 1260),
+    (2024,  6, 1254, 22, 43, 1319, 1319),
+    (2024,  7, 1512, 25, 62, 1599, 1599),
+    (2024,  8, 1570, 23, 51, 1644, 1644),
+    (2024,  9, 1219, 12, 48, 1279, 1279),
+    (2024, 10, 1127,  9, 73, 1209, 1209),
+    (2024, 11, 1431, 13, 70, 1514, 1514),
+    (2024, 12, 2073, 20, 75, 2168, 2168),
+    -- 2025
+    (2025,  1, 2307, 12, 74, 2393, 2393),
+    (2025,  2, 1965, 23, 68, 2056, 2056),
+    (2025,  3, 1022, 31, 76, 1129, 1129),
+    (2025,  4, 1002, 21, 59, 1082, 1082),
+    (2025,  5, 1118, 22, 55, 1195, 1195),
+    (2025,  6, 1076, 32, 55, 1163, 1163),
+    (2025,  7, 1124, 31, 74, 1229, 1229),
+    (2025,  8, 1154, 37, 78, 1269, 1269),
+    (2025,  9, 1071, 15, 76, 1162, 1162),
+    (2025, 10, 1245,  8, 66, 1319, 1319),
+    (2025, 11,  991, 13, 53, 1057, 1057),
+    (2025, 12, 1702,  6, 96, 1804, 1804)
 ON CONFLICT (yr, mo) DO NOTHING;
