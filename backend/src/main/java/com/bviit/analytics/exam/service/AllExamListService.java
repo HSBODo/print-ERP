@@ -16,10 +16,11 @@ import java.util.Map;
 @Service
 @Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class AllExamListService {
+public class AllExamListService implements AllExamListReader {
 
     private final AllExamListRepository repository;
 
+    @Override
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getAllExamList(String from, String to) {
         return repository.findAllExamList(from, to);

@@ -243,7 +243,7 @@ class SurgeryMartQueryService { ... }                                        // 
 | 1 | 수술 | surgery-ratio, surgery-composition | ⚠️ 아직 스냅샷·서비스 레이어 의존 (§4.1 미구현 마트 참조) |
 | 2 | 예약 | reservation, reservation-list, reservation-overall(카카오) | ✅ 마트 스위치 완료 |
 | 2 | 예약 | reservation-stats-system, reservation-stats-cataract | ⚠️ 스냅샷 스토어 유지 중 |
-| 3 | 검사 | examination, procedure-exam, exam-list, cataract-exam-list, all-exam-list | ✅ 마트 스위치 완료 |
+| 3 | 검사 | examination, procedure-exam, exam-list, cataract-exam-list, all-exam-list | ✅ 마트 스위치 완료 (all-exam-list 는 list_exam + list_cataract_exam UNION 조회로 재활용) |
 | 3 | 검사 | overall-exam (월별) | ✅ V10 마트 스위치 완료 (26년+, 24·25는 프론트 하드코딩 병합) |
 | 4 | 전환·성공률 | consultation-rate, cataract-reservation-rate, stop-reason, stop-rate | ✅ 마트 스위치 완료 |
 | 5 | 외래·전체·기타 | outpatient-count, overall-exam-weekly, b2b-revenue | ✅ 마트 스위치 완료 |
