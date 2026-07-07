@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -29,6 +30,11 @@ public class EtcMartJob {
     private final EtcMartWriter writer;
     private final WatermarkRepository watermarkRepository;
 
+    /**
+     * 트랜잭션: 도메인 단위 all-or-nothing. b2b-revenue upsert + watermark 갱신을 하나로 묶어
+     * 부분 커밋을 방지. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
+     */
+    @Transactional
     public int run(LocalDate from, LocalDate to) {
         log.info("EtcMartJob start: range={}..{}", from, to);
         List<Integer> years = yearsInRange(from, to);

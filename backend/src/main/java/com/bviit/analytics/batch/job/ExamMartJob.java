@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -48,7 +49,11 @@ public class ExamMartJob {
 
     /**
      * from..to 범위를 적재한다. 반환값은 upsert/insert된 총 행 수 (관측용).
+     *
+     * 트랜잭션: 도메인 단위 all-or-nothing. examination/procedure/exam-list/cataract-exam-list/watermark
+     * 중 하나라도 실패하면 모두 롤백. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
+    @Transactional
     public int run(LocalDate from, LocalDate to) {
         log.info("ExamMartJob start: range={}..{}", from, to);
 

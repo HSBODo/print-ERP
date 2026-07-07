@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -49,7 +50,11 @@ public class ReservationMartJob {
      *   - Kakao:   범위 delete+insert (일별 dt 기준)
      *
      * 반환값은 upsert/insert된 총 행 수 (관측용).
+     *
+     * 트랜잭션: 도메인 단위 all-or-nothing. monthly/list/kakao/watermark 중 하나라도 실패하면
+     * 모두 롤백되어 일관성을 보장한다. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
+    @Transactional
     public int run(LocalDate from, LocalDate to) {
         log.info("ReservationMartJob start: range={}..{}", from, to);
 

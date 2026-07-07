@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -45,7 +46,11 @@ public class ConsultationMartJob {
     /**
      * from..to 범위를 적재한다. 반환값은 upsert된 총 행 수 (관측용).
      * 이 도메인은 모두 월별 aggregate라 실제 delete+insert 없이 upsert만 수행.
+     *
+     * 트랜잭션: 도메인 단위 all-or-nothing. consultation-rate/stop-reason/reservation-rate(vision+cataract)/watermark
+     * 중 하나라도 실패하면 모두 롤백. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
+    @Transactional
     public int run(LocalDate from, LocalDate to) {
         log.info("ConsultationMartJob start: range={}..{}", from, to);
         List<Integer> years = yearsInRange(from, to);
