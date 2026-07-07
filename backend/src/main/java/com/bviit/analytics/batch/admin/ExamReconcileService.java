@@ -9,6 +9,7 @@ import com.bviit.analytics.exam.service.ExaminationStatsService;
 import com.bviit.analytics.exam.service.ProcedureExamStatsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,9 @@ import java.util.Map;
  *
  * 기대: ExamMartJob이 각 서비스의 결과를 그대로 마트에 upsert하므로 diff가 0이어야 정상.
  *       diff가 나오면 배치/서비스/마트 셋 중 하나가 어긋난 것.
+ *
+ * min-year 미만 연도(procedure-exam)는 V9 seed SSOT — MSSQL 라이브값과 다를 수 있어
+ * 대사에서 제외한다(무조건 mismatch가 되기 때문). skippedYears로 응답에 표기.
  */
 @Service
 @Profile("postgres-mart")
@@ -35,6 +39,9 @@ public class ExamReconcileService {
     private final ExamStatsMartRepository martRepo;                       // Postgres 마트
     private final ObjectMapper objectMapper;
 
+    @Value("${batch.mart.min-year:2026}")
+    private int minYear;
+
     public Map<String, Object> reconcileExamination(List<Integer> years) {
         List<ExaminationMonthlyItem> source = examinationStatsService.getMonthlyStats(years);
         List<ExaminationMonthlyItem> mart = martRepo.findExaminationMonthly(years);
@@ -43,10 +50,22 @@ public class ExamReconcileService {
     }
 
     public Map<String, Object> reconcileProcedureExam(List<Integer> years) {
-        List<ProcedureExamMonthlyItem> source = procedureExamStatsService.getMonthlyStats(years);
-        List<ProcedureExamMonthlyItem> mart = martRepo.findProcedureExamMonthly(years);
-        return reconcileMonthly("procedure-exam", source, mart,
+        List<Integer> normalized = years.stream().distinct().sorted().toList();
+        List<Integer> skipped = normalized.stream().filter(y -> y < minYear).toList();
+        List<Integer> targets = normalized.stream().filter(y -> y >= minYear).toList();
+
+        List<ProcedureExamMonthlyItem> source = targets.isEmpty()
+                ? List.of() : procedureExamStatsService.getMonthlyStats(targets);
+        List<ProcedureExamMonthlyItem> mart = targets.isEmpty()
+                ? List.of() : martRepo.findProcedureExamMonthly(targets);
+        Map<String, Object> result = reconcileMonthly("procedure-exam", source, mart,
                 i -> i.getYear() + "-" + i.getMonth());
+        if (!skipped.isEmpty()) {
+            result.put("skippedYears", skipped);
+            result.put("skippedReason",
+                    "min-year(" + minYear + ") 미만은 V9 seed SSOT — MSSQL 라이브 대사 무의미");
+        }
+        return result;
     }
 
     public Map<String, Object> reconcileExamList(String from, String to) {
