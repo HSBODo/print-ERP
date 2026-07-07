@@ -1,6 +1,7 @@
 package com.bviit.analytics.overall.repository;
 
 import com.bviit.analytics.common.util.SqlLoader;
+import com.bviit.analytics.overall.dto.OverallExamMonthlyItem;
 import com.bviit.analytics.overall.dto.OverallExamWeeklyItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +15,8 @@ import java.util.List;
 /**
  * 전체지표 마트 read 전용 리포지토리.
  *
- * mart_overall_exam_weekly — (yr, mo, wk) PK로 정렬된 주 단위 종합지표.
+ * mart_overall_exam_weekly  — (yr, mo, wk) PK 주 단위 종합지표.
+ * mart_overall_exam_monthly — (yr, mo)     PK 월 단위 종합지표 (2026+ 만 저장, 24·25는 프론트 하드코딩).
  */
 @Repository
 @Profile("postgres-mart")
@@ -22,6 +24,7 @@ import java.util.List;
 public class OverallExamMartRepository {
 
     private static final String SELECT_WEEKLY_SQL = SqlLoader.load("sql/mart/select-overall-exam-weekly.sql");
+    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/select-overall-exam-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -36,6 +39,34 @@ public class OverallExamMartRepository {
                         .partial(rs.getBoolean("partial"))
                         .startDate(rs.getString("startDate"))
                         .endDate(rs.getString("endDate"))
+                        .totalExam(rs.getInt("totalExam"))
+                        .introGeneral(rs.getInt("introGeneral"))
+                        .introCustomer(rs.getInt("introCustomer"))
+                        .introStaff(rs.getInt("introStaff"))
+                        .jobOffice(rs.getInt("jobOffice"))
+                        .jobStudent(rs.getInt("jobStudent"))
+                        .jobEtc(rs.getInt("jobEtc"))
+                        .visionBooked(rs.getInt("visionBooked"))
+                        .cataractTotal(rs.getInt("cataractTotal"))
+                        .cataractOnly(rs.getInt("cataractOnly"))
+                        .cataractBooked(rs.getInt("cataractBooked"))
+                        .stopCount(rs.getInt("stopCount"))
+                        .visionExam(rs.getInt("visionExam"))
+                        .dreamlens(rs.getInt("dreamlens"))
+                        .oneDay(rs.getInt("oneDay"))
+                        .oneDayBooked(rs.getInt("oneDayBooked"))
+                        .build()
+        );
+    }
+
+    public List<OverallExamMonthlyItem> findMonthly(List<Integer> years) {
+        return jdbc.query(
+                SELECT_MONTHLY_SQL,
+                new MapSqlParameterSource("years", years),
+                (rs, i) -> OverallExamMonthlyItem.builder()
+                        .year(rs.getInt("yr"))
+                        .month(rs.getInt("mo"))
+                        .partial(rs.getBoolean("partial"))
                         .totalExam(rs.getInt("totalExam"))
                         .introGeneral(rs.getInt("introGeneral"))
                         .introCustomer(rs.getInt("introCustomer"))

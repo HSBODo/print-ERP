@@ -177,6 +177,11 @@ public class BatchAdminController {
         return overallReconcileService.reconcileWeekly(years);
     }
 
+    @GetMapping("/overall/reconcile-monthly")
+    public Map<String, Object> reconcileOverallMonthly(@RequestParam List<Integer> years) {
+        return overallReconcileService.reconcileMonthly(years);
+    }
+
     // ─── 기타 도메인 ─────────────────────────────────────────
 
     @GetMapping("/etc/reconcile-b2b-revenue")

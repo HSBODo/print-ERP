@@ -1,5 +1,6 @@
 package com.bviit.analytics.batch.job;
 
+import com.bviit.analytics.overall.dto.OverallExamMonthlyItem;
 import com.bviit.analytics.overall.dto.OverallExamWeeklyItem;
 import com.bviit.analytics.overall.repository.OverallExamMartRepository;
 import com.zaxxer.hikari.HikariDataSource;
@@ -24,8 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * 회귀 방지 대상:
  *   - upsertWeekly:   (yr,mo,wk) 충돌 시 값이 덮어써진다 (idempotent + 17개 지표 roundtrip)
- *   - partial 플래그 · 날짜 라운드트립 (부분 주 재현)
- *   - 여러 주에 걸친 upsert
+ *   - upsertMonthly:  (yr,mo) 충돌 시 값이 덮어써진다 (idempotent + 16개 지표 roundtrip)
+ *   - partial 플래그 · 날짜 라운드트립 (부분 주/월 재현)
+ *   - 여러 주/월에 걸친 upsert
  */
 @Testcontainers
 class OverallMartWriterIT {
@@ -56,9 +58,10 @@ class OverallMartWriterIT {
 
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS mart_overall_exam_weekly, "
-                    + "batch_watermark, batch_run_log CASCADE");
+                    + "mart_overall_exam_monthly, batch_watermark, batch_run_log CASCADE");
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V7__overall_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V10__overall_exam_monthly.sql"));
         }
     }
 
@@ -133,6 +136,55 @@ class OverallMartWriterIT {
                 .containsExactly(10, 20, 30);
     }
 
+    @Test
+    void upsertMonthly_writesAndIsIdempotent_allFieldsPreserved() {
+        OverallExamMonthlyItem v1 = fullMonthlyItem(2026, 6, false, 500);
+        int rows1 = writer.upsertMonthly(List.of(v1));
+        assertThat(rows1).isEqualTo(1);
+
+        OverallExamMonthlyItem out = martRepo.findMonthly(List.of(2026)).get(0);
+        assertThat(out.getYear()).isEqualTo(2026);
+        assertThat(out.getMonth()).isEqualTo(6);
+        assertThat(out.isPartial()).isFalse();
+        assertThat(out.getTotalExam()).isEqualTo(500);
+        assertThat(out.getIntroGeneral()).isEqualTo(11);
+        assertThat(out.getIntroCustomer()).isEqualTo(12);
+        assertThat(out.getIntroStaff()).isEqualTo(13);
+        assertThat(out.getJobOffice()).isEqualTo(14);
+        assertThat(out.getJobStudent()).isEqualTo(15);
+        assertThat(out.getJobEtc()).isEqualTo(16);
+        assertThat(out.getVisionBooked()).isEqualTo(17);
+        assertThat(out.getCataractTotal()).isEqualTo(18);
+        assertThat(out.getCataractOnly()).isEqualTo(19);
+        assertThat(out.getCataractBooked()).isEqualTo(20);
+        assertThat(out.getStopCount()).isEqualTo(21);
+        assertThat(out.getVisionExam()).isEqualTo(22);
+        assertThat(out.getDreamlens()).isEqualTo(23);
+        assertThat(out.getOneDay()).isEqualTo(24);
+        assertThat(out.getOneDayBooked()).isEqualTo(25);
+
+        // 덮어쓰기
+        OverallExamMonthlyItem v2 = fullMonthlyItem(2026, 6, true, 800);
+        writer.upsertMonthly(List.of(v2));
+        OverallExamMonthlyItem out2 = martRepo.findMonthly(List.of(2026)).get(0);
+        assertThat(out2.getTotalExam()).isEqualTo(800);
+        assertThat(out2.isPartial()).isTrue();
+    }
+
+    @Test
+    void upsertMonthly_multipleMonthsOrderedByPk() {
+        OverallExamMonthlyItem m1 = fullMonthlyItem(2026, 6, false, 100);
+        OverallExamMonthlyItem m2 = fullMonthlyItem(2026, 7, true, 200);
+        OverallExamMonthlyItem m3 = fullMonthlyItem(2027, 1, false, 300);
+        writer.upsertMonthly(List.of(m3, m1, m2));
+
+        List<OverallExamMonthlyItem> read = martRepo.findMonthly(List.of(2026, 2027));
+        assertThat(read).hasSize(3);
+        // select ORDER BY yr, mo 로 정렬됨
+        assertThat(read).extracting(OverallExamMonthlyItem::getTotalExam)
+                .containsExactly(100, 200, 300);
+    }
+
     // ─── helpers ─────────────────────────────────────────────
 
     private static OverallExamWeeklyItem fullItem(int year, int month, int week, boolean partial,
@@ -140,6 +192,18 @@ class OverallMartWriterIT {
         return OverallExamWeeklyItem.builder()
                 .year(year).month(month).week(week).partial(partial)
                 .startDate(startDate).endDate(endDate)
+                .totalExam(totalExam)
+                .introGeneral(11).introCustomer(12).introStaff(13)
+                .jobOffice(14).jobStudent(15).jobEtc(16)
+                .visionBooked(17).cataractTotal(18).cataractOnly(19).cataractBooked(20)
+                .stopCount(21).visionExam(22).dreamlens(23)
+                .oneDay(24).oneDayBooked(25)
+                .build();
+    }
+
+    private static OverallExamMonthlyItem fullMonthlyItem(int year, int month, boolean partial, int totalExam) {
+        return OverallExamMonthlyItem.builder()
+                .year(year).month(month).partial(partial)
                 .totalExam(totalExam)
                 .introGeneral(11).introCustomer(12).introStaff(13)
                 .jobOffice(14).jobStudent(15).jobEtc(16)

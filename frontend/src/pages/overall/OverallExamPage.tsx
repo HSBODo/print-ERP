@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
+import type { OverallExamMonthlyItem } from '@/api/overall'
 
 /**
  * 전체지표 > 검사자 종합표.
  *
  * 레거시 "총검사자" 종합표(35칼럼)를 그대로 재현한다.
- * - 2024~2025: 레거시 확정값 고정 (아래 ROWS 상수, 원본 엑셀 TSV 기준)
- * - 2026~: 운영 DB(prod) 조사값 + 파생 산식으로 산출 가능한 칼럼 반영
+ * - 2024~2025: 레거시 확정값 고정 (아래 ROWS_LEGACY 상수, 원본 엑셀 TSV 기준)
+ * - 2026~: 운영 DB(prod) 라이브 집계 (mart_overall_exam_monthly → useOverallExamMonthly)
  * 정의: docs/db/지표정의.md §6
  *
  * 셀 값은 원본 표기를 보존하기 위해 문자열로 저장한다(퍼센트·빈칸 포함).
@@ -47,18 +49,11 @@ interface OverallExamRow {
   partial?: boolean // 월중 부분 집계(스냅샷)
 }
 
-const blank = (): string[] => Array(COL_COUNT).fill('')
-
-// 앞쪽부터 값을 채우고, 아직 정의되지 않은 칼럼은 빈 문자열로 남긴다.
-const fillLead = (vals: string[]): string[] => {
-  const cells = blank()
-  vals.forEach((v, i) => {
-    cells[i] = v
-  })
-  return cells
-}
-
-const ROWS: OverallExamRow[] = [
+/**
+ * 24·25 레거시 확정값. 원본 엑셀 TSV 기준 문자열 그대로 저장.
+ * 26년 이후는 이 배열에 없고 API(useOverallExamMonthly) 응답으로 apiItemToRow가 생성한다.
+ */
+const ROWS_LEGACY: OverallExamRow[] = [
   // 2024 (레거시 확정값) — 백내장 전체(노안포함)·중단제외는 원본에서 공란
   { year: 2024, month: 1, cells: ['2432','629','1561','242','904','1197','331','1642','77%','','76','','49','64%','32%','94','4.4%','2134','26','76','158','2432','87.7%','1.1%','1.6%','3.1%','6.5%','2134','1127','1016','1007','678','47%','90%','67%'] },
   { year: 2024, month: 2, cells: ['2035','576','1276','183','925','784','326','1426','79%','','64','','44','69%','39%','108','6.0%','1799','35','64','100','2035','88.4%','1.7%','1.8%','3.1%','4.9%','1799','1100','987','699','439','39%','90%','63%'] },
@@ -85,25 +80,6 @@ const ROWS: OverallExamRow[] = [
   { year: 2025, month: 10, cells: ['1357','767','496','94','1001','155','201','1015','82%','104','66','57','36','55%','35%','42','3%','1245','8','66','38','1357','92%','1%','0%','5%','3%','1245','867','786','378','229','30%','91%','61%'] },
   { year: 2025, month: 11, cells: ['1085','564','434','87','551','419','115','762','77%','81','53','44','30','57%','37%','39','4%','991','13','53','28','1085','91%','1%','0%','5%','3%','991','495','448','496','314','50%','91%','63%'] },
   { year: 2025, month: 12, cells: ['1860','981','740','139','729','876','255','1268','75%','151','96','80','53','55%','35%','86','5%','1702','7','96','55','1860','92%','0%','0%','5%','3%','1702','785','703','917','565','54%','90%','62%'] },
-  // 2026 — 우리 DB 기준 prod 조회값 + 파생 산식 (확정 엑셀 마감값 고정은 추후).
-  //   백내장: 전체(노안포함)=Cataract_Exam 검사 행수(백내장 리스트 조회건수와 동일),
-  //     만=검사건수 '백내장'(§1.4, idx10=idx19 통일), 노안2=전체−만, 예약률(idx13)=예약÷만, 합계·검사비율(21~26) 재계산.
-  //   ⚠️ Cataract_Exam도 스냅샷이라 레거시 엑셀 마감값과 과거월이 다름(전체 01~03 라이브<엑셀 −6~8).
-  // 일반고객은 잔차(총검사자 − 고객소개 − 직원소개)로 두어 소개유형 합 = 총검사자 유지
-  // 칼럼순(idx): 0총검사자 1일반 2고객소개 3직원소개 4직장인 5학생 6기타
-  //   7시력교정예약 8예약률(중단포함) | 백내장: 9전체(노안포함) 10만 11중단제외 12예약 13예약률 14전환률
-  //   중단: 15중단수(EXAM.STOP_YN='Y') 16중단율(=중단수÷검사건수.시력교정)
-  //   검사건수: 17시력교정 18드림렌즈 19백내장 20노안2(=백내장 전체(노안포함)−만, idx9−idx10) 21합계(=17+18+19+20)
-  //   검사비율: 22~26 = 검사건수 17~20 / 합계, 노안은 현재 분류값 0
-  //   원데이/일반검사: 27시력교정(=17), 28원데이(M/5 검사OP), 29원데이예약(원데이 후 7일 이내 유효수술), 30일반검사(=27−28),
-  //     31일반검사예약(=7−29), 32일반검사비율(=30÷27), 33원데이성공률(=29÷28), 34일반성공률(=31÷30)
-  //   ⚠️ EXAM/Cataract_Exam은 고객당 1행 스냅샷이라 과거월 수치가 사후 변동될 수 있음(지표정의.md §1.9.1.1)
-  { year: 2026, month: 1, cells: fillLead(['2038', '1219', '654', '165', '789', '986', '263', '1371', '72%', '145', '96', '', '58', '60%', '37%', '100', '5.3%', '1871', '20', '96', '49', '2036', '91.9%', '1.0%', '0.0%', '4.7%', '2.4%', '1871', '895', '804', '976', '567', '52%', '90%', '58%']) },
-  { year: 2026, month: 2, cells: fillLead(['1712', '984', '571', '157', '830', '665', '217', '1183', '73%', '100', '66', '', '38', '58%', '37%', '109', '6.8%', '1601', '11', '66', '34', '1712', '93.5%', '0.6%', '0.0%', '3.9%', '2.0%', '1601', '937', '839', '664', '344', '41%', '90%', '52%']) },
-  { year: 2026, month: 3, cells: fillLead(['1001', '593', '323', '85', '583', '174', '244', '652', '75%', '128', '66', '', '38', '58%', '36%', '46', '5.4%', '854', '19', '66', '62', '1001', '85.3%', '1.9%', '0.0%', '6.6%', '6.2%', '854', '471', '422', '383', '230', '45%', '90%', '60%']) },
-  { year: 2026, month: 4, cells: fillLead(['936', '575', '290', '71', '604', '125', '207', '600', '73%', '110', '61', '', '42', '69%', '42%', '65', '8.0%', '809', '17', '61', '49', '936', '86.4%', '1.8%', '0.0%', '6.5%', '5.2%', '809', '446', '381', '363', '219', '45%', '85%', '60%']) },
-  { year: 2026, month: 5, cells: fillLead(['1054', '615', '365', '74', '654', '189', '211', '722', '78%', '132', '64', '', '43', '67%', '40%', '50', '5.6%', '899', '23', '64', '68', '1054', '85.3%', '2.2%', '0.0%', '6.1%', '6.5%', '899', '531', '483', '368', '239', '41%', '91%', '65%']) },
-  { year: 2026, month: 6, cells: fillLead(['460', '275', '142', '43', '268', '91', '101', '344', '80%', '64', '35', '', '18', '51%', '33%', '19', '3.8%', '494', '9', '35', '29', '567', '87.1%', '1.6%', '0.0%', '6.2%', '5.1%', '494', '218', '202', '276', '142', '56%', '93%', '51%']), partial: true },
 ]
 
 const display = (v: string) => {
@@ -112,8 +88,88 @@ const display = (v: string) => {
   return Number.isFinite(n) ? n.toLocaleString('ko-KR') : v
 }
 
-// 데이터에 존재하는 연도(오름차순) — 조회 영역 버튼 생성용
-const YEARS = Array.from(new Set(ROWS.map((r) => r.year))).sort((a, b) => a - b)
+// 파생 산식 유틸 — 나누는 값이 0이면 공란, 아니면 소수점 1자리 %
+const pct1 = (num: number, den: number): string =>
+  den > 0 ? `${((num / den) * 100).toFixed(1)}%` : ''
+// 정수 카운트를 문자열로
+const n = (v: number): string => String(v)
+
+/**
+ * API monthly item(2026+ 마트 원시 카운트) → 35 칼럼 표시 행.
+ * 파생 산식: idx8/13/14/16/20~26/30~34 는 아래에서 재계산 (백엔드 mart에는 원시값만 저장).
+ * 24·25 레거시 하드코딩의 산식과 일부 세부(예: 24년 백내장 전체 공란)가 다를 수 있음 —
+ * 26+ 는 여기 규칙을 정본으로 삼는다.
+ *
+ * 칼럼순(idx): 0총검사자 1일반 2고객소개 3직원소개 4직장인 5학생 6기타
+ *   7시력교정예약 8예약률(중단포함) | 백내장: 9전체(노안포함) 10만 11중단제외 12예약 13예약률 14전환률
+ *   중단: 15중단수 16중단율
+ *   검사건수: 17시력교정 18드림렌즈 19백내장(=10) 20노안2(=9−10) 21합계(=17+18+19+20)
+ *   검사비율: 22~26 = 검사건수 17~20 / 합계, 노안(24)은 현재 분류값 0
+ *   원데이/일반검사: 27시력교정(=17), 28원데이, 29원데이예약, 30일반검사(=27−28),
+ *     31일반검사예약(=7−29), 32일반검사비율(=30÷27), 33원데이성공률(=29÷28), 34일반성공률(=31÷30)
+ */
+function apiItemToRow(item: OverallExamMonthlyItem): OverallExamRow {
+  const total = item.visionExam + item.dreamlens + item.cataractTotal // idx21 합계
+  const nogan2 = item.cataractTotal - item.cataractOnly               // idx20
+  const nomalExam = item.visionExam - item.oneDay                     // idx30
+  const nomalBooked = item.visionBooked - item.oneDayBooked           // idx31
+
+  const cells: string[] = [
+    n(item.totalExam),                                    // 0
+    n(item.introGeneral),                                 // 1
+    n(item.introCustomer),                                // 2
+    n(item.introStaff),                                   // 3
+    n(item.jobOffice),                                    // 4
+    n(item.jobStudent),                                   // 5
+    n(item.jobEtc),                                       // 6
+    n(item.visionBooked),                                 // 7
+    pct1(item.visionBooked, item.visionExam),             // 8 예약률(중단포함) = 예약÷검사
+    n(item.cataractTotal),                                // 9
+    n(item.cataractOnly),                                 // 10
+    '',                                                    // 11 중단제외 (마트에 없음)
+    n(item.cataractBooked),                               // 12
+    pct1(item.cataractBooked, item.cataractOnly),         // 13 예약률 = 예약÷만
+    pct1(item.cataractBooked, item.cataractTotal),        // 14 전환률 = 예약÷전체
+    n(item.stopCount),                                    // 15
+    pct1(item.stopCount, item.visionExam),                // 16 중단율 = 중단÷검사
+    n(item.visionExam),                                   // 17
+    n(item.dreamlens),                                    // 18
+    n(item.cataractOnly),                                 // 19 검사건수 백내장 = idx10
+    n(nogan2),                                            // 20 노안2 = 전체−만
+    n(total),                                             // 21 합계
+    pct1(item.visionExam, total),                         // 22 시력교정 비율
+    pct1(item.dreamlens, total),                          // 23 드림렌즈 비율
+    '0.0%',                                               // 24 노안 비율 (현재 분류 0)
+    pct1(item.cataractOnly, total),                       // 25 백내장 비율
+    pct1(nogan2, total),                                  // 26 노안2+5대질환 비율
+    n(item.visionExam),                                   // 27 원데이/일반검사 시력교정 = idx17
+    n(item.oneDay),                                       // 28 원데이
+    n(item.oneDayBooked),                                 // 29 원데이예약
+    n(nomalExam),                                         // 30 일반검사
+    n(nomalBooked),                                       // 31 일반검사예약
+    pct1(nomalExam, item.visionExam),                     // 32 일반검사비율
+    pct1(item.oneDayBooked, item.oneDay),                 // 33 원데이성공률
+    pct1(nomalBooked, nomalExam),                         // 34 일반성공률
+  ]
+
+  return {
+    year: item.year,
+    month: item.month,
+    cells,
+    partial: item.partial,
+  }
+}
+
+// 조회할 "라이브" 연도(2026 ~ 현재 연도). 프론트 하드코딩된 레거시 연도(2024·2025)는 제외.
+const CURRENT_YEAR = new Date().getFullYear()
+const LIVE_YEARS: number[] = Array.from(
+  { length: Math.max(0, CURRENT_YEAR - 2025) },
+  (_, i) => 2026 + i,
+)
+
+// 조회 영역 버튼용 연도 목록
+const LEGACY_YEARS = [2024, 2025]
+const YEARS = [...LEGACY_YEARS, ...LIVE_YEARS]
 
 /** 조회 연도: 'all'(전체) 또는 특정 연도 */
 type YearFilter = 'all' | number
@@ -121,9 +177,21 @@ type YearFilter = 'all' | number
 export function OverallExamPage() {
   const [year, setYear] = useState<YearFilter>('all')
 
+  const { items: liveItems } = useOverallExamMonthly(LIVE_YEARS)
+
+  const liveRows = useMemo(
+    () => liveItems.map(apiItemToRow),
+    [liveItems],
+  )
+
+  const allRows = useMemo(
+    () => [...ROWS_LEGACY, ...liveRows],
+    [liveRows],
+  )
+
   const rows = useMemo(
-    () => (year === 'all' ? ROWS : ROWS.filter((r) => r.year === year)),
-    [year],
+    () => (year === 'all' ? allRows : allRows.filter((r) => r.year === year)),
+    [year, allRows],
   )
 
   return (
