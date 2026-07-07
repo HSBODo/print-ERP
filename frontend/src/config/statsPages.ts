@@ -65,8 +65,8 @@ export const statsPages: StatsPageDefinition[] = [
     'overall-exam',
     '월별 검사자 종합지표',
     '/stats/overall-exam',
-    'overall-group',
-    '전체지표',
+    'exam-group',
+    '검사',
     '총검사자와 소개유형·직업 구성을 월별로 정리한 종합표입니다. 2024·2025년 확정값, 2026년부터 운영 DB 집계 예정.',
     '/api/stats/overall-exam'
   ),
@@ -74,8 +74,8 @@ export const statsPages: StatsPageDefinition[] = [
     'overall-exam-weekly',
     '주간 검사자 종합지표',
     '/stats/overall-exam-weekly',
-    'overall-group',
-    '전체지표',
+    'exam-group',
+    '검사',
     '월별 종합표와 동일한 35칼럼을 주(월~일, 월 경계 클립) 단위로 운영 DB에서 라이브 집계한 종합표입니다.',
     '/api/stats/overall-exam/weekly'
   ),
@@ -195,6 +195,15 @@ export const statsPages: StatsPageDefinition[] = [
     '전환&성공률',
     '백내장 검사자 대비 수술예약건 비율을 월별로 확인하는 화면입니다.',
     '/api/stats/cataract-reservation-rate'
+  ),
+  statsPage(
+    'stop-rate',
+    '중단률',
+    '/stats/stop-rate',
+    'consultation',
+    '전환&성공률',
+    '시력교정 검사자 대비 검사 중단(STOP_YN) 건 비율을 월별·연도별로 비교하는 화면입니다. 중단율 = 중단수 / 시력교정 검사자.',
+    '/api/stats/overall-exam/weekly'
   ),
   statsPage(
     'stop-reason',

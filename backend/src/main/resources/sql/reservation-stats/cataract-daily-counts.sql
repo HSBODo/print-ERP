@@ -24,12 +24,14 @@ CH_CALL AS (
       WHEN a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21' AND a.CtiDtlCod2='21' AND a.CtiDtlCod3='28' AND ISNULL(b.ClgIOF,'I')='I' THEN '백내장_재문의'
       -- 추가예약(A/H/10/31): 레거시 백내장신환(★예약)엔 포함, 백내장신규(신규검사문의)엔 미포함 → 별도 GB로 분리(총예약만 가산).
       WHEN a.CtiGbnCod='A' AND a.CtiCtgCod='H' AND a.CtiDtlCod1='10' AND a.CtiDtlCod2='31' THEN '백내장_추가예약'
+      -- ★신환: 레거시 uCATARACT8Sql 백내장신환 브랜치와 동일 코드셋. S/9/21/9(상담등록 ★신환)는 레거시 ★신환엔 없고 신규문의 전용이라 여기서 제외.
       WHEN (a.CtiGbnCod='A' AND a.CtiCtgCod='H' AND a.CtiDtlCod1='10' AND a.CtiDtlCod2 IN ('28','32'))
-        OR (a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21' AND a.CtiDtlCod2 IN ('9','41'))
+        OR (a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21' AND a.CtiDtlCod2='41')
         OR (a.CtiGbnCod='M' AND a.CtiCtgCod='H' AND a.CtiDtlCod1='7' AND a.CtiDtlCod2='5') THEN '백내장_신환'
       -- 신규문의: S/9/21/21은 신환재상담(Cod3='28')을 제외(레거시 백내장신규의 Cod3<>'28' OR NULL 가드). 발신 Cod3='28'은 재문의(수신만)에도 안 잡혀 미집계됨.
+      -- S/9/21/9(상담등록 ★신환)는 레거시 백내장신규(신규검사문의)에만 있고 ★신환엔 미포함 → 여기서 집계해 newExamInquiry로만 반영(newPatient·totalCataract 미가산).
       WHEN a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21'
-        AND ((a.CtiDtlCod2='21' AND (a.CtiDtlCod3<>'28' OR a.CtiDtlCod3 IS NULL)) OR a.CtiDtlCod2='32') THEN '백내장_신규문의'
+        AND ((a.CtiDtlCod2='21' AND (a.CtiDtlCod3<>'28' OR a.CtiDtlCod3 IS NULL)) OR a.CtiDtlCod2 IN ('32','9')) THEN '백내장_신규문의'
       ELSE '' END AS GB,
     '' AS GB2, CONVERT(VARCHAR(10), a.CtiRgtDtm, 23) AS [예약날짜], CONVERT(VARCHAR(100), a.CtiCallID) AS PK
   FROM CtiRptLst a WITH(NOLOCK) LEFT JOIN CtiClg b WITH(NOLOCK) ON a.CtiCallID = b.ClgNum

@@ -13,7 +13,7 @@ type YearSeries = Record<number, Array<number | null>>
  * series = 연도별 차트, success/stopReason = 당해연도 전용 블록(목차 위치에 끼워 넣음).
  */
 type RowSpec =
-  | { type: 'series'; group: string; label: string; unit: '건' | '%'; key: string }
+  | { type: 'series'; group: string; label: string; unit: '건' | '%'; key: string; fractionDigits?: number }
   | { type: 'success' }
   | { type: 'stopReason' }
 
@@ -38,7 +38,7 @@ const ROWS: RowSpec[] = [
   { type: 'series', group: '비율', label: '시력교정 일반예약률', unit: '%', key: 'rateVisionGeneral' },
   { type: 'series', group: '비율', label: '원데이 예약률', unit: '%', key: 'rateOneday' },
   { type: 'success' },
-  { type: 'series', group: '중단', label: '중단율', unit: '%', key: 'stopRate' },
+  { type: 'series', group: '중단', label: '중단율', unit: '%', key: 'stopRate', fractionDigits: 1 },
   { type: 'stopReason' },
   { type: 'series', group: '수술', label: '백내장 수술', unit: '건', key: 'cataractSurgery' },
   { type: 'series', group: '수술', label: '시력교정 수술', unit: '건', key: 'visionSurgery' },
@@ -63,12 +63,13 @@ const escapeCell = (value: string | number): string => {
 }
 
 /**
- * 비율은 화면 차트와 동일하게 정수 반올림(Math.round) — ReportLineChart format:'percent',
- * 상담성공률 차트 모두 Math.round로 표시하므로 CSV도 일치시킨다. 건수는 원값, null은 빈칸.
+ * 비율은 화면 차트와 동일하게 기본 정수 반올림(Math.round), 지표별 fractionDigits가 있으면 그 자릿수로 표시.
+ * 건수는 원값, null은 빈칸.
  */
-const formatValue = (value: number | null | undefined, unit: '건' | '%'): string => {
+const formatValue = (value: number | null | undefined, unit: '건' | '%', fractionDigits?: number): string => {
   if (value === null || value === undefined) return ''
-  return unit === '%' ? String(Math.round(value)) : String(value)
+  if (unit !== '%') return String(value)
+  return typeof fractionDigits === 'number' ? value.toFixed(fractionDigits) : String(Math.round(value))
 }
 
 export interface MonthlyReportCsvInput {
@@ -103,9 +104,10 @@ export function buildMonthlyReportCsv({
     unit: '건' | '%',
     year: number,
     values: Array<number | null>,
+    fractionDigits?: number,
   ) => {
     lines.push(
-      [group, label, unit, year, ...MONTHS.map((_, i) => formatValue(values[i], unit))]
+      [group, label, unit, year, ...MONTHS.map((_, i) => formatValue(values[i], unit, fractionDigits))]
         .map(escapeCell)
         .join(','),
     )
@@ -119,7 +121,7 @@ export function buildMonthlyReportCsv({
       const byYear = charts[spec.key] as YearSeries | undefined
       if (!byYear) continue
       for (const year of sortedYears) {
-        pushRow(spec.group, spec.label, spec.unit, year, byYear[year] ?? [])
+        pushRow(spec.group, spec.label, spec.unit, year, byYear[year] ?? [], spec.fractionDigits)
       }
     } else if (spec.type === 'success') {
       if (!includeCurrentYear) continue

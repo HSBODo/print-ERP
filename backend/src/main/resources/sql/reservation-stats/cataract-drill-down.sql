@@ -5,11 +5,13 @@ CH_CALL AS (
     CASE
       WHEN a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21' AND a.CtiDtlCod2='21' AND a.CtiDtlCod3='28' AND ISNULL(b.ClgIOF,'I')='I' THEN '백내장_재문의'
       WHEN a.CtiGbnCod='A' AND a.CtiCtgCod='H' AND a.CtiDtlCod1='10' AND a.CtiDtlCod2='31' THEN '백내장_추가예약'
+      -- ★신환: 레거시 uCATARACT8Sql 백내장신환 브랜치와 동일. S/9/21/9는 레거시 ★신환에 없음(신규문의 전용) → 제외. daily-counts.sql과 동일.
       WHEN (a.CtiGbnCod='A' AND a.CtiCtgCod='H' AND a.CtiDtlCod1='10' AND a.CtiDtlCod2 IN ('28','32'))
-        OR (a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21' AND a.CtiDtlCod2 IN ('9','41'))
+        OR (a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21' AND a.CtiDtlCod2='41')
         OR (a.CtiGbnCod='M' AND a.CtiCtgCod='H' AND a.CtiDtlCod1='7' AND a.CtiDtlCod2='5') THEN '백내장_신환'
+      -- S/9/21/9(상담등록 ★신환)는 레거시 신규검사문의 전용 → 신규문의로 집계(newExamInquiry만 반영, newPatient·totalCataract 미가산).
       WHEN a.CtiGbnCod='S' AND a.CtiCtgCod='9' AND a.CtiDtlCod1='21'
-        AND ((a.CtiDtlCod2='21' AND (a.CtiDtlCod3<>'28' OR a.CtiDtlCod3 IS NULL)) OR a.CtiDtlCod2='32') THEN '백내장_신규문의'
+        AND ((a.CtiDtlCod2='21' AND (a.CtiDtlCod3<>'28' OR a.CtiDtlCod3 IS NULL)) OR a.CtiDtlCod2 IN ('32','9')) THEN '백내장_신규문의'
       ELSE '' END AS GB,
     '' AS GB2, CONVERT(VARCHAR(10), a.CtiRgtDtm, 23) AS [예약날짜], CONVERT(VARCHAR(100), a.CtiCallID) AS PK,
     '' AS custNum,

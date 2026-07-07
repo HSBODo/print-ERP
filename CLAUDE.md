@@ -117,7 +117,7 @@ project-root/
 - DashboardPage (KPI 카드 4개 + 차트 5개, 하드코딩 목업)
 - ReservationPage (월별/연도별 비교, TanStack Query 기반 API 연동)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
-- 통계 전용 페이지 20종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
+- 통계 전용 페이지 24종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
 
@@ -127,25 +127,29 @@ project-root/
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 34개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 20개 / **미구현(pending)** 14개.
+`statsPages.ts`에 38개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 24개 / **미구현(pending)** 14개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
 |----|------|------|------|------|
 | weekly-report | 주간 레포트 | /report/weekly | Report | 완료 (메뉴 숨김·라우트 유지) |
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
-| overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 전체지표 | 완료 |
-| overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 전체지표 | 완료 |
 | intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
 | reservation-list | 예약자 리스트 | /stats/reservation-list | 예약 | 완료 (메뉴 순서: 예약 종합보다 앞) |
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
+| reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
+| reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
+| overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (2026-07-07 전체지표→검사 이동) |
+| overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (2026-07-07 전체지표→검사 이동) |
 | exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 |
 | cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 |
+| all-exam-list | 전체 검사자 리스트 | /stats/all-exam-list | 검사 | 완료 (시력교정+백내장 통합, 종합지표 정합) |
 | examination | 시술별 | /stats/examination | 검사 | 완료 |
 | procedure-exam | 검사건수 | /stats/procedure-exam | 검사 | 완료 |
 | consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 |
 | cataract-reservation-rate | 예약률 | /stats/cataract-reservation-rate | 전환&성공률 | 완료 |
+| stop-rate | 중단률 | /stats/stop-rate | 전환&성공률 | 완료 (2026-07-07 신규, 중단수/시력교정 검사자) |
 | stop-reason | 중단 사유 | /stats/stop-reason | 전환&성공률 | 완료 |
 | surgery-list | 수술자 리스트 | /stats/surgery-list | 수술 | 완료 |
 | surgery | 수술 건수 | /stats/surgery | 수술 | 완료 |

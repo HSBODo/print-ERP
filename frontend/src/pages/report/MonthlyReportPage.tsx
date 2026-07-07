@@ -120,8 +120,8 @@ export function MonthlyReportPage() {
       const legacy = MONTHLY_LEGACY_CHARTS[legacyKey].data
       const out: Record<number, (number | null)[]> = {}
       YEARS.forEach((y) => {
-        if (y !== CURRENT_YEAR && legacy[y]) {
-          out[y] = legacy[y]
+        if (y !== CURRENT_YEAR) {
+          out[y] = legacy[y] ?? Array.from({ length: 12 }, () => null)
           return
         }
         out[y] = Array.from({ length: 12 }, (_, i) => {
@@ -149,7 +149,9 @@ export function MonthlyReportPage() {
       const legacy = MONTHLY_LEGACY_CHARTS[legacyKey].data
       const out: Record<number, (number | null)[]> = {}
       YEARS.forEach((y) => {
-        out[y] = y !== CURRENT_YEAR && legacy[y] ? legacy[y] : curYearSeries(pick)
+        out[y] = y !== CURRENT_YEAR
+          ? (legacy[y] ?? Array.from({ length: 12 }, () => null))
+          : curYearSeries(pick)
       })
       return applyCurrentYearBase(out, CURRENT_YEAR, legacy[CURRENT_YEAR])
     }
@@ -212,6 +214,9 @@ export function MonthlyReportPage() {
 
   const stopReasonItem = stopReason.dataMap[CURRENT_YEAR]?.[latestMonthIdx] ?? null
   const periodLabel = `${CURRENT_YEAR}년 ${latestMonthIdx + 1}월`
+  const stopRateYears = YEARS.filter((year) =>
+    charts.stopRate[year]?.some((value) => typeof value === 'number'),
+  )
 
   const isLoading =
     resv.isLoading || outpatient.isLoading || procedure.isLoading || exam.isLoading || surgery.isLoading || stopReason.isLoading || overall.isLoading || consult.isLoading
@@ -239,7 +244,7 @@ export function MonthlyReportPage() {
     { group: '비율', id: 'rate-vision-general', label: '시력교정 일반예약률', node: <ReportLineChart {...MONTHLY_LEGACY_CHARTS['rate-vision-general']} years={YEARS} data={charts.rateVisionGeneral} /> },
     { group: '비율', id: 'rate-oneday', label: '원데이 예약률', node: <ReportLineChart {...MONTHLY_LEGACY_CHARTS['rate-oneday']} years={YEARS} data={charts.rateOneday} /> },
     { group: '전환&성공', id: 'success-rate', label: '시력교정 상담성공률', node: <ReportSuccessRateChart year={CURRENT_YEAR} all={charts.successAll} oneday={charts.successOneday} general={charts.successGeneral} /> },
-    { group: '중단', id: 'stop-rate', label: '중단율', node: <ReportLineChart {...MONTHLY_LEGACY_CHARTS['stop-rate']} years={YEARS} data={charts.stopRate} /> },
+    { group: '중단', id: 'stop-rate', label: '중단율', node: <ReportLineChart {...MONTHLY_LEGACY_CHARTS['stop-rate']} years={stopRateYears.length ? stopRateYears : [CURRENT_YEAR]} data={charts.stopRate} percentFractionDigits={1} /> },
     { group: '중단', id: 'stop-reason', label: '중단 사유', node: <StopReasonBar item={stopReasonItem} monthLabel={periodLabel} /> },
     { group: '수술', id: 'surgery-cataract', label: '백내장 수술', node: <ReportLineChart title="백내장 수술" years={YEARS} data={charts.cataractSurgery} /> },
     { group: '수술', id: 'surgery-vision', label: '시력교정 수술', node: <ReportLineChart title="시력교정 수술" years={YEARS} data={charts.visionSurgery} /> },

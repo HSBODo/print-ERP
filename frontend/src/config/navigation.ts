@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  Home, Table2, CalendarCheck, Microscope, Stethoscope, Syringe,
+  Home, CalendarCheck, Microscope, Stethoscope, Syringe,
   Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
 } from 'lucide-react'
 
@@ -51,6 +51,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'procedure-exam': 'complete',
   'consultation-rate': 'complete',
   'cataract-reservation-rate': 'complete',
+  'stop-rate': 'complete',
   'stop-reason': 'complete',
   'surgery-list': 'complete',
   'surgery': 'complete',
@@ -125,13 +126,6 @@ const rawMenuItems: MenuItem[] = [
     children: kids('weekly-report', 'monthly-report'),
   },
   {
-    id: 'overall-group',
-    label: '전체지표',
-    href: '#',
-    icon: Table2,
-    children: kids('overall-exam', 'overall-exam-weekly'),
-  },
-  {
     id: 'reservation-group',
     label: '예약',
     href: '#',
@@ -144,14 +138,14 @@ const rawMenuItems: MenuItem[] = [
     label: '검사',
     href: '#',
     icon: Microscope,
-    children: kids('exam-list', 'cataract-exam-list', 'all-exam-list', 'examination', 'procedure-exam'),
+    children: kids('overall-exam', 'overall-exam-weekly', 'exam-list', 'cataract-exam-list', 'all-exam-list', 'examination', 'procedure-exam'),
   },
   {
     id: 'consultation',
     label: '전환&성공률',
     href: '#',
     icon: Stethoscope,
-    children: kids('consultation-rate', 'cataract-reservation-rate', 'stop-reason'),
+    children: kids('consultation-rate', 'cataract-reservation-rate', 'stop-rate', 'stop-reason'),
   },
   {
     id: 'surgery-group',

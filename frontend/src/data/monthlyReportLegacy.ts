@@ -124,9 +124,14 @@ export const MONTHLY_LEGACY_CHARTS: Record<string, LegacyChart> = {
  * 월간 레포트 렌더링 시 이 값이 있는 달은 PDF 값을 그대로 쓰고, null인 달만 운영 DB live 값으로 채운다.
  */
 export const MONTHLY_REPORT_PDF_2026_CHARTS: Record<string, (number | null)[]> = {
-  reservations: pad([2425, 1892, 1318, 1243]),
-  call: pad([1432, 1132, 836, 750]),
-  online: pad([993, 760, 482, 493]),
+  // 예약 종합/콜/온라인(1~6월) = 우리 예약통계 RSS 스냅샷(시력교정+백내장, 골든와이즈 PDF 시드) 기준으로 통일.
+  //   콜    = 시력교정(인입콜예약+TM예약+TM재상담예약) + 백내장(★신환+TM예약)
+  //   온라인 = 시력교정(홈+네이버+카톡) + 백내장(카톡검사+카톡노안+온라인)
+  //   종합  = 콜 + 온라인 (스냅샷 총예약과 검산 일치)
+  // ⚠️ 레거시 월간보고값(예: 온라인 493·465)으로 되돌리지 말 것 — 레거시는 담당자별 집계가 뒤섞여 비일관.
+  reservations: pad([2548, 1908, 1378, 1288, 1232, 1455]),
+  call: pad([1476, 1132, 836, 750, 728, 903]),
+  online: pad([1072, 776, 542, 538, 504, 552]),
   cataractExam: pad([96, 68, 76, 58]),
   visionExam: pad([1868, 1604, 853, 807]),
   examCount: pad([2038, 1721, 1007, 932]),

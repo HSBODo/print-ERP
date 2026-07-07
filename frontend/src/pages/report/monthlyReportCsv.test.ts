@@ -28,6 +28,7 @@ const run = () =>
         2026: [200, 201, null, null, null, null, null, null, null, null, null, null],
       },
       ratioGeneral: { 2026: [51.8128, ...Array<number | null>(11).fill(null)] },
+      stopRate: { 2026: [6.37, ...Array<number | null>(11).fill(null)] },
       // examCount 등 나머지 키는 미제공 → 행이 생기지 않아야 함
     } as Record<string, unknown>,
     success: {
@@ -65,6 +66,11 @@ describe('buildMonthlyReportCsv', () => {
     const cells = row('비율,일반검사 비율,%,2026,')!.split(',').slice(4)
     // 51.8128 → Math.round → 52 (화면 차트 표시와 일치)
     expect(cells[0]).toBe('52')
+  })
+
+  it('중단율은 소수점 첫째 자리까지 직렬화', () => {
+    const cells = row('중단,중단율,%,2026,')!.split(',').slice(4)
+    expect(cells[0]).toBe('6.4')
   })
 
   it('상담성공률·중단사유는 당해연도 행으로 포함', () => {

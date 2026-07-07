@@ -28,15 +28,28 @@ export interface ReportLineChartProps {
   /** year → 12개월 값 배열 (없는 달은 null) */
   data: Record<number, (number | null)[]>
   format?: 'number' | 'percent'
+  percentFractionDigits?: number
   /** Y축 범위 고정 [min, max](예: 예약종합 [800, 3000]). 미지정 시 데이터 스케일 자동. */
   yDomain?: [number, number]
 }
 
-export function ReportLineChart({ title, suffix, years, data, format = 'number', yDomain }: ReportLineChartProps) {
+export function ReportLineChart({
+  title,
+  suffix,
+  years,
+  data,
+  format = 'number',
+  percentFractionDigits,
+  yDomain,
+}: ReportLineChartProps) {
   const sorted = useMemo(() => [...years].sort((a, b) => a - b), [years])
   const latest = sorted[sorted.length - 1]
 
-  const fmt = (v: number) => (format === 'percent' ? `${Math.round(v)}%` : formatAxisNumber(v))
+  const fmt = (v: number) => {
+    if (format !== 'percent') return formatAxisNumber(v)
+    if (typeof percentFractionDigits === 'number') return `${v.toFixed(percentFractionDigits)}%`
+    return `${Math.round(v)}%`
+  }
 
   // 우측 합계 칼럼 = 차트 우측여백(80)과 같은 폭의 정렬용 칼럼. 숫자=합계 / 퍼센트=평균
   const summarize = (year: number): number | null => {
@@ -156,7 +169,15 @@ export function ReportLineChart({ title, suffix, years, data, format = 'number',
               allowDecimals={false}
               tickFormatter={(v) => fmt(Number(v))}
             />
-            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  valueFormatter={(value) =>
+                    typeof value === 'number' ? fmt(value) : String(value)
+                  }
+                />
+              }
+            />
             {sorted.map((y) => (
               <Line
                 key={y}
