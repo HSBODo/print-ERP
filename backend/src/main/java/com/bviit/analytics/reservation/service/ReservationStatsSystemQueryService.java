@@ -5,6 +5,7 @@ import com.bviit.analytics.reservation.dto.ReservationStatsDiagnosticsHealthResp
 import com.bviit.analytics.reservation.dto.ReservationStatsDiffResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsDrillDownResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsParityResponse;
+import com.bviit.analytics.reservation.repository.ReservationStatsSystemMartRepository;
 import com.bviit.analytics.common.stats.StatsResponseMeta;
 import com.bviit.analytics.reservation.dto.ReservationStatsResult;
 import com.bviit.analytics.reservation.dto.ReservationStatsSnapshot;
@@ -31,6 +32,7 @@ public class ReservationStatsSystemQueryService {
     private final ReservationStatsCellEditService cellEditService;
     private final Optional<ReservationStatsSystemService> liveService;
     private final Optional<ReservationStatsDiagnosticDiffService> diagnosticService;
+    private final Optional<ReservationStatsSystemMartRepository> martRepository;
 
     public ReservationStatsResult<List<ReservationStatsDailyRow>> getDailyCounts(
             LocalDate from,
@@ -38,6 +40,15 @@ public class ReservationStatsSystemQueryService {
             String username
     ) {
         String period = from.toString().substring(0, 7);
+
+        // postgres-mart 프로파일: 배치가 채운 D-1 마트가 유일한 진실. override 는 SQL 에서 오버레이됨.
+        if (martRepository.isPresent()) {
+            List<ReservationStatsDailyRow> days = martRepository.get()
+                    .findDailyCounts(from.toString(), to.toString());
+            return new ReservationStatsResult<>(days, liveMeta(period));
+        }
+
+        // 이하 레거시 경로 (mssql-only 프로파일). Cutover 후 제거 예정.
         autoFillIfNeeded(period, username);
 
         Optional<ReservationStatsSnapshot> snapshot = snapshotStore.find(period);
@@ -52,7 +63,6 @@ public class ReservationStatsSystemQueryService {
         }
 
         // 당월인데 스냅샷이 없음(월초라 마감된 날 D-1이 아직 없음) → 오늘을 라이브로 노출하지 않고 빈 결과.
-        // (내일 오늘이 D-1이 되면 자동 적재되어 표시된다. 지난달은 아래 라이브 폴백 유지.)
         if (isCurrentMonth(period)) {
             return new ReservationStatsResult<>(List.of(), liveMeta(period));
         }

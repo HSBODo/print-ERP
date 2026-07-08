@@ -6,6 +6,7 @@ import com.bviit.analytics.reservation.dto.ReservationStatsDiagnosticsHealthResp
 import com.bviit.analytics.reservation.dto.ReservationStatsDiffResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsDrillDownResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsParityResponse;
+import com.bviit.analytics.reservation.repository.CataractStatsSystemMartRepository;
 import com.bviit.analytics.common.stats.StatsResponseMeta;
 import com.bviit.analytics.reservation.dto.ReservationStatsResult;
 import com.bviit.analytics.common.exception.DataSourceUnavailableException;
@@ -31,6 +32,7 @@ public class CataractStatsSystemQueryService {
     private final CataractStatsCellEditService cellEditService;
     private final Optional<CataractStatsSystemService> liveService;
     private final Optional<CataractStatsDiagnosticDiffService> diagnosticService;
+    private final Optional<CataractStatsSystemMartRepository> martRepository;
 
     public ReservationStatsResult<List<CataractStatsDailyRow>> getDailyCounts(
             LocalDate from,
@@ -38,6 +40,15 @@ public class CataractStatsSystemQueryService {
             String username
     ) {
         String period = from.toString().substring(0, 7);
+
+        // postgres-mart 프로파일: 배치가 채운 D-1 마트가 유일한 진실. override 는 SQL 에서 오버레이됨.
+        if (martRepository.isPresent()) {
+            List<CataractStatsDailyRow> days = martRepository.get()
+                    .findDailyCounts(from.toString(), to.toString());
+            return new ReservationStatsResult<>(days, liveMeta(period));
+        }
+
+        // 이하 레거시 경로 (mssql-only 프로파일). Cutover 후 제거 예정.
         autoFillIfNeeded(period, username);
 
         Optional<CataractStatsSnapshot> snapshot = snapshotStore.find(period);
