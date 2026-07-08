@@ -7,6 +7,7 @@ import com.bviit.analytics.batch.job.ExamMartJob;
 import com.bviit.analytics.batch.job.OutpatientMartJob;
 import com.bviit.analytics.batch.job.OverallMartJob;
 import com.bviit.analytics.batch.job.ReservationMartJob;
+import com.bviit.analytics.batch.job.ReservationStatsDailyMartJob;
 import com.bviit.analytics.batch.job.SurgeryMartJob;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class BatchOrchestrator {
     private final BatchRunLogRepository runLogRepository;
     private final SurgeryMartJob surgeryMartJob;
     private final ReservationMartJob reservationMartJob;
+    private final ReservationStatsDailyMartJob reservationStatsDailyMartJob;
     private final ExamMartJob examMartJob;
     private final ConsultationMartJob consultationMartJob;
     private final OutpatientMartJob outpatientMartJob;
@@ -131,7 +133,10 @@ public class BatchOrchestrator {
     private int runDomains(LocalDate from, LocalDate to, Set<Domain> targets) {
         int total = 0;
         if (targets.contains(Domain.SURGERY))       total += surgeryMartJob.run(from, to);
-        if (targets.contains(Domain.RESERVATION))   total += reservationMartJob.run(from, to);
+        if (targets.contains(Domain.RESERVATION)) {
+            total += reservationMartJob.run(from, to);
+            total += reservationStatsDailyMartJob.run(from, to);
+        }
         if (targets.contains(Domain.EXAM))          total += examMartJob.run(from, to);
         if (targets.contains(Domain.CONSULTATION))  total += consultationMartJob.run(from, to);
         if (targets.contains(Domain.OUTPATIENT))    total += outpatientMartJob.run(from, to);
