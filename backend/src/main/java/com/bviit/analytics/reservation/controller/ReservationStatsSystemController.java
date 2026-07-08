@@ -10,6 +10,7 @@ import com.bviit.analytics.reservation.dto.ReservationStatsParityResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsResult;
 import com.bviit.analytics.reservation.service.ReservationStatsSystemQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,6 +31,7 @@ import java.util.List;
  *   GET  /api/stats/reservation-stats-system/diagnostics/*                  진단(diff/drill-down/parity/health).
  */
 @RestController
+@Profile("postgres-mart")
 @RequestMapping("/api/stats/reservation-stats-system")
 @RequiredArgsConstructor
 public class ReservationStatsSystemController {

@@ -1,17 +1,17 @@
 package com.bviit.analytics.reservation.service;
 
+import com.bviit.analytics.common.exception.DataSourceUnavailableException;
+import com.bviit.analytics.common.stats.StatsResponseMeta;
 import com.bviit.analytics.reservation.dto.CataractStatsDailyRow;
 import com.bviit.analytics.reservation.dto.CataractStatsSnapshot;
 import com.bviit.analytics.reservation.dto.ReservationStatsDiagnosticsHealthResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsDiffResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsDrillDownResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsParityResponse;
-import com.bviit.analytics.reservation.repository.CataractStatsSystemMartRepository;
-import com.bviit.analytics.common.stats.StatsResponseMeta;
 import com.bviit.analytics.reservation.dto.ReservationStatsResult;
-import com.bviit.analytics.common.exception.DataSourceUnavailableException;
+import com.bviit.analytics.reservation.repository.CataractStatsSystemMartRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,20 +19,21 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 예약통계_백내장 조회 진입점. postgres-mart 프로파일 전용.
+ * 시력교정과 동일 구조 — 마트 조회 + override 오버레이 + 진단 브릿지.
+ */
 @Service
+@Profile("postgres-mart")
 @RequiredArgsConstructor
-@Slf4j
 public class CataractStatsSystemQueryService {
 
     private static final String STATS_TYPE = "cataract";
     private static final String FORMULA_VERSION = "reservation-stats-cataract-v1";
 
-    private final CataractStatsSnapshotStore snapshotStore;
-    private final CataractStatsCellEditService cellEditService;
-    private final Optional<CataractStatsSystemService> liveService;
+    private final CataractStatsSystemMartRepository martRepository;
+    private final CataractStatsOverrideCellEditService martCellEditService;
     private final Optional<CataractStatsDiagnosticDiffService> diagnosticService;
-    private final Optional<CataractStatsSystemMartRepository> martRepository;
-    private final Optional<CataractStatsOverrideCellEditService> martCellEditService;
 
     public ReservationStatsResult<List<CataractStatsDailyRow>> getDailyCounts(
             LocalDate from,
@@ -40,42 +41,8 @@ public class CataractStatsSystemQueryService {
             String username
     ) {
         String period = from.toString().substring(0, 7);
-
-        // postgres-mart 프로파일: 배치가 채운 D-1 마트가 유일한 진실. override 는 SQL 에서 오버레이됨.
-        if (martRepository.isPresent()) {
-            List<CataractStatsDailyRow> days = martRepository.get()
-                    .findDailyCounts(from.toString(), to.toString());
-            return new ReservationStatsResult<>(days, martMeta(period));
-        }
-
-        // 이하 레거시 경로 (mssql-only 프로파일). Cutover 후 제거 예정.
-        autoFillIfNeeded(period, username);
-
-        Optional<CataractStatsSnapshot> snapshot = snapshotStore.find(period);
-        if (snapshot.isPresent()) {
-            List<CataractStatsDailyRow> days = ReservationStatsQuerySupport.filterDays(
-                    snapshot.get().days(),
-                    CataractStatsDailyRow::date,
-                    from,
-                    to
-            );
-            return new ReservationStatsResult<>(days, snapshotMeta(period, snapshot.get()));
-        }
-
-        // 당월인데 스냅샷이 없음(월초라 마감된 날 D-1이 아직 없음) → 오늘을 라이브로 노출하지 않고 빈 결과.
-        if (isCurrentMonth(period)) {
-            return new ReservationStatsResult<>(List.of(), liveMeta(period));
-        }
-
-        CataractStatsSystemService service = requireLiveService(period, "확정 스냅샷·라이브 소스(MSSQL)가 없습니다.");
-        return new ReservationStatsResult<>(
-                service.getDailyCounts(from.toString(), to.toString()),
-                liveMeta(period)
-        );
-    }
-
-    private static boolean isCurrentMonth(String period) {
-        return period.equals(LocalDate.now().toString().substring(0, 7));
+        List<CataractStatsDailyRow> days = martRepository.findDailyCounts(from.toString(), to.toString());
+        return new ReservationStatsResult<>(days, martMeta(period));
     }
 
     public CataractStatsDailyRow editCell(
@@ -85,11 +52,7 @@ public class CataractStatsSystemQueryService {
             int value,
             String username
     ) {
-        String actor = ReservationStatsQuerySupport.actor(username);
-        if (martCellEditService.isPresent()) {
-            return martCellEditService.get().editCell(period, date, field, value, actor);
-        }
-        return cellEditService.editCell(period, date, field, value, actor);
+        return martCellEditService.editCell(period, date, field, value, ReservationStatsQuerySupport.actor(username));
     }
 
     public ReservationStatsDiffResponse diff(String period) {
@@ -105,87 +68,33 @@ public class CataractStatsSystemQueryService {
     }
 
     public ReservationStatsDiagnosticsHealthResponse health(String period) {
-        Optional<CataractStatsSnapshot> snapshot = snapshotStore.find(period);
-        StatsResponseMeta.Source source = martRepository.isPresent()
-                ? StatsResponseMeta.Source.MART
-                : snapshot.isPresent()
-                ? StatsResponseMeta.Source.SNAPSHOT
-                : liveService.isPresent()
-                ? StatsResponseMeta.Source.LIVE
-                : StatsResponseMeta.Source.UNAVAILABLE;
-
         return new ReservationStatsDiagnosticsHealthResponse(
                 period,
                 STATS_TYPE,
-                source,
-                liveService.isPresent(),
+                StatsResponseMeta.Source.MART,
+                false,
                 diagnosticService.isPresent(),
-                snapshot.isPresent(),
-                snapshot.map(CataractStatsSnapshot::locked).orElse(false),
-                snapshot.map(CataractStatsSnapshot::schemaVersion)
-                        .orElse(CataractStatsSnapshot.CURRENT_SCHEMA_VERSION),
-                snapshot.map(s -> s.days().size()).orElse(0),
-                snapshot.map(s -> ReservationStatsQuerySupport.latestDate(s.days(), CataractStatsDailyRow::date))
-                        .orElse(null),
-                snapshot.map(CataractStatsSnapshot::confirmedAt).orElse(null),
-                snapshot.map(CataractStatsSnapshot::confirmedBy).orElse(null),
+                false,
+                false,
+                CataractStatsSnapshot.CURRENT_SCHEMA_VERSION,
+                0,
+                null,
+                null,
+                null,
                 FORMULA_VERSION,
                 LocalDateTime.now().toString()
         );
     }
 
-    private void autoFillIfNeeded(String period, String username) {
-        if (liveService.isEmpty()) return;
-
-        Optional<CataractStatsSnapshot> snapshot = snapshotStore.find(period);
-        boolean needsAutoFill = ReservationStatsQuerySupport.needsAutoFill(
-                LocalDate.now(),
-                period,
-                snapshotStore.isLocked(period),
-                snapshot,
-                CataractStatsSnapshot::confirmedAt
-        );
-        if (!needsAutoFill) return;
-
-        try {
-            liveService.get().fillSnapshot(period, username == null ? "auto" : username);
-        } catch (RuntimeException e) {
-            log.warn("조회 중 자동 채움 실패(기존 데이터로 계속): period={}, err={}", period, e.getMessage());
-        }
-    }
-
-    private CataractStatsSystemService requireLiveService(String period) {
-        return requireLiveService(period, "실 데이터 소스(MSSQL)가 연결되지 않았습니다.");
-    }
-
-    private CataractStatsSystemService requireLiveService(String period, String message) {
-        return liveService.orElseThrow(() -> dataSourceUnavailable(period, message));
-    }
-
     private CataractStatsDiagnosticDiffService requireDiagnosticService(String period) {
-        return diagnosticService.orElseThrow(() -> dataSourceUnavailable(
-                period,
-                "실 데이터 소스(MSSQL)가 연결되지 않았습니다."
+        return diagnosticService.orElseThrow(() -> new DataSourceUnavailableException(
+                "진단용 MSSQL 소스가 연결되지 않았습니다.",
+                StatsResponseMeta.unavailable(
+                        period,
+                        FORMULA_VERSION,
+                        CataractStatsSnapshot.CURRENT_SCHEMA_VERSION
+                )
         ));
-    }
-
-    private static StatsResponseMeta snapshotMeta(String period, CataractStatsSnapshot snapshot) {
-        return StatsResponseMeta.snapshot(
-                period,
-                FORMULA_VERSION,
-                snapshot.locked(),
-                snapshot.confirmedAt(),
-                snapshot.confirmedBy(),
-                snapshot.schemaVersion()
-        );
-    }
-
-    private static StatsResponseMeta liveMeta(String period) {
-        return StatsResponseMeta.live(
-                period,
-                FORMULA_VERSION,
-                CataractStatsSnapshot.CURRENT_SCHEMA_VERSION
-        );
     }
 
     private static StatsResponseMeta martMeta(String period) {
@@ -193,17 +102,6 @@ public class CataractStatsSystemQueryService {
                 period,
                 FORMULA_VERSION,
                 CataractStatsSnapshot.CURRENT_SCHEMA_VERSION
-        );
-    }
-
-    private static DataSourceUnavailableException dataSourceUnavailable(String period, String message) {
-        return new DataSourceUnavailableException(
-                message,
-                StatsResponseMeta.unavailable(
-                        period,
-                        FORMULA_VERSION,
-                        CataractStatsSnapshot.CURRENT_SCHEMA_VERSION
-                )
         );
     }
 }
