@@ -16,12 +16,13 @@ import static com.bviit.analytics.common.util.NumberUtils.roundToOneDecimal;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class ConsultationRateService {
+public class ConsultationRateService implements ConsultationRateReader {
 
     private final ConsultationRateRepository repository;
 
+    @Override
     @Transactional(readOnly = true)
     public List<ConsultationRateItem> getMonthlyRates(List<Integer> years) {
         int minYear = years.stream().mapToInt(Integer::intValue).min().orElse(2025);

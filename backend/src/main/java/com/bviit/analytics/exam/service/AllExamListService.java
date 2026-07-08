@@ -14,12 +14,13 @@ import java.util.Map;
  * 검사구분·내원동기·직업 토글의 조회건수가 월별 검사자 종합지표(검사유입·검사수)와 정합한다.
  */
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class AllExamListService {
+public class AllExamListService implements AllExamListReader {
 
     private final AllExamListRepository repository;
 
+    @Override
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getAllExamList(String from, String to) {
         return repository.findAllExamList(from, to);

@@ -1,4 +1,36 @@
 services:
+  # ─────────────────────────────────────────────────────────────
+  # Postgres — 마트 아키텍처의 Primary DB (mart 프로파일에서만 기동)
+  # 실행: docker compose --profile mart up -d
+  # 참고 문서: docs/databatch/strategy.md
+  # ─────────────────────────────────────────────────────────────
+  postgres:
+    profiles: ["mart"]
+    image: postgres:18-alpine
+    container_name: bnviit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-analytics}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      TZ: Asia/Seoul
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # postgres 18+ 는 /var/lib/postgresql (부모 경로) 마운트를 요구한다.
+      # major 버전별 subdir(data, 18/main 등)을 컨테이너가 관리해 pg_upgrade --link 를 지원.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-analytics} -d ${POSTGRES_DB:-analytics}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # ─────────────────────────────────────────────────────────────
+  # 애플리케이션
+  # 기본 실행 (docker compose up)          → SPRING_PROFILES_ACTIVE=mssql (CRM 직결, 레거시)
+  # 마트 실행 (docker compose --profile mart up) → SPRING_PROFILES_ACTIVE=local (또는 dev/prod)
+  # ─────────────────────────────────────────────────────────────
   analytics:
     build:
       context: .
@@ -8,18 +40,28 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_PORT:-18080}:18080"
-    # backend/.env 의 값들이 그대로 컨테이너 환경변수로 주입된다.
-    # (없으면 H2 + JWT_SECRET 미설정으로 부팅 실패하므로 반드시 준비)
+    depends_on:
+      postgres:
+        condition: service_healthy
+        # postgres는 mart 프로파일에서만 기동. 없어도 앱이 뜨도록 required=false 지정.
+        required: false
+    # backend/.env 가 실제 파일. 프로젝트 루트 .env 는 이 파일로의 symlink.
+    #   - env_file: backend/.env  → analytics 컨테이너 런타임 환경변수
+    #   - 루트 .env (symlink)      → docker-compose.yml 의 ${VAR} 치환용 (postgres 초기화 등)
     env_file:
       - backend/.env
     environment:
-      # Spring profile (mssql / postgres / 미지정=H2). backend/.env 가 있으면 기본 mssql.
+      # Spring profile ({local|dev|prod} 권장 / 레거시: mssql,postgres,postgres-mart / 미지정=H2).
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-mssql}
       SERVER_PORT: "18080"
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:18080}
       STATS_CACHE_DIR: /app/.cache/stats
+      # postgres-mart 프로파일에서 컨테이너 간 통신용 기본 URL.
+      # backend/.env 에 POSTGRES_URL 이 있으면 그 값이 우선.
+      POSTGRES_URL: ${POSTGRES_URL:-jdbc:postgresql://postgres:5432/${POSTGRES_DB:-analytics}}
     volumes:
       - analytics-cache:/app/.cache
 
 volumes:
   analytics-cache:
+  postgres-data:

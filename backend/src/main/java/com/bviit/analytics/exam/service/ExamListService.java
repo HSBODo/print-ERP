@@ -14,12 +14,13 @@ import java.util.Map;
  * 진료구분·검색 등 세부 필터는 프론트에서 클라이언트 사이드로 처리(월 단위 ~800행).
  */
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class ExamListService {
+public class ExamListService implements ExamListReader {
 
     private final ExamListRepository repository;
 
+    @Override
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getExamList(String from, String to) {
         return repository.findExamList(from, to);

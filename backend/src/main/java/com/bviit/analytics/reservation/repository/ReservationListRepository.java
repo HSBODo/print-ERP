@@ -27,15 +27,17 @@ import java.util.Map;
  * READ-ONLY · MSSQL 2014 호환(TRIM 금지). 날짜 범위는 등록일(InsertedDateTime) 기준.
  */
 @Repository
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 public class ReservationListRepository {
 
     static final String RESERVATION_LIST_SQL = "sql/reservation-list/reservation-list.sql";
     static final String KAKAO_COUNT_SQL = "sql/reservation-list/kakao-count.sql";
+    static final String KAKAO_DAILY_COUNTS_SQL = "sql/reservation-list/kakao-daily-counts.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String reservationListSql;
     private final String kakaoCountSql;
+    private final String kakaoDailyCountsSql;
 
     public ReservationListRepository(
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
@@ -43,6 +45,7 @@ public class ReservationListRepository {
         this.jdbc = jdbc;
         this.reservationListSql = SqlLoader.load(RESERVATION_LIST_SQL);
         this.kakaoCountSql = SqlLoader.load(KAKAO_COUNT_SQL);
+        this.kakaoDailyCountsSql = SqlLoader.load(KAKAO_DAILY_COUNTS_SQL);
     }
 
     public List<Map<String, Object>> findReservationList(String from, String to) {
@@ -62,5 +65,15 @@ public class ReservationListRepository {
                 .addValue("from", from)
                 .addValue("to", to), Integer.class);
         return count == null ? 0 : count;
+    }
+
+    /**
+     * 카카오(해피톡) 일별 신규 신환 예약 건수 — 마트 배치 적재용.
+     * 반환: [{dt: 'YYYY-MM-DD', kakaoCount: int}, ...] (해당 날짜에 건수가 있는 행만).
+     */
+    public List<Map<String, Object>> findKakaoDailyCounts(String from, String to) {
+        return jdbc.queryForList(kakaoDailyCountsSql, new MapSqlParameterSource()
+                .addValue("from", from)
+                .addValue("to", to));
     }
 }

@@ -1,5 +1,6 @@
 package com.bviit.analytics.auth.dto;
 
+import com.bviit.analytics.auth.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -16,5 +17,6 @@ public class LoginResponse {
         private String loginId;
         private String email;
         private String name;
+        private Role role;
     }
 }

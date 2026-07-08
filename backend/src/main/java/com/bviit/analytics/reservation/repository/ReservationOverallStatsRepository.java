@@ -26,7 +26,7 @@ import java.util.Map;
  * READ-ONLY — SELECT만 실행.
  */
 @Repository
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 public class ReservationOverallStatsRepository {
 
     static final String MONTHLY_SQL = "sql/reservation-overall/monthly.sql";

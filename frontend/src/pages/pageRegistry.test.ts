@@ -4,6 +4,7 @@ import {
   getMenuStatus,
   getMenuStatusIds,
   hasExplicitMenuStatus,
+  isAdminOnlyPage,
   statsPages,
 } from '../config/navigation'
 
@@ -28,22 +29,33 @@ describe('통계 페이지 라우트 정책 불변식', () => {
 
   it('backend-only 페이지는 모든 환경에서 placeholder로 차단된다', () => {
     for (const id of backendOnlyIds) {
-      expect(isRouteBlocked(id, true)).toBe(true)
-      expect(isRouteBlocked(id, false)).toBe(true)
+      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(true)
+      expect(isRouteBlocked(id, false, 'ADMIN')).toBe(true)
     }
   })
 
   it('pending 페이지는 운영(PROD)에서 차단되고 개발(DEV)에서는 허용된다', () => {
     expect(pendingIds.length).toBeGreaterThan(0)
     for (const id of pendingIds) {
-      expect(isRouteBlocked(id, true)).toBe(true) // 운영: 차단(placeholder)
-      expect(isRouteBlocked(id, false)).toBe(false) // 개발: WIP 미리보기 허용
+      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(true) // 운영: 차단(placeholder)
+      expect(isRouteBlocked(id, false, 'ADMIN')).toBe(false) // 개발: WIP 미리보기 허용
     }
   })
 
-  it('완료(live) 페이지는 운영에서도 차단되지 않는다', () => {
+  it('완료(live) 페이지는 운영에서도 차단되지 않는다 (ADMIN 롤 기준)', () => {
+    // admin-only 페이지도 ADMIN 롤에게는 열려있어야 한다.
     for (const id of completeIds) {
-      expect(isRouteBlocked(id, true)).toBe(false)
+      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(false)
+    }
+  })
+
+  it('ADMIN 전용 페이지는 role !== ADMIN 이면 환경 무관하게 차단된다', () => {
+    const adminOnlyIds = completeIds.filter((id) => isAdminOnlyPage(id))
+    expect(adminOnlyIds.length).toBeGreaterThan(0)
+    for (const id of adminOnlyIds) {
+      expect(isRouteBlocked(id, false, 'USER')).toBe(true)
+      expect(isRouteBlocked(id, true, 'USER')).toBe(true)
+      expect(isRouteBlocked(id, false, undefined)).toBe(true)
     }
   })
 

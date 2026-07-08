@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
 public class ReservationStatsDiagnosticDiffService {
 

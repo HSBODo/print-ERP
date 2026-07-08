@@ -24,20 +24,17 @@ import java.util.Optional;
 
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
+/**
+ * 검사 유형별(시력교정/드림렌즈/백내장) 월간 통계 — MSSQL 라이브 조회.
+ *
+ * 24·25 확정값은 mart(V9__legacy_seed.sql)가 유일 원천이며, postgres-mart 프로파일에서는
+ * ExaminationMartQueryService(@Primary)가 mart를 직접 조회한다. 이 서비스는 배치 잡의
+ * MSSQL 소스 리더로만 사용(2026+ 값). 24·25는 ExamMartJob에서 min-year 가드로 write 차단.
+ */
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class ExaminationStatsService {
-
-    private static final Map<Integer, int[]> LEGACY_VISION_CORRECTION = Map.of(
-            2024, new int[] {2134, 1799, 1045, 928, 1171, 1254, 1512, 1570, 1219, 1127, 1431, 2073},
-            2025, new int[] {2307, 1965, 1022, 1002, 1118, 1076, 1124, 1154, 1071, 1245, 991, 1702}
-    );
-
-    private static final Map<Integer, int[]> LEGACY_CATARACT = Map.of(
-            2024, new int[] {76, 64, 53, 50, 65, 43, 62, 51, 48, 73, 70, 75},
-            2025, new int[] {74, 68, 76, 59, 55, 55, 74, 78, 76, 66, 53, 96}
-    );
+public class ExaminationStatsService implements ExaminationStatsReader {
 
     private final ExaminationStatsRepository repository;
     private final ObjectMapper objectMapper;
@@ -52,6 +49,7 @@ public class ExaminationStatsService {
      * 연도별 월간 검사 유형별 건수 (시력교정=사람, 드림렌즈=사람, 백내장=눈).
      * 빈 달은 0. total은 화면 전체 검사건수와 같은 값.
      */
+    @Override
     @Transactional(readOnly = true)
     public List<ExaminationMonthlyItem> getMonthlyStats(List<Integer> years) {
         List<Integer> normalizedYears = years.stream().distinct().sorted().toList();
@@ -76,11 +74,9 @@ public class ExaminationStatsService {
         for (Map.Entry<String, ExaminationMonthlyItem> entry : map.entrySet()) {
             String key = entry.getKey();
             ExaminationMonthlyItem cur = entry.getValue();
-            int v = legacyVisionCorrection(cur.getYear(), cur.getMonth())
-                    .orElse(vision.getOrDefault(key, 0));
+            int v = vision.getOrDefault(key, 0);
             int d = dreamlens.getOrDefault(key, 0);
-            int c = legacyCataract(cur.getYear(), cur.getMonth())
-                    .orElse(cataract.getOrDefault(key, 0));
+            int c = cataract.getOrDefault(key, 0);
             int examTotal = v + d + c;
             entry.setValue(ExaminationMonthlyItem.builder()
                     .year(cur.getYear())
@@ -118,26 +114,9 @@ public class ExaminationStatsService {
                 .build();
     }
 
-    private Optional<Integer> legacyVisionCorrection(int year, int month) {
-        int[] values = LEGACY_VISION_CORRECTION.get(year);
-        if (values == null || month < 1 || month > values.length) {
-            return Optional.empty();
-        }
-        return Optional.of(values[month - 1]);
-    }
-
-    private Optional<Integer> legacyCataract(int year, int month) {
-        int[] values = LEGACY_CATARACT.get(year);
-        if (values == null || month < 1 || month > values.length) {
-            return Optional.empty();
-        }
-        return Optional.of(values[month - 1]);
-    }
-
     /**
      * 당해연도(라이브) 포함 요청은 캐시하지 않는다.
-     * 2024~2025는 레거시 상수로 덮어써 불변이지만, 2026+ 라이브값은 EXAM 덮어쓰기로 시점마다 변동하므로
-     * 영구 파일캐시에 동결되면 안 된다(ProcedureExam과 동일 정책).
+     * EXAM 스냅샷은 조회 시점마다 미세 변동하므로 영구 파일캐시에 동결되면 안 됨.
      */
     private boolean isLiveRequest(List<Integer> years) {
         int currentYear = Year.now().getValue();
@@ -180,7 +159,8 @@ public class ExaminationStatsService {
 
     private Path cacheFile(List<Integer> years) {
         String key = String.join("_", years.stream().map(String::valueOf).toList());
+        // v8: LEGACY_VISION_CORRECTION/LEGACY_CATARACT 상수 제거 이후 캐시 무효화용 버전 bump.
         return Path.of(cacheDir).toAbsolutePath().normalize()
-                .resolve("examination-monthly-v7-" + key + ".json");
+                .resolve("examination-monthly-v8-" + key + ".json");
     }
 }

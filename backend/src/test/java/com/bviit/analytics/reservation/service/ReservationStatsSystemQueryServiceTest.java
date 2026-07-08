@@ -32,6 +32,9 @@ class ReservationStatsSystemQueryServiceTest {
     private ReservationStatsSnapshotStore reservationStore;
 
     @Mock
+    private ReservationStatsCellEditService reservationCellEditService;
+
+    @Mock
     private ReservationStatsSystemService reservationLiveService;
 
     @Mock
@@ -60,6 +63,7 @@ class ReservationStatsSystemQueryServiceTest {
         );
         ReservationStatsSystemQueryService service = new ReservationStatsSystemQueryService(
                 reservationStore,
+                reservationCellEditService,
                 Optional.empty(),
                 Optional.empty()
         );
@@ -84,6 +88,7 @@ class ReservationStatsSystemQueryServiceTest {
         // 월초(마감된 D-1 없음)엔 오늘을 라이브로 노출하지 않고 빈 표를 준다. (내일 D-1로 적재되어 등장)
         ReservationStatsSystemQueryService service = new ReservationStatsSystemQueryService(
                 reservationStore,
+                reservationCellEditService,
                 Optional.empty(),
                 Optional.empty()
         );
@@ -103,6 +108,7 @@ class ReservationStatsSystemQueryServiceTest {
     void 시력교정_조회는_스냅샷과_라이브가_모두_없으면_출처_메타가_있는_503_예외를_던진다() {
         ReservationStatsSystemQueryService service = new ReservationStatsSystemQueryService(
                 reservationStore,
+                reservationCellEditService,
                 Optional.empty(),
                 Optional.empty()
         );
@@ -133,6 +139,7 @@ class ReservationStatsSystemQueryServiceTest {
         );
         ReservationStatsSystemQueryService service = new ReservationStatsSystemQueryService(
                 reservationStore,
+                reservationCellEditService,
                 Optional.of(reservationLiveService),
                 Optional.of(reservationDiagnosticService)
         );

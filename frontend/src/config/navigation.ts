@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Home, CalendarCheck, Microscope, Stethoscope, Syringe,
-  Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText,
+  Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
 } from 'lucide-react'
 
 import { getStatsPageById } from './statsPages'
@@ -23,6 +23,8 @@ export interface MenuItem {
   icon: LucideIcon
   children?: MenuLink[]
   status?: MenuStatus
+  /** true 이면 ADMIN 롤 사용자에게만 노출 (Sidebar 필터). */
+  adminOnly?: boolean
 }
 
 /**
@@ -70,6 +72,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'designated-doctor': 'pending',
   'visit-reason': 'pending',
   'daily-reception': 'pending',
+  'batch-management': 'complete',
 }
 
 /** 메뉴 구현 상태 조회 (router의 운영 빌드 pending 라우트 차단 등에 사용). */
@@ -77,6 +80,13 @@ export const getMenuStatus = (id: string): MenuStatus => MENU_STATUS[id] ?? 'pen
 export const hasExplicitMenuStatus = (id: string): boolean =>
   Object.prototype.hasOwnProperty.call(MENU_STATUS, id)
 export const getMenuStatusIds = (): string[] => Object.keys(MENU_STATUS)
+
+/**
+ * ADMIN 롤 전용 페이지. 사이드바 숨김 + 직접 URL 접근도 placeholder 로 차단(pageRegistry.isRouteBlocked).
+ * admin-group 아래의 페이지들과 항상 동기화.
+ */
+const ADMIN_ONLY_PAGE_IDS = new Set<string>(['batch-management'])
+export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
 
 /**
  * 사이드바에서 숨기는 메뉴(페이지·라우트는 유지 — 직접 URL 접근은 가능). 여기만 수정하면
@@ -182,6 +192,14 @@ const rawMenuItems: MenuItem[] = [
       'prp-rate', 'reoperation-rate', 'same-day-op',
       'designated-doctor', 'visit-reason', 'daily-reception',
     ),
+  },
+  {
+    id: 'admin-group',
+    label: '관리자',
+    href: '#',
+    icon: Wrench,
+    adminOnly: true,
+    children: kids('batch-management'),
   },
 ]
 

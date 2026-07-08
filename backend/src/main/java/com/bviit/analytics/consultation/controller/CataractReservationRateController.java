@@ -5,7 +5,7 @@ import com.bviit.analytics.common.stats.StatsPanelSupport;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.consultation.dto.CataractReservationRateItem;
-import com.bviit.analytics.consultation.service.CataractReservationRateService;
+import com.bviit.analytics.consultation.service.CataractReservationRateReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CataractReservationRateController {
 
-    private final Optional<CataractReservationRateService> realService;
+    private final Optional<CataractReservationRateReader> realService;
 
     @GetMapping("/trend")
     public ResponseEntity<ApiResponse<List<CataractReservationRateItem>>> getTrend(
@@ -31,7 +31,7 @@ public class CataractReservationRateController {
         StatsRequestValidator.validateYears(years);
         return StatsPanelSupport.require(
                 realService,
-                service -> service.getMonthlyRates(years, category)
+                reader -> reader.getMonthlyRates(years, category)
         );
     }
 }

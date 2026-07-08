@@ -3,7 +3,7 @@ package com.bviit.analytics.surgery.controller;
 import com.bviit.analytics.common.stats.StatsRequestValidator;
 import com.bviit.analytics.common.stats.StatsPanelSupport;
 import com.bviit.analytics.common.dto.ApiResponse;
-import com.bviit.analytics.surgery.service.SurgeryListService;
+import com.bviit.analytics.surgery.service.SurgeryListReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ public class SurgeryListController {
 
     private static final int MAX_RANGE_DAYS = 366;
 
-    private final Optional<SurgeryListService> surgeryListService;
+    private final Optional<SurgeryListReader> surgeryListService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSurgeryList(

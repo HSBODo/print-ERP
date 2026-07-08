@@ -19,7 +19,7 @@ import java.util.Optional;
  * 시력교정(ReservationStatsSystemService)과 동일 패턴. 백내장=RESERVE_FLAG='H'.
  */
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
 public class CataractStatsSystemService {
 

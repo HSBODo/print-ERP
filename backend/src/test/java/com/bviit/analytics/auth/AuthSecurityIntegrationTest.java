@@ -1,6 +1,7 @@
 package com.bviit.analytics.auth;
 
 import com.bviit.analytics.auth.config.JwtUtil;
+import com.bviit.analytics.auth.entity.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,7 +115,7 @@ class AuthSecurityIntegrationTest {
     void statsApiAllowsAuthenticatedRequests() throws Exception {
         mockMvc.perform(get("/api/stats/reservation/kpi")
                         .param("years", "2025")
-                        .header("Authorization", "Bearer " + jwtUtil.generateToken("admin")))
+                        .header("Authorization", "Bearer " + jwtUtil.generateToken("admin", Role.ADMIN)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray());
@@ -161,7 +162,7 @@ class AuthSecurityIntegrationTest {
     @Test
     void protectedEndpointReturns200ForValidToken() throws Exception {
         mockMvc.perform(get("/api/test/protected")
-                        .header("Authorization", "Bearer " + jwtUtil.generateToken("admin")))
+                        .header("Authorization", "Bearer " + jwtUtil.generateToken("admin", Role.ADMIN)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.loginId").value("admin"));
     }

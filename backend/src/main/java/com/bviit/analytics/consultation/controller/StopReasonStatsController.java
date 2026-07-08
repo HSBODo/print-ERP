@@ -4,7 +4,7 @@ import com.bviit.analytics.common.stats.StatsRequestValidator;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.consultation.dto.StopReasonMonthlyItem;
-import com.bviit.analytics.consultation.service.StopReasonStatsService;
+import com.bviit.analytics.consultation.service.StopReasonStatsReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StopReasonStatsController {
 
-    private final StopReasonStatsService stopReasonStatsService;
+    private final StopReasonStatsReader stopReasonStatsService;
 
     /**
      * GET /api/stats/stop-reason/monthly?years=2025,2026

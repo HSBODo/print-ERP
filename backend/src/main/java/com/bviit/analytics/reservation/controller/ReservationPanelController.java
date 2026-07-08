@@ -6,7 +6,7 @@ import com.bviit.analytics.common.stats.StatsPanelSupport;
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
 import com.bviit.analytics.reservation.repository.MockReservationRepository;
-import com.bviit.analytics.reservation.service.ReservationStatsService;
+import com.bviit.analytics.reservation.service.ReservationStatsReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +22,8 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 /**
  * 예약 패널 API — 프로파일 제한 없음.
- * mock=true → SQLite 더미 데이터, mock=false → 실 데이터 (mssql 프로파일 필요)
+ * mock=true → SQLite 더미 데이터, mock=false → 실 데이터 (mssql·postgres-mart 프로파일 필요).
+ * postgres-mart 프로파일에서는 ReservationMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  */
 @RestController
 @RequestMapping("/api/stats/reservation")
@@ -30,7 +31,7 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 public class ReservationPanelController {
 
     private final MockReservationRepository mockRepository;
-    private final Optional<ReservationStatsService> realService;
+    private final Optional<ReservationStatsReader> realService;
 
     @GetMapping("/kpi")
     public ResponseEntity<ApiResponse<List<?>>> getKpi(

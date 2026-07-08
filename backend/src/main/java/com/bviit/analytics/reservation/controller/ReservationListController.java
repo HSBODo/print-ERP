@@ -4,7 +4,7 @@ import com.bviit.analytics.common.stats.StatsRequestValidator;
 import com.bviit.analytics.common.stats.StatsPanelSupport;
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.reservation.dto.ReservationListResult;
-import com.bviit.analytics.reservation.service.ReservationListService;
+import com.bviit.analytics.reservation.service.ReservationListReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,8 @@ import java.util.Optional;
 /**
  * GET /api/reservation-list?from=YYYY-MM-DD&to=YYYY-MM-DD
  * 예약자 명단 + 카카오 건수. 응답: ApiResponse&lt;{rows:List&lt;Map&gt;, kakaoCount:int}&gt; (camelCase 키).
- * 실 데이터 서비스는 mssql 프로파일에서만 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * postgres-mart 프로파일에서는 ReservationListMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  */
 @RestController
 @RequestMapping("/api/reservation-list")
@@ -28,7 +29,7 @@ public class ReservationListController {
 
     private static final int MAX_RANGE_DAYS = 366;
 
-    private final Optional<ReservationListService> reservationListService;
+    private final Optional<ReservationListReader> reservationListService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<ReservationListResult>> getReservationList(

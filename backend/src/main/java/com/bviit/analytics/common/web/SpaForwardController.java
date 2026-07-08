@@ -9,7 +9,9 @@ public class SpaForwardController {
     @GetMapping({
         "/",
         "/login",
-        "/stats/{path:[^\\.]*}"
+        "/stats/{path:[^\\.]*}",
+        "/admin/{path:[^\\.]*}",
+        "/report/{path:[^\\.]*}"
     })
     public String forward() {
         return "forward:/index.html";

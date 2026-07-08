@@ -15,7 +15,7 @@ import java.util.Map;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
 public class IntakeConversionStatsService {
 

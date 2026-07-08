@@ -20,6 +20,26 @@ import {
  * 비율·총예약 등 파생값은 프론트(reservationStatsSystemData)가 동일 공식으로 계산한다.
  * 실 데이터는 mssql 프로파일에서만 — 미연결 시 503 → 호출부가 미연결 안내 표시.
  */
+/** 셀 손보정 이력 1건 — '이 셀은 수기 보정됨' 마커 + 추적(누가/언제). */
+const cellEditSchema = z.object({
+  field: z.string(),
+  value: z.number(),
+  editedBy: z.string(),
+  editedAt: z.string(),
+})
+export type ReservationStatsCellEdit = z.infer<typeof cellEditSchema>
+
+/** 손보정 가능한 필드(홈+네이버 온라인예약 원시 카운트 6개) — 백엔드 EDITABLE_FIELDS와 일치. */
+export const RESERVATION_STATS_EDITABLE_FIELDS = [
+  'homeReceived',
+  'homeReservation',
+  'naverReceived',
+  'naverRejected',
+  'naverValid',
+  'naverReservation',
+] as const
+export type ReservationStatsEditableField = (typeof RESERVATION_STATS_EDITABLE_FIELDS)[number]
+
 const dailyCountsSchema = z.object({
   date: z.string(),
   inboundCall: z.number(),
@@ -46,6 +66,7 @@ const dailyCountsSchema = z.object({
   visit: z.number(),
   noShowReservation: z.number(),
   cancel: z.number(),
+  manualEdits: z.array(cellEditSchema).optional(),
 })
 
 export type ReservationStatsDailyCounts = z.infer<typeof dailyCountsSchema>
@@ -55,6 +76,7 @@ export type ReservationStatsDailyCountsResult = {
 }
 
 const responseSchema = apiResponseOf(z.array(dailyCountsSchema), reservationStatsResponseMetaSchema)
+const cellEditResponseSchema = apiResponseOf(dailyCountsSchema)
 
 /** 확정 월 요약: period + locked(PDF 고정이면 재확정 금지). */
 const snapshotInfoSchema = z.object({ period: z.string(), locked: z.boolean() })
@@ -86,6 +108,23 @@ export const reservationStatsSystemApi = {
   /** 호출(증분 채움): 해당 월을 D-1까지 라이브 조회해 비어있는 날짜만 채운다(있으면 보존). */
   fillSnapshot: async (period: string): Promise<void> => {
     await api.post<unknown>(withQuery('/stats/reservation-stats-system/fill', { period }), {})
+  },
+
+  /**
+   * 셀 손보정: 특정 일자의 홈페이지/네이버 온라인예약 원시 카운트(6개 필드) 값을 직접 수정한다.
+   * 스냅샷 파일만 갱신되며 수정 이력이 남는다. 갱신된 일자 row를 반환.
+   */
+  editCell: async (
+    period: string,
+    date: string,
+    field: ReservationStatsEditableField,
+    value: number,
+  ): Promise<ReservationStatsDailyCounts> => {
+    const res = await api.post<unknown>(
+      withQuery('/stats/reservation-stats-system/cell', { period, date, field, value }),
+      {},
+    )
+    return cellEditResponseSchema.parse(res).data
   },
 
   /** 확정 스냅샷과 라이브 재조회값을 일자/필드별로 비교한다. */

@@ -28,6 +28,7 @@ public class ReservationStatsSystemQueryService {
     private static final String FORMULA_VERSION = "reservation-stats-system-v1";
 
     private final ReservationStatsSnapshotStore snapshotStore;
+    private final ReservationStatsCellEditService cellEditService;
     private final Optional<ReservationStatsSystemService> liveService;
     private final Optional<ReservationStatsDiagnosticDiffService> diagnosticService;
 
@@ -79,6 +80,16 @@ public class ReservationStatsSystemQueryService {
         ReservationStatsSnapshot snapshot = requireLiveService(period)
                 .fillSnapshot(period, ReservationStatsQuerySupport.actor(username));
         return new ReservationStatsResult<>(snapshot, snapshotMeta(period, snapshot));
+    }
+
+    public ReservationStatsDailyRow editCell(
+            String period,
+            String date,
+            String field,
+            int value,
+            String username
+    ) {
+        return cellEditService.editCell(period, date, field, value, ReservationStatsQuerySupport.actor(username));
     }
 
     public List<ReservationStatsSnapshotStore.SnapshotInfo> listSnapshots() {

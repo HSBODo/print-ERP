@@ -1,5 +1,9 @@
 package com.bviit.analytics.reservation.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.List;
+
 /**
  * 예약통계시스템(BCRM RSS 컨택통계) 일자별 원시 카운트 1행.
  *
@@ -7,6 +11,8 @@ package com.bviit.analytics.reservation.dto;
  * 프론트가 집계(일→주→월) 후 동일 공식으로 계산하므로 여기서는 원시 카운트만 담는다.
  * 채널 원천: CtiRptLst·DB_CUSTOM·DB_ReCounsel·RESERVATION/RESERVE_HISTORY·RESERVATION_NAVER·
  * HappyTalk·EICN_MySQL(OPENQUERY 인입/응대콜).
+ *
+ * manualEdits: 셀 수기 보정 이력(없으면 직렬화 생략). 홈/네이버 온라인예약 카운트를 손보정하면 남는다.
  */
 public record ReservationStatsDailyRow(
         String date,             // 예약(등록)일 yyyy-MM-dd
@@ -33,6 +39,34 @@ public record ReservationStatsDailyRow(
         int cancelKakao,         // CH21 취소 카톡
         int visit,               // CH22 내원
         int noShowReservation,   // CH23 예약(부도)
-        int cancel               // CH24 취소
+        int cancel,              // CH24 취소
+        // 수기 보정 이력(비어있으면 JSON 직렬화 생략) — 이 일자에서 손보정한 셀 목록
+        @JsonInclude(JsonInclude.Include.NON_EMPTY) List<ReservationStatsCellEdit> manualEdits
 ) {
+
+    public ReservationStatsDailyRow {
+        manualEdits = manualEdits == null ? List.of() : List.copyOf(manualEdits);
+    }
+
+    /** 라이브 조회/기존 코드용 — 수기 보정 이력 없이 생성. */
+    public ReservationStatsDailyRow(
+            String date,
+            int inboundCall, int answeredCall, int newInquiry, int callReservation,
+            int tmTotalDb, int tmValidDb, int tmReservation,
+            int tmRecounsel, int tmRecounselValid, int tmRecounselReservation,
+            int homeReceived, int homeReservation,
+            int naverReceived, int naverRejected, int naverValid, int naverReservation,
+            int kakaoInquiry, int kakaoReservation,
+            int cancelCallNaver, int cancelHome, int cancelKakao,
+            int visit, int noShowReservation, int cancel
+    ) {
+        this(date, inboundCall, answeredCall, newInquiry, callReservation,
+                tmTotalDb, tmValidDb, tmReservation,
+                tmRecounsel, tmRecounselValid, tmRecounselReservation,
+                homeReceived, homeReservation,
+                naverReceived, naverRejected, naverValid, naverReservation,
+                kakaoInquiry, kakaoReservation,
+                cancelCallNaver, cancelHome, cancelKakao,
+                visit, noShowReservation, cancel, List.of());
+    }
 }

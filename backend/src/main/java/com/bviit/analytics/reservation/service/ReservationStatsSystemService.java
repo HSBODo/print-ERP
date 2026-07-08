@@ -19,7 +19,7 @@ import java.util.Optional;
  * 주/월/전체 집계와 비율 계산은 프론트(reservationStatsSystemData)가 동일 공식으로 처리한다.
  */
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
 public class ReservationStatsSystemService {
 

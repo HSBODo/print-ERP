@@ -81,6 +81,29 @@ public class ReservationStatsSystemController {
         return ResponseEntity.ok(ApiResponse.ok(result.data(), result.meta()));
     }
 
+    /**
+     * 셀 손보정 — 특정 일자의 홈페이지/네이버 온라인예약 원시 카운트(6개 필드)를 직접 고친다.
+     * 스냅샷 파일만 갱신(라이브/MSSQL 불필요)하며 수정 이력을 남긴다. locked 월도 허용(이력으로 추적).
+     */
+    @PostMapping("/cell")
+    public ResponseEntity<ApiResponse<ReservationStatsDailyRow>> editCell(
+            @RequestParam String period,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam String field,
+            @RequestParam int value,
+            Authentication authentication
+    ) {
+        StatsRequestValidator.validatePeriod(period);
+        ReservationStatsDailyRow updated = queryService.editCell(
+                period,
+                date.toString(),
+                field,
+                value,
+                username(authentication)
+        );
+        return ResponseEntity.ok(ApiResponse.ok(updated));
+    }
+
     @GetMapping("/snapshots")
     public ResponseEntity<ApiResponse<List<ReservationStatsSnapshotStore.SnapshotInfo>>> listSnapshots() {
         return ResponseEntity.ok(ApiResponse.ok(queryService.listSnapshots()));

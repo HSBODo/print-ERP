@@ -16,12 +16,13 @@ import java.util.Map;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class CataractReservationRateService {
+public class CataractReservationRateService implements CataractReservationRateReader {
 
     private final ExaminationStatsRepository repository;
 
+    @Override
     @Transactional(readOnly = true)
     public List<CataractReservationRateItem> getMonthlyRates(List<Integer> years, String category) {
         List<Integer> normalizedYears = years.stream().distinct().sorted().toList();

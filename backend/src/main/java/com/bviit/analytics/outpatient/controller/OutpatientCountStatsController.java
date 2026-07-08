@@ -4,7 +4,7 @@ import com.bviit.analytics.common.stats.StatsRequestValidator;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.outpatient.dto.OutpatientCountMonthlyItem;
-import com.bviit.analytics.outpatient.service.OutpatientCountStatsService;
+import com.bviit.analytics.outpatient.service.OutpatientCountStatsReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OutpatientCountStatsController {
 
-    private final OutpatientCountStatsService outpatientCountStatsService;
+    private final OutpatientCountStatsReader outpatientCountStatsService;
 
     /**
      * GET /api/stats/outpatient-count/monthly?years=2024,2025,2026

@@ -1,0 +1,63 @@
+# ========================================
+# Postgres Mart Profile
+# Profile: postgres-mart (또는 local/dev/prod 그룹을 통해 자동 활성)
+#
+# 아키텍처:
+#   Postgres (@Primary) → JPA + 마트 조회 (mart_*, list_*) + User
+#   MSSQL (stats)        → 배치 전용 (읽기) — 매일 03:00 D-1 append
+#
+# 관련 문서: docs/databatch/strategy.md
+# ========================================
+
+spring:
+  # --- Primary (Postgres) ---
+  # 도커 컴포즈 사용 시 postgres 컨테이너의 초기화용 env(POSTGRES_USER/DB/PASSWORD)와
+  # 같은 값을 재사용한다.
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/${POSTGRES_DB:analytics}}
+    username: ${POSTGRES_USER:analytics}
+    password: ${POSTGRES_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  h2:
+    console:
+      enabled: false
+
+app:
+  seed:
+    enabled: false
+
+# --- Batch source (MSSQL, read-only) ---
+# 배치가 하루 1회 CRM MSSQL을 읽어 Postgres 마트에 적재. 다른 시점에는 접근 없음.
+stats:
+  datasource:
+    url: ${STATS_DB_URL:}
+    username: ${STATS_DB_USERNAME:}
+    password: ${STATS_DB_PASSWORD:}
+    driver-class-name: net.sourceforge.jtds.jdbc.Driver
+    hikari:
+      maximum-pool-size: 3
+      read-only: true
+      connection-timeout: 10000
+
+# --- Batch scheduling ---
+batch:
+  mart:
+    # 매일 03:00 — 어제(D-1) 하루치 append
+    enabled: ${BATCH_MART_ENABLED:true}
+    daily-cron: ${BATCH_MART_DAILY_CRON:0 0 3 * * *}
+    # 매월 1일 03:30 — 전월 전체 재계산(소급 수정 흡수)
+    monthly-reconcile-cron: ${BATCH_MART_MONTHLY_CRON:0 30 3 1 * *}
+    # 스케줄러가 덮어쓰지 않는 연도 하한. 이 값 미만 연도(2024·2025 등)는 mart 값이 "확정"으로 간주된다.
+    # 매일/매월 자동 배치는 이 가드를 따르지만, 관리자 수동 배치(runManual)는 초기 backfill/보정을 위해
+    # 이 가드를 우회한다. 24·25 값 수정은 mart SQL UPDATE로 처리하는 워크플로우를 위한 안전장치.
+    min-year: ${BATCH_MART_MIN_YEAR:2026}

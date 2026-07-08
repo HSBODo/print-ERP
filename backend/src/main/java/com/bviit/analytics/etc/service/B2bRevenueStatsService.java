@@ -15,12 +15,13 @@ import java.util.Map;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile("mssql")
+@Profile({"mssql", "postgres-mart"})
 @RequiredArgsConstructor
-public class B2bRevenueStatsService {
+public class B2bRevenueStatsService implements B2bRevenueStatsReader {
 
     private final B2bRevenueStatsRepository repository;
 
+    @Override
     @Transactional(readOnly = true)
     public List<B2bRevenueMonthlyItem> getMonthlyRevenue(List<Integer> years) {
         List<Map<String, Object>> rows = repository.findMonthlyRevenue(years);

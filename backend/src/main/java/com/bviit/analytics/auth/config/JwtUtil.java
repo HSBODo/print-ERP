@@ -1,5 +1,6 @@
 package com.bviit.analytics.auth.config;
 
+import com.bviit.analytics.auth.entity.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,9 +35,10 @@ public class JwtUtil {
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String subject) {
+    public String generateToken(String subject, Role role) {
         return Jwts.builder()
                 .subject(subject)
+                .claim("role", role.name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(key)
@@ -52,6 +54,22 @@ public class JwtUtil {
             throw new JwtException("JWT subject is missing");
         }
         return subject;
+    }
+
+    /** JWT의 role 클레임을 파싱. 없거나 잘못된 값이면 기본 USER 로 폴백(하위 호환). */
+    public Role getRoleFromToken(String token) {
+        Object claim = Jwts.parser().verifyWith(key).build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role");
+        if (claim == null) {
+            return Role.USER;
+        }
+        try {
+            return Role.valueOf(claim.toString());
+        } catch (IllegalArgumentException e) {
+            return Role.USER;
+        }
     }
 
     public boolean validateToken(String token) {

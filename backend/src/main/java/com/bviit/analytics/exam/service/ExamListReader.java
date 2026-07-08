@@ -1,0 +1,15 @@
+package com.bviit.analytics.exam.service;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 검사자 리스트 조회 계약 (시력교정).
+ *
+ * 구현체:
+ *   - ExamListService          : @Profile({"mssql","postgres-mart"}) — MSSQL 직결 (레거시)
+ *   - ExamListMartQueryService : @Profile("postgres-mart") @Primary — Postgres 마트
+ */
+public interface ExamListReader {
+    List<Map<String, Object>> getExamList(String from, String to);
+}

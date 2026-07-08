@@ -58,6 +58,8 @@ public class SecurityConfig {
                         "/",
                         "/login",
                         "/stats/**",
+                        "/admin/**",
+                        "/report/**",
                         "/index.html",
                         "/assets/**",
                         "/favicon.ico",
@@ -72,6 +74,8 @@ public class SecurityConfig {
                 if (h2ConsoleEnabled) {
                     auth.requestMatchers("/h2-console/**").permitAll();
                 }
+                // 관리자 전용 API (배치 트리거·로그) — ADMIN 롤 필수
+                auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
                 auth.anyRequest().authenticated();
             })
             .exceptionHandling(ex -> ex

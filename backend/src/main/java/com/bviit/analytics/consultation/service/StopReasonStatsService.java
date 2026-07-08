@@ -23,11 +23,12 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  */
 @Service
 @RequiredArgsConstructor
-public class StopReasonStatsService {
+public class StopReasonStatsService implements StopReasonStatsReader {
 
-    /** mssql 프로파일에서만 주입됨. 없으면(H2 개발) 사유별 0으로 반환. */
+    /** mssql·postgres-mart 프로파일에서만 주입됨. 없으면(H2 개발) 사유별 0으로 반환. */
     private final Optional<StopReasonStatsRepository> repository;
 
+    @Override
     public List<StopReasonMonthlyItem> getMonthlyStats(List<Integer> years) {
         List<Integer> normalizedYears = years.stream().distinct().sorted().toList();
 
