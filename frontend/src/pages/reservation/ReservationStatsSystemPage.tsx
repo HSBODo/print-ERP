@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { withQuery } from '@/api/_shared'
 import {
@@ -10,9 +10,16 @@ import {
   type ReservationStatsDrillDown,
   type ReservationStatsParity,
 } from '@/api/reservation/reservationStatsDiagnostics'
+import {
+  RESERVATION_STATS_EDITABLE_FIELDS,
+  type ReservationStatsCellEdit,
+  type ReservationStatsDailyCounts,
+  type ReservationStatsEditableField,
+} from '@/api/reservation/reservationStatsSystem'
 import { downloadCsv } from '@/utils/csv'
 import {
   useReservationStatsSystem,
+  useReservationStatsSystemCellEdit,
   useReservationStatsSnapshots,
 } from '@/hooks/reservation/useReservationStatsSystem'
 import { ReservationStatsDiagnosticsModal } from './ReservationStatsDiagnosticsModal'
@@ -41,6 +48,8 @@ import {
   formatNumber,
   formatSummaryValue,
 } from './shared/reservationStatsFormat'
+import { EditMark, EditableNumberCell } from './shared/reservationStatsEditableCell'
+import { editMarkTitle } from './shared/reservationStatsEditableCell.utils'
 import { columnSpan, splitColumnGroups } from './shared/reservationStatsTable'
 
 /**
@@ -188,6 +197,31 @@ const SYSTEM_HEADER_NODES: StatsHeaderNode<SystemHeaderColumn>[] = [
   group('예약 종합 (내원 · 부도 · 취소)', `${divider} bg-emerald-200`, summaryLeaves),
 ]
 
+/* ── 셀 손보정(홈/네이버 온라인예약 원시 카운트) ── */
+const EDITABLE_FIELD_SET = new Set<string>(RESERVATION_STATS_EDITABLE_FIELDS)
+const EDITABLE_FIELD_LABEL: Record<ReservationStatsEditableField, string> = {
+  homeReceived: '홈페이지 예약접수',
+  homeReservation: '홈페이지 예약수',
+  naverReceived: '네이버 예약접수',
+  naverRejected: '네이버 파트너거절',
+  naverValid: '네이버 유효접수',
+  naverReservation: '네이버 예약수',
+}
+
+type ManualEditsByDate = Map<string, Record<string, ReservationStatsCellEdit>>
+
+/** dailies → date별 수기 보정 이력(field → 이력) 맵. 마커·툴팁 표시에 사용. */
+function buildManualEditsByDate(dailies: ReservationStatsDailyCounts[] | undefined): ManualEditsByDate {
+  const map: ManualEditsByDate = new Map()
+  for (const d of dailies ?? []) {
+    if (!d.manualEdits?.length) continue
+    const byField: Record<string, ReservationStatsCellEdit> = {}
+    for (const e of d.manualEdits) byField[e.field] = e
+    map.set(d.date, byField)
+  }
+  return map
+}
+
 const systemHeaderModel = (period: string): StatsHeaderModel<SystemHeaderColumn> => ({
   corner: {
     content: (
@@ -227,7 +261,22 @@ export function ReservationStatsSystemPage() {
   const hasData = rows.length > 0
 
   const { getDiff, isDiffing, getDrillDown, isDrillingDown, getParity, isCheckingParity } = useReservationStatsSnapshots()
+  const { editCell, isEditing } = useReservationStatsSystemCellEdit()
   const tableViewportClass = granularity === 'month' ? 'max-h-[72vh]' : 'min-h-0 flex-1'
+
+  // 셀 손보정: 확정 스냅샷일 때만(라이브는 저장 대상 없음). 일(day) 행의 온라인예약 6개 필드만 대상.
+  const cellEditEnabled = live && meta?.source === 'SNAPSHOT'
+  // 일자별 수기 보정 이력(date → field → 이력) — 마커·툴팁 표시용.
+  const manualEditsByDate = useMemo(() => buildManualEditsByDate(dailies), [dailies])
+
+  const handleEditCell = async (date: string, field: ReservationStatsEditableField, value: number) => {
+    try {
+      await editCell({ period: appliedMonth, date, field, value })
+      toast.success('수정 완료', { description: `${date} ${EDITABLE_FIELD_LABEL[field]} → ${value}` })
+    } catch (e) {
+      toast.error('수정 실패', { description: e instanceof Error ? e.message : undefined })
+    }
+  }
 
   // 조회 = 호출 통합: 서버 GET이 당월·미잠금이면 자동 증분 채움까지 처리한다.
   // 같은 월을 다시 조회하면 쿼리 키가 안 바뀌므로 refetch로 강제 갱신(서버 자동 채움 재평가).
@@ -364,7 +413,16 @@ export function ReservationStatsSystemPage() {
                 ) : isLoading || isFetching ? (
                   <SkeletonRows />
                 ) : hasData ? (
-                  rows.map((row) => <BodyRow key={`${granularity}-${row.label}`} row={row} />)
+                  rows.map((row) => (
+                    <BodyRow
+                      key={`${granularity}-${row.label}`}
+                      row={row}
+                      edits={row.date ? manualEditsByDate.get(row.date) : undefined}
+                      cellEditEnabled={cellEditEnabled}
+                      isEditing={isEditing}
+                      onEditCell={handleEditCell}
+                    />
+                  ))
                 ) : (
                   <tr>
                     <td colSpan={TOTAL_COL_SPAN} className={`${labelCell} bg-white py-8 text-sm text-muted-foreground`}>
@@ -423,9 +481,23 @@ function SkeletonRows() {
   )
 }
 
-function BodyRow({ row }: { row: DisplayRow }) {
+function BodyRow({
+  row,
+  edits,
+  cellEditEnabled,
+  isEditing,
+  onEditCell,
+}: {
+  row: DisplayRow
+  edits: Record<string, ReservationStatsCellEdit> | undefined
+  cellEditEnabled: boolean
+  isEditing: boolean
+  onEditCell: (date: string, field: ReservationStatsEditableField, value: number) => void
+}) {
   const { channel, summary, tier, isTotal, muted, weekStart } = row
   const isSunday = row.weekday === '일'
+  // 손보정 가능 셀 = 일(day) 행 + 확정 스냅샷 + 미음영(데이터 있는 날).
+  const canEditRow = cellEditEnabled && tier === 'day' && !muted && Boolean(row.date)
 
   const rowBg =
     tier === 'month'
@@ -457,17 +529,38 @@ function BodyRow({ row }: { row: DisplayRow }) {
         {muted ? <span className="text-slate-300">–</span> : formatNumber(channel.totalReservation)}
       </td>
 
-      {CHANNEL_COLUMNS.map((col) =>
-        muted ? (
-          <td key={col.key} className={`${numCell} text-slate-300`}>
-            –
-          </td>
-        ) : (
-          <td key={col.key} className={`${numCell} ${col.emphasis ? 'text-rose-600' : ''}`}>
+      {CHANNEL_COLUMNS.map((col) => {
+        if (muted) {
+          return (
+            <td key={col.key} className={`${numCell} text-slate-300`}>
+              –
+            </td>
+          )
+        }
+        const edit = edits?.[col.key]
+        if (canEditRow && row.date && EDITABLE_FIELD_SET.has(col.key)) {
+          return (
+            <EditableNumberCell
+              key={col.key}
+              value={channel[col.key] as number}
+              edit={edit}
+              busy={isEditing}
+              onSave={(next) => onEditCell(row.date!, col.key as ReservationStatsEditableField, next)}
+              cellClassName={numCell}
+            />
+          )
+        }
+        return (
+          <td
+            key={col.key}
+            title={edit ? editMarkTitle(edit) : undefined}
+            className={`${numCell} ${col.emphasis ? 'text-rose-600' : ''}`}
+          >
             {formatChannelValue(channel[col.key], col.fmt)}
+            {edit ? <EditMark /> : null}
           </td>
-        ),
-      )}
+        )
+      })}
 
       {SUMMARY_COLUMNS.map((col, i) =>
         muted ? (

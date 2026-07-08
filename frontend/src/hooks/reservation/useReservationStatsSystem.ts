@@ -1,5 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { reservationStatsSystemApi } from '@/api/reservation/reservationStatsSystem'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  reservationStatsSystemApi,
+  type ReservationStatsEditableField,
+} from '@/api/reservation/reservationStatsSystem'
 
 /**
  * 예약통계시스템 일자별 카운트 조회 훅. from~to(등록일) 범위로 서버 조회.
@@ -15,6 +18,32 @@ export function useReservationStatsSystem(from: string, to: string, enabled = tr
   })
 
   return { dailies: data?.data, meta: data?.meta, isLoading, isFetching, isError, refetch }
+}
+
+/**
+ * 셀 손보정(홈/네이버 온라인예약 원시 카운트) 뮤테이션. 성공 시 시스템 조회 캐시를 무효화해 표를 갱신한다.
+ * 등록일 기반 라이브 값이 재수집/상태변경으로 어긋나는 일자를 PDF/레거시 값으로 직접 고칠 때 사용.
+ */
+export function useReservationStatsSystemCellEdit() {
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: ({
+      period,
+      date,
+      field,
+      value,
+    }: {
+      period: string
+      date: string
+      field: ReservationStatsEditableField
+      value: number
+    }) => reservationStatsSystemApi.editCell(period, date, field, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservation-stats-system'] })
+    },
+  })
+
+  return { editCell: mutation.mutateAsync, isEditing: mutation.isPending }
 }
 
 /** 스냅샷 vs 라이브 진단(diff) 뮤테이션. */
