@@ -33,6 +33,7 @@ public class CataractStatsSystemQueryService {
     private final Optional<CataractStatsSystemService> liveService;
     private final Optional<CataractStatsDiagnosticDiffService> diagnosticService;
     private final Optional<CataractStatsSystemMartRepository> martRepository;
+    private final Optional<CataractStatsOverrideCellEditService> martCellEditService;
 
     public ReservationStatsResult<List<CataractStatsDailyRow>> getDailyCounts(
             LocalDate from,
@@ -99,7 +100,11 @@ public class CataractStatsSystemQueryService {
             int value,
             String username
     ) {
-        return cellEditService.editCell(period, date, field, value, ReservationStatsQuerySupport.actor(username));
+        String actor = ReservationStatsQuerySupport.actor(username);
+        if (martCellEditService.isPresent()) {
+            return martCellEditService.get().editCell(period, date, field, value, actor);
+        }
+        return cellEditService.editCell(period, date, field, value, actor);
     }
 
     public List<CataractStatsSnapshotStore.SnapshotInfo> listSnapshots() {

@@ -66,6 +66,7 @@ class ReservationStatsSystemQueryServiceTest {
                 reservationCellEditService,
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()
         );
         when(reservationStore.find("2026-05")).thenReturn(Optional.of(snapshot));
@@ -92,6 +93,7 @@ class ReservationStatsSystemQueryServiceTest {
                 reservationCellEditService,
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()
         );
         String currentMonth = YearMonth.now().toString();
@@ -111,6 +113,7 @@ class ReservationStatsSystemQueryServiceTest {
         ReservationStatsSystemQueryService service = new ReservationStatsSystemQueryService(
                 reservationStore,
                 reservationCellEditService,
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty()
@@ -145,6 +148,7 @@ class ReservationStatsSystemQueryServiceTest {
                 reservationCellEditService,
                 Optional.of(reservationLiveService),
                 Optional.of(reservationDiagnosticService),
+                Optional.empty(),
                 Optional.empty()
         );
         when(reservationStore.find("2026-05")).thenReturn(Optional.of(snapshot));
@@ -167,6 +171,7 @@ class ReservationStatsSystemQueryServiceTest {
                 cataractStore,
                 cataractCellEditService,
                 Optional.of(cataractLiveService),
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty()
         );

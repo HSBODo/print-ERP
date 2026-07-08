@@ -33,6 +33,7 @@ public class ReservationStatsSystemQueryService {
     private final Optional<ReservationStatsSystemService> liveService;
     private final Optional<ReservationStatsDiagnosticDiffService> diagnosticService;
     private final Optional<ReservationStatsSystemMartRepository> martRepository;
+    private final Optional<ReservationStatsOverrideCellEditService> martCellEditService;
 
     public ReservationStatsResult<List<ReservationStatsDailyRow>> getDailyCounts(
             LocalDate from,
@@ -99,7 +100,11 @@ public class ReservationStatsSystemQueryService {
             int value,
             String username
     ) {
-        return cellEditService.editCell(period, date, field, value, ReservationStatsQuerySupport.actor(username));
+        String actor = ReservationStatsQuerySupport.actor(username);
+        if (martCellEditService.isPresent()) {
+            return martCellEditService.get().editCell(period, date, field, value, actor);
+        }
+        return cellEditService.editCell(period, date, field, value, actor);
     }
 
     public List<ReservationStatsSnapshotStore.SnapshotInfo> listSnapshots() {
