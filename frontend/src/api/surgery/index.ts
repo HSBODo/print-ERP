@@ -37,7 +37,7 @@ export type SurgeryDailyItem = z.infer<typeof surgeryDailyItemSchema>
 
 /** 응답 메타 — 출처(스냅샷/라이브) 표시용. NON_NULL이라 대부분 optional. */
 const surgeryDailyMetaSchema = z.object({
-  source: z.enum(['SNAPSHOT', 'LIVE', 'UNAVAILABLE']).optional(),
+  source: z.enum(['SNAPSHOT', 'LIVE', 'MART', 'UNAVAILABLE']).optional(),
   period: z.string().optional(),
   confirmedAt: z.string().optional(),
   confirmedBy: z.string().optional(),

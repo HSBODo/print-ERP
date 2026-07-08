@@ -257,8 +257,8 @@ export function ReservationStatsCataractPage() {
   const { editCell, isEditing } = useReservationStatsCataractCellEdit()
   const tableViewportClass = granularity === 'month' ? 'max-h-[72vh]' : 'min-h-0 flex-1'
 
-  // 셀 손보정: 확정 스냅샷일 때만(라이브는 저장 대상 없음). 일(day) 행의 인입콜/응대콜만 대상.
-  const cellEditEnabled = live && meta?.source === 'SNAPSHOT'
+  // 셀 손보정: 확정 스냅샷 or 마트(D-1 배치 적재)일 때 허용. 라이브는 저장 대상 없음.
+  const cellEditEnabled = live && (meta?.source === 'SNAPSHOT' || meta?.source === 'MART')
   // 일자별 수기 보정 이력(date → field → 이력) — 마커·툴팁 표시용.
   const manualEditsByDate = useMemo(() => buildManualEditsByDate(dailies), [dailies])
 

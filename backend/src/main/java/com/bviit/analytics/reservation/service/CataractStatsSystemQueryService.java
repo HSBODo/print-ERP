@@ -10,7 +10,6 @@ import com.bviit.analytics.reservation.repository.CataractStatsSystemMartReposit
 import com.bviit.analytics.common.stats.StatsResponseMeta;
 import com.bviit.analytics.reservation.dto.ReservationStatsResult;
 import com.bviit.analytics.common.exception.DataSourceUnavailableException;
-import com.bviit.analytics.common.exception.SnapshotLockedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,7 +45,7 @@ public class CataractStatsSystemQueryService {
         if (martRepository.isPresent()) {
             List<CataractStatsDailyRow> days = martRepository.get()
                     .findDailyCounts(from.toString(), to.toString());
-            return new ReservationStatsResult<>(days, liveMeta(period));
+            return new ReservationStatsResult<>(days, martMeta(period));
         }
 
         // 이하 레거시 경로 (mssql-only 프로파일). Cutover 후 제거 예정.
@@ -79,20 +78,6 @@ public class CataractStatsSystemQueryService {
         return period.equals(LocalDate.now().toString().substring(0, 7));
     }
 
-    public ReservationStatsResult<CataractStatsSnapshot> saveSnapshot(String period, String username) {
-        ensureWritable(period, "재확정(덮어쓰기)");
-        CataractStatsSnapshot snapshot = requireLiveService(period)
-                .saveSnapshot(period, ReservationStatsQuerySupport.actor(username));
-        return new ReservationStatsResult<>(snapshot, snapshotMeta(period, snapshot));
-    }
-
-    public ReservationStatsResult<CataractStatsSnapshot> fillSnapshot(String period, String username) {
-        ensureWritable(period, "호출(채움)");
-        CataractStatsSnapshot snapshot = requireLiveService(period)
-                .fillSnapshot(period, ReservationStatsQuerySupport.actor(username));
-        return new ReservationStatsResult<>(snapshot, snapshotMeta(period, snapshot));
-    }
-
     public CataractStatsDailyRow editCell(
             String period,
             String date,
@@ -105,10 +90,6 @@ public class CataractStatsSystemQueryService {
             return martCellEditService.get().editCell(period, date, field, value, actor);
         }
         return cellEditService.editCell(period, date, field, value, actor);
-    }
-
-    public List<CataractStatsSnapshotStore.SnapshotInfo> listSnapshots() {
-        return snapshotStore.listSnapshots();
     }
 
     public ReservationStatsDiffResponse diff(String period) {
@@ -125,7 +106,9 @@ public class CataractStatsSystemQueryService {
 
     public ReservationStatsDiagnosticsHealthResponse health(String period) {
         Optional<CataractStatsSnapshot> snapshot = snapshotStore.find(period);
-        StatsResponseMeta.Source source = snapshot.isPresent()
+        StatsResponseMeta.Source source = martRepository.isPresent()
+                ? StatsResponseMeta.Source.MART
+                : snapshot.isPresent()
                 ? StatsResponseMeta.Source.SNAPSHOT
                 : liveService.isPresent()
                 ? StatsResponseMeta.Source.LIVE
@@ -171,12 +154,6 @@ public class CataractStatsSystemQueryService {
         }
     }
 
-    private void ensureWritable(String period, String action) {
-        if (snapshotStore.isLocked(period)) {
-            throw new SnapshotLockedException("PDF 고정 스냅샷이라 " + action + "할 수 없습니다: " + period);
-        }
-    }
-
     private CataractStatsSystemService requireLiveService(String period) {
         return requireLiveService(period, "실 데이터 소스(MSSQL)가 연결되지 않았습니다.");
     }
@@ -205,6 +182,14 @@ public class CataractStatsSystemQueryService {
 
     private static StatsResponseMeta liveMeta(String period) {
         return StatsResponseMeta.live(
+                period,
+                FORMULA_VERSION,
+                CataractStatsSnapshot.CURRENT_SCHEMA_VERSION
+        );
+    }
+
+    private static StatsResponseMeta martMeta(String period) {
+        return StatsResponseMeta.mart(
                 period,
                 FORMULA_VERSION,
                 CataractStatsSnapshot.CURRENT_SCHEMA_VERSION

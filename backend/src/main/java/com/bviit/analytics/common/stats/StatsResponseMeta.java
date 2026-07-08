@@ -22,6 +22,7 @@ public record StatsResponseMeta(
     public enum Source {
         SNAPSHOT,
         LIVE,
+        MART,
         UNAVAILABLE
     }
 
@@ -49,6 +50,19 @@ public record StatsResponseMeta(
     public static StatsResponseMeta live(String period, String formulaVersion, int schemaVersion) {
         return new StatsResponseMeta(
                 Source.LIVE,
+                period,
+                schemaVersion,
+                formulaVersion,
+                false,
+                null,
+                null
+        );
+    }
+
+    /** 마트(D-1 배치 적재) 출처 — 매일 03:00 배치가 채워둔 Postgres 마트에서 조회. */
+    public static StatsResponseMeta mart(String period, String formulaVersion, int schemaVersion) {
+        return new StatsResponseMeta(
+                Source.MART,
                 period,
                 schemaVersion,
                 formulaVersion,
