@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.Connection;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Spring 컨텍스트 없이 실제 DDL + JdbcTemplate만 사용해 빠르게 돈다.
  */
+@EnabledIfEnvironmentVariable(named = "RUN_INTEGRATION_TESTS", matches = "true")
 @Testcontainers
 class ReservationMartWriterIT {
 

@@ -52,8 +52,23 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
-tasks.named('test') {
+// 유닛 테스트 — CI 기본 실행. Testcontainers(Docker) 필요한 *IT 는 클래스 어노테이션으로 자체 스킵.
+tasks.named('test', Test) {
 	useJUnitPlatform()
+}
+
+// 통합 테스트 — Docker 있는 환경에서 명시적으로: ./gradlew integrationTest
+// *IT 클래스에 @EnabledIfEnvironmentVariable(RUN_INTEGRATION_TESTS=true) 이 걸려있어
+// 이 태스크에서만 env 를 세팅해 JUnit condition 을 통과시킨다.
+tasks.register('integrationTest', Test) {
+	description = 'Runs *IT integration tests (requires Docker for Testcontainers).'
+	group = 'verification'
+	useJUnitPlatform()
+	include '**/*IT.class'
+	environment 'RUN_INTEGRATION_TESTS', 'true'
+	shouldRunAfter tasks.named('test')
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
 }
 
 tasks.named('processResources') {

@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.Connection;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   - partial 플래그 · 날짜 라운드트립 (부분 주/월 재현)
  *   - 여러 주/월에 걸친 upsert
  */
+@EnabledIfEnvironmentVariable(named = "RUN_INTEGRATION_TESTS", matches = "true")
 @Testcontainers
 class OverallMartWriterIT {
 

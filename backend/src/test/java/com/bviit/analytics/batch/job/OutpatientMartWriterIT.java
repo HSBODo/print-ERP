@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.Connection;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   - upsertMonthly:   (yr,mo) 충돌 시 값이 덮어써진다 (idempotent)
  *   - null 필드 저장·조회 라운드트립 (2026 미확인 월 재현)
  */
+@EnabledIfEnvironmentVariable(named = "RUN_INTEGRATION_TESTS", matches = "true")
 @Testcontainers
 class OutpatientMartWriterIT {
 
