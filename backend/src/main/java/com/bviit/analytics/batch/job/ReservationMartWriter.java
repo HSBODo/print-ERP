@@ -2,6 +2,7 @@ package com.bviit.analytics.batch.job;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
+import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,11 +35,12 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 @RequiredArgsConstructor
 public class ReservationMartWriter {
 
-    private static final String UPSERT_MONTHLY_SQL      = SqlLoader.load("sql/mart/upsert-reservation-monthly.sql");
-    private static final String DELETE_LIST_RANGE_SQL   = SqlLoader.load("sql/mart/delete-list-reservation-range.sql");
-    private static final String INSERT_LIST_SQL         = SqlLoader.load("sql/mart/insert-list-reservation.sql");
-    private static final String DELETE_KAKAO_RANGE_SQL  = SqlLoader.load("sql/mart/delete-kakao-daily-range.sql");
-    private static final String UPSERT_KAKAO_DAILY_SQL  = SqlLoader.load("sql/mart/upsert-reservation-kakao-daily.sql");
+    private static final String UPSERT_MONTHLY_SQL         = SqlLoader.load("sql/mart/upsert-reservation-monthly.sql");
+    private static final String UPSERT_OVERALL_MONTHLY_SQL = SqlLoader.load("sql/mart/upsert-reservation-overall-monthly.sql");
+    private static final String DELETE_LIST_RANGE_SQL      = SqlLoader.load("sql/mart/delete-list-reservation-range.sql");
+    private static final String INSERT_LIST_SQL            = SqlLoader.load("sql/mart/insert-list-reservation.sql");
+    private static final String DELETE_KAKAO_RANGE_SQL     = SqlLoader.load("sql/mart/delete-kakao-daily-range.sql");
+    private static final String UPSERT_KAKAO_DAILY_SQL     = SqlLoader.load("sql/mart/upsert-reservation-kakao-daily.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -51,6 +53,22 @@ public class ReservationMartWriter {
         int[] updated = jdbc.batchUpdate(UPSERT_MONTHLY_SQL, batch);
         int total = sum(updated);
         log.info("mart_reservation_monthly upserted rows={}", total);
+        return total;
+    }
+
+    /**
+     * 예약 종합(콜/온라인) 월별 upsert. reservations/online/call/total 은 null 저장 가능
+     * (서비스가 미래월 또는 원천 미주입 시 null 반환 — 마트에도 그대로 저장).
+     */
+    @Transactional
+    public int upsertOverallMonthly(List<ReservationOverallMonthlyItem> items) {
+        if (items.isEmpty()) return 0;
+        SqlParameterSource[] batch = items.stream()
+                .map(ReservationMartWriter::toOverallMonthlyParams)
+                .toArray(SqlParameterSource[]::new);
+        int[] updated = jdbc.batchUpdate(UPSERT_OVERALL_MONTHLY_SQL, batch);
+        int total = sum(updated);
+        log.info("mart_reservation_overall_monthly upserted rows={}", total);
         return total;
     }
 
@@ -112,6 +130,16 @@ public class ReservationMartWriter {
                 .addValue("outpatient", m.getOutpatient())
                 .addValue("dreamlens", m.getDreamlens())
                 .addValue("total", m.getTotal());
+    }
+
+    private static SqlParameterSource toOverallMonthlyParams(ReservationOverallMonthlyItem m) {
+        return new MapSqlParameterSource()
+                .addValue("yr", m.getYear())
+                .addValue("mo", m.getMonth())
+                .addValue("reservations", m.getReservations(), Types.INTEGER)
+                .addValue("online", m.getOnline(), Types.INTEGER)
+                .addValue("call", m.getCall(), Types.INTEGER)
+                .addValue("total", m.getTotal(), Types.INTEGER);
     }
 
     /**
