@@ -32,16 +32,6 @@ const RATE_TABS: { key: RateTabKey; label: string; title: string; description: s
   },
 ]
 
-const VISION_RATE_BY_YEAR: Record<number, Array<number | null>> = {
-  2024: [77, 79, 77, 76, 78, 80, 76, 80, 79, 75, 72, 74],
-  2025: [75, 76, 79, 77, 76, 75, 77, 77, 76, 82, 77, 75],
-}
-
-const CATARACT_LEGACY_RATE_BY_YEAR: Record<number, Array<number | null>> = {
-  2024: [64, 69, 66, 80, 62, 65, 66, 67, 63, 74, 57, 77],
-  2025: [68, 57, 59, 49, 58, 44, 55, 63, 57, 55, 57, 55],
-}
-
 const formatPercent = (value: number | null) =>
   typeof value === 'number' ? `${Math.ceil(value)}%` : ''
 
@@ -54,9 +44,8 @@ export function CataractReservationRatePage() {
   const filter = useFilterBar('year', [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR])
   const [tab, setTab] = useState<RateTabKey>('vision')
   const sortedYears = useMemo(() => [...filter.years].sort((a, b) => a - b), [filter.years])
-  const calculatedYears = useMemo(() => sortedYears.filter((year) => year >= 2026), [sortedYears])
 
-  const rateQuery = useCataractReservationRateTrend(calculatedYears, tab)
+  const rateQuery = useCataractReservationRateTrend(sortedYears, tab)
 
   const series = useMemo(() => {
     const latestYear = sortedYears[sortedYears.length - 1]
@@ -89,24 +78,6 @@ export function CataractReservationRatePage() {
       MONTHS.map((month, monthIndex) => {
         const row: Record<string, string | number | null> = { month }
         sortedYears.forEach((year) => {
-          if (tab === 'vision') {
-            if (VISION_RATE_BY_YEAR[year]) {
-              row[`y${year}`] = VISION_RATE_BY_YEAR[year][monthIndex]
-              return
-            }
-
-            const item = rateQuery.dataMap[year]?.[monthIndex]
-            row[`y${year}`] = isFutureMonth(year, monthIndex) || !item?.examCount
-              ? null
-              : Math.ceil(item.reservationRate)
-            return
-          }
-
-          if (CATARACT_LEGACY_RATE_BY_YEAR[year]) {
-            row[`y${year}`] = CATARACT_LEGACY_RATE_BY_YEAR[year][monthIndex]
-            return
-          }
-
           const item = rateQuery.dataMap[year]?.[monthIndex]
           row[`y${year}`] = isFutureMonth(year, monthIndex) || !item?.examCount
             ? null
@@ -114,7 +85,7 @@ export function CataractReservationRatePage() {
         })
         return row
       }),
-    [sortedYears, rateQuery.dataMap, tab],
+    [sortedYears, rateQuery.dataMap],
   )
 
   const activeTab = RATE_TABS.find((item) => item.key === tab) ?? RATE_TABS[0]
@@ -122,8 +93,8 @@ export function CataractReservationRatePage() {
   const yAxisTicks = tab === 'vision'
     ? [55, 60, 65, 70, 75, 80, 85, 90]
     : [40, 50, 60, 70, 80, 90, 100]
-  const isLoading = calculatedYears.length > 0 && rateQuery.isLoading
-  const isError = calculatedYears.length > 0 && rateQuery.isError
+  const isLoading = rateQuery.isLoading
+  const isError = rateQuery.isError
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[40rem] flex-col gap-6">
