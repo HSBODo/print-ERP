@@ -9,6 +9,7 @@ import com.bviit.analytics.consultation.service.ConsultationRateService;
 import com.bviit.analytics.consultation.service.StopReasonStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,13 @@ public class ConsultationMartJob {
     private final WatermarkRepository watermarkRepository;
 
     /**
+     * 예약률(reservation-rate) 24·25 seed(V13) 보호용 min-year 가드.
+     * consultation-rate·stop-reason 은 24·25 시드가 없으므로 이 가드를 적용하지 않는다.
+     */
+    @Value("${batch.mart.min-year:2026}")
+    private int minYear;
+
+    /**
      * from..to 범위를 적재한다. 반환값은 upsert된 총 행 수 (관측용).
      * 이 도메인은 모두 월별 aggregate라 실제 delete+insert 없이 upsert만 수행.
      *
@@ -69,15 +77,17 @@ public class ConsultationMartJob {
                         .toList();
         int stopReasonRows = writer.upsertStopReasonMonthly(stopReasonMonthly);
 
-        // 3) 예약률 upsert — vision + cataract 각각
+        // 3) 예약률 upsert — vision + cataract 각각. min-year 미만 연도는 V13 seed 값 보존 (write 차단)
         List<CataractReservationRateItem> visionRates =
                 cataractReservationRateService.getMonthlyRates(years, "vision").stream()
+                        .filter(m -> m.getYear() >= minYear)
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int visionRows = writer.upsertReservationRateMonthly("vision", visionRates);
 
         List<CataractReservationRateItem> cataractRates =
                 cataractReservationRateService.getMonthlyRates(years, "cataract").stream()
+                        .filter(m -> m.getYear() >= minYear)
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int cataractRows = writer.upsertReservationRateMonthly("cataract", cataractRates);

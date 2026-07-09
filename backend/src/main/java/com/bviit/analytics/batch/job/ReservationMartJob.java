@@ -2,11 +2,14 @@ package com.bviit.analytics.batch.job;
 
 import com.bviit.analytics.batch.repository.WatermarkRepository;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
+import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
 import com.bviit.analytics.reservation.repository.ReservationListRepository;
 import com.bviit.analytics.reservation.service.ReservationListService;
+import com.bviit.analytics.reservation.service.ReservationOverallStatsService;
 import com.bviit.analytics.reservation.service.ReservationStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +23,17 @@ import java.util.stream.Stream;
 /**
  * 예약 도메인 마트 적재 잡.
  *
- * 세 개의 마트를 채운다:
- *   - mart_reservation_monthly       — 범위에 걸친 각 (yr, mo) upsert (수술/외래/드림렌즈)
- *   - list_reservation               — from..to 범위 delete+insert (예약자 명단)
- *   - mart_reservation_kakao_daily   — from..to 범위 delete+insert (해피톡 일별 건수)
+ * 네 개의 마트를 채운다:
+ *   - mart_reservation_monthly           — 범위에 걸친 각 (yr, mo) upsert (수술/외래/드림렌즈)
+ *   - mart_reservation_overall_monthly   — (yr, mo) upsert (예약 종합/콜/온라인). min-year 가드로 24·25 write 차단.
+ *   - list_reservation                   — from..to 범위 delete+insert (예약자 명단)
+ *   - mart_reservation_kakao_daily       — from..to 범위 delete+insert (해피톡 일별 건수)
  *
- * MSSQL 소스에서 읽기는 기존 서비스(ReservationStatsService, ReservationListService)와
- * 리포지토리(ReservationListRepository.findKakaoDailyCounts) 재사용.
+ * MSSQL 소스에서 읽기는 기존 서비스(ReservationStatsService, ReservationOverallStatsService,
+ * ReservationListService)와 리포지토리(ReservationListRepository.findKakaoDailyCounts) 재사용.
+ *
+ * reservation_overall 의 24·25 확정값은 V12 seed 가 mart 에 넣은 값을 유일 원천으로 유지하며,
+ * runManual 로 24·25 범위를 실행해도 min-year 이상 연도만 write.
  */
 @Slf4j
 @Component
@@ -37,10 +44,14 @@ public class ReservationMartJob {
     static final String MART_NAME = "reservation";
 
     private final ReservationStatsService statsService;
+    private final ReservationOverallStatsService overallStatsService;
     private final ReservationListService listService;
     private final ReservationListRepository listRepository;
     private final ReservationMartWriter writer;
     private final WatermarkRepository watermarkRepository;
+
+    @Value("${batch.mart.min-year:2026}")
+    private int minYear;
 
     /**
      * from..to 범위를 적재한다.
@@ -65,22 +76,30 @@ public class ReservationMartJob {
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
 
-        // 2) List delete+insert
+        // 2) Overall monthly upsert — min-year 미만 연도는 V12 seed 값 보존 (write 차단)
+        List<ReservationOverallMonthlyItem> overallMonthly =
+                overallStatsService.getMonthlyStats(years).stream()
+                        .filter(m -> m.getYear() >= minYear)
+                        .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
+                        .toList();
+        int overallRows = writer.upsertOverallMonthly(overallMonthly);
+
+        // 3) List delete+insert
         List<Map<String, Object>> listRows =
                 listService.getReservationList(from.toString(), to.toString()).rows();
         int listRowsCount = writer.replaceList(from, to, listRows);
 
-        // 3) Kakao daily delete+insert
+        // 4) Kakao daily delete+insert
         List<Map<String, Object>> kakaoRows =
                 listRepository.findKakaoDailyCounts(from.toString(), to.toString());
         int kakaoRowsCount = writer.replaceKakaoDaily(from, to, kakaoRows);
 
-        // 4) Watermark 갱신 (성공 시에만)
+        // 5) Watermark 갱신 (성공 시에만)
         watermarkRepository.upsert(MART_NAME, to);
 
-        int total = monthlyRows + listRowsCount + kakaoRowsCount;
-        log.info("ReservationMartJob done: monthly={} list={} kakao={} total={}",
-                monthlyRows, listRowsCount, kakaoRowsCount, total);
+        int total = monthlyRows + overallRows + listRowsCount + kakaoRowsCount;
+        log.info("ReservationMartJob done: monthly={} overall={} list={} kakao={} total={}",
+                monthlyRows, overallRows, listRowsCount, kakaoRowsCount, total);
         return total;
     }
 
