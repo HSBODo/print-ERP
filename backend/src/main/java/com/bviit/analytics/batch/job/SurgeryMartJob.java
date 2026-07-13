@@ -63,7 +63,7 @@ public class SurgeryMartJob {
      * 모두 롤백되어 일관성을 보장한다. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
-    public int run(LocalDate from, LocalDate to) {
+    public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("SurgeryMartJob start: range={}..{}", from, to);
 
         // 1) Daily upsert
@@ -86,10 +86,13 @@ public class SurgeryMartJob {
         // 4) Watermark 갱신 (성공 시에만)
         watermarkRepository.upsert(MART_NAME, to);
 
-        int total = dailyRows + monthlyRows + listRowsCount;
-        log.info("SurgeryMartJob done: daily={} monthly={} list={} total={}",
-                dailyRows, monthlyRows, listRowsCount, total);
-        return total;
+        Map<String, Integer> stats = Map.of(
+                "mart_surgery_daily", dailyRows,
+                "mart_surgery_monthly", monthlyRows,
+                "list_surgery", listRowsCount
+        );
+        log.info("SurgeryMartJob done: {}", stats);
+        return stats;
     }
 
     /** from..to에 걸친 연도 목록 (오름차순, 중복 제거). */

@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -129,33 +131,34 @@ public class BatchOrchestrator {
 
     /**
      * 지정 도메인 잡 순차 실행. 하나가 실패하면 즉시 예외 전파(전체 run_log는 FAILED로 기록됨).
+     * 반환값: 각 잡이 write한 테이블 → rows 를 통합한 맵 (batch_run_log.table_stats에 저장됨).
      */
-    private int runDomains(LocalDate from, LocalDate to, Set<Domain> targets) {
-        int total = 0;
-        if (targets.contains(Domain.SURGERY))       total += surgeryMartJob.run(from, to);
+    private Map<String, Integer> runDomains(LocalDate from, LocalDate to, Set<Domain> targets) {
+        Map<String, Integer> stats = new LinkedHashMap<>();
+        if (targets.contains(Domain.SURGERY))       stats.putAll(surgeryMartJob.run(from, to));
         if (targets.contains(Domain.RESERVATION)) {
-            total += reservationMartJob.run(from, to);
-            total += reservationStatsDailyMartJob.run(from, to);
+            stats.putAll(reservationMartJob.run(from, to));
+            stats.putAll(reservationStatsDailyMartJob.run(from, to));
         }
-        if (targets.contains(Domain.EXAM))          total += examMartJob.run(from, to);
-        if (targets.contains(Domain.CONSULTATION))  total += consultationMartJob.run(from, to);
-        if (targets.contains(Domain.OUTPATIENT))    total += outpatientMartJob.run(from, to);
-        if (targets.contains(Domain.OVERALL))       total += overallMartJob.run(from, to);
-        if (targets.contains(Domain.ETC))           total += etcMartJob.run(from, to);
+        if (targets.contains(Domain.EXAM))          stats.putAll(examMartJob.run(from, to));
+        if (targets.contains(Domain.CONSULTATION))  stats.putAll(consultationMartJob.run(from, to));
+        if (targets.contains(Domain.OUTPATIENT))    stats.putAll(outpatientMartJob.run(from, to));
+        if (targets.contains(Domain.OVERALL))       stats.putAll(overallMartJob.run(from, to));
+        if (targets.contains(Domain.ETC))           stats.putAll(etcMartJob.run(from, to));
         // 모든 도메인 마트 완료. 후속은 스냅샷 파일→마트 이관(strategy.md §7).
-        return total;
+        return stats;
     }
 
     /** 스케줄러(전체 도메인) 진입점 — 기존 시그니처 유지. */
-    private int runAllDomains(LocalDate from, LocalDate to) {
+    private Map<String, Integer> runAllDomains(LocalDate from, LocalDate to) {
         return runDomains(from, to, EnumSet.allOf(Domain.class));
     }
 
     private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to, Job job) {
         long id = runLogRepository.start(ORCHESTRATOR_JOB, type, from, to);
         try {
-            int rows = job.run();
-            runLogRepository.success(id, rows);
+            Map<String, Integer> tableStats = job.run();
+            runLogRepository.success(id, tableStats);
         } catch (Exception e) {
             log.error("Batch failed: type={} range={}..{}", type, from, to, e);
             runLogRepository.fail(id, e.toString());
@@ -164,6 +167,6 @@ public class BatchOrchestrator {
 
     @FunctionalInterface
     private interface Job {
-        int run() throws Exception;
+        Map<String, Integer> run() throws Exception;
     }
 }

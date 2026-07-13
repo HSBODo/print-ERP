@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -35,7 +36,7 @@ public class EtcMartJob {
      * 부분 커밋을 방지. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
-    public int run(LocalDate from, LocalDate to) {
+    public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("EtcMartJob start: range={}..{}", from, to);
         List<Integer> years = yearsInRange(from, to);
 
@@ -47,8 +48,9 @@ public class EtcMartJob {
 
         watermarkRepository.upsert(MART_NAME, to);
 
-        log.info("EtcMartJob done: b2bRevenue={}", rows);
-        return rows;
+        Map<String, Integer> stats = Map.of("mart_b2b_revenue_monthly", rows);
+        log.info("EtcMartJob done: {}", stats);
+        return stats;
     }
 
     private static List<Integer> yearsInRange(LocalDate from, LocalDate to) {

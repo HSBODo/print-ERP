@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,7 +54,7 @@ public class ReservationStatsDailyMartJob {
      * 모두 롤백. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
-    public int run(LocalDate from, LocalDate to) {
+    public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("ReservationStatsDailyMartJob start: range={}..{}", from, to);
 
         // 1) MSSQL 원본 조회 (시력교정 + 백내장)
@@ -87,9 +88,11 @@ public class ReservationStatsDailyMartJob {
         // 4) Watermark 갱신 (성공 시에만)
         watermarkRepository.upsert(MART_NAME, to);
 
-        int total = systemUpserted + cataractUpserted;
-        log.info("ReservationStatsDailyMartJob done: system={} cataract={} total={}",
-                systemUpserted, cataractUpserted, total);
-        return total;
+        Map<String, Integer> stats = Map.of(
+                "mart_reservation_stats_system_daily", systemUpserted,
+                "mart_reservation_stats_cataract_daily", cataractUpserted
+        );
+        log.info("ReservationStatsDailyMartJob done: {}", stats);
+        return stats;
     }
 }

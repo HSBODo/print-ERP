@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -59,7 +60,7 @@ public class ConsultationMartJob {
      * 중 하나라도 실패하면 모두 롤백. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
-    public int run(LocalDate from, LocalDate to) {
+    public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("ConsultationMartJob start: range={}..{}", from, to);
         List<Integer> years = yearsInRange(from, to);
 
@@ -95,10 +96,16 @@ public class ConsultationMartJob {
         // 4) Watermark 갱신 (성공 시에만)
         watermarkRepository.upsert(MART_NAME, to);
 
-        int total = consultationRows + stopReasonRows + visionRows + cataractRows;
-        log.info("ConsultationMartJob done: consultation={} stopReason={} vision={} cataract={} total={}",
-                consultationRows, stopReasonRows, visionRows, cataractRows, total);
-        return total;
+        // mart_reservation_rate_monthly 는 category(vision/cataract)로 나뉜 논리 파티션.
+        // 통계 관측 편의를 위해 두 카테고리를 각각 표기.
+        Map<String, Integer> stats = Map.of(
+                "mart_consultation_rate_monthly", consultationRows,
+                "mart_stop_reason_monthly", stopReasonRows,
+                "mart_reservation_rate_monthly[vision]", visionRows,
+                "mart_reservation_rate_monthly[cataract]", cataractRows
+        );
+        log.info("ConsultationMartJob done: {}", stats);
+        return stats;
     }
 
     /** from..to에 걸친 연도 목록 (오름차순, 중복 제거). */
