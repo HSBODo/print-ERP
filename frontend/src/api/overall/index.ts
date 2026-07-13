@@ -31,7 +31,7 @@ const overallExamWeeklyItemSchema = z.object({
 export type OverallExamWeeklyItem = z.infer<typeof overallExamWeeklyItemSchema>
 const overallExamWeeklyResponseSchema = apiResponseOf(z.array(overallExamWeeklyItemSchema))
 
-/* ── Monthly (월별 검사자 종합지표 페이지용, 2026+ 만 반환. 24·25 는 프론트 하드코딩) ── */
+/* ── Monthly (월별 검사자 종합지표 페이지용, 전 연도 마트 반환) ── */
 
 const overallExamMonthlyItemSchema = z.object({
   year: z.number(),

@@ -20,7 +20,7 @@ import java.util.Map;
  * 전체지표 마트값 vs MSSQL 직결값 대사. local/dev 전용.
  *
  * 주간: 키 = (yr, mo, wk). 서비스가 데이터가 있는 주만 반환하므로 마트도 동일 집합이어야 정합.
- * 월간: 키 = (yr, mo). 26년+ 만 대상(24·25는 프론트 하드코딩이라 마트에 없음).
+ * 월간: 키 = (yr, mo). 26년+ 만 대사 대상 (24·25 는 시드 SSOT — MSSQL 직결값과 비교하지 않는다).
  */
 @Service
 @Profile("postgres-mart")

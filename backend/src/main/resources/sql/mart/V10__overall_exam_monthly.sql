@@ -6,8 +6,8 @@
 --   mart_overall_exam_monthly — 월간 검사자 종합지표 (OverallExamMonthlyItem)
 --
 -- PK: (yr, mo). partial 은 진행 중 월의 부분 집계 여부.
--- 24·25 는 프론트 하드코딩(레거시 엑셀 마감값)이 유일한 진실이라 이 마트에 시드하지 않는다.
--- 배치는 batch.mart.min-year(=2026) 가드로 26년부터만 upsert.
+-- 24·25 는 V14 시드 + V16 백내장/시력교정예약 backfill 이 SSOT.
+-- 배치는 batch.mart.min-year(=2026) 가드로 26년부터만 upsert (24·25 시드 보호).
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS mart_overall_exam_monthly (
