@@ -7,6 +7,7 @@ import com.bviit.analytics.surgery.service.SurgeryListService;
 import com.bviit.analytics.surgery.service.SurgeryStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +22,17 @@ import java.util.stream.Stream;
  * 수술 도메인 마트 적재 잡.
  *
  * 세 개의 마트를 채운다:
- *   - mart_surgery_monthly  — 대상 기간의 각 (yr, mo) upsert
+ *   - mart_surgery_monthly  — 대상 기간의 각 (yr, mo) upsert (min-year 가드로 백필값 write 차단)
  *   - mart_surgery_daily    — from..to 각 날짜 upsert
  *   - list_surgery          — from..to 범위 delete+insert
  *
  * MSSQL 소스에서 읽기는 기존 서비스(SurgeryStatsService, SurgeryListService) 재사용.
  * 월별은 LEGACY_VISION_SURGERY 보정치가 적용된 값으로 저장됨(현재 UI 값과 일치).
+ *
+ * 24·25 는 V-seed 가 없어 최초 1회 운영자가 admin API 로 백필해야 한다
+ * (예: POST /api/admin/batch/rerun?from=2024-01-01&to=2025-12-31&domain=SURGERY,
+ *  실행 전 batch.mart.min-year=2024 로 임시 낮춘 뒤 다시 2026 으로 복원).
+ * 백필 이후에는 min-year 가드가 24·25 값을 daily 배치 재실행으로부터 보호한다.
  */
 @Slf4j
 @Component
@@ -40,6 +46,9 @@ public class SurgeryMartJob {
     private final SurgeryListService listService;
     private final SurgeryMartWriter writer;
     private final WatermarkRepository watermarkRepository;
+
+    @Value("${batch.mart.min-year:2026}")
+    private int minYear;
 
     /**
      * from..to 범위를 적재한다.
@@ -62,8 +71,10 @@ public class SurgeryMartJob {
         int dailyRows = writer.upsertDaily(daily);
 
         // 2) Monthly upsert — 기간에 걸친 연도들만 재계산
+        //    min-year 미만 연도는 백필된 값(24·25)을 보존하기 위해 write 차단
         List<Integer> years = yearsInRange(from, to);
         List<SurgeryMonthlyItem> monthly = statsService.getMonthlyStats(years).stream()
+                .filter(m -> m.getYear() >= minYear)
                 .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
