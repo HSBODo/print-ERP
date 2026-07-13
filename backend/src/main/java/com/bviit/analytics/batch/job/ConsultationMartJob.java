@@ -46,8 +46,10 @@ public class ConsultationMartJob {
     private final WatermarkRepository watermarkRepository;
 
     /**
-     * 예약률(reservation-rate) 24·25 seed(V13) 보호용 min-year 가드.
-     * consultation-rate·stop-reason 은 24·25 시드가 없으므로 이 가드를 적용하지 않는다.
+     * 24·25 seed 보호용 min-year 가드.
+     * - reservation-rate: V13 시드 보호
+     * - consultation-rate: V18 시드(일반예약률) 보호
+     * stop-reason 은 24·25 시드가 없으므로 min-year 이하도 write 허용.
      */
     @Value("${batch.mart.min-year:2026}")
     private int minYear;
@@ -64,9 +66,10 @@ public class ConsultationMartJob {
         log.info("ConsultationMartJob start: range={}..{}", from, to);
         List<Integer> years = yearsInRange(from, to);
 
-        // 1) 전환율 upsert (범위에 걸친 (yr,mo)만)
+        // 1) 전환율 upsert — min-year 미만 연도는 V18 시드(일반예약률) 보존 (write 차단)
         List<ConsultationRateItem> consultationMonthly =
                 consultationRateService.getMonthlyRates(years).stream()
+                        .filter(m -> m.getYear() >= minYear)
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int consultationRows = writer.upsertConsultationRateMonthly(consultationMonthly);

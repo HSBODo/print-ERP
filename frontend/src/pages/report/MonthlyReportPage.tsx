@@ -92,10 +92,21 @@ export function MonthlyReportPage() {
       visionSurgery: build((y, i) => surgery.dataMap[y]?.[i]?.visionPatients),
       totalSurgery: build((y, i) => surgery.dataMap[y]?.[i]?.total),
       outpatient: build((y, i) => outpatient.dataMap[y]?.[i]?.outpatientCount),
-      // 시력교정 상담성공률(검사중단/수술불가 제외) — 전체/원데이/일반 3계열, 3개년 라이브
-      successAll: build((y, i) => consult.dataMap[y]?.[i]?.visionConsultation),
-      successOneday: build((y, i) => consult.dataMap[y]?.[i]?.visionConsultationOneday),
-      successGeneral: build((y, i) => consult.dataMap[y]?.[i]?.visionConsultationGeneral),
+      // 시력교정 상담성공률(검사중단/수술불가 제외) — 전체/원데이/일반 3계열.
+      // 24·25 는 V18 시드가 vision_general_book_rate 만 채우고 count 는 0 이므로,
+      // count 가드로 이 세 라인이 잘못된 0% 로 표시되는 것을 방지.
+      successAll: build((y, i) => {
+        const it = consult.dataMap[y]?.[i]
+        return it && it.visionCounselCount > 0 ? it.visionConsultation : null
+      }),
+      successOneday: build((y, i) => {
+        const it = consult.dataMap[y]?.[i]
+        return it && it.visionCounselCount > 0 ? it.visionConsultationOneday : null
+      }),
+      successGeneral: build((y, i) => {
+        const it = consult.dataMap[y]?.[i]
+        return it && it.visionCounselCount > 0 ? it.visionConsultationGeneral : null
+      }),
       // 검사자 종합지표 파생 — 마트에서 직접
       examGeneralCustomer: buildFromOverall((s) => s.introGeneral),
       examReferralCustomer: buildFromOverall((s) => s.introCustomer),
