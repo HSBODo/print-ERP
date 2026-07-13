@@ -111,6 +111,11 @@ public class BatchAdminController {
         return reservationReconcileService.reconcileMonthly(years);
     }
 
+    @GetMapping("/reservation/reconcile-overall-monthly")
+    public Map<String, Object> reconcileReservationOverallMonthly(@RequestParam List<Integer> years) {
+        return reservationReconcileService.reconcileOverallMonthly(years);
+    }
+
     @GetMapping("/reservation/reconcile-list")
     public Map<String, Object> reconcileReservationList(@RequestParam String from, @RequestParam String to) {
         return reservationReconcileService.reconcileList(from, to);

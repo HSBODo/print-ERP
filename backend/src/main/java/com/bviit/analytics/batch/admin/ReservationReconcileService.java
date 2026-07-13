@@ -2,12 +2,16 @@ package com.bviit.analytics.batch.admin;
 
 import com.bviit.analytics.reservation.dto.ReservationListResult;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
+import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
 import com.bviit.analytics.reservation.repository.ReservationListRepository;
+import com.bviit.analytics.reservation.repository.ReservationOverallMartRepository;
 import com.bviit.analytics.reservation.repository.ReservationStatsMartRepository;
 import com.bviit.analytics.reservation.service.ReservationListService;
+import com.bviit.analytics.reservation.service.ReservationOverallStatsService;
 import com.bviit.analytics.reservation.service.ReservationStatsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,11 +34,16 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 @RequiredArgsConstructor
 public class ReservationReconcileService {
 
-    private final ReservationStatsService statsService;   // MSSQL 직결
-    private final ReservationListService listService;      // MSSQL 직결
-    private final ReservationListRepository listRepository; // MSSQL 직결 (kakao daily)
-    private final ReservationStatsMartRepository martRepo;  // Postgres 마트
+    private final ReservationStatsService statsService;              // MSSQL 직결
+    private final ReservationOverallStatsService overallStatsService; // MSSQL 직결 (예약 종합/콜/온라인)
+    private final ReservationListService listService;                 // MSSQL 직결
+    private final ReservationListRepository listRepository;           // MSSQL 직결 (kakao daily)
+    private final ReservationStatsMartRepository martRepo;            // Postgres 마트
+    private final ReservationOverallMartRepository overallMartRepo;   // Postgres 마트 (예약 종합)
     private final ObjectMapper objectMapper;
+
+    @Value("${batch.mart.min-year:2026}")
+    private int minYear;
 
     public Map<String, Object> reconcileMonthly(List<Integer> years) {
         List<ReservationMonthlyItem> source = statsService.getMonthlyStats(years);
@@ -55,6 +64,33 @@ public class ReservationReconcileService {
             if (!fieldDiff.isEmpty()) diffs.add(mismatchEntry(k, fieldDiff));
         }
         return summary("monthly", source.size(), mart.size(), diffs);
+    }
+
+    /**
+     * 예약 종합(콜·온라인) 월별 대사 — mart_reservation_overall_monthly vs MSSQL 직결값.
+     * 24·25 는 V12 seed 값으로 고정되고 MSSQL 라이브값과 다를 수 있어 min-year 이상만 비교.
+     */
+    public Map<String, Object> reconcileOverallMonthly(List<Integer> years) {
+        List<Integer> targetYears = years.stream().filter(y -> y >= minYear).toList();
+
+        List<ReservationOverallMonthlyItem> source = overallStatsService.getMonthlyStats(targetYears);
+        List<ReservationOverallMonthlyItem> mart = overallMartRepo.findMonthly(targetYears);
+
+        Map<String, ReservationOverallMonthlyItem> sourceByKey = keyOverall(source);
+        Map<String, ReservationOverallMonthlyItem> martByKey   = keyOverall(mart);
+
+        List<Map<String, Object>> diffs = new ArrayList<>();
+        for (String k : union(sourceByKey.keySet(), martByKey.keySet())) {
+            ReservationOverallMonthlyItem s = sourceByKey.get(k);
+            ReservationOverallMonthlyItem m = martByKey.get(k);
+            if (s == null || m == null) {
+                diffs.add(Map.of("period", k, "reason", s == null ? "missing-in-source" : "missing-in-mart"));
+                continue;
+            }
+            Map<String, Integer[]> fieldDiff = diffNullableFields(s, m);
+            if (!fieldDiff.isEmpty()) diffs.add(mismatchEntryNullable(k, fieldDiff));
+        }
+        return summary("overall-monthly", source.size(), mart.size(), diffs);
     }
 
     public Map<String, Object> reconcileList(String from, String to) {
@@ -136,6 +172,51 @@ public class ReservationReconcileService {
         LinkedHashMap<String, ReservationMonthlyItem> m = new LinkedHashMap<>();
         for (ReservationMonthlyItem i : items) m.put(i.getYear() + "-" + i.getMonth(), i);
         return m;
+    }
+
+    private static Map<String, ReservationOverallMonthlyItem> keyOverall(List<ReservationOverallMonthlyItem> items) {
+        LinkedHashMap<String, ReservationOverallMonthlyItem> m = new LinkedHashMap<>();
+        for (ReservationOverallMonthlyItem i : items) {
+            m.put(String.format("%04d-%02d", i.getYear(), i.getMonth()), i);
+        }
+        return m;
+    }
+
+    /**
+     * ReservationOverallMonthlyItem 의 nullable Integer 필드 비교. 둘 다 null 이면 스킵,
+     * 한쪽만 null 이거나 값이 다르면 diff 로 기록.
+     */
+    private Map<String, Integer[]> diffNullableFields(Object source, Object mart) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sMap = objectMapper.convertValue(source, Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> mMap = objectMapper.convertValue(mart, Map.class);
+        Map<String, Integer[]> out = new LinkedHashMap<>();
+        for (String key : sMap.keySet()) {
+            Object sv = sMap.get(key);
+            Object mv = mMap.get(key);
+            if (sv == null && mv == null) continue;
+            if (!(sv instanceof Number || sv == null)) continue;
+            if (!(mv instanceof Number || mv == null)) continue;
+            Integer si = sv instanceof Number n ? n.intValue() : null;
+            Integer mi = mv instanceof Number n ? n.intValue() : null;
+            if (java.util.Objects.equals(si, mi)) continue;
+            Integer diff = (si != null && mi != null) ? si - mi : null;
+            out.put(key, new Integer[]{si, mi, diff});
+        }
+        return out;
+    }
+
+    private Map<String, Object> mismatchEntryNullable(String key, Map<String, Integer[]> fieldDiff) {
+        LinkedHashMap<String, Object> mismatched = new LinkedHashMap<>();
+        fieldDiff.forEach((f, arr) -> {
+            LinkedHashMap<String, Object> field = new LinkedHashMap<>();
+            field.put("source", arr[0]);
+            field.put("mart", arr[1]);
+            field.put("diff", arr[2]);
+            mismatched.put(f, field);
+        });
+        return Map.of("period", key, "fields", mismatched);
     }
 
     private static List<String> union(java.util.Set<String> a, java.util.Set<String> b) {
