@@ -29,11 +29,6 @@ public class B2bRevenueStatsController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                b2bRevenueStatsService,
-                service -> service.getMonthlyRevenue(years),
-                List::of
-        );
+        return StatsPanelSupport.require(b2bRevenueStatsService, service -> service.getMonthlyRevenue(years));
     }
 }

@@ -4,7 +4,6 @@ import com.bviit.analytics.common.stats.StatsRequestValidator;
 import com.bviit.analytics.common.stats.StatsPanelSupport;
 
 import com.bviit.analytics.common.dto.ApiResponse;
-import com.bviit.analytics.consultation.repository.MockConsultationRateRepository;
 import com.bviit.analytics.consultation.service.ConsultationRateReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,42 +17,23 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ConsultationRatePanelController {
 
-    private final MockConsultationRateRepository mockRepository;
     private final Optional<ConsultationRateReader> realService;
 
     @GetMapping("/kpi")
-    public ResponseEntity<ApiResponse<List<?>>> getKpi(
-            @RequestParam List<Integer> years, @RequestParam(defaultValue = "false") boolean mock) {
+    public ResponseEntity<ApiResponse<List<?>>> getKpi(@RequestParam List<Integer> years) {
         StatsRequestValidator.validateYears(years);
-        return StatsPanelSupport.resolve(
-                mock,
-                realService,
-                service -> service.getMonthlyRates(years),
-                () -> mockRepository.findKpiByYears(years)
-        );
+        return StatsPanelSupport.require(realService, service -> service.getMonthlyRates(years));
     }
 
     @GetMapping("/trend")
-    public ResponseEntity<ApiResponse<List<?>>> getTrend(
-            @RequestParam List<Integer> years, @RequestParam(defaultValue = "false") boolean mock) {
+    public ResponseEntity<ApiResponse<List<?>>> getTrend(@RequestParam List<Integer> years) {
         StatsRequestValidator.validateYears(years);
-        return StatsPanelSupport.resolve(
-                mock,
-                realService,
-                service -> service.getMonthlyRates(years),
-                () -> mockRepository.findMonthlyByYears(years)
-        );
+        return StatsPanelSupport.require(realService, service -> service.getMonthlyRates(years));
     }
 
     @GetMapping("/composition")
-    public ResponseEntity<ApiResponse<List<?>>> getComposition(
-            @RequestParam List<Integer> years, @RequestParam(defaultValue = "false") boolean mock) {
+    public ResponseEntity<ApiResponse<List<?>>> getComposition(@RequestParam List<Integer> years) {
         StatsRequestValidator.validateYears(years);
-        return StatsPanelSupport.resolve(
-                mock,
-                realService,
-                service -> service.getMonthlyRates(years),
-                () -> mockRepository.findMonthlyByYears(years)
-        );
+        return StatsPanelSupport.require(realService, service -> service.getMonthlyRates(years));
     }
 }

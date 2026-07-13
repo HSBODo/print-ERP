@@ -70,6 +70,5 @@ public class ReservationStatsResponse {
     public static class Meta {
         private final String from;
         private final String to;
-        private final boolean mock;
     }
 }

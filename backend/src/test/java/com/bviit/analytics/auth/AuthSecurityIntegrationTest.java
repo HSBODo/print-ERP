@@ -113,15 +113,14 @@ class AuthSecurityIntegrationTest {
 
     @Test
     void statsApiAllowsAuthenticatedRequests() throws Exception {
-        // 이 테스트는 실 데이터 소스(mssql·postgres-mart) 없이 실행되므로 mock 데이터로 200 확인.
-        // 인증/응답 wrapping 자체를 검증하는 것이 목적.
+        // 인증 통과 후 핸들러까지 도달했는지가 검증 목적. 이 테스트는 실 데이터 소스가 없어
+        // 503(DataSourceUnavailable)이 정상 응답 — 401(미인증)이 아님을 확인함으로써 auth 통과를 증명.
         mockMvc.perform(get("/api/stats/reservation/kpi")
                         .param("years", "2025")
-                        .param("mock", "true")
                         .header("Authorization", "Bearer " + jwtUtil.generateToken("admin", Role.ADMIN)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray());
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(503));
     }
 
     @Test

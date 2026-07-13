@@ -65,12 +65,7 @@ public class ReservationStatsController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                statsReader,
-                reader -> reader.getMonthlyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(statsReader, reader -> reader.getMonthlyStats(years));
     }
 
 }

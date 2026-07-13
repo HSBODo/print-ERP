@@ -33,11 +33,6 @@ public class IntakeConversionStatsController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                service,
-                realService -> realService.getMonthlyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(service, realService -> realService.getMonthlyStats(years));
     }
 }

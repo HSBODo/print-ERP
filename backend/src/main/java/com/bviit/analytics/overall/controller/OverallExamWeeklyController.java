@@ -40,11 +40,6 @@ public class OverallExamWeeklyController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                overallExamWeeklyService,
-                service -> service.getWeeklyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(overallExamWeeklyService, service -> service.getWeeklyStats(years));
     }
 }

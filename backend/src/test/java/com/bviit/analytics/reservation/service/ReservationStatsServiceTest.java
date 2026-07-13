@@ -51,7 +51,6 @@ class ReservationStatsServiceTest {
 
         assertThat(response.getMeta().getFrom()).isEqualTo("2026-04-01");
         assertThat(response.getMeta().getTo()).isEqualTo("2026-04-03");
-        assertThat(response.getMeta().isMock()).isFalse();
         assertThat(response.getData().getSummary().getReservationChangeRate()).isEqualTo(100.0);
         assertThat(response.getData().getSummary().getExaminationConversionRate()).isEqualTo(50.0);
         assertThat(response.getData().getSummary().getCancellationRate()).isEqualTo(20.0);

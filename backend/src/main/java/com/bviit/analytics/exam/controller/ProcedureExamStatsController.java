@@ -40,11 +40,6 @@ public class ProcedureExamStatsController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                procedureExamService,
-                service -> service.getMonthlyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(procedureExamService, service -> service.getMonthlyStats(years));
     }
 }

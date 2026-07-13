@@ -44,7 +44,6 @@ const reservationStatsResponseSchema = z.object({
   meta: z.object({
     from: z.string(),
     to: z.string(),
-    mock: z.boolean(),
   }),
 })
 

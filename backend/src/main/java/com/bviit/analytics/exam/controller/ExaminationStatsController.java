@@ -41,11 +41,6 @@ public class ExaminationStatsController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                examinationService,
-                service -> service.getMonthlyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(examinationService, service -> service.getMonthlyStats(years));
     }
 }

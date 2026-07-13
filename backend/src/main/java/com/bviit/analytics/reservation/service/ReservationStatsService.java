@@ -76,7 +76,6 @@ public class ReservationStatsService implements ReservationStatsReader {
                 .meta(ReservationStatsResponse.Meta.builder()
                         .from(fromStr)
                         .to(toStr)
-                        .mock(false)
                         .build())
                 .build();
     }

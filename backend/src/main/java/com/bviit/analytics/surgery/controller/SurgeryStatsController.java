@@ -117,11 +117,6 @@ public class SurgeryStatsController {
 
     private ResponseEntity<ApiResponse<List<SurgeryMonthlyItem>>> getValidatedMonthlyStats(List<Integer> years) {
         StatsRequestValidator.validateYears(years);
-        return StatsPanelSupport.resolve(
-                false,
-                surgeryService,
-                service -> service.getMonthlyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(surgeryService, service -> service.getMonthlyStats(years));
     }
 }
