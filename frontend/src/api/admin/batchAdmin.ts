@@ -10,6 +10,8 @@ const batchRunLogSchema = z.object({
   targetTo: z.string().nullable(),
   status: z.enum(['RUNNING', 'SUCCESS', 'FAILED']),
   rowsUpserted: z.number(),
+  // V17 이전 이력·실패·진행중 이력은 null. 성공 이력은 테이블명 → upsert 행 수.
+  tableStats: z.record(z.string(), z.number()).nullable().optional(),
   startedAt: z.string(),
   finishedAt: z.string().nullable(),
   durationMs: z.number().nullable(),

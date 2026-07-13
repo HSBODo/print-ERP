@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Loader2, Play, RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronRight, Loader2, Play, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useBatchRerun, useBatchRunLogs } from '@/hooks/admin/useBatchAdmin'
@@ -85,6 +85,16 @@ export function BatchManagementPage() {
   const [from, setFrom] = useState<string>(daysAgo(30))
   const [to, setTo] = useState<string>(daysAgo(1))
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true)
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
+
+  const toggleExpanded = (id: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const rerun = useBatchRerun()
   const isRunning = rerun.isPending
@@ -211,9 +221,10 @@ export function BatchManagementPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] border-collapse text-sm">
+              <table className="w-full min-w-[960px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-left">
+                    <th className="w-8 px-2 py-2" />
                     <th className="px-3 py-2 font-medium">#</th>
                     <th className="px-3 py-2 font-medium">잡</th>
                     <th className="px-3 py-2 font-medium">타입</th>
@@ -229,33 +240,65 @@ export function BatchManagementPage() {
                 <tbody>
                   {(logsQuery.data ?? []).length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="py-6 text-center text-muted-foreground">
+                      <td colSpan={11} className="py-6 text-center text-muted-foreground">
                         실행 이력이 없습니다.
                       </td>
                     </tr>
                   ) : (
-                    (logsQuery.data ?? []).map((log) => (
-                      <tr key={log.id} className="border-b last:border-0 hover:bg-muted/20">
-                        <td className="px-3 py-2 tabular-nums text-muted-foreground">{log.id}</td>
-                        <td className="px-3 py-2 font-mono text-xs">{log.jobName}</td>
-                        <td className="px-3 py-2">{log.runType}</td>
-                        <td className="px-3 py-2 tabular-nums text-xs">
-                          {log.targetFrom ?? '-'} ~ {log.targetTo ?? '-'}
-                        </td>
-                        <td className="px-3 py-2">
-                          <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[log.status]}`}>
-                            {log.status}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums">{log.rowsUpserted.toLocaleString()}</td>
-                        <td className="px-3 py-2 tabular-nums text-xs">{formatDateTime(log.startedAt)}</td>
-                        <td className="px-3 py-2 tabular-nums text-xs">{formatDateTime(log.finishedAt)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-xs">{formatDuration(log.durationMs)}</td>
-                        <td className="px-3 py-2 max-w-[240px] truncate text-xs text-red-600" title={log.errorMessage ?? ''}>
-                          {log.errorMessage ?? ''}
-                        </td>
-                      </tr>
-                    ))
+                    (logsQuery.data ?? []).flatMap((log) => {
+                      const hasStats = log.tableStats && Object.keys(log.tableStats).length > 0
+                      const isExpanded = expandedIds.has(log.id)
+                      const rows = [
+                        <tr
+                          key={log.id}
+                          className={`border-b last:border-0 hover:bg-muted/20 ${hasStats ? 'cursor-pointer' : ''}`}
+                          onClick={() => hasStats && toggleExpanded(log.id)}
+                        >
+                          <td className="px-2 py-2 text-muted-foreground">
+                            {hasStats ? (
+                              isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                            ) : null}
+                          </td>
+                          <td className="px-3 py-2 tabular-nums text-muted-foreground">{log.id}</td>
+                          <td className="px-3 py-2 font-mono text-xs">{log.jobName}</td>
+                          <td className="px-3 py-2">{log.runType}</td>
+                          <td className="px-3 py-2 tabular-nums text-xs">
+                            {log.targetFrom ?? '-'} ~ {log.targetTo ?? '-'}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[log.status]}`}>
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums">{log.rowsUpserted.toLocaleString()}</td>
+                          <td className="px-3 py-2 tabular-nums text-xs">{formatDateTime(log.startedAt)}</td>
+                          <td className="px-3 py-2 tabular-nums text-xs">{formatDateTime(log.finishedAt)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-xs">{formatDuration(log.durationMs)}</td>
+                          <td className="px-3 py-2 max-w-[240px] truncate text-xs text-red-600" title={log.errorMessage ?? ''}>
+                            {log.errorMessage ?? ''}
+                          </td>
+                        </tr>,
+                      ]
+                      if (hasStats && isExpanded) {
+                        rows.push(
+                          <tr key={`${log.id}-stats`} className="border-b last:border-0 bg-muted/10">
+                            <td />
+                            <td colSpan={10} className="px-3 py-3">
+                              <div className="text-xs font-medium text-muted-foreground">테이블별 upsert 행수</div>
+                              <div className="mt-2 grid grid-cols-2 gap-x-8 gap-y-1 md:grid-cols-3 lg:grid-cols-4">
+                                {Object.entries(log.tableStats ?? {}).map(([table, count]) => (
+                                  <div key={table} className="flex items-baseline justify-between gap-2 text-xs">
+                                    <span className="font-mono text-foreground">{table}</span>
+                                    <span className="tabular-nums text-muted-foreground">{count.toLocaleString()}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>,
+                        )
+                      }
+                      return rows
+                    })
                   )}
                 </tbody>
               </table>
