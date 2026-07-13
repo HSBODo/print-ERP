@@ -36,7 +36,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class BatchOrchestrator {
 
-    static final String ORCHESTRATOR_JOB = "orchestrator";
+    static final String ORCHESTRATOR_JOB_PREFIX = "orchestrator";
+    private static final Set<Domain> ALL_DOMAINS = EnumSet.allOf(Domain.class);
 
     /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
     public enum Domain { SURGERY, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, ETC }
@@ -78,7 +79,7 @@ public class BatchOrchestrator {
             log.info("Batch skip daily — target year {} < min-year {}", yesterday.getYear(), minYear);
             return;
         }
-        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday,
+        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday, ALL_DOMAINS,
                 () -> runAllDomains(yesterday, yesterday));
     }
 
@@ -107,7 +108,7 @@ public class BatchOrchestrator {
         }
         LocalDate from = prev.atDay(1);
         LocalDate to = prev.atEndOfMonth();
-        runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to,
+        runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to, ALL_DOMAINS,
                 () -> runAllDomains(from, to));
     }
 
@@ -125,7 +126,7 @@ public class BatchOrchestrator {
     public void runManual(LocalDate from, LocalDate to, Set<Domain> targets) {
         Set<Domain> resolved = (targets == null || targets.isEmpty())
                 ? EnumSet.allOf(Domain.class) : EnumSet.copyOf(targets);
-        runWithLog(BatchRunLog.RunType.MANUAL, from, to,
+        runWithLog(BatchRunLog.RunType.MANUAL, from, to, resolved,
                 () -> runDomains(from, to, resolved));
     }
 
@@ -154,15 +155,34 @@ public class BatchOrchestrator {
         return runDomains(from, to, EnumSet.allOf(Domain.class));
     }
 
-    private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to, Job job) {
-        long id = runLogRepository.start(ORCHESTRATOR_JOB, type, from, to);
+    private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to,
+                            Set<Domain> targets, Job job) {
+        String jobName = jobNameOf(targets);
+        long id = runLogRepository.start(jobName, type, from, to);
         try {
             Map<String, Integer> tableStats = job.run();
             runLogRepository.success(id, tableStats);
         } catch (Exception e) {
-            log.error("Batch failed: type={} range={}..{}", type, from, to, e);
+            log.error("Batch failed: job={} type={} range={}..{}", jobName, type, from, to, e);
             runLogRepository.fail(id, e.toString());
         }
+    }
+
+    /**
+     * jobName 표기 규칙:
+     *   - 전체 도메인:   orchestrator[ALL]
+     *   - 부분 도메인:   orchestrator[SURGERY,RESERVATION] (enum 선언 순서 유지)
+     * targets 가 비어있거나 null 이면 안전하게 [ALL] 로 표기.
+     */
+    private static String jobNameOf(Set<Domain> targets) {
+        if (targets == null || targets.isEmpty() || targets.containsAll(ALL_DOMAINS)) {
+            return ORCHESTRATOR_JOB_PREFIX + "[ALL]";
+        }
+        String list = EnumSet.copyOf(targets).stream()
+                .map(Enum::name)
+                .reduce((a, b) -> a + "," + b)
+                .orElse("ALL");
+        return ORCHESTRATOR_JOB_PREFIX + "[" + list + "]";
     }
 
     @FunctionalInterface
