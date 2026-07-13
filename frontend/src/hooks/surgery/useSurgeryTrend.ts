@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { surgeryApi, type SurgeryMonthlyItem } from '@/api/surgery'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 interface SurgeryData {
   lasek: number; lasik: number; smile: number; smilePro: number
@@ -44,12 +43,9 @@ function toDataMap(items: SurgeryMonthlyItem[]): Record<number, SurgeryData[]> {
 }
 
 export function useSurgeryTrend(years: number[]) {
-  const source = useDataSourceStore((state) => state.source)
-  const isMock = source === 'mock'
-
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['surgery-trend', years, source],
-    queryFn: () => surgeryApi.getSurgeryTrend(years, isMock),
+    queryKey: ['surgery-trend', years],
+    queryFn: () => surgeryApi.getSurgeryTrend(years),
     enabled: years.length > 0,
   })
 

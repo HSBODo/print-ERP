@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { outpatientApi, type OutpatientCountMonthlyItem } from '@/api/outpatient'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 interface MonthlyData {
   outpatientCount: number | null
@@ -23,10 +22,8 @@ function toDataMap(items: OutpatientCountMonthlyItem[]): Record<number, MonthlyD
 }
 
 export function useOutpatientCountTrend(years: number[]) {
-  const source = useDataSourceStore((state) => state.source)
-
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['outpatient-count-trend', years, source],
+    queryKey: ['outpatient-count-trend', years],
     queryFn: () => outpatientApi.getOutpatientCountMonthly(years),
     enabled: years.length > 0,
   })

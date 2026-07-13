@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { consultationApi, type ConsultationRateItem } from '@/api/consultation'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 interface MonthlyData {
   overallConsultation: number
@@ -51,12 +50,9 @@ function toDataMap(items: ConsultationRateItem[]): Record<number, MonthlyData[]>
 }
 
 export function useConsultationRateComposition(years: number[]) {
-  const source = useDataSourceStore((state) => state.source)
-  const isMock = source === 'mock'
-
   const { data: apiItems, isLoading, isError } = useQuery({
-    queryKey: ['consultation-rate-composition', years, source],
-    queryFn: () => consultationApi.getConsultationRateComposition(years, isMock),
+    queryKey: ['consultation-rate-composition', years],
+    queryFn: () => consultationApi.getConsultationRateComposition(years),
     enabled: years.length > 0,
   })
 

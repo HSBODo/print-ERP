@@ -49,22 +49,17 @@ export const surgeryApi = {
   getSurgeryMonthly: async (years: number[]) =>
     surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/monthly', { years }))).data,
 
-  /** 수술별 비중 — real은 전용 API, mock은 panel composition 응답 재사용 */
-  getSurgeryRatio: async (years: number[], mock = false) => {
-    const endpoint = mock
-      ? withQuery('/stats/surgery/panel/composition', { years, mock: true })
-      : withQuery('/stats/surgery-ratio', { years })
-    return surgeryMonthlyResponseSchema.parse(await api.get<unknown>(endpoint)).data
-  },
+  getSurgeryRatio: async (years: number[]) =>
+    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery-ratio', { years }))).data,
 
-  getSurgeryKpi: async (years: number[], mock = true) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/kpi', { years, mock }))).data,
+  getSurgeryKpi: async (years: number[]) =>
+    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/kpi', { years }))).data,
 
-  getSurgeryTrend: async (years: number[], mock = true) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/trend', { years, mock }))).data,
+  getSurgeryTrend: async (years: number[]) =>
+    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/trend', { years }))).data,
 
-  getSurgeryComposition: async (years: number[], mock = true) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/composition', { years, mock }))).data,
+  getSurgeryComposition: async (years: number[]) =>
+    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/composition', { years }))).data,
 
   /** 수술별 비중 일별 — 스냅샷 우선(적재) + 당월 조회 시 전일까지 증분. data+meta 반환. */
   getSurgeryDaily: async (from: string, to: string) => {

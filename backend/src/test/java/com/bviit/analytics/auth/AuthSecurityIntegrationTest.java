@@ -113,8 +113,11 @@ class AuthSecurityIntegrationTest {
 
     @Test
     void statsApiAllowsAuthenticatedRequests() throws Exception {
+        // 이 테스트는 실 데이터 소스(mssql·postgres-mart) 없이 실행되므로 mock 데이터로 200 확인.
+        // 인증/응답 wrapping 자체를 검증하는 것이 목적.
         mockMvc.perform(get("/api/stats/reservation/kpi")
                         .param("years", "2025")
+                        .param("mock", "true")
                         .header("Authorization", "Bearer " + jwtUtil.generateToken("admin", Role.ADMIN)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

@@ -94,14 +94,14 @@ export const reservationApi = {
   getReservationMonthly: async (years: number[]) =>
     reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/monthly', { years }))).data,
 
-  getReservationKpi: async (years: number[], mock = true) =>
-    reservationKpiResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/kpi', { years, mock }))).data,
+  getReservationKpi: async (years: number[]) =>
+    reservationKpiResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/kpi', { years }))).data,
 
-  getReservationTrend: async (years: number[], mock = true) =>
-    reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/trend', { years, mock }))).data,
+  getReservationTrend: async (years: number[]) =>
+    reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/trend', { years }))).data,
 
-  getReservationComposition: async (years: number[], mock = true) =>
-    reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/composition', { years, mock }))).data,
+  getReservationComposition: async (years: number[]) =>
+    reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/composition', { years }))).data,
 
   getReservationOverallMonthly: async (years: number[]) =>
     reservationOverallResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation-overall/monthly', { years }))).data,

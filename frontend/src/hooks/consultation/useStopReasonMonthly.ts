@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { consultationApi, type StopReasonMonthlyItem } from '@/api/consultation'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 function toDataMap(items: StopReasonMonthlyItem[]): Record<number, (StopReasonMonthlyItem | null)[]> {
   const map: Record<number, (StopReasonMonthlyItem | null)[]> = {}
@@ -13,10 +12,8 @@ function toDataMap(items: StopReasonMonthlyItem[]): Record<number, (StopReasonMo
 }
 
 export function useStopReasonMonthly(years: number[]) {
-  const source = useDataSourceStore((state) => state.source)
-
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['stop-reason-monthly', years, source],
+    queryKey: ['stop-reason-monthly', years],
     queryFn: () => consultationApi.getStopReasonMonthly(years),
     enabled: years.length > 0,
   })

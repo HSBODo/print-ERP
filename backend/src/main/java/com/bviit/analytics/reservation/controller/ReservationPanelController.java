@@ -36,7 +36,7 @@ public class ReservationPanelController {
     @GetMapping("/kpi")
     public ResponseEntity<ApiResponse<List<?>>> getKpi(
             @RequestParam List<Integer> years,
-            @RequestParam(defaultValue = "true") boolean mock
+            @RequestParam(defaultValue = "false") boolean mock
     ) {
         StatsRequestValidator.validateYears(years);
         return StatsPanelSupport.resolve(
@@ -50,7 +50,7 @@ public class ReservationPanelController {
     @GetMapping("/trend")
     public ResponseEntity<ApiResponse<List<ReservationMonthlyItem>>> getTrend(
             @RequestParam List<Integer> years,
-            @RequestParam(defaultValue = "true") boolean mock
+            @RequestParam(defaultValue = "false") boolean mock
     ) {
         StatsRequestValidator.validateYears(years);
         return StatsPanelSupport.resolve(
@@ -64,7 +64,7 @@ public class ReservationPanelController {
     @GetMapping("/composition")
     public ResponseEntity<ApiResponse<List<ReservationMonthlyItem>>> getComposition(
             @RequestParam List<Integer> years,
-            @RequestParam(defaultValue = "true") boolean mock
+            @RequestParam(defaultValue = "false") boolean mock
     ) {
         StatsRequestValidator.validateYears(years);
         return StatsPanelSupport.resolve(

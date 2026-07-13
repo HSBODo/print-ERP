@@ -32,12 +32,12 @@ export const examApi = {
   getProcedureExamMonthly: async (years: number[]) =>
     procedureExamResponseSchema.parse(await api.get<unknown>(withQuery('/stats/procedure-exam/monthly', { years }))).data,
 
-  getExaminationKpi: async (years: number[], mock = true) =>
-    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/kpi', { years, mock }))).data,
+  getExaminationKpi: async (years: number[]) =>
+    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/kpi', { years }))).data,
 
-  getExaminationTrend: async (years: number[], mock = true) =>
-    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/trend', { years, mock }))).data,
+  getExaminationTrend: async (years: number[]) =>
+    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/trend', { years }))).data,
 
-  getExaminationComposition: async (years: number[], mock = true) =>
-    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/composition', { years, mock }))).data,
+  getExaminationComposition: async (years: number[]) =>
+    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/composition', { years }))).data,
 }

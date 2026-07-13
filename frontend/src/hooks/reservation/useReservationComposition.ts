@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { reservationApi, type ReservationMonthlyItem } from '@/api/reservation'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 interface MonthlyData { surgery: number; outpatient: number; dreamlens: number }
 const EMPTY: MonthlyData = { surgery: 0, outpatient: 0, dreamlens: 0 }
@@ -16,12 +15,9 @@ function toDataMap(items: ReservationMonthlyItem[]): Record<number, MonthlyData[
 }
 
 export function useReservationComposition(queryYears: number[]) {
-  const source = useDataSourceStore((s) => s.source)
-  const isMock = source === 'mock'
-
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['reservation-composition', queryYears, source],
-    queryFn: () => reservationApi.getReservationComposition(queryYears, isMock),
+    queryKey: ['reservation-composition', queryYears],
+    queryFn: () => reservationApi.getReservationComposition(queryYears),
   })
 
   const dataMap = useMemo(() => apiData ? toDataMap(apiData) : {}, [apiData])
