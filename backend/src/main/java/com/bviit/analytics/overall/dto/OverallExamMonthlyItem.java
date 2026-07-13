@@ -10,8 +10,8 @@ import lombok.extern.jackson.Jacksonized;
  * 주별(월~일, 월 경계 클립)의 월 롤업으로 정의된다. 주 데이터가 이미 월 경계에서 잘려
  * 각 달로 귀속되므로 월 합계 = 그 달 주 합계로 정확히 일치한다.
  *
- * 24·25 는 프론트 하드코딩(레거시 엑셀 마감값)이 유일한 진실이며 마트에 시드되지 않는다.
- * 배치는 batch.mart.min-year(=2026) 가드로 26년부터만 upsert하며, API도 26년 이후만 반환한다.
+ * 24·25 는 V14(총검사/직업/유입·검사건수 등) + V16(vision_booked·cataract_*) 시드가 SSOT.
+ * 배치({@code OverallMartJob})는 batch.mart.min-year(=2026) 가드로 26년부터만 upsert 한다.
  *
  * 파생 칼럼(예약률·비율·성공률 등)은 프론트에서 아래 원시 값으로 계산한다.
  * 정의: docs/db/지표정의.md §6 / §1.3~1.10
