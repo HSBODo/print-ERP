@@ -14,22 +14,46 @@ RUN npm run build
 # Stage 2. Backend build (Gradle bootJar)
 #   - build.gradle 의 processResources 가 ../frontend/dist 를
 #     백엔드 static/ 으로 복사하므로 디렉터리 구조를 동일하게 유지한다.
+#   - Nexus(사내 라이브러리) 인증은 BuildKit secret 으로 주입.
+#     Jenkins 파이프라인의 secret id 규칙과 동일: nexus_id / nexus_pw
+#
+#     로컬 빌드:
+#       DOCKER_BUILDKIT=1 docker build \
+#         --secret id=nexus_id,env=NEXUS_USERNAME \
+#         --secret id=nexus_pw,env=NEXUS_PASSWORD \
+#         -t analytics .
 # ─────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jdk-jammy AS backend-builder
-WORKDIR /workspace
-
-COPY backend/ /workspace/backend/
-COPY --from=frontend-builder /workspace/frontend/dist /workspace/frontend/dist
-
 WORKDIR /workspace/backend
-RUN chmod +x gradlew \
- && ./gradlew --no-daemon clean bootJar -x test
+
+# 1) 의존성만 먼저 해석 (gradle 캐시 레이어 재사용) — 소스 변경 시 재다운로드 스킵.
+COPY backend/build.gradle backend/settings.gradle* backend/gradlew ./
+COPY backend/gradle ./gradle
+RUN chmod +x gradlew
+RUN --mount=type=secret,id=nexus_id \
+    --mount=type=secret,id=nexus_pw \
+    ./gradlew --no-daemon dependencies \
+        -PnexusUsername="$(cat /run/secrets/nexus_id 2>/dev/null || true)" \
+        -PnexusPassword="$(cat /run/secrets/nexus_pw 2>/dev/null || true)" \
+    || true
+
+# 2) 소스 복사 후 bootJar 빌드.
+COPY backend/ ./
+COPY --from=frontend-builder /workspace/frontend/dist /workspace/frontend/dist
+RUN --mount=type=secret,id=nexus_id \
+    --mount=type=secret,id=nexus_pw \
+    ./gradlew --no-daemon clean bootJar -x test \
+        -PnexusUsername="$(cat /run/secrets/nexus_id 2>/dev/null || true)" \
+        -PnexusPassword="$(cat /run/secrets/nexus_pw 2>/dev/null || true)"
 
 # ─────────────────────────────────────────────────────────────
 # Stage 3. Runtime
 # ─────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
+
+# 레거시 MSSQL(jtds) 등 TLSv1/1.1 만 지원하는 원격지 대비 — Jenkins 파이프라인과 동일 정책.
+RUN sed -i 's/TLSv1, TLSv1.1,//g' $JAVA_HOME/conf/security/java.security
 
 RUN groupadd --system app && useradd --system --gid app --home /app app \
  && mkdir -p /app/.cache/stats \

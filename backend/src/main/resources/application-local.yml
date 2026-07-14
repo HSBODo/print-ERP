@@ -61,3 +61,9 @@ batch:
     enabled: false
     daily-cron: "-"
     monthly-reconcile-cron: "-"
+
+# --- Slack 로그 알림 (OFF) ---
+# 로컬 개발 시 Slack 채널로 노이즈 방지. 필요시 LOGGING_SLACK_ENABLED=true 로 개별 오버라이드.
+logging:
+  slack:
+    enabled: true

@@ -64,3 +64,9 @@ batch:
     enabled: true
     daily-cron: ${BATCH_MART_DAILY_CRON:0 0 3 * * *}
     monthly-reconcile-cron: ${BATCH_MART_MONTHLY_CRON:0 30 3 1 * *}
+
+# --- Slack 로그 알림 (ON) ---
+# 운영에서 배치 실패·에러 즉시 감지. LOGGING_SLACK_WEBHOOK_URL 환경변수 필수(배포 스크립트 주입).
+logging:
+  slack:
+    enabled: true

@@ -22,7 +22,23 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
+    // 1. 우리 회사의 넥서스 주소 추가 (중요: allowInsecureProtocol도 필요함)
+    maven {
+        url "http://3.38.35.254:8081/repository/maven-public/"
+        allowInsecureProtocol = true
+
+        // Credential 우선순위: -P gradle property > env(nexusUsername) > env(NEXUS_USERNAME).
+        // Docker 빌드 시 BuildKit secret 또는 --build-arg 로 주입.
+        credentials {
+            username = project.findProperty('nexusUsername')
+                    ?: System.getenv('nexusUsername')
+                    ?: System.getenv('NEXUS_USERNAME')
+            password = project.findProperty('nexusPassword')
+                    ?: System.getenv('nexusPassword')
+                    ?: System.getenv('NEXUS_PASSWORD')
+        }
+    }
 }
 
 def frontendDistDir = file("${projectDir}/../frontend/dist")
@@ -49,6 +65,7 @@ dependencies {
 	testRuntimeOnly 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+    implementation 'com.visuworks.lib:slack-logger:1.0.0'
 }
 
 // 유닛 테스트 — CI 기본 실행. Testcontainers(Docker) 필요한 *IT 는 클래스 어노테이션으로 자체 스킵.

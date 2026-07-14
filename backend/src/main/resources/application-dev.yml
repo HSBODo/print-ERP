@@ -60,3 +60,9 @@ stats:
 batch:
   mart:
     enabled: true
+
+# --- Slack 로그 알림 (ON) ---
+# LOGGING_SLACK_WEBHOOK_URL 환경변수 필수(deploy 스크립트 주입). 미주입 시 라이브러리가 스킵.
+logging:
+  slack:
+    enabled: true
