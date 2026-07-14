@@ -87,6 +87,29 @@ public class BatchOrchestrator {
     }
 
     /**
+     * 매일 10:00 — 예약통계(시력교정·백내장) 일별 마트만 D-1 재실행.
+     * 새벽 03:00 배치 이후 늦게 반영된 콜센터 데이터/수정분 흡수용. upsert 안전.
+     * run_type=DAILY 로 기록되므로 `useBatchLastSuccess` 표시가 자연스럽게 갱신된다.
+     * jobName 은 `orchestrator[RESERVATION_STATS_INTRADAY]` 로 구분.
+     */
+    @Scheduled(cron = "${batch.mart.reservation-stats-intraday-cron:0 0 10 * * *}", zone = "Asia/Seoul")
+    public void runReservationStatsIntraday() {
+        if (!enabled) {
+            log.info("Batch disabled — skip reservation-stats intraday run");
+            return;
+        }
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        if (yesterday.getYear() < minYear) {
+            log.info("Batch skip reservation-stats intraday — target year {} < min-year {}",
+                    yesterday.getYear(), minYear);
+            return;
+        }
+        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday,
+                ORCHESTRATOR_JOB_PREFIX + "[RESERVATION_STATS_INTRADAY]",
+                () -> reservationStatsDailyMartJob.run(yesterday, yesterday));
+    }
+
+    /**
      * 매월 1일 03:30 — 전월 전체 재계산 (소급 수정 흡수).
      * 전월의 연도가 min-year 미만이면 skip.
      *
@@ -160,7 +183,11 @@ public class BatchOrchestrator {
 
     private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to,
                             Set<Domain> targets, Job job) {
-        String jobName = jobNameOf(targets);
+        runWithLog(type, from, to, jobNameOf(targets), job);
+    }
+
+    private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to,
+                            String jobName, Job job) {
         long id = runLogRepository.start(jobName, type, from, to);
         Instant startedAt = Instant.now();
         try {
