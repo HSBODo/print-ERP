@@ -10,6 +10,7 @@ import { useCataractReservationRateTrend } from '@/hooks/consultation/useCatarac
 import { useStopReasonMonthly } from '@/hooks/consultation/useStopReasonMonthly'
 import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
 import { useConsultationRateTrend } from '@/hooks/consultation/useConsultationRateTrend'
+import { useBatchLastSuccess } from '@/hooks/batch/useBatchLastSuccess'
 import { CURRENT_YEAR } from '@/constants/chart'
 import type { OverallExamMonthlyItem } from '@/api/overall'
 import {
@@ -32,6 +33,7 @@ export function MonthlyReportPage() {
   const cataractRate = useCataractReservationRateTrend(YEARS, 'cataract')
   const overall = useOverallExamMonthly(YEARS)
   const consult = useConsultationRateTrend(YEARS)
+  const lastBatch = useBatchLastSuccess()
 
   // 마트에서 받은 월별 검사자 종합지표를 (year → month → item) 인덱스로 정리
   const overallByYear = useMemo(() => {
@@ -255,6 +257,7 @@ export function MonthlyReportPage() {
             <h1 className="text-xl font-bold text-foreground">월간 레포트</h1>
             <p className="text-sm text-muted-foreground">
               {periodLabel} 기준 · 당해연도({CURRENT_YEAR})·전년도({CURRENT_YEAR - 1})·전전년도({CURRENT_YEAR - 2}) 3개년 비교
+              {lastBatch.data?.targetDate && ` · ${lastBatch.data.targetDate} 데이터 반영`}
             </p>
           </div>
           <div className="flex items-center gap-2">

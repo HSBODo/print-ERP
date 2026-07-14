@@ -1,5 +1,6 @@
 package com.bviit.analytics.batch.repository;
 
+import com.bviit.analytics.batch.dto.BatchLastSuccessResponse;
 import com.bviit.analytics.batch.dto.BatchRunLog;
 import com.bviit.analytics.common.util.SqlLoader;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 배치 실행 이력 기록.
@@ -43,6 +45,7 @@ public class BatchRunLogRepository {
     private static final String SUCCESS_SQL = SqlLoader.load("sql/mart/update-batch-run-log-success.sql");
     private static final String FAIL_SQL    = SqlLoader.load("sql/mart/update-batch-run-log-fail.sql");
     private static final String SELECT_RECENT_SQL = SqlLoader.load("sql/mart/select-batch-run-logs.sql");
+    private static final String SELECT_LAST_DAILY_SUCCESS_SQL = SqlLoader.load("sql/mart/select-batch-last-success-daily.sql");
     private static final TypeReference<Map<String, Integer>> TABLE_STATS_TYPE = new TypeReference<>() {};
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
@@ -78,6 +81,17 @@ public class BatchRunLogRepository {
                 .addValue("id", id)
                 .addValue("finishedAt", LocalDateTime.now())
                 .addValue("err", truncated));
+    }
+
+    /** 마지막으로 성공한 DAILY 배치의 target_to·finished_at. 없으면 empty. */
+    public Optional<BatchLastSuccessResponse> findLastSuccessfulDaily() {
+        List<BatchLastSuccessResponse> found = jdbc.query(SELECT_LAST_DAILY_SUCCESS_SQL,
+                new MapSqlParameterSource(),
+                (rs, i) -> new BatchLastSuccessResponse(
+                        rs.getObject("target_to", LocalDate.class),
+                        rs.getObject("finished_at", LocalDateTime.class)
+                ));
+        return found.isEmpty() ? Optional.empty() : Optional.of(found.get(0));
     }
 
     public List<BatchRunLog> findRecent(int limit) {
