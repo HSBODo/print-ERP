@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.EnumSet;
@@ -43,6 +45,7 @@ public class BatchOrchestrator {
     public enum Domain { SURGERY, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, ETC }
 
     private final BatchRunLogRepository runLogRepository;
+    private final BatchSlackNotifier slackNotifier;
     private final SurgeryMartJob surgeryMartJob;
     private final ReservationMartJob reservationMartJob;
     private final ReservationStatsDailyMartJob reservationStatsDailyMartJob;
@@ -159,12 +162,17 @@ public class BatchOrchestrator {
                             Set<Domain> targets, Job job) {
         String jobName = jobNameOf(targets);
         long id = runLogRepository.start(jobName, type, from, to);
+        Instant startedAt = Instant.now();
         try {
             Map<String, Integer> tableStats = job.run();
             runLogRepository.success(id, tableStats);
+            slackNotifier.notifySuccess(jobName, type, from, to, tableStats,
+                    Duration.between(startedAt, Instant.now()));
         } catch (Exception e) {
             log.error("Batch failed: job={} type={} range={}..{}", jobName, type, from, to, e);
             runLogRepository.fail(id, e.toString());
+            slackNotifier.notifyFailure(jobName, type, from, to, e.toString(),
+                    Duration.between(startedAt, Instant.now()));
         }
     }
 
