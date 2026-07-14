@@ -6,9 +6,9 @@ import { CURRENT_YEAR } from '@/constants/chart'
 export const YEARS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]
 
 const now = new Date()
-// 진행 중인 당월은 검사·수술 등이 아직 누적 중이라 값이 급감 → 마지막 '완료된 월'까지만 표시(당월 포함 이후 null)
+// 미래 월은 데이터 자체가 없으므로 null 처리. 당월은 누적 중이지만 값을 노출한다.
 export const isIncompleteMonth = (year: number, monthIndex: number) =>
-  year > now.getFullYear() || (year === now.getFullYear() && monthIndex >= now.getMonth())
+  year > now.getFullYear() || (year === now.getFullYear() && monthIndex > now.getMonth())
 
 /**
  * MonthlyReportPage 도표별 UI 라벨 (title/suffix/format).
