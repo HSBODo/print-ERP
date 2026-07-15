@@ -82,13 +82,20 @@ public class ExaminationStatsRepository {
      * '백내장_검사' 화면에 맞추며 눈 → 사람(RESERVATION)으로 바꿨으나 서로 다른 원장을 맞춘 셈이었다
      * (6월 오차 +20). 2026-07-15 눈으로 복원 — java_dashboard {@code cabe8fc} 와 동일 정의.
      *
-     * <p>2024·2025 는 {@code ExaminationStatsService.LEGACY_CATARACT} 확정값으로 덮어쓰므로
-     * 이 쿼리는 2026+ 라이브에만 영향을 준다.
+     * <p>이 쿼리는 <b>2026+ 에만 영향을 준다.</b> 2024·2025 확정값은 V9 seed 가 마트에 넣은 값이
+     * 유일 원천이고, {@code ExamMartJob} 의 min-year 가드가 그 구간 write 를 막는다.
+     * ({@code LEGACY_CATARACT} 상수가 막아준다는 설명이 돌아다니지만 그 상수는 {@code d14c301} 에서
+     *  제거됐다 — 보호 기전만 바뀌었을 뿐 결과는 같다.)
      *
-     * <p>⚠️ <b>전체 검사자 리스트(AllExamListRepository)는 사람 기준이라 단위가 어긋난다 — 의도된 미해결이다.</b>
-     * 레포트는 월간보고 재현, 리스트는 개별 환자 확인이라 목적이 다르다.
-     * <p>⚠️ 되돌려도 골든과 완전히 맞지는 않는다(3월 −10 · 5월 −17). 상세·판단 근거:
-     * {@code docs/db/백내장-검사수-정의-정정.md}
+     * <p>⚠️ <b>전체 검사자 리스트({@code AllExamListRepository})는 사람 기준이라 단위가 어긋난다 — 의도된 미해결이다.</b>
+     * 레포트는 월간보고 재현, 리스트는 개별 환자 확인이라 목적이 다르고 사람 명단을 눈 단위로 만들 수 없다.
+     * 6월 기준 레포트 56 vs 리스트 75 — "안 맞는다"는 보고는 버그가 아니라 이 정의 차이다.
+     *
+     * <p>⚠️ <b>되돌려도 골든과 완전히 맞지는 않는다</b> — 3월 −10 · 5월 −17 이 남는다.
+     * {@code afa6149} 는 즉흥적 변경이 아니라 노안/백내장 분리를 전수 추적한 뒤 "'백내장 만' 재현 불가"로
+     * 내린 결정이었다. 어느 쪽도 골든을 재현하지 못하며 6월의 +1 은 우연일 소지가 있다.
+     *
+     * <p>2026 실측(2026-07-15) vs 골든: 1월 96/96 · 2월 66/68 · 3월 66/76 · 4월 62/58 · 5월 67/84 · 6월 56/55
      */
     public List<Map<String, Object>> findCataractMonthly(String from, String to) {
         String sql = findCataractMonthlySql;
