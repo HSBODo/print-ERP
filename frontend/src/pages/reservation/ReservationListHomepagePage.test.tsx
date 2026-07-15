@@ -100,6 +100,43 @@ describe('CSV 출력', () => {
 })
 
 describe('ReservationListHomepagePage', () => {
+  it('월별을 고르면 월 선택기로 바뀌고, 그 달 전체를 조회한다', async () => {
+    setRows([row()])
+    const { ReservationListHomepagePage } = await import('./ReservationListHomepagePage')
+    render(<ReservationListHomepagePage />)
+
+    // 일별 모드: 시작일·종료일 두 칸
+    expect(screen.getByLabelText('등록 시작일')).toBeInTheDocument()
+    expect(screen.queryByLabelText('등록 기준 월')).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('기간 단위'), { target: { value: 'monthly' } })
+
+    // 월별 모드: 월 한 칸으로 대체
+    expect(screen.getByLabelText('등록 기준 월')).toBeInTheDocument()
+    expect(screen.queryByLabelText('등록 시작일')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('등록 종료일')).not.toBeInTheDocument()
+
+    // 지난 달을 고르면 1일~말일 전체가 조회 구간이 된다.
+    fireEvent.change(screen.getByLabelText('등록 기준 월'), { target: { value: '2026-05' } })
+    fireEvent.click(screen.getByRole('button', { name: '조회' }))
+    expect(mockHook).toHaveBeenLastCalledWith('2026-05-01', '2026-05-31', true)
+  })
+
+  it('진행 중인 달은 말일이 아니라 오늘까지만 조회한다 (미래 구간 요청 방지)', async () => {
+    setRows([row()])
+    const { ReservationListHomepagePage } = await import('./ReservationListHomepagePage')
+    const { todayIso, monthStartOf } = await import('./reservationListHomepageUtils')
+    render(<ReservationListHomepagePage />)
+
+    fireEvent.change(screen.getByLabelText('기간 단위'), { target: { value: 'monthly' } })
+    fireEvent.change(screen.getByLabelText('등록 기준 월'), {
+      target: { value: todayIso().slice(0, 7) },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '조회' }))
+
+    expect(mockHook).toHaveBeenLastCalledWith(monthStartOf(todayIso()), todayIso(), true)
+  })
+
   it('조회 전에는 안내문을 보여주고 서버를 호출하지 않는다', async () => {
     const { ReservationListHomepagePage } = await import('./ReservationListHomepagePage')
     render(<ReservationListHomepagePage />)

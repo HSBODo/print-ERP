@@ -8,6 +8,7 @@ import type { ReservationListHomepageItem } from '@/api/reservation/reservationL
  * if/else 하드코딩이라 DB만 봐서는 알 수 없다 — 원본에서 그대로 옮겨온 값이다.
  */
 
+export type PeriodMode = 'daily' | 'monthly'
 export type SortDirection = 'asc' | 'desc'
 export type SortState = { key: string; direction: SortDirection } | null
 
@@ -78,6 +79,26 @@ export const monthStartOf = (iso: string) => `${iso.slice(0, 7)}-01`
 /** 기본 조회 기간 = 이번 달 1일 ~ 오늘. (상수가 아니라 함수 — 탭을 오래 켜둬도 안 낡는다) */
 export const defaultTo = () => todayIso()
 export const defaultFrom = () => monthStartOf(todayIso())
+
+/* ── 월별 모드 (검사자·수술자 리스트와 동일한 헬퍼) ── */
+/** 'YYYY-MM-DD' → 'YYYY-MM' (input[type=month] 값) */
+export const toMonthValue = (date: string) => date.slice(0, 7)
+
+/** 'YYYY-MM' → 그 달 1일 */
+export const toMonthStart = (month: string) => `${month}-01`
+
+/**
+ * 'YYYY-MM' → 그 달 말일. 단 **진행 중인 달은 오늘까지만** 자른다.
+ * 미래 날짜로 조회하면 스냅샷 소스에서 '천장 초과' 거짓 경고가 뜨기 때문이다
+ * (예약자 리스트의 monthRange 와 같은 처리).
+ */
+export const toMonthEnd = (month: string) => {
+  const [year, monthNumber] = month.split('-').map(Number)
+  const lastDate = new Date(year, monthNumber, 0).getDate()
+  const end = `${month}-${String(lastDate).padStart(2, '0')}`
+  const today = todayIso()
+  return end > today ? today : end
+}
 
 /**
  * 조회 종료일이 스냅샷 마지막 등록일시를 넘는지. 넘으면 그 구간은 소스에 없어

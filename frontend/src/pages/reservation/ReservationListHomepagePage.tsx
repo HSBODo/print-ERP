@@ -19,6 +19,10 @@ import {
   PAGE_SIZE_OPTIONS,
   DEFAULT_PAGE_SIZE,
   SKELETON_ROWS,
+  toMonthValue,
+  toMonthStart,
+  toMonthEnd,
+  type PeriodMode,
   type SortState,
 } from './reservationListHomepageUtils'
 
@@ -41,6 +45,7 @@ import {
  */
 export function ReservationListHomepagePage() {
   // 등록일만 서버 조회 파라미터다 — draft(입력중) / query(조회에 반영됨)를 나눈다.
+  const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
   const [draftFrom, setDraftFrom] = useState(defaultFrom)
   const [draftTo, setDraftTo] = useState(defaultTo)
   const [queryFrom, setQueryFrom] = useState(defaultFrom)
@@ -110,7 +115,21 @@ export function ReservationListHomepagePage() {
     setQueryTo(draftTo)
   }
 
+  /**
+   * 일별 ↔ 월별 전환. 월별은 단일 월이므로 from·to 를 그 달의 시작·끝으로 맞춘다.
+   * (진행 중인 달이면 toMonthEnd 가 오늘까지만 자른다 — 미래 조회는 의미가 없다)
+   */
+  const handlePeriodModeChange = (mode: PeriodMode) => {
+    setDraftPeriodMode(mode)
+    if (mode === 'monthly') {
+      const month = toMonthValue(draftFrom)
+      setDraftFrom(toMonthStart(month))
+      setDraftTo(toMonthEnd(month))
+    }
+  }
+
   const handleReset = () => {
+    setDraftPeriodMode('daily')
     setDraftFrom(defaultFrom())
     setDraftTo(defaultTo())
     setQueryFrom(defaultFrom())
@@ -156,21 +175,50 @@ export function ReservationListHomepagePage() {
       {/* 필터 바 — 다른 리스트 화면(검사자·수술자·예약자)과 동일한 단일 행 툴바 구성 */}
       <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
         <div className="flex flex-wrap items-center gap-1 text-xs text-gray-700">
-          <input
-            aria-label="등록 시작일"
-            type="date"
-            value={draftFrom}
-            onChange={(e) => setDraftFrom(e.target.value)}
-            className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          />
-          <span className="text-gray-400">~</span>
-          <input
-            aria-label="등록 종료일"
-            type="date"
-            value={draftTo}
-            onChange={(e) => setDraftTo(e.target.value)}
-            className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          />
+          <div className="relative">
+            <select
+              aria-label="기간 단위"
+              value={draftPeriodMode}
+              onChange={(e) => handlePeriodModeChange(e.target.value as PeriodMode)}
+              className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="daily">일별</option>
+              <option value="monthly">월별</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+          </div>
+          {draftPeriodMode === 'monthly' ? (
+            <input
+              aria-label="등록 기준 월"
+              type="month"
+              value={toMonthValue(draftFrom)}
+              max={toMonthValue(defaultTo())}
+              onChange={(e) => {
+                if (!e.target.value) return
+                setDraftFrom(toMonthStart(e.target.value))
+                setDraftTo(toMonthEnd(e.target.value))
+              }}
+              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            />
+          ) : (
+            <>
+              <input
+                aria-label="등록 시작일"
+                type="date"
+                value={draftFrom}
+                onChange={(e) => setDraftFrom(e.target.value)}
+                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+              <span className="text-gray-400">~</span>
+              <input
+                aria-label="등록 종료일"
+                type="date"
+                value={draftTo}
+                onChange={(e) => setDraftTo(e.target.value)}
+                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </>
+          )}
         </div>
         <div className="h-6 w-px bg-border" />
         <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
