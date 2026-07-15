@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ReservationListHomepageItem } from '@/api/reservation/reservationListHomepage'
+import { maskName, maskPhone } from '@/utils/mask'
 import {
   dash,
   formatDeviceType,
@@ -113,8 +114,8 @@ export const COLUMNS: Column[] = [
       return cell.badge(label, DEVICE_TYPE_STYLE[label])
     },
   },
-  { key: 'name', label: '이름', align: 'center', min: '5rem', render: (r) => dash(r.name) },
-  { key: 'phone', label: '휴대폰번호', align: 'center', min: '8rem', text: true, render: (r) => dash(r.phone) },
+  { key: 'name', label: '이름', align: 'center', min: '5rem', csv: (r) => maskName(r.name), render: (r) => dash(r.name) },
+  { key: 'phone', label: '휴대폰번호', align: 'center', min: '8rem', text: true, csv: (r) => maskPhone(r.phone), render: (r) => dash(r.phone) },
   { key: 'reserveDate', label: '예약일', align: 'center', min: '6rem', render: (r) => dash(r.reserveDate) },
   { key: 'reserveTime', label: '예약시간', align: 'center', min: '5rem', render: (r) => dash(r.reserveTime) },
   {

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { SurgeryListItem } from '@/api/surgery/surgeryList'
 import { calcAge, dash } from './surgeryListUtils'
+import { maskName, maskPhone } from '@/utils/mask'
 
 /** SurgeryListPage 컬럼/뱃지 렌더 설정 (순수 로직은 surgeryListUtils.ts). */
 
@@ -56,8 +57,8 @@ export const COLUMNS: Column[] = [
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_TYPE_STYLE[r.patientType]) },
   { key: 'surgeryTime', label: '예약시간', align: 'center', min: '4.5rem', render: (r) => dash(r.surgeryTime) },
   { key: 'chartNo', label: '차트번호', align: 'center', min: '6rem', text: true },
-  { key: 'name', label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
-  { key: 'nameEng', label: '고객명(영)', align: 'left', min: '7rem' },
+  { key: 'name', csv: (r) => maskName(r.name), label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
+  { key: 'nameEng', csv: (r) => maskName(r.nameEng), label: '고객명(영)', align: 'left', min: '7rem' },
   { key: 'surgeryR', label: '수술방법R', align: 'center', min: '7rem', render: (r) => dash(r.surgeryR) },
   { key: 'surgeryL', label: '수술방법L', align: 'center', min: '7rem', render: (r) => dash(r.surgeryL) },
   { key: 'surgeon', label: '집도의', align: 'center', min: '5rem', render: (r) => dash(r.surgeon) },
@@ -75,8 +76,8 @@ export const COLUMNS: Column[] = [
   { key: 'birth', label: '생년월일', align: 'center', min: '6rem' },
   { key: 'age', label: '만나이', align: 'right', min: '3.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
   { key: 'lunar', label: '양/음', align: 'center', min: '3.5rem' },
-  { key: 'phone2', label: '휴대전화', align: 'left', min: '8rem', text: true },
-  { key: 'phone1', label: '집전화', align: 'left', min: '7rem', text: true },
+  { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'left', min: '8rem', text: true },
+  { key: 'phone1', csv: (r) => maskPhone(r.phone1), label: '집전화', align: 'left', min: '7rem', text: true },
   { key: 'email', label: '이메일', align: 'left', min: '10rem', render: (r) => cell.truncate(r.email, '11rem') },
   { key: 'route', label: '예약경로', align: 'center', min: '5rem', render: (r) => dash(r.route) },
   { key: 'section', label: '섹션', align: 'center', min: '3.5rem', render: (r) => dash(r.section) },

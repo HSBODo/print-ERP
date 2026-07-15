@@ -95,7 +95,31 @@ describe('CSV 출력', () => {
     expect(csv).toContain('예약')                    // isReserve Y
     expect(csv).toContain('naver-bs / sa / mo_naver-bs_conv_2504') // UTM 3종 한 셀
     // 앞자리 0 손실·지수표기 방지 — ="값" 수식으로 감싼 뒤 CSV 따옴표 이스케이프.
-    expect(csv).toContain('"=""010-0000-0001"""')
+    // 마스킹된 값이라도 ="..." 은 유지돼야 한다.
+    expect(csv).toContain('"=""010-****-0001"""')
+  })
+
+  it('개인정보는 CSV 로 나갈 때만 마스킹된다', async () => {
+    const { csvColumnsOf } = await import('./reservationListHomepageColumns')
+    const { columnsToCsv } = await import('@/utils/csv')
+
+    const csv = columnsToCsv(csvColumnsOf(1), [row()])
+
+    // 파일은 PC 에 남고 메신저로 전달된다 — 원문이 나가면 안 된다.
+    expect(csv).toContain('홍*동')
+    expect(csv).not.toContain('홍길동')
+    expect(csv).toContain('010-****-0001')
+    expect(csv).not.toContain('010-0000-0001')
+  })
+
+  it('화면에는 원문이 그대로 보인다 (레거시 화면과 동일)', async () => {
+    setRows([row()])
+    await searchWith('2026-06-01', '2026-06-30')
+
+    // 직원이 환자 식별·연락에 쓰는 화면이라 마스킹하지 않는다 — CSV 만 가린다.
+    const dataRow = within(screen.getAllByRole('row')[1])
+    expect(dataRow.getByText('홍길동')).toBeInTheDocument()
+    expect(dataRow.getByText('010-0000-0001')).toBeInTheDocument()
   })
 })
 
