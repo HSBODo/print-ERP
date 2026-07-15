@@ -76,11 +76,19 @@ public class ExaminationStatsRepository {
     }
 
     /**
-     * 백내장 검사 — 레거시 BCRM "백내장_검사" 화면과 동일하게 RESERVATION 기준 **사람(고객)** 단위.
-     * RESERVE_FLAG='H'(백내장) + RESERVE_JINRYO='1'(검사진료) + STATE 내원(I/H), 고객·검사일별 1건.
-     * 전체 검사자 리스트(AllExamListRepository) 백내장과 동일 정의 → 리스트=레포트 정합.
-     * 2024·2025는 ExaminationStatsService.LEGACY_CATARACT 확정값으로 덮어쓰고 2026+만 이 라이브값 사용.
-     * 레거시 표시값과 ±10 안팎 잔차(라이브·다소스·시점차). 과거 눈(OPERATIONR/L) 정의에서 2026-06 전환.
+     * 백내장 검사 — Cataract_Exam 기준 <b>눈(안)</b> 단위. 수술방법(OPERATIONR/L) 입력된 눈만 좌+우 합산.
+     *
+     * <p><b>월간보고 골든이 눈 기준이라 그에 맞춘다.</b> 2026-06-23 {@code afa6149} 가 레거시 BCRM
+     * '백내장_검사' 화면에 맞추며 눈 → 사람(RESERVATION)으로 바꿨으나 서로 다른 원장을 맞춘 셈이었다
+     * (6월 오차 +20). 2026-07-15 눈으로 복원 — java_dashboard {@code cabe8fc} 와 동일 정의.
+     *
+     * <p>2024·2025 는 {@code ExaminationStatsService.LEGACY_CATARACT} 확정값으로 덮어쓰므로
+     * 이 쿼리는 2026+ 라이브에만 영향을 준다.
+     *
+     * <p>⚠️ <b>전체 검사자 리스트(AllExamListRepository)는 사람 기준이라 단위가 어긋난다 — 의도된 미해결이다.</b>
+     * 레포트는 월간보고 재현, 리스트는 개별 환자 확인이라 목적이 다르다.
+     * <p>⚠️ 되돌려도 골든과 완전히 맞지는 않는다(3월 −10 · 5월 −17). 상세·판단 근거:
+     * {@code docs/db/백내장-검사수-정의-정정.md}
      */
     public List<Map<String, Object>> findCataractMonthly(String from, String to) {
         String sql = findCataractMonthlySql;
