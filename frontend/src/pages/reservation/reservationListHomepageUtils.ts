@@ -82,11 +82,11 @@ export const defaultFrom = () => monthStartOf(todayIso())
 /**
  * 조회 종료일이 스냅샷 마지막 등록일시를 넘는지. 넘으면 그 구간은 소스에 없어
  * 건수가 조용히 모자라게 나온다(가이드 문서 §0 / 6장 참조) → 화면에 경고를 띄운다.
- * snapshotMaxRegDate 형식: 'YYYY-MM-DD HH:MM:SS'.
+ * lastRegDate 형식: 'YYYY-MM-DD HH:MM:SS'.
  */
-export const isRangeBeyondSnapshot = (to: string, snapshotMaxRegDate: string) => {
-  if (!to || !snapshotMaxRegDate) return false
-  return to > snapshotMaxRegDate.slice(0, 10)
+export const isRangeBeyondSnapshot = (to: string, lastRegDate: string) => {
+  if (!to || !lastRegDate) return false
+  return to > lastRegDate.slice(0, 10)
 }
 
 /* ── 검색/정렬 ── */

@@ -40,10 +40,15 @@ const row = (over: Partial<ReservationListHomepageItem> = {}): ReservationListHo
   ...over,
 })
 
-const setRows = (rows: ReservationListHomepageItem[], snapshot = '2026-07-10 16:15:55') => {
+const setRows = (
+  rows: ReservationListHomepageItem[],
+  snapshot = '2026-07-10 16:15:55',
+  live = false,
+) => {
   mockHook.mockReturnValue({
     rows,
-    snapshotMaxRegDate: snapshot,
+    lastRegDate: snapshot,
+    live,
     isLoading: false,
     isFetching: false,
     isError: false,
@@ -150,7 +155,19 @@ describe('ReservationListHomepagePage', () => {
     expect(screen.getByText('2026-07-10 16:15:55')).toBeInTheDocument()
   })
 
-  it('구분 필터가 걸린다', async () => {
+  it('실시간 소스면 같은 조건에도 경고 대신 신선도를 보여준다', async () => {
+    // 스냅샷이면 경고가 뜨는 바로 그 조건(종료일 > 마지막 등록일). 실시간엔 천장이 없어 거짓 경고다.
+    setRows([row()], '2026-07-15 15:22:57', true)
+    await searchWith('2026-07-01', '2026-07-31')
+
+    expect(screen.queryByText(/집계되지 않았습니다/)).not.toBeInTheDocument()
+    expect(screen.getByText(/레거시 홈페이지 운영 DB 를 직접 조회/)).toBeInTheDocument()
+    expect(screen.getByText('2026-07-15 15:22:57')).toBeInTheDocument()
+  })
+
+  // 구분·예약구분·검색은 이미 받아온 행을 거르는 클라이언트 필터다 → 조회 버튼 없이 즉시 반영돼야 한다.
+  // (조회를 기다리게 하면 버튼을 눌러도 아무 일이 없는 것처럼 보인다)
+  it('구분 필터는 조회 버튼 없이 즉시 반영된다', async () => {
     setRows([row({ legacyNo: '1', deviceType: 'M' }), row({ legacyNo: '2', deviceType: 'P' })])
     const { ReservationListHomepagePage } = await import('./ReservationListHomepagePage')
     render(<ReservationListHomepagePage />)
@@ -158,13 +175,15 @@ describe('ReservationListHomepagePage', () => {
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('2건')
 
-    // 'PC' 는 완전일치라 'AI PC' 버튼과 겹치지 않는다.
+    // 'PC' 는 완전일치라 'AI PC' 버튼과 겹치지 않는다. 클릭만으로 걸려야 한다.
     fireEvent.click(screen.getByRole('button', { name: 'PC' }))
-    fireEvent.click(screen.getByRole('button', { name: '조회' }))
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('1건')
+
+    fireEvent.click(screen.getByRole('button', { name: '전체' }))
+    expect(screen.getByText('조회건수').parentElement).toHaveTextContent('2건')
   })
 
-  it('예약구분 필터가 걸린다', async () => {
+  it('예약구분 필터는 조회 버튼 없이 즉시 반영된다', async () => {
     setRows([row({ legacyNo: '1', isReserve: 'Y' }), row({ legacyNo: '2', isReserve: 'N' })])
     const { ReservationListHomepagePage } = await import('./ReservationListHomepagePage')
     render(<ReservationListHomepagePage />)
@@ -173,26 +192,24 @@ describe('ReservationListHomepagePage', () => {
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('2건')
 
     fireEvent.change(screen.getByLabelText('예약구분'), { target: { value: 'N' } })
-    fireEvent.click(screen.getByRole('button', { name: '조회' }))
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('1건')
   })
 
-  it('이름·휴대폰번호를 한 입력으로 검색한다 (하이픈 무관)', async () => {
+  it('이름·휴대폰번호를 한 입력으로 즉시 검색한다 (하이픈 무관)', async () => {
     setRows([
       row({ legacyNo: '1', name: '홍길동', phone: '010-1111-2222' }),
       row({ legacyNo: '2', name: '김철수', phone: '010-3333-4444' }),
     ])
     const { ReservationListHomepagePage } = await import('./ReservationListHomepagePage')
     render(<ReservationListHomepagePage />)
+    fireEvent.click(screen.getByRole('button', { name: '조회' }))
 
     const keyword = screen.getByPlaceholderText('이름 · 휴대폰번호')
     fireEvent.change(keyword, { target: { value: '김철수' } })
-    fireEvent.click(screen.getByRole('button', { name: '조회' }))
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('1건')
 
     // 원문이 '010-1111-2222' 여도 하이픈 없는 입력으로 찾힌다.
     fireEvent.change(keyword, { target: { value: '01011112222' } })
-    fireEvent.click(screen.getByRole('button', { name: '조회' }))
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('1건')
     expect(within(screen.getAllByRole('row')[1]).getByText('홍길동')).toBeInTheDocument()
   })

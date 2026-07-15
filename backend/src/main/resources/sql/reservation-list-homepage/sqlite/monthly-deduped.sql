@@ -12,7 +12,7 @@
 --      dedup 범위는 '달 안'이다(GROUP BY 로 월을 나눈 뒤 DISTINCT). 5월·6월에 각각 신청했으면 각 달 1건.
 --
 -- ⚠️ 스냅샷 소스면 마지막 등록일 이후 구간이 조용히 비어 나온다 — 호출부에서 반드시 확인할 것
---    (snapshot-max-reg-date.sql).
+--    (last-reg-date.sql).
 SELECT CAST(substr(reg_date, 1, 4) AS INTEGER) AS "yr",
        CAST(substr(reg_date, 6, 2) AS INTEGER) AS "mo",
        COUNT(DISTINCT phone)                   AS "cnt"

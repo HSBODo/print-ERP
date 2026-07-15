@@ -1,6 +1,7 @@
 package com.bviit.analytics.reservation.repository;
 
 import com.bviit.analytics.common.config.LegacyDataSourceConfig;
+import com.bviit.analytics.common.config.LegacyDialect;
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -21,31 +22,44 @@ import java.util.Map;
  * <p><b>제약</b>
  * <ul>
  *   <li>READ-ONLY — 이 소스에 쓰기를 하지 않는다(레거시 운영계 원본이다).
- *   <li>SQLite 방언. 기간 필터는 문자열 비교 + date() 반개구간이다 — SQL 파일 주석 참조.
- *   <li>컬럼명은 캐시의 snake_case 다. 레거시 원본(대문자)·legacy_raw(Postgres, 원본 대소문자)와
- *       다르니 어느 쪽을 보고 있는지 항상 확인할 것.
+ *   <li>소스가 둘이라 <b>SQL 세트도 둘</b>이다 — {@link LegacyDialect} 가 URL 로 판별해 고른다.
+ *       같은 데이터인데 스키마가 다르다(캐시가 원본을 snake_case 로 개명해 적재했다):
+ *       스냅샷은 {@code consultations.legacy_no}, 운영 DB 는 {@code TBL_COUNSEL.C_NO} 다.
+ *       한쪽 SQL 을 다른 쪽에 그대로 쓰면 'no such column' 이 난다.
+ *   <li>두 세트의 <b>결과 별칭 계약은 동일</b>해야 한다(프론트 zod 와 1:1). 한쪽만 고치지 말 것.
  * </ul>
  */
 @Repository
 @ConditionalOnExpression(LegacyDataSourceConfig.ENABLED_EXPRESSION)
 public class ReservationListHomepageRepository {
 
-    static final String LIST_SQL = "sql/reservation-list-homepage/reservation-list-homepage.sql";
-    static final String SNAPSHOT_MAX_REG_DATE_SQL = "sql/reservation-list-homepage/snapshot-max-reg-date.sql";
-    static final String MONTHLY_DEDUPED_SQL = "sql/reservation-list-homepage/monthly-deduped.sql";
+    private static final String SQL_BASE = "sql/reservation-list-homepage/";
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final LegacyDialect dialect;
     private final String listSql;
-    private final String snapshotMaxRegDateSql;
+    private final String lastRegDateSql;
     private final String monthlyDedupedSql;
 
     public ReservationListHomepageRepository(
-            @Qualifier("legacyJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("legacyJdbcTemplate") NamedParameterJdbcTemplate jdbc,
+            @Qualifier("legacyDialect") LegacyDialect dialect
     ) {
         this.jdbc = jdbc;
-        this.listSql = SqlLoader.load(LIST_SQL);
-        this.snapshotMaxRegDateSql = SqlLoader.load(SNAPSHOT_MAX_REG_DATE_SQL);
-        this.monthlyDedupedSql = SqlLoader.load(MONTHLY_DEDUPED_SQL);
+        this.dialect = dialect;
+        this.listSql = SqlLoader.load(sqlPath(dialect, "reservation-list-homepage.sql"));
+        this.lastRegDateSql = SqlLoader.load(sqlPath(dialect, "last-reg-date.sql"));
+        this.monthlyDedupedSql = SqlLoader.load(sqlPath(dialect, "monthly-deduped.sql"));
+    }
+
+    /** sql/reservation-list-homepage/{sqlite|mariadb}/{fileName} */
+    static String sqlPath(LegacyDialect dialect, String fileName) {
+        return SQL_BASE + dialect.sqlDir() + "/" + fileName;
+    }
+
+    /** 현재 소스의 방언 — Service 가 live 여부(경고 배너 on/off)를 판단하는 데 쓴다. */
+    public LegacyDialect dialect() {
+        return dialect;
     }
 
     /** 등록일 from~to(양끝 포함) 구간의 온라인 예약 목록. */
@@ -69,10 +83,15 @@ public class ReservationListHomepageRepository {
                 .addValue("to", to));
     }
 
-    /** 소스가 담고 있는 마지막 등록일시. 값이 없으면 빈 문자열. */
-    public String findSnapshotMaxRegDate() {
+    /**
+     * 소스가 담고 있는 마지막 등록일시. 값이 없으면 빈 문자열.
+     *
+     * <p>스냅샷이면 이 값이 곧 '천장'이다(이후 구간은 조용히 빈다). 실시간이면 그냥 최신 등록건
+     * 시각이다 — 의미가 갈리므로 호출부는 {@link #dialect()}{@code .live()} 를 함께 봐야 한다.
+     */
+    public String findLastRegDate() {
         String value = jdbc.queryForObject(
-                snapshotMaxRegDateSql, new MapSqlParameterSource(), String.class);
+                lastRegDateSql, new MapSqlParameterSource(), String.class);
         return value == null ? "" : value;
     }
 }

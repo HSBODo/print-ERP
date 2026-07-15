@@ -92,7 +92,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
                             + "(미설정 상태로 계산하면 홈페이지 몫이 빠진 값이 조용히 적재됩니다)"));
 
             homepage = countsByMonth(homepageRepo.findMonthlyDedupedCounts(from, to), "cnt");
-            homepageMaxMonth = snapshotCoverageMonth(homepageRepo.findSnapshotMaxRegDate());
+            homepageMaxMonth = coverageMonth(homepageRepo.findLastRegDate());
         }
 
         List<ReservationOverallMonthlyItem> items = new ArrayList<>();
@@ -163,18 +163,23 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
     }
 
     /**
-     * 홈페이지 소스가 '온전히' 커버하는 마지막 달.
+     * 홈페이지 소스가 '온전히' 커버하는 마지막 달. 말일까지 담긴 경우에만 그 달을 인정한다.
      *
-     * <p>스냅샷 마지막 등록일이 2026-07-10 이면 7월은 10일까지만 있으므로 신뢰할 수 없다 →
-     * 온전한 마지막 달은 6월이다. 말일까지 담긴 경우에만 그 달을 인정한다.
+     * <p>소스가 스냅샷이든 실시간이든 판정은 같다 — 부분만 담긴 달은 신뢰하지 않는다.
+     * <ul>
+     *   <li>스냅샷(마지막 등록일 2026-07-10): 7월은 10일까지뿐 → 온전한 마지막 달은 6월
+     *   <li>실시간(오늘이 2026-07-15): 7월은 아직 안 끝났다 → 마찬가지로 6월
+     * </ul>
+     * 어느 쪽이든 부분 월을 0 으로 더하면 '조용히 작은 온라인 예약'이 되므로 null 로 끊는다.
      *
-     * @return 판정 불가(빈 값)면 null — 이 경우 달 제한을 걸지 않는다(실시간 소스로 본다)
+     * @param lastRegDate 소스의 마지막 등록일시('YYYY-MM-DD ...'). 빈 값이면 판정 불가.
+     * @return 판정 불가면 null — 이 경우 달 제한을 걸지 않는다
      */
-    private YearMonth snapshotCoverageMonth(String snapshotMaxRegDate) {
-        if (snapshotMaxRegDate == null || snapshotMaxRegDate.length() < 10) {
+    private YearMonth coverageMonth(String lastRegDate) {
+        if (lastRegDate == null || lastRegDate.length() < 10) {
             return null;
         }
-        java.time.LocalDate last = java.time.LocalDate.parse(snapshotMaxRegDate.substring(0, 10));
+        java.time.LocalDate last = java.time.LocalDate.parse(lastRegDate.substring(0, 10));
         YearMonth ym = YearMonth.from(last);
         return last.getDayOfMonth() == ym.lengthOfMonth() ? ym : ym.minusMonths(1);
     }

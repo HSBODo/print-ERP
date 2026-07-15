@@ -30,7 +30,11 @@ import javax.sql.DataSource;
  * <p><b>SQLite 읽기 전용</b> — URL 에 {@code ?open_mode=1}(SQLITE_OPEN_READONLY)을 붙여
  * 파일 레벨에서 읽기 전용으로 연다. Hikari 의 read-only 설정은 커넥션의 실제 open mode 와
  * 일치해야 한다(불일치 시 드라이버가 setReadOnly 에서 예외를 던진다) — 그래서 기본값을 true 로
- * 두고 URL 과 짝을 맞춘다.
+ * 두고 URL 과 짝을 맞춘다. MariaDB 에서도 read-only 는 세션 읽기 전용이라 그대로 유효하다.
+ *
+ * <p><b>소스는 두 가지, 판별은 URL 로</b> — {@link LegacyDialect} 참조.
+ * {@code jdbc:sqlite:} 스냅샷 파일(기본) / {@code jdbc:mariadb:} 운영 DB 직결(실시간).
+ * 드라이버 클래스도 URL 에서 파생하므로 보통은 URL 과 계정만 설정하면 된다.
  */
 @Configuration
 @ConditionalOnExpression(LegacyDataSourceConfig.ENABLED_EXPRESSION)
@@ -42,18 +46,28 @@ public class LegacyDataSourceConfig {
      */
     public static final String ENABLED_EXPRESSION = "!'${legacy.datasource.url:}'.trim().isEmpty()";
 
+    /** URL 에서 판별한 방언 — Repository 가 SQL 세트를, Service 가 live 여부를 여기서 가져간다. */
+    @Bean("legacyDialect")
+    public LegacyDialect legacyDialect(@Value("${legacy.datasource.url}") String url) {
+        return LegacyDialect.of(url);
+    }
+
     @Bean("legacyDataSource")
     public DataSource legacyDataSource(
             @Value("${legacy.datasource.url}") String url,
             @Value("${legacy.datasource.username:}") String username,
             @Value("${legacy.datasource.password:}") String password,
-            @Value("${legacy.datasource.driver-class-name:org.sqlite.JDBC}") String driverClassName,
+            @Value("${legacy.datasource.driver-class-name:}") String driverClassName,
             @Value("${legacy.datasource.hikari.maximum-pool-size:2}") int maxPoolSize,
             @Value("${legacy.datasource.hikari.read-only:true}") boolean readOnly,
             @Value("${legacy.datasource.hikari.connection-timeout:5000}") long connectionTimeout
     ) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(url);
+        // 미지정이면 URL 에서 파생한다 — URL 과 드라이버가 어긋날 여지를 없앤다.
+        if (driverClassName.isBlank()) {
+            driverClassName = LegacyDialect.of(url).driverClassName();
+        }
         if (!username.isBlank()) {
             ds.setUsername(username);
         }

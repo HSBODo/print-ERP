@@ -59,7 +59,7 @@ class ReservationOverallStatsServiceTest {
         when(homepageRepository.findMonthlyDedupedCounts(anyString(), anyString()))
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "cnt", 202)));
         // 스냅샷이 7/10 까지 → 온전히 커버하는 마지막 달은 6월
-        when(homepageRepository.findSnapshotMaxRegDate()).thenReturn("2026-07-10 16:15:55");
+        when(homepageRepository.findLastRegDate()).thenReturn("2026-07-10 16:15:55");
     }
 
     private ReservationOverallStatsService service() {
@@ -102,7 +102,7 @@ class ReservationOverallStatsServiceTest {
 
     @Test
     void 스냅샷이_말일까지_담으면_그_달은_계산한다() {
-        when(homepageRepository.findSnapshotMaxRegDate()).thenReturn("2026-06-30 23:48:13");
+        when(homepageRepository.findLastRegDate()).thenReturn("2026-06-30 23:48:13");
 
         assertThat(monthOf(service().getMonthlyStats(List.of(2026)), 6).getOnline()).isEqualTo(264);
     }

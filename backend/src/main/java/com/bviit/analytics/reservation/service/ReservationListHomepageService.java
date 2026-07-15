@@ -28,7 +28,8 @@ public class ReservationListHomepageService implements ReservationListHomepageRe
     public ReservationListHomepageResult getReservationListHomepage(String from, String to) {
         return new ReservationListHomepageResult(
                 repository.findList(from, to),
-                repository.findSnapshotMaxRegDate()
+                repository.findLastRegDate(),
+                repository.dialect().live()
         );
     }
 }

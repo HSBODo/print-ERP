@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Download, RotateCcw, Search, TriangleAlert } from 'lucide-react'
+import { ChevronDown, Download, Radio, RotateCcw, Search, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
@@ -40,36 +40,40 @@ import {
  *  - 필터는 레거시의 4블록 폼 대신 다른 리스트 화면과 같은 단일 행 툴바로 그린다.
  */
 export function ReservationListHomepagePage() {
+  // 등록일만 서버 조회 파라미터다 — draft(입력중) / query(조회에 반영됨)를 나눈다.
   const [draftFrom, setDraftFrom] = useState(defaultFrom)
   const [draftTo, setDraftTo] = useState(defaultTo)
-  const [draftDevice, setDraftDevice] = useState('전체')
-  const [draftReserve, setDraftReserve] = useState('전체')
-  const [draftKeyword, setDraftKeyword] = useState('')
   const [queryFrom, setQueryFrom] = useState(defaultFrom)
   const [queryTo, setQueryTo] = useState(defaultTo)
-  const [queryDevice, setQueryDevice] = useState('전체')
-  const [queryReserve, setQueryReserve] = useState('전체')
-  const [queryKeyword, setQueryKeyword] = useState('')
+  // 구분·예약구분·검색은 이미 받아온 행을 거르는 클라이언트 필터라 즉시 적용한다.
+  // (조회 버튼을 기다리게 하면 눌러도 아무 일이 없는 것처럼 보인다 — 서버 왕복이 필요 없다)
+  const [device, setDevice] = useState('전체')
+  const [reserve, setReserve] = useState('전체')
+  const [keyword, setKeyword] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [sortState, setSortState] = useState<SortState>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
-  const { rows, snapshotMaxRegDate, isLoading, isFetching, isError } =
+  const { rows, lastRegDate, live, isLoading, isFetching, isError } =
     useReservationListHomepage(queryFrom, queryTo, hasSearched)
   const showSkeleton = hasSearched && (isLoading || isFetching)
 
+  const sourceReady = hasSearched && !showSkeleton && !isError
   // 조회 구간이 스냅샷 범위를 넘으면 건수가 조용히 모자라게 나온다 — 명시적으로 경고.
+  // 실시간 소스에는 이 천장이 없다. 그때 같은 비교를 하면 미래 날짜 조회마다 거짓 경고가 뜬다.
   const beyondSnapshot =
-    hasSearched && !showSkeleton && !isError && isRangeBeyondSnapshot(queryTo, snapshotMaxRegDate)
+    sourceReady && !live && isRangeBeyondSnapshot(queryTo, lastRegDate)
+  // 실시간이면 경고 대신 신선도를 알린다 — 안 그러면 소스 시점을 알 길이 없어진다.
+  const showLiveNote = sourceReady && live && Boolean(lastRegDate)
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
-      if (queryDevice !== '전체' && r.deviceType.trim() !== queryDevice) return false
-      if (queryReserve !== '전체' && r.isReserve.trim() !== queryReserve) return false
-      return matchesSearch(r, queryKeyword)
+      if (device !== '전체' && r.deviceType.trim() !== device) return false
+      if (reserve !== '전체' && r.isReserve.trim() !== reserve) return false
+      return matchesSearch(r, keyword)
     })
-  }, [rows, queryDevice, queryReserve, queryKeyword])
+  }, [rows, device, reserve, keyword])
 
   const sortedRows = useMemo(() => {
     if (!sortState) return filtered
@@ -98,31 +102,32 @@ export function ReservationListHomepagePage() {
   const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1
   const rangeEnd = Math.min(safePage * pageSize, filtered.length)
 
+  /** 조회 = 등록일 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
   const handleSearch = () => {
     setHasSearched(true)
     setCurrentPage(1)
     setQueryFrom(draftFrom)
     setQueryTo(draftTo)
-    setQueryDevice(draftDevice)
-    setQueryReserve(draftReserve)
-    setQueryKeyword(draftKeyword)
   }
 
   const handleReset = () => {
     setDraftFrom(defaultFrom())
     setDraftTo(defaultTo())
-    setDraftDevice('전체')
-    setDraftReserve('전체')
-    setDraftKeyword('')
     setQueryFrom(defaultFrom())
     setQueryTo(defaultTo())
-    setQueryDevice('전체')
-    setQueryReserve('전체')
-    setQueryKeyword('')
+    setDevice('전체')
+    setReserve('전체')
+    setKeyword('')
     setPageSize(DEFAULT_PAGE_SIZE)
     setCurrentPage(1)
     setSortState(null)
     setHasSearched(false)
+  }
+
+  /** 클라이언트 필터 변경 — 즉시 반영하고 1페이지로 되돌린다(3페이지에서 걸러 0건이 보이는 걸 막는다). */
+  const changeFilter = (apply: () => void) => {
+    apply()
+    setCurrentPage(1)
   }
 
   const handlePageChange = (page: number) => {
@@ -173,13 +178,13 @@ export function ReservationListHomepagePage() {
             <button
               key={option.value}
               type="button"
-              aria-pressed={draftDevice === option.value}
+              aria-pressed={device === option.value}
               className={`min-w-[3.5rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 ${
-                draftDevice === option.value
+                device === option.value
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
               }`}
-              onClick={() => setDraftDevice(option.value)}
+              onClick={() => changeFilter(() => setDevice(option.value))}
             >
               {option.label}
             </button>
@@ -188,8 +193,8 @@ export function ReservationListHomepagePage() {
         <div className="relative">
           <select
             aria-label="예약구분"
-            value={draftReserve}
-            onChange={(e) => setDraftReserve(e.target.value)}
+            value={reserve}
+            onChange={(e) => changeFilter(() => setReserve(e.target.value))}
             className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             {RESERVE_FILTER_OPTIONS.map((option) => (
@@ -203,9 +208,8 @@ export function ReservationListHomepagePage() {
         <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
           <input
             type="text"
-            value={draftKeyword}
-            onChange={(e) => setDraftKeyword(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+            value={keyword}
+            onChange={(e) => changeFilter(() => setKeyword(e.target.value))}
             placeholder="이름 · 휴대폰번호"
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
@@ -247,8 +251,18 @@ export function ReservationListHomepagePage() {
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
           <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" />
           <span>
-            현재 데이터 소스는 <strong className="tabular-nums">{snapshotMaxRegDate}</strong> 까지의 스냅샷입니다.
+            현재 데이터 소스는 <strong className="tabular-nums">{lastRegDate}</strong> 까지의 스냅샷입니다.
             조회 종료일({queryTo})이 이 시점을 넘어서 <strong>그 이후 등록건은 집계되지 않았습니다</strong> — 실제보다 적은 건수입니다.
+          </span>
+        </div>
+      )}
+
+      {showLiveNote && (
+        <div className="flex items-start gap-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-800">
+          <Radio className="mt-px h-3.5 w-3.5 shrink-0" />
+          <span>
+            <strong>실시간</strong> — 레거시 홈페이지 운영 DB 를 직접 조회합니다.
+            마지막 등록건: <strong className="tabular-nums">{lastRegDate}</strong>
           </span>
         </div>
       )}

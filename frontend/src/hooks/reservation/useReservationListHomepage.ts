@@ -17,7 +17,10 @@ export function useReservationListHomepage(from: string, to: string, enabled = t
 
   return {
     rows: enabled ? (data?.rows ?? []) as ReservationListHomepageItem[] : [],
-    snapshotMaxRegDate: enabled ? (data?.snapshotMaxRegDate ?? '') : '',
+    lastRegDate: enabled ? (data?.lastRegDate ?? '') : '',
+    // 실시간 소스면 '스냅샷 초과' 경고가 의미 없다 → 배너를 끈다.
+    // 응답 전(undefined)에는 false 로 둔다 — 스냅샷 가정이 안전한 기본값이다(경고를 놓치는 쪽보다 낫다).
+    live: enabled ? (data?.live ?? false) : false,
     isLoading,
     isFetching,
     isError,
