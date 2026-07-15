@@ -134,6 +134,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/reservation-list'
   ),
   statsPage(
+    'reservation-list-homepage',
+    '예약자 리스트_홈페이지',
+    '/stats/reservation-list-homepage',
+    'reservation-group',
+    '예약',
+    '홈페이지 온라인 예약 신청 명단입니다. 레거시 관리자 화면(counsel/online_list.php)과 동일한 조회 조건·컬럼 구성이며, 등록일 기준 조회입니다.',
+    '/api/reservation-list-homepage'
+  ),
+  statsPage(
     'exam-list',
     '검사자 리스트',
     '/stats/exam-list',

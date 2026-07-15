@@ -60,8 +60,17 @@ services:
       # postgres 컨테이너 비활성화 상태 — POSTGRES_URL 은 backend/.env 에서 외부 개발 DB 주소로 지정.
       # 컨테이너 재활성화 시 기본값을 jdbc:postgresql://postgres:5432/${POSTGRES_DB:-analytics} 로 되돌린다.
       POSTGRES_URL: ${POSTGRES_URL}
+      # 레거시 홈페이지 온라인 예약 소스(예약자 리스트_홈페이지). 기본은 꺼짐 —
+      # backend/.env 의 값은 호스트 경로라 컨테이너에서 못 읽으므로 여기서 빈 값으로 덮는다.
+      # (빈 값이면 관련 빈이 안 떠서 해당 API 만 503. 앱 기동에는 영향 없다.)
+      # 도커에서도 쓰려면: 아래 volumes 의 마운트 주석을 풀고 이 값을 컨테이너 경로로 지정.
+      #   LEGACY_DATASOURCE_URL: jdbc:sqlite:/app/legacy/legacy-consultations.sqlite?open_mode=1
+      LEGACY_DATASOURCE_URL: ${LEGACY_DATASOURCE_URL_CONTAINER:-}
     volumes:
       - analytics-cache:/app/.cache
+      # 레거시 온라인 예약 스냅샷을 읽기 전용으로 마운트할 때 사용.
+      # 호스트 경로는 각자 다르므로 backend/.env 에 LEGACY_CACHE_FILE 을 정의해 쓸 것.
+      # - ${LEGACY_CACHE_FILE}:/app/legacy/legacy-consultations.sqlite:ro
 
 volumes:
   analytics-cache:
