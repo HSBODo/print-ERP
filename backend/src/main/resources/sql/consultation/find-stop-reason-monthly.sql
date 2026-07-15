@@ -19,11 +19,11 @@
 --
 -- ⚠️ ELSE 로 떨어지는 코드는 에러 없이 조용히 other 가 된다. 운영에 새 CANCEL_CD 가 생겨도
 --    티가 안 나고 기타만 부푼다. 골든 대조에서 기타가 부풀면 이걸 먼저 의심할 것
---    (중단사유-분류-정의.md §검증 쿼리 1번). 검토를 마친 코드는 위처럼 WHEN 으로 명시할 것.
+--    (docs/db/중단사유-분류-정의.md §검증 쿼리 1번). 검토를 마친 코드는 위처럼 WHEN 으로 명시할 것.
 -- ⚠️ CANCEL_CD 는 이름과 달리 '취소 플래그'가 아니라 '중단 사유 코드'다. 다른 쿼리들은 같은 컬럼을
 --    취소 판정(ISNULL(e.CANCEL_CD,'') = '')에 쓴다 — 한쪽 의미로만 알고 고치면 다른 쪽이 깨진다.
 --
--- 매핑을 바꾸는 법·검증 쿼리·함정: 중단사유-분류-정의.md
+-- 매핑을 바꾸는 법·검증 쿼리·함정: docs/db/중단사유-분류-정의.md
             SELECT t.yr, t.mo,
                    SUM(CASE WHEN t.cat = 'recommendX'    THEN 1 ELSE 0 END) AS recommendX,
                    SUM(CASE WHEN t.cat = 'lensImpossible' THEN 1 ELSE 0 END) AS lensImpossible,

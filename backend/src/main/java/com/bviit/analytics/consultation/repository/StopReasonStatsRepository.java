@@ -35,7 +35,7 @@ import java.util.Map;
  *   취소 판정(ISNULL(e.CANCEL_CD,'') = '')에 쓴다 — 같은 컬럼, 두 용도.
  *
  * 분류 규칙 본체는 sql/consultation/find-stop-reason-monthly.sql 의 CASE 문 한 곳.
- * 매핑 변경 절차·검증 쿼리·함정은 중단사유-분류-정의.md 참조.
+ * 매핑 변경 절차·검증 쿼리·함정은 docs/db/중단사유-분류-정의.md 참조.
  *
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
  */
