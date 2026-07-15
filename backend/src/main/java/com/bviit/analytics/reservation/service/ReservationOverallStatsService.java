@@ -61,7 +61,12 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
         int minYear = normalizedYears.stream().mapToInt(Integer::intValue).min().orElse(2025);
         int maxYear = normalizedYears.stream().mapToInt(Integer::intValue).max().orElse(2026);
         String from = minYear + "-01-01";
+        // MSSQL 소스(종합·네이버·카카오)는 InsertedDateTime <= :to 라 상한에 시각이 필요하다.
         String to = maxYear + "-12-31 23:59:59";
+        // 레거시 홈페이지 소스는 규약이 다르다 — reg_date < (:to + 1일) 반개구간이라 '날짜'를 기대한다.
+        // 위 to 를 그대로 넘기면 MariaDB 에서 < (다음해 1/1 23:59:59) 가 되어 다음 해 1/1 이 딸려오고,
+        // SQLite 는 date() 가 시각을 버려 딸려오지 않는다 — 같은 입력에 소스별로 결과가 갈린다.
+        String homepageTo = maxYear + "-12-31";
 
         List<Map<String, Object>> rows = repository.findReservationOverallMonthly(from, to);
         Map<String, Integer> dbTotal = new HashMap<>();
@@ -91,7 +96,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
                             + "legacy.datasource.url 을 설정하세요. "
                             + "(미설정 상태로 계산하면 홈페이지 몫이 빠진 값이 조용히 적재됩니다)"));
 
-            homepage = countsByMonth(homepageRepo.findMonthlyDedupedCounts(from, to), "cnt");
+            homepage = countsByMonth(homepageRepo.findMonthlyDedupedCounts(from, homepageTo), "cnt");
             homepageMaxMonth = coverageMonth(homepageRepo.findLastRegDate());
         }
 

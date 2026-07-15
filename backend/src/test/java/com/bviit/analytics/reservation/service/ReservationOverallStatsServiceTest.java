@@ -119,6 +119,18 @@ class ReservationOverallStatsServiceTest {
     }
 
     @Test
+    void 소스마다_기간_상한_규약이_달라_to_를_형식별로_넘긴다() {
+        service().getMonthlyStats(List.of(2026));
+
+        // MSSQL 소스: InsertedDateTime <= :to → 그날 마지막 시각까지 포함해야 한다.
+        verify(repository).findReservationOverallMonthly("2026-01-01", "2026-12-31 23:59:59");
+        // 레거시 홈페이지 소스: reg_date < (:to + 1일) 반개구간 → '날짜'여야 한다.
+        // 시각이 붙은 값을 넘기면 MariaDB 는 < (2027-01-01 23:59:59) 가 되어 다음 해 1/1 이 딸려오고,
+        // SQLite 는 date() 가 시각을 버려 안 딸려온다 — 같은 입력에 소스별로 결과가 갈린다.
+        verify(homepageRepository).findMonthlyDedupedCounts("2026-01-01", "2026-12-31");
+    }
+
+    @Test
     void 컷오버_이전_연도만_조회하면_레거시_소스가_없어도_동작한다() {
         when(repository.findReservationOverallMonthly(anyString(), anyString()))
                 .thenReturn(List.of(Map.of("yr", 2025, "mo", 12, "cnt", 2209, "online_cnt", 975, "call_cnt", 1234)));

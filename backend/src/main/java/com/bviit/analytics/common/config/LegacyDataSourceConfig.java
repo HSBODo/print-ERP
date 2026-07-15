@@ -54,6 +54,7 @@ public class LegacyDataSourceConfig {
 
     @Bean("legacyDataSource")
     public DataSource legacyDataSource(
+            @Qualifier("legacyDialect") LegacyDialect dialect,
             @Value("${legacy.datasource.url}") String url,
             @Value("${legacy.datasource.username:}") String username,
             @Value("${legacy.datasource.password:}") String password,
@@ -64,17 +65,14 @@ public class LegacyDataSourceConfig {
     ) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(url);
-        // 미지정이면 URL 에서 파생한다 — URL 과 드라이버가 어긋날 여지를 없앤다.
-        if (driverClassName.isBlank()) {
-            driverClassName = LegacyDialect.of(url).driverClassName();
-        }
         if (!username.isBlank()) {
             ds.setUsername(username);
         }
         if (!password.isBlank()) {
             ds.setPassword(password);
         }
-        ds.setDriverClassName(driverClassName);
+        // 미지정이면 방언에서 파생한다 — URL 과 드라이버가 어긋날 여지를 없앤다.
+        ds.setDriverClassName(driverClassName.isBlank() ? dialect.driverClassName() : driverClassName);
         ds.setMaximumPoolSize(maxPoolSize);
         ds.setReadOnly(readOnly);
         ds.setConnectionTimeout(connectionTimeout);
