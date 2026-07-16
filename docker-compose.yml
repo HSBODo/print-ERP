@@ -29,13 +29,23 @@ services:
 
   # ─────────────────────────────────────────────────────────────
   # 애플리케이션
-  # 실행: docker compose up  (postgres 는 외부 개발 DB 사용)
-  # SPRING_PROFILES_ACTIVE 는 backend/.env 또는 아래 environment 에서 지정 (기본 mssql).
+  # 실행: docker compose up -d
+  #
+  # SSH 터널: 컨테이너 자체가 entrypoint.sh 에서 sshpass 로 터널을 연다(사이드카 없음).
+  # SSH_HOST 가 설정된 경우에만 활성 — 미설정 시 홈페이지 API 만 503, 앱 기동엔 영향 없음.
+  # 자세한 env 는 backend/.env.example 참고.
   # ─────────────────────────────────────────────────────────────
   analytics:
     build:
       context: .
       dockerfile: Dockerfile
+      # Nexus(사내 Maven 저장소) 인증. Dockerfile 이 BuildKit secret 으로 읽는다.
+      # 로컬: backend/.env 의 NEXUS_USERNAME/NEXUS_PASSWORD 를 env 시크릿으로 전달.
+      # 젠킨스: 파이프라인이 `docker build --secret id=nexus_id,env=NEXUS_USERNAME` 로 직접 주입 —
+      # 이 secrets 블록은 로컬 `docker compose build` 경로에서만 사용됨.
+      secrets:
+        - nexus_id
+        - nexus_pw
     image: bviit-analytics:${IMAGE_TAG:-latest}
     container_name: bviit-analytics
     restart: unless-stopped
@@ -46,29 +56,24 @@ services:
     #   postgres:
     #     condition: service_healthy
     #     required: false
-    # backend/.env 가 실제 파일. 프로젝트 루트 .env 는 이 파일로의 symlink.
-    #   - env_file: backend/.env  → analytics 컨테이너 런타임 환경변수
-    #   - 루트 .env (symlink)      → docker-compose.yml 의 ${VAR} 치환용 (postgres 초기화 등)
     env_file:
       - backend/.env
     environment:
-      # Spring profile ({local|dev|prod} 권장 / 레거시: mssql,postgres,postgres-mart / 미지정=H2).
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-mssql}
       SERVER_PORT: "18080"
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:18080}
       STATS_CACHE_DIR: /app/.cache/stats
-      # postgres 컨테이너 비활성화 상태 — POSTGRES_URL 은 backend/.env 에서 외부 개발 DB 주소로 지정.
-      # 컨테이너 재활성화 시 기본값을 jdbc:postgresql://postgres:5432/${POSTGRES_DB:-analytics} 로 되돌린다.
       POSTGRES_URL: ${POSTGRES_URL}
-      # 레거시 홈페이지 온라인 예약 소스(예약자 리스트_홈페이지). 기본은 꺼짐 —
-      # backend/.env 의 값은 호스트 경로라 컨테이너에서 못 읽으므로 여기서 빈 값으로 덮는다.
-      # (빈 값이면 관련 빈이 안 떠서 해당 API 만 503. 앱 기동에는 영향 없다.)
-      # 도커에서도 쓰려면: 아래 volumes 의 마운트 주석을 풀고 이 값을 컨테이너 경로로 지정.
-      #   LEGACY_DATASOURCE_URL: jdbc:sqlite:/app/legacy/legacy-consultations.sqlite?open_mode=1
-      LEGACY_DATASOURCE_URL: ${LEGACY_DATASOURCE_URL_CONTAINER:-}
+      # 레거시 홈페이지 온라인 예약 소스. 값 유무로 관련 빈이 켜지는 스위치.
+      #   - 미설정(빈값): 관련 빈 미기동 → /api/reservation-list-homepage 만 503.
+      #   - MariaDB 직결(컨테이너 내부 SSH 터널 경유): jdbc:mariadb://127.0.0.1:13306/bseyecom_db
+      #     함께 SSH_HOST/PORT/USER/PASSWORD 도 세팅 필요. entrypoint.sh 가 터널을 연다.
+      #   - SQLite 스냅샷 마운트: jdbc:sqlite:/app/legacy/legacy-consultations.sqlite?open_mode=1
+      #     (아래 volumes 의 LEGACY_CACHE_FILE 마운트 주석 해제 필요)
+      LEGACY_DATASOURCE_URL: ${LEGACY_DATASOURCE_URL:-}
     volumes:
       - analytics-cache:/app/.cache
-      # 레거시 온라인 예약 스냅샷을 읽기 전용으로 마운트할 때 사용.
+      # 레거시 온라인 예약 스냅샷을 읽기 전용으로 마운트할 때 사용(MariaDB 대신 SQLite 를 쓸 때).
       # 호스트 경로는 각자 다르므로 backend/.env 에 LEGACY_CACHE_FILE 을 정의해 쓸 것.
       # - ${LEGACY_CACHE_FILE}:/app/legacy/legacy-consultations.sqlite:ro
 
@@ -76,3 +81,15 @@ volumes:
   analytics-cache:
   # postgres 컨테이너 재활성화 시 아래 볼륨 주석 해제.
   # postgres-data:
+
+# ─────────────────────────────────────────────────────────────
+# BuildKit 시크릿 — analytics.build 가 참조 (로컬 compose 빌드 시).
+# Dockerfile 내부: --mount=type=secret,id=nexus_id / nexus_pw
+# 값은 backend/.env 의 NEXUS_USERNAME / NEXUS_PASSWORD 환경변수에서 조달.
+# 젠킨스 파이프라인은 docker build 를 직접 호출해 --secret 로 넘기므로 이 블록과 무관.
+# ─────────────────────────────────────────────────────────────
+secrets:
+  nexus_id:
+    environment: NEXUS_USERNAME
+  nexus_pw:
+    environment: NEXUS_PASSWORD
