@@ -92,12 +92,18 @@ class ReservationOverallStatsServiceTest {
     }
 
     @Test
-    void 스냅샷이_온전히_담지_못한_달은_0_이_아니라_null_이다() {
-        // 7월은 스냅샷이 10일까지만 담고 있다 → 조용히 적은 값 대신 선을 끊는다.
-        ReservationOverallMonthlyItem july = monthOf(service().getMonthlyStats(List.of(2026)), 7);
+    void 과거의_부분_월은_null_이다() {
+        // 정책: 과거 달은 말일까지 담긴 경우에만 인정 — 부분 과거 월은 배제한다.
+        // (현재 진행 중인 달은 별도로 부분값 노출 — coverageMonth 의 YearMonth.now() 분기)
+        //
+        // 5/10 까지만 담긴 스냅샷 → 5월도 부분 → coverage = 4월 → 6월은 4월 이후이므로 null.
+        // 이 시나리오는 실제 clock 이 어느 달이든 성립한다(5월도, 6월도 결과가 같음).
+        when(homepageRepository.findLastRegDate()).thenReturn("2026-05-10 16:15:55");
 
-        assertThat(july.getOnline()).isNull();
-        assertThat(july.getReservations()).isNull();
+        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 6);
+
+        assertThat(june.getOnline()).isNull();
+        assertThat(june.getReservations()).isNull();
     }
 
     @Test

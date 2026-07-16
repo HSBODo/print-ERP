@@ -181,14 +181,22 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
     }
 
     /**
-     * 홈페이지 소스가 '온전히' 커버하는 마지막 달. 말일까지 담긴 경우에만 그 달을 인정한다.
+     * 홈페이지 소스가 커버하는 마지막 달.
      *
-     * <p>소스가 스냅샷이든 실시간이든 판정은 같다 — 부분만 담긴 달은 신뢰하지 않는다.
+     * <p><b>과거 달은 엄격</b> — 말일까지 담긴 경우에만 그 달을 인정한다.
+     * 스냅샷의 마지막 등록일이 6월 10일이면 6월도 부분이므로 5월까지만 인정.
+     * 부분 과거 월을 0 으로 더하면 '조용히 작은 온라인 예약'이 되기 때문.
+     *
+     * <p><b>현재 달은 관대함</b> — 진행 중인 달은 정의상 말일까지 안 담겨 있어도
+     * 사용자에게 "현재까지 접수된 온라인 예약" 을 보여주는 편이 유용하다. 프론트가 필요 시
+     * '진행 중 (D-1 까지 반영)' 라벨을 붙일 수 있게 값 자체는 노출한다.
+     *
+     * <p>예시:
      * <ul>
-     *   <li>스냅샷(마지막 등록일 2026-07-10): 7월은 10일까지뿐 → 온전한 마지막 달은 6월
-     *   <li>실시간(오늘이 2026-07-15): 7월은 아직 안 끝났다 → 마찬가지로 6월
+     *   <li>오늘 2026-07-16, 마지막 등록일 2026-07-15 → 커버 = <b>2026-07</b> (현재 달이라 인정)
+     *   <li>오늘 2026-07-16, 마지막 등록일 2026-06-10 → 커버 = <b>2026-05</b> (6월 부분이라 배제)
+     *   <li>오늘 2026-07-16, 마지막 등록일 2026-06-30 → 커버 = <b>2026-06</b> (6월 완료)
      * </ul>
-     * 어느 쪽이든 부분 월을 0 으로 더하면 '조용히 작은 온라인 예약'이 되므로 null 로 끊는다.
      *
      * @param lastRegDate 소스의 마지막 등록일시('YYYY-MM-DD ...'). 빈 값이면 판정 불가.
      * @return 판정 불가면 null — 이 경우 달 제한을 걸지 않는다
@@ -199,6 +207,11 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
         }
         java.time.LocalDate last = java.time.LocalDate.parse(lastRegDate.substring(0, 10));
         YearMonth ym = YearMonth.from(last);
+        // 현재 달은 정의상 진행 중이라 말일 도달 불가 — 부분값이라도 인정해 사용자가 흐름 파악 가능.
+        if (ym.equals(YearMonth.now())) {
+            return ym;
+        }
+        // 과거 달은 말일까지 담겨야 온전 — 부분 과거는 조용한 과소 노출 방지를 위해 배제.
         return last.getDayOfMonth() == ym.lengthOfMonth() ? ym : ym.minusMonths(1);
     }
 }
