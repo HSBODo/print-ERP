@@ -1,7 +1,7 @@
 package com.bviit.analytics.reservation.service;
 
 import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
-import com.bviit.analytics.reservation.repository.ReservationListHomepageRepository;
+import com.bviit.analytics.reservation.repository.HomepageOverallSource;
 import com.bviit.analytics.reservation.repository.ReservationOverallStatsRepository;
 import com.bviit.analytics.common.util.MonthlyBuckets;
 import lombok.RequiredArgsConstructor;
@@ -51,8 +51,20 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
     static final YearMonth ONLINE_FORMULA_CUTOVER = YearMonth.of(2026, 6);
 
     private final ReservationOverallStatsRepository repository;
-    /** 레거시 홈페이지 소스. 미설정 환경에서는 비어 있다 — 컷오버 이후 달을 계산할 때만 필수. */
-    private final Optional<ReservationListHomepageRepository> homepageRepository;
+    /**
+     * 홈페이지 몫 소스. postgres-mart 에서는 {@code ReservationListHomepageMartRepository}
+     * ({@code @Primary}) 가 마트 테이블 {@code mart_list_reservation_homepage} 를 읽고,
+     * 그 외 프로파일에서는 레거시 소스판({@code ReservationListHomepageRepository}) 이
+     * {@code legacy.datasource.url} 이 설정된 경우에만 후보로 들어온다.
+     *
+     * <p><b>배치 순서 결합</b> — postgres-mart 에서 마트를 읽으므로,
+     * {@code ReservationListHomepageMartJob} 이 이 서비스를 호출하는 {@code ReservationMartJob}
+     * 보다 먼저 실행돼야 한다({@code BatchOrchestrator.runDomains} 참조).
+     *
+     * <p>미설정 환경(마트도 없고 레거시 URL 도 없음)에서는 비어 있다 — 컷오버(2026-06) 이후 달을
+     * 계산할 때만 필수라 그 이전 구간은 이 값 없이도 정상 동작한다.
+     */
+    private final Optional<HomepageOverallSource> homepageRepository;
 
     @Override
     public List<ReservationOverallMonthlyItem> getMonthlyStats(List<Integer> years) {
@@ -90,10 +102,11 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
         YearMonth homepageMaxMonth = null;
 
         if (needsNewFormula) {
-            ReservationListHomepageRepository homepageRepo = homepageRepository.orElseThrow(() ->
+            HomepageOverallSource homepageRepo = homepageRepository.orElseThrow(() ->
                     new IllegalStateException(
-                            "온라인 예약(2026-06~)은 레거시 홈페이지 소스가 필요합니다. "
-                            + "legacy.datasource.url 을 설정하세요. "
+                            "온라인 예약(2026-06~)은 홈페이지 소스가 필요합니다. "
+                            + "postgres-mart 에서는 mart_list_reservation_homepage 마트가 채워져 있어야 하고, "
+                            + "그 외 프로파일에서는 legacy.datasource.url 을 설정하세요. "
                             + "(미설정 상태로 계산하면 홈페이지 몫이 빠진 값이 조용히 적재됩니다)"));
 
             homepage = countsByMonth(homepageRepo.findMonthlyDedupedCounts(from, homepageTo), "cnt");

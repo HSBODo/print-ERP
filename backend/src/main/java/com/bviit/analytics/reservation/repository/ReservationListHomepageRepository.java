@@ -31,7 +31,7 @@ import java.util.Map;
  */
 @Repository
 @ConditionalOnExpression(LegacyDataSourceConfig.ENABLED_EXPRESSION)
-public class ReservationListHomepageRepository {
+public class ReservationListHomepageRepository implements HomepageOverallSource {
 
     private static final String SQL_BASE = "sql/reservation-list-homepage/";
 
@@ -77,6 +77,7 @@ public class ReservationListHomepageRepository {
      *
      * @return yr, mo, cnt 를 담은 행들(데이터가 없는 달은 행 자체가 없다)
      */
+    @Override
     public List<Map<String, Object>> findMonthlyDedupedCounts(String from, String to) {
         return jdbc.queryForList(monthlyDedupedSql, new MapSqlParameterSource()
                 .addValue("from", from)
@@ -89,6 +90,7 @@ public class ReservationListHomepageRepository {
      * <p>스냅샷이면 이 값이 곧 '천장'이다(이후 구간은 조용히 빈다). 실시간이면 그냥 최신 등록건
      * 시각이다 — 의미가 갈리므로 호출부는 {@link #dialect()}{@code .live()} 를 함께 봐야 한다.
      */
+    @Override
     public String findLastRegDate() {
         String value = jdbc.queryForObject(
                 lastRegDateSql, new MapSqlParameterSource(), String.class);
