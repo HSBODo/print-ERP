@@ -1,6 +1,6 @@
 package com.bviit.analytics.reservation.service;
 
-import com.bviit.analytics.common.config.LegacyDataSourceConfig;
+import com.bviit.analytics.common.config.HomepageDataSourceConfig;
 import com.bviit.analytics.reservation.dto.ReservationListHomepageResult;
 import com.bviit.analytics.reservation.repository.ReservationListHomepageRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
  * 조회라 트랜잭션이 필요 없다.
  */
 @Service
-@ConditionalOnExpression(LegacyDataSourceConfig.ENABLED_EXPRESSION)
+@ConditionalOnExpression(HomepageDataSourceConfig.ENABLED_EXPRESSION)
 @RequiredArgsConstructor
 public class ReservationListHomepageService implements ReservationListHomepageReader {
 

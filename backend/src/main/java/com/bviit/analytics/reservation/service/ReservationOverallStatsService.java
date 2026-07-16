@@ -38,7 +38,7 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  * SQL 한 방으로 조인할 수 없다. 그래서 세 쿼리를 각각 읽어 여기서 더한다.
  *
  * <p><b>레거시 소스가 없으면 실패시킨다</b> — 홈페이지 몫이 빠진 채로 조용히 작은 값을 마트에
- * 적재하면 아무도 눈치채지 못한다. 운영에도 {@code legacy.datasource.url} 이 설정돼 있어야 한다.
+ * 적재하면 아무도 눈치채지 못한다. 운영에도 {@code homepage.datasource.url} 이 설정돼 있어야 한다.
  *
  * ⚠️ 등록일(InsertedDateTime) 기준 집계. 미래월은 자연히 행이 없어 null.
  */
@@ -55,7 +55,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
      * 홈페이지 몫 소스. postgres-mart 에서는 {@code ReservationListHomepageMartRepository}
      * ({@code @Primary}) 가 마트 테이블 {@code mart_list_reservation_homepage} 를 읽고,
      * 그 외 프로파일에서는 레거시 소스판({@code ReservationListHomepageRepository}) 이
-     * {@code legacy.datasource.url} 이 설정된 경우에만 후보로 들어온다.
+     * {@code homepage.datasource.url} 이 설정된 경우에만 후보로 들어온다.
      *
      * <p><b>배치 순서 결합</b> — postgres-mart 에서 마트를 읽으므로,
      * {@code ReservationListHomepageMartJob} 이 이 서비스를 호출하는 {@code ReservationMartJob}
@@ -106,7 +106,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
                     new IllegalStateException(
                             "온라인 예약(2026-06~)은 홈페이지 소스가 필요합니다. "
                             + "postgres-mart 에서는 mart_list_reservation_homepage 마트가 채워져 있어야 하고, "
-                            + "그 외 프로파일에서는 legacy.datasource.url 을 설정하세요. "
+                            + "그 외 프로파일에서는 homepage.datasource.url 을 설정하세요. "
                             + "(미설정 상태로 계산하면 홈페이지 몫이 빠진 값이 조용히 적재됩니다)"));
 
             homepage = countsByMonth(homepageRepo.findMonthlyDedupedCounts(from, homepageTo), "cnt");

@@ -1,7 +1,7 @@
 package com.bviit.analytics.reservation.repository;
 
-import com.bviit.analytics.common.config.LegacyDataSourceConfig;
-import com.bviit.analytics.common.config.LegacyDialect;
+import com.bviit.analytics.common.config.HomepageDataSourceConfig;
+import com.bviit.analytics.common.config.HomepageSourceDialect;
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -15,14 +15,14 @@ import java.util.Map;
 /**
  * 예약자 리스트_홈페이지 — 레거시 홈페이지 온라인 예약 소스 조회 (읽기 전용).
  *
- * <p>소스는 대시보드 DB 가 아니라 레거시 홈페이지 데이터다 → {@code legacyJdbcTemplate}.
- * {@code legacy.datasource.url} 이 없으면 DataSource 자체가 없으므로 이 빈도 함께 사라진다
- * (LegacyDataSourceConfig 와 동일 조건). 그 경우 컨트롤러가 503 을 준다.
+ * <p>소스는 대시보드 DB 가 아니라 레거시 홈페이지 데이터다 → {@code homepageJdbcTemplate}.
+ * {@code homepage.datasource.url} 이 없으면 DataSource 자체가 없으므로 이 빈도 함께 사라진다
+ * (HomepageDataSourceConfig 와 동일 조건). 그 경우 컨트롤러가 503 을 준다.
  *
  * <p><b>제약</b>
  * <ul>
  *   <li>READ-ONLY — 이 소스에 쓰기를 하지 않는다(레거시 운영계 원본이다).
- *   <li>소스가 둘이라 <b>SQL 세트도 둘</b>이다 — {@link LegacyDialect} 가 URL 로 판별해 고른다.
+ *   <li>소스가 둘이라 <b>SQL 세트도 둘</b>이다 — {@link HomepageSourceDialect} 가 URL 로 판별해 고른다.
  *       같은 데이터인데 스키마가 다르다(캐시가 원본을 snake_case 로 개명해 적재했다):
  *       스냅샷은 {@code consultations.legacy_no}, 운영 DB 는 {@code TBL_COUNSEL.C_NO} 다.
  *       한쪽 SQL 을 다른 쪽에 그대로 쓰면 'no such column' 이 난다.
@@ -30,20 +30,20 @@ import java.util.Map;
  * </ul>
  */
 @Repository
-@ConditionalOnExpression(LegacyDataSourceConfig.ENABLED_EXPRESSION)
+@ConditionalOnExpression(HomepageDataSourceConfig.ENABLED_EXPRESSION)
 public class ReservationListHomepageRepository implements HomepageOverallSource {
 
     private static final String SQL_BASE = "sql/reservation-list-homepage/";
 
     private final NamedParameterJdbcTemplate jdbc;
-    private final LegacyDialect dialect;
+    private final HomepageSourceDialect dialect;
     private final String listSql;
     private final String lastRegDateSql;
     private final String monthlyDedupedSql;
 
     public ReservationListHomepageRepository(
-            @Qualifier("legacyJdbcTemplate") NamedParameterJdbcTemplate jdbc,
-            @Qualifier("legacyDialect") LegacyDialect dialect
+            @Qualifier("homepageJdbcTemplate") NamedParameterJdbcTemplate jdbc,
+            @Qualifier("homepageSourceDialect") HomepageSourceDialect dialect
     ) {
         this.jdbc = jdbc;
         this.dialect = dialect;
@@ -53,12 +53,12 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     }
 
     /** sql/reservation-list-homepage/{sqlite|mariadb}/{fileName} */
-    static String sqlPath(LegacyDialect dialect, String fileName) {
+    static String sqlPath(HomepageSourceDialect dialect, String fileName) {
         return SQL_BASE + dialect.sqlDir() + "/" + fileName;
     }
 
     /** 현재 소스의 방언 — Service 가 live 여부(경고 배너 on/off)를 판단하는 데 쓴다. */
-    public LegacyDialect dialect() {
+    public HomepageSourceDialect dialect() {
         return dialect;
     }
 

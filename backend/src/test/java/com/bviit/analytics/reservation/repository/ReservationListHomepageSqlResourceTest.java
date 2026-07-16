@@ -1,6 +1,6 @@
 package com.bviit.analytics.reservation.repository;
 
-import com.bviit.analytics.common.config.LegacyDialect;
+import com.bviit.analytics.common.config.HomepageSourceDialect;
 import com.bviit.analytics.common.util.SqlLoader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +36,7 @@ class ReservationListHomepageSqlResourceTest {
      *   <li>공백 정규화 — 별칭 정렬용 공백 개수에 단언이 매이지 않게 한다.
      * </ul>
      */
-    private static String sqlBody(LegacyDialect dialect, String fileName) {
+    private static String sqlBody(HomepageSourceDialect dialect, String fileName) {
         return SqlLoader.load(ReservationListHomepageRepository.sqlPath(dialect, fileName))
                 .replaceAll("--[^\\n]*", "")
                 .replaceAll("\\s+", " ")
@@ -51,8 +51,8 @@ class ReservationListHomepageSqlResourceTest {
     };
 
     @ParameterizedTest
-    @EnumSource(LegacyDialect.class)
-    void 목록_sql은_어느_소스든_프론트_zod_계약인_camelCase_별칭_14개를_보존한다(LegacyDialect dialect) {
+    @EnumSource(HomepageSourceDialect.class)
+    void 목록_sql은_어느_소스든_프론트_zod_계약인_camelCase_별칭_14개를_보존한다(HomepageSourceDialect dialect) {
         String sql = sqlBody(dialect, "reservation-list-homepage.sql");
 
         for (String alias : ALIASES) {
@@ -63,8 +63,8 @@ class ReservationListHomepageSqlResourceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(LegacyDialect.class)
-    void 목록_sql은_어느_소스든_레거시_동일건수_조건을_보존한다(LegacyDialect dialect) {
+    @EnumSource(HomepageSourceDialect.class)
+    void 목록_sql은_어느_소스든_레거시_동일건수_조건을_보존한다(HomepageSourceDialect dialect) {
         String sql = sqlBody(dialect, "reservation-list-homepage.sql");
 
         assertThat(sql).contains(":from", ":to");
@@ -76,7 +76,7 @@ class ReservationListHomepageSqlResourceTest {
 
     @Test
     void 스냅샷_세트는_SQLite_스키마와_방언을_쓴다() {
-        String sql = sqlBody(LegacyDialect.SQLITE, "reservation-list-homepage.sql");
+        String sql = sqlBody(HomepageSourceDialect.SQLITE, "reservation-list-homepage.sql");
 
         assertThat(sql)
                 .contains("FROM consultations")
@@ -90,7 +90,7 @@ class ReservationListHomepageSqlResourceTest {
 
     @Test
     void 운영_세트는_TBL_COUNSEL_원본_스키마와_MariaDB_방언을_쓴다() {
-        String sql = sqlBody(LegacyDialect.MARIADB, "reservation-list-homepage.sql");
+        String sql = sqlBody(HomepageSourceDialect.MARIADB, "reservation-list-homepage.sql");
 
         assertThat(sql)
                 // 캐시가 개명한 이름(consultations/legacy_no/name)은 운영 DB 에 없다.
@@ -105,8 +105,8 @@ class ReservationListHomepageSqlResourceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(LegacyDialect.class)
-    void 월별_중복제외_sql은_어느_소스든_집계_조건을_보존한다(LegacyDialect dialect) {
+    @EnumSource(HomepageSourceDialect.class)
+    void 월별_중복제외_sql은_어느_소스든_집계_조건을_보존한다(HomepageSourceDialect dialect) {
         String sql = sqlBody(dialect, "monthly-deduped.sql");
 
         assertThat(sql).contains(":from", ":to");
@@ -119,8 +119,8 @@ class ReservationListHomepageSqlResourceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(LegacyDialect.class)
-    void 마지막_등록일시_sql은_신선도판단용이라_삭제건을_거르지_않는다(LegacyDialect dialect) {
+    @EnumSource(HomepageSourceDialect.class)
+    void 마지막_등록일시_sql은_신선도판단용이라_삭제건을_거르지_않는다(HomepageSourceDialect dialect) {
         String sql = sqlBody(dialect, "last-reg-date.sql");
 
         assertThat(sql).containsPattern("(?i)MAX\\(REG_DATE\\)");
@@ -131,13 +131,13 @@ class ReservationListHomepageSqlResourceTest {
 
     @Test
     void 방언은_URL_접두사로_판별한다() {
-        assertThat(LegacyDialect.of("jdbc:mariadb://127.0.0.1:13306/bseyecom_db")).isEqualTo(LegacyDialect.MARIADB);
-        assertThat(LegacyDialect.of("jdbc:sqlite:/app/legacy/x.sqlite?open_mode=1")).isEqualTo(LegacyDialect.SQLITE);
+        assertThat(HomepageSourceDialect.of("jdbc:mariadb://127.0.0.1:13306/bseyecom_db")).isEqualTo(HomepageSourceDialect.MARIADB);
+        assertThat(HomepageSourceDialect.of("jdbc:sqlite:/app/legacy/x.sqlite?open_mode=1")).isEqualTo(HomepageSourceDialect.SQLITE);
         // 미지 접두사는 기존 기본 동작(스냅샷)으로 — 실시간으로 오인해 경고를 끄는 것보다 안전하다.
-        assertThat(LegacyDialect.of("")).isEqualTo(LegacyDialect.SQLITE);
+        assertThat(HomepageSourceDialect.of("")).isEqualTo(HomepageSourceDialect.SQLITE);
 
         // 실시간 여부 = 경고 배너 on/off 의 근거
-        assertThat(LegacyDialect.MARIADB.live()).isTrue();
-        assertThat(LegacyDialect.SQLITE.live()).isFalse();
+        assertThat(HomepageSourceDialect.MARIADB.live()).isTrue();
+        assertThat(HomepageSourceDialect.SQLITE.live()).isFalse();
     }
 }

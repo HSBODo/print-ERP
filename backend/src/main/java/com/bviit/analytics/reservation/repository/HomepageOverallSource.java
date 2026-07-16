@@ -12,7 +12,7 @@ import java.util.Map;
  * <p>두 구현이 있다:
  * <ul>
  *   <li>{@link ReservationListHomepageRepository} — 레거시 소스(SQLite/MariaDB) 직결.
- *       {@code legacy.datasource.url} 이 설정된 경우에만 빈으로 등록된다.
+ *       {@code homepage.datasource.url} 이 설정된 경우에만 빈으로 등록된다.
  *   <li>{@link ReservationListHomepageMartRepository} — {@code mart_list_reservation_homepage} 마트 조회.
  *       {@code postgres-mart} 프로파일에서 {@code @Primary} — Optional 이 마트 쪽으로 해결된다.
  * </ul>

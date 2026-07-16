@@ -19,7 +19,7 @@ import javax.sql.DataSource;
  * spring.datasource(H2) 로 만들어줬다.
  *
  * <p>그런데 그 auto-config 는 {@code @ConditionalOnMissingBean(DataSource.class)} 다 —
- * <b>DataSource 빈이 하나라도 있으면 통째로 물러난다.</b> LegacyDataSourceConfig 가 켜지면
+ * <b>DataSource 빈이 하나라도 있으면 통째로 물러난다.</b> HomepageDataSourceConfig 가 켜지면
  * 그 SQLite DataSource 가 유일한 DataSource 가 되어 JPA 가 그걸 집어들고
  * "Unable to determine Dialect for SQLite" 로 기동이 깨졌다.
  *

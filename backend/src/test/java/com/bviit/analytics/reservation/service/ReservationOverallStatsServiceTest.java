@@ -115,7 +115,7 @@ class ReservationOverallStatsServiceTest {
         // 홈페이지 몫(202)이 빠진 62 를 마트에 적재하는 게 최악이다 — 차라리 터뜨린다.
         assertThatThrownBy(() -> noHomepage.getMonthlyStats(List.of(2026)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("legacy.datasource.url");
+                .hasMessageContaining("homepage.datasource.url");
     }
 
     @Test

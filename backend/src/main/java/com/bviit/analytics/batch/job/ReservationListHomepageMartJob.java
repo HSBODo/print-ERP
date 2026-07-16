@@ -25,8 +25,8 @@ import java.util.Optional;
  * {@link ReservationMartJob} 하나로 묶이지만, 이건 데이터소스가 달라 트랜잭션·의존성이 갈린다.
  *
  * <h2>소스 미설정 시</h2>
- * {@code legacy.datasource.url} 이 없으면 {@link ReservationListHomepageRepository} 빈이 없다
- * (LegacyDataSourceConfig 조건). Optional 로 받아 로그만 남기고 skip — 배치 전체가 실패하지 않게.
+ * {@code homepage.datasource.url} 이 없으면 {@link ReservationListHomepageRepository} 빈이 없다
+ * (HomepageDataSourceConfig 조건). Optional 로 받아 로그만 남기고 skip — 배치 전체가 실패하지 않게.
  *
  * <p>관련 문서: docs/databatch/legacy-homepage-source-strategy.md §3
  */
@@ -54,7 +54,7 @@ public class ReservationListHomepageMartJob {
         log.info("ReservationListHomepageMartJob start: range={}..{}", from, to);
 
         if (sourceRepository.isEmpty()) {
-            log.warn("ReservationListHomepageMartJob skip — legacy.datasource.url 미설정. "
+            log.warn("ReservationListHomepageMartJob skip — homepage.datasource.url 미설정. "
                     + "마트 적재 없음 (소스 없어 배치가 자연 skip). range={}..{}", from, to);
             return Map.of("mart_list_reservation_homepage", 0);
         }

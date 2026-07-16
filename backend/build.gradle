@@ -55,9 +55,9 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	runtimeOnly 'net.sourceforge.jtds:jtds:1.3.1'
-	// 레거시 홈페이지 온라인 예약 소스(읽기 전용) — LegacyDataSourceConfig 참조.
-	// legacy.datasource.url 미설정 시 DataSource 자체가 안 뜨므로 런타임에 로드되지 않는다.
-	// 소스는 둘 중 하나다. 방언은 URL 접두사로 자동 판별한다(LegacyDialect).
+	// 레거시 홈페이지 온라인 예약 소스(읽기 전용) — HomepageDataSourceConfig 참조.
+	// homepage.datasource.url 미설정 시 DataSource 자체가 안 뜨므로 런타임에 로드되지 않는다.
+	// 소스는 둘 중 하나다. 방언은 URL 접두사로 자동 판별한다(HomepageSourceDialect).
 	//   jdbc:sqlite:  — 로컬 스냅샷 파일 (기본. 자격증명·터널 불필요, 데이터는 스냅샷 시점까지)
 	//   jdbc:mariadb: — 레거시 운영 DB 직결 (실시간. SSH 터널 + 계정 필요)
 	runtimeOnly 'org.xerial:sqlite-jdbc:3.47.1.0'
