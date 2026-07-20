@@ -37,6 +37,7 @@ const run = () =>
       general: blank12(),
     },
     stopReasonByMonth: [{ ...emptyStop, recommendX: 23, total: 100 }, ...Array<StopReasonMonthlyItem | null>(11).fill(null)],
+    stopReasonMonth: 1,
   })
 
 const lines = () => run().split('\r\n')
@@ -90,6 +91,7 @@ describe('buildMonthlyReportCsv', () => {
       charts: { reservations: { 2025: Array.from({ length: 12 }, (_, i) => i) } } as Record<string, unknown>,
       success: { all: blank12(), oneday: blank12(), general: blank12() },
       stopReasonByMonth: Array<StopReasonMonthlyItem | null>(12).fill(null),
+      stopReasonMonth: 1,
     })
     expect(csv).not.toContain('상담성공률')
     expect(csv).not.toContain('중단사유')
@@ -108,6 +110,7 @@ describe('buildMonthlyReportCsv', () => {
       } as Record<string, unknown>,
       success: { all: blank12(), oneday: blank12(), general: blank12() },
       stopReasonByMonth: Array<StopReasonMonthlyItem | null>(12).fill(null),
+      stopReasonMonth: 1,
     })
     const at = (s: string) => csv.indexOf(s)
     expect(at('일반검사 비율')).toBeLessThan(at('상담성공률(전체)'))

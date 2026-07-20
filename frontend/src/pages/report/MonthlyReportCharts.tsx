@@ -7,10 +7,13 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
+import { Select } from '@/components/filters/Select'
 import type { StopReasonMonthlyItem } from '@/api/consultation'
 import { CURRENT_YEAR, MONTHS } from '@/constants/chart'
 import { formatAxisNumber } from '@/utils/stats'
 import { isIncompleteMonth } from './monthlyReportUtils'
+
+const MONTH_SELECT_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `${i + 1}월` }))
 
 /** 월간 레포트 전용 차트/표 서브컴포넌트. 공통 상수/로직은 monthlyReportUtils.ts. */
 
@@ -31,7 +34,20 @@ const REASONS: { key: keyof StopReasonMonthlyItem; label: string; color: string 
 
 const stopReasonConfig: ChartConfig = { value: { label: '건수', color: IMPOSSIBLE_COLOR } }
 
-export function StopReasonBar({ item, monthLabel }: { item: StopReasonMonthlyItem | null; monthLabel: string }) {
+export function StopReasonBar({
+  year,
+  items,
+  month,
+  onMonthChange,
+}: {
+  year: number
+  items: (StopReasonMonthlyItem | null)[]
+  month: number
+  onMonthChange: (m: number) => void
+}) {
+  const item = items[month - 1] ?? null
+  const monthLabel = `${year}년 ${month}월`
+
   const chartData = useMemo(() => {
     const rows = REASONS.map((r) => ({
       name: r.label,
@@ -44,10 +60,13 @@ export function StopReasonBar({ item, monthLabel }: { item: StopReasonMonthlyIte
 
   return (
     <Card className="report-chart flex break-inside-avoid flex-col border-border/70 shadow-sm">
-      <CardHeader className="items-center pb-2">
+      <CardHeader className="relative items-center pb-2">
         <CardTitle className="text-center text-lg">
           중단 사유<span className="text-sm font-medium text-muted-foreground"> ({monthLabel})</span>
         </CardTitle>
+        <div className="report-no-print absolute right-4 top-3">
+          <Select value={month} onChange={onMonthChange} options={MONTH_SELECT_OPTIONS} title="월 선택" />
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={stopReasonConfig} className="report-chart-area aspect-auto h-[480px] w-full">

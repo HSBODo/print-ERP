@@ -85,6 +85,8 @@ export interface MonthlyReportCsvInput {
   }
   /** 당해연도 12개월 중단 사유(없는 달은 null). */
   stopReasonByMonth: Array<StopReasonMonthlyItem | null>
+  /** 중단 사유 화면에서 선택한 월(1~12). CSV는 이 월 데이터만 채운다. */
+  stopReasonMonth: number
 }
 
 /** 월간 레포트 전 도표(#27 제외)를 세로형 CSV 문자열로 만든다(BOM 미포함). */
@@ -94,6 +96,7 @@ export function buildMonthlyReportCsv({
   currentYear,
   success,
   stopReasonByMonth,
+  stopReasonMonth,
 }: MonthlyReportCsvInput): string {
   const sortedYears = [...years].sort((a, b) => a - b)
   const lines: string[] = [['그룹', '지표', '단위', '연도', ...MONTHS].map(escapeCell).join(',')]
@@ -130,8 +133,11 @@ export function buildMonthlyReportCsv({
       pushRow('전환&성공', '상담성공률(일반)', '%', currentYear, success.general)
     } else {
       if (!includeCurrentYear) continue
+      // 중단 사유는 화면에서 선택한 단일 월만 값을 채우고, 나머지 월 열은 빈칸으로 둔다.
+      const selectedItem = stopReasonByMonth[stopReasonMonth - 1] ?? null
       for (const reason of STOP_REASONS) {
-        const values = stopReasonByMonth.map((item) => (item ? (item[reason.key] as number) : null))
+        const values: Array<number | null> = Array.from({ length: 12 }, () => null)
+        values[stopReasonMonth - 1] = selectedItem ? (selectedItem[reason.key] as number) : null
         pushRow('중단', reason.label, '건', currentYear, values)
       }
     }
