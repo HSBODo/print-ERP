@@ -11,8 +11,8 @@ import {
   compareSortValue,
   buildPaginationItems,
   formatCount,
-  DEFAULT_FROM,
-  DEFAULT_TO,
+  defaultFrom,
+  defaultTo,
   PAGE_SIZE_OPTIONS,
   type SortState,
 } from './examListUtils'
@@ -38,10 +38,10 @@ const sortValue = (r: AllExamListItem, key: string, originalIndex: number): stri
 }
 
 export function AllExamListPage() {
-  const [draftFrom, setDraftFrom] = useState(DEFAULT_FROM)
-  const [draftTo, setDraftTo] = useState(DEFAULT_TO)
-  const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
-  const [queryTo, setQueryTo] = useState(DEFAULT_TO)
+  const [draftFrom, setDraftFrom] = useState(defaultFrom)
+  const [draftTo, setDraftTo] = useState(defaultTo)
+  const [queryFrom, setQueryFrom] = useState(defaultFrom)
+  const [queryTo, setQueryTo] = useState(defaultTo)
   const [hasSearched, setHasSearched] = useState(false)
 
   const [examGroup, setExamGroup] = useState<string>('전체')
@@ -101,10 +101,10 @@ export function AllExamListPage() {
   }
 
   const handleReset = () => {
-    setDraftFrom(DEFAULT_FROM)
-    setDraftTo(DEFAULT_TO)
-    setQueryFrom(DEFAULT_FROM)
-    setQueryTo(DEFAULT_TO)
+    setDraftFrom(defaultFrom())
+    setDraftTo(defaultTo())
+    setQueryFrom(defaultFrom())
+    setQueryTo(defaultTo())
     setExamGroup('전체')
     setIntroType('전체')
     setJobBucket('전체')

@@ -13,8 +13,8 @@ import {
   surgeryDateOf,
   formatCount,
   CATEGORY_OPTIONS,
-  DEFAULT_FROM,
-  DEFAULT_TO,
+  defaultFrom,
+  defaultTo,
   PAGE_SIZE_OPTIONS,
   SKELETON_ROWS,
   QUICK_RANGES,
@@ -33,12 +33,12 @@ import {
 export function SurgeryListPage() {
   const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
   const [activeQuickRange, setActiveQuickRange] = useState<QuickRangeKey | null>(null)
-  const [draftFrom, setDraftFrom] = useState(DEFAULT_FROM)
-  const [draftTo, setDraftTo] = useState(DEFAULT_TO)
+  const [draftFrom, setDraftFrom] = useState(defaultFrom)
+  const [draftTo, setDraftTo] = useState(defaultTo)
   const [draftCategory, setDraftCategory] = useState('전체')
   const [draftKeyword, setDraftKeyword] = useState('')
-  const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
-  const [queryTo, setQueryTo] = useState(DEFAULT_TO)
+  const [queryFrom, setQueryFrom] = useState(defaultFrom)
+  const [queryTo, setQueryTo] = useState(defaultTo)
   const [queryCategory, setQueryCategory] = useState('전체')
   const [queryKeyword, setQueryKeyword] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -104,12 +104,12 @@ export function SurgeryListPage() {
   const handleReset = () => {
     setDraftPeriodMode('daily')
     setActiveQuickRange(null)
-    setDraftFrom(DEFAULT_FROM)
-    setDraftTo(DEFAULT_TO)
+    setDraftFrom(defaultFrom())
+    setDraftTo(defaultTo())
     setDraftCategory('전체')
     setDraftKeyword('')
-    setQueryFrom(DEFAULT_FROM)
-    setQueryTo(DEFAULT_TO)
+    setQueryFrom(defaultFrom())
+    setQueryTo(defaultTo())
     setQueryCategory('전체')
     setQueryKeyword('')
     setPageSize(50)
