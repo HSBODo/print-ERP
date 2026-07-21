@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { isMenuHidden, menuItems, statsPages } from './navigation'
+import { isMenuHidden, menuItems, statsPages, type MenuItem } from './navigation'
 
-const menuPaths = () =>
-  menuItems.flatMap((item) =>
-    item.children?.map((child) => child.href) ?? (item.href === '#' ? [] : [item.href]),
+/** 3단 트리를 재귀 탐색해 실제 링크(href !== '#')만 수집. */
+const collectPaths = (items: MenuItem[]): string[] =>
+  items.flatMap((item) =>
+    item.children ? collectPaths(item.children) : item.href === '#' ? [] : [item.href],
   )
+
+const menuPaths = () => collectPaths(menuItems)
 
 describe('navigation menu', () => {
   it('statsPages에 정의된 모든 통계 페이지는 메뉴에 노출 경로가 있어야 한다(숨김 메뉴 제외)', () => {
