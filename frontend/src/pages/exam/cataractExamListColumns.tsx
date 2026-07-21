@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { CataractExamListItem } from '@/api/exam/cataractExamList'
 import { calcAge, dash } from './cataractExamListUtils'
+import { maskJumin, maskName, maskPhone } from '@/utils/mask'
 
 /** CataractExamListPage 컬럼/뱃지 렌더 설정 (순수 로직은 cataractExamListUtils.ts). */
 
@@ -58,14 +59,14 @@ export const COLUMNS: Column[] = [
   { key: 'examType', label: '진료구분', align: 'center', min: '6rem', render: (r) => cell.badge(r.examType, EXAM_TYPE_STYLE[r.examType]) },
   { key: 'examTime', label: '검사시간', align: 'center', min: '4.5rem' },
   { key: 'chartNo', label: '차트번호', align: 'center', min: '6rem', text: true },
-  { key: 'name', label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
-  { key: 'nameEng', label: '고객명(영)', align: 'left', min: '7rem' },
+  { key: 'name', csv: (r) => maskName(r.name), label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
+  { key: 'nameEng', csv: (r) => maskName(r.nameEng), label: '고객명(영)', align: 'left', min: '7rem' },
   { key: 'grade', label: '등급', align: 'center', min: '3.5rem', render: (r) => cell.badge(r.grade, GRADE_STYLE[r.grade]) },
   { key: 'birth', label: '생년월일', align: 'center', min: '6rem' },
   { key: 'age', label: '만나이', align: 'right', min: '3.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
   { key: 'lunar', label: '양/음', align: 'center', min: '3.5rem' },
-  { key: 'phone2', label: '휴대전화', align: 'left', min: '8rem', text: true },
-  { key: 'phone1', label: '집전화', align: 'left', min: '7rem', text: true },
+  { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'left', min: '8rem', text: true },
+  { key: 'phone1', csv: (r) => maskPhone(r.phone1), label: '집전화', align: 'left', min: '7rem', text: true },
   { key: 'email', label: '이메일', align: 'left', min: '10rem', render: (r) => cell.truncate(r.email, '11rem') },
   { key: 'counselor', label: '상담사', align: 'center', min: '5rem' },
   { key: 'doctor', label: '상담의', align: 'center', min: '5rem' },
@@ -93,7 +94,7 @@ export const COLUMNS: Column[] = [
   { key: 'job', label: '직업', align: 'center', min: '6rem' },
   { key: 'nationality', label: '국적', align: 'center', min: '4.5rem' },
   { key: 'insurance', label: '보험사', align: 'center', min: '4.5rem' },
-  { key: 'jumin', label: '주민번호', align: 'center', min: '8rem', text: true },
+  { key: 'jumin', csv: (r) => maskJumin(r.jumin), label: '주민번호', align: 'center', min: '8rem', text: true },
   { key: 'zip', label: '우편번호', align: 'center', min: '4.5rem', text: true },
   { key: 'addr1', label: '주소1', align: 'left', min: '12rem', render: (r) => cell.truncate(r.addr1, '14rem') },
   { key: 'addr2', label: '주소2', align: 'left', min: '8rem', render: (r) => cell.truncate(r.addr2, '9rem') },

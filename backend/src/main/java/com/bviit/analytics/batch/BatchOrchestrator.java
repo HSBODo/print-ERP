@@ -6,6 +6,7 @@ import com.bviit.analytics.batch.job.EtcMartJob;
 import com.bviit.analytics.batch.job.ExamMartJob;
 import com.bviit.analytics.batch.job.OutpatientMartJob;
 import com.bviit.analytics.batch.job.OverallMartJob;
+import com.bviit.analytics.batch.job.ReservationListHomepageMartJob;
 import com.bviit.analytics.batch.job.ReservationMartJob;
 import com.bviit.analytics.batch.job.ReservationStatsDailyMartJob;
 import com.bviit.analytics.batch.job.SurgeryMartJob;
@@ -49,6 +50,7 @@ public class BatchOrchestrator {
     private final SurgeryMartJob surgeryMartJob;
     private final ReservationMartJob reservationMartJob;
     private final ReservationStatsDailyMartJob reservationStatsDailyMartJob;
+    private final ReservationListHomepageMartJob reservationListHomepageMartJob;
     private final ExamMartJob examMartJob;
     private final ConsultationMartJob consultationMartJob;
     private final OutpatientMartJob outpatientMartJob;
@@ -164,6 +166,11 @@ public class BatchOrchestrator {
         Map<String, Integer> stats = new LinkedHashMap<>();
         if (targets.contains(Domain.SURGERY))       stats.putAll(surgeryMartJob.run(from, to));
         if (targets.contains(Domain.RESERVATION)) {
+            // 홈페이지 리스트 마트를 먼저 채운다 — ReservationMartJob 안의 overallStatsService
+            // 가 홈페이지 몫을 mart_list_reservation_homepage 에서 읽기 때문. 순서를 바꾸면
+            // 2026-06~ 온라인 예약 종합값이 홈페이지 몫만큼 조용히 작게 적재된다.
+            // 소스가 MariaDB(별도 DS)라 트랜잭션·의존성이 갈려 별도 잡. 소스 미설정 시 잡 내부에서 skip.
+            stats.putAll(reservationListHomepageMartJob.run(from, to));
             stats.putAll(reservationMartJob.run(from, to));
             stats.putAll(reservationStatsDailyMartJob.run(from, to));
         }

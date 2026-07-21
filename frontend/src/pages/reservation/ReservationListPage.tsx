@@ -3,6 +3,7 @@ import { RotateCcw, Search, Check, Lock, CheckCircle2, ChevronDown, ChevronUp, C
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv, type CsvColumn } from '@/utils/csv'
+import { maskName } from '@/utils/mask'
 import { useReservationList } from '@/hooks/reservation/useReservationList'
 import { weekOf, weeksInRange, shortDate, weekSpillNote, type WeekRef } from '@/utils/weekBucket'
 import type { ReservationListItem } from '@/api/reservation/reservationList'
@@ -83,14 +84,19 @@ const COLUMNS: { label: string; key: SortKey | null }[] = [
   { label: '메모', key: 'comment' },
 ]
 
-/** CSV 출력 칼럼 — 표 칼럼/순서와 동일. 상태는 코드(Y/I/H/C) 대신 표시 라벨로. */
+/**
+ * CSV 출력 칼럼 — 표 칼럼/순서와 동일. 상태는 코드(Y/I/H/C) 대신 표시 라벨로.
+ *
+ * ⚠️ 개인정보는 CSV 로 나갈 때만 마스킹한다. 화면은 레거시와 동일하게 원문 유지 —
+ * 파일은 PC 에 남고 메신저로 전달되므로 위험이 훨씬 크다.
+ */
 const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'rowNo', label: 'No', csv: (_r, n) => n },
   { key: 'registeredAt', label: '등록일' },
   { key: 'registeredTime', label: '등록시간' },
   { key: 'channel', label: '채널' },
   { key: 'chartNo', label: '차트번호', text: true },
-  { key: 'name', label: '고객명' },
+  { key: 'name', label: '고객명', csv: (r) => maskName(r.name) },
   { key: 'reserveDate', label: '예약일' },
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
   { key: 'doctor', label: '담당의' },

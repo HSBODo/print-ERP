@@ -137,8 +137,9 @@ export function MonthlyReportPage() {
     return 0
   }, [charts])
 
-  const stopReasonItem = stopReason.dataMap[CURRENT_YEAR]?.[latestMonthIdx] ?? null
   const periodLabel = `${CURRENT_YEAR}년 ${latestMonthIdx + 1}월`
+  const [stopReasonMonth, setStopReasonMonth] = useState<number | null>(null)
+  const activeStopReasonMonth = stopReasonMonth ?? (latestMonthIdx + 1)
   const stopRateYears = YEARS.filter((year) =>
     charts.stopRate[year]?.some((value) => typeof value === 'number'),
   )
@@ -170,7 +171,7 @@ export function MonthlyReportPage() {
     { group: '비율', id: 'rate-oneday', label: '원데이 예약률', node: <ReportLineChart {...MONTHLY_CHART_LABELS['rate-oneday']} years={YEARS} data={charts.rateOneday} /> },
     { group: '전환&성공', id: 'success-rate', label: '시력교정 상담성공률', node: <ReportSuccessRateChart year={CURRENT_YEAR} all={charts.successAll[CURRENT_YEAR] ?? []} oneday={charts.successOneday[CURRENT_YEAR] ?? []} general={charts.successGeneral[CURRENT_YEAR] ?? []} /> },
     { group: '중단', id: 'stop-rate', label: '중단율', node: <ReportLineChart {...MONTHLY_CHART_LABELS['stop-rate']} years={stopRateYears.length ? stopRateYears : [CURRENT_YEAR]} data={charts.stopRate} percentFractionDigits={1} /> },
-    { group: '중단', id: 'stop-reason', label: '중단 사유', node: <StopReasonBar item={stopReasonItem} monthLabel={periodLabel} /> },
+    { group: '중단', id: 'stop-reason', label: '중단 사유', node: <StopReasonBar year={CURRENT_YEAR} items={stopReason.dataMap[CURRENT_YEAR] ?? []} month={activeStopReasonMonth} onMonthChange={setStopReasonMonth} /> },
     { group: '수술', id: 'surgery-cataract', label: '백내장 수술', node: <ReportLineChart title="백내장 수술" years={YEARS} data={charts.cataractSurgery} /> },
     { group: '수술', id: 'surgery-vision', label: '시력교정 수술', node: <ReportLineChart title="시력교정 수술" years={YEARS} data={charts.visionSurgery} /> },
     { group: '수술', id: 'surgery-total', label: '총 수술수', node: <ReportLineChart title="총 수술수" years={YEARS} data={charts.totalSurgery} /> },
@@ -199,6 +200,7 @@ export function MonthlyReportPage() {
         general: charts.successGeneral[CURRENT_YEAR] ?? [],
       },
       stopReasonByMonth: stopReason.dataMap[CURRENT_YEAR] ?? [],
+      stopReasonMonth: activeStopReasonMonth,
     })
     // Excel 한글 보존을 위해 UTF-8 BOM 선두 부착
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })

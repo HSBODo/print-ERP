@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { AllExamListItem } from '@/api/exam/allExamList'
 import { calcAge, dash } from './examListUtils'
+import { maskName, maskPhone } from '@/utils/mask'
 
 /** AllExamListPage 컬럼/뱃지 렌더 설정 (순수 로직은 examListUtils.ts 재사용). */
 
@@ -70,11 +71,11 @@ export const COLUMNS: Column[] = [
   { key: 'jobBucket', label: '직업구분', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.jobBucket, JOB_STYLE[r.jobBucket]) },
   { key: 'job', label: '직업', align: 'center', min: '6rem', render: (r) => dash(r.job) },
   { key: 'chartNo', label: '차트번호', align: 'center', min: '6rem', text: true },
-  { key: 'name', label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
+  { key: 'name', csv: (r) => maskName(r.name), label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
   { key: 'grade', label: '등급', align: 'center', min: '3.5rem', render: (r) => cell.badge(r.grade, GRADE_STYLE[r.grade]) },
   { key: 'birth', label: '생년월일', align: 'center', min: '6rem' },
   { key: 'age', label: '만나이', align: 'right', min: '3.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
-  { key: 'phone2', label: '휴대전화', align: 'left', min: '8rem', text: true },
+  { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'left', min: '8rem', text: true },
   { key: 'counselor', label: '상담사', align: 'center', min: '5rem', render: (r) => dash(r.counselor) },
   { key: 'doctor', label: '상담의', align: 'center', min: '5rem', render: (r) => dash(r.doctor) },
   { key: 'optometrist', label: '검안사', align: 'center', min: '5rem', render: (r) => dash(r.optometrist) },
