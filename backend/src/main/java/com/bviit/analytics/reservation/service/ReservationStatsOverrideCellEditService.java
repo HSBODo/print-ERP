@@ -24,20 +24,35 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ReservationStatsOverrideCellEditService {
 
-    static final Set<String> EDITABLE_FIELDS = Set.of(
-            "homeReceived", "homeReservation",
-            "naverReceived", "naverRejected", "naverValid", "naverReservation"
+    /** DTO camelCase → 마트 컬럼 snake_case. override 조회 SQL의 field_name 과 동일 문자열이어야 한다. */
+    private static final Map<String, String> COLUMN_BY_FIELD = Map.ofEntries(
+            Map.entry("inboundCall",              "inbound_call"),
+            Map.entry("answeredCall",             "answered_call"),
+            Map.entry("newInquiry",               "new_inquiry"),
+            Map.entry("callReservation",          "call_reservation"),
+            Map.entry("tmTotalDb",                "tm_total_db"),
+            Map.entry("tmValidDb",                "tm_valid_db"),
+            Map.entry("tmReservation",            "tm_reservation"),
+            Map.entry("tmRecounsel",              "tm_recounsel"),
+            Map.entry("tmRecounselValid",         "tm_recounsel_valid"),
+            Map.entry("tmRecounselReservation",   "tm_recounsel_reservation"),
+            Map.entry("homeReceived",             "home_received"),
+            Map.entry("homeReservation",          "home_reservation"),
+            Map.entry("naverReceived",            "naver_received"),
+            Map.entry("naverRejected",            "naver_rejected"),
+            Map.entry("naverValid",               "naver_valid"),
+            Map.entry("naverReservation",         "naver_reservation"),
+            Map.entry("kakaoInquiry",             "kakao_inquiry"),
+            Map.entry("kakaoReservation",         "kakao_reservation"),
+            Map.entry("cancelCallNaver",          "cancel_call_naver"),
+            Map.entry("cancelHome",               "cancel_home"),
+            Map.entry("cancelKakao",              "cancel_kakao"),
+            Map.entry("visit",                    "visit"),
+            Map.entry("noShowReservation",        "no_show_reservation"),
+            Map.entry("cancel",                   "cancel")
     );
 
-    /** DTO camelCase → 마트 컬럼 snake_case. override 조회 SQL의 field_name 과 동일 문자열이어야 한다. */
-    private static final Map<String, String> COLUMN_BY_FIELD = Map.of(
-            "homeReceived",     "home_received",
-            "homeReservation",  "home_reservation",
-            "naverReceived",    "naver_received",
-            "naverRejected",    "naver_rejected",
-            "naverValid",       "naver_valid",
-            "naverReservation", "naver_reservation"
-    );
+    static final Set<String> EDITABLE_FIELDS = COLUMN_BY_FIELD.keySet();
 
     private static final int MAX_VALUE = 100_000;
     private static final String PRODUCT_TYPE = "SYSTEM";
