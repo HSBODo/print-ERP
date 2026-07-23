@@ -5,6 +5,7 @@ SELECT
     COALESCE(name_eng, '')                     AS "nameEng",
     COALESCE(exam_type, '')                    AS "examType",
     COALESCE(exam_category, '')                AS "examCategory",
+    COALESCE(classification, '')               AS "classification",
     COALESCE(patient_type, '')                 AS "patientType",
     COALESCE(exam_reg_date, '')                AS "examRegDate",
     COALESCE(exam_memo, '')                    AS "examMemo",
