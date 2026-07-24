@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
  *
  * <pre>
  *   ~ 2026-05 : 온라인 = 기존 SQL 의 online_cnt (홈페이지/앱 + 네이버, 카카오 미포함)
- *   2026-06 ~ : 온라인 = 네이버 + 카카오톡 + 홈페이지(중복제외)
+ *   2026-06 ~ : 온라인 = 네이버 + 카카오톡 + 홈페이지(리스트 화면과 동일한 raw · 전 진료)
  *               종합   = 콜 + 새 온라인
  * </pre>
  *
@@ -56,7 +56,7 @@ class ReservationOverallStatsServiceTest {
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "naver_cnt", 50)));
         when(repository.findKakaoMonthly(anyString(), anyString()))
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "kakao_cnt", 12)));
-        when(homepageRepository.findMonthlyDedupedCounts(anyString(), anyString()))
+        when(homepageRepository.findMonthlyListRawCounts(anyString(), anyString()))
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "cnt", 202)));
         // 스냅샷이 7/10 까지 → 온전히 커버하는 마지막 달은 6월
         when(homepageRepository.findLastRegDate()).thenReturn("2026-07-10 16:15:55");
@@ -133,7 +133,7 @@ class ReservationOverallStatsServiceTest {
         // 레거시 홈페이지 소스: reg_date < (:to + 1일) 반개구간 → '날짜'여야 한다.
         // 시각이 붙은 값을 넘기면 MariaDB 는 < (2027-01-01 23:59:59) 가 되어 다음 해 1/1 이 딸려오고,
         // SQLite 는 date() 가 시각을 버려 안 딸려온다 — 같은 입력에 소스별로 결과가 갈린다.
-        verify(homepageRepository).findMonthlyDedupedCounts("2026-01-01", "2026-12-31");
+        verify(homepageRepository).findMonthlyListRawCounts("2026-01-01", "2026-12-31");
     }
 
     @Test

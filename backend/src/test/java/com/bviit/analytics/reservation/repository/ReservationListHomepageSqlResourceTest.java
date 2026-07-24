@@ -106,16 +106,16 @@ class ReservationListHomepageSqlResourceTest {
 
     @ParameterizedTest
     @EnumSource(HomepageSourceDialect.class)
-    void 월별_중복제외_sql은_어느_소스든_집계_조건을_보존한다(HomepageSourceDialect dialect) {
-        String sql = sqlBody(dialect, "monthly-deduped.sql");
+    void 월별_list_raw_sql은_어느_소스든_리스트_화면과_동일_집계를_보존한다(HomepageSourceDialect dialect) {
+        String sql = sqlBody(dialect, "monthly-list-raw.sql");
 
         assertThat(sql).contains(":from", ":to");
         assertThat(sql).containsIgnoringCase("CATEGORY = 'COUNSELONLINE'");
         assertThat(sql).containsIgnoringCase("DEL_TF = 'N'");
-        // 시력교정만 — 백내장(2)·노안(21)·렌즈삽입(24,25)·미상(1) 제외 (2026-07-15 결정)
-        assertThat(sql).containsIgnoringCase("EXAM_TYPE = '5'");
-        // 중복제외 = 달 안에서 전화번호 기준. COUNT(*) 로 바뀌면 온라인 예약이 부풀려진다.
-        assertThat(sql).containsPattern("(?i)COUNT\\(DISTINCT (phone|M_PHONE)\\)");
+        // 리스트 화면과 정합 위해 EXAM_TYPE 필터·DISTINCT 없다. 하나라도 들어오면 값이 조용히 줄어든다.
+        assertThat(sql).doesNotContainIgnoringCase("EXAM_TYPE");
+        assertThat(sql).doesNotContainIgnoringCase("DISTINCT");
+        assertThat(sql).containsIgnoringCase("COUNT(*)");
     }
 
     @ParameterizedTest

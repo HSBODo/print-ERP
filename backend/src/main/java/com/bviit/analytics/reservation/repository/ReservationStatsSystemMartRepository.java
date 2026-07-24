@@ -29,6 +29,8 @@ public class ReservationStatsSystemMartRepository {
 
     private static final String SELECT_SQL =
             SqlLoader.load("sql/mart/select-reservation-stats-system-daily.sql");
+    private static final String SELECT_MONTHLY_CHANNEL_SUMS_SQL =
+            SqlLoader.load("sql/mart/select-reservation-stats-system-monthly-channel-sums.sql");
 
     /** 마트 컬럼(snake_case) → API 필드(camelCase). OverrideCellEditService.COLUMN_BY_FIELD 의 역매핑. */
     private static final Map<String, String> FIELD_BY_COLUMN = Map.of(
@@ -42,6 +44,20 @@ public class ReservationStatsSystemMartRepository {
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
     private final ReservationStatsOverrideRepository overrideRepository;
+
+    /**
+     * (yr, mo) 별 예약 종합 계산에 필요한 채널 예약수 합계.
+     * reservation_stats_override 오버레이 반영 — 셀 편집이 즉시 반영되어야 한다.
+     *
+     * 반환 컬럼:
+     *   - yr, mo
+     *   - naver_cnt, kakao_cnt (온라인)
+     *   - call_reservation_cnt, tm_reservation_cnt, tm_recounsel_reservation_cnt (콜)
+     */
+    public List<Map<String, Object>> findMonthlyChannelReservationSums(String from, String to) {
+        return jdbc.queryForList(SELECT_MONTHLY_CHANNEL_SUMS_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to));
+    }
 
     public List<ReservationStatsDailyRow> findDailyCounts(String from, String to) {
         List<ReservationStatsDailyRow> base = jdbc.query(SELECT_SQL,

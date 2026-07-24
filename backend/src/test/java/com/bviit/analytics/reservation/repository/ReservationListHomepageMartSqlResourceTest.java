@@ -75,17 +75,17 @@ class ReservationListHomepageMartSqlResourceTest {
     }
 
     @Test
-    void 마트_월별_중복제외_sql은_소스판과_동일한_집계_조건을_보존한다() {
-        String sql = sqlBody("select-list-reservation-homepage-monthly-deduped.sql");
+    void 마트_월별_list_raw_sql은_리스트_화면과_동일_집계를_보존한다() {
+        String sql = sqlBody("select-list-reservation-homepage-monthly-list-raw.sql");
 
         assertThat(sql).contains(":from", ":to");
-        // 시력교정만 — 백내장(2)·노안(21)·렌즈삽입(24,25)·미상(1) 제외. 소스판과 동일.
-        assertThat(sql).containsIgnoringCase("exam_type = '5'");
-        // 중복제외 = 달 안 전화번호 기준. COUNT(*) 로 바뀌면 온라인 예약이 부풀려진다.
-        assertThat(sql).containsIgnoringCase("COUNT(DISTINCT phone)");
-        // 반개구간 — 소스판과 규약 일치.
+        // 리스트 화면과 정합 위해 exam_type 필터·DISTINCT 없다 — 소스판과 동일한 raw 집계.
+        assertThat(sql).doesNotContainIgnoringCase("exam_type");
+        assertThat(sql).doesNotContainIgnoringCase("DISTINCT");
+        assertThat(sql).containsIgnoringCase("COUNT(*)");
+        // 반개구간 — 소스판·리스트 화면과 규약 일치.
         assertThat(sql).containsPattern("reg_date\\s*<\\s*CAST\\(:to AS TIMESTAMP\\)\\s*\\+\\s*INTERVAL '1 day'");
-        // yr·mo·cnt 결과 계약 — 소스판(../{sqlite,mariadb}/monthly-deduped.sql)과 동일.
+        // yr·mo·cnt 결과 계약 — 소스판(../{sqlite,mariadb}/monthly-list-raw.sql)과 동일.
         assertThat(sql).containsPattern("AS \"yr\"");
         assertThat(sql).containsPattern("AS \"mo\"");
         assertThat(sql).containsPattern("AS \"cnt\"");
