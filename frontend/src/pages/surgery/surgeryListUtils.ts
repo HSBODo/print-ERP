@@ -22,7 +22,7 @@ export const calcAge = (birth: string) => {
   return age >= 0 && age < 130 ? String(age) : '—'
 }
 
-export const CATEGORY_OPTIONS = ['전체', '시력교정', '백내장']
+export const CATEGORY_OPTIONS = ['전체', '시력교정', '백내장', '재수술']
 export const DEFAULT_FROM = '2026-04-01'
 export const DEFAULT_TO = '2026-04-30'
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
@@ -77,6 +77,39 @@ export const getSortValue = (row: SurgeryListItem, key: string, originalIndex: n
   }
   return String(row[key as keyof SurgeryListItem] ?? '').trim()
 }
+
+/**
+ * 재수술 후보(자동 포함분)를 수술자 리스트 행 형태로 변환 — '재수술' 카테고리 필터용.
+ * RE_OPERATION 출처라 채워지는 값은 수술일(=재수술일)·차트번호·고객명·수술방법 R/L 뿐(나머지는 공란).
+ */
+const BLANK_SURGERY_ROW: SurgeryListItem = {
+  chartNo: '', name: '', nameEng: '', surgeryCategory: '', surgeryDate: '', examDate: '',
+  patientType: '', surgeryReserveDate: '', surgeryRegDate: '', surgeryTime: '',
+  surgeryR: '', surgeryL: '', recommendedR: '', recommendedL: '', estimate: '', surgeryRate: '',
+  payment: '', surgeon: '', counselor: '', doctor: '', optometrist: '', birth: '', lunar: '',
+  phone1: '', phone2: '', email: '', zip: '', addr1: '', addr2: '', memo: '', grade: '', job: '',
+  lastVisit: '', route: '', section: '', motiveL: '', motiveM: '', motiveS: '', motiveMemo: '',
+  examMemo: '', insurance: '', nationality: '',
+}
+
+export const reopCandidateToRow = (
+  c: {
+    chartNo: string; name: string; nameEng: string; patientType: string
+    surgeon: string; payment: string; reopDate: string; againR: string; againL: string
+  },
+): SurgeryListItem => ({
+  ...BLANK_SURGERY_ROW,
+  chartNo: c.chartNo,
+  name: c.name,
+  nameEng: c.nameEng,
+  patientType: c.patientType,
+  surgeon: c.surgeon,
+  payment: c.payment,
+  surgeryCategory: '재수술',
+  surgeryDate: c.reopDate,
+  surgeryR: c.againR,
+  surgeryL: c.againL,
+})
 
 export const compareSortValue = (a: string | number | null, b: string | number | null) => {
   const aEmpty = a === null || a === ''
