@@ -2,6 +2,7 @@ package com.bviit.analytics.reservation.service;
 
 import com.bviit.analytics.common.util.MonthlyBuckets;
 import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
+import com.bviit.analytics.reservation.repository.CataractStatsSystemMartRepository;
 import com.bviit.analytics.reservation.repository.HomepageOverallSource;
 import com.bviit.analytics.reservation.repository.ReservationOverallMartRepository;
 import com.bviit.analytics.reservation.repository.ReservationStatsSystemMartRepository;
@@ -37,8 +38,9 @@ import static com.bviit.analytics.reservation.service.OverallOnlineFormula.cover
  *
  * <p>컷오버 이후 실시간 합산 원천:
  * <ul>
- *   <li>온라인 = 네이버 + 카카오톡(시스템 마트) + 홈페이지(홈페이지 마트, 리스트 화면과 동일한 raw)</li>
- *   <li>콜 = call_reservation(인콜) + tm_reservation(TM) + tm_recounsel_reservation(재상담)</li>
+ *   <li>온라인 = 네이버 + 카카오톡(시력교정 마트) + 홈페이지(홈페이지 마트, 리스트 화면과 동일한 raw)</li>
+ *   <li>콜 = [시력교정] call_reservation(인콜) + tm_reservation(TM) + tm_recounsel_reservation(재상담)
+ *          + [백내장] new_patient(★신환) + tm_reservation(아웃바운드 예약수)</li>
  *   <li>종합 = 온라인 + 콜 (하나라도 null 이면 null)</li>
  * </ul>
  *
@@ -53,6 +55,7 @@ public class ReservationOverallMartQueryService implements ReservationOverallSta
 
     private final ReservationOverallMartRepository martRepository;
     private final ReservationStatsSystemMartRepository systemMartRepository;
+    private final CataractStatsSystemMartRepository cataractMartRepository;
     private final HomepageOverallSource homepageRepository;
 
     @Override
@@ -75,6 +78,8 @@ public class ReservationOverallMartQueryService implements ReservationOverallSta
         Map<String, Integer> callReservation = Map.of();
         Map<String, Integer> tmReservation = Map.of();
         Map<String, Integer> tmRecounselReservation = Map.of();
+        Map<String, Integer> cataractNewPatient = Map.of();
+        Map<String, Integer> cataractTmReservation = Map.of();
         YearMonth homepageMaxMonth = null;
 
         if (needsLiveSum) {
@@ -89,6 +94,9 @@ public class ReservationOverallMartQueryService implements ReservationOverallSta
             callReservation = countsByMonth(sums, "call_reservation_cnt");
             tmReservation = countsByMonth(sums, "tm_reservation_cnt");
             tmRecounselReservation = countsByMonth(sums, "tm_recounsel_reservation_cnt");
+            List<Map<String, Object>> cataractSums = cataractMartRepository.findMonthlyCallSums(from, to);
+            cataractNewPatient = countsByMonth(cataractSums, "new_patient_cnt");
+            cataractTmReservation = countsByMonth(cataractSums, "tm_reservation_cnt");
             homepage = countsByMonth(homepageRepository.findMonthlyListRawCounts(from, to), "cnt");
             homepageMaxMonth = coverageMonth(homepageRepository.findLastRegDate());
         }
@@ -112,9 +120,12 @@ public class ReservationOverallMartQueryService implements ReservationOverallSta
                 }
 
                 // 컷오버 이후: 온라인·콜 모두 라이브 합산
+                // 콜 = 시력교정(인콜+TM+TM재상담) + 백내장(★신환+아웃바운드 예약수)
                 int liveCall = callReservation.getOrDefault(key, 0)
                         + tmReservation.getOrDefault(key, 0)
-                        + tmRecounselReservation.getOrDefault(key, 0);
+                        + tmRecounselReservation.getOrDefault(key, 0)
+                        + cataractNewPatient.getOrDefault(key, 0)
+                        + cataractTmReservation.getOrDefault(key, 0);
                 Integer online = computeOnline(key, ym, naver, kakao, homepage, homepageMaxMonth);
                 Integer total = online == null ? null : online + liveCall;
 

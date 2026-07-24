@@ -1,6 +1,7 @@
 package com.bviit.analytics.reservation.service;
 
 import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
+import com.bviit.analytics.reservation.repository.CataractStatsSystemMartRepository;
 import com.bviit.analytics.reservation.repository.HomepageOverallSource;
 import com.bviit.analytics.reservation.repository.ReservationOverallMartRepository;
 import com.bviit.analytics.reservation.repository.ReservationStatsSystemMartRepository;
@@ -23,8 +24,9 @@ import static org.mockito.Mockito.when;
  *
  * <pre>
  *   2024·2025 : mart_reservation_overall_monthly 그대로 (V12 시드 확정값)
- *   2026-01 ~ : online = 네이버 + 카카오(시스템 마트) + 홈페이지(홈페이지 마트)
- *               call   = call_reservation + tm_reservation + tm_recounsel_reservation (시스템 마트)
+ *   2026-01 ~ : online = 네이버 + 카카오(시력교정 마트) + 홈페이지(홈페이지 마트)
+ *               call   = [시력교정] call_reservation + tm_reservation + tm_recounsel_reservation
+ *                      + [백내장]   new_patient + tm_reservation
  *               reservations = call + online
  * </pre>
  */
@@ -32,6 +34,7 @@ class ReservationOverallMartQueryServiceTest {
 
     private ReservationOverallMartRepository martRepository;
     private ReservationStatsSystemMartRepository systemMartRepository;
+    private CataractStatsSystemMartRepository cataractMartRepository;
     private HomepageOverallSource homepageRepository;
 
     /** 마트: 2025-12 → online 200/call 100/total 300 (컷오버 이전, 그대로), 2026-06 → 컷오버 이후 라이브로 덮여야 함 */
@@ -52,6 +55,7 @@ class ReservationOverallMartQueryServiceTest {
     void setUp() {
         martRepository = mock(ReservationOverallMartRepository.class);
         systemMartRepository = mock(ReservationStatsSystemMartRepository.class);
+        cataractMartRepository = mock(CataractStatsSystemMartRepository.class);
         homepageRepository = mock(HomepageOverallSource.class);
 
         when(martRepository.findMonthly(anyList())).thenReturn(martMonthly());
@@ -62,13 +66,18 @@ class ReservationOverallMartQueryServiceTest {
                         "tm_reservation_cnt", 25,
                         "tm_recounsel_reservation_cnt", 8)
         ));
+        when(cataractMartRepository.findMonthlyCallSums(anyString(), anyString())).thenReturn(List.of(
+                Map.of("yr", 2026, "mo", 6,
+                        "new_patient_cnt", 15,
+                        "tm_reservation_cnt", 7)
+        ));
         when(homepageRepository.findMonthlyListRawCounts(anyString(), anyString()))
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "cnt", 202)));
         when(homepageRepository.findLastRegDate()).thenReturn("2026-07-10 16:15:55");
     }
 
     private ReservationOverallMartQueryService service() {
-        return new ReservationOverallMartQueryService(martRepository, systemMartRepository, homepageRepository);
+        return new ReservationOverallMartQueryService(martRepository, systemMartRepository, cataractMartRepository, homepageRepository);
     }
 
     @Test
@@ -88,18 +97,20 @@ class ReservationOverallMartQueryServiceTest {
     }
 
     @Test
-    void 컷오버_이후_콜은_인콜_TM_재상담_예약수_실시간_합이다() {
+    void 컷오버_이후_콜은_시력교정_인콜_TM_재상담과_백내장_신환_아웃바운드의_실시간_합이다() {
         ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
-        assertThat(june.getCall()).isEqualTo(40 + 25 + 8);  // 73 — 마트의 111 이 아니다
+        // 시력교정 73(=40+25+8) + 백내장 22(=15+7) = 95 — 마트의 111 이 아니다
+        assertThat(june.getCall()).isEqualTo(40 + 25 + 8 + 15 + 7);
     }
 
     @Test
     void 컷오버_이후_종합은_라이브_콜과_라이브_온라인의_합이다() {
         ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
-        assertThat(june.getReservations()).isEqualTo(73 + 264);  // 337 — 마트의 333 이 아니다
-        assertThat(june.getTotal()).isEqualTo(337);
+        // call 95 + online 264 = 359 — 마트의 333 이 아니다
+        assertThat(june.getReservations()).isEqualTo(95 + 264);
+        assertThat(june.getTotal()).isEqualTo(359);
     }
 
     @Test
@@ -111,18 +122,18 @@ class ReservationOverallMartQueryServiceTest {
 
         assertThat(june.getOnline()).isNull();
         assertThat(june.getReservations()).isNull();
-        assertThat(june.getCall()).isEqualTo(73);  // 콜은 시스템 마트만 참조하므로 홈페이지 커버리지와 무관
+        assertThat(june.getCall()).isEqualTo(95);  // 콜은 시력교정+백내장 마트만 참조 — 홈페이지 커버리지와 무관
     }
 
     @Test
-    void 시스템_마트에_없는_달은_콜과_온라인_모두_0_으로_합산한다() {
+    void 시력교정_마트에_없는_달은_시력교정_콜만_0_이고_백내장_콜은_유지된다() {
         when(systemMartRepository.findMonthlyChannelReservationSums(anyString(), anyString())).thenReturn(List.of());
 
         ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
-        assertThat(june.getOnline()).isEqualTo(202);  // 0 + 0 + 202
-        assertThat(june.getCall()).isZero();          // 0 + 0 + 0
-        assertThat(june.getReservations()).isEqualTo(202);
+        assertThat(june.getOnline()).isEqualTo(202);   // 0 + 0 + 202
+        assertThat(june.getCall()).isEqualTo(15 + 7);  // 시력교정 0 + 백내장 22
+        assertThat(june.getReservations()).isEqualTo(202 + 22);
     }
 
     @Test
@@ -151,6 +162,7 @@ class ReservationOverallMartQueryServiceTest {
         assertThat(dec.getOnline()).isEqualTo(975);
         assertThat(dec.getCall()).isEqualTo(1234);
         verify(systemMartRepository, never()).findMonthlyChannelReservationSums(anyString(), anyString());
+        verify(cataractMartRepository, never()).findMonthlyCallSums(anyString(), anyString());
         verify(homepageRepository, never()).findMonthlyListRawCounts(anyString(), anyString());
         verify(homepageRepository, never()).findLastRegDate();
     }
