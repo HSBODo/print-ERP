@@ -32,12 +32,13 @@ import static com.bviit.analytics.reservation.service.OverallOnlineFormula.cover
  * 24·25 확정값은 V12 seed 로 마트에 저장되어 있고 min-year 가드로 write 차단되므로,
  * 여기서는 별도의 LEGACY_* 하드코딩을 두지 않는다.
  *
- * <h2>온라인 예약 정의가 2026-06 부터 바뀐다</h2>
+ * <h2>온라인 예약 정의가 2026-01 부터 바뀐다</h2>
  * <pre>
- *   ~ 2026-05 : 온라인 = RESERVE_PATH ONLINE/APP(홈페이지) + NAVER(네이버). 카카오 미포함.
- *   2026-06 ~ : 온라인 = 네이버(RSS 기준) + 카카오톡(해피톡) + 홈페이지(레거시, 리스트 화면과 동일한 raw)
+ *   2024·2025 : 온라인 = RESERVE_PATH ONLINE/APP(홈페이지) + NAVER(네이버). V12 시드 확정값.
+ *   2026-01 ~ : 온라인 = 네이버(RSS 기준) + 카카오톡(해피톡) + 홈페이지(레거시, 리스트 화면과 동일한 raw)
  * </pre>
- * 종합 = 콜 + 온라인 이므로 종합도 2026-06 부터 같이 움직인다(2026-07-15 결정).
+ * 종합 = 콜 + 온라인 이므로 종합도 2026-01 부터 같이 움직인다.
+ * (최초 컷오버는 2026-06 이었으나 오버라이드 즉시 반영 요구로 2026-01 로 앞당김 · 2026-07-24)
  *
  * <p><b>왜 자바에서 합치나</b> — 네이버·카카오는 MSSQL, 홈페이지는 레거시 홈페이지(별도 DB)라
  * SQL 한 방으로 조인할 수 없다. 그래서 세 쿼리를 각각 읽어 여기서 더한다.
@@ -63,8 +64,8 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
      * {@code ReservationListHomepageMartJob} 이 이 서비스를 호출하는 {@code ReservationMartJob}
      * 보다 먼저 실행돼야 한다({@code BatchOrchestrator.runDomains} 참조).
      *
-     * <p>미설정 환경(마트도 없고 레거시 URL 도 없음)에서는 비어 있다 — 컷오버(2026-06) 이후 달을
-     * 계산할 때만 필수라 그 이전 구간은 이 값 없이도 정상 동작한다.
+     * <p>미설정 환경(마트도 없고 레거시 URL 도 없음)에서는 비어 있다 — 컷오버(2026-01) 이후 달을
+     * 계산할 때만 필수라 그 이전 구간(2024·2025)은 이 값 없이도 정상 동작한다.
      */
     private final Optional<HomepageOverallSource> homepageRepository;
 
@@ -106,7 +107,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
         if (needsNewFormula) {
             HomepageOverallSource homepageRepo = homepageRepository.orElseThrow(() ->
                     new IllegalStateException(
-                            "온라인 예약(2026-06~)은 홈페이지 소스가 필요합니다. "
+                            "온라인 예약(2026-01~)은 홈페이지 소스가 필요합니다. "
                             + "postgres-mart 에서는 mart_list_reservation_homepage 마트가 채워져 있어야 하고, "
                             + "그 외 프로파일에서는 homepage.datasource.url 을 설정하세요. "
                             + "(미설정 상태로 계산하면 홈페이지 몫이 빠진 값이 조용히 적재됩니다)"));

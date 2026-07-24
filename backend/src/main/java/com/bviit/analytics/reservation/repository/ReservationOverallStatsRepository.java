@@ -65,7 +65,7 @@ public class ReservationOverallStatsRepository {
 
     /**
      * 월별 네이버 예약수 — 예약통계_시력교정(RSS)의 '네이버 예약수'와 동일 기준(취소 제외, 정크제외 미적용).
-     * 2026-06 부터의 온라인 예약 재정의(네이버+카카오톡+홈페이지)에 쓴다.
+     * 2026-01 부터의 온라인 예약 재정의(네이버+카카오톡+홈페이지)에 쓴다.
      *
      * ⚠️ {@link #findReservationOverallMonthly} 의 online_cnt 안에 있는 NAVER 집계와 값이 다르다.
      * 기준이 다른 게 의도다 — 맞추려 하지 말 것(SQL 주석 참고).
@@ -76,7 +76,7 @@ public class ReservationOverallStatsRepository {
 
     /**
      * 월별 카카오톡 예약수 — 해피톡('수술전' + '★신환') 기준. RESERVATION 이 아니라 별도 원천이다.
-     * 2026-06 이전 종합에는 카카오가 의도적으로 빠져 있었다(클래스 주석 참고).
+     * 2026-01 이전(2024·2025) 종합에는 카카오가 의도적으로 빠져 있었다(클래스 주석 참고).
      */
     public List<Map<String, Object>> findKakaoMonthly(String from, String to) {
         return jdbc.queryForList(monthlyKakaoSql, params(from, to));

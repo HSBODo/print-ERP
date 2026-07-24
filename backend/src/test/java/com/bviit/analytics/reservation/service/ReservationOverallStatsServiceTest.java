@@ -19,11 +19,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 온라인 예약 정의 전환(2026-06) 계약.
+ * 온라인 예약 정의 전환(2026-01) 계약.
  *
  * <pre>
- *   ~ 2026-05 : 온라인 = 기존 SQL 의 online_cnt (홈페이지/앱 + 네이버, 카카오 미포함)
- *   2026-06 ~ : 온라인 = 네이버 + 카카오톡 + 홈페이지(리스트 화면과 동일한 raw · 전 진료)
+ *   2024·2025 : 온라인 = 기존 SQL 의 online_cnt (홈페이지/앱 + 네이버, 카카오 미포함)
+ *   2026-01 ~ : 온라인 = 네이버 + 카카오톡 + 홈페이지(리스트 화면과 동일한 raw · 전 진료)
  *               종합   = 콜 + 새 온라인
  * </pre>
  *
@@ -34,16 +34,16 @@ class ReservationOverallStatsServiceTest {
     private ReservationOverallStatsRepository repository;
     private ReservationListHomepageRepository homepageRepository;
 
-    /** 기존 SQL: 2026-05 → call 100 / online 200 / total 300, 2026-06 → call 111 / online 222 / total 333 */
+    /** 기존 SQL: 2025-12 → call 100 / online 200 / total 300 (컷오버 이전), 2026-06 → call 111 / online 222 / total 333 (컷오버 이후 라이브로 덮여야) */
     private static List<Map<String, Object>> overallRows() {
         return List.of(
-                Map.of("yr", 2026, "mo", 5, "cnt", 300, "online_cnt", 200, "call_cnt", 100),
+                Map.of("yr", 2025, "mo", 12, "cnt", 300, "online_cnt", 200, "call_cnt", 100),
                 Map.of("yr", 2026, "mo", 6, "cnt", 333, "online_cnt", 222, "call_cnt", 111)
         );
     }
 
-    private static ReservationOverallMonthlyItem monthOf(List<ReservationOverallMonthlyItem> items, int month) {
-        return items.stream().filter(i -> i.getYear() == 2026 && i.getMonth() == month).findFirst().orElseThrow();
+    private static ReservationOverallMonthlyItem monthOf(List<ReservationOverallMonthlyItem> items, int year, int month) {
+        return items.stream().filter(i -> i.getYear() == year && i.getMonth() == month).findFirst().orElseThrow();
     }
 
     @BeforeEach
@@ -68,23 +68,23 @@ class ReservationOverallStatsServiceTest {
 
     @Test
     void 컷오버_이전_달은_기존_공식을_그대로_쓴다() {
-        ReservationOverallMonthlyItem may = monthOf(service().getMonthlyStats(List.of(2026)), 5);
+        ReservationOverallMonthlyItem dec2025 = monthOf(service().getMonthlyStats(List.of(2025, 2026)), 2025, 12);
 
-        assertThat(may.getOnline()).isEqualTo(200);   // 네이버+카카오+홈페이지(264)가 아니다
-        assertThat(may.getCall()).isEqualTo(100);
-        assertThat(may.getReservations()).isEqualTo(300);
+        assertThat(dec2025.getOnline()).isEqualTo(200);   // 컷오버 이전이라 기존 online_cnt 그대로
+        assertThat(dec2025.getCall()).isEqualTo(100);
+        assertThat(dec2025.getReservations()).isEqualTo(300);
     }
 
     @Test
     void 컷오버_달부터_온라인은_네이버_카카오_홈페이지_합이다() {
-        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 6);
+        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
         assertThat(june.getOnline()).isEqualTo(50 + 12 + 202);  // 264 — 기존 online_cnt 222 가 아니다
     }
 
     @Test
     void 컷오버_달부터_종합은_콜과_새_온라인의_합이다() {
-        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 6);
+        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
         assertThat(june.getReservations()).isEqualTo(111 + 264);  // 375 — 기존 cnt 333 이 아니다
         assertThat(june.getTotal()).isEqualTo(375);
@@ -100,7 +100,7 @@ class ReservationOverallStatsServiceTest {
         // 이 시나리오는 실제 clock 이 어느 달이든 성립한다(5월도, 6월도 결과가 같음).
         when(homepageRepository.findLastRegDate()).thenReturn("2026-05-10 16:15:55");
 
-        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 6);
+        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
         assertThat(june.getOnline()).isNull();
         assertThat(june.getReservations()).isNull();
@@ -110,7 +110,7 @@ class ReservationOverallStatsServiceTest {
     void 스냅샷이_말일까지_담으면_그_달은_계산한다() {
         when(homepageRepository.findLastRegDate()).thenReturn("2026-06-30 23:48:13");
 
-        assertThat(monthOf(service().getMonthlyStats(List.of(2026)), 6).getOnline()).isEqualTo(264);
+        assertThat(monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6).getOnline()).isEqualTo(264);
     }
 
     @Test

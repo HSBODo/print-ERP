@@ -28,10 +28,10 @@ import static com.bviit.analytics.reservation.service.OverallOnlineFormula.cover
  * postgres-mart 프로파일에서 @Primary. 컨트롤러가 ReservationOverallStatsReader 를 주입하면
  * MSSQL 버전(ReservationOverallStatsService)보다 이 구현체가 우선 선택된다.
  *
- * <h2>컷오버(2026-06) 기준 원천 분기</h2>
+ * <h2>컷오버(2026-01) 기준 원천 분기</h2>
  * <pre>
- *   ~ 2026-05 : mart_reservation_overall_monthly 그대로 (V12 seed 확정값 및 배치 결과)
- *   2026-06 ~ : 요청 시점 실시간 합산 — 온라인/콜 모두 예약통계_시력교정 마트에서 SUM
+ *   2024·2025 : mart_reservation_overall_monthly 그대로 (V12 seed 확정값)
+ *   2026-01 ~ : 요청 시점 실시간 합산 — 온라인/콜 모두 예약통계_시력교정 마트에서 SUM
  *               (reservation_stats_override 오버레이 반영 → 셀 편집 즉시 반영)
  * </pre>
  *

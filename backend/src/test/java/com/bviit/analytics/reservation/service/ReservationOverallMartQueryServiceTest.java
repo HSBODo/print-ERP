@@ -19,11 +19,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 예약 종합 마트 조회 서비스 — 컷오버(2026-06) 이후 온라인·콜 모두 요청 시점에 시력교정 마트 SUM 으로 대체.
+ * 예약 종합 마트 조회 서비스 — 컷오버(2026-01) 이후 온라인·콜 모두 요청 시점에 시력교정 마트 SUM 으로 대체.
  *
  * <pre>
- *   ~ 2026-05 : mart_reservation_overall_monthly 그대로
- *   2026-06 ~ : online = 네이버 + 카카오(시스템 마트) + 홈페이지(홈페이지 마트)
+ *   2024·2025 : mart_reservation_overall_monthly 그대로 (V12 시드 확정값)
+ *   2026-01 ~ : online = 네이버 + 카카오(시스템 마트) + 홈페이지(홈페이지 마트)
  *               call   = call_reservation + tm_reservation + tm_recounsel_reservation (시스템 마트)
  *               reservations = call + online
  * </pre>
@@ -34,11 +34,11 @@ class ReservationOverallMartQueryServiceTest {
     private ReservationStatsSystemMartRepository systemMartRepository;
     private HomepageOverallSource homepageRepository;
 
-    /** 마트: 2026-05 → online 200/call 100/total 300 (컷오버 이전, 그대로), 2026-06 → 컷오버 이후 라이브로 덮여야 함 */
+    /** 마트: 2025-12 → online 200/call 100/total 300 (컷오버 이전, 그대로), 2026-06 → 컷오버 이후 라이브로 덮여야 함 */
     private static List<ReservationOverallMonthlyItem> martMonthly() {
         return List.of(
                 ReservationOverallMonthlyItem.builder()
-                        .year(2026).month(5).reservations(300).online(200).call(100).total(300).build(),
+                        .year(2025).month(12).reservations(300).online(200).call(100).total(300).build(),
                 ReservationOverallMonthlyItem.builder()
                         .year(2026).month(6).reservations(333).online(222).call(111).total(333).build()
         );
@@ -73,11 +73,11 @@ class ReservationOverallMartQueryServiceTest {
 
     @Test
     void 컷오버_이전_달은_마트_값을_그대로_쓴다() {
-        ReservationOverallMonthlyItem may = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 5);
+        ReservationOverallMonthlyItem dec2025 = monthOf(service().getMonthlyStats(List.of(2025, 2026)), 2025, 12);
 
-        assertThat(may.getOnline()).isEqualTo(200);
-        assertThat(may.getCall()).isEqualTo(100);
-        assertThat(may.getReservations()).isEqualTo(300);
+        assertThat(dec2025.getOnline()).isEqualTo(200);
+        assertThat(dec2025.getCall()).isEqualTo(100);
+        assertThat(dec2025.getReservations()).isEqualTo(300);
     }
 
     @Test
