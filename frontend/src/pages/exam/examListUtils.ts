@@ -63,6 +63,13 @@ export const toMonthEnd = (month: string) => {
   return `${month}-${String(lastDate).padStart(2, '0')}`
 }
 
+/** 오늘 기준 전월 'YYYY-MM' (기본 조회 기간용 — 예: 2026-07 이면 '2026-06'). */
+export const previousMonthValue = () => {
+  const now = new Date()
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`
+}
+
 export const toMonthWeekRange = (month: string, week: number) => {
   const startDay = ((week - 1) * 7) + 1
   const monthEnd = toMonthEnd(month)
