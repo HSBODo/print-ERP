@@ -20,14 +20,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 예약 종합 마트 조회 서비스 — 컷오버(2026-01) 이후 온라인·콜 모두 요청 시점에 시력교정 마트 SUM 으로 대체.
+ * 예약 종합 마트 조회 서비스 — 컷오버(2026-06) 이후 온라인·콜 모두 요청 시점에 마트 SUM 으로 대체.
  *
  * <pre>
- *   2024·2025 : mart_reservation_overall_monthly 그대로 (V12 시드 확정값)
- *   2026-01 ~ : online = 네이버 + 카카오(시력교정 마트) + 홈페이지(홈페이지 마트)
- *               call   = [시력교정] call_reservation + tm_reservation + tm_recounsel_reservation
- *                      + [백내장]   new_patient + tm_reservation
- *               reservations = call + online
+ *   2024·2025    : mart_reservation_overall_monthly 그대로 (V12 시드 확정값)
+ *   2026-01 ~ 05 : mart_reservation_overall_monthly 그대로 (V24 골든 시드 — 담당자 확정값)
+ *   2026-06 ~    : online = 네이버 + 카카오(시력교정 마트) + 홈페이지(홈페이지 마트)
+ *                  call   = [시력교정] call_reservation + tm_reservation + tm_recounsel_reservation
+ *                         + [백내장]   new_patient + tm_reservation
+ *                  reservations = call + online
  * </pre>
  */
 class ReservationOverallMartQueryServiceTest {
@@ -87,6 +88,23 @@ class ReservationOverallMartQueryServiceTest {
         assertThat(dec2025.getOnline()).isEqualTo(200);
         assertThat(dec2025.getCall()).isEqualTo(100);
         assertThat(dec2025.getReservations()).isEqualTo(300);
+    }
+
+    @Test
+    void V24_골든_시드_구간_2026_01_05_는_마트_값을_그대로_쓴다() {
+        // 2026-03 은 V24 골든 시드 구간이라 라이브 SUM 대신 마트 값을 읽어야 한다.
+        when(martRepository.findMonthly(anyList())).thenReturn(List.of(
+                ReservationOverallMonthlyItem.builder()
+                        .year(2026).month(3).reservations(1318).online(482).call(836).total(1318).build(),
+                ReservationOverallMonthlyItem.builder()
+                        .year(2026).month(6).reservations(333).online(222).call(111).total(333).build()
+        ));
+
+        ReservationOverallMonthlyItem mar = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 3);
+
+        assertThat(mar.getOnline()).isEqualTo(482);   // V24 골든 시드 그대로
+        assertThat(mar.getCall()).isEqualTo(836);
+        assertThat(mar.getReservations()).isEqualTo(1318);
     }
 
     @Test

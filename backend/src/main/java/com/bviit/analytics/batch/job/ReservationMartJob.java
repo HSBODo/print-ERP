@@ -76,10 +76,13 @@ public class ReservationMartJob {
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
 
-        // 2) Overall monthly upsert — min-year 미만 연도는 V12 seed 값 보존 (write 차단)
+        // 2) Overall monthly upsert
+        //    - min-year 미만 연도(24·25)는 V12 seed 값 보존 (write 차단)
+        //    - 2026-01~05 는 V24 골든 시드 보존 (write 차단) — 담당자 확정값
         List<ReservationOverallMonthlyItem> overallMonthly =
                 overallStatsService.getMonthlyStats(years).stream()
                         .filter(m -> m.getYear() >= minYear)
+                        .filter(m -> !isOverallSeededMonth(m.getYear(), m.getMonth()))
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int overallRows = writer.upsertOverallMonthly(overallMonthly);
@@ -118,5 +121,15 @@ public class ReservationMartJob {
         YearMonth ymFrom = YearMonth.from(from);
         YearMonth ymTo = YearMonth.from(to);
         return !ym.isBefore(ymFrom) && !ym.isAfter(ymTo);
+    }
+
+    /**
+     * mart_reservation_overall_monthly 의 골든 시드 구간 판정.
+     *
+     * <p>2026-01~05 는 V24 시드가 담당자 확정값을 못 박은 구간 — 배치가 재계산해 덮으면
+     * 확정값을 잃는다. V22 백내장 검사수 골든과 동일 패턴.
+     */
+    private static boolean isOverallSeededMonth(int year, int month) {
+        return year == 2026 && month >= 1 && month <= 5;
     }
 }

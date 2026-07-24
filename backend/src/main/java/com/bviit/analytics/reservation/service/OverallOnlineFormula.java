@@ -11,7 +11,7 @@ import java.util.Map;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 /**
- * 예약 종합의 온라인 예약 공식(2026-01 컷오버 이후) 공유 유틸.
+ * 예약 종합의 온라인 예약 공식(2026-06 컷오버 이후) 공유 유틸.
  *
  * <p>공식: 온라인 = 네이버 + 카카오톡 + 홈페이지(리스트 화면과 동일한 raw · 전 진료 · COUNT(*)).
  * 이 정의는 예약자 리스트_홈페이지 화면 건수와 정확히 정합하도록 통일한 것이다(2026-07-24).
@@ -20,17 +20,21 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  * ({@link ReservationOverallMartQueryService})가 동일 공식을 공유하도록 한 곳에 모아둔다.
  * 실시간 경로는 셀 편집이 즉시 반영되도록 postgres 마트(오버라이드 포함)를 소스로 사용한다.
  *
- * <p><b>2026-07-24 컷오버 확장</b> — 최초 컷오버는 2026-06 이었으나, 예약통계_시력교정 페이지의
- * 셀 편집이 2026-01~05 에도 즉시 반영돼야 한다는 요구로 2026-01 로 앞당김. 2024·2025 는 여전히
- * V12 시드가 컷오버 이전 구간이라 그대로 마트를 읽고, 2026-01~ 은 모두 라이브 SUM 으로 통일.
+ * <p><b>컷오버 이동 이력</b>
+ * <ul>
+ *   <li>2026-07-24 (아침): 오버라이드 즉시 반영을 위해 2026-06 → 2026-01 로 앞당김</li>
+ *   <li>2026-07-24 (오후): 2026-01~05 는 담당자 확정값(V24 시드) 로 못 박기로 결정 —
+ *       CUTOVER 를 다시 2026-06 으로 복원. 24·25(V12) 와 2026-01~05(V24) 는 마트 seed 그대로,
+ *       2026-06+ 만 라이브 SUM(오버라이드 즉시 반영 유지).</li>
+ * </ul>
  */
 public final class OverallOnlineFormula {
 
     /**
      * 온라인 예약 정의가 바뀌는 시점. 이 달부터 네이버+카카오톡+홈페이지 라이브 SUM.
-     * 2026-01 로 앞당긴 것은 오버라이드 즉시 반영 요구 때문(2026-07-24).
+     * 2026-01~05 는 V24 골든 시드로 마트에 못 박혀 있어 이 컷오버 이전 구간에 속한다.
      */
-    public static final YearMonth CUTOVER = YearMonth.of(2026, 1);
+    public static final YearMonth CUTOVER = YearMonth.of(2026, 6);
 
     private OverallOnlineFormula() {}
 
