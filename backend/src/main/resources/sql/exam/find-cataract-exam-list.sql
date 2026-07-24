@@ -1,14 +1,31 @@
+-- 백내장 검사자 리스트 — 백내장검사 예약(RESERVATION FLAG='H') 기준, 고객당 1행.
+--
+-- 레거시 원장: BCRM > 통계(C) > 통계_백내장_내원동기 의 분류 '백내장' + '중단'.
+-- 2026-07-23 모집단 교체 — 종전 Cataract_Exam 행 기준(6월 114건)은 월간 레포트 숫자와 맞지 않았다.
+-- 이제 리스트 건수 = 월간 레포트 백내장 검사수 (6월 55 = 백내장 45 + 중단 10).
+--
+-- 모집단:
+--   1) 기간 내 백내장검사 예약 내원 — FLAG='H' · JINRYO<>'3'(C_재검사) · SEQ<>3(노안5진료실) · STATE NOT IN ('C','Y')
+--   2) 검안사(MY_OPTOMETRIST) 배정됨  → 미배정이면 레거시 분류 'F/U'(외래 추적)라 제외
+--   3) 상담사 = 'BS0808'(BS미지정) → 분류 '중단' / 상담사 배정됨 → 분류 '백내장'. 둘 다 포함.
+--
+-- ⚠️ 담당자 판정은 EXISTS(EMPLOYEE) 로 할 것. `MY_OPTOMETRIST IS NOT NULL` 은 빈 문자열이 걸려 분류가 뒤집힌다.
+-- ⚠️ 검사일 = 기간 내 첫 H 예약일. 레거시는 역대 최초값(MIN 전 기간)을 쓰는데 조회기간과 무관해 2020년이 찍히는 버그다 — 따르지 않는다.
+-- ⚠️ Cataract_Exam(적절IOL·견적가·검사메모 등)은 LEFT 성격이다. 예약은 있으나 검사기록이 없으면 공백(6월 55명 중 1명).
+--
+-- READ-ONLY · MSSQL 2014 호환. 날짜는 char(10) 'YYYY-MM-DD'.
             SELECT
               ISNULL(LTRIM(RTRIM(cu.CUST_NUM)), '')        AS chartNo,
               ISNULL(cu.CUST_NAME, '')                     AS name,
               ISNULL(cu.CUST_ENAME, '')                    AS nameEng,
-              ISNULL(ce.EXAM_DATE, '')                     AS examDate,
+              ISNULL(CH.examDate, '')                      AS examDate,
               ISNULL(
                 NULLIF(LTRIM(RTRIM(ms.SUB_NAME)), ''),
                 CASE WHEN ISNULL(LTRIM(RTRIM(rsv.RESERVE_FLAG)),'') = 'H' THEN '백내장검사' ELSE '' END
               )                                            AS examType,
               ISNULL(rsvReg.regDate, '')                   AS examRegDate,
               '백내장'                                      AS examCategory,
+              CASE WHEN CH.isStop = 1 THEN '중단' ELSE '백내장' END AS classification,
               CASE WHEN ISNULL(cu.FIRST_DAY, '') >= :from AND ISNULL(cu.FIRST_DAY, '') <= :to
                    THEN '신환' ELSE '구환' END             AS patientType,
               ISNULL(ce.EXAM_MEMO, '')                     AS examMemo,
@@ -60,9 +77,38 @@
               ISNULL(cu.LAST_DAY, '')                      AS lastVisit,
               ISNULL(ins.EtcCodNam, '')                    AS insurance,
               ISNULL(nation.Nation_CodeName, '')           AS nationality
-            FROM Cataract_Exam ce WITH(NOLOCK)
-            JOIN CUSTOM cu WITH(NOLOCK)                       ON ce.CUST_NUM = cu.CUST_NUM
-            LEFT JOIN Cataract_Operationdata op WITH(NOLOCK)  ON ce.CUST_NUM = op.CUST_NUM
+            FROM (
+              SELECT B.CUST_NUM,
+                     MIN(D.RESERVE_DATE) AS examDate,
+                     CASE WHEN B.MY_COUNSELOR = 'BS0808' THEN 1 ELSE 0 END AS isStop
+              FROM CUSTOM B WITH(NOLOCK)
+              JOIN RESERVATION D WITH(NOLOCK) ON D.CUST_NUM = B.CUST_NUM
+              WHERE D.RESERVE_DATE >= :from AND D.RESERVE_DATE <= :to
+                AND D.RESERVE_FLAG = 'H'
+                AND ISNULL(D.RESERVE_JINRYO, '') <> '3'
+                AND ISNULL(D.RESERVE_SEQ, 0) <> 3
+                AND D.RESERVE_STATE NOT IN ('C', 'Y')
+                AND B.CUST_NUM <> '9999999999999'
+                AND NOT (
+                  ISNULL(B.CUST_NAME, '') LIKE N'%테스트%'
+                  OR LOWER(ISNULL(B.CUST_NAME, '')) LIKE '%test%'
+                )
+                AND EXISTS (SELECT 1 FROM EMPLOYEE E WITH(NOLOCK) WHERE E.EMP_NUM = B.MY_OPTOMETRIST)
+                AND (
+                  B.MY_COUNSELOR = 'BS0808'
+                  OR EXISTS (SELECT 1 FROM EMPLOYEE E WITH(NOLOCK) WHERE E.EMP_NUM = B.MY_COUNSELOR)
+                )
+              GROUP BY B.CUST_NUM, CASE WHEN B.MY_COUNSELOR = 'BS0808' THEN 1 ELSE 0 END
+            ) CH
+            JOIN CUSTOM cu WITH(NOLOCK)                       ON cu.CUST_NUM = CH.CUST_NUM
+            OUTER APPLY (
+              SELECT TOP 1 c.*
+              FROM Cataract_Exam c WITH(NOLOCK)
+              WHERE c.CUST_NUM = CH.CUST_NUM
+                AND c.EXAM_DATE >= :from AND c.EXAM_DATE <= :to
+              ORDER BY CASE WHEN c.EXAM_DATE = CH.examDate THEN 0 ELSE 1 END, c.EXAM_DATE, c.SEQ DESC
+            ) ce
+            LEFT JOIN Cataract_Operationdata op WITH(NOLOCK)  ON op.CUST_NUM = CH.CUST_NUM
             LEFT JOIN EMPLOYEE osr WITH(NOLOCK)               ON op.OPERATIONR_DOC = osr.EMP_NUM
             LEFT JOIN EMPLOYEE osl WITH(NOLOCK)               ON op.OPERATIONL_DOC = osl.EMP_NUM
             LEFT JOIN EMPLOYEE ec WITH(NOLOCK)                ON cu.MY_COUNSELOR   = ec.EMP_NUM
@@ -75,8 +121,8 @@
             OUTER APPLY (
               SELECT TOP 1 r.RESERVE_FLAG, r.RESERVE_JINRYO, r.START_TIME, r.RESERVE_PATH, r.RESERVE_NUM
               FROM RESERVATION r WITH(NOLOCK)
-              WHERE r.CUST_NUM = ce.CUST_NUM AND r.RESERVE_DATE = ce.EXAM_DATE
-                AND r.RESERVE_STATE IN ('I','H') AND r.RESERVE_FLAG = 'H'
+              WHERE r.CUST_NUM = CH.CUST_NUM AND r.RESERVE_DATE = CH.examDate
+                AND r.RESERVE_STATE NOT IN ('C','Y') AND r.RESERVE_FLAG = 'H'
               ORDER BY r.RESERVE_NUM DESC
             ) rsv
             LEFT JOIN MEDICAL_SUB_CFG ms WITH(NOLOCK)
@@ -91,7 +137,9 @@
             OUTER APPLY (
               SELECT TOP 1 f.RESERVE_DATE, f.RESERVE_NUM
               FROM RESERVATION f WITH(NOLOCK)
-              WHERE f.CUST_NUM = ce.CUST_NUM AND f.RESERVE_FLAG = 'O' AND f.RESERVE_STATE <> 'C'
+              WHERE f.CUST_NUM = CH.CUST_NUM AND f.RESERVE_FLAG = 'O'
+                AND f.RESERVE_JINRYO = '4'            -- 백내장 수술만(레거시 기준). 미지정 시 시력교정 수술예약이 섞임
+                AND f.RESERVE_STATE <> 'C'
               ORDER BY f.RESERVE_NUM DESC
             ) opRsv
             OUTER APPLY (
@@ -110,7 +158,7 @@
                 ISNULL(CONVERT(varchar(10), m2.[section]), '') AS section
               FROM MOTIVE_NEW02 m2 WITH(NOLOCK)
               LEFT JOIN MOTIVE_NEW01 m1 WITH(NOLOCK) ON m2.fkey = m1.pkey
-              WHERE m2.cust_num = ce.CUST_NUM AND m2.Idx = '1'
+              WHERE m2.cust_num = CH.CUST_NUM AND m2.Idx = '1'
               ORDER BY m2.pkey DESC
             ) motive
             LEFT JOIN (
@@ -144,10 +192,5 @@
                 GROUP BY T2.CUST_NUM
               ) TMP
               GROUP BY TMP.PRC_CUSNUM
-            ) pay ON ce.CUST_NUM = pay.PRC_CUSNUM AND ce.CUST_NUM <> '9999999999999'
-            WHERE ce.EXAM_DATE >= :from AND ce.EXAM_DATE <= :to
-              AND NOT (
-                ISNULL(cu.CUST_NAME, '') LIKE N'%테스트%'
-                OR LOWER(ISNULL(cu.CUST_NAME, '')) LIKE '%test%'
-              )
-            ORDER BY ce.EXAM_DATE, rsv.START_TIME, cu.CUST_NAME
+            ) pay ON pay.PRC_CUSNUM = CH.CUST_NUM AND CH.CUST_NUM <> '9999999999999'
+            ORDER BY CH.examDate, rsv.START_TIME, cu.CUST_NAME

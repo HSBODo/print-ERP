@@ -1,7 +1,7 @@
 INSERT INTO list_cataract_exam (
     exam_date,
     chart_no, name, name_eng,
-    exam_type, exam_category, patient_type,
+    exam_type, exam_category, classification, patient_type,
     exam_reg_date, exam_memo, estimate, surgery_rate, exam_time,
     recommended_r, recommended_l,
     surgery_reg_date, surgery_reserve_date, surgery_date,
@@ -19,7 +19,7 @@ INSERT INTO list_cataract_exam (
 ) VALUES (
     CAST(NULLIF(:examDate, '') AS DATE),
     :chartNo, :name, :nameEng,
-    :examType, :examCategory, :patientType,
+    :examType, :examCategory, :classification, :patientType,
     :examRegDate, :examMemo, :estimate, :surgeryRate, :examTime,
     :recommendedR, :recommendedL,
     :surgeryRegDate, :surgeryReserveDate, :surgeryDate,

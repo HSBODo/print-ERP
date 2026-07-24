@@ -141,7 +141,8 @@ public class ExamMartWriter {
     private static final String[] LIST_KEYS = new String[]{
             "examDate",
             "chartNo", "name", "nameEng",
-            "examType", "examCategory", "patientType",
+            // classification: 백내장 리스트 전용(백내장/중단). 시력교정 list_exam SQL은 참조하지 않아 무시된다.
+            "examType", "examCategory", "classification", "patientType",
             "examRegDate", "examMemo", "estimate", "surgeryRate", "examTime",
             "recommendedR", "recommendedL",
             "surgeryRegDate", "surgeryReserveDate", "surgeryDate",
