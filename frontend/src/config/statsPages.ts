@@ -260,6 +260,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/surgery-ratio'
   ),
   statsPage(
+    'outpatient-list',
+    '외래수 리스트',
+    '/stats/outpatient-list',
+    'outpatient',
+    '외래',
+    'RESERVATION(외래 F + 내원/퇴원 I,H) 기준 외래수 상세 명단입니다. 리스트 합계가 월별 외래수 지표와 정합합니다.',
+    '/api/outpatient-list'
+  ),
+  statsPage(
     'outpatient-count',
     '외래수',
     '/stats/outpatient-count',

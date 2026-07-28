@@ -155,6 +155,7 @@ project-root/
 | surgery | 수술 건수 | /stats/surgery | 수술 | 완료 |
 | surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술 | 완료 |
 | surgery-composition | 수술별 비중 | /stats/surgery-composition | 수술 | 완료 |
+| outpatient-list | 외래수 리스트 | /stats/outpatient-list | 외래 | 완료 (RESERVATION F + I/H, 외래수와 정합) |
 | outpatient-count | 외래수 | /stats/outpatient-count | 외래 | 완료 |
 | overseas | 해외 환자 관련 지표 | /stats/overseas | 마케팅 | 미구현 |
 | marketing | 마케팅 유입 및 효율 지표 | /stats/marketing | 마케팅 | 미구현 |

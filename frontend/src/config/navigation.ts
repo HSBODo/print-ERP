@@ -65,6 +65,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'surgery': 'complete',
   'surgery-ratio': 'complete',
   'surgery-composition': 'complete',
+  'outpatient-list': 'complete',
   'outpatient-count': 'complete',
   'overseas': 'pending',
   'marketing': 'pending',
@@ -189,7 +190,7 @@ const rawMenuItems: MenuItem[] = [
         href: '#',
         icon: Hospital,
         kind: 'group',
-        children: kids('outpatient-count'),
+        children: kids('outpatient-list', 'outpatient-count'),
       },
       {
         id: 'cancel-noshow',
