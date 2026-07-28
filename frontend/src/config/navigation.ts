@@ -92,9 +92,14 @@ export const getMenuStatusIds = (): string[] => Object.keys(MENU_STATUS)
 
 /**
  * ADMIN 롤 전용 페이지. 사이드바 숨김 + 직접 URL 접근도 placeholder 로 차단(pageRegistry.isRouteBlocked).
- * admin-group 아래의 페이지들과 항상 동기화.
+ * admin-group 아래의 페이지들 및 그 밖의 관리자 전용 통계와 항상 동기화.
  */
-const ADMIN_ONLY_PAGE_IDS = new Set<string>(['batch-management'])
+const ADMIN_ONLY_PAGE_IDS = new Set<string>([
+  'batch-management',
+  'overall-exam',
+  'overall-exam-weekly',
+  'consultation-rate',
+])
 export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
 
 /**
@@ -119,7 +124,9 @@ const findPage = (id: string) => getStatsPageById(id)
 
 const link = (id: string): MenuItem => {
   const page = findPage(id)
-  return { id, label: page.label, href: page.path, status: getMenuStatus(id) }
+  const item: MenuItem = { id, label: page.label, href: page.path, status: getMenuStatus(id) }
+  if (isAdminOnlyPage(id)) item.adminOnly = true
+  return item
 }
 
 /** 그룹 자식 링크 생성 — 숨김(HIDDEN_MENU_IDS) 대상은 제외. */

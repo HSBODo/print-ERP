@@ -23,8 +23,20 @@ const prunePending = (items: MenuItem[]): MenuItem[] =>
 
 const hidePendingForProd = (items: MenuItem[]): MenuItem[] => (isProd ? prunePending(items) : items)
 
+// 재귀적으로 adminOnly 항목을 제거하고, 자식이 모두 사라진 그룹도 정리한다(섹션은 유지).
+// 최상위 admin-section뿐 아니라 그룹 안 잎(예: 검사 > 월별/주간 검사자 종합지표)도 커버.
+const pruneAdmin = (items: MenuItem[]): MenuItem[] =>
+  items
+    .filter((item) => !item.adminOnly)
+    .map((item) => (item.children ? { ...item, children: pruneAdmin(item.children) } : item))
+    .filter((item) => {
+      if (item.children === undefined) return true
+      if (item.kind === 'section') return true
+      return item.children.length > 0
+    })
+
 const hideAdminForNonAdmin = (items: MenuItem[], isAdmin: boolean): MenuItem[] =>
-  isAdmin ? items : items.filter((item) => !item.adminOnly)
+  isAdmin ? items : pruneAdmin(items)
 
 // 구현 상태별 텍스트 색상 (활성 상태가 아닐 때만 적용)
 const statusTextClass = (status?: MenuStatus): string => {
