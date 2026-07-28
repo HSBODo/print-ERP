@@ -155,7 +155,9 @@ public class ExamMartWriter {
             "motiveL", "motiveM", "motiveS", "motiveMemo",
             "optometrist",
             "cancelCode", "cancelMemo",
-            "grade", "job", "lastVisit", "insurance", "nationality"
+            "grade", "job", "lastVisit", "insurance", "nationality",
+            // oneDay: 시력교정 list_exam 전용(원데이 Y/N). 백내장 SQL은 참조하지 않아 무시된다.
+            "oneDay"
     };
 
     private static int sum(int[] counts) {

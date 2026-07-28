@@ -70,6 +70,7 @@ class ExamMartWriterIT {
                     + "batch_watermark, batch_run_log CASCADE");
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V4__exam_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V26__list_exam_one_day.sql"));
         }
     }
 

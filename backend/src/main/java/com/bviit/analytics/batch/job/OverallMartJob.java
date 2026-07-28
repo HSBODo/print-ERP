@@ -55,8 +55,10 @@ public class OverallMartJob {
         List<OverallExamWeeklyItem> weekly = overallExamWeeklyService.getWeeklyStats(years);
         int weeklyRows = writer.upsertWeekly(weekly);
 
+        // 2026-01~05 는 V27 골든 시드가 담당자 확정값을 못 박은 구간 — 배치가 재계산해 덮으면 확정값을 잃는다.
         List<OverallExamMonthlyItem> monthly = overallExamMonthlyService.getMonthlyStats(years).stream()
                 .filter(m -> m.getYear() >= minYear)
+                .filter(m -> !is2026H1Seeded(m.getYear(), m.getMonth()))
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
 
@@ -72,5 +74,13 @@ public class OverallMartJob {
 
     private static List<Integer> yearsInRange(LocalDate from, LocalDate to) {
         return Stream.iterate(from.getYear(), y -> y <= to.getYear(), y -> y + 1).toList();
+    }
+
+    /**
+     * mart_overall_exam_monthly 의 골든 시드 구간 판정.
+     * 2026-01~05 는 V27 시드가 담당자 확정값을 못 박은 구간이라 배치 재계산 결과로 덮지 않는다.
+     */
+    private static boolean is2026H1Seeded(int year, int month) {
+        return year == 2026 && month >= 1 && month <= 5;
     }
 }

@@ -15,6 +15,7 @@ INSERT INTO list_exam (
     optometrist,
     cancel_code, cancel_memo,
     grade, job, last_visit, insurance, nationality,
+    one_day,
     loaded_at
 ) VALUES (
     CAST(NULLIF(:examDate, '') AS DATE),
@@ -33,5 +34,6 @@ INSERT INTO list_exam (
     :optometrist,
     :cancelCode, :cancelMemo,
     :grade, :job, :lastVisit, :insurance, :nationality,
+    :oneDay,
     CURRENT_TIMESTAMP
 )

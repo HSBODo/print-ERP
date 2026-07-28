@@ -5,6 +5,8 @@
 --   introType  : 소개고객/소개미확인→고객소개, 소개직원→직원소개, 그외→일반
 --   jobBucket  : find-all-exam-list.sql 의 CASE 를 Postgres 문법(SIMILAR TO)으로 이식
 --                MSSQL의 [0-9] 문자 클래스는 Postgres LIKE 미지원 → SIMILAR TO 로 대체
+--   examType   : list_exam.one_day(Y/N) + exam_category → 원데이/일반/'' (드림렌즈·백내장은 '')
+--                one_day 는 find-exam-list.sql 이 배치 적재 시 계산(중단/취소/테스트메모 제외 + M/5 EXISTS).
 --
 -- 필터(테스트고객·백내장 스텁 제외)는 mart 적재 시(find-exam-list.sql / find-cataract-exam-list.sql)
 -- 이미 적용됐으므로 여기서 재적용하지 않음.
@@ -17,7 +19,7 @@ WITH src AS (
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
            phone1, phone2, email, counselor, doctor, optometrist,
-           last_visit, memo
+           last_visit, memo, one_day
       FROM list_exam
      WHERE exam_date >= CAST(:from AS DATE)
        AND exam_date <= CAST(:to   AS DATE)
@@ -25,7 +27,7 @@ WITH src AS (
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
            phone1, phone2, email, counselor, doctor, optometrist,
-           last_visit, memo
+           last_visit, memo, 'N' AS one_day
       FROM list_cataract_exam
      WHERE exam_date >= CAST(:from AS DATE)
        AND exam_date <= CAST(:to   AS DATE)
@@ -35,6 +37,12 @@ SELECT
     COALESCE(name, '')                         AS "name",
     TO_CHAR(exam_date, 'YYYY-MM-DD')           AS "examDate",
     COALESCE(exam_category, '')                AS "examGroup",
+    CASE
+        WHEN exam_category = '백내장'   THEN ''
+        WHEN exam_category = '드림렌즈' THEN ''
+        WHEN one_day = 'Y'              THEN '원데이'
+        ELSE '일반'
+    END                                         AS "examType",
     COALESCE(patient_type, '')                 AS "patientType",
     CASE
         WHEN motive_l IN ('소개고객', '소개미확인') THEN '고객소개'
