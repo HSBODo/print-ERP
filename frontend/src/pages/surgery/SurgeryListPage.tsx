@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
+import { ChevronDown, Download, Repeat, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useSurgeryList } from '@/hooks/surgery/useSurgeryList'
+import { useReoperationCandidates } from '@/hooks/surgery/useReoperationCandidates'
 import { useWeeklyApproval } from '@/hooks/useWeeklyApproval'
 import { WeeklyApprovalPanel } from '@/components/stats/WeeklyApprovalPanel'
+import { ReoperationCandidatesModal } from './ReoperationCandidatesModal'
 import type { SurgeryListItem } from '@/api/surgery/surgeryList'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './surgeryListColumns'
 import {
@@ -18,6 +20,7 @@ import {
   PAGE_SIZE_OPTIONS,
   SKELETON_ROWS,
   QUICK_RANGES,
+  reopCandidateToRow,
   toMonthValue,
   toMonthStart,
   toMonthEnd,
@@ -45,25 +48,46 @@ export function SurgeryListPage() {
   const [pageSize, setPageSize] = useState(50)
   const [sortState, setSortState] = useState<SortState>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  const [reopOpen, setReopOpen] = useState(false)
+  const [reopRange, setReopRange] = useState<{ from: string; to: string }>({ from: defaultFrom(), to: defaultTo() })
 
-  const { rows, isLoading, isFetching, isError } = useSurgeryList(queryFrom, queryTo, hasSearched)
-  const showSkeleton = hasSearched && (isLoading || isFetching)
+  const isReopTab = queryCategory === '재수술'
+  const isCataractTab = queryCategory === '백내장'
+  const { rows, isLoading, isFetching, isError } = useSurgeryList(queryFrom, queryTo, hasSearched && !isReopTab)
+
+  // '재수술' 필터용 데이터 — 자동 포함분(레포트 반영분)만 리스트 행으로 변환. 재수술 탭일 때만 조회.
+  const { candidates: reopCandidates, isLoading: reopLoading, isFetching: reopFetching, isError: reopError } =
+    useReoperationCandidates(queryFrom, queryTo, hasSearched && isReopTab)
+  const reopRows = useMemo(
+    () => reopCandidates.filter((c) => c.autoIncluded === 1).map(reopCandidateToRow),
+    [reopCandidates],
+  )
+
+  const activeError = isReopTab ? reopError : isError
+  const showSkeleton = hasSearched && (isReopTab ? (reopLoading || reopFetching) : (isLoading || isFetching))
 
   const filtered = useMemo(() => {
     const q = queryKeyword.trim().toLowerCase()
-    return rows.filter((r) => {
-      if (queryCategory !== '전체' && r.surgeryCategory !== queryCategory) return false
-      if (!q) return true
-      return r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q)
-    })
-  }, [rows, queryCategory, queryKeyword])
+    const base = queryCategory === '재수술'
+      ? reopRows
+      : rows.filter((r) => queryCategory === '전체' || r.surgeryCategory === queryCategory)
+    if (!q) return base
+    return base.filter((r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q))
+  }, [rows, reopRows, queryCategory, queryKeyword])
 
   // 주별 승인(주차 버킷 + 승인/선택) — 수술일 기준. 같은 달 조회일 때만 패널 노출(weeksInRange 제약).
   const approval = useWeeklyApproval(filtered, surgeryDateOf, queryFrom, queryTo)
   const sameMonth = queryFrom.slice(0, 7) === queryTo.slice(0, 7)
-  const showApproval = hasSearched && !isError && !showSkeleton && sameMonth
+  const showApproval = hasSearched && !activeError && !showSkeleton && sameMonth
   // 선택 주차로 거른 행이 표/페이지네이션 소스(미선택 시 filtered 그대로)
   const tableRows = approval.selectedRows
+
+  // 백내장 안(眼) 수 — 리스트는 사람·수술일(행) 단위(62), 레포트는 눈 단위(65: 같은날 양안=2안).
+  // 행의 우/좌 수술값이 채워진 개수를 세면 레포트 기준 안 수와 일치. (백엔드 호출 불필요)
+  const cataractEyeCount = useMemo(
+    () => tableRows.reduce((sum, r) => sum + (r.surgeryR.trim() ? 1 : 0) + (r.surgeryL.trim() ? 1 : 0), 0),
+    [tableRows],
+  )
 
   const sortedRows = useMemo(() => {
     if (!sortState) return tableRows
@@ -159,6 +183,17 @@ export function SurgeryListPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(Math.min(Math.max(page, 1), pageMax))
+  }
+
+  // 재수술 검토 팝업 — 조회한 기간(미조회 시 선택 월) 기준. 툴바 카운트와 동일 범위라 값이 일치.
+  const openReoperation = () => {
+    if (hasSearched) {
+      setReopRange({ from: queryFrom, to: queryTo })
+    } else {
+      const month = toMonthValue(draftFrom)
+      setReopRange({ from: toMonthStart(month), to: toMonthEnd(month) })
+    }
+    setReopOpen(true)
   }
 
   return (
@@ -261,6 +296,16 @@ export function SurgeryListPage() {
           <span className="text-muted-foreground">조회건수</span>
           <strong className="tabular-nums text-gray-900">{formatCount(tableRows.length)}건</strong>
         </div>
+        {isCataractTab && hasSearched && (
+          <div
+            className="flex h-8 items-center gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 text-xs"
+            aria-live="polite"
+            title="백내장 수술 안(眼) 수 — 같은 날 양안은 2안으로 셈. 월간 레포트 수술건수와 일치(조회건수는 사람·수술일 기준)."
+          >
+            <span className="text-amber-700">수술</span>
+            <strong className="tabular-nums text-amber-900">{formatCount(cataractEyeCount)}안</strong>
+          </div>
+        )}
         <div className="ml-auto flex items-center gap-1.5">
           <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>
             <RotateCcw className="h-3.5 w-3.5" />
@@ -275,6 +320,16 @@ export function SurgeryListPage() {
           >
             <Search className="h-3.5 w-3.5" />
             조회 (F1)
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="bg-violet-600 text-xs text-white hover:bg-violet-700"
+            onClick={openReoperation}
+            title="재수술 검토 — 자동 집계 포함/제외 확인 (조회·미리보기 전용)"
+          >
+            <Repeat className="h-3.5 w-3.5" />
+            재수술 검토
           </Button>
           <Button
             type="button"
@@ -304,7 +359,7 @@ export function SurgeryListPage() {
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
-          {isError ? (
+          {activeError ? (
             <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">데이터를 불러오지 못했습니다.</div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
@@ -419,6 +474,14 @@ export function SurgeryListPage() {
           </div>
         </CardContent>
       </Card>
+
+      {reopOpen && (
+        <ReoperationCandidatesModal
+          from={reopRange.from}
+          to={reopRange.to}
+          onClose={() => setReopOpen(false)}
+        />
+      )}
     </div>
   )
 }

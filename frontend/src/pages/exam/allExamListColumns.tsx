@@ -64,6 +64,11 @@ export const COLUMNS: Column[] = [
   { key: 'rowNo', label: 'No', align: 'right', min: '3.5rem', render: (_r, n) => n.toLocaleString('ko-KR'), csv: (_r, n) => n },
   { key: 'examDate', label: '검사일', align: 'center', min: '6rem' },
   { key: 'examGroup', label: '검사구분', align: 'center', min: '5rem', render: (r) => cell.badge(r.examGroup, GROUP_STYLE[r.examGroup]) },
+  { key: 'examType', label: '원데이', align: 'center', min: '4rem', render: (r) => (
+    r.examType === '원데이'
+      ? cell.badge('원데이', 'bg-violet-100 text-violet-700')
+      : <span className="text-gray-400">{r.examType || '—'}</span>
+  ) },
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_STYLE[r.patientType]) },
   { key: 'introType', label: '내원동기구분', align: 'center', min: '5.5rem', render: (r) => cell.badge(r.introType, INTRO_STYLE[r.introType]) },
   { key: 'motiveL', label: '내원동기(대)', align: 'center', min: '6rem', render: (r) => dash(r.motiveL) },
