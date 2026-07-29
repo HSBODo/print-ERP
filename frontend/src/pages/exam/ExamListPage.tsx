@@ -13,8 +13,8 @@ import {
   examDateOf,
   formatExamType,
   formatCount,
-  DEFAULT_FROM,
-  DEFAULT_TO,
+  defaultFrom,
+  defaultTo,
   PAGE_SIZE_OPTIONS,
   SKELETON_ROWS,
   QUICK_RANGES,
@@ -41,13 +41,13 @@ import {
 export function ExamListPage() {
   const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
   const [activeQuickRange, setActiveQuickRange] = useState<QuickRangeKey | null>(null)
-  const [draftFrom, setDraftFrom] = useState(DEFAULT_FROM)
-  const [draftTo, setDraftTo] = useState(DEFAULT_TO)
+  const [draftFrom, setDraftFrom] = useState(defaultFrom)
+  const [draftTo, setDraftTo] = useState(defaultTo)
   const [draftExamCategory, setDraftExamCategory] = useState('전체')
   const [draftType, setDraftType] = useState('전체')
   const [draftKeyword, setDraftKeyword] = useState('')
-  const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
-  const [queryTo, setQueryTo] = useState(DEFAULT_TO)
+  const [queryFrom, setQueryFrom] = useState(defaultFrom)
+  const [queryTo, setQueryTo] = useState(defaultTo)
   const [queryExamCategory, setQueryExamCategory] = useState('전체')
   const [queryType, setQueryType] = useState('전체')
   const [queryKeyword, setQueryKeyword] = useState('')
@@ -126,13 +126,13 @@ export function ExamListPage() {
   const handleReset = () => {
     setDraftPeriodMode('daily')
     setActiveQuickRange(null)
-    setDraftFrom(DEFAULT_FROM)
-    setDraftTo(DEFAULT_TO)
+    setDraftFrom(defaultFrom())
+    setDraftTo(defaultTo())
     setDraftExamCategory('전체')
     setDraftType('전체')
     setDraftKeyword('')
-    setQueryFrom(DEFAULT_FROM)
-    setQueryTo(DEFAULT_TO)
+    setQueryFrom(defaultFrom())
+    setQueryTo(defaultTo())
     setQueryExamCategory('전체')
     setQueryType('전체')
     setQueryKeyword('')

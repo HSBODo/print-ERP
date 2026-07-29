@@ -1,0 +1,31 @@
+INSERT INTO list_outpatient (
+    reserve_date,
+    reserve_num, reserve_time, end_time,
+    state, state_code,
+    reserve_type, reserve_jinryo_code,
+    patient_type, old_flag, today_flag, happy_call,
+    chart_no, name, name_eng,
+    grade, birth, lunar,
+    phone1, phone2, email,
+    zip, addr1, addr2,
+    doctor, counselor, registered_by,
+    comment, route, section,
+    motive_l, motive_m, motive_s, motive_memo,
+    job, last_visit, insurance, nationality, memo,
+    loaded_at
+) VALUES (
+    CAST(NULLIF(:reserveDate, '') AS DATE),
+    :reserveNum, :reserveTime, :endTime,
+    :state, :stateCode,
+    :reserveType, :reserveJinryoCode,
+    :patientType, :oldFlag, :todayFlag, :happyCall,
+    :chartNo, :name, :nameEng,
+    :grade, :birth, :lunar,
+    :phone1, :phone2, :email,
+    :zip, :addr1, :addr2,
+    :doctor, :counselor, :registeredBy,
+    :comment, :route, :section,
+    :motiveL, :motiveM, :motiveS, :motiveMemo,
+    :job, :lastVisit, :insurance, :nationality, :memo,
+    CURRENT_TIMESTAMP
+)

@@ -15,6 +15,8 @@ const cataractExamListItemSchema = z.object({
   examType: z.string(),
   examRegDate: z.string(),
   examCategory: z.string(),
+  /** 레거시 내원동기 분류 — '백내장'(상담사 배정) / '중단'(상담사 BS미지정). 리스트는 이 둘만 반환한다. */
+  classification: z.string(),
   patientType: z.string(),
   examMemo: z.string(),
   estimate: z.string(),

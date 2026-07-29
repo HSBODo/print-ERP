@@ -29,8 +29,30 @@ const cellEditSchema = z.object({
 })
 export type CataractStatsCellEdit = z.infer<typeof cellEditSchema>
 
-/** 손보정 가능한 필드(인입콜/응대콜만) — 백엔드 EDITABLE_FIELDS와 일치. */
-export const CATARACT_EDITABLE_FIELDS = ['inboundCall', 'answeredCall'] as const
+/** 손보정 가능한 필드(원시 카운트 21개 = 채널 18 + 종합 3) — 백엔드 EDITABLE_FIELDS와 일치. */
+export const CATARACT_EDITABLE_FIELDS = [
+  'totalCataract',
+  'totalPresbyopia',
+  'inboundCall',
+  'answeredCall',
+  'newExamInquiry',
+  'newReInquiry',
+  'newPatient',
+  'tmTotalDb',
+  'tmValidDb',
+  'tmReservation',
+  'kakaoTotalInquiry',
+  'kakaoCataractReservation',
+  'kakaoPresbyopiaReservation',
+  'onlineReservation',
+  'onlineNoShow',
+  'cancelOnline',
+  'cancelCrm',
+  'cancelKakao',
+  'visit',
+  'noShowReservation',
+  'cancel',
+] as const
 export type CataractEditableField = (typeof CATARACT_EDITABLE_FIELDS)[number]
 
 const dailyCountsSchema = z.object({
@@ -80,7 +102,7 @@ export const reservationStatsCataractApi = {
   },
 
   /**
-   * 셀 손보정: 특정 일자의 인입콜/응대콜을 직접 수정한다(휴가 등 라이브 어긋남 교정).
+   * 셀 손보정: 특정 일자의 원시 카운트(21개 필드) 값을 직접 수정한다.
    * postgres-mart 프로파일: reservation_stats_override 에 INSERT-only 로 이력 append.
    */
   editCell: async (

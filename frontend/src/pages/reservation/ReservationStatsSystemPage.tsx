@@ -197,15 +197,33 @@ const SYSTEM_HEADER_NODES: StatsHeaderNode<SystemHeaderColumn>[] = [
   group('예약 종합 (내원 · 부도 · 취소)', `${divider} bg-emerald-200`, summaryLeaves),
 ]
 
-/* ── 셀 손보정(홈/네이버 온라인예약 원시 카운트) ── */
+/* ── 셀 손보정(원시 카운트 24개 = 채널 21 + 종합 3) ── */
 const EDITABLE_FIELD_SET = new Set<string>(RESERVATION_STATS_EDITABLE_FIELDS)
 const EDITABLE_FIELD_LABEL: Record<ReservationStatsEditableField, string> = {
+  inboundCall: '인입콜',
+  answeredCall: '응대콜',
+  newInquiry: '신규예약문의',
+  callReservation: '검사 예약수',
+  tmTotalDb: 'TM 총 DB',
+  tmValidDb: 'TM 유효 DB',
+  tmReservation: 'TM 예약수',
+  tmRecounsel: 'TM 재상담',
+  tmRecounselValid: 'TM 재상담 유효수',
+  tmRecounselReservation: 'TM 재상담 예약수',
   homeReceived: '홈페이지 예약접수',
   homeReservation: '홈페이지 예약수',
   naverReceived: '네이버 예약접수',
   naverRejected: '네이버 파트너거절',
   naverValid: '네이버 유효접수',
   naverReservation: '네이버 예약수',
+  kakaoInquiry: '카톡 문의',
+  kakaoReservation: '카톡 예약수',
+  cancelCallNaver: '취소 콜·네이버',
+  cancelHome: '취소 홈페이지',
+  cancelKakao: '취소 카톡',
+  visit: '내원',
+  noShowReservation: '예약(부도)',
+  cancel: '취소',
 }
 
 type ManualEditsByDate = Map<string, Record<string, ReservationStatsCellEdit>>
@@ -562,20 +580,38 @@ function BodyRow({
         )
       })}
 
-      {SUMMARY_COLUMNS.map((col, i) =>
-        muted ? (
-          <td key={col.key} className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}>
-            –
-          </td>
-        ) : (
+      {SUMMARY_COLUMNS.map((col, i) => {
+        if (muted) {
+          return (
+            <td key={col.key} className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}>
+              –
+            </td>
+          )
+        }
+        const edit = edits?.[col.key]
+        if (canEditRow && row.date && EDITABLE_FIELD_SET.has(col.key)) {
+          return (
+            <EditableNumberCell
+              key={col.key}
+              value={summary[col.key] as number}
+              edit={edit}
+              busy={isEditing}
+              onSave={(next) => onEditCell(row.date!, col.key as ReservationStatsEditableField, next)}
+              cellClassName={`${numCell} ${i === 0 ? divider : ''} ${col.emphasis ? 'bg-rose-50' : ''}`}
+            />
+          )
+        }
+        return (
           <td
             key={col.key}
+            title={edit ? editMarkTitle(edit) : undefined}
             className={`${numCell} ${i === 0 ? divider : ''} ${col.emphasis ? 'bg-rose-50 text-rose-600' : ''}`}
           >
             {formatSummaryValue(summary[col.key], col.fmt)}
+            {edit ? <EditMark /> : null}
           </td>
-        ),
-      )}
+        )
+      })}
     </tr>
   )
 }

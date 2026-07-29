@@ -40,10 +40,12 @@ CH_KAKAO AS (
   WHERE H.InsertedDateTime >= :date AND H.InsertedDateTime < DATEADD(DAY,1,CONVERT(datetime,:date))
     AND C01.Name IN ('백내장검사','백내장외래')
 ),
+-- 온라인예약: 예약등록일(RESERVATION.InsertedDateTime) 기준 (2026-07-21 교정, daily-counts.sql CH_RES와 동일 정의).
+-- 구: 예약저장 이력시각(RH.HISTORY_TIME). 레거시 「온라인예약체크」 데스크(예약등록일 필터)와 일치시키기 위해 변경.
 CH_RES AS (
   SELECT DISTINCT
-    CASE WHEN RH.RESERVE_PATH IN ('ONLINE','APP','NAVER') THEN '백내장_온라인예약' ELSE '백내장_예약' END AS GB,
-    '' AS GB2, CONVERT(VARCHAR(10), RH.HISTORY_TIME, 23) AS [예약날짜], CONVERT(VARCHAR(100), RH.HISTORY_NUM) AS PK,
+    '백내장_온라인예약' AS GB,
+    '' AS GB2, CONVERT(VARCHAR(10), R.InsertedDateTime, 23) AS [예약날짜], CONVERT(VARCHAR(100), R.RESERVE_NUM) AS PK,
     ISNULL(CONVERT(VARCHAR(100), R.CUST_NUM),'') AS custNum,
     ISNULL(CONVERT(VARCHAR(100), R.RESERVE_NUM),'') AS reserveNum,
     ISNULL(R.RESERVE_STATE,'') AS reserveState,
@@ -54,9 +56,10 @@ CH_RES AS (
       WHEN R.RESERVE_STATE='C' THEN '취소'
       ELSE ''
     END AS exclusionReasonCandidate
-  FROM RESERVATION R WITH(NOLOCK) INNER JOIN RESERVE_HISTORY RH WITH(NOLOCK) ON R.RESERVE_NUM = RH.RESERVE_NUM
-  WHERE RH.HISTORY_TIME >= :date AND RH.HISTORY_TIME < DATEADD(DAY,1,CONVERT(datetime,:date))
-    AND R.RESERVE_FLAG='H' AND R.RESERVE_STATE<>'C' AND R.RESERVE_JINRYO<>'16' AND RH.MEMO='예약저장'
+  FROM RESERVATION R WITH(NOLOCK)
+  WHERE R.InsertedDateTime >= :date AND R.InsertedDateTime < DATEADD(DAY,1,CONVERT(datetime,:date))
+    AND R.RESERVE_FLAG='H' AND R.RESERVE_STATE<>'C' AND R.RESERVE_JINRYO<>'16'
+    AND R.RESERVE_PATH IN ('ONLINE','APP','NAVER')
     AND R.CUST_NUM<>'8888888888888' AND NOT (R.CUST_NAME LIKE '%테스트%' OR R.CUST_NAME LIKE '%TEST%')
 ),
 CH_VISIT AS (

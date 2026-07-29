@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * 예약 종합 계산에서 사용하는 홈페이지 데이터 소스.
  *
- * <p>온라인 예약 공식 = 네이버 + 카카오톡 + <b>홈페이지(중복제외)</b>. 이 인터페이스가
+ * <p>온라인 예약 공식 = 네이버 + 카카오톡 + <b>홈페이지(리스트 화면 raw 건수)</b>. 이 인터페이스가
  * '홈페이지' 몫을 제공한다({@link com.bviit.analytics.reservation.service.ReservationOverallStatsService}).
  *
  * <p>두 구현이 있다:
@@ -24,10 +24,11 @@ import java.util.Map;
 public interface HomepageOverallSource {
 
     /**
-     * 월별 중복제외 홈페이지 예약 건수 (yr / mo / cnt).
-     * 조건: exam_type='5' (시력교정) · COUNT(DISTINCT phone) · 반개구간.
+     * 월별 홈페이지 예약 건수 — 예약자 리스트_홈페이지 화면과 동일한 raw 건수 (yr / mo / cnt).
+     * 조건: 전 진료(백내장·노안·렌즈삽입 등 포함) · COUNT(*) · 반개구간.
+     * ⚠️ 네이버·카카오는 시력교정만 집계 — 이 홈페이지 판만 전 진료 포함이라 진료 범위 비대칭(의도적).
      */
-    List<Map<String, Object>> findMonthlyDedupedCounts(String from, String to);
+    List<Map<String, Object>> findMonthlyListRawCounts(String from, String to);
 
     /**
      * 소스가 담고 있는 마지막 등록일시. 값이 없으면 빈 문자열.

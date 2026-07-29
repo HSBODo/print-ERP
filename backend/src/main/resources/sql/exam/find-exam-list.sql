@@ -16,6 +16,14 @@
                 END
               )                                             AS examType,
               CASE WHEN visit.hasDreamlens = 1 AND visit.hasMedical = 0 THEN '드림렌즈' ELSE '시력교정' END AS examCategory,
+              -- 원데이 검사: 같은날 검사OP(M/5) 예약 내원. 레포트 정합 위해 중단/취소/테스트메모 제외.
+              -- all-exam-list examType('원데이'/'일반') 파생용. 드림렌즈·백내장은 마트 조회 시 ''로 무효화.
+              CASE WHEN ISNULL(e.STOP_YN, '') <> 'Y' AND ISNULL(e.CANCEL_CD, '') = ''
+                    AND NOT (ISNULL(e.EXAM_MEMO, '') LIKE N'%테스트%' OR LOWER(ISNULL(e.EXAM_MEMO, '')) LIKE '%test%')
+                    AND EXISTS (SELECT 1 FROM RESERVATION r5 WITH(NOLOCK)
+                                WHERE r5.CUST_NUM = e.CUST_NUM AND r5.RESERVE_DATE = e.EXAM_DATE
+                                  AND r5.RESERVE_FLAG = 'M' AND r5.RESERVE_JINRYO = '5' AND r5.RESERVE_STATE IN ('I','H'))
+                   THEN 'Y' ELSE 'N' END                     AS oneDay,
               CASE WHEN ISNULL(cu.FIRST_DAY, '') >= :from AND ISNULL(cu.FIRST_DAY, '') <= :to
                    THEN '신환' ELSE '구환' END             AS patientType,
               ISNULL(rsvReg.regDate, '')                   AS examRegDate,

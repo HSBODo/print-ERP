@@ -14,19 +14,38 @@ import java.util.Set;
 
 /**
  * 예약통계_백내장 — Postgres 마트 기반 셀 수기 보정.
- * 시력교정과 동일 패턴. 백내장은 인입콜/응대콜만 손보정 대상(휴가일 어긋남 교정).
+ * 시력교정과 동일 패턴. 원시 카운트(21컬럼: 채널 18 + 종합 3) 전체를 손보정 가능.
  */
 @Service
 @Profile("postgres-mart")
 @RequiredArgsConstructor
 public class CataractStatsOverrideCellEditService {
 
-    static final Set<String> EDITABLE_FIELDS = Set.of("inboundCall", "answeredCall");
-
-    private static final Map<String, String> COLUMN_BY_FIELD = Map.of(
-            "inboundCall",  "inbound_call",
-            "answeredCall", "answered_call"
+    private static final Map<String, String> COLUMN_BY_FIELD = Map.ofEntries(
+            Map.entry("totalCataract",              "total_cataract"),
+            Map.entry("totalPresbyopia",            "total_presbyopia"),
+            Map.entry("inboundCall",                "inbound_call"),
+            Map.entry("answeredCall",               "answered_call"),
+            Map.entry("newExamInquiry",             "new_exam_inquiry"),
+            Map.entry("newReInquiry",               "new_re_inquiry"),
+            Map.entry("newPatient",                 "new_patient"),
+            Map.entry("tmTotalDb",                  "tm_total_db"),
+            Map.entry("tmValidDb",                  "tm_valid_db"),
+            Map.entry("tmReservation",              "tm_reservation"),
+            Map.entry("kakaoTotalInquiry",          "kakao_total_inquiry"),
+            Map.entry("kakaoCataractReservation",   "kakao_cataract_reservation"),
+            Map.entry("kakaoPresbyopiaReservation", "kakao_presbyopia_reservation"),
+            Map.entry("onlineReservation",          "online_reservation"),
+            Map.entry("onlineNoShow",               "online_no_show"),
+            Map.entry("cancelOnline",               "cancel_online"),
+            Map.entry("cancelCrm",                  "cancel_crm"),
+            Map.entry("cancelKakao",                "cancel_kakao"),
+            Map.entry("visit",                      "visit"),
+            Map.entry("noShowReservation",          "no_show_reservation"),
+            Map.entry("cancel",                     "cancel")
     );
+
+    static final Set<String> EDITABLE_FIELDS = COLUMN_BY_FIELD.keySet();
 
     private static final int MAX_VALUE = 100_000;
     private static final String PRODUCT_TYPE = "CATARACT";

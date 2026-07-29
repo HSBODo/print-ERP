@@ -64,18 +64,22 @@ public class ExamMartJob {
         log.info("ExamMartJob start: range={}..{}", from, to);
 
         // 1) Examination monthly upsert — min-year 미만 연도는 V9 seed 값 보존 (write 차단)
+        //    2026-01~05 는 V22(cataract)·V27(vision/dreamlens) 골든 시드가 확정값을 못 박은 구간 — 스킵.
         List<Integer> years = yearsInRange(from, to);
         List<ExaminationMonthlyItem> examinationMonthly =
                 examinationStatsService.getMonthlyStats(years).stream()
                         .filter(m -> m.getYear() >= minYear)
+                        .filter(m -> !is2026H1Seeded(m.getYear(), m.getMonth()))
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int examinationRows = writer.upsertExaminationMonthly(examinationMonthly);
 
         // 2) Procedure exam monthly upsert — min-year 미만 연도는 V9 seed 값 보존 (write 차단)
+        //    2026-01~05 는 V27 골든 시드 구간 — 스킵.
         List<ProcedureExamMonthlyItem> procedureMonthly =
                 procedureExamStatsService.getMonthlyStats(years).stream()
                         .filter(m -> m.getYear() >= minYear)
+                        .filter(m -> !is2026H1Seeded(m.getYear(), m.getMonth()))
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int procedureRows = writer.upsertProcedureExamMonthly(procedureMonthly);
@@ -114,5 +118,14 @@ public class ExamMartJob {
         YearMonth ymFrom = YearMonth.from(from);
         YearMonth ymTo = YearMonth.from(to);
         return !ym.isBefore(ymFrom) && !ym.isAfter(ymTo);
+    }
+
+    /**
+     * 2026-01~05 골든 시드 구간 판정.
+     * V22(cataract) + V27(vision/dreamlens, procedure_exam) 이 담당자 확정값을 못 박은 구간이라
+     * 배치 재계산 결과로 덮지 않는다.
+     */
+    private static boolean is2026H1Seeded(int year, int month) {
+        return year == 2026 && month >= 1 && month <= 5;
     }
 }

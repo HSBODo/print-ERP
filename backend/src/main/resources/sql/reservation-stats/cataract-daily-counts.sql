@@ -52,13 +52,20 @@ CH_KAKAO AS (
   WHERE H.InsertedDateTime >= :from AND H.InsertedDateTime < DATEADD(DAY,1,CONVERT(datetime,:to))
     AND C01.Name IN ('백내장검사','백내장외래')
 ),
+-- 온라인예약: 백내장(FLAG='H') 온라인경로(ONLINE/APP/NAVER) 예약을 예약등록일(RESERVATION.InsertedDateTime) 기준으로 집계.
+-- ⚠️ 2026-07-21 교정 — 날짜기준을 예약저장(예약접수) 이력시각 → 예약등록일(InsertedDateTime)로 변경:
+--    레거시 「온라인예약체크」 데스크가 예약등록일(InsertedDateTime, 예약수정 시 갱신) 필터로 집계한다.
+--    온라인 접수 후 백내장팀이 다음 영업일에 예약수정/확정하면 InsertedDateTime이 그날로 갱신 → 레거시가 그날에 집계.
+--    예) 이서구(온라인 7/17 접수 → 7/20 예약수정)·이은주(7/18 접수 → 7/20 수정)는 레거시 7/20=2. 구 예약저장 기준이면 7/17·7/18로 어긋났음.
+--    (구 ELSE '백내장_예약'는 어느 집계에도 미사용이라 제거하고 온라인경로만 남긴다. RESERVE_HISTORY 조인도 불필요.)
 CH_RES AS (
   SELECT DISTINCT
-    CASE WHEN RH.RESERVE_PATH IN ('ONLINE','APP','NAVER') THEN '백내장_온라인예약' ELSE '백내장_예약' END AS GB,
-    '' AS GB2, CONVERT(VARCHAR(10), RH.HISTORY_TIME, 23) AS [예약날짜], CONVERT(VARCHAR(100), RH.HISTORY_NUM) AS PK
-  FROM RESERVATION R WITH(NOLOCK) INNER JOIN RESERVE_HISTORY RH WITH(NOLOCK) ON R.RESERVE_NUM = RH.RESERVE_NUM
-  WHERE RH.HISTORY_TIME >= :from AND RH.HISTORY_TIME < DATEADD(DAY,1,CONVERT(datetime,:to))
-    AND R.RESERVE_FLAG='H' AND R.RESERVE_STATE<>'C' AND R.RESERVE_JINRYO<>'16' AND RH.MEMO='예약저장'
+    '백내장_온라인예약' AS GB,
+    '' AS GB2, CONVERT(VARCHAR(10), R.InsertedDateTime, 23) AS [예약날짜], CONVERT(VARCHAR(100), R.RESERVE_NUM) AS PK
+  FROM RESERVATION R WITH(NOLOCK)
+  WHERE R.InsertedDateTime >= :from AND R.InsertedDateTime < DATEADD(DAY,1,CONVERT(datetime,:to))
+    AND R.RESERVE_FLAG='H' AND R.RESERVE_STATE<>'C' AND R.RESERVE_JINRYO<>'16'
+    AND R.RESERVE_PATH IN ('ONLINE','APP','NAVER')
     AND R.CUST_NUM<>'8888888888888' AND NOT (R.CUST_NAME LIKE '%테스트%' OR R.CUST_NAME LIKE '%TEST%')
 ),
 CH_VISIT AS (
@@ -110,11 +117,13 @@ R AS (
    WHERE CtiRgtDtm >= :from AND CtiRgtDtm < DATEADD(DAY,1,CONVERT(datetime,:to))
   UNION SELECT CONVERT(VARCHAR(10), InsertedDateTime, 23), CONVERT(VARCHAR(23), InsertedDateTime, 21) FROM HappyTalk_Counsel_List WITH(NOLOCK)
    WHERE InsertedDateTime >= :from AND InsertedDateTime < DATEADD(DAY,1,CONVERT(datetime,:to))
-  UNION SELECT CONVERT(VARCHAR(10), HISTORY_TIME, 23), CONVERT(VARCHAR(100), HISTORY_NUM) FROM RESERVE_HISTORY WITH(NOLOCK)
-   WHERE HISTORY_TIME >= :from AND HISTORY_TIME < DATEADD(DAY,1,CONVERT(datetime,:to))
+  -- 온라인예약(CH_RES): 예약등록일(InsertedDateTime) 기준 → RESERVE_NUM 을 그 날짜에 스파인에 넣는다(2026-07-21 교정).
+  UNION SELECT CONVERT(VARCHAR(10), InsertedDateTime, 23), CONVERT(VARCHAR(100), RESERVE_NUM) FROM RESERVATION WITH(NOLOCK)
+   WHERE InsertedDateTime >= :from AND InsertedDateTime < DATEADD(DAY,1,CONVERT(datetime,:to))
+     AND RESERVE_FLAG='H' AND RESERVE_PATH IN ('ONLINE','APP','NAVER')
   UNION SELECT CONVERT(VARCHAR(10), RESERVE_DATE, 23), CONVERT(VARCHAR(100), RESERVE_NUM) FROM RESERVATION WITH(NOLOCK)
    WHERE RESERVE_DATE >= :from AND RESERVE_DATE < DATEADD(DAY,1,CONVERT(datetime,:to))
-  -- 내원도 RESERVATION(RESERVE_NUM) 기반이라 위 RESERVATION 브랜치로 PK가 모두 포함됨 → Cataract_Exam 브랜치 불필요(제거).
+  -- 내원/부도/취소도 RESERVATION(RESERVE_NUM) 기반이라 위 RESERVE_DATE 브랜치로 PK가 모두 포함됨 → Cataract_Exam 브랜치 불필요(제거).
   UNION SELECT CONVERT(VARCHAR(10), assign_date, 23), CONVERT(VARCHAR(100), DBCust_num) FROM DB_CUSTOM WITH(NOLOCK)
    WHERE assign_date >= :from AND assign_date < DATEADD(DAY,1,CONVERT(datetime,:to))
      AND TM_EMP IN ('KC0307','BV1119','BV1207','BV0067') AND ISNULL(Gubun,'') NOT LIKE 'B2B%'

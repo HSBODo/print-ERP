@@ -8,6 +8,7 @@ import { maskName, maskPhone } from '@/utils/mask'
 const SURGERY_CATEGORY_STYLE: Record<string, string> = {
   시력교정: 'bg-sky-50 text-sky-700',
   백내장: 'bg-amber-50 text-amber-700',
+  재수술: 'bg-violet-50 text-violet-700',
 }
 const PATIENT_TYPE_STYLE: Record<string, string> = {
   신환: 'bg-emerald-50 text-emerald-700',

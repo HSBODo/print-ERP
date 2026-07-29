@@ -40,3 +40,6 @@ backend/data/reservation-stats-cataract/*
 !backend/data/reservation-stats-cataract/2026-05.json
 !backend/data/reservation-stats-cataract/2026-06.json
 data/reservation-stats/
+
+# 운영 자격증명이 남을 수 있는 .env 백업
+.env.bak*

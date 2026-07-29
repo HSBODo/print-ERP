@@ -215,11 +215,30 @@ const cataractHeaderModel = (period: string): StatsHeaderModel<CataractHeaderCol
   nodes: CATARACT_HEADER_NODES,
 })
 
-/* ── 셀 손보정(인입콜/응대콜) ── */
+/* ── 셀 손보정(원시 카운트 21개 = 채널 18 + 종합 3) ── */
 const EDITABLE_FIELD_SET = new Set<string>(CATARACT_EDITABLE_FIELDS)
 const EDITABLE_FIELD_LABEL: Record<CataractEditableField, string> = {
+  totalCataract: '총예약 백내장',
+  totalPresbyopia: '총예약 노안',
   inboundCall: '총 인입콜',
   answeredCall: '응대콜',
+  newExamInquiry: '총 신규검사문의',
+  newReInquiry: '신규 재문의',
+  newPatient: '★신환',
+  tmTotalDb: 'TM 총 DB',
+  tmValidDb: 'TM 유효 DB',
+  tmReservation: 'TM 예약수',
+  kakaoTotalInquiry: '카톡 총문의',
+  kakaoCataractReservation: '카톡 백내장 검사예약',
+  kakaoPresbyopiaReservation: '카톡 노안 검사예약',
+  onlineReservation: '온라인 예약수',
+  onlineNoShow: '온라인 부도수',
+  cancelOnline: '취소 온라인',
+  cancelCrm: '취소 컨택센터 현장(CRM)',
+  cancelKakao: '취소 카톡',
+  visit: '내원',
+  noShowReservation: '예약(부도)',
+  cancel: '취소',
 }
 
 type ManualEditsByDate = Map<string, Record<string, CataractStatsCellEdit>>
@@ -551,20 +570,38 @@ function BodyRow({
         )
       })}
 
-      {SUMMARY_COLUMNS.map((col, i) =>
-        muted ? (
-          <td key={col.key} className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}>
-            –
-          </td>
-        ) : (
+      {SUMMARY_COLUMNS.map((col, i) => {
+        if (muted) {
+          return (
+            <td key={col.key} className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}>
+              –
+            </td>
+          )
+        }
+        const edit = edits?.[col.key]
+        if (canEditRow && row.date && EDITABLE_FIELD_SET.has(col.key)) {
+          return (
+            <EditableNumberCell
+              key={col.key}
+              value={summary[col.key] as number}
+              edit={edit}
+              busy={isEditing}
+              onSave={(next) => onEditCell(row.date!, col.key as CataractEditableField, next)}
+              cellClassName={`${numCell} ${i === 0 ? divider : ''} ${col.emphasis ? 'bg-rose-50' : ''}`}
+            />
+          )
+        }
+        return (
           <td
             key={col.key}
+            title={edit ? editMarkTitle(edit) : undefined}
             className={`${numCell} ${i === 0 ? divider : ''} ${col.emphasis ? 'bg-rose-50 text-rose-600' : ''}`}
           >
             {formatSummaryValue(summary[col.key], col.fmt)}
+            {edit ? <EditMark /> : null}
           </td>
-        ),
-      )}
+        )
+      })}
     </tr>
   )
 }

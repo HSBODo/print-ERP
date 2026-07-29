@@ -29,14 +29,32 @@ const cellEditSchema = z.object({
 })
 export type ReservationStatsCellEdit = z.infer<typeof cellEditSchema>
 
-/** 손보정 가능한 필드(홈+네이버 온라인예약 원시 카운트 6개) — 백엔드 EDITABLE_FIELDS와 일치. */
+/** 손보정 가능한 필드(원시 카운트 24개 = 채널 21 + 종합 3) — 백엔드 EDITABLE_FIELDS와 일치. */
 export const RESERVATION_STATS_EDITABLE_FIELDS = [
+  'inboundCall',
+  'answeredCall',
+  'newInquiry',
+  'callReservation',
+  'tmTotalDb',
+  'tmValidDb',
+  'tmReservation',
+  'tmRecounsel',
+  'tmRecounselValid',
+  'tmRecounselReservation',
   'homeReceived',
   'homeReservation',
   'naverReceived',
   'naverRejected',
   'naverValid',
   'naverReservation',
+  'kakaoInquiry',
+  'kakaoReservation',
+  'cancelCallNaver',
+  'cancelHome',
+  'cancelKakao',
+  'visit',
+  'noShowReservation',
+  'cancel',
 ] as const
 export type ReservationStatsEditableField = (typeof RESERVATION_STATS_EDITABLE_FIELDS)[number]
 
@@ -90,7 +108,7 @@ export const reservationStatsSystemApi = {
   },
 
   /**
-   * 셀 손보정: 특정 일자의 홈페이지/네이버 온라인예약 원시 카운트(6개 필드) 값을 직접 수정한다.
+   * 셀 손보정: 특정 일자의 원시 카운트(24개 필드) 값을 직접 수정한다.
    * postgres-mart 프로파일: reservation_stats_override 에 INSERT-only 로 이력 append.
    */
   editCell: async (

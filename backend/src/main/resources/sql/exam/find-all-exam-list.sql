@@ -5,6 +5,11 @@
               CASE WHEN src.isCat = 1 THEN N'백내장'
                    WHEN vis.hasDreamlens = 1 AND vis.hasMedical = 0 THEN N'드림렌즈'
                    ELSE N'시력교정' END                     AS examGroup,
+              -- 원데이/일반 구분(시력교정 한정). 원데이 = 같은날 검사OP(M/5) 내원, 중단/취소 제외(레포트 정합).
+              CASE WHEN src.isCat = 1 THEN ''
+                   WHEN vis.hasDreamlens = 1 AND vis.hasMedical = 0 THEN ''
+                   WHEN src.isOneDay = 1 THEN N'원데이'
+                   ELSE N'일반' END                         AS examType,
               CASE WHEN ISNULL(cu.FIRST_DAY, '') >= :from AND ISNULL(cu.FIRST_DAY, '') <= :to
                    THEN N'신환' ELSE N'구환' END            AS patientType,
               CASE WHEN mv.motiveL IN (N'소개고객', N'소개미확인') THEN N'고객소개'
@@ -42,7 +47,14 @@
               ISNULL(cu.LAST_DAY, '')                      AS lastVisit,
               ISNULL(cu.ETC, '')                           AS memo
             FROM (
-              SELECT e.CUST_NUM AS cn, e.EXAM_DATE AS d, 0 AS isCat
+              SELECT e.CUST_NUM AS cn, e.EXAM_DATE AS d, 0 AS isCat,
+                     -- 원데이 검사: 같은날 시력교정 검사OP 예약(M/5, 내원 I/H). 레포트 정합 위해 중단/취소/테스트메모 제외.
+                     CASE WHEN ISNULL(e.STOP_YN, '') <> 'Y' AND ISNULL(e.CANCEL_CD, '') = ''
+                           AND NOT (ISNULL(e.EXAM_MEMO, '') LIKE N'%테스트%' OR LOWER(ISNULL(e.EXAM_MEMO, '')) LIKE '%test%')
+                           AND EXISTS (SELECT 1 FROM RESERVATION r WITH(NOLOCK)
+                                       WHERE r.CUST_NUM = e.CUST_NUM AND r.RESERVE_DATE = e.EXAM_DATE
+                                         AND r.RESERVE_FLAG = 'M' AND r.RESERVE_JINRYO = '5' AND r.RESERVE_STATE IN ('I','H'))
+                          THEN 1 ELSE 0 END AS isOneDay
               FROM EXAM e WITH(NOLOCK)
               JOIN CUSTOM cux WITH(NOLOCK) ON e.CUST_NUM = cux.CUST_NUM
               WHERE e.EXAM_DATE >= :from AND e.EXAM_DATE <= :to
@@ -56,7 +68,7 @@
               UNION ALL
               -- 백내장은 사람(고객) 단위: 레거시 BCRM "백내장_검사" 화면과 동일하게 RESERVATION 기준.
               -- FLAG='H'(백내장) + JINRYO='1'(백내장검사 진료) + STATE 내원(I/H), 고객·검사일별 1행.
-              SELECT a.CUST_NUM AS cn, a.RESERVE_DATE AS d, 1 AS isCat
+              SELECT a.CUST_NUM AS cn, a.RESERVE_DATE AS d, 1 AS isCat, 0 AS isOneDay
               FROM RESERVATION a WITH(NOLOCK)
               WHERE a.RESERVE_DATE >= :from AND a.RESERVE_DATE <= :to
                 AND a.RESERVE_STATE IN ('I','H')

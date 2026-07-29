@@ -39,7 +39,7 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     private final HomepageSourceDialect dialect;
     private final String listSql;
     private final String lastRegDateSql;
-    private final String monthlyDedupedSql;
+    private final String monthlyListRawSql;
 
     public ReservationListHomepageRepository(
             @Qualifier("homepageJdbcTemplate") NamedParameterJdbcTemplate jdbc,
@@ -49,7 +49,7 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
         this.dialect = dialect;
         this.listSql = SqlLoader.load(sqlPath(dialect, "reservation-list-homepage.sql"));
         this.lastRegDateSql = SqlLoader.load(sqlPath(dialect, "last-reg-date.sql"));
-        this.monthlyDedupedSql = SqlLoader.load(sqlPath(dialect, "monthly-deduped.sql"));
+        this.monthlyListRawSql = SqlLoader.load(sqlPath(dialect, "monthly-list-raw.sql"));
     }
 
     /** sql/reservation-list-homepage/{sqlite|mariadb}/{fileName} */
@@ -70,16 +70,16 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     }
 
     /**
-     * 월별 중복제외 홈페이지 예약 건수 — 월간 레포트의 온라인 예약(2026-06~) 구성요소 ③.
+     * 월별 홈페이지 예약 건수 — 예약 종합의 온라인 예약(2026-06~) 구성요소 ③.
      *
-     * <p>화면 목록과 조건이 다르다: 시력교정(exam_type='5')만, 전화번호 기준 중복제외.
+     * <p>예약자 리스트_홈페이지 화면과 동일한 raw 건수(전 진료 · COUNT(*)) — 두 화면 정합.
      * 자세한 근거는 SQL 주석 참고.
      *
      * @return yr, mo, cnt 를 담은 행들(데이터가 없는 달은 행 자체가 없다)
      */
     @Override
-    public List<Map<String, Object>> findMonthlyDedupedCounts(String from, String to) {
-        return jdbc.queryForList(monthlyDedupedSql, new MapSqlParameterSource()
+    public List<Map<String, Object>> findMonthlyListRawCounts(String from, String to) {
+        return jdbc.queryForList(monthlyListRawSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

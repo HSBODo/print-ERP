@@ -22,9 +22,10 @@ import static org.mockito.Mockito.when;
  * 온라인 예약 정의 전환(2026-06) 계약.
  *
  * <pre>
- *   ~ 2026-05 : 온라인 = 기존 SQL 의 online_cnt (홈페이지/앱 + 네이버, 카카오 미포함)
- *   2026-06 ~ : 온라인 = 네이버 + 카카오톡 + 홈페이지(중복제외)
- *               종합   = 콜 + 새 온라인
+ *   2024·2025    : 온라인 = 기존 SQL 의 online_cnt (홈페이지/앱 + 네이버, 카카오 미포함)
+ *   2026-01 ~ 05 : V24 골든 시드 (여기서는 배치 서비스 관점이라 기존 online_cnt 그대로 계산)
+ *   2026-06 ~    : 온라인 = 네이버 + 카카오톡 + 홈페이지(리스트 화면과 동일한 raw · 전 진료)
+ *                  종합   = 콜 + 새 온라인
  * </pre>
  *
  * MSSQL·레거시 소스에 붙지 않고 합산 규칙만 고정한다(실 쿼리는 SqlResourceTest 가 본다).
@@ -34,16 +35,16 @@ class ReservationOverallStatsServiceTest {
     private ReservationOverallStatsRepository repository;
     private ReservationListHomepageRepository homepageRepository;
 
-    /** 기존 SQL: 2026-05 → call 100 / online 200 / total 300, 2026-06 → call 111 / online 222 / total 333 */
+    /** 기존 SQL: 2025-12 → call 100 / online 200 / total 300 (컷오버 이전), 2026-06 → call 111 / online 222 / total 333 (컷오버 이후 라이브로 덮여야) */
     private static List<Map<String, Object>> overallRows() {
         return List.of(
-                Map.of("yr", 2026, "mo", 5, "cnt", 300, "online_cnt", 200, "call_cnt", 100),
+                Map.of("yr", 2025, "mo", 12, "cnt", 300, "online_cnt", 200, "call_cnt", 100),
                 Map.of("yr", 2026, "mo", 6, "cnt", 333, "online_cnt", 222, "call_cnt", 111)
         );
     }
 
-    private static ReservationOverallMonthlyItem monthOf(List<ReservationOverallMonthlyItem> items, int month) {
-        return items.stream().filter(i -> i.getYear() == 2026 && i.getMonth() == month).findFirst().orElseThrow();
+    private static ReservationOverallMonthlyItem monthOf(List<ReservationOverallMonthlyItem> items, int year, int month) {
+        return items.stream().filter(i -> i.getYear() == year && i.getMonth() == month).findFirst().orElseThrow();
     }
 
     @BeforeEach
@@ -56,7 +57,7 @@ class ReservationOverallStatsServiceTest {
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "naver_cnt", 50)));
         when(repository.findKakaoMonthly(anyString(), anyString()))
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "kakao_cnt", 12)));
-        when(homepageRepository.findMonthlyDedupedCounts(anyString(), anyString()))
+        when(homepageRepository.findMonthlyListRawCounts(anyString(), anyString()))
                 .thenReturn(List.of(Map.of("yr", 2026, "mo", 6, "cnt", 202)));
         // 스냅샷이 7/10 까지 → 온전히 커버하는 마지막 달은 6월
         when(homepageRepository.findLastRegDate()).thenReturn("2026-07-10 16:15:55");
@@ -68,23 +69,23 @@ class ReservationOverallStatsServiceTest {
 
     @Test
     void 컷오버_이전_달은_기존_공식을_그대로_쓴다() {
-        ReservationOverallMonthlyItem may = monthOf(service().getMonthlyStats(List.of(2026)), 5);
+        ReservationOverallMonthlyItem dec2025 = monthOf(service().getMonthlyStats(List.of(2025, 2026)), 2025, 12);
 
-        assertThat(may.getOnline()).isEqualTo(200);   // 네이버+카카오+홈페이지(264)가 아니다
-        assertThat(may.getCall()).isEqualTo(100);
-        assertThat(may.getReservations()).isEqualTo(300);
+        assertThat(dec2025.getOnline()).isEqualTo(200);   // 컷오버 이전이라 기존 online_cnt 그대로
+        assertThat(dec2025.getCall()).isEqualTo(100);
+        assertThat(dec2025.getReservations()).isEqualTo(300);
     }
 
     @Test
     void 컷오버_달부터_온라인은_네이버_카카오_홈페이지_합이다() {
-        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 6);
+        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
         assertThat(june.getOnline()).isEqualTo(50 + 12 + 202);  // 264 — 기존 online_cnt 222 가 아니다
     }
 
     @Test
     void 컷오버_달부터_종합은_콜과_새_온라인의_합이다() {
-        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 6);
+        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
         assertThat(june.getReservations()).isEqualTo(111 + 264);  // 375 — 기존 cnt 333 이 아니다
         assertThat(june.getTotal()).isEqualTo(375);
@@ -100,7 +101,7 @@ class ReservationOverallStatsServiceTest {
         // 이 시나리오는 실제 clock 이 어느 달이든 성립한다(5월도, 6월도 결과가 같음).
         when(homepageRepository.findLastRegDate()).thenReturn("2026-05-10 16:15:55");
 
-        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 6);
+        ReservationOverallMonthlyItem june = monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6);
 
         assertThat(june.getOnline()).isNull();
         assertThat(june.getReservations()).isNull();
@@ -110,7 +111,7 @@ class ReservationOverallStatsServiceTest {
     void 스냅샷이_말일까지_담으면_그_달은_계산한다() {
         when(homepageRepository.findLastRegDate()).thenReturn("2026-06-30 23:48:13");
 
-        assertThat(monthOf(service().getMonthlyStats(List.of(2026)), 6).getOnline()).isEqualTo(264);
+        assertThat(monthOf(service().getMonthlyStats(List.of(2026)), 2026, 6).getOnline()).isEqualTo(264);
     }
 
     @Test
@@ -133,7 +134,7 @@ class ReservationOverallStatsServiceTest {
         // 레거시 홈페이지 소스: reg_date < (:to + 1일) 반개구간 → '날짜'여야 한다.
         // 시각이 붙은 값을 넘기면 MariaDB 는 < (2027-01-01 23:59:59) 가 되어 다음 해 1/1 이 딸려오고,
         // SQLite 는 date() 가 시각을 버려 안 딸려온다 — 같은 입력에 소스별로 결과가 갈린다.
-        verify(homepageRepository).findMonthlyDedupedCounts("2026-01-01", "2026-12-31");
+        verify(homepageRepository).findMonthlyListRawCounts("2026-01-01", "2026-12-31");
     }
 
     @Test

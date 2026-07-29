@@ -22,6 +22,28 @@ import {
 import { YEARS, isIncompleteMonth, MONTHLY_CHART_LABELS } from './monthlyReportUtils'
 import { buildMonthlyReportCsv } from './monthlyReportCsv'
 
+/**
+ * 월간레포트 수술 3종 골든 override — 담당자 확정값(docs/databatch/월간레포트_2026_01_05월.csv).
+ *
+ * 마트(`mart_surgery_monthly`) 는 세부 수술방법 컬럼(lasik/smile/cat_mono/…)으로 세분화돼 있어
+ * CSV 의 aggregate(백내장 수술·시력교정 수술·총 수술수) 를 subcolumn 으로 분해할 수 없다.
+ * 그렇다고 대표 컬럼에 몰빵하면 "주요 수술별 비중"·"수술별 비중" 도표가 왜곡된다.
+ *
+ * 해결: 월간레포트 페이지에서만 이 3개 도표 값을 override 하고, 개별 수술 통계 페이지는
+ * 배치 산출값(마트) 을 그대로 사용한다. (year, month) → { cataract, vision, total }.
+ *
+ * 세부 수술방법별 CSV 를 담당자에게 별도 제공받으면 이 override 를 제거하고 마트로 이관 가능.
+ */
+const SURGERY_GOLDEN: Record<number, Record<number, { cataract: number; vision: number; total: number }>> = {
+  2026: {
+    1: { cataract: 90, vision: 1361, total: 1483 },
+    2: { cataract: 67, vision: 1388, total: 1488 },
+    3: { cataract: 69, vision:  657, total:  745 },
+    4: { cataract: 42, vision:  568, total:  629 },
+    5: { cataract: 61, vision:  722, total:  806 },
+  },
+}
+
 export function MonthlyReportPage() {
   const resv = useReservationOverallTrend(YEARS)
   const outpatient = useOutpatientCountTrend(YEARS)
@@ -90,9 +112,10 @@ export function MonthlyReportPage() {
       oneDayExam: build((y, i) => procedure.dataMap[y]?.[i]?.oneDayExamCount),
       cataractRate: rateSeries(cataractRate.dataMap),
       visionRate: rateSeries(visionRate.dataMap),
-      cataractSurgery: build((y, i) => surgery.dataMap[y]?.[i]?.cataractPatients),
-      visionSurgery: build((y, i) => surgery.dataMap[y]?.[i]?.visionPatients),
-      totalSurgery: build((y, i) => surgery.dataMap[y]?.[i]?.total),
+      // 수술 3종은 SURGERY_GOLDEN 이 있으면 골든값, 없으면 마트 산출값 (파일 상단 상수 참고).
+      cataractSurgery: build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.cataract ?? surgery.dataMap[y]?.[i]?.cataractPatients),
+      visionSurgery:   build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.vision   ?? surgery.dataMap[y]?.[i]?.visionPatients),
+      totalSurgery:    build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.total    ?? surgery.dataMap[y]?.[i]?.total),
       outpatient: build((y, i) => outpatient.dataMap[y]?.[i]?.outpatientCount),
       // 시력교정 상담성공률(검사중단/수술불가 제외) — 전체/원데이/일반 3계열.
       // 24·25 는 V18 시드가 vision_general_book_rate 만 채우고 count 는 0 이므로,

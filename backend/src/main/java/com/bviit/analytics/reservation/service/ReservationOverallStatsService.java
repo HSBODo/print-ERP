@@ -16,6 +16,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
+import static com.bviit.analytics.reservation.service.OverallOnlineFormula.CUTOVER;
+import static com.bviit.analytics.reservation.service.OverallOnlineFormula.computeOnline;
+import static com.bviit.analytics.reservation.service.OverallOnlineFormula.countsByMonth;
+import static com.bviit.analytics.reservation.service.OverallOnlineFormula.coverageMonth;
+
 
 /**
  * 예약 종합(콜, 온라인) / 온라인 예약 — MSSQL 직결 소스.
@@ -29,10 +34,11 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  *
  * <h2>온라인 예약 정의가 2026-06 부터 바뀐다</h2>
  * <pre>
- *   ~ 2026-05 : 온라인 = RESERVE_PATH ONLINE/APP(홈페이지) + NAVER(네이버). 카카오 미포함.
- *   2026-06 ~ : 온라인 = 네이버(RSS 기준) + 카카오톡(해피톡) + 홈페이지(레거시, 중복제외·시력교정만)
+ *   2024·2025    : 온라인 = RESERVE_PATH ONLINE/APP(홈페이지) + NAVER(네이버). V12 시드 확정값.
+ *   2026-01 ~ 05 : V24 골든 시드(담당자 확정값) — 배치 write 는 ReservationMartJob 에서 필터로 차단.
+ *   2026-06 ~    : 온라인 = 네이버(RSS 기준) + 카카오톡(해피톡) + 홈페이지(레거시, 리스트 화면과 동일한 raw)
  * </pre>
- * 종합 = 콜 + 온라인 이므로 종합도 2026-06 부터 같이 움직인다(2026-07-15 결정).
+ * 종합 = 콜 + 온라인 이므로 종합도 2026-06 부터 같이 움직인다.
  *
  * <p><b>왜 자바에서 합치나</b> — 네이버·카카오는 MSSQL, 홈페이지는 레거시 홈페이지(별도 DB)라
  * SQL 한 방으로 조인할 수 없다. 그래서 세 쿼리를 각각 읽어 여기서 더한다.
@@ -47,9 +53,6 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 @RequiredArgsConstructor
 public class ReservationOverallStatsService implements ReservationOverallStatsReader {
 
-    /** 온라인 예약 정의가 바뀌는 시점. 이 달부터 네이버+카카오톡+홈페이지 합산. */
-    static final YearMonth ONLINE_FORMULA_CUTOVER = YearMonth.of(2026, 6);
-
     private final ReservationOverallStatsRepository repository;
     /**
      * 홈페이지 몫 소스. postgres-mart 에서는 {@code ReservationListHomepageMartRepository}
@@ -62,7 +65,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
      * 보다 먼저 실행돼야 한다({@code BatchOrchestrator.runDomains} 참조).
      *
      * <p>미설정 환경(마트도 없고 레거시 URL 도 없음)에서는 비어 있다 — 컷오버(2026-06) 이후 달을
-     * 계산할 때만 필수라 그 이전 구간은 이 값 없이도 정상 동작한다.
+     * 계산할 때만 필수라 그 이전 구간(2024·2025, 2026-01~05 V24 시드)은 이 값 없이도 정상 동작한다.
      */
     private final Optional<HomepageOverallSource> homepageRepository;
 
@@ -93,7 +96,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
 
         YearMonth currentMonth = YearMonth.now();
         boolean needsNewFormula = normalizedYears.stream()
-                .anyMatch(y -> !YearMonth.of(y, 12).isBefore(ONLINE_FORMULA_CUTOVER));
+                .anyMatch(y -> !YearMonth.of(y, 12).isBefore(CUTOVER));
 
         // 컷오버 이후 구간에서만 쓰는 재료들. 필요 없으면 쿼리도 날리지 않는다.
         Map<String, Integer> naver = needsNewFormula ? countsByMonth(repository.findNaverMonthly(from, to), "naver_cnt") : Map.of();
@@ -109,7 +112,7 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
                             + "그 외 프로파일에서는 homepage.datasource.url 을 설정하세요. "
                             + "(미설정 상태로 계산하면 홈페이지 몫이 빠진 값이 조용히 적재됩니다)"));
 
-            homepage = countsByMonth(homepageRepo.findMonthlyDedupedCounts(from, homepageTo), "cnt");
+            homepage = countsByMonth(homepageRepo.findMonthlyListRawCounts(from, homepageTo), "cnt");
             homepageMaxMonth = coverageMonth(homepageRepo.findLastRegDate());
         }
 
@@ -127,11 +130,11 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
                 if (future) {
                     online = null;
                     total = null;
-                } else if (ym.isBefore(ONLINE_FORMULA_CUTOVER)) {
+                } else if (ym.isBefore(CUTOVER)) {
                     online = dbOnline.get(key);
                     total = dbTotal.get(key);
                 } else {
-                    online = newOnline(key, ym, naver, kakao, homepage, homepageMaxMonth);
+                    online = computeOnline(key, ym, naver, kakao, homepage, homepageMaxMonth);
                     // 종합 = 콜 + 새 온라인. 둘 중 하나라도 모르면 종합도 모른다.
                     total = (online == null || call == null) ? null : online + call;
                 }
@@ -148,70 +151,5 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
         }
 
         return items;
-    }
-
-    /**
-     * 2026-06~ 온라인 예약 = 네이버 + 카카오톡 + 홈페이지(중복제외).
-     *
-     * <p>홈페이지 소스가 스냅샷이면 마지막 등록일 이후 달은 데이터가 아예 없어 0 으로 보인다.
-     * 그 구간을 0 으로 더하면 '조용히 작은 온라인 예약'이 되므로 null 을 준다(차트에서 선이 끊긴다).
-     */
-    private Integer newOnline(
-            String key,
-            YearMonth ym,
-            Map<String, Integer> naver,
-            Map<String, Integer> kakao,
-            Map<String, Integer> homepage,
-            YearMonth homepageMaxMonth
-    ) {
-        if (homepageMaxMonth != null && ym.isAfter(homepageMaxMonth)) {
-            return null;
-        }
-        return naver.getOrDefault(key, 0)
-                + kakao.getOrDefault(key, 0)
-                + homepage.getOrDefault(key, 0);
-    }
-
-    private Map<String, Integer> countsByMonth(List<Map<String, Object>> rows, String countColumn) {
-        Map<String, Integer> out = new HashMap<>();
-        for (Map<String, Object> row : rows) {
-            out.put(MonthlyBuckets.key(toInt(row.get("yr")), toInt(row.get("mo"))), toInt(row.get(countColumn)));
-        }
-        return out;
-    }
-
-    /**
-     * 홈페이지 소스가 커버하는 마지막 달.
-     *
-     * <p><b>과거 달은 엄격</b> — 말일까지 담긴 경우에만 그 달을 인정한다.
-     * 스냅샷의 마지막 등록일이 6월 10일이면 6월도 부분이므로 5월까지만 인정.
-     * 부분 과거 월을 0 으로 더하면 '조용히 작은 온라인 예약'이 되기 때문.
-     *
-     * <p><b>현재 달은 관대함</b> — 진행 중인 달은 정의상 말일까지 안 담겨 있어도
-     * 사용자에게 "현재까지 접수된 온라인 예약" 을 보여주는 편이 유용하다. 프론트가 필요 시
-     * '진행 중 (D-1 까지 반영)' 라벨을 붙일 수 있게 값 자체는 노출한다.
-     *
-     * <p>예시:
-     * <ul>
-     *   <li>오늘 2026-07-16, 마지막 등록일 2026-07-15 → 커버 = <b>2026-07</b> (현재 달이라 인정)
-     *   <li>오늘 2026-07-16, 마지막 등록일 2026-06-10 → 커버 = <b>2026-05</b> (6월 부분이라 배제)
-     *   <li>오늘 2026-07-16, 마지막 등록일 2026-06-30 → 커버 = <b>2026-06</b> (6월 완료)
-     * </ul>
-     *
-     * @param lastRegDate 소스의 마지막 등록일시('YYYY-MM-DD ...'). 빈 값이면 판정 불가.
-     * @return 판정 불가면 null — 이 경우 달 제한을 걸지 않는다
-     */
-    private YearMonth coverageMonth(String lastRegDate) {
-        if (lastRegDate == null || lastRegDate.length() < 10) {
-            return null;
-        }
-        java.time.LocalDate last = java.time.LocalDate.parse(lastRegDate.substring(0, 10));
-        YearMonth ym = YearMonth.from(last);
-        // 현재 달은 정의상 진행 중이라 말일 도달 불가 — 부분값이라도 인정해 사용자가 흐름 파악 가능.
-        if (ym.equals(YearMonth.now())) {
-            return ym;
-        }
-        // 과거 달은 말일까지 담겨야 온전 — 부분 과거는 조용한 과소 노출 방지를 위해 배제.
-        return last.getDayOfMonth() == ym.lengthOfMonth() ? ym : ym.minusMonths(1);
     }
 }

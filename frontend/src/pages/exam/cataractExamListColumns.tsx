@@ -14,6 +14,10 @@ const PATIENT_TYPE_STYLE: Record<string, string> = {
   신환: 'bg-emerald-50 text-emerald-700',
   구환: 'bg-gray-100 text-gray-700',
 }
+const CLASSIFICATION_STYLE: Record<string, string> = {
+  백내장: 'bg-amber-50 text-amber-700',
+  중단: 'bg-rose-50 text-rose-700',
+}
 const GRADE_STYLE: Record<string, string> = {
   R: 'bg-emerald-50 text-emerald-700',
   A: 'bg-blue-50 text-blue-700',
@@ -55,6 +59,7 @@ export interface Column {
 export const COLUMNS: Column[] = [
   { key: 'rowNo', label: 'No', align: 'right', min: '3.5rem', render: (_r, rowNumber) => rowNumber.toLocaleString('ko-KR'), csv: (_r, rowNumber) => rowNumber },
   { key: 'examDate', label: '검사일', align: 'center', min: '6rem' },
+  { key: 'classification', label: '분류', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.classification, CLASSIFICATION_STYLE[r.classification]) },
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_TYPE_STYLE[r.patientType]) },
   { key: 'examType', label: '진료구분', align: 'center', min: '6rem', render: (r) => cell.badge(r.examType, EXAM_TYPE_STYLE[r.examType]) },
   { key: 'examTime', label: '검사시간', align: 'center', min: '4.5rem' },

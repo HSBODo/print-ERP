@@ -34,7 +34,7 @@ public class ReservationListHomepageMartRepository implements HomepageOverallSou
 
     private static final String LIST_SQL             = SqlLoader.load("sql/mart/select-list-reservation-homepage.sql");
     private static final String LAST_REG_DATE_SQL    = SqlLoader.load("sql/mart/select-list-reservation-homepage-last-reg-date.sql");
-    private static final String MONTHLY_DEDUPED_SQL  = SqlLoader.load("sql/mart/select-list-reservation-homepage-monthly-deduped.sql");
+    private static final String MONTHLY_LIST_RAW_SQL = SqlLoader.load("sql/mart/select-list-reservation-homepage-monthly-list-raw.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -46,12 +46,12 @@ public class ReservationListHomepageMartRepository implements HomepageOverallSou
     }
 
     /**
-     * 월별 중복제외 홈페이지 예약 건수 — 소스판과 동일한 조건(exam_type='5', DISTINCT phone).
+     * 월별 홈페이지 예약 건수 — 예약자 리스트_홈페이지 화면과 동일한 raw 건수 (전 진료 · COUNT(*)).
      * 배치가 이미 CATEGORY·DEL_TF 필터를 적용해 마트에 넣었기 때문에 여기서는 재적용하지 않는다.
      */
     @Override
-    public List<Map<String, Object>> findMonthlyDedupedCounts(String from, String to) {
-        return jdbc.queryForList(MONTHLY_DEDUPED_SQL, new MapSqlParameterSource()
+    public List<Map<String, Object>> findMonthlyListRawCounts(String from, String to) {
+        return jdbc.queryForList(MONTHLY_LIST_RAW_SQL, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

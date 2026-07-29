@@ -67,9 +67,11 @@ public class ConsultationMartJob {
         List<Integer> years = yearsInRange(from, to);
 
         // 1) 전환율 upsert — min-year 미만 연도는 V18 시드(일반예약률) 보존 (write 차단)
+        //    2026-01~05 는 V27 골든 시드(상담성공률 3종 · 시력교정 일반예약률) 구간 — 스킵.
         List<ConsultationRateItem> consultationMonthly =
                 consultationRateService.getMonthlyRates(years).stream()
                         .filter(m -> m.getYear() >= minYear)
+                        .filter(m -> !is2026H1Seeded(m.getYear(), m.getMonth()))
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int consultationRows = writer.upsertConsultationRateMonthly(consultationMonthly);
@@ -82,9 +84,11 @@ public class ConsultationMartJob {
         int stopReasonRows = writer.upsertStopReasonMonthly(stopReasonMonthly);
 
         // 3) 예약률 upsert — vision + cataract 각각. min-year 미만 연도는 V13 seed 값 보존 (write 차단)
+        //    2026-01~05 는 V27 골든 시드(시력교정·백내장 예약률) 구간 — 스킵.
         List<CataractReservationRateItem> visionRates =
                 cataractReservationRateService.getMonthlyRates(years, "vision").stream()
                         .filter(m -> m.getYear() >= minYear)
+                        .filter(m -> !is2026H1Seeded(m.getYear(), m.getMonth()))
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int visionRows = writer.upsertReservationRateMonthly("vision", visionRates);
@@ -92,6 +96,7 @@ public class ConsultationMartJob {
         List<CataractReservationRateItem> cataractRates =
                 cataractReservationRateService.getMonthlyRates(years, "cataract").stream()
                         .filter(m -> m.getYear() >= minYear)
+                        .filter(m -> !is2026H1Seeded(m.getYear(), m.getMonth()))
                         .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int cataractRows = writer.upsertReservationRateMonthly("cataract", cataractRates);
@@ -122,5 +127,16 @@ public class ConsultationMartJob {
         YearMonth ymFrom = YearMonth.from(from);
         YearMonth ymTo = YearMonth.from(to);
         return !ym.isBefore(ymFrom) && !ym.isAfter(ymTo);
+    }
+
+    /**
+     * 2026-01~05 골든 시드 구간 판정.
+     * V27 이 mart_consultation_rate_monthly(상담성공률·시력교정 일반예약률) 와
+     * mart_reservation_rate_monthly(시력교정·백내장 예약률) 확정값을 못 박은 구간이라
+     * 배치 재계산 결과로 덮지 않는다.
+     * (mart_stop_reason_monthly 는 아직 시드 없음 — 이 필터 대상 아님.)
+     */
+    private static boolean is2026H1Seeded(int year, int month) {
+        return year == 2026 && month >= 1 && month <= 5;
     }
 }

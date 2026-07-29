@@ -22,8 +22,9 @@ export const calcAge = (birth: string) => {
   return age >= 0 && age < 130 ? String(age) : '—'
 }
 
-export const DEFAULT_FROM = '2026-04-01'
-export const DEFAULT_TO = '2026-04-30'
+/** 기본 조회 기간 = 현재 월 1일 ~ 말일. (상수가 아니라 함수 — 탭을 오래 켜둬도 안 낡는다) */
+export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
+export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 export const SKELETON_ROWS = 50
 export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
@@ -35,12 +36,17 @@ export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
 ]
 
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
+const pad = (n: number) => String(n).padStart(2, '0')
+export const todayIso = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
 export const toMonthValue = (date: string) => date.slice(0, 7)
 export const toMonthStart = (month: string) => `${month}-01`
 export const toMonthEnd = (month: string) => {
   const [year, monthNumber] = month.split('-').map(Number)
   const lastDate = new Date(year, monthNumber, 0).getDate()
-  return `${month}-${String(lastDate).padStart(2, '0')}`
+  return `${month}-${pad(lastDate)}`
 }
 export const toMonthWeekRange = (month: string, week: number) => {
   const startDay = ((week - 1) * 7) + 1

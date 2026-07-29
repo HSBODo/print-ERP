@@ -28,6 +28,8 @@ public class CataractStatsSystemMartRepository {
 
     private static final String SELECT_SQL =
             SqlLoader.load("sql/mart/select-reservation-stats-cataract-daily.sql");
+    private static final String SELECT_MONTHLY_CALL_SUMS_SQL =
+            SqlLoader.load("sql/mart/select-reservation-stats-cataract-monthly-call-sums.sql");
 
     /** 마트 컬럼(snake_case) → API 필드(camelCase). 백내장은 인입콜/응대콜만 보정 대상. */
     private static final Map<String, String> FIELD_BY_COLUMN = Map.of(
@@ -37,6 +39,20 @@ public class CataractStatsSystemMartRepository {
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
     private final ReservationStatsOverrideRepository overrideRepository;
+
+    /**
+     * (yr, mo) 별 예약 종합 콜 계산에 필요한 백내장 채널 예약수 합계.
+     * reservation_stats_override 오버레이 반영 — 셀 편집이 즉시 반영되어야 한다.
+     *
+     * 반환 컬럼:
+     *   - yr, mo
+     *   - new_patient_cnt        (인바운드 ★신환)
+     *   - tm_reservation_cnt     (아웃바운드 예약수)
+     */
+    public List<Map<String, Object>> findMonthlyCallSums(String from, String to) {
+        return jdbc.queryForList(SELECT_MONTHLY_CALL_SUMS_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to));
+    }
 
     public List<CataractStatsDailyRow> findDailyCounts(String from, String to) {
         List<CataractStatsDailyRow> base = jdbc.query(SELECT_SQL,

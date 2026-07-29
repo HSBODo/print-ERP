@@ -88,7 +88,7 @@ INSERT INTO list_* (...) VALUES (...);
 |---|---|---|---|---|---|
 | `mart_list_reservation_homepage` | ReservationListHomepageMartJob | DELETE+INSERT (reg_date) | MariaDB `TBL_COUNSEL` (SSH 터널 경유) | 없음 | 홈페이지 소스 URL 미설정 시 skip. **다른 잡보다 먼저 실행** — 종합 계산이 이 마트를 읽기 때문 |
 | `mart_reservation_monthly` | ReservationMartJob | UPSERT (yr, mo) | MSSQL | ✅ 적용 | 24·25 는 V9/V12 시드 보호 |
-| `mart_reservation_overall_monthly` | ReservationMartJob | UPSERT (yr, mo) | MSSQL + 홈페이지 마트 | ✅ 적용 | 24·25 는 V12 시드 · 2026-06~ 는 네이버+카카오+홈페이지(중복제외) 공식 · 현재 진행 중인 달은 부분값 노출 |
+| `mart_reservation_overall_monthly` | ReservationMartJob | UPSERT (yr, mo) | MSSQL + 홈페이지 마트 | ✅ 적용 | 24·25 는 V12 시드 · 2026-01~05 는 V24 골든 시드(담당자 확정값, 배치 write 차단) · 2026-06~ 는 네이버+카카오+홈페이지(리스트 화면과 동일한 raw) 공식으로 라이브 SUM(오버라이드 즉시 반영) · 현재 진행 중인 달은 부분값 노출 |
 | `list_reservation` | ReservationMartJob | DELETE+INSERT (registered_at) | MSSQL | 없음 | 취소·수정건 자동 흡수 |
 | `mart_reservation_kakao_daily` | ReservationMartJob | DELETE+INSERT (dt) | MSSQL | 없음 | 해피톡 카카오 예약 참고용 |
 | `mart_reservation_stats_system_daily` | ReservationStatsDailyMartJob | UPSERT (stat_date) | MSSQL | ✅ 적용 | **2026-H1 (1~6월) V19 시드 + period_lock** — 배치가 이 6개월 안 덮음 |
@@ -240,7 +240,9 @@ POST /rerun?from=2026-07-01&to=2026-07-16&domain=CONSULTATION
 
 ### 4-3. `mart_reservation_overall_monthly` (온라인 예약 공식 · coverageMonth)
 
-- **2026-06 부터 온라인 = 네이버 + 카카오톡 + 홈페이지(중복제외)** — 그 이전은 기존 SQL 그대로.
+- **2026-06 부터 온라인 = 네이버 + 카카오톡 + 홈페이지(리스트 화면과 동일한 raw · 전 진료 · `COUNT(*)`)** — 그 이전은 마트 시드(24·25 V12, 2026-01~05 V24) 그대로.
+- **2026-06+ 조회는 마트 대신 라이브 SUM** — 예약통계_시력교정·백내장 셀 오버라이드가 예약 종합·월간 레포트에 즉시 반영되도록 매 요청마다 시력교정 마트 + 백내장 마트 + 홈페이지 마트에서 SUM. 배치가 채운 마트 값은 폴백용으로만 남음.
+- **2026-01~05 는 V24 골든 시드로 고정** (2026-07-24) — 담당자 확정값 못 박음. `ReservationMartJob` 이 이 5개월은 write 대상에서 제외.
 - `coverageMonth` 로직으로 홈페이지 커버리지 판정:
   - **과거 달**: 홈페이지 마지막 등록일이 그 달 말일이 아니면 미커버로 판정 → null
   - **현재 진행 중인 달**: 부분값이라도 노출 (2026-07 부터 정책 완화, 커밋 `ceca8a0`)
