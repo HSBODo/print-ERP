@@ -19,3 +19,31 @@ export function periodRange(period: string): { from: string; to: string; lastDay
     lastDay,
   }
 }
+
+/**
+ * 백엔드 ReservationStatsRequestValidator.MAX_RANGE_DAYS = 92 와 동일. 초과 시 400.
+ * 프론트에서 미리 차단해 서버 왕복 없이 안내한다.
+ */
+export const MAX_RANGE_DAYS = 92
+
+/** from~to 포함일수(같은 날이면 1). from > to 면 0. */
+export const daysBetween = (from: string, to: string): number => {
+  const a = new Date(`${from}T00:00:00`).getTime()
+  const b = new Date(`${to}T00:00:00`).getTime()
+  if (b < a) return 0
+  return Math.floor((b - a) / 86_400_000) + 1
+}
+
+/** 두 날짜가 같은 달인지 — 셀 편집·진단은 period(YYYY-MM) 파라미터를 요구하므로 필요. */
+export const isSingleMonthRange = (from: string, to: string): boolean =>
+  Boolean(from) && from.slice(0, 7) === to.slice(0, 7)
+
+/** from~to 범위 유효성. ok=false면 reason 을 사용자에게 표시. */
+export function validateRange(from: string, to: string): { ok: boolean; reason?: string } {
+  if (!from || !to) return { ok: false, reason: '시작일과 종료일을 모두 선택하세요.' }
+  if (from > to) return { ok: false, reason: '시작일이 종료일보다 늦습니다.' }
+  const days = daysBetween(from, to)
+  if (days > MAX_RANGE_DAYS)
+    return { ok: false, reason: `조회 범위는 최대 ${MAX_RANGE_DAYS}일까지 가능합니다 (현재 ${days}일).` }
+  return { ok: true }
+}

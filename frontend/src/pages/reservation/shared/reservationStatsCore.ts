@@ -31,6 +31,20 @@ export const weekdayKo = (weekdayIndex: number): string => WEEKDAY_KO[weekdayInd
 /** 0-based calendar week within a month. */
 export const weekOf = (day: number, firstWeekday: number): number => Math.floor((day - 1 + firstWeekday) / 7)
 
+/**
+ * ISO 8601 주차 (1~53). 월요일 시작·목요일 규칙(첫 목요일이 든 주가 그 해의 1주).
+ * 예) 2026-01-01(목) → {year:2026, week:1} · 2026-06-01(월) → {year:2026, week:23}.
+ * 연말·연초 경계 주는 year 가 인접 해로 넘어갈 수 있으니 라벨링 시 함께 사용.
+ */
+export function isoWeek(date: Date): { year: number; week: number } {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7 // 일=0 → 7 로 취급해 월요일=1..일요일=7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum) // 그 주의 목요일로 이동 (ISO 규칙)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7)
+  return { year: d.getUTCFullYear(), week }
+}
+
 export const pctInt = (a: number, b: number): number => (b === 0 ? 0 : Math.round((a * 100) / b))
 
 export const pct1 = (a: number, b: number): number => (b === 0 ? 0 : Math.round((a * 1000) / b) / 10)
