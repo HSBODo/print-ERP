@@ -74,6 +74,17 @@ class ReservationListHomepageSqlResourceTest {
         assertThat(sql).containsIgnoringCase("DEL_TF = 'N'");
     }
 
+    @ParameterizedTest
+    @EnumSource(HomepageSourceDialect.class)
+    void 목록_sql은_어느_소스든_테스트_이름_행을_배치_소스에서_걸러낸다(HomepageSourceDialect dialect) {
+        String sql = sqlBody(dialect, "reservation-list-homepage.sql");
+
+        // 이름에 '테스트'/'TEST' 포함건 제외 — 리스트 화면 정합용 배치 필터.
+        // 빠지면 마트에 테스트 데이터가 흘러들어 리스트·집계가 부풀어 오른다.
+        assertThat(sql).containsIgnoringCase("NOT LIKE '%테스트%'");
+        assertThat(sql).containsIgnoringCase("NOT LIKE '%TEST%'");
+    }
+
     @Test
     void 스냅샷_세트는_SQLite_스키마와_방언을_쓴다() {
         String sql = sqlBody(HomepageSourceDialect.SQLITE, "reservation-list-homepage.sql");
@@ -116,6 +127,9 @@ class ReservationListHomepageSqlResourceTest {
         assertThat(sql).doesNotContainIgnoringCase("EXAM_TYPE");
         assertThat(sql).doesNotContainIgnoringCase("DISTINCT");
         assertThat(sql).containsIgnoringCase("COUNT(*)");
+        // 테스트 이름 필터 — 리스트 화면과 동일하게 걸어야 월별 집계가 정합.
+        assertThat(sql).containsIgnoringCase("NOT LIKE '%테스트%'");
+        assertThat(sql).containsIgnoringCase("NOT LIKE '%TEST%'");
     }
 
     @ParameterizedTest

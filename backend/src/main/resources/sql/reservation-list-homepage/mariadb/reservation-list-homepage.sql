@@ -20,7 +20,11 @@
 --      (2026-06 기준 206 → 199). REG_DATE 가 datetime 이라 :to('YYYY-MM-DD')는 00:00:00 으로 승격된다.
 --   4) ORDER BY C_NO DESC — 등록일이 아니라 PK 역순.
 --
--- 회귀 기준: from=2026-06-01 / to=2026-06-30 → 206건 (2026-07-15 운영 DB 실측으로 확인).
+-- 레거시와 의도적으로 다른 지점(테스트 데이터 제거):
+--   · M_NM 에 '테스트' 또는 'TEST' 포함건 제외 — reservation-stats 계열의 CUST_NAME 필터와 동일 규약.
+--     COALESCE 로 감싸 NULL 이름 행(빈 문자열로 노출되는 정상건) 은 보존한다.
+--
+-- 회귀 기준: from=2026-06-01 / to=2026-06-30 → 206건 (2026-07-15 운영 DB 실측, 테스트 이름 필터 도입 전 값).
 SELECT
     CAST(C_NO AS CHAR)                              AS `legacyNo`,
     COALESCE(DIVICE_TYPE, '')                       AS `deviceType`,
@@ -39,6 +43,8 @@ SELECT
   FROM TBL_COUNSEL
  WHERE CATEGORY = 'COUNSELONLINE'
    AND DEL_TF = 'N'
+   AND COALESCE(M_NM, '') NOT LIKE '%테스트%'
+   AND COALESCE(M_NM, '') NOT LIKE '%TEST%'
    AND REG_DATE >= :from
    AND REG_DATE <  DATE_ADD(:to, INTERVAL 1 DAY)
  ORDER BY C_NO DESC

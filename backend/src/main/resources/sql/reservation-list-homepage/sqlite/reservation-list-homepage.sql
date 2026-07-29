@@ -13,7 +13,11 @@
 --      해석돼 그날 등록분이 통째로 날아간다(2026-06 기준 206 → 199). 가이드 6장 함정 7.
 --   4) ORDER BY legacy_no DESC — 등록일이 아니라 PK(C_NO) 역순이다.
 --
--- 회귀 기준: from=2026-06-01 / to=2026-06-30 → 206건 (운영 화면 동일 조건과 같은 값).
+-- 레거시와 의도적으로 다른 지점(테스트 데이터 제거):
+--   · name 에 '테스트' 또는 'TEST' 포함건 제외 — MariaDB 판(M_NM)과 동일 규약.
+--     COALESCE 로 감싸 NULL 이름 행(빈 문자열로 노출되는 정상건) 은 보존한다.
+--
+-- 회귀 기준: from=2026-06-01 / to=2026-06-30 → 206건 (운영 화면 동일 조건, 테스트 이름 필터 도입 전 값).
 SELECT
     CAST(legacy_no AS TEXT)          AS "legacyNo",
     COALESCE(device_type, '')        AS "deviceType",
@@ -32,6 +36,8 @@ SELECT
   FROM consultations
  WHERE category = 'COUNSELONLINE'
    AND del_tf = 'N'
+   AND COALESCE(name, '') NOT LIKE '%테스트%'
+   AND COALESCE(name, '') NOT LIKE '%TEST%'
    AND reg_date >= :from
    AND reg_date <  date(:to, '+1 day')
  ORDER BY legacy_no DESC
