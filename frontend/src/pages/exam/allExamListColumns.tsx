@@ -76,7 +76,7 @@ export const COLUMNS: Column[] = [
   ) },
   { key: 'cataractClass', label: '백내장분류', align: 'center', min: '5rem', render: (r) => cell.badge(r.cataractClass, CATARACT_CLASS_STYLE[r.cataractClass]) },
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_STYLE[r.patientType]) },
-  { key: 'introType', label: '내원동기구분', align: 'center', min: '5.5rem', render: (r) => cell.badge(r.introType, INTRO_STYLE[r.introType]) },
+  { key: 'introType', label: '소개구분', align: 'center', min: '5rem', render: (r) => cell.badge(r.introType, INTRO_STYLE[r.introType]) },
   { key: 'motiveL', label: '내원동기(대)', align: 'center', min: '6rem', render: (r) => dash(r.motiveL) },
   { key: 'motiveM', label: '내원동기(중)', align: 'center', min: '6rem', render: (r) => dash(r.motiveM) },
   { key: 'jobBucket', label: '직업구분', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.jobBucket, JOB_STYLE[r.jobBucket]) },
