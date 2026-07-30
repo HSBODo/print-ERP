@@ -66,7 +66,7 @@ export interface Column {
 }
 
 /**
- * 정렬 규칙: 고객메모만 좌측정렬(긴 자유 텍스트), 나머지는 전부 중앙정렬.
+ * 정렬 규칙: 고객메모만 좌측정렬(긴 자유 텍스트), 만나이는 숫자라 우측정렬(tabular-nums), 나머지는 중앙정렬.
  * min은 하한값일 뿐(테이블 auto layout)이라 헤더 + 정렬 화살표 + 셀 실제 폭에 맞춰 최소로 잡는다.
  */
 export const COLUMNS: Column[] = [
@@ -90,7 +90,7 @@ export const COLUMNS: Column[] = [
   { key: 'name', csv: (r) => maskName(r.name), label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
   { key: 'grade', label: '등급', align: 'center', min: '3.5rem', render: (r) => cell.badge(r.grade, GRADE_STYLE[r.grade]) },
   { key: 'birth', label: '생년월일', align: 'center', min: '5.5rem' },
-  { key: 'age', label: '만나이', align: 'center', min: '4.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
+  { key: 'age', label: '만나이', align: 'right', min: '4.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
   { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'center', min: '7rem', text: true },
   { key: 'counselor', label: '상담사', align: 'center', min: '5rem', render: (r) => dash(r.counselor) },
   { key: 'doctor', label: '상담의', align: 'center', min: '5rem', render: (r) => dash(r.doctor) },
