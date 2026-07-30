@@ -45,11 +45,11 @@ export const getStatsPageById = (id: string): StatsPageDefinition => {
 export const statsPages: StatsPageDefinition[] = [
   statsPage(
     'weekly-report',
-    '주간 레포트',
+    '주차 레포트',
     '/report/weekly',
     'report-group',
     'Report',
-    '한 주간의 핵심 KPI(예약·검사·수술·전환율 등)를 요약한 주간 리포트입니다.',
+    '월간 레포트와 같은 도표를 주차(월~일) 단위로 본 리포트입니다. 전체 주차 또는 특정 월에 걸친 주차(월 경계 주차 포함)를 선택할 수 있습니다.',
     '/api/report/weekly'
   ),
   statsPage(

@@ -106,11 +106,10 @@ export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(
  * 사이드바에서 숨기는 메뉴(페이지·라우트는 유지 — 직접 URL 접근은 가능). 여기만 수정하면
  * 빈 그룹·숨김 단일 메뉴는 menuItems에서 자동 제거된다(kids() + 아래 filter).
  *   - 예약: 유입(검사예약)·예약 건수 숨김(예약자 리스트 → 예약 종합만 노출)
- *   - Report: 주간 레포트 숨김(월간만 노출)
+ *   - Report: 월간 레포트·주차 레포트 모두 노출
  *   - 외래 아래: 마케팅·취소&부도·객단가·기타 그룹 전체 숨김
  */
 const HIDDEN_MENU_IDS = new Set<string>([
-  'weekly-report',
   'intake-conversion', 'reservation',
   'overseas', 'marketing',
   'cancel-rate', 'no-show-rate',
@@ -153,7 +152,7 @@ const rawMenuItems: MenuItem[] = [
         href: '#',
         icon: FileText,
         kind: 'group',
-        children: kids('weekly-report', 'monthly-report'),
+        children: kids('monthly-report', 'weekly-report'),
       },
       {
         id: 'reservation-group',

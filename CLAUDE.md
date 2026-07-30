@@ -81,7 +81,7 @@ project-root/
 │   │   │   ├── exam/                   # ExamList·CataractExamList·Examination(±Vision/Dreamlens)·ProcedureExam
 │   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
 │   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
-│   │   │   ├── report/                 # ReportPage(주간)·MonthlyReportPage
+│   │   │   ├── report/                 # MonthlyReportPage(월간)·WeeklyReportPage(주차) + 공용 ReportShell·useReportSeries·reportItems
 │   │   │   ├── overall/ · outpatient/ · marketing/ · cancel-noshow/ · unit-price/ · etc/
 │   │   │   ├── LoginPage.tsx           # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx       # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
@@ -132,7 +132,7 @@ project-root/
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
 |----|------|------|------|------|
-| weekly-report | 주간 레포트 | /report/weekly | Report | 완료 (메뉴 숨김·라우트 유지) |
+| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 주차축으로, 주차 데이터는 월값 임시 분배) |
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
 | intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
@@ -174,7 +174,7 @@ project-root/
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
-> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `weekly-report`(주간 레포트), `intake-conversion`·`reservation`(예약), 그리고 **마케팅·취소&부도·객단가·기타 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price·dreamlens-revenue·b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출은 `HIDDEN_MENU_IDS`에서 빼면 됨.
+> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `intake-conversion`·`reservation`(예약), 그리고 **마케팅·취소&부도·객단가·기타 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price·dreamlens-revenue·b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출은 `HIDDEN_MENU_IDS`에서 빼면 됨.
 
 ## 백엔드 컨벤션
 

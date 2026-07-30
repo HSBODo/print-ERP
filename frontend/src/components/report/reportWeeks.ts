@@ -1,26 +1,24 @@
-import { shortDate } from '@/utils/weekBucket'
+import { addDays, isoWeekMonday, isoWeeksInYear, toIsoDate } from '@/utils/isoWeek'
 
 /**
- * 레포트 주차(연간 주차) — 월간 레포트의 "주차 보기" 축을 만든다.
+ * 레포트 주차 축 — 주차 레포트가 쓰는 연간 주차 목록/분배 로직.
  *
- * 규칙:
- *  - 주는 **월요일~일요일**(리스트 페이지 주별 승인과 동일).
- *  - **1월 1일이 속한 주 = 1주차** → 1주차의 월요일은 전년 12월일 수 있다.
- *  - 이후 7일마다 +1. 그 해 안에 월요일이 있는 주까지 열거 → 52주 또는 53주.
- *  - `daysByMonth` 는 **그 해에 속한 날짜만** 월별로 센다(연 경계 날짜는 제외).
+ * 주차 규칙은 **ISO 8601**(`@/utils/isoWeek`)을 그대로 따른다 — 예약통계시스템·수술별 비중의
+ * '주차' 탭과 같은 번호 체계라 화면 간 "31주차"가 항상 같은 주를 가리킨다.
+ *   - 월요일 시작, 첫 목요일이 든 주가 1주차 (한 해 52 또는 53주)
+ *   - 1주차는 전년 12월을, 마지막 주차는 다음 해 1월을 물 수 있다
  *
- * 월 경계 주차(`crossMonth`)는 두 달에 모두 속하므로 `weeksOfMonth()` 가 양쪽 달에서 반환한다.
+ * `daysByMonth` 는 **그 해에 속한 날짜만** 월별로 센다(연 경계 날짜 제외).
+ * 월 경계 주차(`crossMonth`)는 두 달에 모두 속하므로 {@link weeksOfMonth} 가 양쪽 달에서 반환한다.
  * (예: 2026-08 선택 → 7/27~8/2 주차와 8/31~9/6 주차가 함께 나온다)
  *
- * ⚠️ `weekBucket.ts` 의 `weekOf()` 는 "그 달의 주차"(월 경계 분할)라 성격이 다르다. 혼동 주의.
+ * ⚠️ `@/utils/weekBucket` 의 `weekOf()` 는 "그 달의 주차"(월 경계 분할)라 성격이 다르다. 혼동 주의.
  */
 
-const DAY_MS = 86_400_000
-const pad = (n: number) => String(n).padStart(2, '0')
-const toIso = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
+const shortMd = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
 
 export interface ReportWeek {
-  /** 연간 주차 (1 ~ 52/53) */
+  /** ISO 8601 연간 주차 (1 ~ 52/53) */
   week: number
   /** 월요일 YYYY-MM-DD (1주차는 전년 12월일 수 있음) */
   startDate: string
@@ -38,48 +36,39 @@ export interface ReportWeek {
   rangeLabel: string
 }
 
-/** 해당 연도의 전체 주차(52 또는 53개)를 열거한다. */
+/** 해당 ISO 연도의 전체 주차(52 또는 53개). */
 export function weeksOfYear(year: number): ReportWeek[] {
-  const jan1 = Date.UTC(year, 0, 1)
-  const dow = (new Date(jan1).getUTCDay() + 6) % 7 // 월=0 … 일=6
-  const yearEnd = Date.UTC(year, 11, 31)
-
-  const weeks: ReportWeek[] = []
-  let monday = jan1 - dow * DAY_MS
-  for (let n = 1; monday <= yearEnd; n++, monday += 7 * DAY_MS) {
-    const start = new Date(monday)
-    const end = new Date(monday + 6 * DAY_MS)
+  return Array.from({ length: isoWeeksInYear(year) }, (_, i) => {
+    const week = i + 1
+    const monday = isoWeekMonday(year, week)
+    const sunday = addDays(monday, 6)
 
     const daysByMonth: Record<number, number> = {}
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday + i * DAY_MS)
-      if (d.getUTCFullYear() !== year) continue
-      const m = d.getUTCMonth() + 1
+    for (let d = 0; d < 7; d++) {
+      const day = addDays(monday, d)
+      if (day.getFullYear() !== year) continue
+      const m = day.getMonth() + 1
       daysByMonth[m] = (daysByMonth[m] ?? 0) + 1
     }
 
-    const startIso = toIso(start)
-    const endIso = toIso(end)
-    weeks.push({
-      week: n,
-      startDate: startIso,
-      endDate: endIso,
+    return {
+      week,
+      startDate: toIsoDate(monday),
+      endDate: toIsoDate(sunday),
       daysByMonth,
       months: Object.keys(daysByMonth).map(Number).sort((a, b) => a - b),
-      crossMonth: start.getUTCMonth() !== end.getUTCMonth(),
-      label: `${n}주`,
-      rangeLabel: `${shortDate(startIso)}~${shortDate(endIso)}`,
-    })
-  }
-  return weeks
+      crossMonth: monday.getMonth() !== sunday.getMonth(),
+      label: `${week}주`,
+      rangeLabel: `${shortMd(monday)}~${shortMd(sunday)}`,
+    }
+  })
 }
 
 /** 해당 월에 하루라도 걸친 주차 — 월 경계 주차를 포함한다. */
 export const weeksOfMonth = (weeks: ReportWeek[], month: number): ReportWeek[] =>
   weeks.filter((w) => w.months.includes(month))
 
-const daysInMonth = (year: number, month: number) =>
-  new Date(Date.UTC(year, month, 0)).getUTCDate()
+const daysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate()
 
 /**
  * 월별 값 → 주차 값 **임시 분배**(주차 집계 API 연동 전 UI 미리보기용).
