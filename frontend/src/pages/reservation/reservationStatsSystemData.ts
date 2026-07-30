@@ -19,7 +19,7 @@ import {
 } from './formulas/reservationStatsSystemFormulas'
 import { buildStatsCsv, type CsvColumnGroup } from './shared/reservationStatsCsv'
 import type { CellFormat } from './shared/reservationStatsFormat'
-import { buildDisplayRowsFromCounts, type StatsDisplayRow } from './shared/reservationStatsRows'
+import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './shared/reservationStatsRows'
 import { SUMMARY_COLUMNS, computeSummaryRow } from './shared/reservationStatsSummary'
 
 export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './shared/reservationStatsCore'
@@ -134,6 +134,23 @@ export const getDisplayRowsFromCounts = (
   lastDay: number,
 ): DisplayRow[] =>
   buildDisplayRowsFromCounts(granularity, dailies, period, lastDay, {
+    zeroCounts,
+    sumCounts,
+    isZeroCounts,
+    buildRow: countRow,
+  })
+
+/**
+ * 시작일/종료일 범위로 표시 행을 만든다. 여러 달을 걸쳐도 동작. 툴바에서 직접
+ * 날짜를 지정한 경우에 사용. 단일 월 범위면 getDisplayRowsFromCounts 와 동일 결과.
+ */
+export const getRangeDisplayRowsFromCounts = (
+  granularity: Granularity,
+  dailies: ReservationStatsDailyCounts[],
+  from: string,
+  to: string,
+): DisplayRow[] =>
+  buildRangeDisplayRowsFromCounts(granularity, dailies, from, to, {
     zeroCounts,
     sumCounts,
     isZeroCounts,

@@ -6,6 +6,7 @@
 --   · exam_type 필터 없음 — 백내장(2)·노안(21)·렌즈삽입(24,25)·미상(1) 모두 포함
 --   · dedup 없음         — 같은 사람 여러 신청건도 각각 카운트
 --   · COUNT(*)           — 리스트가 그대로 보여주는 raw 건수
+--   · name 에 '테스트'/'TEST' 포함건 제외 — 리스트 화면과 동일하게 스캔에서 걸러야 정합이 유지된다.
 --
 -- ⚠️ 네이버·카카오는 시력교정만 집계 — 이 홈페이지 판만 전 진료 포함이라 진료 범위 비대칭(의도적).
 -- ../mariadb/monthly-list-raw.sql · sql/mart/select-list-reservation-homepage-monthly-list-raw.sql 과
@@ -19,6 +20,8 @@ SELECT CAST(substr(reg_date, 1, 4) AS INTEGER) AS "yr",
   FROM consultations
  WHERE category = 'COUNSELONLINE'
    AND del_tf = 'N'
+   AND COALESCE(name, '') NOT LIKE '%테스트%'
+   AND COALESCE(name, '') NOT LIKE '%TEST%'
    AND reg_date >= :from
    AND reg_date <  date(:to, '+1 day')
  GROUP BY substr(reg_date, 1, 4), substr(reg_date, 6, 2)
