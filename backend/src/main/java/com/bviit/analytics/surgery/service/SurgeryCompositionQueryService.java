@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,7 +37,49 @@ public class SurgeryCompositionQueryService {
     public record DailyResult(List<SurgeryDailyItem> data, StatsResponseMeta meta) {}
 
     public DailyResult getDaily(LocalDate from, LocalDate to, String username) {
-        String period = from.toString().substring(0, 7);
+        YearMonth firstMonth = YearMonth.from(from);
+        YearMonth lastMonth = YearMonth.from(to);
+        return firstMonth.equals(lastMonth)
+                ? getMonth(firstMonth, from, to, username)
+                : getMultiMonth(firstMonth, lastMonth, from, to, username);
+    }
+
+    /**
+     * 여러 달에 걸친 범위(주차 뷰의 연간 조회 등) — 스냅샷이 월 단위라 달별로 조회해 이어 붙인다.
+     * 한 달이 실패해도(미적재 + 라이브 미연결) 그 달만 비우고 나머지는 그대로 보여준다.
+     */
+    private DailyResult getMultiMonth(
+            YearMonth firstMonth,
+            YearMonth lastMonth,
+            LocalDate from,
+            LocalDate to,
+            String username
+    ) {
+        YearMonth currentMonth = YearMonth.from(LocalDate.now());
+        List<SurgeryDailyItem> data = new ArrayList<>();
+        StatsResponseMeta meta = null;
+
+        for (YearMonth month = firstMonth; !month.isAfter(lastMonth); month = month.plusMonths(1)) {
+            if (month.isAfter(currentMonth)) break; // 미래월 — 조회/적재 대상 없음
+            LocalDate monthFrom = from.isAfter(month.atDay(1)) ? from : month.atDay(1);
+            LocalDate monthTo = to.isBefore(month.atEndOfMonth()) ? to : month.atEndOfMonth();
+            try {
+                DailyResult result = getMonth(month, monthFrom, monthTo, username);
+                data.addAll(result.data());
+                // 표시용 meta 는 데이터가 있는 마지막 달 기준(적재 여부·최종 적재일 배지).
+                if (meta == null || !result.data().isEmpty()) meta = result.meta();
+            } catch (RuntimeException e) {
+                log.warn("범위 조회 중 월 조회 실패(해당 월만 공백): period={}, err={}", month, e.getMessage());
+            }
+        }
+
+        StatsResponseMeta fallback = StatsResponseMeta.live(
+                firstMonth.toString(), FORMULA_VERSION, SurgerySnapshot.CURRENT_SCHEMA_VERSION);
+        return new DailyResult(data, meta != null ? meta : fallback);
+    }
+
+    private DailyResult getMonth(YearMonth month, LocalDate from, LocalDate to, String username) {
+        String period = month.toString();
         ensureSnapshot(period, username);
 
         Optional<SurgerySnapshot> snapshot = snapshotStore.find(period);

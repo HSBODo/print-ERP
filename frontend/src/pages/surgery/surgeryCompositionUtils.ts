@@ -1,16 +1,20 @@
+import { addDays, isoWeekMonday, isoWeeksInYear, isoYearRange, toIsoDate } from '@/utils/isoWeek'
 import { formatAxisNumber } from '@/utils/stats'
 
 /**
  * 수술별 비중 — 순수 집계/표시 로직 (JSX 없음).
  * 예약통계_백내장과 동일하게 한 달(period)을 전체/월별/주별/일별 단위로 분해한다.
  * 일별 원시 데이터(SurgeryDailyData)를 주/월로 합산하며, 비중(%)은 합산 후 재계산한다.
+ *
+ * 예외적으로 '주차'(yearWeek)만 조회 범위가 한 해 전체 — 예약통계시스템과 같은 ISO 8601 연간 주차다.
  */
 
-export type Granularity = 'month' | 'week' | 'day' | 'all'
+export type Granularity = 'month' | 'yearWeek' | 'week' | 'day' | 'all'
 
-/** 툴바 노출 순서 — 예약통계 페이지와 동일(월별/주별/일별/전체). */
+// 주별 = 그 달의 주(1~5주) / 주차 = ISO 8601 연간 주차(01~52·53주차, 한 해 전체). 버킷 규칙이 달라 라벨·범위가 다르다.
 export const GRANULARITIES: { key: Granularity; label: string }[] = [
   { key: 'month', label: '월별' },
+  { key: 'yearWeek', label: '주차' },
   { key: 'week', label: '주별' },
   { key: 'day', label: '일별' },
   { key: 'all', label: '전체' },
@@ -74,17 +78,62 @@ export interface SurgeryRow {
   label: string
   tier: RowTier
   weekday?: string
+  /** 주차 행의 실제 기간 표기 — 예 '12/29~1/4'. */
+  range?: string
   muted?: boolean
   weekStart?: boolean
   d: Cell
 }
 
+/** 'YYYY-MM' → 연도. 주차(yearWeek) 뷰는 이 연도 전체를 조회한다. */
+export const yearOf = (ym: string): number => Number(ym.slice(0, 4))
+
+/** 조회 범위 — 주차는 그 해 1주차 월요일~마지막 주차 일요일, 나머지는 선택한 달의 1일~말일. */
+export function queryRange(granularity: Granularity, ym: string): { from: string; to: string } {
+  if (granularity === 'yearWeek') {
+    const { from, to } = isoYearRange(yearOf(ym))
+    return { from, to }
+  }
+  const { from, to } = monthRange(ym)
+  return { from, to }
+}
+
+const shortMd = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
+
+/**
+ * ISO 8601 연간 주차 행 — 01주차부터 그 해 마지막 주차(52 또는 53)까지 항상 전부 노출한다.
+ * 데이터가 없는 주(미래·휴진)는 muted 로 비워 두어 주차 번호가 끊기지 않게 한다.
+ * 1주차는 전년 12월을, 마지막 주차는 다음 해 1월을 물 수 있다(ISO 규칙).
+ */
+export function buildYearWeekRows(dataMap: Record<string, Cell>, year: number): SurgeryRow[] {
+  const weeks = isoWeeksInYear(year)
+  const weekRows: SurgeryRow[] = []
+  const allCells: Cell[] = []
+
+  for (let week = 1; week <= weeks; week++) {
+    const monday = isoWeekMonday(year, week)
+    const days = Array.from({ length: 7 }, (_, i) => dataMap[toIsoDate(addDays(monday, i))] ?? EMPTY)
+    const d = sumCells(days)
+    allCells.push(d)
+    weekRows.push({
+      label: `${pad2(week)}주차`,
+      tier: 'week',
+      range: `${shortMd(monday)}~${shortMd(addDays(monday, 6))}`,
+      muted: isEmptyCell(d),
+      d,
+    })
+  }
+
+  return [{ label: `${year}년`, tier: 'month', d: sumCells(allCells) }, ...weekRows]
+}
+
 /**
  * 일자별 데이터 → 조회 단위별 표시 행. (예약통계 buildDisplayRowsFromCounts와 동일 버킷팅)
- *   month: [월합계]
- *   week:  [월합계, 1주, 2주, …]
- *   day:   [월합계, 1일, 2일, …]
- *   all:   [월합계, 주…, 일…]
+ *   month:    [월합계]
+ *   yearWeek: [연합계, 01주차, 02주차, …] — period 의 연도 전체(dataMap 도 1년치여야 한다)
+ *   week:     [월합계, 1주, 2주, …]
+ *   day:      [월합계, 1일, 2일, …]
+ *   all:      [월합계, 주…, 일…]
  */
 export function buildSurgeryRows(
   granularity: Granularity,
@@ -92,6 +141,8 @@ export function buildSurgeryRows(
   period: string,
   lastDay: number,
 ): SurgeryRow[] {
+  if (granularity === 'yearWeek') return buildYearWeekRows(dataMap, yearOf(period))
+
   const [year, month] = period.split('-').map(Number)
   const firstWeekday = new Date(year, month - 1, 1).getDay()
 

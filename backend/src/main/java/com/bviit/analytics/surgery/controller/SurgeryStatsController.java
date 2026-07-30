@@ -33,7 +33,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SurgeryStatsController {
 
-    private static final int MAX_RANGE_DAYS = 366;
+    /** ISO 53주차 연간 조회(1주차 월요일~53주차 일요일 = 371일)를 담는 상한. */
+    private static final int MAX_RANGE_DAYS = 371;
 
     private final Optional<SurgeryStatsReader> surgeryService;
     private final SurgeryCompositionQueryService compositionQueryService;
