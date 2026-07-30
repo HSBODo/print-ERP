@@ -17,7 +17,7 @@ import javax.sql.DataSource;
  * 듀얼 DataSource — mssql 프로파일에서만 활성화.
  *
  *   H2 (@Primary)   → JPA EntityManager → User 테이블
- *   MSSQL (stats)    → JdbcTemplate      → RESERVATION, ExamCount 등
+ *   MSSQL (stats)    → JdbcTemplate      → RESERVATION 등
  */
 @Configuration
 @Profile("mssql")
