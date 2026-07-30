@@ -11,28 +11,32 @@ import org.springframework.stereotype.Repository;
 import java.util.Map;
 
 /**
- * 검사수(월간 레포트 c-exam-count) 범위 집계 — EXAM 행수 + Cataract_Exam 세션수 (원시 COUNT).
- * 전체 검사자 리스트의 "조회건수(사람)" 옆에 참고용 "검사수(세션)"를 표시하기 위한 읽기 전용 조회.
+ * 검사수 범위 집계 — 마트 원시 COUNT (필터·세션합 없음).
+ *
+ * <p>전체 검사자 리스트의 "조회건수(사람)" 옆 참고 지표. 소스는 postgres 마트
+ * (list_exam + list_cataract_exam) 만 사용 — MSSQL 직결 없음.
+ *
+ * <p>2026-07-15 브랜치의 무필터 COUNT 로직을 마트 DB 로 이관한 것.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ExamCountRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_EXAM_COUNT_RANGE_SQL = "sql/exam/find-exam-count-range.sql";
+    private static final String SELECT_EXAM_COUNT_RANGE_SQL = "sql/mart/select-exam-count-range.sql";
 
-    private final String findExamCountRangeSql;
+    private final String selectExamCountRangeSql;
 
     public ExamCountRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc
     ) {
         this.jdbc = jdbc;
-        this.findExamCountRangeSql = SqlLoader.load(FIND_EXAM_COUNT_RANGE_SQL);
+        this.selectExamCountRangeSql = SqlLoader.load(SELECT_EXAM_COUNT_RANGE_SQL);
     }
 
     public Map<String, Object> findExamCountRange(String from, String to) {
-        return jdbc.queryForMap(findExamCountRangeSql, new MapSqlParameterSource()
+        return jdbc.queryForMap(selectExamCountRangeSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

@@ -73,7 +73,8 @@ export function AllExamListPage() {
   const { rows, isLoading, isFetching, isError } = useAllExamList(queryFrom, queryTo, hasSearched)
   const showLoading = hasSearched && (isLoading || isFetching)
 
-  // 검사수(월간 레포트 기준) = EXAM 행수 + Cataract_Exam 세션수. 조회건수(사람)와 집계 단위가 달라 참고용.
+  // 검사수 = 마트 list_exam + list_cataract_exam 원시 COUNT (기간 전체, 필터 미반영).
+  // 조회건수(사람)와 집계 단위가 유사하지만 필터를 반영하지 않아 참고용.
   const { examCount } = useExamCount(queryFrom, queryTo, hasSearched)
 
   // 토글 필터(즉시 반영) + 키워드
@@ -289,7 +290,7 @@ export function AllExamListPage() {
           <div
             className="flex h-8 items-center gap-2 rounded-md border border-amber-300 bg-amber-50/60 px-3 text-xs"
             aria-live="polite"
-            title="월간 레포트 검사수 기준 = EXAM 행수 + 백내장 검사행(세션)수. 조회건수는 사람(명단) 기준이라 백내장 집계 단위가 다름."
+            title="검사수 = 마트 list_exam + list_cataract_exam 행수 (기간 전체, 필터 미반영). 조회건수는 필터 반영된 사람(명단) 기준."
           >
             <span className="text-amber-700">검사수</span>
             <strong className="tabular-nums text-amber-900">{formatCount(examCount.visionCount + examCount.cataractCount)}건</strong>

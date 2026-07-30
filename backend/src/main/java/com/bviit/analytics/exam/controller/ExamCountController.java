@@ -20,8 +20,8 @@ import java.util.Optional;
 /**
  * GET /api/stats/exam-count?from=YYYY-MM-DD&to=YYYY-MM-DD
  *
- * 검사수(월간 레포트 c-exam-count 기준) 범위 집계 — EXAM 행수 + Cataract_Exam 세션수.
- * 전체 검사자 리스트의 "조회건수(사람)" 옆 참고 지표. 실 데이터 프로파일에서만 주입, 미연결 시 503.
+ * 검사수 범위 집계 — 마트(list_exam + list_cataract_exam) 원시 COUNT.
+ * 전체 검사자 리스트의 "조회건수(사람)" 옆 참고 지표. postgres-mart 프로파일에서만 주입, 미연결 시 503.
  */
 @RestController
 @RequestMapping("/api/stats/exam-count")
