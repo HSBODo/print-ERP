@@ -364,8 +364,8 @@ export function ReportExamByClassChart({
             <thead>
               <tr className="border-y border-border bg-muted/40">
                 <th className="py-1.5" />
-                {MONTHS.map((m) => <th key={m} className="py-1.5 font-semibold text-foreground">{m}</th>)}
-                <th className="py-1.5 font-semibold text-foreground">합계</th>
+                {MONTHS.map((m) => <th key={m} className="py-1.5 pr-2 text-right font-semibold text-foreground">{m}</th>)}
+                <th className="py-1.5 pr-2 text-right font-semibold text-foreground">합계</th>
               </tr>
             </thead>
             <tbody>
@@ -373,15 +373,15 @@ export function ReportExamByClassChart({
                 <tr key={s.key} className="border-b border-border">
                   <td className="py-1.5 text-left font-semibold" style={{ color: s.color }}>{s.key}</td>
                   {chartData.map((row, i) => (
-                    <td key={i} className="py-1.5 tabular-nums">{cell(row[s.key] as number | null)}</td>
+                    <td key={i} className="py-1.5 pr-2 text-right tabular-nums">{cell(row[s.key] as number | null)}</td>
                   ))}
-                  <td className="py-1.5 font-semibold tabular-nums">{formatAxisNumber(seriesTotal(s.key))}</td>
+                  <td className="py-1.5 pr-2 text-right font-semibold tabular-nums">{formatAxisNumber(seriesTotal(s.key))}</td>
                 </tr>
               ))}
               <tr className="border-t-2 border-border bg-muted/30 font-semibold">
                 <td className="py-1.5 text-left">합계</td>
-                {monthTotals.map((v, i) => <td key={i} className="py-1.5 tabular-nums">{cell(v)}</td>)}
-                <td className="py-1.5 tabular-nums">
+                {monthTotals.map((v, i) => <td key={i} className="py-1.5 pr-2 text-right tabular-nums">{cell(v)}</td>)}
+                <td className="py-1.5 pr-2 text-right tabular-nums">
                   {formatAxisNumber(monthTotals.reduce((a: number, b) => a + (b ?? 0), 0))}
                 </td>
               </tr>
