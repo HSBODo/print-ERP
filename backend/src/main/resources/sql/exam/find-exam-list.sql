@@ -95,7 +95,21 @@
                     AND rm.RESERVE_DATE = e.EXAM_DATE
                     AND rm.RESERVE_STATE IN ('I','H')
                     AND rm.RESERVE_FLAG = 'M'
-                ) THEN 1 ELSE 0 END AS hasMedical
+                ) THEN 1 ELSE 0 END AS hasMedical,
+                -- 수술 연계: 검사일 이후(당일 포함) 수술예약(O, 취소 제외) 또는 수술기록 존재.
+                -- 재수술(그날 O 예약)·수술 확정 환자를 시력교정 검사자로 유지하기 위한 판정.
+                CASE WHEN EXISTS (
+                  SELECT 1 FROM RESERVATION ro WITH(NOLOCK)
+                  WHERE ro.CUST_NUM = e.CUST_NUM
+                    AND ro.RESERVE_FLAG = 'O'
+                    AND ro.RESERVE_STATE <> 'C'
+                    AND ro.RESERVE_DATE >= e.EXAM_DATE
+                ) OR EXISTS (
+                  SELECT 1 FROM OPERATIONDATA od WITH(NOLOCK)
+                  WHERE od.CUST_NUM = e.CUST_NUM
+                    AND ISNULL(od.OPERATION_DATE, '') <> ''
+                    AND od.OPERATION_DATE >= e.EXAM_DATE
+                ) THEN 1 ELSE 0 END AS hasSurgeryLink
             ) visit
             OUTER APPLY (
               SELECT TOP 1 r.*
@@ -277,4 +291,8 @@
                 AND NULLIF(LTRIM(RTRIM(ISNULL(e.RIGHT30, ''))), '') IS NULL
                 AND NULLIF(LTRIM(RTRIM(ISNULL(e.LEFT30, ''))), '') IS NULL
               )
+              -- 순수 외래 유입 제외(2026-07-30 확정, docs/점검/시력교정-검사자_2026-06~07.md):
+              -- 그날 검사(M)·드림렌즈(D) 내원이 없고 수술 연계도 없으면 검사자가 아니다
+              -- (외래·백내장 예약으로 와서 EXAM 행만 생긴 건). 재수술·수술확정 환자는 유지.
+              AND NOT (visit.hasMedical = 0 AND visit.hasDreamlens = 0 AND visit.hasSurgeryLink = 0)
             ORDER BY e.EXAM_DATE, rsv.RESERVE_DATE, rsv.START_TIME, cu.CUST_NAME

@@ -100,4 +100,18 @@
             OUTER APPLY (SELECT TOP 1 ISNULL(EMP_NAME, '') AS nm FROM EMPLOYEE WITH(NOLOCK) WHERE EMP_NUM = cu.MY_COUNSELOR) ec
             OUTER APPLY (SELECT TOP 1 ISNULL(EMP_NAME, '') AS nm FROM EMPLOYEE WITH(NOLOCK) WHERE EMP_NUM = cu.MY_DOCTOR) ed
             OUTER APPLY (SELECT TOP 1 ISNULL(EMP_NAME, '') AS nm FROM EMPLOYEE WITH(NOLOCK) WHERE EMP_NUM = cu.MY_OPTOMETRIST) eo
+            -- 순수 외래 유입 제외(2026-07-30 확정, docs/점검/시력교정-검사자_2026-06~07.md):
+            -- 시력교정 그룹(isCat=0, 드림렌즈 아님) 중 그날 검사(M) 내원도 수술 연계도 없는 행 제외.
+            -- find-exam-list.sql 의 hasSurgeryLink 와 동일 기준. 백내장·드림렌즈 그룹은 영향 없음.
+            WHERE NOT (
+              src.isCat = 0
+              AND vis.hasMedical = 0
+              AND vis.hasDreamlens = 0
+              AND NOT EXISTS (SELECT 1 FROM RESERVATION ro WITH(NOLOCK)
+                              WHERE ro.CUST_NUM = src.cn AND ro.RESERVE_FLAG = 'O'
+                                AND ro.RESERVE_STATE <> 'C' AND ro.RESERVE_DATE >= src.d)
+              AND NOT EXISTS (SELECT 1 FROM OPERATIONDATA od WITH(NOLOCK)
+                              WHERE od.CUST_NUM = src.cn AND ISNULL(od.OPERATION_DATE, '') <> ''
+                                AND od.OPERATION_DATE >= src.d)
+            )
             ORDER BY src.d, src.isCat, cu.CUST_NAME
