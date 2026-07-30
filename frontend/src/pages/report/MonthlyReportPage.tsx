@@ -1,6 +1,9 @@
 import { useMemo, useState, Fragment, type ReactNode } from 'react'
 import { Download, Printer } from 'lucide-react'
 import { ReportLineChart } from '@/components/report/ReportLineChart'
+import { ReportWeekLineChart } from '@/components/report/ReportWeekLineChart'
+import { weeksOfYear, weeksOfMonth, monthlyToWeekly } from '@/components/report/reportWeeks'
+import { Select } from '@/components/filters/Select'
 import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
 import { useOutpatientCountTrend } from '@/hooks/outpatient/useOutpatientCountTrend'
 import { useProcedureExamTrend } from '@/hooks/exam/useProcedureExamTrend'
@@ -12,7 +15,7 @@ import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
 import { useConsultationRateTrend } from '@/hooks/consultation/useConsultationRateTrend'
 import { useExamCountByClass } from '@/hooks/exam/useExamCountByClass'
 import { useBatchLastSuccess } from '@/hooks/batch/useBatchLastSuccess'
-import { CURRENT_YEAR } from '@/constants/chart'
+import { CURRENT_YEAR, MONTHS } from '@/constants/chart'
 import type { OverallExamMonthlyItem } from '@/api/overall'
 import {
   StopReasonBar,
@@ -21,7 +24,7 @@ import {
   ReportExamByClassChart,
   ReportChartSkeleton,
 } from './MonthlyReportCharts'
-import { YEARS, isIncompleteMonth, MONTHLY_CHART_LABELS } from './monthlyReportUtils'
+import { YEARS, isIncompleteMonth, MONTHLY_CHART_LABELS, PERCENT_SERIES_KEYS } from './monthlyReportUtils'
 import { buildMonthlyReportCsv } from './monthlyReportCsv'
 
 /**
@@ -165,6 +168,36 @@ export function MonthlyReportPage() {
   }, [charts])
 
   const periodLabel = `${CURRENT_YEAR}년 ${latestMonthIdx + 1}월`
+
+  /* ── 보기 단위: 월간(기존) / 주차 ── */
+  const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
+  // 주차 범위: 0 = 전체(52/53주), 1~12 = 그 달에 걸친 주차(월 경계 주차 포함)
+  const [weekScope, setWeekScope] = useState(0)
+  const yearWeeks = useMemo(() => weeksOfYear(CURRENT_YEAR), [])
+  const weeks = useMemo(
+    () => (weekScope === 0 ? yearWeeks : weeksOfMonth(yearWeeks, weekScope)),
+    [yearWeeks, weekScope],
+  )
+  const weekScopeOptions = [
+    { value: 0, label: `전체 (${yearWeeks.length}주)` },
+    ...MONTHS.map((m, i) => ({ value: i + 1, label: m })),
+  ]
+
+  const weekPeriodLabel = weeks.length
+    ? weekScope === 0
+      ? `${CURRENT_YEAR}년 주차 기준 · 1~${weeks[weeks.length - 1].week}주`
+      : `${CURRENT_YEAR}년 ${weekScope}월 포함 주차 · ${weeks[0].week}~${weeks[weeks.length - 1].week}주 (${weeks[0].rangeLabel} ~ ${weeks[weeks.length - 1].rangeLabel})`
+    : `${CURRENT_YEAR}년 주차 기준`
+
+  // 주차 시리즈 — 아직 주차 집계 API 가 없어 월값을 일수 비례로 임시 분배한다(UI 미리보기).
+  const weekCharts = useMemo(() => {
+    const out: Record<string, Record<number, (number | null)[]>> = {}
+    for (const [key, byYear] of Object.entries(charts)) {
+      out[key] = monthlyToWeekly(byYear, weeks, PERCENT_SERIES_KEYS.has(key) ? 'avg' : 'sum')
+    }
+    return out
+  }, [charts, weeks])
+
   const [stopReasonMonth, setStopReasonMonth] = useState<number | null>(null)
   const activeStopReasonMonth = stopReasonMonth ?? (latestMonthIdx + 1)
   const stopRateYears = YEARS.filter((year) =>
@@ -174,38 +207,72 @@ export function MonthlyReportPage() {
   const isLoading =
     resv.isLoading || outpatient.isLoading || procedure.isLoading || exam.isLoading || surgery.isLoading || stopReason.isLoading || overall.isLoading || consult.isLoading || examByClass.isLoading
 
-  // 전체 도표 목차(월간보고 순서). node 있으면 완료(차트 렌더+목차 링크), 없으면 미완성(목차 회색 표시).
-  const items: { group: string; id: string; label: string; node?: ReactNode }[] = [
-    { group: '예약', id: 'reservation-overall', label: '예약 종합 (콜·온라인)', node: <ReportLineChart title="예약 종합" suffix="(콜, 온라인)" years={YEARS} data={charts.reservations} yDomain={[800, 3000]} /> },
-    { group: '예약', id: 'reservation-call', label: '콜 예약 (인콜·아웃콜)', node: <ReportLineChart title="콜 예약" suffix="(인콜, 아웃콜)" years={YEARS} data={charts.call} /> },
-    { group: '예약', id: 'reservation-online', label: '온라인 예약 (네이버·카카오·홈페이지)', node: <ReportLineChart title="온라인 예약" suffix="(네이버, 카카오, 홈페이지)" years={YEARS} data={charts.online} /> },
-    { group: '검사 유입', id: 'exam-general-customer', label: '일반 고객 검사 (소개 제외)', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-general-customer']} years={YEARS} data={charts.examGeneralCustomer} /> },
-    { group: '검사 유입', id: 'exam-referral-customer', label: '고객소개 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-referral-customer']} years={YEARS} data={charts.examReferralCustomer} /> },
-    { group: '검사 유입', id: 'exam-referral-staff', label: '직원소개 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-referral-staff']} years={YEARS} data={charts.examReferralStaff} /> },
+  /**
+   * 전체 도표 목차(월간보고 순서).
+   *  - `chart`: 월/주차 공통 라인차트 — 보기 단위에 따라 월축/주차축으로 자동 전환
+   *  - `node`: 월 기준 전용 도표(주차 분해 불가) — 주차 보기에서도 월 기준으로 렌더
+   *  - 둘 다 없으면 미완성(목차 회색 표시)
+   */
+  interface ReportItem {
+    group: string
+    id: string
+    label: string
+    chart?: {
+      title: string
+      suffix?: string
+      format?: 'percent'
+      series: keyof typeof charts
+      years?: number[]
+      yDomain?: [number, number]
+      percentFractionDigits?: number
+    }
+    node?: ReactNode
+  }
+
+  const items: ReportItem[] = [
+    { group: '예약', id: 'reservation-overall', label: '예약 종합 (콜·온라인)', chart: { title: '예약 종합', suffix: '(콜, 온라인)', series: 'reservations', yDomain: [800, 3000] } },
+    { group: '예약', id: 'reservation-call', label: '콜 예약 (인콜·아웃콜)', chart: { title: '콜 예약', suffix: '(인콜, 아웃콜)', series: 'call' } },
+    { group: '예약', id: 'reservation-online', label: '온라인 예약 (네이버·카카오·홈페이지)', chart: { title: '온라인 예약', suffix: '(네이버, 카카오, 홈페이지)', series: 'online' } },
+    { group: '검사 유입', id: 'exam-general-customer', label: '일반 고객 검사 (소개 제외)', chart: { ...MONTHLY_CHART_LABELS['exam-general-customer'], series: 'examGeneralCustomer' } },
+    { group: '검사 유입', id: 'exam-referral-customer', label: '고객소개 검사', chart: { ...MONTHLY_CHART_LABELS['exam-referral-customer'], series: 'examReferralCustomer' } },
+    { group: '검사 유입', id: 'exam-referral-staff', label: '직원소개 검사', chart: { ...MONTHLY_CHART_LABELS['exam-referral-staff'], series: 'examReferralStaff' } },
     { group: '검사 유입', id: 'exam-by-class', label: '고객분류별 검사수', node: <ReportExamByClassChart year={CURRENT_YEAR} rows={examByClass.rows} /> },
-    { group: '검사 유입', id: 'exam-worker', label: '직장인 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-worker']} years={YEARS} data={charts.examWorker} /> },
-    { group: '검사 유입', id: 'exam-student', label: '학생 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-student']} years={YEARS} data={charts.examStudent} /> },
-    { group: '검사 유입', id: 'exam-etc', label: '기타 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-etc']} years={YEARS} data={charts.examEtc} /> },
-    { group: '검사수', id: 'exam-cataract', label: '백내장 검사수', node: <ReportLineChart title="백내장 검사수" years={YEARS} data={charts.cataractExam} /> },
-    { group: '검사수', id: 'exam-vision', label: '시력교정 검사', node: <ReportLineChart title="시력교정 검사" years={YEARS} data={charts.visionExam} /> },
-    { group: '검사수', id: 'exam-count', label: '검사수', node: <ReportLineChart title="검사수" years={YEARS} data={charts.examCount} /> },
-    { group: '검사수', id: 'exam-oneday', label: '원데이 검사', node: <ReportLineChart title="원데이 검사" years={YEARS} data={charts.oneDayExam} /> },
-    { group: '검사수', id: 'exam-general', label: '일반 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-general']} years={YEARS} data={charts.examGeneral} /> },
-    { group: '비율', id: 'ratio-general', label: '일반검사 비율', node: <ReportLineChart {...MONTHLY_CHART_LABELS['ratio-general']} years={YEARS} data={charts.ratioGeneral} /> },
-    { group: '비율', id: 'rate-cataract', label: '백내장 예약률', node: <ReportLineChart title="백내장 예약률" suffix="(수술예약건/검사자)" years={YEARS} data={charts.cataractRate} format="percent" /> },
-    { group: '비율', id: 'rate-vision', label: '시력교정 예약률', node: <ReportLineChart title="시력교정 예약률" suffix="(수술예약건/검사자)" years={YEARS} data={charts.visionRate} format="percent" /> },
-    { group: '비율', id: 'rate-vision-general', label: '시력교정 일반예약률', node: <ReportLineChart {...MONTHLY_CHART_LABELS['rate-vision-general']} years={YEARS} data={charts.rateVisionGeneral} /> },
-    { group: '비율', id: 'rate-oneday', label: '원데이 예약률', node: <ReportLineChart {...MONTHLY_CHART_LABELS['rate-oneday']} years={YEARS} data={charts.rateOneday} /> },
+    { group: '검사 유입', id: 'exam-worker', label: '직장인 검사', chart: { ...MONTHLY_CHART_LABELS['exam-worker'], series: 'examWorker' } },
+    { group: '검사 유입', id: 'exam-student', label: '학생 검사', chart: { ...MONTHLY_CHART_LABELS['exam-student'], series: 'examStudent' } },
+    { group: '검사 유입', id: 'exam-etc', label: '기타 검사', chart: { ...MONTHLY_CHART_LABELS['exam-etc'], series: 'examEtc' } },
+    { group: '검사수', id: 'exam-cataract', label: '백내장 검사수', chart: { title: '백내장 검사수', series: 'cataractExam' } },
+    { group: '검사수', id: 'exam-vision', label: '시력교정 검사', chart: { title: '시력교정 검사', series: 'visionExam' } },
+    { group: '검사수', id: 'exam-count', label: '검사수', chart: { title: '검사수', series: 'examCount' } },
+    { group: '검사수', id: 'exam-oneday', label: '원데이 검사', chart: { title: '원데이 검사', series: 'oneDayExam' } },
+    { group: '검사수', id: 'exam-general', label: '일반 검사', chart: { ...MONTHLY_CHART_LABELS['exam-general'], series: 'examGeneral' } },
+    { group: '비율', id: 'ratio-general', label: '일반검사 비율', chart: { ...MONTHLY_CHART_LABELS['ratio-general'], series: 'ratioGeneral' } },
+    { group: '비율', id: 'rate-cataract', label: '백내장 예약률', chart: { title: '백내장 예약률', suffix: '(수술예약건/검사자)', format: 'percent', series: 'cataractRate' } },
+    { group: '비율', id: 'rate-vision', label: '시력교정 예약률', chart: { title: '시력교정 예약률', suffix: '(수술예약건/검사자)', format: 'percent', series: 'visionRate' } },
+    { group: '비율', id: 'rate-vision-general', label: '시력교정 일반예약률', chart: { ...MONTHLY_CHART_LABELS['rate-vision-general'], series: 'rateVisionGeneral' } },
+    { group: '비율', id: 'rate-oneday', label: '원데이 예약률', chart: { ...MONTHLY_CHART_LABELS['rate-oneday'], series: 'rateOneday' } },
     { group: '전환&성공', id: 'success-rate', label: '시력교정 상담성공률', node: <ReportSuccessRateChart year={CURRENT_YEAR} all={charts.successAll[CURRENT_YEAR] ?? []} oneday={charts.successOneday[CURRENT_YEAR] ?? []} general={charts.successGeneral[CURRENT_YEAR] ?? []} /> },
-    { group: '중단', id: 'stop-rate', label: '중단율', node: <ReportLineChart {...MONTHLY_CHART_LABELS['stop-rate']} years={stopRateYears.length ? stopRateYears : [CURRENT_YEAR]} data={charts.stopRate} percentFractionDigits={1} /> },
+    { group: '중단', id: 'stop-rate', label: '중단율', chart: { ...MONTHLY_CHART_LABELS['stop-rate'], series: 'stopRate', years: stopRateYears.length ? stopRateYears : [CURRENT_YEAR], percentFractionDigits: 1 } },
     { group: '중단', id: 'stop-reason', label: '중단 사유', node: <StopReasonBar year={CURRENT_YEAR} items={stopReason.dataMap[CURRENT_YEAR] ?? []} month={activeStopReasonMonth} onMonthChange={setStopReasonMonth} /> },
-    { group: '수술', id: 'surgery-cataract', label: '백내장 수술', node: <ReportLineChart title="백내장 수술" years={YEARS} data={charts.cataractSurgery} /> },
-    { group: '수술', id: 'surgery-vision', label: '시력교정 수술', node: <ReportLineChart title="시력교정 수술" years={YEARS} data={charts.visionSurgery} /> },
-    { group: '수술', id: 'surgery-total', label: '총 수술수', node: <ReportLineChart title="총 수술수" years={YEARS} data={charts.totalSurgery} /> },
+    { group: '수술', id: 'surgery-cataract', label: '백내장 수술', chart: { title: '백내장 수술', series: 'cataractSurgery' } },
+    { group: '수술', id: 'surgery-vision', label: '시력교정 수술', chart: { title: '시력교정 수술', series: 'visionSurgery' } },
+    { group: '수술', id: 'surgery-total', label: '총 수술수', chart: { title: '총 수술수', series: 'totalSurgery' } },
     { group: '수술', id: 'surgery-detail', label: '수술 상세표', node: <ReportSurgeryTable dataMap={surgery.dataMap} /> },
-    { group: '외래', id: 'outpatient', label: '외래수', node: <ReportLineChart title="외래수" years={YEARS} data={charts.outpatient} /> },
+    { group: '외래', id: 'outpatient', label: '외래수', chart: { title: '외래수', series: 'outpatient' } },
   ]
-  const doneCount = items.filter((it) => it.node).length
+  const isDone = (it: ReportItem) => Boolean(it.chart || it.node)
+  const doneCount = items.filter(isDone).length
+
+  // 보기 단위에 맞춰 도표 렌더 — chart 는 월축/주차축 전환, node 는 항상 월 기준
+  const renderItem = (it: ReportItem): ReactNode => {
+    if (!it.chart) return it.node
+    const { series, years, ...rest } = it.chart
+    const chartYears = years ?? YEARS
+    return viewMode === 'week' ? (
+      <ReportWeekLineChart {...rest} years={chartYears} weeks={weeks} data={weekCharts[series] ?? {}} provisional />
+    ) : (
+      <ReportLineChart {...rest} years={chartYears} data={charts[series]} />
+    )
+  }
 
   // CSV 다운로드 연도 선택 팝업
   const [csvOpen, setCsvOpen] = useState(false)
@@ -259,10 +326,13 @@ export function MonthlyReportPage() {
                   <li className="px-1 pt-2 text-[11px] font-bold text-muted-foreground">{it.group}</li>
                 )}
                 <li>
-                  {it.node ? (
+                  {isDone(it) ? (
                     <a href={`#c-${it.id}`} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-gray-700 hover:bg-blue-50">
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                       <span className="truncate">{it.label}</span>
+                      {viewMode === 'week' && !it.chart && (
+                        <span className="ml-auto shrink-0 rounded bg-amber-100 px-1 text-[10px] font-semibold text-amber-700">월</span>
+                      )}
                     </a>
                   ) : (
                     <span className="flex items-center gap-1.5 px-1.5 py-1 text-gray-400">
@@ -285,11 +355,31 @@ export function MonthlyReportPage() {
           <div>
             <h1 className="text-xl font-bold text-foreground">월간 레포트</h1>
             <p className="text-sm text-muted-foreground">
-              {periodLabel} 기준 · 당해연도({CURRENT_YEAR})·전년도({CURRENT_YEAR - 1})·전전년도({CURRENT_YEAR - 2}) 3개년 비교
+              {viewMode === 'week' ? weekPeriodLabel : `${periodLabel} 기준`} · 당해연도({CURRENT_YEAR})·전년도({CURRENT_YEAR - 1})·전전년도({CURRENT_YEAR - 2}) 3개년 비교
               {lastBatch.data?.targetDate && ` · ${lastBatch.data.targetDate} 데이터 반영`}
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* 보기 단위: 월간 ↔ 주차 */}
+            <div className="inline-flex rounded-md border border-slate-300 bg-white p-0.5 shadow-sm">
+              {([['month', '월간'], ['week', '주차']] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setViewMode(mode)}
+                  aria-pressed={viewMode === mode}
+                  className={`rounded px-3 py-1.5 text-sm font-semibold transition-colors ${
+                    viewMode === mode ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {viewMode === 'week' && (
+              <Select value={weekScope} onChange={setWeekScope} options={weekScopeOptions} title="주차 범위" />
+            )}
+            <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden />
             <button
               type="button"
               onClick={() => setCsvOpen(true)}
@@ -319,13 +409,22 @@ export function MonthlyReportPage() {
         ) : (
           // 고정폭(1040px): 화면·인쇄 차트 크기를 동일하게 → Recharts 재측정 없이 PDF에 12개월 전부·정렬 유지.
           <div className="mx-auto w-[1040px] space-y-6">
-            {items
-              .filter((it) => it.node)
-              .map((it) => (
-                <div key={it.id} id={`c-${it.id}`} className="scroll-mt-4">
-                  {it.node}
-                </div>
-              ))}
+            {viewMode === 'week' && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+                <b>주차 레포트 — UI 미리보기</b> · 주차 값은 월 데이터를 <b>일수 비례로 임시 분배</b>한 값입니다(점선 표시).
+                실제 주차 집계 API 연동 전이므로 수치는 참고용입니다.
+              </div>
+            )}
+            {items.filter(isDone).map((it) => (
+              <div key={it.id} id={`c-${it.id}`} className="scroll-mt-4">
+                {viewMode === 'week' && !it.chart && (
+                  <p className="report-no-print mb-1 text-[11px] font-semibold text-amber-700">
+                    ※ 이 도표는 월 기준으로만 제공됩니다.
+                  </p>
+                )}
+                {renderItem(it)}
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -20,6 +20,15 @@ export interface ChartLabels {
   format?: 'percent'
 }
 
+/**
+ * 비율(%) 계열 차트 키 — 주차 보기에서 월값을 **합산이 아니라 가중평균**으로 분배해야 하는 지표.
+ * (MonthlyReportPage 의 `charts` 키 기준)
+ */
+export const PERCENT_SERIES_KEYS = new Set<string>([
+  'cataractRate', 'visionRate', 'ratioGeneral', 'rateVisionGeneral', 'rateOneday', 'stopRate',
+  'successAll', 'successOneday', 'successGeneral',
+])
+
 export const MONTHLY_CHART_LABELS: Record<string, ChartLabels> = {
   'exam-general-customer': { title: '일반 고객 검사', suffix: '(소개 제외)' },
   'exam-referral-customer': { title: '고객소개 검사' },
