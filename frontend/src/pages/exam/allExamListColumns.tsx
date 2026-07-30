@@ -65,29 +65,33 @@ export interface Column {
   text?: boolean
 }
 
+/**
+ * 정렬 규칙: 고객메모만 좌측정렬(긴 자유 텍스트), 나머지는 전부 중앙정렬.
+ * min은 하한값일 뿐(테이블 auto layout)이라 헤더 + 정렬 화살표 + 셀 실제 폭에 맞춰 최소로 잡는다.
+ */
 export const COLUMNS: Column[] = [
-  { key: 'rowNo', label: 'No', align: 'right', min: '3.5rem', render: (_r, n) => n.toLocaleString('ko-KR'), csv: (_r, n) => n },
-  { key: 'examDate', label: '검사일', align: 'center', min: '6rem' },
+  { key: 'rowNo', label: 'No', align: 'center', min: '3.5rem', render: (_r, n) => n.toLocaleString('ko-KR'), csv: (_r, n) => n },
+  { key: 'examDate', label: '검사일', align: 'center', min: '5.5rem' },
   { key: 'examGroup', label: '검사구분', align: 'center', min: '5rem', render: (r) => cell.badge(r.examGroup, GROUP_STYLE[r.examGroup]) },
-  { key: 'examType', label: '원데이', align: 'center', min: '4rem', render: (r) => (
+  { key: 'examType', label: '원데이', align: 'center', min: '4.5rem', render: (r) => (
     r.examType === '원데이'
       ? cell.badge('원데이', 'bg-violet-100 text-violet-700')
       : <span className="text-gray-400">{r.examType || '—'}</span>
   ) },
-  { key: 'cataractClass', label: '백내장분류', align: 'center', min: '5rem', render: (r) => cell.badge(r.cataractClass, CATARACT_CLASS_STYLE[r.cataractClass]) },
+  { key: 'cataractClass', label: '백내장분류', align: 'center', min: '6rem', render: (r) => cell.badge(r.cataractClass, CATARACT_CLASS_STYLE[r.cataractClass]) },
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_STYLE[r.patientType]) },
   { key: 'introType', label: '소개구분', align: 'center', min: '5rem', render: (r) => cell.badge(r.introType, INTRO_STYLE[r.introType]) },
-  { key: 'motiveReport', label: '내원동기(레포트)', align: 'center', min: '6.5rem', render: (r) => dash(r.motiveReport) },
-  { key: 'motiveL', label: '내원동기(대)', align: 'center', min: '6rem', render: (r) => dash(r.motiveL) },
-  { key: 'motiveM', label: '내원동기(중)', align: 'center', min: '6rem', render: (r) => dash(r.motiveM) },
-  { key: 'jobBucket', label: '직업구분', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.jobBucket, JOB_STYLE[r.jobBucket]) },
-  { key: 'job', label: '직업', align: 'center', min: '6rem', render: (r) => dash(r.job) },
-  { key: 'chartNo', label: '차트번호', align: 'center', min: '6rem', text: true },
+  { key: 'motiveReport', label: '내원동기(레포트)', align: 'center', min: '7.5rem', render: (r) => dash(r.motiveReport) },
+  { key: 'motiveL', label: '내원동기(대)', align: 'center', min: '6.5rem', render: (r) => dash(r.motiveL) },
+  { key: 'motiveM', label: '내원동기(중)', align: 'center', min: '6.5rem', render: (r) => dash(r.motiveM) },
+  { key: 'jobBucket', label: '직업구분', align: 'center', min: '5rem', render: (r) => cell.badge(r.jobBucket, JOB_STYLE[r.jobBucket]) },
+  { key: 'job', label: '직업', align: 'center', min: '5.5rem', render: (r) => dash(r.job) },
+  { key: 'chartNo', label: '차트번호', align: 'center', min: '5.5rem', text: true },
   { key: 'name', csv: (r) => maskName(r.name), label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
   { key: 'grade', label: '등급', align: 'center', min: '3.5rem', render: (r) => cell.badge(r.grade, GRADE_STYLE[r.grade]) },
-  { key: 'birth', label: '생년월일', align: 'center', min: '6rem' },
-  { key: 'age', label: '만나이', align: 'right', min: '3.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
-  { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'left', min: '8rem', text: true },
+  { key: 'birth', label: '생년월일', align: 'center', min: '5.5rem' },
+  { key: 'age', label: '만나이', align: 'center', min: '4.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
+  { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'center', min: '7rem', text: true },
   { key: 'counselor', label: '상담사', align: 'center', min: '5rem', render: (r) => dash(r.counselor) },
   { key: 'doctor', label: '상담의', align: 'center', min: '5rem', render: (r) => dash(r.doctor) },
   { key: 'optometrist', label: '검안사', align: 'center', min: '5rem', render: (r) => dash(r.optometrist) },
