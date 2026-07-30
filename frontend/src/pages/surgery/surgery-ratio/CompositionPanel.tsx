@@ -4,6 +4,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Pie,
   PieChart,
   XAxis,
@@ -30,7 +31,7 @@ import {
   type FamilyKey,
   type MonthlyData,
 } from './surgeryRatioUtils'
-import { formatAxisPercent } from '@/utils/stats'
+import { formatAxisNumber, formatAxisPercent } from '@/utils/stats'
 
 interface CompositionPanelProps {
   selectedData: MonthlyData
@@ -97,16 +98,32 @@ export function CompositionPanel({
           <CardDescription>{baseLabel} 기준 수술 유형별 비중을 비교합니다.</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* 막대 길이·축은 비중(%), 막대 끝 라벨과 툴팁에 건수를 함께 표기한다. */}
           <ChartContainer config={barConfig} className="h-[460px] w-full">
-            <BarChart data={shareData} layout="vertical" margin={{ left: 8, right: 12 }}>
+            <BarChart data={shareData} layout="vertical" margin={{ left: 8, right: 64 }}>
               <CartesianGrid horizontal={false} />
               <XAxis type="number" tickFormatter={formatAxisPercent} />
               <YAxis dataKey="name" type="category" width={120} tickLine={false} axisLine={false} />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent formatter={(_, name, item) => `${Number(item?.payload?.share ?? 0).toFixed(1)}%`} />}
+                content={
+                  <ChartTooltipContent
+                    formatter={(_, name, item) =>
+                      `${formatAxisNumber(item?.payload?.value ?? 0)}건 · ${Number(item?.payload?.share ?? 0).toFixed(1)}%`
+                    }
+                  />
+                }
               />
               <Bar dataKey="share" radius={8} barSize={18}>
+                <LabelList
+                  dataKey="value"
+                  position="right"
+                  offset={8}
+                  className="fill-foreground"
+                  fontSize={12}
+                  fontWeight={600}
+                  formatter={(v) => (typeof v === 'number' ? `${formatAxisNumber(v)}건` : '')}
+                />
                 {shareData.map((entry) => (
                   <Cell key={entry.key} fill={entry.fill} />
                 ))}
