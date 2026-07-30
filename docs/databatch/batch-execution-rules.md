@@ -111,6 +111,11 @@ INSERT INTO list_* (...) VALUES (...);
 | `list_exam` | DELETE+INSERT (exam_date) | 없음 | |
 | `list_cataract_exam` | DELETE+INSERT (exam_date) | 없음 | Cataract_Exam 스냅샷 특성상 과거월 소급 변동 가능 |
 
+> ⚠️ **`list_cataract_exam` 수동 재적재는 반드시 월 단위로 나눠서** (`/api/admin/batch/rerun?...&domain=EXAM`).
+> 검사일 = "요청 범위 내 첫 H 예약일"이라, 여러 달을 한 범위로 돌리면 월 경계를 넘는 재방문자의
+> 뒷달 행이 앞달로 흡수돼 `리스트 건수 = 월별 백내장 검사수` 정합이 깨진다
+> (실사례 2026-07-30: 05~07월 한 번에 돌리자 6월 55 → 54). 일 단위 야간 크론은 창이 작아 무관.
+
 ### 2-4. CONSULTATION 도메인 (`ConsultationMartJob`)
 
 | 마트 | 패턴 | min-year | 특수 조건 |
