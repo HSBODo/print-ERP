@@ -48,9 +48,9 @@
               ISNULL(cu.ETC, '')                           AS memo
             FROM (
               SELECT e.CUST_NUM AS cn, e.EXAM_DATE AS d, 0 AS isCat,
-                     -- 원데이 검사: 같은날 시력교정 검사OP 예약(M/5, 내원 I/H). 레포트 정합 위해 중단/취소/테스트메모 제외.
-                     CASE WHEN ISNULL(e.STOP_YN, '') <> 'Y' AND ISNULL(e.CANCEL_CD, '') = ''
-                           AND NOT (ISNULL(e.EXAM_MEMO, '') LIKE N'%테스트%' OR LOWER(ISNULL(e.EXAM_MEMO, '')) LIKE '%test%')
+                     -- 원데이 검사: 같은날 시력교정 검사OP 예약(M/5, 내원 I/H), 테스트메모만 제외.
+                     -- 2026-07-30 확정: 중단/취소(STOP_YN·CANCEL_CD) 단서 제거 (점검/원데이-레거시-비교 §5).
+                     CASE WHEN NOT (ISNULL(e.EXAM_MEMO, '') LIKE N'%테스트%' OR LOWER(ISNULL(e.EXAM_MEMO, '')) LIKE '%test%')
                            AND EXISTS (SELECT 1 FROM RESERVATION r WITH(NOLOCK)
                                        WHERE r.CUST_NUM = e.CUST_NUM AND r.RESERVE_DATE = e.EXAM_DATE
                                          AND r.RESERVE_FLAG = 'M' AND r.RESERVE_JINRYO = '5' AND r.RESERVE_STATE IN ('I','H'))
