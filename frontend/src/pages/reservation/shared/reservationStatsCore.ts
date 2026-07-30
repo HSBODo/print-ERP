@@ -1,10 +1,12 @@
 /** Shared pure helpers for reservation stats data modules. */
 
-export type Granularity = 'month' | 'week' | 'day' | 'all'
+export type Granularity = 'month' | 'week' | 'yearWeek' | 'day' | 'all'
 
+// 주별 = 해당 월의 주(1~5주) / 주차 = ISO 8601 연간 주차(1~53주). 두 뷰의 버킷 규칙이 달라 라벨·정렬이 다르다.
 export const GRANULARITIES: { key: Granularity; label: string }[] = [
   { key: 'month', label: '월별' },
   { key: 'week', label: '주별' },
+  { key: 'yearWeek', label: '주차' },
   { key: 'day', label: '일별' },
   { key: 'all', label: '전체' },
 ]

@@ -75,6 +75,12 @@ describe('reservation stats shared helpers', () => {
       '1주',
       '2주',
     ])
+    // 주차 = ISO 8601. 2026-06-01 은 ISO 23주, 2026-06-08 은 ISO 24주 → '23주차', '24주차'.
+    expect(buildDisplayRowsFromCounts('yearWeek', dailies, '2026-06', 8, deps).map((row) => row.label)).toEqual([
+      'TOTAL',
+      '23주차',
+      '24주차',
+    ])
     expect(buildDisplayRowsFromCounts('day', dailies, '2026-06', 2, deps)).toMatchObject([
       { label: 'TOTAL', tier: 'month' },
       { label: '1일', weekday: '월', muted: false, weekStart: true },
