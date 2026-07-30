@@ -19,6 +19,16 @@
               CASE WHEN mv.motiveL IN (N'소개고객', N'소개미확인') THEN N'고객소개'
                    WHEN mv.motiveL = N'소개직원' THEN N'직원소개'
                    ELSE N'일반' END                         AS introType,
+              -- 내원동기(레포트): 내원동기(대) → 레포트 9계열 매핑 (select-all-exam-list.sql 과 동일 기준).
+              CASE
+                WHEN mv.motiveL = N'B2B(군인)' THEN N'B2B(군인)'
+                WHEN mv.motiveL IN (N'B2B(기업)', N'B2B(비앤빛)', N'제휴') THEN N'B2B(기업)'
+                WHEN mv.motiveL IN (N'VIP고객관리팀', N'소개고객', N'소개미확인') THEN N'소개고객'
+                WHEN mv.motiveL = N'소개직원' THEN N'소개직원'
+                WHEN mv.motiveL IN (N'광고', N'기타', N'바이럴', N'프로모션', N'홈페이지') THEN mv.motiveL
+                WHEN ISNULL(mv.motiveL, '') = '' THEN ''
+                ELSE N'기타'
+              END                                          AS motiveReport,
               ISNULL(mv.motiveL, '')                       AS motiveL,
               ISNULL(mv.motiveM, '')                       AS motiveM,
               ISNULL(mv.motiveS, '')                       AS motiveS,
