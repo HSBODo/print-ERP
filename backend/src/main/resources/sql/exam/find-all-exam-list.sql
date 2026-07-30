@@ -10,6 +10,10 @@
                    WHEN vis.hasDreamlens = 1 AND vis.hasMedical = 0 THEN ''
                    WHEN src.isOneDay = 1 THEN N'원데이'
                    ELSE N'일반' END                         AS examType,
+              -- 백내장분류: 백내장 리스트의 분류와 동일 기준(상담사 BS0808=BS미지정 → 중단, 그 외 → 백내장).
+              CASE WHEN src.isCat = 1 AND cu.MY_COUNSELOR = 'BS0808' THEN N'중단'
+                   WHEN src.isCat = 1 THEN N'백내장'
+                   ELSE '' END                              AS cataractClass,
               CASE WHEN ISNULL(cu.FIRST_DAY, '') >= :from AND ISNULL(cu.FIRST_DAY, '') <= :to
                    THEN N'신환' ELSE N'구환' END            AS patientType,
               CASE WHEN mv.motiveL IN (N'소개고객', N'소개미확인') THEN N'고객소개'

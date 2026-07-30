@@ -15,6 +15,7 @@ const allExamListItemSchema = z.object({
   examDate: z.string(),
   examGroup: z.string(),
   examType: z.string(), // 시력교정 원데이/일반 구분 (백내장·드림렌즈는 '')
+  cataractClass: z.string(), // 백내장분류: 백내장/중단 (백내장 리스트 classification과 동일, 그 외 검사구분은 '')
   patientType: z.string(),
   introType: z.string(),
   motiveL: z.string(),

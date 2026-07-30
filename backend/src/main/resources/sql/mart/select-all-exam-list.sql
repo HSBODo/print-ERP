@@ -19,15 +19,16 @@ WITH src AS (
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
            phone1, phone2, email, counselor, doctor, optometrist,
-           last_visit, memo, one_day
+           last_visit, memo, one_day, '' AS classification
       FROM list_exam
      WHERE exam_date >= CAST(:from AS DATE)
        AND exam_date <= CAST(:to   AS DATE)
     UNION ALL
+    -- classification: 백내장 리스트의 분류(백내장/중단, V23) — 전체 리스트에서는 '백내장분류' 컬럼.
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
            phone1, phone2, email, counselor, doctor, optometrist,
-           last_visit, memo, 'N' AS one_day
+           last_visit, memo, 'N' AS one_day, classification
       FROM list_cataract_exam
      WHERE exam_date >= CAST(:from AS DATE)
        AND exam_date <= CAST(:to   AS DATE)
@@ -43,6 +44,7 @@ SELECT
         WHEN one_day = 'Y'              THEN '원데이'
         ELSE '일반'
     END                                         AS "examType",
+    COALESCE(classification, '')                AS "cataractClass",
     COALESCE(patient_type, '')                 AS "patientType",
     CASE
         WHEN motive_l IN ('소개고객', '소개미확인') THEN '고객소개'

@@ -10,6 +10,11 @@ const GROUP_STYLE: Record<string, string> = {
   드림렌즈: 'bg-fuchsia-50 text-fuchsia-700',
   백내장: 'bg-amber-50 text-amber-700',
 }
+// 백내장 검사자 리스트의 분류 칩과 동일 스타일 (cataractExamListColumns.tsx CLASSIFICATION_STYLE)
+const CATARACT_CLASS_STYLE: Record<string, string> = {
+  백내장: 'bg-amber-50 text-amber-700',
+  중단: 'bg-rose-50 text-rose-700',
+}
 const INTRO_STYLE: Record<string, string> = {
   일반: 'bg-gray-100 text-gray-600',
   고객소개: 'bg-emerald-50 text-emerald-700',
@@ -69,6 +74,7 @@ export const COLUMNS: Column[] = [
       ? cell.badge('원데이', 'bg-violet-100 text-violet-700')
       : <span className="text-gray-400">{r.examType || '—'}</span>
   ) },
+  { key: 'cataractClass', label: '백내장분류', align: 'center', min: '5rem', render: (r) => cell.badge(r.cataractClass, CATARACT_CLASS_STYLE[r.cataractClass]) },
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_STYLE[r.patientType]) },
   { key: 'introType', label: '내원동기구분', align: 'center', min: '5.5rem', render: (r) => cell.badge(r.introType, INTRO_STYLE[r.introType]) },
   { key: 'motiveL', label: '내원동기(대)', align: 'center', min: '6rem', render: (r) => dash(r.motiveL) },
