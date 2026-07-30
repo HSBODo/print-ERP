@@ -31,6 +31,7 @@ project-root/
 │   │   ├── consultation/                # 전환율·예약률·중단사유
 │   │   ├── outpatient/                  # 외래수
 │   │   ├── overall/                     # 주간 종합지표
+│   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API)
 │   │   └── etc/                         # B2B 매출 등 기타
 │   ├── src/main/resources/
 │   │   ├── application.yml                     # H2 인메모리 (개발 기본)
@@ -55,6 +56,7 @@ project-root/
 │   │   │   ├── consultation/           # index.ts(consultationApi)
 │   │   │   ├── outpatient/             # index.ts(outpatientApi)
 │   │   │   ├── overall/                # index.ts(overallApi)
+│   │   │   ├── report/                 # index.ts(reportApi · 주차 레포트)
 │   │   │   └── etc/                    # index.ts(b2bApi · B2B 매출)
 │   │   ├── hooks/                       # 도메인별 TanStack Query 훅
 │   │   │   ├── reservation/            # useReservationKpi/Trend/Composition/List/OverallTrend …
@@ -62,6 +64,7 @@ project-root/
 │   │   │   ├── consultation/           # useConsultationRate*·useCataractReservationRateTrend·useStopReasonMonthly
 │   │   │   ├── surgery/                # useSurgery*·useSurgeryRatio*
 │   │   │   ├── overall/                # useOverallExamWeekly
+│   │   │   ├── report/                 # useWeeklyReport
 │   │   │   ├── outpatient/             # useOutpatientCountTrend
 │   │   │   ├── useIsMobile.ts          # (공용) 반응형 분기
 │   │   │   └── useWeeklyApproval.ts    # (공용) 리스트 주별 승인 워크플로우
@@ -69,7 +72,7 @@ project-root/
 │   │   │   ├── layout/                  # AppLayout·Sidebar·Topbar + desktop/·mobile/
 │   │   │   ├── filters/                 # FilterBar·PeriodChip·Select
 │   │   │   ├── stats/                   # KpiCard·StatsPrimitives·WeeklyApprovalPanel (공용)
-│   │   │   ├── report/                  # ReportLineChart
+│   │   │   ├── report/                  # ReportLineChart·ReportWeekLineChart·reportWeeks(ISO 주차)
 │   │   │   └── ui/                      # shadcn 컴포넌트 (button, card, chart)
 │   │   ├── config/
 │   │   │   ├── statsPages.ts            # 통계 페이지 정의 (id/path/section/apiDraftPath)
@@ -132,7 +135,7 @@ project-root/
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
 |----|------|------|------|------|
-| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 주차축으로, 주차 데이터는 월값 임시 분배) |
+| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 ISO 주차축으로 · `/api/report/weekly` 운영 DB 라이브) |
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
 | intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
@@ -190,7 +193,13 @@ GET    /api/stats/{pageId}/kpi?years=2024,2025&mock=false
 GET    /api/stats/{pageId}/trend?years=2024,2025&mock=false
 GET    /api/stats/{pageId}/composition?years=2024,2025&mock=false
 GET    /api/{listPageId}?from=2026-01-01&to=2026-01-31  # 리스트 계열
+GET    /api/report/weekly?years=2024,2025,2026       # 주차 레포트 (ISO 8601 연간 주차 원시 집계)
 ```
+
+> 📅 **주차 개념 3종 주의** — 이름이 비슷하지만 버킷 규칙이 다르다.
+> - **ISO 연간 주차**(`utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.
+> - **그 달의 주차**(`utils/weekBucket.ts` · `OverallExamWeeklyService`): 월 경계에서 잘라 각 달에 귀속 → 월 합계 = 그 달 주 합계. 리스트 '주별 승인'·주간 검사자 종합지표가 쓴다.
+> - **월별**: 마트 확정값(2024·2025 레거시 시드 포함).
 
 ### 응답 포맷
 

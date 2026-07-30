@@ -1,7 +1,7 @@
 import { addDays, isoWeekMonday, isoWeeksInYear, toIsoDate } from '@/utils/isoWeek'
 
 /**
- * 레포트 주차 축 — 주차 레포트가 쓰는 연간 주차 목록/분배 로직.
+ * 레포트 주차 축 — 주차 레포트가 쓰는 연간 주차 열거.
  *
  * 주차 규칙은 **ISO 8601**(`@/utils/isoWeek`)을 그대로 따른다 — 예약통계시스템·수술별 비중의
  * '주차' 탭과 같은 번호 체계라 화면 간 "31주차"가 항상 같은 주를 가리킨다.
@@ -67,39 +67,3 @@ export function weeksOfYear(year: number): ReportWeek[] {
 /** 해당 월에 하루라도 걸친 주차 — 월 경계 주차를 포함한다. */
 export const weeksOfMonth = (weeks: ReportWeek[], month: number): ReportWeek[] =>
   weeks.filter((w) => w.months.includes(month))
-
-const daysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate()
-
-/**
- * 월별 값 → 주차 값 **임시 분배**(주차 집계 API 연동 전 UI 미리보기용).
- *
- * - `sum`(건수): 월값을 그 달의 일수로 나눠 주차에 속한 일수만큼 배분 후 합산·반올림
- * - `avg`(비율): 주차에 속한 일수를 가중치로 월값을 가중평균
- *
- * 비교 연도(전년·전전년)도 **기준연도 주차 구성**을 그대로 쓴다 — 주차 번호 기준 비교이므로
- * 연도별 요일 차이는 무시한다(실데이터 연동 시 서버 주차 집계로 대체).
- */
-export function monthlyToWeekly(
-  data: Record<number, (number | null)[]>,
-  weeks: ReportWeek[],
-  mode: 'sum' | 'avg',
-): Record<number, (number | null)[]> {
-  const out: Record<number, (number | null)[]> = {}
-  for (const [key, months] of Object.entries(data)) {
-    const year = Number(key)
-    out[year] = weeks.map((w) => {
-      let acc = 0
-      let weight = 0
-      for (const m of w.months) {
-        const v = months?.[m - 1]
-        if (typeof v !== 'number') continue
-        const days = w.daysByMonth[m] ?? 0
-        acc += mode === 'avg' ? v * days : (v * days) / daysInMonth(year, m)
-        weight += days
-      }
-      if (!weight) return null
-      return mode === 'avg' ? acc / weight : Math.round(acc)
-    })
-  }
-  return out
-}

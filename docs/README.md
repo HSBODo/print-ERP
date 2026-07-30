@@ -8,7 +8,7 @@ B&VIIT Analytics 대시보드 문서 모음. 카테고리별 진입점입니다.
 |------|------|
 | [기획/dashboard-spec.md](기획/dashboard-spec.md) | **대시보드 종합 기획서** (메뉴·API·구현 현황) — 현행 기준 |
 | [기획/prd.html](기획/prd.html) | PRD 통합 문서 (PRD·Features·User Flow·Wireframe 탭, 브라우저로 열기) |
-| [기획/report-chart-status.md](기획/report-chart-status.md) | 월간/주간 레포트 28개 도표 현황 + 레거시 검증 |
+| [기획/report-chart-status.md](기획/report-chart-status.md) | 월간/주차 레포트 28개 도표 현황 + 레거시 검증 |
 
 ## 지표정의 — 환자 흐름별 ([지표정의/](지표정의/))
 

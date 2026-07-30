@@ -36,8 +36,6 @@ export interface ReportWeekLineChartProps {
   format?: 'number' | 'percent'
   percentFractionDigits?: number
   yDomain?: [number, number]
-  /** 임시 분배값(주차 집계 API 연동 전) — 점선 + 각주로 표시 */
-  provisional?: boolean
 }
 
 export function ReportWeekLineChart({
@@ -49,7 +47,6 @@ export function ReportWeekLineChart({
   format = 'number',
   percentFractionDigits,
   yDomain,
-  provisional = false,
 }: ReportWeekLineChartProps) {
   const sorted = useMemo(() => [...years].sort((a, b) => a - b), [years])
   const latest = sorted[sorted.length - 1]
@@ -241,7 +238,6 @@ export function ReportWeekLineChart({
                 dataKey={`y${y}`}
                 stroke={colorOf(y, latest)}
                 strokeWidth={y === latest ? 3 : 2.5}
-                strokeDasharray={provisional ? '7 4' : undefined}
                 dot={false}
                 connectNulls={false}
                 activeDot={{ r: 4 }}
@@ -315,11 +311,9 @@ export function ReportWeekLineChart({
           </div>
         ))}
 
-        {(hasCrossMonth || provisional) && (
-          <p className="text-[11px] text-muted-foreground">
-            {hasCrossMonth && <span style={{ color: CROSS_MONTH_COLOR }}>* 월 경계 주차(두 달에 걸침)</span>}
-            {hasCrossMonth && provisional && ' · '}
-            {provisional && '※ 주차 값은 월 데이터를 일수 비례로 임시 분배한 미리보기 값 (주차 집계 API 연동 시 교체)'}
+        {hasCrossMonth && (
+          <p className="text-[11px]" style={{ color: CROSS_MONTH_COLOR }}>
+            * 월 경계 주차(두 달에 걸침)
           </p>
         )}
       </CardContent>

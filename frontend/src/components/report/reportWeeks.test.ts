@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weeksOfYear, weeksOfMonth, monthlyToWeekly } from './reportWeeks'
+import { weeksOfYear, weeksOfMonth } from './reportWeeks'
 
 describe('weeksOfYear', () => {
   it('ISO 8601 주차를 따른다 (2026년 1주차 = 2025-12-29~2026-01-04)', () => {
@@ -77,37 +77,5 @@ describe('weeksOfMonth', () => {
       const covered = weeksOfMonth(weeks, m).reduce((sum, w) => sum + (w.daysByMonth[m] ?? 0), 0)
       expect(covered).toBe(new Date(Date.UTC(2026, m, 0)).getUTCDate())
     }
-  })
-})
-
-describe('monthlyToWeekly', () => {
-  const weeks = weeksOfMonth(weeksOfYear(2026), 8) // 2026-08: 7/27~8/2 … 8/31~9/6
-
-  it('건수(sum)는 월값을 일수 비례로 나눠 담는다', () => {
-    // 8월 = 31일, 값 310 → 하루 10. 첫 주는 8/1~8/2 2일치 = 20
-    const out = monthlyToWeekly({ 2026: Array(12).fill(null).map((_, i) => (i === 7 ? 310 : null)) }, weeks, 'sum')
-    expect(out[2026][0]).toBe(20)
-    // 8월분 합계는 원래 월값과 같다(반올림 오차 ±주차수)
-    const total = out[2026].reduce((a: number, b) => a + (b ?? 0), 0)
-    expect(Math.abs(total - 310)).toBeLessThanOrEqual(weeks.length)
-  })
-
-  it('비율(avg)은 일수 가중평균이라 월값 범위를 벗어나지 않는다', () => {
-    const monthly = Array(12).fill(null) as (number | null)[]
-    monthly[6] = 60 // 7월
-    monthly[7] = 80 // 8월
-    const out = monthlyToWeekly({ 2026: monthly }, weeks, 'avg')
-    out[2026].forEach((v) => {
-      if (v === null) return
-      expect(v).toBeGreaterThanOrEqual(60)
-      expect(v).toBeLessThanOrEqual(80)
-    })
-    // 7/27~8/2 = 7월 5일 + 8월 2일 → (60*5 + 80*2)/7
-    expect(out[2026][0]).toBeCloseTo((60 * 5 + 80 * 2) / 7, 6)
-  })
-
-  it('걸친 달의 값이 모두 없으면 null (선 끊김)', () => {
-    const out = monthlyToWeekly({ 2026: Array(12).fill(null) }, weeks, 'sum')
-    expect(out[2026].every((v) => v === null)).toBe(true)
   })
 })
