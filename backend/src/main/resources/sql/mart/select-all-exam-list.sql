@@ -52,16 +52,14 @@ SELECT
         ELSE '일반'
     END                                         AS "introType",
     -- 내원동기(레포트): 내원동기(대) → 레포트 9계열 매핑 (2026-07-30 담당자 엑셀 기준).
-    --   B2B(기업) ← B2B(기업)·B2B(비앤빛)·제휴 / 소개고객 ← VIP고객관리팀·소개고객·소개미확인
-    --   그 외 5종(광고·기타·바이럴·프로모션·홈페이지)·B2B(군인)·소개직원은 그대로.
-    --   매핑에 없는 구식 값은 '기타', 동기 미입력은 공란.
+    --   B2B(기업) ← B2B(기업)·B2B(비앤빛)·B2B(백내장)·제휴 / 소개고객 ← VIP고객관리팀·소개고객·소개미확인
+    --   B2B(군인)·소개직원·광고·바이럴·프로모션·홈페이지는 그대로. 미기재 포함 그 외 전부 '기타'.
+    --   월간 레포트 도표 #7(find-exam-count-by-class-monthly.sql)·find-all-exam-list.sql 과 동일 규칙 — 함께 고칠 것.
     CASE
         WHEN motive_l = 'B2B(군인)'                                THEN 'B2B(군인)'
-        WHEN motive_l IN ('B2B(기업)', 'B2B(비앤빛)', '제휴')       THEN 'B2B(기업)'
+        WHEN motive_l IN ('B2B(기업)', 'B2B(비앤빛)', 'B2B(백내장)', '제휴') THEN 'B2B(기업)'
         WHEN motive_l IN ('VIP고객관리팀', '소개고객', '소개미확인') THEN '소개고객'
-        WHEN motive_l = '소개직원'                                  THEN '소개직원'
-        WHEN motive_l IN ('광고', '기타', '바이럴', '프로모션', '홈페이지') THEN motive_l
-        WHEN COALESCE(motive_l, '') = ''                            THEN ''
+        WHEN motive_l IN ('소개직원', '광고', '바이럴', '프로모션', '홈페이지') THEN motive_l
         ELSE '기타'
     END                                         AS "motiveReport",
     COALESCE(motive_l, '')                      AS "motiveL",

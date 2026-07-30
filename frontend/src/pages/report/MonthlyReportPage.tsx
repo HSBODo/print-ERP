@@ -10,6 +10,7 @@ import { useCataractReservationRateTrend } from '@/hooks/consultation/useCatarac
 import { useStopReasonMonthly } from '@/hooks/consultation/useStopReasonMonthly'
 import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
 import { useConsultationRateTrend } from '@/hooks/consultation/useConsultationRateTrend'
+import { useExamCountByClass } from '@/hooks/exam/useExamCountByClass'
 import { useBatchLastSuccess } from '@/hooks/batch/useBatchLastSuccess'
 import { CURRENT_YEAR } from '@/constants/chart'
 import type { OverallExamMonthlyItem } from '@/api/overall'
@@ -17,6 +18,7 @@ import {
   StopReasonBar,
   ReportSurgeryTable,
   ReportSuccessRateChart,
+  ReportExamByClassChart,
   ReportChartSkeleton,
 } from './MonthlyReportCharts'
 import { YEARS, isIncompleteMonth, MONTHLY_CHART_LABELS } from './monthlyReportUtils'
@@ -55,6 +57,8 @@ export function MonthlyReportPage() {
   const cataractRate = useCataractReservationRateTrend(YEARS, 'cataract')
   const overall = useOverallExamMonthly(YEARS)
   const consult = useConsultationRateTrend(YEARS)
+  // 고객분류별 검사수는 24·25 에 해당 분류가 없어 당해연도만 조회한다.
+  const examByClass = useExamCountByClass(CURRENT_YEAR)
   const lastBatch = useBatchLastSuccess()
 
   // 마트에서 받은 월별 검사자 종합지표를 (year → month → item) 인덱스로 정리
@@ -168,7 +172,7 @@ export function MonthlyReportPage() {
   )
 
   const isLoading =
-    resv.isLoading || outpatient.isLoading || procedure.isLoading || exam.isLoading || surgery.isLoading || stopReason.isLoading || overall.isLoading || consult.isLoading
+    resv.isLoading || outpatient.isLoading || procedure.isLoading || exam.isLoading || surgery.isLoading || stopReason.isLoading || overall.isLoading || consult.isLoading || examByClass.isLoading
 
   // 전체 도표 목차(월간보고 순서). node 있으면 완료(차트 렌더+목차 링크), 없으면 미완성(목차 회색 표시).
   const items: { group: string; id: string; label: string; node?: ReactNode }[] = [
@@ -178,7 +182,7 @@ export function MonthlyReportPage() {
     { group: '검사 유입', id: 'exam-general-customer', label: '일반 고객 검사 (소개 제외)', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-general-customer']} years={YEARS} data={charts.examGeneralCustomer} /> },
     { group: '검사 유입', id: 'exam-referral-customer', label: '고객소개 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-referral-customer']} years={YEARS} data={charts.examReferralCustomer} /> },
     { group: '검사 유입', id: 'exam-referral-staff', label: '직원소개 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-referral-staff']} years={YEARS} data={charts.examReferralStaff} /> },
-    { group: '검사 유입', id: 'exam-by-class', label: '고객분류별 검사수' },
+    { group: '검사 유입', id: 'exam-by-class', label: '고객분류별 검사수', node: <ReportExamByClassChart year={CURRENT_YEAR} rows={examByClass.rows} /> },
     { group: '검사 유입', id: 'exam-worker', label: '직장인 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-worker']} years={YEARS} data={charts.examWorker} /> },
     { group: '검사 유입', id: 'exam-student', label: '학생 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-student']} years={YEARS} data={charts.examStudent} /> },
     { group: '검사 유입', id: 'exam-etc', label: '기타 검사', node: <ReportLineChart {...MONTHLY_CHART_LABELS['exam-etc']} years={YEARS} data={charts.examEtc} /> },
