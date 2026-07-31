@@ -1,3 +1,6 @@
+                -- 일별 재수술 건수.
+                -- 제외 규칙은 find-reoperation-monthly.sql · find-reoperation-candidates.sql 와 동일하게 유지할 것.
+                -- 근거: docs/점검/재수술-분류_2026-01~07.md (2026-07-31 적용)
                 SELECT
                     x.dt,
                     COUNT(*) AS reoperation,
@@ -15,29 +18,8 @@
                     FROM (
                         SELECT
                             r.REOP_DATE AS d,
-                            (CASE WHEN
-                    r.AGAIN_R IS NOT NULL AND RTRIM(r.AGAIN_R) <> ''
-                    AND r.AGAIN_R NOT LIKE 'Irrigation%'
-                    AND r.AGAIN_R NOT LIKE 'repo%'
-                    AND r.AGAIN_R NOT LIKE '%reposition%'
-                    AND r.AGAIN_R NOT LIKE 'Clareon%'
-                    AND r.AGAIN_R NOT LIKE 'T-Clareon%'
-                    AND r.AGAIN_R NOT LIKE 'Tecnis%'
-                    AND r.AGAIN_R NOT LIKE 'LAL%'
-                    AND r.AGAIN_R NOT LIKE 'ELANA%'
-                             THEN ISNULL(r.AGAIN_R, '') ELSE '' END)
-                            + '|' +
-                            (CASE WHEN
-                    r.AGAIN_L IS NOT NULL AND RTRIM(r.AGAIN_L) <> ''
-                    AND r.AGAIN_L NOT LIKE 'Irrigation%'
-                    AND r.AGAIN_L NOT LIKE 'repo%'
-                    AND r.AGAIN_L NOT LIKE '%reposition%'
-                    AND r.AGAIN_L NOT LIKE 'Clareon%'
-                    AND r.AGAIN_L NOT LIKE 'T-Clareon%'
-                    AND r.AGAIN_L NOT LIKE 'Tecnis%'
-                    AND r.AGAIN_L NOT LIKE 'LAL%'
-                    AND r.AGAIN_L NOT LIKE 'ELANA%'
-                             THEN ISNULL(r.AGAIN_L, '') ELSE '' END) AS qt
+                            -- 렌즈/레이저 구분용 시술명(양안). 포함 여부는 아래 WHERE 의 사유코드가 판단한다.
+                            ISNULL(r.AGAIN_R, '') + '|' + ISNULL(r.AGAIN_L, '') AS qt
                         FROM RE_OPERATION r WITH(NOLOCK)
                         LEFT JOIN CUSTOM cu WITH(NOLOCK) ON cu.CUST_NUM = r.CUST_NUM
                         WHERE r.REOP_DATE >= :from AND r.REOP_DATE <= :to
@@ -45,8 +27,14 @@
                               ISNULL(cu.CUST_NAME, '') LIKE N'%테스트%'
                               OR LOWER(ISNULL(cu.CUST_NAME, '')) LIKE '%test%'
                           )
+                          -- 재수술 아님: 01 Irrigation(세척) · 07 Lens Reposition(재위치) · 10 CATARACT(백내장)
+                          AND RTRIM(ISNULL(r.REASON_CD, '')) NOT IN ('01', '07', '10')
+                          -- 시술명이 Irrigation 이면 사유코드(02 ENHANCE)가 오입력된 세척 건이라 함께 제외
+                          AND ISNULL(r.AGAIN_R, '') NOT LIKE 'Irrigation%'
+                          AND ISNULL(r.AGAIN_L, '') NOT LIKE 'Irrigation%'
+                          -- 양안 모두 시술명이 비면 집계 대상 아님
+                          AND (RTRIM(ISNULL(r.AGAIN_R, '')) <> '' OR RTRIM(ISNULL(r.AGAIN_L, '')) <> '')
                     ) y
-                    WHERE REPLACE(y.qt, '|', '') <> ''
                 ) x
                 GROUP BY x.dt
                 ORDER BY x.dt
