@@ -181,15 +181,15 @@ export function SurgeryCompositionPage() {
           </span>
         ) : null}
 
-        {meta?.source === 'SNAPSHOT' ? (
+        {meta?.source === 'MART' ? (
           <span
             className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"
-            title="적재된 스냅샷 — 적재된 일자는 동결되어 흔들리지 않습니다(당월은 조회 시 전일까지 자동 적재)."
+            title="mart_surgery_daily 조회 — 매일 03:00 배치가 D-1 까지 적재합니다."
           >
-            적재됨{latestDate ? ` · 최종 ${latestDate}` : ''}
+            마트{latestDate ? ` · 최종 ${latestDate}` : ''}
           </span>
         ) : meta?.source === 'LIVE' ? (
-          <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700" title="실시간 조회(미적재 월)">
+          <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700" title="소스 라이브 조회(mssql 단독 프로파일)">
             라이브
           </span>
         ) : null}
