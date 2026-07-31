@@ -66,12 +66,11 @@ project-root/
 │   │   │   ├── overall/                # useOverallExamWeekly
 │   │   │   ├── report/                 # useWeeklyReport
 │   │   │   ├── outpatient/             # useOutpatientCountTrend
-│   │   │   ├── useIsMobile.ts          # (공용) 반응형 분기
-│   │   │   └── useWeeklyApproval.ts    # (공용) 리스트 주별 승인 워크플로우
+│   │   │   └── useIsMobile.ts          # (공용) 반응형 분기
 │   │   ├── components/
 │   │   │   ├── layout/                  # AppLayout·Sidebar·Topbar + desktop/·mobile/
 │   │   │   ├── filters/                 # FilterBar·PeriodChip·Select
-│   │   │   ├── stats/                   # KpiCard·StatsPrimitives·WeeklyApprovalPanel (공용)
+│   │   │   ├── stats/                   # KpiCard·StatsPrimitives (공용)
 │   │   │   ├── report/                  # ReportLineChart·ReportWeekLineChart·reportWeeks(ISO 주차)
 │   │   │   └── ui/                      # shadcn 컴포넌트 (button, card, chart)
 │   │   ├── config/
@@ -106,7 +105,7 @@ project-root/
 도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation`(예약) / `exam`(검사) / `surgery`(수술) / `consultation`(전환&성공률) / `report` / `overall`(전체지표) / `outpatient`(외래) / `marketing` / `cancel-noshow` / `unit-price` / `etc`.
 
 - **백엔드(도메인 중심)**: `<domain>/{controller,service,repository,dto}` (예: `reservation/controller`, `reservation/service`). 인증은 `auth/`, 공통 응답·예외·유틸·통계 helper(`StatsPanelSupport`·`StatsRequestValidator`·`StatsResponseMeta`)는 `common/`(특히 `common/stats/`)에 둔다. `Mock*Repository`는 해당 도메인 `repository/`에 둔다.
-- **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `hooks/useWeeklyApproval.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
+- **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
 - **신규 추가**: 새 통계 기능은 해당 도메인 폴더/패키지에 파일을 추가한다(새 레이어 루트에 흩뿌리지 말 것). 도메인이 없으면 메뉴 그룹 기준으로 새 폴더를 만든다.
 
 > ✅ **이관 완료**: 백엔드는 **도메인 중심 패키지**(`<domain>/{controller,service,repository,dto}` + `auth`·`common`)로, 프론트(api·hooks·pages·pageRegistry)는 레이어 우선 + 도메인 하위 분할로 정리 완료. 공용 통계 유틸은 `common/stats/`. 검증 기준: frontend lint/build/test green, backend test green.
@@ -203,7 +202,7 @@ GET    /api/report/weekly?years=2024,2025,2026       # 주차 레포트 (ISO 860
 
 > 📅 **주차 개념 3종 주의** — 이름이 비슷하지만 버킷 규칙이 다르다.
 > - **ISO 연간 주차**(`utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.
-> - **그 달의 주차**(`utils/weekBucket.ts` · `OverallExamWeeklyService`): 월 경계에서 잘라 각 달에 귀속 → 월 합계 = 그 달 주 합계. 리스트 '주별 승인'·주간 검사자 종합지표가 쓴다.
+> - **그 달의 주차**(`utils/weekBucket.ts` · `OverallExamWeeklyService`): 월 경계에서 잘라 각 달에 귀속 → 월 합계 = 그 달 주 합계. 주간 검사자 종합지표가 쓴다.
 > - **월별**: 마트 확정값(2024·2025 레거시 시드 포함).
 
 ### 응답 포맷

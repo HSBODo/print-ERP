@@ -5,14 +5,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useSurgeryList } from '@/hooks/surgery/useSurgeryList'
 import { useReoperationCandidates } from '@/hooks/surgery/useReoperationCandidates'
-import { useWeeklyApproval } from '@/hooks/useWeeklyApproval'
-import { WeeklyApprovalPanel } from '@/components/stats/WeeklyApprovalPanel'
 import { ReoperationCandidatesModal } from './ReoperationCandidatesModal'
 import type { SurgeryListItem } from '@/api/surgery/surgeryList'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './surgeryListColumns'
 import {
   dash,
-  surgeryDateOf,
   formatCount,
   CATEGORY_OPTIONS,
   defaultFrom,
@@ -87,12 +84,7 @@ export function SurgeryListPage() {
     return base.filter((r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q))
   }, [rows, reopRows, isReopTab, isAllTab, queryCategory, queryKeyword])
 
-  // 주별 승인(주차 버킷 + 승인/선택) — 수술일 기준. 같은 달 조회일 때만 패널 노출(weeksInRange 제약).
-  const approval = useWeeklyApproval(filtered, surgeryDateOf, queryFrom, queryTo)
-  const sameMonth = queryFrom.slice(0, 7) === queryTo.slice(0, 7)
-  const showApproval = hasSearched && !activeError && !showSkeleton && sameMonth
-  // 선택 주차로 거른 행이 표/페이지네이션 소스(미선택 시 filtered 그대로)
-  const tableRows = approval.selectedRows
+  const tableRows = filtered
 
   // 백내장 안(眼) 수 — 리스트는 사람·수술일(행) 단위(62), 레포트는 눈 단위(65: 같은날 양안=2안).
   // 행의 우/좌 수술값이 채워진 개수를 세면 레포트 기준 안 수와 일치. (백엔드 호출 불필요)
@@ -130,7 +122,6 @@ export function SurgeryListPage() {
   const handleSearch = () => {
     setHasSearched(true)
     setCurrentPage(1)
-    approval.clearSelection()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryCategory(draftCategory)
@@ -150,7 +141,6 @@ export function SurgeryListPage() {
     setQueryKeyword('')
     setPageSize(50)
     setCurrentPage(1)
-    approval.reset()
     setHasSearched(false)
   }
 
@@ -289,7 +279,14 @@ export function SurgeryListPage() {
               className={`min-w-[4.25rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 ${
                 draftCategory === category ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
               }`}
-              onClick={() => setDraftCategory(category)}
+              onClick={() => {
+                setDraftCategory(category)
+                // 카테고리는 클라이언트 필터(이미 조회된 rows 를 걸러냄)라 조회 버튼 없이 즉시 반영.
+                if (hasSearched) {
+                  setQueryCategory(category)
+                  setCurrentPage(1)
+                }
+              }}
             >
               {category}
             </button>
@@ -362,18 +359,6 @@ export function SurgeryListPage() {
           </Button>
         </div>
       </div>
-
-      {showApproval && (
-        <WeeklyApprovalPanel
-          weeks={approval.weeks}
-          approved={approval.approved}
-          selectedWeek={approval.selectedWeek}
-          onToggleApprove={approval.toggleApprove}
-          onSelectWeek={approval.selectWeek}
-          subtitle={`수술자 · ${queryCategory} (수술일 기준)`}
-          totalLabel="월 합계"
-        />
-      )}
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
