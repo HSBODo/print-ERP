@@ -8,7 +8,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { formatAxisNumber } from '@/utils/stats'
-import { niceAxis, niceAxisFor } from './niceAxis'
+import { niceAxisFor, tightAxis } from './niceAxis'
 import { colorOf } from './reportYearColors'
 import type { ReportWeek } from './reportWeeks'
 
@@ -95,13 +95,15 @@ export function ReportWeekLineChart({
     return out
   }, [weeks])
 
+  // 주차는 값의 오르내림을 읽는 게 목적이라 tightAxis(여백 8%·8등분·0 스냅 최소화)를 쓴다.
+  // niceAxis 는 여백 15% + 하한 0 스냅이라 주 단위 값에서는 데이터가 축 절반에만 몰린다.
   const { domain: axisDomain, ticks: yTicks } = useMemo(() => {
     if (yDomain) return niceAxisFor(yDomain[0], yDomain[1])
     const values: number[] = []
     sorted.forEach((y) => (data[y] ?? []).forEach((v) => {
       if (typeof v === 'number') values.push(v)
     }))
-    return niceAxis(values)
+    return tightAxis(values)
   }, [sorted, data, yDomain])
 
   // X축 눈금: 압축=주차 숫자만 / 상세=주차 + 날짜범위 2줄. 월 경계 주차는 주황으로 구분.
