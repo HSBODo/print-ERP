@@ -17,6 +17,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -164,6 +166,29 @@ class WeeklyReportServiceTest {
         assertThat(item.getOnline()).isEqualTo(19);
         assertThat(item.getCall()).isEqualTo(28);
         assertThat(item.getReservations()).isEqualTo(47);
+    }
+
+    @Test
+    @DisplayName("컷오버 이전 구간만 조회하면 홈페이지 원격 소스를 부르지 않는다")
+    void 컷오버_이전만_조회하면_홈페이지_미조회() {
+        when(repository.findReservationOverallDaily(anyString(), anyString())).thenReturn(List.of(
+                Map.of("d", "2025-03-03", "cnt", 10, "online_cnt", 4, "call_cnt", 6)
+        ));
+
+        WeeklyReportItem item = service().getWeeklyStats(List.of(2025)).get(0);
+
+        assertThat(item.getOnline()).isEqualTo(4);
+        assertThat(item.getReservations()).isEqualTo(10);
+        verify(homepageRepository, never()).findDailyListRawCounts(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("홈페이지 조회 범위는 컷오버 이후로 좁힌다 — 원격 소스를 전 구간 긁지 않는다")
+    void 홈페이지_조회범위는_컷오버부터() {
+        service().getWeeklyStats(List.of(2025, 2026));
+
+        // 전체 범위는 2024-12-30 ~ 2027-01-03 이지만 홈페이지는 컷오버(2026-06) 부터만 필요하다
+        verify(homepageRepository).findDailyListRawCounts("2026-06-01", "2027-01-03");
     }
 
     @Test

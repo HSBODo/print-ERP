@@ -53,16 +53,29 @@ export function WeeklyReportPage() {
   const activeStopReasonMonth =
     stopReasonMonth ?? (weekScope === ALL_SCOPE ? monthly.latestMonthIdx + 1 : weekScope)
 
-  const items = buildReportItems(monthly, {
-    stopReasonMonth: activeStopReasonMonth,
-    onStopReasonMonthChange: setStopReasonMonth,
-  })
+  // 중단율 도표의 비교 연도는 **주차 집계** 기준으로 고른다.
+  // buildReportItems 기본값(monthly.stopRateYears)은 월간 마트에 중단수가 있는 연도라,
+  // 마트에 없고 주차 라이브에만 있는 연도(24·25)의 비교선이 통째로 빠진다.
+  const weeklyStopRateYears = useMemo(
+    () => YEARS.filter((year) => weekCharts.stopRate?.[year]?.some((v) => typeof v === 'number')),
+    [weekCharts],
+  )
+
+  const items = buildReportItems(
+    { ...monthly, stopRateYears: weeklyStopRateYears.length ? weeklyStopRateYears : monthly.stopRateYears },
+    {
+      stopReasonMonth: activeStopReasonMonth,
+      onStopReasonMonthChange: setStopReasonMonth,
+    },
+  )
 
   const monthOnlyBadge = (
     <span className="ml-auto shrink-0 rounded bg-amber-100 px-1 text-[10px] font-semibold text-amber-700">월</span>
   )
+  // 인쇄에도 남긴다 — 목차 '월' 뱃지는 인쇄 영역 밖이라, 이 문구가 없으면 PDF 에서
+  // 월 기준 도표 4종이 주차 도표와 구분되지 않는다.
   const monthOnlyNote = (
-    <p className="report-no-print mb-1 text-[11px] font-semibold text-amber-700">
+    <p className="mb-1 text-[11px] font-semibold text-amber-700">
       ※ 이 도표는 주차로 분해되지 않아 월 기준으로 표시합니다.
     </p>
   )

@@ -15,8 +15,12 @@ import type { OverallExamMonthlyItem } from '@/api/overall'
 import { YEARS, isIncompleteMonth } from './monthlyReportUtils'
 
 /**
- * 레포트 공통 데이터 소스 — 월간 레포트·주차 레포트가 같은 월별 시리즈를 공유한다.
- * (주차 레포트는 이 월별 시리즈를 주차로 분배해 그린다. `reportWeeks.monthlyToWeekly` 참고)
+ * 레포트 공통 월별 시리즈 — 마트 + 레거시 확정값.
+ *
+ * 월간 레포트는 전 도표에 이걸 쓴다. 주차 레포트는 **주차로 분해되지 않는 4개 도표**
+ * (고객분류별 검사수·상담성공률·중단 사유·수술 상세표)에만 쓰고, 나머지 주차 값은
+ * `/api/report/weekly` 원시 집계를 `weeklyReportSeries.buildWeeklySeries` 가 계산한다.
+ * (월값을 주차로 임시 분배하던 방식은 2026-07-30 실집계로 대체하며 제거)
  */
 
 /**

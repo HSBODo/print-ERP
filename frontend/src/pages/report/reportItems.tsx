@@ -53,7 +53,8 @@ export function buildReportItems(
     { group: '검사 유입', id: 'exam-general-customer', label: '일반 고객 검사 (소개 제외)', chart: { ...MONTHLY_CHART_LABELS['exam-general-customer'], series: 'examGeneralCustomer' } },
     { group: '검사 유입', id: 'exam-referral-customer', label: '고객소개 검사', chart: { ...MONTHLY_CHART_LABELS['exam-referral-customer'], series: 'examReferralCustomer' } },
     { group: '검사 유입', id: 'exam-referral-staff', label: '직원소개 검사', chart: { ...MONTHLY_CHART_LABELS['exam-referral-staff'], series: 'examReferralStaff' } },
-    { group: '검사 유입', id: 'exam-by-class', label: '고객분류별 검사수', node: <ReportExamByClassChart year={CURRENT_YEAR} rows={s.examByClassRows} /> },
+    // 라이브 전용 도표라 API 미연결(503)·무데이터면 도표 자체가 없다 — 목차에도 '미완성'으로 둔다.
+    { group: '검사 유입', id: 'exam-by-class', label: '고객분류별 검사수', node: s.examByClassRows.length ? <ReportExamByClassChart year={CURRENT_YEAR} rows={s.examByClassRows} /> : undefined },
     { group: '검사 유입', id: 'exam-worker', label: '직장인 검사', chart: { ...MONTHLY_CHART_LABELS['exam-worker'], series: 'examWorker' } },
     { group: '검사 유입', id: 'exam-student', label: '학생 검사', chart: { ...MONTHLY_CHART_LABELS['exam-student'], series: 'examStudent' } },
     { group: '검사 유입', id: 'exam-etc', label: '기타 검사', chart: { ...MONTHLY_CHART_LABELS['exam-etc'], series: 'examEtc' } },

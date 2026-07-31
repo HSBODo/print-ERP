@@ -176,15 +176,24 @@ public class WeeklyReportService implements WeeklyReportReader {
         Map<String, Integer> naverByDay = countsByDay(repository.findReservationNaverDaily(fromDate, toDateTime), "naver_cnt");
         Map<String, Integer> kakaoByDay = countsByDay(repository.findReservationKakaoDaily(fromDate, toDateTime), "kakao_cnt");
 
+        // 홈페이지 몫은 컷오버 이후 구간에서만 쓴다 — 원격 조회 범위도 거기까지만 좁힌다
+        // (조회 범위가 전부 컷오버 이전이면 아예 부르지 않는다).
+        LocalDate end = LocalDate.parse(toDate);
+        LocalDate cutoverStart = CUTOVER.atDay(1);
+        boolean needsHomepage = !cutoverStart.isAfter(end);
+        String homepageFrom = cutoverStart.isAfter(LocalDate.parse(fromDate)) ? cutoverStart.toString() : fromDate;
+
         // 홈페이지는 원격(레거시 DB/터널) 소스라 끊길 수 있다. 여기서 죽으면 레포트 전체가 비므로
         // 실패는 '온라인 예약만 미상'으로 격리한다 — 나머지 도표는 그대로 나온다.
         Map<String, Integer> homepageByDay = Map.of();
         LocalDate homepageCeiling = null;
         boolean homepageAvailable = false;
-        if (homepageRepository.isPresent()) {
+        if (!needsHomepage) {
+            homepageAvailable = true; // 쓰이지 않는 구간 — 미상 표시가 붙지 않도록 둔다
+        } else if (homepageRepository.isPresent()) {
             HomepageOverallSource source = homepageRepository.get();
             try {
-                homepageByDay = countsByDay(source.findDailyListRawCounts(fromDate, toDate), "cnt");
+                homepageByDay = countsByDay(source.findDailyListRawCounts(homepageFrom, toDate), "cnt");
                 homepageCeiling = parseDate(source.findLastRegDate());
                 homepageAvailable = true;
             } catch (RuntimeException e) {
@@ -208,7 +217,6 @@ public class WeeklyReportService implements WeeklyReportReader {
         // ⚠️ 데이터가 없는 날에 버킷을 만들면 안 된다 — 빈 주가 통째로 생겨 미래 주까지 행이 나온다.
         //    값이 있는 날만 버킷을 만들고(bucketOf), 그 외에는 이미 있는 주에만 손댄다(existingBucket).
         LocalDate ceiling = homepageCeiling;
-        LocalDate end = LocalDate.parse(toDate);
         for (LocalDate day = LocalDate.parse(fromDate); !day.isAfter(end); day = day.plusDays(1)) {
             String key = day.toString();
 
