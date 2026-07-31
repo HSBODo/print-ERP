@@ -31,7 +31,7 @@ project-root/
 │   │   ├── consultation/                # 전환율·예약률·중단사유
 │   │   ├── outpatient/                  # 외래수
 │   │   ├── overall/                     # 주간 종합지표
-│   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API)
+│   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
 │   │   └── etc/                         # B2B 매출 등 기타
 │   ├── src/main/resources/
 │   │   ├── application.yml                     # H2 인메모리 (개발 기본)
@@ -195,6 +195,11 @@ GET    /api/stats/{pageId}/composition?years=2024,2025&mock=false
 GET    /api/{listPageId}?from=2026-01-01&to=2026-01-31  # 리스트 계열
 GET    /api/report/weekly?years=2024,2025,2026       # 주차 레포트 (ISO 8601 연간 주차 원시 집계)
 ```
+
+> 🔌 **화면은 마트를 읽는다.** 통계 API 는 배치가 적재한 Postgres 마트를 조회하고, MSSQL 직결은
+> 배치(적재) 시간대에만 쓴다. 그래서 SSH 터널·VPN 이 끊겨도 화면은 마지막 적재분으로 동작한다.
+> 신규 통계 API 를 만들 때 `statsJdbcTemplate`(MSSQL) 로 화면을 직접 붙이지 말 것 —
+> 마트 테이블 + `@Primary` 마트 QueryService + 배치 Job 을 함께 만든다(예: `report` 도메인).
 
 > 📅 **주차 개념 3종 주의** — 이름이 비슷하지만 버킷 규칙이 다르다.
 > - **ISO 연간 주차**(`utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.

@@ -7,6 +7,7 @@ import com.bviit.analytics.batch.job.ExamMartJob;
 import com.bviit.analytics.batch.job.OutpatientMartJob;
 import com.bviit.analytics.batch.job.OverallMartJob;
 import com.bviit.analytics.batch.job.ReservationListHomepageMartJob;
+import com.bviit.analytics.batch.job.ReportMartJob;
 import com.bviit.analytics.batch.job.ReservationMartJob;
 import com.bviit.analytics.batch.job.ReservationStatsDailyMartJob;
 import com.bviit.analytics.batch.job.SurgeryMartJob;
@@ -43,7 +44,7 @@ public class BatchOrchestrator {
     private static final Set<Domain> ALL_DOMAINS = EnumSet.allOf(Domain.class);
 
     /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
-    public enum Domain { SURGERY, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, ETC }
+    public enum Domain { SURGERY, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC }
 
     private final BatchRunLogRepository runLogRepository;
     private final BatchSlackNotifier slackNotifier;
@@ -55,6 +56,7 @@ public class BatchOrchestrator {
     private final ConsultationMartJob consultationMartJob;
     private final OutpatientMartJob outpatientMartJob;
     private final OverallMartJob overallMartJob;
+    private final ReportMartJob reportMartJob;
     private final EtcMartJob etcMartJob;
 
     @Value("${batch.mart.enabled:true}")
@@ -178,6 +180,9 @@ public class BatchOrchestrator {
         if (targets.contains(Domain.CONSULTATION))  stats.putAll(consultationMartJob.run(from, to));
         if (targets.contains(Domain.OUTPATIENT))    stats.putAll(outpatientMartJob.run(from, to));
         if (targets.contains(Domain.OVERALL))       stats.putAll(overallMartJob.run(from, to));
+        // REPORT 는 EXAM·RESERVATION 등과 소스가 겹치지만 자체적으로 MSSQL 일별 집계를 다시 읽으므로
+        // 다른 도메인 마트에 의존하지 않는다. 순서 제약 없음.
+        if (targets.contains(Domain.REPORT))        stats.putAll(reportMartJob.run(from, to));
         if (targets.contains(Domain.ETC))           stats.putAll(etcMartJob.run(from, to));
         // 모든 도메인 마트 완료. 후속은 스냅샷 파일→마트 이관(strategy.md §7).
         return stats;
