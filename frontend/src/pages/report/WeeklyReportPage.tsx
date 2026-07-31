@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Printer } from 'lucide-react'
+import { Download, Printer } from 'lucide-react'
 import { ReportWeekLineChart } from '@/components/report/ReportWeekLineChart'
 import { weeksOfYear, weeksOfMonth } from '@/components/report/reportWeeks'
 import { Select } from '@/components/filters/Select'
+import { downloadCsv } from '@/utils/csv'
 import { useWeeklyReport } from '@/hooks/report/useWeeklyReport'
 import { CURRENT_YEAR, MONTHS } from '@/constants/chart'
 import { YEARS } from './monthlyReportUtils'
 import { useReportSeries } from './useReportSeries'
 import { buildReportItems } from './reportItems'
 import { buildWeeklySeries } from './weeklyReportSeries'
+import { buildWeeklyReportCsv, type WeeklyCsvRowSpec } from './weeklyReportCsv'
 import { ReportShell, type ShellReportItem } from './ReportShell'
 
 /**
@@ -100,6 +102,25 @@ export function WeeklyReportPage() {
       : it.node,
   }))
 
+  // CSV — 화면 목차 순서 그대로, 주차로 분해되는 도표(chart 있는 항목)만 담는다.
+  // 월 기준 도표 4종은 주차 열에 채울 값이 없어 제외(월간 레포트 CSV 를 쓸 것).
+  const handleDownloadCsv = () => {
+    const rows: WeeklyCsvRowSpec[] = items
+      .filter((it) => it.chart)
+      .map((it) => ({
+        group: it.group,
+        label: it.label,
+        series: it.chart!.series,
+        format: it.chart!.format,
+        fractionDigits: it.chart!.percentFractionDigits,
+      }))
+    const csv = buildWeeklyReportCsv({ years: YEARS, weeks, charts: weekCharts, rows })
+    const scope = weekScope === ALL_SCOPE
+      ? `전체_${String(weeks[0]?.week ?? 1).padStart(2, '0')}-${weeks[weeks.length - 1]?.week ?? ''}주차`
+      : `${weekScope}월`
+    downloadCsv(`주차레포트_${CURRENT_YEAR}_${scope}.csv`, csv)
+  }
+
   const first = weeks[0]
   const last = weeks[weeks.length - 1]
   const rangeLabel = !first
@@ -119,6 +140,16 @@ export function WeeklyReportPage() {
       actions={
         <>
           <Select value={weekScope} onChange={setWeekScope} options={scopeOptions} title="주차 범위" />
+          <button
+            type="button"
+            onClick={handleDownloadCsv}
+            disabled={weekly.isLoading || !weeks.length}
+            title="화면에 보이는 주차 범위를 CSV로 내려받기"
+            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            CSV
+          </button>
           <button
             type="button"
             onClick={() => window.print()}
