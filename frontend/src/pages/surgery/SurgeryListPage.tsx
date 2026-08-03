@@ -60,16 +60,23 @@ export function SurgeryListPage() {
   const { candidates: reopCandidates, isLoading: reopLoading, isFetching: reopFetching, isError: reopError } =
     useReoperationCandidates(queryFrom, queryTo, reopEnabled)
   // 저장된 재수술 판정 — 자동판정보다 우선. 저장 없음 = 자동판정 그대로.
+  // 키는 (차트번호, 수술일, 우안, 좌안) — 같은 사람·같은 날 시술명이 다른 재수술을 별건으로 구분.
   const { decisions: reopDecisions } = useReoperationDecisions(queryFrom, queryTo, reopEnabled)
+  const reopDecisionKey = (chartNo: string, opDate: string, againR: string, againL: string) =>
+    `${chartNo}|${opDate}|${againR}|${againL}`
   const reopDecisionMap = useMemo(() => {
     const map = new Map<string, boolean>()
-    for (const d of reopDecisions) map.set(`${d.chartNo}-${d.opDate}`, d.isReoperation)
+    for (const d of reopDecisions) map.set(reopDecisionKey(d.chartNo, d.opDate, d.againR, d.againL), d.isReoperation)
     return map
   }, [reopDecisions])
   const reopRows = useMemo(
     () =>
       reopCandidates
-        .filter((c) => reopDecisionMap.get(`${c.chartNo}-${c.reopDate}`) ?? c.autoIncluded === 1)
+        .filter(
+          (c) =>
+            reopDecisionMap.get(reopDecisionKey(c.chartNo, c.reopDate, c.againR, c.againL)) ??
+            c.autoIncluded === 1,
+        )
         .map(reopCandidateToRow),
     [reopCandidates, reopDecisionMap],
   )

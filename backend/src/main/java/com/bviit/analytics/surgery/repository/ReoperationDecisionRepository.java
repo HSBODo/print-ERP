@@ -11,5 +11,6 @@ public interface ReoperationDecisionRepository extends JpaRepository<Reoperation
 
     List<ReoperationDecision> findByOpDateBetween(LocalDate from, LocalDate to);
 
-    Optional<ReoperationDecision> findByChartNoAndOpDate(String chartNo, LocalDate opDate);
+    Optional<ReoperationDecision> findByChartNoAndOpDateAndAgainRAndAgainL(
+            String chartNo, LocalDate opDate, String againR, String againL);
 }

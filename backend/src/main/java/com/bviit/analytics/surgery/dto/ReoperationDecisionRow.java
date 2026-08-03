@@ -27,6 +27,8 @@ public class ReoperationDecisionRow {
     private final Long id;
     private final String chartNo;
     private final LocalDate opDate;
+    private final String againR;
+    private final String againL;
     private final boolean isReoperation;
     private final String memo;
     private final LocalDateTime updatedAt;
@@ -37,6 +39,8 @@ public class ReoperationDecisionRow {
                 .id(e.getId())
                 .chartNo(e.getChartNo())
                 .opDate(e.getOpDate())
+                .againR(e.getAgainR())
+                .againL(e.getAgainL())
                 .isReoperation(e.isReoperation())
                 .memo(e.getMemo())
                 .updatedAt(e.getUpdatedAt())

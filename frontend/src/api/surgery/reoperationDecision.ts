@@ -10,6 +10,8 @@ const reoperationDecisionRowSchema = z.object({
   id: z.number(),
   chartNo: z.string(),
   opDate: z.string(),
+  againR: z.string(),
+  againL: z.string(),
   isReoperation: z.boolean(),
   memo: z.string().nullish(),
   updatedAt: z.string().nullish(),
@@ -33,6 +35,8 @@ const saveResponseSchema = z.object({
 export interface ReoperationDecisionSaveItem {
   chartNo: string
   opDate: string
+  againR: string
+  againL: string
   isReoperation: boolean
   memo?: string
 }

@@ -37,6 +37,16 @@ public class ReoperationDecisionSaveRequest {
         @NotNull(message = "수술일은 필수입니다.")
         private LocalDate opDate;
 
+        /** 우안 시술명 — 같은 사람·같은 날 서로 다른 시술을 별건으로 구분하기 위한 식별자. */
+        @NotNull(message = "우안 시술명은 필수입니다(빈 문자열 허용).")
+        @Size(max = 200, message = "우안 시술명은 200자를 넘을 수 없습니다.")
+        private String againR;
+
+        /** 좌안 시술명 — 함께 유니크 키로 사용. */
+        @NotNull(message = "좌안 시술명은 필수입니다(빈 문자열 허용).")
+        @Size(max = 200, message = "좌안 시술명은 200자를 넘을 수 없습니다.")
+        private String againL;
+
         @NotNull(message = "재수술 여부는 필수입니다.")
         private Boolean isReoperation;
 

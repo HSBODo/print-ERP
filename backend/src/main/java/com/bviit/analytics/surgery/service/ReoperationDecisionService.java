@@ -50,7 +50,10 @@ public class ReoperationDecisionService {
             LocalDateTime now,
             String updatedBy
     ) {
-        return repository.findByChartNoAndOpDate(item.getChartNo(), item.getOpDate())
+        String againR = item.getAgainR();
+        String againL = item.getAgainL();
+        return repository.findByChartNoAndOpDateAndAgainRAndAgainL(
+                        item.getChartNo(), item.getOpDate(), againR, againL)
                 .map(existing -> {
                     existing.applyDecision(item.getIsReoperation(), item.getMemo(), now, updatedBy);
                     return existing;
@@ -59,6 +62,8 @@ public class ReoperationDecisionService {
                     ReoperationDecision entry = ReoperationDecision.builder()
                             .chartNo(item.getChartNo())
                             .opDate(item.getOpDate())
+                            .againR(againR)
+                            .againL(againL)
                             .isReoperation(item.getIsReoperation())
                             .memo(item.getMemo())
                             .build();

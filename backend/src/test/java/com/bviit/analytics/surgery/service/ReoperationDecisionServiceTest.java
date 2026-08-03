@@ -17,7 +17,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * 재수술 판정 저장·조회 계약.
- *   - (chartNo, opDate) 유니크로 upsert 된다
+ *   - (chartNo, opDate, againR, againL) 유니크로 upsert 된다
+ *   - 같은 사람·같은 날 시술명만 다른 재수술은 별건으로 저장된다
  *   - 기간 조회는 opDate 기준
  *   - updatedBy 는 saveBatch 호출 시 인자로 들어온 값이 저장된다
  */
@@ -45,9 +46,17 @@ class ReoperationDecisionServiceTest {
     }
 
     private ReoperationDecisionSaveRequest.Item item(String chartNo, String date, boolean isReop) {
+        return item(chartNo, date, "", "", isReop);
+    }
+
+    private ReoperationDecisionSaveRequest.Item item(
+            String chartNo, String date, String againR, String againL, boolean isReop
+    ) {
         ReoperationDecisionSaveRequest.Item item = new ReoperationDecisionSaveRequest.Item();
         item.setChartNo(chartNo);
         item.setOpDate(LocalDate.parse(date));
+        item.setAgainR(againR);
+        item.setAgainL(againL);
         item.setIsReoperation(isReop);
         return item;
     }
@@ -64,14 +73,27 @@ class ReoperationDecisionServiceTest {
     }
 
     @Test
-    void 같은_chartNo_opDate_는_upsert_로_갱신된다() {
-        service.saveBatch(batch(item("12345", "2026-07-15", true)), "first");
-        service.saveBatch(batch(item("12345", "2026-07-15", false)), "second");
+    void 같은_chartNo_opDate_시술명은_upsert_로_갱신된다() {
+        service.saveBatch(batch(item("12345", "2026-07-15", "remo", "", true)), "first");
+        service.saveBatch(batch(item("12345", "2026-07-15", "remo", "", false)), "second");
 
         List<ReoperationDecisionRow> rows = service.findRows(LocalDate.parse("2026-07-01"), LocalDate.parse("2026-07-31"));
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0).isReoperation()).isFalse();
         assertThat(rows.get(0).getUpdatedBy()).isEqualTo("second");
+    }
+
+    @Test
+    void 같은_사람_같은_날_다른_시술명은_별건으로_저장된다() {
+        service.saveBatch(batch(
+                item("327701", "2026-08-03", "remo+T-ARF", "", true),
+                item("327701", "2026-08-03", "K-flex", "", false)
+        ), "tester");
+
+        List<ReoperationDecisionRow> rows = service.findRows(LocalDate.parse("2026-08-01"), LocalDate.parse("2026-08-31"));
+        assertThat(rows).hasSize(2);
+        assertThat(rows).extracting(ReoperationDecisionRow::getAgainR)
+                .containsExactlyInAnyOrder("remo+T-ARF", "K-flex");
     }
 
     @Test

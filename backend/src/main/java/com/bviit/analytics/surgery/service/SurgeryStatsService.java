@@ -204,7 +204,9 @@ public class SurgeryStatsService implements SurgeryStatsReader {
         for (Map<String, Object> row : candidates) {
             String chartNo = String.valueOf(row.get("chartNo"));
             String opDate = String.valueOf(row.get("reopDate"));
-            if (ReoperationOverlay.isReoperation(decisionMap, chartNo, opDate, row)) {
+            String againR = String.valueOf(row.get("againR"));
+            String againL = String.valueOf(row.get("againL"));
+            if (ReoperationOverlay.isReoperation(decisionMap, chartNo, opDate, againR, againL, row)) {
                 result.add(row);
             }
         }

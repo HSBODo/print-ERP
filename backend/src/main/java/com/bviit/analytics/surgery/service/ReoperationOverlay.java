@@ -29,17 +29,29 @@ public final class ReoperationOverlay {
             "precizon", "lisa", "gemetric", "encla"
     };
 
-    /** (chartNo, opDate) → 저장된 판정 여부. */
+    /** (chartNo, opDate, againR, againL) → 저장된 판정 여부. */
     public static Map<String, Boolean> decisionMap(List<ReoperationDecision> decisions) {
         Map<String, Boolean> map = new HashMap<>(decisions.size() * 2);
         for (ReoperationDecision d : decisions) {
-            map.put(key(d.getChartNo(), d.getOpDate().toString()), d.isReoperation());
+            map.put(
+                    key(d.getChartNo(), d.getOpDate().toString(), d.getAgainR(), d.getAgainL()),
+                    d.isReoperation()
+            );
         }
         return map;
     }
 
-    public static String key(String chartNo, String opDate) {
-        return chartNo + "|" + opDate;
+    /**
+     * 같은 사람·같은 날 여러 재수술이 존재하는 케이스가 있어 시술명(양안) 도 키에 포함한다.
+     * candidates SQL 은 AGAIN_R/AGAIN_L 을 ISNULL(...) 로 감싸 항상 문자열을 돌려주므로
+     * null 방어는 하되 정규화(양쪽 모두 빈 문자열) 만 한다.
+     */
+    public static String key(String chartNo, String opDate, String againR, String againL) {
+        return chartNo + "|" + opDate + "|" + safe(againR) + "|" + safe(againL);
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s;
     }
 
     /** 시술명(양안) 중 하나라도 렌즈 패턴에 매칭되면 렌즈. 대소문자 무시. */
@@ -54,15 +66,17 @@ public final class ReoperationOverlay {
 
     /**
      * 최종 재수술 여부 — 저장 판정이 있으면 그 값, 없으면 자동판정.
-     * (chartNo, opDate) 는 candidates 결과의 컬럼 그대로.
+     * (chartNo, opDate, againR, againL) 는 candidates 결과의 컬럼 그대로.
      */
     public static boolean isReoperation(
             Map<String, Boolean> decisionMap,
             String chartNo,
             String opDate,
+            String againR,
+            String againL,
             Map<String, Object> candidateRow
     ) {
-        Boolean saved = decisionMap.get(key(chartNo, opDate));
+        Boolean saved = decisionMap.get(key(chartNo, opDate, againR, againL));
         if (saved != null) return saved;
         return toInt(candidateRow.get("autoIncluded")) == 1;
     }

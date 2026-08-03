@@ -21,15 +21,20 @@ import java.time.LocalDateTime;
  * 재수술 확정 판정 — 재수술 검토 모달에서 담당자가 저장한 최종 결정.
  *
  * 자동판정(find-reoperation-candidates.sql)은 후보 제안일 뿐이고,
- * 이 테이블에 저장된 값이 재수술 여부의 정답이다. 저장이 없는 (chartNo, opDate)는
- * "아직 검토 안 됨" 이라 자동판정을 기본값으로 쓴다.
+ * 이 테이블에 저장된 값이 재수술 여부의 정답이다.
+ *
+ * 유니크 키가 (chartNo, opDate, againR, againL) 인 이유:
+ *   같은 사람·같은 날 서로 다른 시술명의 재수술이 별건으로 존재하는 케이스가 있다
+ *   (예: 327701 2026-08-03 "remo+T-ARF" 와 "K-flex"). RE_OPERATION 원본에 표면
+ *   PK 가 노출돼 있지 않아 시술명 조합을 식별자로 쓴다. againR/againL 은 candidates
+ *   SQL 의 ISNULL(...) 로 항상 문자열(빈 문자열 포함) 이 들어온다.
  */
 @Entity
 @Table(
         name = "reoperation_decision",
         uniqueConstraints = @UniqueConstraint(
-                name = "uq_reoperation_decision_chart_opdate",
-                columnNames = {"chartNo", "opDate"}
+                name = "uq_reoperation_decision_key",
+                columnNames = {"chartNo", "opDate", "againR", "againL"}
         ),
         indexes = {
                 @Index(name = "idx_reoperation_decision_op_date", columnList = "opDate")
@@ -50,6 +55,14 @@ public class ReoperationDecision {
 
     @Column(nullable = false)
     private LocalDate opDate;
+
+    /** 우안 시술명(RE_OPERATION.AGAIN_R). 없으면 빈 문자열. */
+    @Column(nullable = false, length = 200)
+    private String againR;
+
+    /** 좌안 시술명(RE_OPERATION.AGAIN_L). 없으면 빈 문자열. */
+    @Column(nullable = false, length = 200)
+    private String againL;
 
     /** true = 재수술로 확정, false = 재수술 아님으로 확정. */
     @Column(nullable = false)

@@ -15,32 +15,52 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ReoperationOverlayTest {
 
-    private static Map<String, Object> candidate(String chartNo, String reopDate, int autoIncluded) {
-        return Map.of("chartNo", chartNo, "reopDate", reopDate, "autoIncluded", autoIncluded);
+    private static Map<String, Object> candidate(int autoIncluded) {
+        return Map.of("autoIncluded", autoIncluded);
+    }
+
+    private static ReoperationDecision decision(String chartNo, String date, String againR, String againL, boolean isReop) {
+        return ReoperationDecision.builder()
+                .chartNo(chartNo).opDate(LocalDate.parse(date))
+                .againR(againR).againL(againL)
+                .isReoperation(isReop).build();
     }
 
     @Test
     void 저장_판정이_있으면_자동판정을_덮어쓴다() {
-        List<ReoperationDecision> decisions = List.of(
-                ReoperationDecision.builder()
-                        .chartNo("12345").opDate(LocalDate.parse("2026-07-15"))
-                        .isReoperation(true).build()
-        );
-        Map<String, Boolean> map = ReoperationOverlay.decisionMap(decisions);
+        Map<String, Boolean> map = ReoperationOverlay.decisionMap(List.of(
+                decision("12345", "2026-07-15", "remo+T-ARF", "", true)
+        ));
 
         // 자동판정은 제외(0) 인데 저장 판정으로 포함(true) 이 됨
-        assertThat(ReoperationOverlay.isReoperation(map, "12345", "2026-07-15",
-                candidate("12345", "2026-07-15", 0))).isTrue();
+        assertThat(ReoperationOverlay.isReoperation(map, "12345", "2026-07-15", "remo+T-ARF", "",
+                candidate(0))).isTrue();
     }
 
     @Test
     void 저장_판정이_없으면_자동판정을_그대로_쓴다() {
         Map<String, Boolean> map = ReoperationOverlay.decisionMap(List.of());
 
-        assertThat(ReoperationOverlay.isReoperation(map, "12345", "2026-07-15",
-                candidate("12345", "2026-07-15", 1))).isTrue();
-        assertThat(ReoperationOverlay.isReoperation(map, "23456", "2026-07-15",
-                candidate("23456", "2026-07-15", 0))).isFalse();
+        assertThat(ReoperationOverlay.isReoperation(map, "12345", "2026-07-15", "", "",
+                candidate(1))).isTrue();
+        assertThat(ReoperationOverlay.isReoperation(map, "23456", "2026-07-15", "", "",
+                candidate(0))).isFalse();
+    }
+
+    @Test
+    void 같은_사람_같은_날_다른_시술명은_각각_별도로_판정된다() {
+        // 327701 2026-08-03 에 "remo+T-ARF" 와 "K-flex" 두 재수술이 별건으로 존재하는 케이스.
+        Map<String, Boolean> map = ReoperationOverlay.decisionMap(List.of(
+                decision("327701", "2026-08-03", "remo+T-ARF", "", true)
+                // "K-flex" 는 저장되지 않은 상태 — 자동판정을 따라야 한다.
+        ));
+
+        assertThat(ReoperationOverlay.isReoperation(map, "327701", "2026-08-03", "remo+T-ARF", "",
+                candidate(0))).as("저장 판정 true 가 자동판정 0 을 덮어쓴다").isTrue();
+        assertThat(ReoperationOverlay.isReoperation(map, "327701", "2026-08-03", "K-flex", "",
+                candidate(0))).as("K-flex 는 저장 없음 → 자동판정 0 그대로").isFalse();
+        assertThat(ReoperationOverlay.isReoperation(map, "327701", "2026-08-03", "K-flex", "",
+                candidate(1))).as("K-flex 는 저장 없음 → 자동판정 1 그대로").isTrue();
     }
 
     @Test

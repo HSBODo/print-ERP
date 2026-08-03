@@ -25,6 +25,8 @@ class ReoperationDecisionRowJsonTest {
                 .id(1L)
                 .chartNo("12345")
                 .opDate(LocalDate.parse("2026-07-15"))
+                .againR("remo")
+                .againL("")
                 .isReoperation(true)
                 .build();
 

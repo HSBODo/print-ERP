@@ -38,10 +38,13 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
     [candidates],
   )
 
-  // 저장된 판정을 (차트번호, 수술일) 키로 인덱싱. 자동판정보다 우선.
+  // 저장된 판정을 (차트번호, 수술일, 우안, 좌안) 키로 인덱싱. 자동판정보다 우선.
+  // 같은 사람·같은 날 시술명이 다른 재수술이 별건으로 존재해서 시술명까지 키에 포함해야 한다.
+  const decisionKey = (chartNo: string, opDate: string, againR: string, againL: string) =>
+    `${chartNo}|${opDate}|${againR}|${againL}`
   const decisionMap = useMemo(() => {
     const map = new Map<string, boolean>()
-    for (const d of decisions) map.set(`${d.chartNo}-${d.opDate}`, d.isReoperation)
+    for (const d of decisions) map.set(decisionKey(d.chartNo, d.opDate, d.againR, d.againL), d.isReoperation)
     return map
   }, [decisions])
 
@@ -49,7 +52,7 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
   const [flipped, setFlipped] = useState<Set<string>>(new Set())
 
   const baseChecked = (c: KeyedCandidate) => {
-    const saved = decisionMap.get(`${c.chartNo}-${c.reopDate}`)
+    const saved = decisionMap.get(decisionKey(c.chartNo, c.reopDate, c.againR, c.againL))
     return saved ?? c.autoIncluded === 1
   }
 
@@ -111,6 +114,8 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
       .map((c) => ({
         chartNo: c.chartNo,
         opDate: c.reopDate,
+        againR: c.againR ?? '',
+        againL: c.againL ?? '',
         isReoperation: isChecked(c),
       }))
     if (payload.length === 0) return
