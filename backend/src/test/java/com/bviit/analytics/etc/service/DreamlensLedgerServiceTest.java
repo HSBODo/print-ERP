@@ -82,16 +82,22 @@ class DreamlensLedgerServiceTest {
     }
 
     @Test
-    void 조회_구간은_366일까지만_허용한다() {
+    void 조회_구간은_92일_3개월_까지만_허용한다() {
         LocalDate from = LocalDate.parse("2025-01-01");
 
-        // 366일(경계)은 통과
-        assertThat(service.findRows(from, from.plusDays(365))).isEmpty();
+        // 92일(경계)은 통과
+        assertThat(service.findRows(from, from.plusDays(91))).isEmpty();
 
-        // 367일부터 거부 — 없으면 20년 전 구간 조회가 그대로 나간다
-        assertThatThrownBy(() -> service.findRows(from, from.plusDays(366)))
+        // 93일부터 거부 — 없으면 20년 전 구간 조회가 그대로 나간다
+        assertThatThrownBy(() -> service.findRows(from, from.plusDays(92)))
                 .isInstanceOf(InvalidPeriodException.class)
-                .hasMessageContaining("최대 366일");
+                .hasMessageContaining("최대 92일");
+    }
+
+    @Test
+    void 연속_3개월_전체는_막히지_않는다() {
+        // 7·8·9월 = 31+31+30 = 92일. 상한을 90 으로 잡으면 이 분기 조회가 막힌다.
+        assertThat(service.findRows(LocalDate.parse("2026-07-01"), LocalDate.parse("2026-09-30"))).isEmpty();
     }
 
     @Test

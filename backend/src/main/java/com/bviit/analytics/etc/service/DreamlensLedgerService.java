@@ -24,9 +24,11 @@ public class DreamlensLedgerService {
     /**
      * 한 번에 조회할 수 있는 최대 구간(일). 장부는 20년치 2.4만 행이라 상한이 없으면
      * 전 구간 조회 시 응답이 18MB 를 넘고 엔티티도 전부 영속성 컨텍스트에 올라간다.
-     * 1년(윤년 포함 366일)이면 연 단위 조회는 그대로 되고 사고성 전 구간 조회만 막힌다.
+     *
+     * 3개월. 92일인 이유는 연속 3개월의 최대 일수가 92일이기 때문이다(7·8·9월 = 31+31+30).
+     * 90 으로 잡으면 그런 분기를 통째로 조회할 때 막힌다.
      */
-    private static final long MAX_RANGE_DAYS = 366;
+    private static final long MAX_RANGE_DAYS = 92;
 
     private final DreamlensLedgerRepository repository;
 
