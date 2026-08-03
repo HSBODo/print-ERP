@@ -25,6 +25,11 @@ export type LedgerGroup = {
   label: string
   /** 그룹 헤더 배경 — 시트의 색 구분을 따라간다. */
   headClass: string
+  /**
+   * 가로 스크롤 시 좌측에 고정할 그룹. 그룹 헤더가 colspan 으로 묶여 있어
+   * 그룹 단위로만 고정할 수 있다(한 그룹의 일부 컬럼만 고정하면 헤더가 어긋난다).
+   */
+  frozen?: boolean
   columns: LedgerColumn[]
 }
 
@@ -75,14 +80,23 @@ export const PURCHASE_TYPES = [
 
 export const LEDGER_GROUPS: LedgerGroup[] = [
   {
-    id: 'basic',
-    label: '기본 정보',
+    // 좌측 고정 구간 — 36컬럼을 가로로 넘길 때 "어느 행인지" 놓치지 않게 날짜~이름을 붙잡아 둔다.
+    id: 'customer',
+    label: '고객',
     headClass: 'bg-slate-100',
+    frozen: true,
     columns: [
       { key: 'entryDate', label: '날짜', type: 'date', width: 116 },
       { key: 'visitType', label: '진료구분', type: 'text', suggestions: VISIT_TYPES, maxLength: LEN.short, width: 88 },
       { key: 'customerNo', label: '고객번호', type: 'text', maxLength: LEN.short, width: 96 },
       { key: 'customerName', label: '이름', type: 'text', maxLength: LEN.name, width: 92 },
+    ],
+  },
+  {
+    id: 'basic',
+    label: '기본 정보',
+    headClass: 'bg-slate-100',
+    columns: [
       { key: 'examiner', label: '검사자', type: 'text', suggestions: EXAMINERS, maxLength: LEN.name, width: 92 },
       // 시트 원본 '주소' — 구매·배송 구분과 실제 배송 주소가 섞여 있어 라벨에 둘 다 담는다.
       { key: 'purchaseType', label: '주소·구매구분', type: 'text', suggestions: PURCHASE_TYPES, maxLength: LEN.long, width: 190 },
@@ -157,6 +171,29 @@ export const REVENUE_KEYS = LEDGER_GROUPS
 
 /** datalist 를 컬럼별로 한 번만 렌더하기 위한 고정 id. */
 export const suggestionListId = (key: string) => `dl-ledger-suggest-${key}`
+
+/**
+ * 좌측 고정 컬럼의 left 오프셋(px). 체크박스 열 폭에서 시작해 컬럼 폭을 누적한다.
+ * 폭을 바꾸면 오프셋이 자동으로 따라오므로 값을 두 곳에서 관리하지 않는다.
+ */
+export function frozenLeftOffsets(selectColWidth: number): Map<LedgerFieldKey, number> {
+  const offsets = new Map<LedgerFieldKey, number>()
+  let left = selectColWidth
+  for (const group of LEDGER_GROUPS) {
+    if (!group.frozen) continue
+    for (const column of group.columns) {
+      offsets.set(column.key, left)
+      left += column.width
+    }
+  }
+  return offsets
+}
+
+/** 고정 구간의 마지막 컬럼 — 여기에만 경계선을 그려 어디까지 고정인지 보이게 한다. */
+export const LAST_FROZEN_KEY: LedgerFieldKey | undefined = LEDGER_GROUPS
+  .filter((group) => group.frozen)
+  .flatMap((group) => group.columns)
+  .at(-1)?.key
 
 /**
  * 신규 행의 기본값 — 날짜만 오늘로 채우고 나머지는 빈 값.

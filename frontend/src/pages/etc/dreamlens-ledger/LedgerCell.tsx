@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { suggestionListId, type LedgerColumn } from './ledgerColumns'
 
 const displayValue = (column: LedgerColumn, value: string | number | null | undefined) => {
@@ -19,11 +19,20 @@ export function LedgerCell({
   value,
   busy,
   onCommit,
+  stickyLeft,
+  stickyBgClass = '',
+  frozenEdge = false,
 }: {
   column: LedgerColumn
   value: string | number | null | undefined
   busy: boolean
   onCommit: (next: string | number | null) => void
+  /** 좌측 고정 컬럼이면 left 오프셋(px). 없으면 일반 셀. */
+  stickyLeft?: number
+  /** 고정 셀은 뒤 내용이 비쳐 보이므로 불투명 배경이 필요하다(행 상태에 맞춰 주입). */
+  stickyBgClass?: string
+  /** 고정 구간의 마지막 컬럼 — 오른쪽에 경계선을 그린다. */
+  frozenEdge?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -52,9 +61,24 @@ export function LedgerCell({
   // 숫자만 우측(자릿수 비교), 나머지는 중앙 정렬.
   const align = column.type === 'number' ? 'text-right tabular-nums' : 'text-center'
 
+  // border-collapse 표에서는 고정 셀의 테두리가 스크롤 중 사라질 수 있어
+  // 고정 구간 경계는 box-shadow 로 그린다(항상 보인다).
+  const sticky: { className: string; style?: CSSProperties } = stickyLeft === undefined
+    ? { className: '' }
+    : {
+        className: `sticky z-10 ${stickyBgClass}`,
+        style: {
+          left: stickyLeft,
+          boxShadow: frozenEdge ? '1px 0 0 0 #cbd5e1' : undefined,
+        },
+      }
+
   if (editing) {
     return (
-      <td className="border border-border/60 bg-amber-50 p-0">
+      <td
+        className={`border border-border/60 bg-amber-50 p-0 ${stickyLeft === undefined ? '' : 'sticky z-10'}`}
+        style={sticky.style}
+      >
         <input
           type={column.type === 'number' ? 'number' : column.type === 'date' ? 'date' : 'text'}
           min={column.type === 'number' ? 0 : undefined}
@@ -89,10 +113,10 @@ export function LedgerCell({
       onClick={start}
       // 값이 있으면 전체 값을 툴팁으로 — 폭을 넘겨 말줄임된 값도 확인할 수 있게.
       title={text ? `${text}\n(클릭하여 수정)` : '클릭하여 수정'}
-      style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
+      style={{ width: column.width, minWidth: column.width, maxWidth: column.width, ...sticky.style }}
       className={`cursor-pointer border border-border/60 px-1.5 py-1 text-xs hover:bg-amber-50 ${
         busy ? 'opacity-50' : ''
-      }`}
+      } ${sticky.className}`}
     >
       {/* 컬럼 폭을 넘는 값이 옆 칸을 밀지 않도록 말줄임 처리한다(표가 어긋나는 걸 막는다). */}
       <div className={`truncate ${align}`}>{text || <span className="text-transparent">-</span>}</div>

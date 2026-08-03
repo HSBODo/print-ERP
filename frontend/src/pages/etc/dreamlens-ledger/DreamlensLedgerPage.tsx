@@ -9,10 +9,12 @@ import { dreamlensLedgerApi, type DreamlensLedgerRow } from '@/api/etc'
 import { LedgerCell } from './LedgerCell'
 import {
   EXAMINERS,
+  LAST_FROZEN_KEY,
   LEDGER_COLUMNS,
   LEDGER_GROUPS,
   REVENUE_KEYS,
   emptyRow,
+  frozenLeftOffsets,
   suggestionListId,
   type LedgerFieldKey,
 } from './ledgerColumns'
@@ -46,6 +48,11 @@ const won = (value: number) => (value === 0 ? '' : value.toLocaleString('ko-KR')
 
 /** 체크박스/합계 열 폭 — "합계"가 한 줄에 들어가야 세로로 쪼개지지 않는다. */
 const SELECT_COL_WIDTH = 52
+
+/** 좌측 고정 컬럼(날짜~이름)의 left 오프셋. 체크박스 열 다음부터 누적된다. */
+const FROZEN_LEFT = frozenLeftOffsets(SELECT_COL_WIDTH)
+/** border-collapse 에서 고정 셀 테두리가 스크롤 중 사라져 경계는 그림자로 그린다. */
+const FROZEN_EDGE_SHADOW = { boxShadow: '1px 0 0 0 #cbd5e1' } as const
 
 export function DreamlensLedgerPage() {
   // 조회 구간만 서버 파라미터다 — draft(입력중) / query(조회에 반영됨)를 나눈다.
@@ -476,8 +483,8 @@ export function DreamlensLedgerPage() {
                   <tr>
                     <th
                       rowSpan={2}
-                      style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH }}
-                      className="sticky top-0 z-20 whitespace-nowrap border border-border/60 bg-slate-100 px-2 py-1.5"
+                      style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
+                      className="sticky top-0 left-0 z-30 whitespace-nowrap border border-border/60 bg-slate-100 px-2 py-1.5"
                     >
                       <input
                         type="checkbox"
@@ -487,20 +494,28 @@ export function DreamlensLedgerPage() {
                         className="h-3.5 w-3.5 align-middle accent-rose-600"
                       />
                     </th>
-                    {LEDGER_GROUPS.map((group) => (
-                      <th
-                        key={group.id}
-                        colSpan={group.columns.length}
-                        className={`sticky top-0 z-10 border border-border/60 px-2 py-1.5 font-semibold ${group.headClass}`}
-                      >
-                        {group.label}
-                      </th>
-                    ))}
+                    {LEDGER_GROUPS.map((group) => {
+                      // 고정 그룹의 헤더는 그룹 첫 컬럼 위치에 붙인다(그룹 전체가 함께 고정된다).
+                      const left = group.frozen ? FROZEN_LEFT.get(group.columns[0].key) : undefined
+                      return (
+                        <th
+                          key={group.id}
+                          colSpan={group.columns.length}
+                          style={left === undefined ? undefined : { left, ...FROZEN_EDGE_SHADOW }}
+                          className={`sticky top-0 border border-border/60 px-2 py-1.5 font-semibold ${group.headClass} ${
+                            left === undefined ? 'z-10' : 'sticky z-30'
+                          }`}
+                        >
+                          {group.label}
+                        </th>
+                      )
+                    })}
                   </tr>
                   <tr>
                     {LEDGER_GROUPS.flatMap((group) =>
                       group.columns.map((column) => {
                         const direction = sortState?.key === column.key ? sortState.direction : null
+                        const left = FROZEN_LEFT.get(column.key)
 
                         return (
                           <th
@@ -510,8 +525,15 @@ export function DreamlensLedgerPage() {
                                 : direction === 'desc' ? 'descending'
                                   : 'none'
                             }
-                            style={{ width: column.width, minWidth: column.width }}
-                            className={`sticky top-[31px] z-10 whitespace-nowrap border border-border/60 px-1.5 py-1.5 text-center font-medium ${group.headClass}`}
+                            style={{
+                              width: column.width,
+                              minWidth: column.width,
+                              ...(left === undefined ? {} : { left }),
+                              ...(column.key === LAST_FROZEN_KEY ? FROZEN_EDGE_SHADOW : {}),
+                            }}
+                            className={`sticky top-[31px] whitespace-nowrap border border-border/60 px-1.5 py-1.5 text-center font-medium ${group.headClass} ${
+                              left === undefined ? 'z-10' : 'sticky z-30'
+                            }`}
                           >
                             <button
                               type="button"
@@ -556,51 +578,72 @@ export function DreamlensLedgerPage() {
                       </td>
                     </tr>
                   )}
-                  {!busy && visibleRows.map((row) => (
-                    <tr key={row.id} className={selected.has(row.id) ? 'bg-rose-50/50' : 'hover:bg-blue-50/40'}>
-                      <td
-                        style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH }}
-                        className="border border-border/60 px-2 py-1 text-center"
+                  {!busy && visibleRows.map((row) => {
+                    const isSelected = selected.has(row.id)
+                    // 고정 셀은 뒤 내용이 비치므로 불투명 배경이 필요하다.
+                    // 행 hover 는 group-hover 로 고정 셀에도 그대로 전달한다.
+                    const frozenBg = isSelected ? 'bg-rose-50' : 'bg-white group-hover:bg-blue-50'
+
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`group ${isSelected ? 'bg-rose-50/50' : 'hover:bg-blue-50/40'}`}
                       >
-                        <input
-                          type="checkbox"
-                          aria-label={`${row.entryDate} ${row.customerName ?? ''} 선택`}
-                          checked={selected.has(row.id)}
-                          onChange={() => toggleOne(row.id)}
-                          className="h-3.5 w-3.5 align-middle accent-rose-600"
-                        />
-                      </td>
-                      {LEDGER_COLUMNS.map((column) => (
-                        <LedgerCell
-                          key={column.key}
-                          column={column}
-                          value={row[column.key]}
-                          busy={pendingRows.has(row.id)}
-                          onCommit={(next) => commitCell(row.id, column.key, next)}
-                        />
-                      ))}
-                    </tr>
-                  ))}
+                        <td
+                          style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
+                          className={`sticky left-0 z-10 border border-border/60 px-2 py-1 text-center ${frozenBg}`}
+                        >
+                          <input
+                            type="checkbox"
+                            aria-label={`${row.entryDate} ${row.customerName ?? ''} 선택`}
+                            checked={isSelected}
+                            onChange={() => toggleOne(row.id)}
+                            className="h-3.5 w-3.5 align-middle accent-rose-600"
+                          />
+                        </td>
+                        {LEDGER_COLUMNS.map((column) => (
+                          <LedgerCell
+                            key={column.key}
+                            column={column}
+                            value={row[column.key]}
+                            busy={pendingRows.has(row.id)}
+                            onCommit={(next) => commitCell(row.id, column.key, next)}
+                            stickyLeft={FROZEN_LEFT.get(column.key)}
+                            stickyBgClass={frozenBg}
+                            frozenEdge={column.key === LAST_FROZEN_KEY}
+                          />
+                        ))}
+                      </tr>
+                    )
+                  })}
                 </tbody>
                 {!busy && filtered.length > 0 && (
                   <tfoot>
                     <tr className="bg-slate-100 font-medium">
+                      {/* 좌하단 모서리 — 세로·가로 양쪽 고정이라 z 를 가장 높게 둔다. */}
                       <td
-                        style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH }}
-                        className="sticky bottom-0 whitespace-nowrap border border-border/60 bg-slate-100 px-2 py-1.5 text-center"
+                        style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
+                        className="sticky bottom-0 left-0 z-30 whitespace-nowrap border border-border/60 bg-slate-100 px-2 py-1.5 text-center"
                       >
                         합계
                       </td>
-                      {LEDGER_COLUMNS.map((column) => (
-                        <td
-                          key={column.key}
-                          className={`sticky bottom-0 border border-border/60 bg-slate-100 px-1.5 py-1.5 ${
-                            column.type === 'number' ? 'text-right tabular-nums' : 'text-center'
-                          }`}
-                        >
-                          {column.type === 'number' ? won(totals[column.key] ?? 0) : ''}
-                        </td>
-                      ))}
+                      {LEDGER_COLUMNS.map((column) => {
+                        const left = FROZEN_LEFT.get(column.key)
+                        return (
+                          <td
+                            key={column.key}
+                            style={{
+                              ...(left === undefined ? {} : { left }),
+                              ...(column.key === LAST_FROZEN_KEY ? FROZEN_EDGE_SHADOW : {}),
+                            }}
+                            className={`sticky bottom-0 border border-border/60 bg-slate-100 px-1.5 py-1.5 ${
+                              column.type === 'number' ? 'text-right tabular-nums' : 'text-center'
+                            } ${left === undefined ? '' : 'z-30'}`}
+                          >
+                            {column.type === 'number' ? won(totals[column.key] ?? 0) : ''}
+                          </td>
+                        )
+                      })}
                     </tr>
                   </tfoot>
                 )}
