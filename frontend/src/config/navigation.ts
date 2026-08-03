@@ -72,7 +72,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'cancel-rate': 'pending',
   'no-show-rate': 'pending',
   'unit-price': 'pending',
-  'dreamlens-revenue': 'pending',
+  'dreamlens-revenue': 'complete',
   'b2b-revenue': 'complete',
   'staff-point': 'pending',
   'prp-rate': 'pending',
@@ -107,14 +107,15 @@ export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(
  * 빈 그룹·숨김 단일 메뉴는 menuItems에서 자동 제거된다(kids() + 아래 filter).
  *   - 예약: 유입(검사예약)·예약 건수 숨김(예약자 리스트 → 예약 종합만 노출)
  *   - Report: 월간 레포트·주차 레포트 모두 노출
- *   - 외래 아래: 마케팅·취소&부도·객단가·기타 그룹 전체 숨김
+ *   - 외래 아래: 마케팅·취소&부도·객단가 전체 숨김
+ *   - 기타: 드림렌즈 매출만 노출, 나머지는 숨김
  */
 const HIDDEN_MENU_IDS = new Set<string>([
   'intake-conversion', 'reservation',
   'overseas', 'marketing',
   'cancel-rate', 'no-show-rate',
   'unit-price',
-  'dreamlens-revenue', 'b2b-revenue', 'staff-point', 'prp-rate',
+  'b2b-revenue', 'staff-point', 'prp-rate',
   'reoperation-rate', 'same-day-op', 'designated-doctor', 'visit-reason', 'daily-reception',
 ])
 export const isMenuHidden = (id: string): boolean => HIDDEN_MENU_IDS.has(id)

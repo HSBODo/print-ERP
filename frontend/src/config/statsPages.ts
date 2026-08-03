@@ -324,12 +324,12 @@ export const statsPages: StatsPageDefinition[] = [
   ),
   statsPage(
     'dreamlens-revenue',
-    '드림렌즈 매출',
+    '드림렌즈 장부',
     '/stats/dreamlens-revenue',
     'etc',
     '기타',
-    '드림렌즈 매출 추이와 기간별 비교를 확인하는 화면입니다.',
-    '/api/stats/dreamlens-revenue'
+    'D/L 장부를 직접 입력·수정하는 화면입니다.',
+    '/api/dreamlens-ledger'
   ),
   statsPage(
     'b2b-revenue',

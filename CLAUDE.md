@@ -32,7 +32,7 @@ project-root/
 │   │   ├── outpatient/                  # 외래수
 │   │   ├── overall/                     # 주간 종합지표
 │   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
-│   │   └── etc/                         # B2B 매출 등 기타
+│   │   └── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) 등 기타
 │   ├── src/main/resources/
 │   │   ├── application.yml                     # H2 인메모리 (개발 기본)
 │   │   ├── application-postgres.yml            # PostgreSQL (운영)
@@ -119,17 +119,17 @@ project-root/
 - DashboardPage (KPI 카드 4개 + 차트 5개, 하드코딩 목업)
 - ReservationPage (월별/연도별 비교, TanStack Query 기반 API 연동)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
-- 통계 전용 페이지 24종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
+- 통계 전용 페이지 25종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
 
 ### 미구현 (플레이스홀더)
 
-통계 페이지 14종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
+통계 페이지 13종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 38개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 24개 / **미구현(pending)** 14개.
+`statsPages.ts`에 38개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 25개 / **미구현(pending)** 13개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
@@ -164,7 +164,7 @@ project-root/
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
 | unit-price | 객단가 | /stats/unit-price | 객단가 | 미구현 |
-| dreamlens-revenue | 드림렌즈 매출 | /stats/dreamlens-revenue | 기타 | 미구현 |
+| dreamlens-revenue | 드림렌즈 장부 | /stats/dreamlens-revenue | 기타 | 완료 (**직접 입력 테이블** · `dreamlens_ledger` JPA CRUD · `/api/dreamlens-ledger`) |
 | b2b-revenue | B2B 매출 | /stats/b2b-revenue | 기타 | 완료 |
 | staff-point | 직원 포인트 | /stats/staff-point | 기타 | 미구현 |
 | prp-rate | PRP 시술율 | /stats/prp-rate | 기타 | 미구현 |
@@ -176,7 +176,7 @@ project-root/
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
-> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `intake-conversion`·`reservation`(예약), 그리고 **마케팅·취소&부도·객단가·기타 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price·dreamlens-revenue·b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출은 `HIDDEN_MENU_IDS`에서 빼면 됨.
+> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `intake-conversion`·`reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
 
 ## 백엔드 컨벤션
 
@@ -193,7 +193,18 @@ GET    /api/stats/{pageId}/trend?years=2024,2025&mock=false
 GET    /api/stats/{pageId}/composition?years=2024,2025&mock=false
 GET    /api/{listPageId}?from=2026-01-01&to=2026-01-31  # 리스트 계열
 GET    /api/report/weekly?years=2024,2025,2026       # 주차 레포트 (ISO 8601 연간 주차 원시 집계)
+
+# 직접 입력 장부 (조회 전용 통계와 달리 CRUD)
+GET    /api/dreamlens-ledger?from=2026-07-01&to=2026-08-31
+POST   /api/dreamlens-ledger                          # 행 추가
+PUT    /api/dreamlens-ledger/{id}                     # 행 수정 (전체 필드 교체)
+DELETE /api/dreamlens-ledger/{id}                     # 행 삭제
 ```
+
+> ✍️ **예외 — 사용자가 직접 입력하는 원천 데이터**는 마트가 아니라 JPA 엔티티로 다룬다.
+> 현재 `드림렌즈 장부`(`dreamlens_ledger`)가 유일하다. MSSQL 원천이 없고 화면에서 CRUD 하므로
+> 배치·마트 대신 `etc/entity` + `JpaRepository` + `/api/dreamlens-ledger` 로 구성한다.
+> 스키마는 `ddl-auto: update` 가 생성하고, 초기 10행은 `DreamlensLedgerSeeder` 가 표가 비었을 때만 넣는다.
 
 > 🔌 **화면은 마트를 읽는다.** 통계 API 는 배치가 적재한 Postgres 마트를 조회하고, MSSQL 직결은
 > 배치(적재) 시간대에만 쓴다. 그래서 SSH 터널·VPN 이 끊겨도 화면은 마지막 적재분으로 동작한다.
