@@ -2,15 +2,20 @@ import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useReoperationCandidates } from '@/hooks/surgery/useReoperationCandidates'
+import {
+  useReoperationDecisions,
+  useSaveReoperationDecisions,
+} from '@/hooks/surgery/useReoperationDecisions'
 import type { ReoperationCandidate } from '@/api/surgery/reoperationCandidates'
 
 /**
- * 재수술 검토 팝업 — 조회·미리보기 전용.
- * 자동 포함(레포트 반영) 행 + 제외 행(검토 필요)을 보여주고, 체크로 최종 건수를 미리보기.
- * 저장·레포트 반영은 별도 override 레이어(개발 연동 예정) — 여기서는 화면상 미리보기만.
+ * 재수술 검토 팝업 — 자동판정 후보를 체크박스로 검토하고 최종 판정을 저장한다.
  *
- * 상태는 "자동 기본값에서 뒤집은 행(flipped)"만 저장하는 오버레이 방식.
- * → 데이터 로드 시 별도 초기화(effect) 불필요. 열릴 때마다 부모가 조건부 마운트하므로 초기화됨.
+ * 초기 체크 상태:
+ *   저장된 판정이 있으면 그 값을, 없으면 자동판정(autoIncluded)을 기본으로 쓴다.
+ *   사용자가 체크박스를 뒤집으면 flipped Set 에 담아두고, 저장 시 서버로 batch upsert.
+ *
+ * 저장 값이 "재수술 여부의 정답" — 자동판정 SQL 이 바뀌어도 저장된 판정이 우선한다.
  */
 
 type KeyedCandidate = ReoperationCandidate & { key: string }
@@ -25,18 +30,32 @@ const dash = (v: string) => (v && v.trim() ? v : '—')
 
 export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
   const { candidates, isLoading, isFetching, isError } = useReoperationCandidates(from, to, true)
+  const { decisions } = useReoperationDecisions(from, to, true)
+  const saveMutation = useSaveReoperationDecisions(from, to)
 
   const keyed = useMemo<KeyedCandidate[]>(
     () => candidates.map((c, i) => ({ ...c, key: `${c.chartNo}-${c.reopDate}-${i}` })),
     [candidates],
   )
 
-  // 사용자가 자동 기본값에서 뒤집은 행만 저장(오버레이). 비어있으면 = 전부 자동 기본값.
+  // 저장된 판정을 (차트번호, 수술일) 키로 인덱싱. 자동판정보다 우선.
+  const decisionMap = useMemo(() => {
+    const map = new Map<string, boolean>()
+    for (const d of decisions) map.set(`${d.chartNo}-${d.opDate}`, d.isReoperation)
+    return map
+  }, [decisions])
+
+  // 사용자가 이번 세션에서 기본값(=저장값 or 자동판정)에서 뒤집은 행. 저장 성공 시 비운다.
   const [flipped, setFlipped] = useState<Set<string>>(new Set())
 
+  const baseChecked = (c: KeyedCandidate) => {
+    const saved = decisionMap.get(`${c.chartNo}-${c.reopDate}`)
+    return saved ?? c.autoIncluded === 1
+  }
+
   const isChecked = (c: KeyedCandidate) => {
-    const auto = c.autoIncluded === 1
-    return flipped.has(c.key) ? !auto : auto
+    const base = baseChecked(c)
+    return flipped.has(c.key) ? !base : base
   }
 
   const included = useMemo(() => keyed.filter((c) => c.autoIncluded === 1), [keyed])
@@ -75,12 +94,32 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
     setFlipped((prev) => {
       const next = new Set(prev)
       for (const r of rows) {
-        const auto = r.autoIncluded === 1
-        if (desired !== auto) next.add(r.key)
+        const base = baseChecked(r)
+        if (desired !== base) next.add(r.key)
         else next.delete(r.key)
       }
       return next
     })
+  }
+
+  const hasChanges = flipped.size > 0
+
+  const handleSave = async () => {
+    if (!hasChanges || saveMutation.isPending) return
+    const payload = keyed
+      .filter((c) => flipped.has(c.key))
+      .map((c) => ({
+        chartNo: c.chartNo,
+        opDate: c.reopDate,
+        isReoperation: isChecked(c),
+      }))
+    if (payload.length === 0) return
+    try {
+      await saveMutation.mutateAsync(payload)
+      setFlipped(new Set())
+    } catch {
+      // 에러 표시는 아래 저장 상태 라벨에서 처리.
+    }
   }
 
   return (
@@ -207,13 +246,30 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
 
         {/* 푸터 */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-4 py-3">
-          <p className="text-[11px] text-muted-foreground">※ 조회·미리보기 전용 — 저장·레포트 반영은 개발 연동 예정</p>
+          <p className="text-[11px] text-muted-foreground">
+            {saveMutation.isError ? (
+              <span className="text-red-600">저장에 실패했습니다. 다시 시도해주세요.</span>
+            ) : saveMutation.isSuccess && !hasChanges ? (
+              <span className="text-emerald-600">저장되었습니다.</span>
+            ) : hasChanges ? (
+              <span>변경 {flipped.size}건 — 저장을 눌러 확정하세요.</span>
+            ) : (
+              <span>체크박스를 눌러 재수술 여부를 확정합니다. 저장된 판정은 자동판정보다 우선합니다.</span>
+            )}
+          </p>
           <div className="flex items-center gap-1.5">
             <Button type="button" variant="outline" size="sm" className="text-xs" onClick={onClose}>
               닫기
             </Button>
-            <Button type="button" size="sm" disabled className="text-xs" title="저장 기능은 개발 연동 예정">
-              저장 (연동 예정)
+            <Button
+              type="button"
+              size="sm"
+              className="text-xs"
+              onClick={handleSave}
+              disabled={!hasChanges || saveMutation.isPending}
+              title={hasChanges ? '' : '변경된 항목이 없습니다'}
+            >
+              {saveMutation.isPending ? '저장 중…' : '저장'}
             </Button>
           </div>
         </div>
