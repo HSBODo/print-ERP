@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useSurgeryList } from '@/hooks/surgery/useSurgeryList'
 import { useReoperationCandidates } from '@/hooks/surgery/useReoperationCandidates'
+import { useReoperationDecisions } from '@/hooks/surgery/useReoperationDecisions'
 import { ReoperationCandidatesModal } from './ReoperationCandidatesModal'
 import type { SurgeryListItem } from '@/api/surgery/surgeryList'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './surgeryListColumns'
@@ -55,11 +56,22 @@ export function SurgeryListPage() {
 
   // 재수술은 RE_OPERATION 별도 테이블이라 수술자 리스트(OPERATIONDATA·Cataract_Operationdata)에 들어있지 않다.
   // 자동 포함분(레포트 반영분)만 리스트 행으로 변환하며, '재수술' 탭과 '전체' 탭에서 조회한다.
+  const reopEnabled = hasSearched && (isReopTab || isAllTab)
   const { candidates: reopCandidates, isLoading: reopLoading, isFetching: reopFetching, isError: reopError } =
-    useReoperationCandidates(queryFrom, queryTo, hasSearched && (isReopTab || isAllTab))
+    useReoperationCandidates(queryFrom, queryTo, reopEnabled)
+  // 저장된 재수술 판정 — 자동판정보다 우선. 저장 없음 = 자동판정 그대로.
+  const { decisions: reopDecisions } = useReoperationDecisions(queryFrom, queryTo, reopEnabled)
+  const reopDecisionMap = useMemo(() => {
+    const map = new Map<string, boolean>()
+    for (const d of reopDecisions) map.set(`${d.chartNo}-${d.opDate}`, d.isReoperation)
+    return map
+  }, [reopDecisions])
   const reopRows = useMemo(
-    () => reopCandidates.filter((c) => c.autoIncluded === 1).map(reopCandidateToRow),
-    [reopCandidates],
+    () =>
+      reopCandidates
+        .filter((c) => reopDecisionMap.get(`${c.chartNo}-${c.reopDate}`) ?? c.autoIncluded === 1)
+        .map(reopCandidateToRow),
+    [reopCandidates, reopDecisionMap],
   )
 
   const activeError = isReopTab ? reopError : (isAllTab ? (isError || reopError) : isError)
