@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { toMonthStart, toMonthValue, toWeekStart, toWeekValue, toWeekEnd } from './ledgerUtils'
+import {
+  isoWeekNumbers,
+  toMonthStart,
+  toMonthValue,
+  toWeekEnd,
+  toWeekStart,
+  toWeekValue,
+} from './ledgerUtils'
 
 /**
  * 장부 툴바의 기간 단위 변환.
@@ -38,6 +45,22 @@ describe('드림렌즈 장부 기간 헬퍼', () => {
       for (const week of ['2026-W01', '2026-W10', '2026-W32', '2025-W52']) {
         const [y, m, d] = toWeekStart(week).split('-').map(Number)
         expect(new Date(y, m - 1, d).getDay()).toBe(1) // 1 = 월요일
+      }
+    })
+
+    it('미래 주차를 골라도 시작일 <= 종료일 이 깨지지 않는다', () => {
+      // 종료일을 오늘로 자르면 미래 주에서 from > to 가 되어 조회가 막힌다.
+      for (const week of ['2026-W52', '2026-W40', '2026-W01']) {
+        expect(toWeekStart(week) <= toWeekEnd(week)).toBe(true)
+      }
+      expect(toWeekEnd('2026-W52')).toBe('2026-12-27') // 자르지 않고 그 주 일요일 그대로
+    })
+
+    it('연도별 주차 수는 52 또는 53 이다', () => {
+      for (const year of [2020, 2021, 2024, 2025, 2026]) {
+        expect(isoWeekNumbers(year).length).toBeGreaterThanOrEqual(52)
+        expect(isoWeekNumbers(year).length).toBeLessThanOrEqual(53)
+        expect(isoWeekNumbers(year)[0]).toBe(1)
       }
     })
   })

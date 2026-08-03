@@ -1,6 +1,6 @@
 import type { CsvColumn } from '@/utils/csv'
 import type { DreamlensLedgerRow } from '@/api/etc'
-import { addDays, isoWeek, isoWeekMonday, toIsoDate } from '@/utils/isoWeek'
+import { addDays, isoWeek, isoWeekMonday, isoWeeksInYear, toIsoDate } from '@/utils/isoWeek'
 import { LEDGER_COLUMNS, type LedgerFieldKey } from './ledgerColumns'
 
 export type PeriodMode = 'daily' | 'weekly' | 'monthly'
@@ -86,18 +86,44 @@ export const toMonthEnd = (month: string) => {
  * <input type="week"> 의 값 형식(YYYY-Www)이 곧 ISO 주차라 변환 없이 맞물린다.
  */
 
-export const toWeekValue = (date: string) => {
+/** 장부에 데이터가 존재하는 첫 연도(D/L 장부 마이그레이션 기준 2006-10). 연도 드롭다운 하한. */
+export const LEDGER_FIRST_YEAR = 2006
+
+/** 연도 선택 목록 — 최신 연도부터 내림차순. */
+export const ledgerYears = (): number[] => {
+  const now = new Date().getFullYear()
+  return Array.from({ length: now - LEDGER_FIRST_YEAR + 1 }, (_, i) => now - i)
+}
+
+/** 그 해의 주차 목록(1..52 또는 53). ISO 기준이라 해마다 53주가 있을 수 있다. */
+export const isoWeekNumbers = (year: number): number[] =>
+  Array.from({ length: isoWeeksInYear(year) }, (_, i) => i + 1)
+
+export const weekValueOf = (year: number, week: number) =>
+  `${year}-W${String(week).padStart(2, '0')}`
+
+/** 'YYYY-MM-DD' → 그 날짜가 속한 ISO 주차. 연말·연초는 year 가 인접 해로 넘어간다. */
+export const isoWeekOf = (date: string): { year: number; week: number } => {
   const [y, m, d] = date.split('-').map(Number)
-  const { year, week } = isoWeek(new Date(y, m - 1, d))
-  return `${year}-W${String(week).padStart(2, '0')}`
+  return isoWeek(new Date(y, m - 1, d))
+}
+
+export const toWeekValue = (date: string) => {
+  const { year, week } = isoWeekOf(date)
+  return weekValueOf(year, week)
 }
 export const toWeekStart = (weekValue: string) => {
   const [year, week] = weekValue.split('-W').map(Number)
   return toIsoDate(isoWeekMonday(year, week))
 }
+/**
+ * 그 주의 일요일. 월별과 달리 오늘로 자르지 않는다 —
+ * 주차를 드롭다운으로 직접 고를 수 있어, 미래 주를 클램프하면 시작일 > 종료일이 되어
+ * 조회 자체가 막힌다. 미래 주는 그냥 0건으로 나오는 편이 예측 가능하다.
+ */
 export const toWeekEnd = (weekValue: string) => {
   const [year, week] = weekValue.split('-W').map(Number)
-  return clampToToday(addDays(isoWeekMonday(year, week), 6))
+  return toIsoDate(addDays(isoWeekMonday(year, week), 6))
 }
 
 /** 이름·고객번호·검사자 부분일치. 공백 키워드는 통과. */

@@ -40,7 +40,13 @@ export const VISIT_TYPES = ['신규', '재진'] as const
 /**
  * 구매·배송 표준 표기 5종.
  *
- * 기존 시트에는 같은 뜻이 285가지로 흩어져 있었다(띄어쓰기·조사·오타 차이).
+ * ⚠️ 이 컬럼(시트 원본 헤더 '주소')은 값이 두 종류로 섞여 있다.
+ *   - 최근 데이터: 구매·배송 구분('본원 재고구매' 등)
+ *   - 과거 데이터: 환자 실제 배송 주소(전체 8,004건 중 상당수, 최대 76자)
+ * 그래서 아래 5종은 **강제가 아니라 제안**이고, 매칭되지 않는 값(주소 포함)은
+ * 원문을 그대로 보존한다. 주소를 범주로 뭉개면 배송지 정보가 사라진다.
+ *
+ * 구분 값 쪽에는 같은 뜻이 285가지로 흩어져 있었다(띄어쓰기·조사·오타 차이).
  *   재고구매 계열 — '본원 재고구매' / '본원 재고 구매' / '본원재고구매' / '본원 재고수령' …
  *   본원수령 계열 — '본원배송(본원수령희망)' / '본원 배송(본원 수령)' / '본원배송(본원수령)' …
  *   택배 계열     — '본원 배송(택배 희망)' / '본원배송(택배발송희망)' / '본원배송(텍배배송희망)'(오타) …
@@ -70,7 +76,8 @@ export const LEDGER_GROUPS: LedgerGroup[] = [
       { key: 'customerNo', label: '고객번호', type: 'text', width: 96 },
       { key: 'customerName', label: '이름', type: 'text', width: 92 },
       { key: 'examiner', label: '검사자', type: 'text', suggestions: EXAMINERS, width: 92 },
-      { key: 'purchaseType', label: '구매·배송', type: 'text', suggestions: PURCHASE_TYPES, width: 160 },
+      // 시트 원본 '주소' — 구매·배송 구분과 실제 배송 주소가 섞여 있어 라벨에 둘 다 담는다.
+      { key: 'purchaseType', label: '주소·구매구분', type: 'text', suggestions: PURCHASE_TYPES, width: 190 },
     ],
   },
   {

@@ -30,8 +30,12 @@ import {
   defaultTo,
   formatCount,
   getSortValue,
+  isoWeekNumbers,
+  isoWeekOf,
+  ledgerYears,
   matchesKeyword,
   today,
+  weekValueOf,
   toMonthEnd,
   toMonthStart,
   toMonthValue,
@@ -191,6 +195,16 @@ export function DreamlensLedgerPage() {
     setQueryTo(draftTo)
   }
 
+  /** 주차 드롭다운의 현재 선택값 — draft 시작일이 속한 ISO 주차. */
+  const weekPick = useMemo(() => isoWeekOf(draftFrom), [draftFrom])
+
+  /** 연도·주차 선택 → 그 주(월~일)로 구간을 맞춘다. 53주가 없는 해를 고르면 마지막 주로 보정. */
+  const applyWeek = (year: number, week: number) => {
+    const value = weekValueOf(year, Math.min(week, isoWeekNumbers(year).length))
+    setDraftFrom(toWeekStart(value))
+    setDraftTo(toWeekEnd(value))
+  }
+
   /** 주차·월별로 바꾸면 시작일이 속한 주/달의 경계로 from·to 를 맞춘다(일별은 사용자가 직접 고른다). */
   const handlePeriodModeChange = (mode: PeriodMode) => {
     setDraftPeriodMode(mode)
@@ -282,18 +296,34 @@ export function DreamlensLedgerPage() {
           </div>
           {draftPeriodMode === 'weekly' ? (
             <>
-              <input
-                aria-label="조회 주차"
-                type="week"
-                value={toWeekValue(draftFrom)}
-                max={toWeekValue(defaultTo())}
-                onChange={(e) => {
-                  if (!e.target.value) return
-                  setDraftFrom(toWeekStart(e.target.value))
-                  setDraftTo(toWeekEnd(e.target.value))
-                }}
-                className="h-8 w-[9.5rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
+              {/* 브라우저 기본 주차 선택기(<input type="week">)는 일요일 시작 달력이라
+                  ISO 주차(월~일)와 어긋나 보인다. 연도·주차 드롭다운으로 직접 고르게 한다. */}
+              <div className="relative">
+                <select
+                  aria-label="조회 연도"
+                  value={weekPick.year}
+                  onChange={(e) => applyWeek(Number(e.target.value), weekPick.week)}
+                  className="h-8 w-[5.5rem] appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                >
+                  {ledgerYears().map((year) => (
+                    <option key={year} value={year}>{year}년</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+              </div>
+              <div className="relative">
+                <select
+                  aria-label="조회 주차"
+                  value={weekPick.week}
+                  onChange={(e) => applyWeek(weekPick.year, Number(e.target.value))}
+                  className="h-8 w-[5.5rem] appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                >
+                  {isoWeekNumbers(weekPick.year).map((week) => (
+                    <option key={week} value={week}>{week}주차</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+              </div>
               {/* 주차만 보면 실제 날짜를 알 수 없어 구간을 함께 적는다(ISO 주차 = 월~일). */}
               <span className="whitespace-nowrap text-gray-500 tabular-nums">
                 {draftFrom} ~ {draftTo}
