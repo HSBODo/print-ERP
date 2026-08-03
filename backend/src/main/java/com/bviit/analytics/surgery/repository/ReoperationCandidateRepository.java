@@ -15,7 +15,8 @@ import java.util.Map;
  * 재수술 후보 — RE_OPERATION 원본 행 + 자동판정(포함/제외)·제외사유.
  *
  * 기준일: 재수술일(RE_OPERATION.REOP_DATE)
- * 제외 규칙은 월간 레포트 재수술 집계(find-reoperation-monthly.sql)와 동일하게 유지한다.
+ * SurgeryStatsService 의 재수술 카운트 원천이자, 재수술 검토 모달의 조회 소스.
+ * laser/lens 분류는 자바(ReoperationOverlay) 에서 시술명 패턴으로 담당한다.
  *
  * MSSQL 2014 호환: STRING_AGG, TRIM 사용 금지.
  */

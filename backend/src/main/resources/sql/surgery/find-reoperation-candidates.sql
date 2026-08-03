@@ -1,9 +1,9 @@
             -- 재수술 후보 목록 (RE_OPERATION 원본 행 + 자동판정·제외사유 + 고객/집도의 정보)
-            -- 월간 레포트 재수술 건수(find-reoperation-monthly.sql)와 동일한 제외 규칙을 행 단위로 노출.
-            -- autoIncluded=1 : 자동 집계에 포함되는 행(= 레포트 재수술 건수에 반영)
+            -- SurgeryStatsService 가 재수술 카운트의 원천으로 쓴다 — 자동판정 + 저장 판정 오버레이 후
+            -- laser/lens 는 자바(ReoperationOverlay)에서 시술명 패턴으로 분류.
+            -- autoIncluded=1 : 자동 집계에 포함되는 행 (저장 판정 없으면 그대로 재수술로 카운트)
             -- autoIncluded=0 : 제외된 행 + excludeReason(제외 카테고리 — RE_OPERATION 의 실제 사유값 기반)
             -- surgeon : 재수술 집도의(RE_OPERATION.AGAIN_DOCTOR → EMPLOYEE.EMP_NAME). 스칼라 서브쿼리라 행 배수 없음.
-            -- 조회/미리보기 전용 — 저장·레포트 반영은 별도 override 레이어에서 담당.
             -- 근거: docs/점검/재수술-분류_2026-01~07.md (2026-07-31 적용)
             WITH base AS (
                 SELECT
