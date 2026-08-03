@@ -36,6 +36,11 @@ export interface ReportItem {
     percentFractionDigits?: number
   }
   node?: ReactNode
+  /**
+   * 주차 레포트에만 싣는 항목. 월간 대응 데이터가 없어(주간보고 확정값) 월간에서는 빈 차트가 되므로
+   * MonthlyReportPage 가 걸러낸다.
+   */
+  weeklyOnly?: boolean
 }
 
 export const isDoneItem = (it: ReportItem) => Boolean(it.chart || it.node)
@@ -65,6 +70,10 @@ export function buildReportItems(
     { group: '검사 유입', id: 'exam-etc', label: '기타 검사', chart: { ...MONTHLY_CHART_LABELS['exam-etc'], series: 'examEtc' } },
     { group: '검사수', id: 'exam-cataract', label: '백내장 검사수', chart: { title: '백내장 검사수', series: 'cataractExam' } },
     { group: '검사수', id: 'exam-vision', label: '시력교정 검사', chart: { title: '시력교정 검사', series: 'visionExam' } },
+    // 드림렌즈 2종은 외래센터 주간보고 확정값(마트 골든 시드). 사내 시스템에 신규/FU 구분 소스가 없어
+    // 주차 단위 확정값만 존재한다 → 주차 레포트 전용.
+    { group: '검사수', id: 'dreamlens-new', label: '드림렌즈 신규수', weeklyOnly: true, chart: { title: '드림렌즈 신규수', series: 'dreamlensNew' } },
+    { group: '검사수', id: 'dreamlens-fu', label: '드림렌즈 FU수', weeklyOnly: true, chart: { title: '드림렌즈 FU수', series: 'dreamlensFu' } },
     { group: '검사수', id: 'exam-count', label: '검사수', chart: { title: '검사수', series: 'examCount' } },
     { group: '검사수', id: 'exam-oneday', label: '원데이 검사', chart: { title: '원데이 검사', series: 'oneDayExam' } },
     { group: '검사수', id: 'exam-general', label: '일반 검사', chart: { ...MONTHLY_CHART_LABELS['exam-general'], series: 'examGeneral' } },

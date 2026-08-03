@@ -16,10 +16,11 @@ export function MonthlyReportPage() {
   const [stopReasonMonth, setStopReasonMonth] = useState<number | null>(null)
   const activeStopReasonMonth = stopReasonMonth ?? (latestMonthIdx + 1)
 
+  // weeklyOnly 항목(드림렌즈 신규/FU)은 월간 대응 데이터가 없어 여기서 제외한다.
   const items = buildReportItems(series, {
     stopReasonMonth: activeStopReasonMonth,
     onStopReasonMonthChange: setStopReasonMonth,
-  })
+  }).filter((it) => !it.weeklyOnly)
 
   const shellItems: ShellReportItem[] = items.map((it) => ({
     group: it.group,

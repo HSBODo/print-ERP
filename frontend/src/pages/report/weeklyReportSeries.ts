@@ -65,6 +65,8 @@ export function buildWeeklySeries(
     cataractExam: pick((it) => num(it.cataractExam)),
     visionExam: pick((it) => num(it.visionExam)),
     examCount: pick((it) => num(it.examTotal)),
+    dreamlensNew: pick((it) => num(it.dreamlensNew)),
+    dreamlensFu: pick((it) => num(it.dreamlensFu)),
     oneDayExam: pick((it) => num(it.oneDay)),
     examGeneral: pick((it) => diff(it.visionExam, it.oneDay)),
 

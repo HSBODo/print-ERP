@@ -66,4 +66,9 @@ public class WeeklyReportItem {
 
     /* ── 외래 ── */
     private final Integer outpatient;
+
+    /* 드림렌즈 (외래센터 주간보고 확정값 — 마트 골든 시드 V30 가 유일 입력 지점).
+     * 사내 시스템에 신규/FU 를 나누는 소스가 없어 배치가 산출하지 않는다 → MSSQL 직결 경로에서는 null. */
+    private final Integer dreamlensNew;  // 주차별 드림렌즈 신규수
+    private final Integer dreamlensFu;   // 주차별 드림렌즈 FU수
 }

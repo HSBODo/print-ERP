@@ -65,6 +65,8 @@ public class WeeklyReportMartRepository {
                 .cataractSurgery(nullableInt(rs, "cataractSurgery"))
                 .totalSurgery(nullableInt(rs, "totalSurgery"))
                 .outpatient(nullableInt(rs, "outpatient"))
+                .dreamlensNew(nullableInt(rs, "dreamlensNew"))
+                .dreamlensFu(nullableInt(rs, "dreamlensFu"))
                 .build();
     }
 

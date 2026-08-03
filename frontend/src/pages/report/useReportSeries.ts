@@ -55,6 +55,8 @@ export type ReportSeriesKey =
   | 'examGeneralCustomer' | 'examReferralCustomer' | 'examReferralStaff'
   | 'examWorker' | 'examStudent' | 'examEtc' | 'examGeneral'
   | 'ratioGeneral' | 'rateVisionGeneral' | 'rateOneday' | 'stopRate'
+  // 주차 전용 — 외래센터 주간보고 확정값이라 월간 대응 계열이 없다(월간에서는 항상 빈 값).
+  | 'dreamlensNew' | 'dreamlensFu'
 
 /** year → 12개월 값 배열 (없는 달은 null) */
 export type MonthlySeries = Record<number, (number | null)[]>
@@ -144,6 +146,10 @@ export function useReportSeries(): ReportSeriesResult {
       visionSurgery:   build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.vision   ?? surgery.dataMap[y]?.[i]?.visionPatients),
       totalSurgery:    build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.total    ?? surgery.dataMap[y]?.[i]?.total),
       outpatient: build((y, i) => outpatient.dataMap[y]?.[i]?.outpatientCount),
+      // 드림렌즈 신규/FU 는 주차 단위 확정값만 존재한다 — 월간 레포트에서는 항목 자체를 감춘다
+      // (ReportItem.weeklyOnly). 여기서는 타입을 채우기 위한 빈 계열.
+      dreamlensNew: {},
+      dreamlensFu: {},
       // 시력교정 상담성공률(검사중단/수술불가 제외) — 전체/원데이/일반 3계열.
       // 24·25 는 V18 시드가 vision_general_book_rate 만 채우고 count 는 0 이므로,
       // count 가드로 이 세 라인이 잘못된 0% 로 표시되는 것을 방지.

@@ -48,6 +48,10 @@ const weeklyReportItemSchema = z.object({
 
   // 외래
   outpatient: count,
+
+  // 드림렌즈 — 외래센터 주간보고 확정값(마트 골든 시드). 시드가 없는 주는 null.
+  dreamlensNew: count,
+  dreamlensFu: count,
 })
 
 export type WeeklyReportItem = z.infer<typeof weeklyReportItemSchema>

@@ -26,7 +26,9 @@ SELECT
     vision_surgery      AS "visionSurgery",
     cataract_surgery    AS "cataractSurgery",
     total_surgery       AS "totalSurgery",
-    outpatient
+    outpatient,
+    dreamlens_new       AS "dreamlensNew",
+    dreamlens_fu        AS "dreamlensFu"
   FROM mart_weekly_report
  WHERE yr IN (:years)
  ORDER BY yr, wk
