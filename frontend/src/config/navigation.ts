@@ -99,6 +99,8 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'overall-exam',
   'overall-exam-weekly',
   'consultation-rate',
+  'exam-list',
+  'cataract-exam-list',
 ])
 export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
 
