@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -20,12 +21,24 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DreamlensLedgerService {
 
+    /**
+     * 한 번에 조회할 수 있는 최대 구간(일). 장부는 20년치 2.4만 행이라 상한이 없으면
+     * 전 구간 조회 시 응답이 18MB 를 넘고 엔티티도 전부 영속성 컨텍스트에 올라간다.
+     * 1년(윤년 포함 366일)이면 연 단위 조회는 그대로 되고 사고성 전 구간 조회만 막힌다.
+     */
+    private static final long MAX_RANGE_DAYS = 366;
+
     private final DreamlensLedgerRepository repository;
 
     @Transactional(readOnly = true)
     public List<DreamlensLedgerRow> findRows(LocalDate from, LocalDate to) {
         if (from.isAfter(to)) {
             throw new InvalidPeriodException("조회 시작일이 종료일보다 늦을 수 없습니다.");
+        }
+        long days = ChronoUnit.DAYS.between(from, to) + 1;
+        if (days > MAX_RANGE_DAYS) {
+            throw new InvalidPeriodException(
+                    "조회 구간은 최대 " + MAX_RANGE_DAYS + "일까지입니다. (요청: " + days + "일) 기간을 나눠 조회해주세요.");
         }
         return repository.findByEntryDateBetweenOrderByEntryDateDescIdDesc(from, to).stream()
                 .map(DreamlensLedgerRow::from)

@@ -4,6 +4,7 @@ import com.bviit.analytics.etc.entity.DreamlensLedgerEntry;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,47 +30,54 @@ import java.time.LocalDate;
 )
 public class DreamlensLedgerRequest {
 
+    /* 길이는 DreamlensLedgerEntry 의 @Column(length) 과 같은 값이어야 한다.
+     * 여기서 막지 않으면 DB 제약에 걸려 "데이터 조회에 실패했습니다"(503) 로 튀어
+     * 사용자가 원인을 알 수 없다. 400 + 필드 메시지로 돌려주는 게 목적이다. */
+    private static final String TOO_LONG = "{max}자를 넘을 수 없습니다.";
+
     @NotNull(message = "날짜는 필수입니다.")
     private LocalDate entryDate;
-    private String visitType;
-    private String customerNo;
-    private String customerName;
-    private String examiner;
-    private String purchaseType;
+    @Size(max = 50, message = TOO_LONG) private String visitType;
+    @Size(max = 50, message = TOO_LONG) private String customerNo;
+    @Size(max = 100, message = TOO_LONG) private String customerName;
+    @Size(max = 100, message = TOO_LONG) private String examiner;
+    @Size(max = 200, message = TOO_LONG) private String purchaseType;
 
-    private String rLensName;
-    private String rBox;
-    private String rLensSpec;
-    private String rColor;
+    @Size(max = 100, message = TOO_LONG) private String rLensName;
+    @Size(max = 50, message = TOO_LONG) private String rBox;
+    @Size(max = 100, message = TOO_LONG) private String rLensSpec;
+    @Size(max = 50, message = TOO_LONG) private String rColor;
     private LocalDate rReturnDate;
 
-    private String lLensName;
-    private String lBox;
-    private String lLensSpec;
-    private String lColor;
+    @Size(max = 100, message = TOO_LONG) private String lLensName;
+    @Size(max = 50, message = TOO_LONG) private String lBox;
+    @Size(max = 100, message = TOO_LONG) private String lLensSpec;
+    @Size(max = 50, message = TOO_LONG) private String lColor;
     private LocalDate lReturnDate;
 
-    @PositiveOrZero private int dlNewRevenue;
-    @PositiveOrZero private int dlRepurchaseRevenue;
-    @PositiveOrZero private int mNewRevenue;
-    @PositiveOrZero private int mRepurchaseRevenue;
-    @PositiveOrZero private int hlNewRevenue;
-    @PositiveOrZero private int hlRepurchaseRevenue;
-    @PositiveOrZero private int depositRevenue;
-    @PositiveOrZero private int fittingRevenue;
-    @PositiveOrZero private int supplyRevenue;
-    @PositiveOrZero private int treatmentRevenue;
+    private static final String NEGATIVE = "0원 이상이어야 합니다.";
 
-    private String nextReservation;
-    private String recall1;
-    private String recall1Reservation;
-    private String recall1Absent;
-    private String recall2;
-    private String recall2Reservation;
-    private String recall2Absent;
-    private String recall3;
-    private String recall3Reservation;
-    private String recall3Absent;
+    @PositiveOrZero(message = NEGATIVE) private int dlNewRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int dlRepurchaseRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int mNewRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int mRepurchaseRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int hlNewRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int hlRepurchaseRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int depositRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int fittingRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int supplyRevenue;
+    @PositiveOrZero(message = NEGATIVE) private int treatmentRevenue;
+
+    @Size(max = 200, message = TOO_LONG) private String nextReservation;
+    @Size(max = 200, message = TOO_LONG) private String recall1;
+    @Size(max = 200, message = TOO_LONG) private String recall1Reservation;
+    @Size(max = 200, message = TOO_LONG) private String recall1Absent;
+    @Size(max = 200, message = TOO_LONG) private String recall2;
+    @Size(max = 200, message = TOO_LONG) private String recall2Reservation;
+    @Size(max = 200, message = TOO_LONG) private String recall2Absent;
+    @Size(max = 200, message = TOO_LONG) private String recall3;
+    @Size(max = 200, message = TOO_LONG) private String recall3Reservation;
+    @Size(max = 200, message = TOO_LONG) private String recall3Absent;
 
     /** 비영속 엔티티로 변환 — 신규 저장, 또는 기존 행의 updateFrom 소스로 쓴다. */
     public DreamlensLedgerEntry toEntity() {

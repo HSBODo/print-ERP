@@ -58,6 +58,8 @@ export function LedgerCell({
         <input
           type={column.type === 'number' ? 'number' : column.type === 'date' ? 'date' : 'text'}
           min={column.type === 'number' ? 0 : undefined}
+          // 백엔드 @Size 와 같은 상한 — 여기서 막아야 길게 붙여넣어도 저장 실패로 끝나지 않는다.
+          maxLength={column.maxLength}
           list={column.suggestions ? suggestionListId(column.key) : undefined}
           autoFocus
           value={draft}

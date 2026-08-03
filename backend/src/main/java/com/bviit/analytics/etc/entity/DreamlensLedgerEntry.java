@@ -43,28 +43,30 @@ public class DreamlensLedgerEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /* ── 기본 정보 ── */
+    /* ── 기본 정보 ──
+     * 길이는 DreamlensLedgerRequest 의 @Size 와 반드시 같은 값을 쓴다.
+     * 어긋나면 검증을 통과한 값이 DB 제약에 걸려 500/503 으로 튄다(원인을 알 수 없는 실패).
+     */
     private LocalDate entryDate;
-    private String visitType;
-    private String customerNo;
-    private String customerName;
-    private String examiner;
-    /** 시트의 '주소' 컬럼 — 본원 재고구매 / 본원배송(택배발송희망) / 대여렌즈 등. */
-    @Column(length = 200)
-    private String purchaseType;
+    @Column(length = 50) private String visitType;
+    @Column(length = 50) private String customerNo;
+    @Column(length = 100) private String customerName;
+    @Column(length = 100) private String examiner;
+    /** 시트의 '주소' 컬럼 — 구매·배송 구분과 실제 배송 주소가 섞여 있다(주소는 최대 76자 관측). */
+    @Column(length = 200) private String purchaseType;
 
     /* ── R 렌즈 ── */
-    private String rLensName;
-    private String rBox;
-    private String rLensSpec;
-    private String rColor;
+    @Column(length = 100) private String rLensName;
+    @Column(length = 50) private String rBox;
+    @Column(length = 100) private String rLensSpec;
+    @Column(length = 50) private String rColor;
     private LocalDate rReturnDate;
 
     /* ── L 렌즈 ── */
-    private String lLensName;
-    private String lBox;
-    private String lLensSpec;
-    private String lColor;
+    @Column(length = 100) private String lLensName;
+    @Column(length = 50) private String lBox;
+    @Column(length = 100) private String lLensSpec;
+    @Column(length = 50) private String lColor;
     private LocalDate lReturnDate;
 
     /* ── 매출 10종 ── */
@@ -79,17 +81,17 @@ public class DreamlensLedgerEntry {
     @Builder.Default private int supplyRevenue = 0;
     @Builder.Default private int treatmentRevenue = 0;
 
-    /* ── 리콜 관리 ── */
-    private String nextReservation;
-    private String recall1;
-    private String recall1Reservation;
-    private String recall1Absent;
-    private String recall2;
-    private String recall2Reservation;
-    private String recall2Absent;
-    private String recall3;
-    private String recall3Reservation;
-    private String recall3Absent;
+    /* ── 리콜 관리 (날짜·메모가 자유롭게 섞여 들어와 넉넉히 잡는다) ── */
+    @Column(length = 200) private String nextReservation;
+    @Column(length = 200) private String recall1;
+    @Column(length = 200) private String recall1Reservation;
+    @Column(length = 200) private String recall1Absent;
+    @Column(length = 200) private String recall2;
+    @Column(length = 200) private String recall2Reservation;
+    @Column(length = 200) private String recall2Absent;
+    @Column(length = 200) private String recall3;
+    @Column(length = 200) private String recall3Reservation;
+    @Column(length = 200) private String recall3Absent;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

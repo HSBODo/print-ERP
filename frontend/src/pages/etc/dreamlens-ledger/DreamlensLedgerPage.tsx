@@ -5,11 +5,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
-import {
-  dreamlensLedgerApi,
-  type DreamlensLedgerRequest,
-  type DreamlensLedgerRow,
-} from '@/api/etc'
+import { dreamlensLedgerApi, type DreamlensLedgerRow } from '@/api/etc'
 import { LedgerCell } from './LedgerCell'
 import {
   EXAMINERS,
@@ -46,13 +42,6 @@ import {
   type SortState,
 } from './ledgerUtils'
 
-/** 저장 요청 본문 — 서버 계산값(totalRevenue)과 id 는 제외. */
-const toRequest = (row: DreamlensLedgerRow): DreamlensLedgerRequest => {
-  const draft = {} as Record<string, unknown>
-  for (const column of LEDGER_COLUMNS) draft[column.key] = row[column.key]
-  return draft as DreamlensLedgerRequest
-}
-
 const won = (value: number) => (value === 0 ? '' : value.toLocaleString('ko-KR'))
 
 /** 체크박스/합계 열 폭 — "합계"가 한 줄에 들어가야 세로로 쪼개지지 않는다. */
@@ -76,7 +65,7 @@ export function DreamlensLedgerPage() {
   const queryClient = useQueryClient()
   const queryKey = useMemo(() => ['dreamlens-ledger', queryFrom, queryTo], [queryFrom, queryTo])
 
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, error, isLoading, isFetching, isError } = useQuery({
     queryKey,
     queryFn: () => dreamlensLedgerApi.list(queryFrom, queryTo),
     enabled: Boolean(queryFrom && queryTo) && queryFrom <= queryTo,
@@ -132,11 +121,35 @@ export function DreamlensLedgerPage() {
   const setRows = (updater: (old: DreamlensLedgerRow[]) => DreamlensLedgerRow[]) =>
     queryClient.setQueryData<DreamlensLedgerRow[]>(queryKey, (old) => updater(old ?? []))
 
+  /**
+   * 저장 중인 행 id. mutation.variables 는 "가장 최근 한 건"만 가리켜서,
+   * A행 저장 중 B행을 건드리면 A행 잠금이 풀려 이전 편집이 되돌아갈 수 있었다.
+   */
+  const [pendingRows, setPendingRows] = useState<Set<number>>(new Set())
+  const markPending = (id: number, on: boolean) =>
+    setPendingRows((prev) => {
+      const next = new Set(prev)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
+
   const updateMutation = useMutation({
     mutationFn: ({ id, row }: { id: number; row: DreamlensLedgerRow }) =>
-      dreamlensLedgerApi.update(id, toRequest(row)),
+      dreamlensLedgerApi.update(id, row),
+    // 응답을 기다리지 않고 캐시를 먼저 갱신한다 — 다음 편집이 항상 최신 값 위에서 시작된다.
+    onMutate: ({ id, row }) => {
+      markPending(id, true)
+      setRows((old) => old.map((item) => (item.id === id ? row : item)))
+    },
     onSuccess: (saved) => setRows((old) => old.map((row) => (row.id === saved.id ? saved : row))),
-    onError: () => toast.error('저장하지 못했습니다. 잠시 후 다시 시도해주세요.'),
+    // 낙관적으로 반영해 둔 값이 틀렸을 수 있으니 서버 상태로 다시 맞춘다(직접 롤백하면
+    // 동시에 진행 중이던 다른 행의 편집까지 되돌릴 수 있다).
+    onError: () => {
+      toast.error('저장하지 못했습니다. 잠시 후 다시 시도해주세요.')
+      queryClient.invalidateQueries({ queryKey })
+    },
+    onSettled: (_data, _error, variables) => markPending(variables.id, false),
   })
 
   const createMutation = useMutation({
@@ -144,7 +157,7 @@ export function DreamlensLedgerPage() {
       // 새 행이 조회 구간 밖으로 나가 사라지지 않게 오늘이 구간 안일 때만 오늘로 둔다.
       const now = today()
       const date = now >= queryFrom && now <= queryTo ? now : queryTo
-      return dreamlensLedgerApi.create(emptyRow(date) as unknown as DreamlensLedgerRequest)
+      return dreamlensLedgerApi.create(emptyRow(date))
     },
     onSuccess: (saved) => {
       setRows((old) => [saved, ...old])
@@ -171,11 +184,17 @@ export function DreamlensLedgerPage() {
     onError: () => toast.error('삭제하지 못했습니다.'),
   })
 
-  const busyRowId = updateMutation.isPending ? updateMutation.variables?.id : undefined
   const busy = isLoading || isFetching
 
-  const commitCell = (row: DreamlensLedgerRow, key: LedgerFieldKey, next: string | number | null) => {
-    updateMutation.mutate({ id: row.id, row: { ...row, [key]: next } as DreamlensLedgerRow })
+  /**
+   * 셀 저장 — 페이로드는 렌더 시점의 행이 아니라 **캐시의 최신 행**으로 만든다.
+   * 렌더 클로저를 쓰면 직전 편집이 아직 반영되기 전 값으로 덮어써 편집이 되돌아간다.
+   */
+  const commitCell = (rowId: number, key: LedgerFieldKey, next: string | number | null) => {
+    const current = (queryClient.getQueryData<DreamlensLedgerRow[]>(queryKey) ?? [])
+      .find((row) => row.id === rowId)
+    if (!current) return
+    updateMutation.mutate({ id: rowId, row: { ...current, [key]: next } })
   }
 
   const totals = useMemo(() => {
@@ -443,8 +462,12 @@ export function DreamlensLedgerPage() {
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
           {isError ? (
-            <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">
-              장부를 불러오지 못했습니다. 조회 기간과 API 설정을 확인해주세요.
+            <div className="flex flex-1 items-center justify-center px-3 text-center text-sm text-red-500">
+              {/* 서버가 이유를 알려주면 그대로 보여준다 — "구간이 너무 넓다" 같은 안내는
+                  일반 문구로 덮으면 사용자가 무엇을 고쳐야 할지 알 수 없다. */}
+              {error instanceof Error && error.message
+                ? error.message
+                : '장부를 불러오지 못했습니다. 조회 기간과 API 설정을 확인해주세요.'}
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
@@ -552,8 +575,8 @@ export function DreamlensLedgerPage() {
                           key={column.key}
                           column={column}
                           value={row[column.key]}
-                          busy={busyRowId === row.id}
-                          onCommit={(next) => commitCell(row, column.key, next)}
+                          busy={pendingRows.has(row.id)}
+                          onCommit={(next) => commitCell(row.id, column.key, next)}
                         />
                       ))}
                     </tr>
