@@ -1,18 +1,15 @@
 import { useMemo, useState } from 'react'
-import { RotateCcw, Search, Check, Lock, CheckCircle2, ChevronDown, ChevronUp, ChevronsUpDown, Download } from 'lucide-react'
+import { RotateCcw, Search, ChevronDown, ChevronUp, ChevronsUpDown, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv, type CsvColumn } from '@/utils/csv'
 import { maskName } from '@/utils/mask'
 import { useReservationList } from '@/hooks/reservation/useReservationList'
-import { weekOf, weeksInRange, shortDate, weekSpillNote, type WeekRef } from '@/utils/weekBucket'
 import type { ReservationListItem } from '@/api/reservation/reservationList'
 
 /**
  * 예약자 리스트 — "예약 종합(콜·온라인)" 월간 건수를 구성하는 검사예약 인원 명단.
- * 등록일 기준 월 단위 조회 → 주별 승인 → 월별 체크(마감) 워크플로우.
- * 월 합계 = 예약 종합 값(둘 다 카카오 미포함). 카카오(해피톡)는 RESERVATION에 행이 없고 종합에서도 빠지므로
- * 참고용 건수만 표시한다. 승인/체크는 화면 상태(저장X) — 새로고침 시 초기화.
+ * 등록일 기준 월 단위로 조회한다. 명단 합계 = 예약 종합 값(둘 다 카카오 미포함).
  */
 
 /* ── 표시 헬퍼 ── */
@@ -104,11 +101,6 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'comment', label: '메모' },
 ]
 
-interface WeekGroup {
-  ref: WeekRef
-  count: number
-}
-
 export function ReservationListPage() {
   const [draftMonth, setDraftMonth] = useState(currentMonth())
   const [draftKeyword, setDraftKeyword] = useState('')
@@ -118,49 +110,27 @@ export function ReservationListPage() {
   const [subChannel, setSubChannel] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
-  const [approved, setApproved] = useState<Set<string>>(new Set())
-  const [selectedWeek, setSelectedWeek] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
 
   const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
-  const { rows, kakaoCount, isLoading, isFetching, isError } = useReservationList(from, to, hasSearched)
+  const { rows, isLoading, isFetching, isError } = useReservationList(from, to, hasSearched)
   const showLoading = hasSearched && (isLoading || isFetching)
 
-  // 채널 + 세부채널 필터(즉시 반영) — 주차 집계·상세 공통 기준
+  // 채널 + 세부채널 필터(즉시 반영)
   const channelFiltered = useMemo(() => {
     let base = channel === '전체' ? rows : rows.filter((r) => r.channelGroup === channel)
     if (subChannel) base = base.filter((r) => r.channel === subChannel)
     return base
   }, [rows, channel, subChannel])
 
-  // 주차별 그룹 (등록일 기준). 그 달의 모든 주차를 열거하고 건수를 채운다 — 데이터 없는 주도 0으로 유지.
-  const weeks = useMemo<WeekGroup[]>(() => {
-    const counts = new Map<string, number>()
-    for (const r of channelFiltered) {
-      if (!r.registeredAt) continue
-      const key = weekOf(r.registeredAt).key
-      counts.set(key, (counts.get(key) ?? 0) + 1)
-    }
-    return weeksInRange(from, to).map((ref) => ({ ref, count: counts.get(ref.key) ?? 0 }))
-  }, [channelFiltered, from, to])
-
-  // 월별 체크 상태
-  const approvedWeekCount = weeks.filter((w) => approved.has(w.ref.key)).length
-  const monthClosed = weeks.length > 0 && approvedWeekCount === weeks.length
-  const totalCount = weeks.reduce((s, w) => s + w.count, 0)
-  const approvedCount = weeks.filter((w) => approved.has(w.ref.key)).reduce((s, w) => s + w.count, 0)
-
-  // 상세 테이블 (채널 + 키워드 + 선택 주차)
+  // 상세 테이블 (채널 + 키워드)
   const detail = useMemo(() => {
     const q = queryKeyword.trim().toLowerCase()
-    return channelFiltered.filter((r) => {
-      if (selectedWeek && weekOf(r.registeredAt).key !== selectedWeek) return false
-      if (!q) return true
-      return r.name.toLowerCase().includes(q) || r.chartNo.includes(q)
-    })
-  }, [channelFiltered, queryKeyword, selectedWeek])
+    if (!q) return channelFiltered
+    return channelFiltered.filter((r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q))
+  }, [channelFiltered, queryKeyword])
 
   // 정렬 (헤더 클릭) — 한글·숫자 자연 정렬. 필터 결과 길이는 그대로라 건수·페이지 표시는 불변.
   const sorted = useMemo(() => {
@@ -183,7 +153,6 @@ export function ReservationListPage() {
     setHasSearched(true)
     setQueryMonth(draftMonth)
     setQueryKeyword(draftKeyword)
-    setSelectedWeek(null)
     setPage(1)
   }
 
@@ -194,26 +163,10 @@ export function ReservationListPage() {
     setQueryKeyword('')
     setChannel('전체')
     setSubChannel(null)
-    setApproved(new Set())
-    setSelectedWeek(null)
     setPage(1)
     setPageSize(50)
     setSort(null)
     setHasSearched(false)
-  }
-
-  const toggleApprove = (key: string) => {
-    setApproved((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
-
-  const selectWeek = (key: string) => {
-    setSelectedWeek((prev) => (prev === key ? null : key))
-    setPage(1)
   }
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
@@ -318,96 +271,6 @@ export function ReservationListPage() {
           </Button>
         </div>
       </div>
-
-      {/* 주차 승인 현황 (주별 승인 → 월별 체크). 데이터 없는 채널도 주차 영역 유지(건수 0). */}
-      {hasSearched && !isError && !showLoading && weeks.length > 0 && (
-        <div className="rounded-md border border-border/70 bg-white px-3 py-2 shadow-sm">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="text-sm font-bold text-gray-900">
-              {Number(queryMonth.slice(5))}월 주별 승인
-              <span className="ml-1.5 text-xs font-normal text-muted-foreground">예약 종합 · {subChannel ?? channel} (등록일 기준)</span>
-            </span>
-            {monthClosed ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                <CheckCircle2 className="h-3.5 w-3.5" /> 월 마감 완료
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
-                진행중 {approvedWeekCount}/{weeks.length}주 승인
-              </span>
-            )}
-            <span className="ml-auto text-xs text-muted-foreground">
-              승인 합계 <strong className="tabular-nums text-gray-900">{formatCount(approvedCount)}</strong> / 월 합계 {formatCount(totalCount)}건
-              {channel !== '콜' && subChannel === null && kakaoCount > 0 && (
-                <span className="ml-1 text-amber-600">
-                  · 카카오 {formatCount(kakaoCount)}건<span className="text-muted-foreground">(해피톡·종합 외, 참고)</span>
-                </span>
-              )}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {weeks.map((w) => {
-              const isApproved = approved.has(w.ref.key)
-              const isSelected = selectedWeek === w.ref.key
-              const spill = w.ref.partial ? weekSpillNote(w.ref) : null
-              return (
-                <div
-                  key={w.ref.key}
-                  className={`flex items-center gap-2.5 rounded-md border px-3 py-1.5 transition-colors ${
-                    isSelected ? 'border-blue-400 bg-blue-50/50' : 'border-border/70 bg-white'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => selectWeek(w.ref.key)}
-                    className="flex flex-col items-start gap-0.5 text-left"
-                    title="클릭 시 아래 표를 이 주차로 필터"
-                  >
-                    <span className="flex items-baseline gap-1.5">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {w.ref.week}주{w.ref.partial ? '*' : ''}
-                      </span>
-                      <span className="text-[11px] tabular-nums text-muted-foreground">
-                        {shortDate(w.ref.startDate)}~{shortDate(w.ref.endDate)}
-                        {w.ref.partial && ` · ${w.ref.days}일`}
-                      </span>
-                    </span>
-                    {spill && <span className="text-[10px] tabular-nums text-amber-600">{spill}</span>}
-                  </button>
-                  <span className="border-l border-border/60 pl-2.5 text-sm font-bold tabular-nums text-gray-900">
-                    {formatCount(w.count)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => toggleApprove(w.ref.key)}
-                    className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-semibold transition-colors ${
-                      isApproved
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                        : 'border border-border/80 bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {isApproved ? <><Lock className="h-3 w-3" /> 승인됨</> : <><Check className="h-3 w-3" /> 승인</>}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-          {weeks.some((w) => w.ref.partial) && (
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              <span className="font-semibold text-amber-600">*</span> 부분 주 — 월 경계에 걸친 주는 월요일~일요일 중 이 달(등록일)에 속한 날만 집계합니다(나머지는 이웃 달로). 중간 주는 모두 7일.
-            </p>
-          )}
-          {selectedWeek && (
-            <button
-              type="button"
-              onClick={() => { setSelectedWeek(null); setPage(1) }}
-              className="mt-2 text-[11px] text-blue-600 hover:underline"
-            >
-              주차 필터 해제 (전체 보기)
-            </button>
-          )}
-        </div>
-      )}
 
       {/* 상세 테이블 */}
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">

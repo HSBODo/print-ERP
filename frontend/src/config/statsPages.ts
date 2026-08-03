@@ -130,7 +130,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/reservation-list',
     'reservation-group',
     '예약',
-    '예약 종합(콜·온라인) 건수를 구성하는 검사예약 인원 명단입니다. 등록일 기준 월 단위 조회 + 주별 승인 → 월별 체크(마감) 워크플로우.',
+    '예약 종합(콜·온라인) 건수를 구성하는 검사예약 인원 명단입니다. 등록일 기준 월 단위로 조회합니다.',
     '/api/reservation-list'
   ),
   statsPage(
