@@ -205,14 +205,14 @@ describe('ReservationListHomepagePage', () => {
     setRows([row()])
     await searchWith('2026-06-01', '2026-06-30')
 
-    expect(screen.queryByText(/집계되지 않았습니다/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/다음 배치까지 표시되지 않습니다/)).not.toBeInTheDocument()
   })
 
   it('조회 기간이 스냅샷을 넘으면 경고를 띄운다 (조용한 미집계 방지)', async () => {
     setRows([row()])
     await searchWith('2026-07-01', '2026-07-15')
 
-    expect(screen.getByText(/집계되지 않았습니다/)).toBeInTheDocument()
+    expect(screen.getByText(/다음 배치까지 표시되지 않습니다/)).toBeInTheDocument()
     expect(screen.getByText('2026-07-10 16:15:55')).toBeInTheDocument()
   })
 
@@ -221,7 +221,7 @@ describe('ReservationListHomepagePage', () => {
     setRows([row()], '2026-07-15 15:22:57', true)
     await searchWith('2026-07-01', '2026-07-31')
 
-    expect(screen.queryByText(/집계되지 않았습니다/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/다음 배치까지 표시되지 않습니다/)).not.toBeInTheDocument()
     expect(screen.getByText(/레거시 홈페이지 운영 DB 를 직접 조회/)).toBeInTheDocument()
     expect(screen.getByText('2026-07-15 15:22:57')).toBeInTheDocument()
   })
