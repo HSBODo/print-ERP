@@ -67,7 +67,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/overall-exam',
     'exam-group',
     '검사',
-    '총검사자와 소개유형·직업 구성을 월별로 정리한 종합표입니다. 2024·2025년 확정값, 2026년부터 운영 DB 집계 예정.',
+    '총검사자와 소개유형·직업 구성을 월별로 정리한 종합표입니다. 2024·2025년 확정값(마트 시드), 2026년부터는 운영 DB 배치 적재 마트를 조회합니다.',
     '/api/stats/overall-exam'
   ),
   statsPage(
@@ -202,7 +202,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/cataract-reservation-rate',
     'consultation',
     '전환&성공률',
-    '백내장 검사자 대비 수술예약건 비율을 월별로 확인하는 화면입니다.',
+    '시력교정 검사자 대비 수술예약률과, 백내장 진단자 대비 수술예약률을 탭으로 나눠 월별로 확인하는 화면입니다.',
     '/api/stats/cataract-reservation-rate'
   ),
   statsPage(
@@ -247,7 +247,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/surgery-ratio',
     'surgery-ratio',
     '주요 수술별 비중',
-    '주요 수술 종류별 비중과 분포를 보여주는 화면입니다.',
+    '기준 연도와 월(연간 전체 가능)을 선택해 주요 수술 유형별 KPI·점유율과 상위 수술의 월별 추이를 함께 보는 화면입니다.',
     '/api/stats/surgery-ratio'
   ),
   statsPage(
@@ -256,7 +256,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/surgery-composition',
     'surgery',
     '수술',
-    '시술별(라섹·라식·스마일·ICL·백내장 등) 월별 수술 건수와 그룹 내 비중을 표로 보는 화면입니다.',
+    '시술별(라섹·라식·스마일·ICL·백내장 등) 수술 건수와 그룹 내 비중을 월별/주차(ISO)/주별/일별/전체 단위로 골라 보는 표 화면입니다.',
     '/api/stats/surgery-ratio'
   ),
   statsPage(

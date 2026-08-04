@@ -171,7 +171,7 @@ export function ReportSurgeryTable({ dataMap }: { dataMap: Record<number, Surger
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
           ※ 운영 DB 라이브(시술별). 엑스트라·웨이브비전·모노비전은 시력교정 부가시술(환자 수 기준),
-          재수술은 RE_OPERATION 레코드(건) 단위(레거시 월간보고와 ±1 일치). 재수술 레이저/렌즈 세부 분류는 팀장 검증 예정(Phase 2).
+          재수술은 RE_OPERATION 레코드(건) 단위(레거시 월간보고와 ±1 일치).
         </p>
       </CardContent>
     </Card>

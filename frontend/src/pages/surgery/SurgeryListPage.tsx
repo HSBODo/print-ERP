@@ -360,7 +360,7 @@ export function SurgeryListPage() {
             size="sm"
             className="bg-violet-600 text-xs text-white hover:bg-violet-700"
             onClick={openReoperation}
-            title="재수술 검토 — 자동 집계 포함/제외 확인 (조회·미리보기 전용)"
+            title="재수술 검토 — 자동 집계 포함/제외를 확인·수정하고 저장 (저장 판정은 자동판정보다 우선)"
           >
             <Repeat className="h-3.5 w-3.5" />
             재수술 검토

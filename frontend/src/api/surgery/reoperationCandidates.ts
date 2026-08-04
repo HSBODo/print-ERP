@@ -6,7 +6,9 @@ import { withQuery } from '@/api/_shared'
  * 재수술 후보 — RE_OPERATION 원본 행 + 자동판정(포함/제외)·제외사유.
  * 백엔드: GET /api/stats/surgery/reoperation-candidates?from&to → ApiResponse<List<Map>>.
  *
- * 조회·미리보기 전용. 담당자 포함/제외 결정의 저장·레포트 반영은 별도 override 레이어(개발 연동 예정).
+ * 이 API는 자동판정(포함/제외) 후보만 돌려주고, 담당자가 확정한 판정은 별도로 저장된다
+ * (`reoperationDecision.ts` — reoperation_decision 테이블). 통계·리스트 화면은 두 소스를
+ * ReoperationOverlay 로 합쳐 최종 재수술 여부를 결정한다.
  */
 const reoperationCandidateSchema = z.object({
   chartNo: z.string(),

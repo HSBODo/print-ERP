@@ -168,7 +168,7 @@ export function WeeklyReportPage() {
           </div>
         ) : (
           <div className="rounded-md border border-border/70 bg-muted/40 px-4 py-2.5 text-[13px] text-muted-foreground">
-            주차 값은 <b className="text-foreground">운영 DB 일별 집계</b>를 ISO 주차(월~일)로 묶은 라이브 수치입니다.
+            주차 값은 <b className="text-foreground">배치 적재 마트(운영 DB 일별 → ISO 주차)</b>를 조회한 수치입니다.
             월간 레포트의 2024·2025 는 레거시 확정값(월 단위)이라 주로 쪼갤 수 없어, 같은 달이라도 두 화면 합계가 미세하게 다를 수 있습니다.
           </div>
         )
