@@ -12,7 +12,8 @@ import { addDays, isoWeekMonday, isoWeeksInYear, toIsoDate } from '@/utils/isoWe
  * 월 경계 주차(`crossMonth`)는 두 달에 모두 속하므로 {@link weeksOfMonth} 가 양쪽 달에서 반환한다.
  * (예: 2026-08 선택 → 7/27~8/2 주차와 8/31~9/6 주차가 함께 나온다)
  *
- * ⚠️ `@/utils/weekBucket` 의 `weekOf()` 는 "그 달의 주차"(월 경계 분할)라 성격이 다르다. 혼동 주의.
+ * ⚠️ "그 달의 주차"(월 경계로 잘라 각 달에 귀속하는 방식, 주간 검사자 종합지표의 백엔드가 쓴다)와는
+ *    성격이 다르다. 혼동 주의.
  */
 
 const shortMd = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`

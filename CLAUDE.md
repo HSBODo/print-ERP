@@ -213,7 +213,7 @@ DELETE /api/dreamlens-ledger/{id}                     # 행 삭제
 
 > 📅 **주차 개념 3종 주의** — 이름이 비슷하지만 버킷 규칙이 다르다.
 > - **ISO 연간 주차**(`utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.
-> - **그 달의 주차**(`utils/weekBucket.ts` · `OverallExamWeeklyService`): 월 경계에서 잘라 각 달에 귀속 → 월 합계 = 그 달 주 합계. 주간 검사자 종합지표가 쓴다.
+> - **그 달의 주차**(`OverallExamWeeklyService`): 월 경계에서 잘라 각 달에 귀속 → 월 합계 = 그 달 주 합계. 주간 검사자 종합지표가 쓴다(백엔드 산정).
 > - **월별**: 마트 확정값(2024·2025 레거시 시드 포함).
 
 ### 응답 포맷
