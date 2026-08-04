@@ -2,7 +2,6 @@ import type { FC } from 'react'
 import { getMenuStatus, isAdminOnlyPage } from '../config/navigation'
 import type { UserRole } from '../stores/auth-session'
 import { reportPageRoutes } from './report/routes'
-import { overallPageRoutes } from './overall/routes'
 import { reservationPageRoutes } from './reservation/routes'
 import { examPageRoutes } from './exam/routes'
 import { consultationPageRoutes } from './consultation/routes'
@@ -18,7 +17,6 @@ import { adminPageRoutes } from './admin/routes'
 // 새 페이지 연결 = navigation.ts에 정의 + 해당 도메인 routes.ts에 한 줄 추가 (router.tsx 수정 불필요).
 export const PAGE_COMPONENTS: Record<string, FC> = {
   ...reportPageRoutes,
-  ...overallPageRoutes,
   ...reservationPageRoutes,
   ...examPageRoutes,
   ...consultationPageRoutes,

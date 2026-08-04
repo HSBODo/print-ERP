@@ -4,7 +4,7 @@ import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
 import type { OverallExamMonthlyItem } from '@/api/overall'
 
 /**
- * 전체지표 > 검사자 종합표.
+ * 검사 > 월별 검사자 종합지표.
  *
  * 레거시 "총검사자" 종합표(35칼럼)를 재현한다.
  * 전 연도 마트(mart_overall_exam_monthly) 기반 — 24·25 는 V14+V16 시드, 26+ 는 배치 라이브.

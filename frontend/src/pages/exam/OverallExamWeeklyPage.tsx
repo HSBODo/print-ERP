@@ -4,7 +4,7 @@ import { useOverallExamWeekly } from '@/hooks/overall/useOverallExamWeekly'
 import type { OverallExamWeeklyItem } from '@/api/overall'
 
 /**
- * 전체지표 > 주간 검사자 종합지표.
+ * 검사 > 주간 검사자 종합지표.
  *
  * 월별 "검사자 종합지표"와 동일한 9블록 35칼럼을, 주(월~일) 단위로 운영 DB에서 라이브 집계한다.
  * 주 정의: 월요일~일요일, 월 경계를 걸치는 주는 각 달로 잘라 귀속.
