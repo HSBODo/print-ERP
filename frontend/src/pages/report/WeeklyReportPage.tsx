@@ -162,16 +162,22 @@ export function WeeklyReportPage() {
         </>
       }
       banner={
-        weekly.isError ? (
-          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-900">
-            주차 집계를 불러오지 못했습니다. 운영 DB 연결(mssql/postgres-mart 프로파일)을 확인하세요.
+        <div className="space-y-2">
+          <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+            <b>🚧 개발예정 · 임시 프로토타입</b> — 지표 정의·집계 방식은 아직 확정되지 않았습니다.
+            여기 표시되는 수치는 참고용이며, 최종 확정 전까지 의사결정에 그대로 활용하지 마세요.
           </div>
-        ) : (
-          <div className="rounded-md border border-border/70 bg-muted/40 px-4 py-2.5 text-[13px] text-muted-foreground">
-            주차 값은 <b className="text-foreground">배치 적재 마트(운영 DB 일별 → ISO 주차)</b>를 조회한 수치입니다.
-            월간 레포트의 2024·2025 는 레거시 확정값(월 단위)이라 주로 쪼갤 수 없어, 같은 달이라도 두 화면 합계가 미세하게 다를 수 있습니다.
-          </div>
-        )
+          {weekly.isError ? (
+            <div className="rounded-md border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-900">
+              주차 집계를 불러오지 못했습니다. 운영 DB 연결(mssql/postgres-mart 프로파일)을 확인하세요.
+            </div>
+          ) : (
+            <div className="rounded-md border border-border/70 bg-muted/40 px-4 py-2.5 text-[13px] text-muted-foreground">
+              주차 값은 <b className="text-foreground">배치 적재 마트(운영 DB 일별 → ISO 주차)</b>를 조회한 수치입니다.
+              월간 레포트의 2024·2025 는 레거시 확정값(월 단위)이라 주로 쪼갤 수 없어, 같은 달이라도 두 화면 합계가 미세하게 다를 수 있습니다.
+            </div>
+          )}
+        </div>
       }
       items={shellItems}
       isLoading={weekly.isLoading || monthly.isLoading}

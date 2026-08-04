@@ -49,7 +49,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/report/weekly',
     'report-group',
     'Report',
-    '월간 레포트와 같은 도표를 주차(월~일) 단위로 본 리포트입니다. 전체 주차 또는 특정 월에 걸친 주차(월 경계 주차 포함)를 선택할 수 있습니다.',
+    '🚧 개발예정 · 임시 프로토타입 — 지표 정의·집계 방식이 확정되기 전 참고용 화면입니다. 월간 레포트와 같은 도표를 주차(월~일) 단위로 본 리포트로, 전체 주차 또는 특정 월에 걸친 주차(월 경계 주차 포함)를 선택할 수 있습니다.',
     '/api/report/weekly'
   ),
   statsPage(
