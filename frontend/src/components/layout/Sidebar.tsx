@@ -45,6 +45,19 @@ const statusTextClass = (status?: MenuStatus): string => {
   return 'text-gray-500 hover:text-gray-900'
 }
 
+/** ADMIN 롤 전용 항목 표시 배지 — 관리자에게만 노출되지만 어떤 항목이 제한 접근인지 눈에 띄게. */
+function AdminBadge() {
+  return (
+    <span
+      title="관리자 권한 필요"
+      aria-label="관리자 전용"
+      className="ml-auto shrink-0 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+    >
+      관리자
+    </span>
+  )
+}
+
 /** 깊이 depth 에서 활성 경로가 서브트리에 존재하는지 검사(활성 그룹 하이라이트용). */
 const containsPath = (item: MenuItem, pathname: string): boolean => {
   if (item.href === pathname) return true
@@ -215,6 +228,7 @@ function SidebarNode({
           {(!collapsed || depth > 0) && (
             <>
               <span className="flex-1 text-left truncate">{item.label}</span>
+              {item.adminOnly && <AdminBadge />}
               {isEmptySection ? (
                 <span className="text-xs text-gray-400">비어있음</span>
               ) : (
@@ -257,13 +271,14 @@ function SidebarNode({
                   <li key={leaf.id}>
                     <Link
                       to={leaf.href}
-                      className={`block rounded-md px-2.5 py-2 text-sm transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm transition-colors ${
                         pathname === leaf.href
                           ? 'bg-blue-50 font-medium text-blue-600'
                           : `${statusTextClass(leaf.status)} hover:bg-gray-50`
                       }`}
                     >
-                      {leaf.label}
+                      <span className="truncate">{leaf.label}</span>
+                      {leaf.adminOnly && <AdminBadge />}
                     </Link>
                   </li>
                 ))}
@@ -289,7 +304,8 @@ function SidebarNode({
           ${collapsed && depth === 0 ? `justify-center px-0 ${padY}` : `gap-2 ${padX} ${padY}`}`}
       >
         {depth === 0 && Icon && <Icon className="h-[18px] w-[18px] flex-shrink-0" />}
-        {(!collapsed || depth > 0) && <span className="truncate">{item.label}</span>}
+        {(!collapsed || depth > 0) && <span className="flex-1 truncate">{item.label}</span>}
+        {(!collapsed || depth > 0) && item.adminOnly && <AdminBadge />}
       </Link>
     </li>
   )
