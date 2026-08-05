@@ -1,7 +1,12 @@
-# Airflow Dataloader 쿼리 분석
+# Airflow Dataloader 쿼리 분석 — 레거시 ETL ↔ 대시보드 대조
 
-> 위치: `docs/airflow/*.py`
-> 원본: Airflow ETL 파이프라인에서 CRM MSSQL을 조회해 **일별 스냅샷 KPI**와 **비예약/바이럴 추적 리스트**를 뽑는 데이터로더.
+> **원본**: 별도 Airflow ETL 파이프라인(이 리포 코드 아님)의 데이터로더 8종.
+> CRM MSSQL을 조회해 **일별 스냅샷 KPI**와 **비예약/바이럴 추적 리스트**를 뽑는다.
+> `docs/airflow/*.py` 사본은 2026-08-05 정리 때 삭제했다 — 쿼리 조건·필터·함정은 아래 §2·§3 에 전부 옮겨져 있고,
+> 원본 파일이 필요하면 Airflow ETL 리포에서 받는다(사본은 이 리포 git 이력에도 남아 있다).
+>
+> **이 문서를 언제 보나**: 레거시 Airflow 숫자와 대시보드 숫자가 안 맞을 때 → §5.
+>
 > 참조: `docs/db/tables/RESERVATION.md`, `EXAM.md`, `OPERATIONDATA.md`, `COSTPRICE.md`, `CUSTOM.md`.
 
 ## 📑 목차
