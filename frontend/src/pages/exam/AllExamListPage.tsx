@@ -11,6 +11,8 @@ import {
   compareSortValue,
   buildPaginationItems,
   formatCount,
+  GROUP_FILTERS,
+  matchesExamGroup,
   PAGE_SIZE_OPTIONS,
   QUICK_RANGES,
   previousMonthValue,
@@ -34,7 +36,6 @@ const DEFAULT_TO = toMonthEnd(PREV_MONTH)
  * 레포트 검사유입·검사수 수치와 정합한다. (상세 컬럼은 기존 개별 리스트 유지)
  */
 
-const GROUP_FILTERS = ['전체', '시력교정', '드림렌즈', '백내장'] as const
 const ONEDAY_FILTERS = ['전체', '원데이', '일반'] as const
 const INTRO_FILTERS = ['전체', '일반', '고객소개', '직원소개'] as const
 const JOB_FILTERS = ['전체', '직장인', '학생', '기타'] as const
@@ -76,7 +77,7 @@ export function AllExamListPage() {
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase()
     return rows.filter((r) => {
-      if (examGroup !== '전체' && r.examGroup !== examGroup) return false
+      if (!matchesExamGroup(r, examGroup)) return false
       if (oneDayFilter !== '전체' && r.examType !== oneDayFilter) return false
       if (introType !== '전체' && r.introType !== introType) return false
       if (jobBucket !== '전체' && r.jobBucket !== jobBucket) return false

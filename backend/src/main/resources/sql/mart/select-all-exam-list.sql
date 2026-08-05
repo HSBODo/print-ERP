@@ -28,7 +28,7 @@ WITH src AS (
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
            phone1, phone2, email, counselor, doctor, optometrist,
-           last_visit, memo, 'N' AS one_day, classification
+           last_visit, memo, one_day, classification
       FROM list_cataract_exam
      WHERE exam_date >= CAST(:from AS DATE)
        AND exam_date <= CAST(:to   AS DATE)
@@ -38,12 +38,11 @@ SELECT
     COALESCE(name, '')                         AS "name",
     TO_CHAR(exam_date, 'YYYY-MM-DD')           AS "examDate",
     COALESCE(exam_category, '')                AS "examGroup",
-    CASE
-        WHEN exam_category = '백내장'   THEN ''
-        WHEN exam_category = '드림렌즈' THEN ''
-        WHEN one_day = 'Y'              THEN '원데이'
-        ELSE '일반'
-    END                                         AS "examType",
+    -- 원데이/일반 이진값. 빈칸(해당없음)은 두지 않는다 — 2026-08-05 확정.
+    --   시력교정 : list_exam.one_day        (같은날 M/5 예약 내원)
+    --   백내장   : list_cataract_exam.one_day (진료구분 C_원데이·C_노안원데이, V32)
+    --   드림렌즈 : 구조상 원데이가 불가능(M 예약이 있으면 시력교정으로 분류) → 항상 '일반'
+    CASE WHEN one_day = 'Y' THEN '원데이' ELSE '일반' END AS "examType",
     COALESCE(classification, '')                AS "cataractClass",
     COALESCE(patient_type, '')                 AS "patientType",
     CASE

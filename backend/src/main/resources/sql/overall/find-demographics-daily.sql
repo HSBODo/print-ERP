@@ -1,3 +1,7 @@
+            -- 총검사자·직업구분·소개구분 일별 (월간 레포트 #4~#6·#8~#10, 주간 검사자 종합지표).
+            -- 모집단은 sql/fragments/exam-session-source.sql 공유 — 검사수 도표·검사자 리스트와 1:1 정합.
+            --   (2026-08-04 이전에는 `EXAM 전부 + Cataract_Exam 전부` 라 popTotal 이 검사수보다 컸다)
+            -- popTotal = 검사수(전체). 직업 3분류 합 = popTotal, 소개 3분류 합 = popTotal 이어야 한다.
             SELECT p.d AS d,
                    COUNT(*) AS popTotal,
                    SUM(p.isCat) AS cataractSessions,
@@ -28,13 +32,7 @@
                         END) AS jobBucket,
                        m.motiveL AS motiveL
                 FROM (
-                    SELECT e.CUST_NUM AS cn, e.EXAM_DATE AS d, 0 AS isCat
-                    FROM EXAM e WITH(NOLOCK)
-                    WHERE e.EXAM_DATE >= :from AND e.EXAM_DATE <= :to
-                    UNION ALL
-                    SELECT ce.CUST_NUM AS cn, ce.EXAM_DATE AS d, 1 AS isCat
-                    FROM Cataract_Exam ce WITH(NOLOCK)
-                    WHERE ce.EXAM_DATE >= :from AND ce.EXAM_DATE <= :to
+__EXAM_SESSION_SOURCE__
                 ) src
                 LEFT JOIN CUSTOM cu WITH(NOLOCK) ON cu.CUST_NUM = src.cn
                 CROSS APPLY (SELECT LTRIM(RTRIM(ISNULL(cu.JOB, ''))) AS j) jj

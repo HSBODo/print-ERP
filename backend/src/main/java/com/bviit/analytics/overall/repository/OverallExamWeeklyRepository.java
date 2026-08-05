@@ -46,7 +46,8 @@ public class OverallExamWeeklyRepository {
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
     ) {
         this.jdbc = jdbc;
-        this.findDemographicsDailySql = SqlLoader.load(FIND_DEMOGRAPHICS_DAILY_SQL);
+        this.findDemographicsDailySql = SqlLoader.load(FIND_DEMOGRAPHICS_DAILY_SQL)
+                .replace("__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource());
         this.findVisionDailySql = SqlLoader.load(FIND_VISION_DAILY_SQL);
         this.findCataractDailySql = SqlLoader.load(FIND_CATARACT_DAILY_SQL);
         this.findDreamlensDailySql = SqlLoader.load(FIND_DREAMLENS_DAILY_SQL);

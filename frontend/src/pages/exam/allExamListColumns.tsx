@@ -14,6 +14,8 @@ const GROUP_STYLE: Record<string, string> = {
 const CATARACT_CLASS_STYLE: Record<string, string> = {
   백내장: 'bg-amber-50 text-amber-700',
   중단: 'bg-rose-50 text-rose-700',
+  '노안/FU': 'bg-sky-50 text-sky-700',
+  기타: 'bg-gray-100 text-gray-600',
 }
 const INTRO_STYLE: Record<string, string> = {
   일반: 'bg-gray-100 text-gray-600',
@@ -73,10 +75,11 @@ export const COLUMNS: Column[] = [
   { key: 'rowNo', label: 'No', align: 'center', min: '3.5rem', render: (_r, n) => n.toLocaleString('ko-KR'), csv: (_r, n) => n },
   { key: 'examDate', label: '검사일', align: 'center', min: '5.5rem' },
   { key: 'examGroup', label: '검사구분', align: 'center', min: '5rem', render: (r) => cell.badge(r.examGroup, GROUP_STYLE[r.examGroup]) },
+  // 원데이/일반 이진값 — 빈칸 없음. 백내장은 진료구분 C_원데이·C_노안원데이, 시력교정은 같은날 M/5 내원 기준.
   { key: 'examType', label: '원데이', align: 'center', min: '4.5rem', render: (r) => (
     r.examType === '원데이'
       ? cell.badge('원데이', 'bg-violet-100 text-violet-700')
-      : <span className="text-gray-400">{r.examType || '—'}</span>
+      : <span className="text-gray-400">일반</span>
   ) },
   { key: 'cataractClass', label: '백내장분류', align: 'center', min: '6rem', render: (r) => cell.badge(r.cataractClass, CATARACT_CLASS_STYLE[r.cataractClass]) },
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_STYLE[r.patientType]) },

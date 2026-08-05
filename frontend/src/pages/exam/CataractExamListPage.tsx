@@ -21,10 +21,16 @@ import {
   buildPaginationItems,
   getSortValue,
   compareSortValue,
+  summarizeClassifications,
+  EXAM_COUNT_CLASSES,
   type PeriodMode,
   type QuickRangeKey,
   type SortState,
 } from './cataractExamListUtils'
+
+/** 백내장 검사수에 안 들어가는 분류는 옅게 — 총건수를 검사수로 오독하지 않게. */
+const CLASS_CHIP_TONE = (name: string) =>
+  EXAM_COUNT_CLASSES.includes(name) ? 'text-amber-800' : 'text-amber-700/70'
 
 export function CataractExamListPage() {
   const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
@@ -61,16 +67,7 @@ export function CataractExamListPage() {
 
   const tableRows = filtered
 
-  // 분류(백내장/중단) 건수 — 월간 레포트 백내장 검사수 = 총건수.
-  const classCounts = useMemo(() => {
-    let cataract = 0
-    let stopped = 0
-    for (const row of tableRows) {
-      if (row.classification === '중단') stopped += 1
-      else cataract += 1
-    }
-    return { cataract, stopped, total: tableRows.length }
-  }, [tableRows])
+  const classCounts = useMemo(() => summarizeClassifications(tableRows), [tableRows])
 
   const sortedRows = useMemo(() => {
     if (!sortState) return tableRows
@@ -281,13 +278,20 @@ export function CataractExamListPage() {
         <div
           className="flex h-8 items-center gap-2.5 rounded-md border border-amber-300 bg-amber-100 px-3 text-xs"
           aria-live="polite"
-          title="총건수 = 월간 레포트 백내장 검사수. 백내장(상담사 배정) + 중단(상담사 BS미지정)."
+          title="총건수 = 레거시 BCRM 백내장 검사 전체. 월간 레포트 백내장 검사수는 백내장(검안사·상담사 배정) + 중단(상담사 BS미지정)만 센다. 노안/FU(검안사 미배정 + 상담사 BS미지정)와 기타는 전체 검사수에만 더해진다."
         >
           <span className="font-medium text-amber-700">총건수</span>
           <strong className="tabular-nums text-amber-900">{formatCount(classCounts.total)}건</strong>
           <span className="h-3.5 w-px bg-amber-300" />
-          <span className="text-amber-800">백내장 <strong className="tabular-nums text-amber-900">{formatCount(classCounts.cataract)}</strong></span>
-          <span className="text-amber-800">중단 <strong className="tabular-nums text-amber-900">{formatCount(classCounts.stopped)}</strong></span>
+          <span className="font-medium text-amber-800">
+            백내장검사수 <strong className="tabular-nums text-amber-900">{formatCount(classCounts.examCount)}</strong>
+          </span>
+          <span className="h-3.5 w-px bg-amber-300" />
+          {classCounts.breakdown.map(({ name, count }) => (
+            <span key={name} className={CLASS_CHIP_TONE(name)}>
+              {name} <strong className="tabular-nums text-amber-900">{formatCount(count)}</strong>
+            </span>
+          ))}
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>

@@ -1,16 +1,36 @@
--- 백내장 검사자 리스트 — 백내장검사 예약(RESERVATION FLAG='H') 기준, 고객당 1행.
+-- 백내장 검사자 리스트 — 백내장검사 예약(RESERVATION FLAG='H') 기준, 고객 × 검사일 1행.
 --
--- 레거시 원장: BCRM > 통계(C) > 통계_백내장_내원동기 의 분류 '백내장' + '중단'.
+-- 레거시 원장: BCRM > 통계(C) > 통계_백내장_내원동기. 레거시 화면 건수와 1:1 (2026-07 = 102).
 -- 2026-07-23 모집단 교체 — 종전 Cataract_Exam 행 기준(6월 114건)은 월간 레포트 숫자와 맞지 않았다.
--- 이제 리스트 건수 = 월간 레포트 백내장 검사수 (6월 55 = 백내장 45 + 중단 10).
+-- 2026-08-05 모집단 확장 — 담당자 필터를 걷어내고 레거시 전체(102)를 싣되 분류로 가른다.
+--   종전에는 '백내장'+'중단'만 실어 7월 56행이었고, 레거시 102행 중 46행이 화면에서 사라졌다.
 --
--- 모집단:
---   1) 기간 내 백내장검사 예약 내원 — FLAG='H' · JINRYO<>'3'(C_재검사) · SEQ<>3(노안5진료실) · STATE NOT IN ('C','Y')
---   2) 검안사(MY_OPTOMETRIST) 배정됨  → 미배정이면 레거시 분류 'F/U'(외래 추적)라 제외
---   3) 상담사 = 'BS0808'(BS미지정) → 분류 '중단' / 상담사 배정됨 → 분류 '백내장'. 둘 다 포함.
+-- ⚠️ 건수 불변식 — 월간 레포트 백내장 검사수 = 이 리스트의 분류 '백내장' + '중단' (2026-07 = 45+11 = 56).
+--    나머지 분류('노안/FU'·'기타')는 전체 검사수에만 더해진다. sql/fragments/exam-session-source.sql 참조.
+--    리스트 전체 행수(102)를 백내장 검사수로 쓰면 안 된다.
+--
+-- 모집단: 기간 내 백내장검사 예약 내원 — FLAG='H' · JINRYO<>'3'(C_재검사) · SEQ<>3(수술 당일 검사)
+--         · STATE NOT IN ('C','Y') · 테스트 고객 제외. 담당자 배정 여부는 거르지 않고 분류로만 쓴다.
+--
+-- 분류(레거시 CASE 와 동일 구조. 담당자는 CUSTOM 마스터 필드라 방문이 아니라 고객 기준):
+--   백내장   검안사 O + 상담사 O
+--   중단     검안사 O + 상담사 = 'BS0808'(BS미지정)
+--   노안/FU  검안사 X + 상담사 = 'BS0808'  ← 레거시 라벨 'F/U'
+--   기타     그 외(검안사 미배정 + 상담사도 BS0808 아님)
+--
+-- ⚠️ '노안/FU'는 술후 추적이 아니다 — 2026-07 40건 전부 과거 백내장 수술기록이 없고 수술 연계도 0건이다.
+--    (37건은 기간 내 백내장 검사기록 보유. 진료실도 전부 '노안/백내장 1·2·3'.)
+--    다만 원천에 노안 전용 코드(C_노안원데이·C_노안레이저)로 잡힌 건은 0건이라 '노안'은 정황 판단이다.
+-- ⚠️ '기타'를 '미검사'로 부르지 말 것 — 2026-01~07 총 11건 중 2건은 백내장 검사기록이 있다.
+-- ⚠️ 레거시의 5번째 분기 '검진'(CUSTOM.ETC LIKE '검진%')은 넣지 않았다. 2026-01~07 실측 0건이라
+--    사문화된 분기이고, 해당되면 '기타'로 떨어진다. 되살릴 일이 생기면 여기에 분기를 추가할 것.
 --
 -- ⚠️ 담당자 판정은 EXISTS(EMPLOYEE) 로 할 것. `MY_OPTOMETRIST IS NOT NULL` 은 빈 문자열이 걸려 분류가 뒤집힌다.
--- ⚠️ 검사일 = 기간 내 첫 H 예약일. 레거시는 역대 최초값(MIN 전 기간)을 쓰는데 조회기간과 무관해 2020년이 찍히는 버그다 — 따르지 않는다.
+-- ⚠️ 검사일 = 각 H 예약 내원일. 레거시는 역대 최초값(MIN 전 기간)을 쓰는데 조회기간과 무관해 2020년이 찍히는 버그다 — 따르지 않는다.
+-- ⚠️ 2026-08-04: 종전 `고객당 1행 + MIN(RESERVE_DATE)` 은 조회기간에 따라 결과가 달라졌다.
+--    마트를 연 단위로 적재하면 같은 해에 두 번 내원한 고객이 첫 방문 달로 몰려 이후 달에서 사라진다
+--    (2026: 김다연 03-09·07-20 → 07월 56→55). 범위와 무관하도록 고객 × 검사일로 센다.
+--    sql/fragments/exam-session-source.sql(레포트 집계)의 백내장 단위와도 일치한다.
 -- ⚠️ Cataract_Exam(적절IOL·견적가·검사메모 등)은 LEFT 성격이다. 예약은 있으나 검사기록이 없으면 공백(6월 55명 중 1명).
 --
 -- READ-ONLY · MSSQL 2014 호환. 날짜는 char(10) 'YYYY-MM-DD'.
@@ -25,7 +45,11 @@
               )                                            AS examType,
               ISNULL(rsvReg.regDate, '')                   AS examRegDate,
               '백내장'                                      AS examCategory,
-              CASE WHEN CH.isStop = 1 THEN '중단' ELSE '백내장' END AS classification,
+              CH.classification                             AS classification,
+              -- 원데이(백내장) — 그 날 백내장검사 예약 진료구분이 C_원데이(7)·C_노안원데이(9)면 Y.
+              -- 시력교정(find-exam-list.sql)은 같은날 M/5 예약 내원 기준이라 근거가 다르다.
+              -- 전체 검사자 리스트 원데이 컬럼은 이 값으로 원데이/일반 둘 중 하나가 된다(빈칸 없음).
+              CASE WHEN CH.isOneDay = 1 THEN 'Y' ELSE 'N' END AS oneDay,
               CASE WHEN ISNULL(cu.FIRST_DAY, '') >= :from AND ISNULL(cu.FIRST_DAY, '') <= :to
                    THEN '신환' ELSE '구환' END             AS patientType,
               ISNULL(ce.EXAM_MEMO, '')                     AS examMemo,
@@ -79,10 +103,19 @@
               ISNULL(nation.Nation_CodeName, '')           AS nationality
             FROM (
               SELECT B.CUST_NUM,
-                     MIN(D.RESERVE_DATE) AS examDate,
-                     CASE WHEN B.MY_COUNSELOR = 'BS0808' THEN 1 ELSE 0 END AS isStop
+                     D.RESERVE_DATE AS examDate,
+                     -- 그 날 예약이 여러 건이면 하나라도 원데이면 원데이로 본다(MAX).
+                     MAX(CASE WHEN ISNULL(D.RESERVE_JINRYO, '') IN ('7', '9') THEN 1 ELSE 0 END) AS isOneDay,
+                     CASE WHEN opt.v = 1 AND B.MY_COUNSELOR = 'BS0808' THEN N'중단'
+                          WHEN opt.v = 1 AND cns.v = 1                 THEN N'백내장'
+                          WHEN B.MY_COUNSELOR = 'BS0808'               THEN N'노안/FU'
+                          ELSE N'기타' END AS classification
               FROM CUSTOM B WITH(NOLOCK)
               JOIN RESERVATION D WITH(NOLOCK) ON D.CUST_NUM = B.CUST_NUM
+              CROSS APPLY (SELECT CASE WHEN EXISTS (SELECT 1 FROM EMPLOYEE E WITH(NOLOCK)
+                                                    WHERE E.EMP_NUM = B.MY_OPTOMETRIST) THEN 1 ELSE 0 END AS v) opt
+              CROSS APPLY (SELECT CASE WHEN EXISTS (SELECT 1 FROM EMPLOYEE E WITH(NOLOCK)
+                                                    WHERE E.EMP_NUM = B.MY_COUNSELOR)   THEN 1 ELSE 0 END AS v) cns
               WHERE D.RESERVE_DATE >= :from AND D.RESERVE_DATE <= :to
                 AND D.RESERVE_FLAG = 'H'
                 AND ISNULL(D.RESERVE_JINRYO, '') <> '3'
@@ -93,12 +126,11 @@
                   ISNULL(B.CUST_NAME, '') LIKE N'%테스트%'
                   OR LOWER(ISNULL(B.CUST_NAME, '')) LIKE '%test%'
                 )
-                AND EXISTS (SELECT 1 FROM EMPLOYEE E WITH(NOLOCK) WHERE E.EMP_NUM = B.MY_OPTOMETRIST)
-                AND (
-                  B.MY_COUNSELOR = 'BS0808'
-                  OR EXISTS (SELECT 1 FROM EMPLOYEE E WITH(NOLOCK) WHERE E.EMP_NUM = B.MY_COUNSELOR)
-                )
-              GROUP BY B.CUST_NUM, CASE WHEN B.MY_COUNSELOR = 'BS0808' THEN 1 ELSE 0 END
+              GROUP BY B.CUST_NUM, D.RESERVE_DATE,
+                       CASE WHEN opt.v = 1 AND B.MY_COUNSELOR = 'BS0808' THEN N'중단'
+                            WHEN opt.v = 1 AND cns.v = 1                 THEN N'백내장'
+                            WHEN B.MY_COUNSELOR = 'BS0808'               THEN N'노안/FU'
+                            ELSE N'기타' END
             ) CH
             JOIN CUSTOM cu WITH(NOLOCK)                       ON cu.CUST_NUM = CH.CUST_NUM
             OUTER APPLY (
