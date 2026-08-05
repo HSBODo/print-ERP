@@ -129,7 +129,7 @@ project-root/
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 38개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 25개 / **미구현(pending)** 13개.
+`statsPages.ts`에 42개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **미구현(pending)** 13개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
@@ -139,6 +139,7 @@ project-root/
 | intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
 | reservation-list | 예약자 리스트 | /stats/reservation-list | 예약 | 완료 (메뉴 순서: 예약 종합보다 앞) |
+| reservation-list-homepage | 예약자 리스트_홈페이지 | /stats/reservation-list-homepage | 예약 | 완료 (레거시 홈페이지 소스 · `HOMEPAGE_DATASOURCE_URL` 미설정 시 503) |
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
@@ -147,6 +148,7 @@ project-root/
 | exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 |
 | cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 |
 | all-exam-list | 전체 검사자 리스트 | /stats/all-exam-list | 검사 | 완료 (시력교정+백내장 통합, 종합지표 정합) |
+| eoeis-checkup | 아이리더 검사통계 | /stats/eoeis-checkup | 검사 | 완료 (2026-08-05 신규 · 검사자×장비/기간 피벗 · `EOEIS_DATASOURCE_URL` 미설정 시 503) |
 | examination | 시술별 | /stats/examination | 검사 | 완료 |
 | procedure-exam | 검사건수 | /stats/procedure-exam | 검사 | 완료 |
 | consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 |
@@ -173,6 +175,7 @@ project-root/
 | designated-doctor | 지정의 수술 비율 | /stats/designated-doctor | 기타 | 미구현 |
 | visit-reason | 내원동기별 비중 | /stats/visit-reason | 기타 | 미구현 |
 | daily-reception | 일일 접수/응대 건수 | /stats/daily-reception | 기타 | 미구현 |
+| batch-management | 데이터 배치 관리 | /admin/batch | 관리자 | 완료 (관리자 전용 · 마트 재적재/실행 이력) |
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
@@ -346,12 +349,11 @@ cd frontend && npm run test              # Vitest
 ### Git
 
 - 커밋: `feat: 예약 통계 페이지 구현`, `fix: 달성률 소수점 계산 오류`
-- 브랜치: `dev` (개발, 기본), `main` (운영)
-- **배포 플로우**: `dev` → PR → `main` (main에 직접 push 금지)
-  1. `dev`에서 작업 및 커밋
-  2. `git push origin dev`
-  3. `gh pr create --base main` 로 PR 생성
-  4. PR 머지 후 로컬 동기화 (`git pull origin main`)
+- **커밋·푸시는 작업 브랜치 `2026-07-29` 안에서만 한다** (`git push origin 2026-07-29`).
+- 🚫 **`main` 은 물론 `develop` 으로도 임의로 push·PR 하지 않는다.** 운영 반영은 **개발자와 협의해서** 진행한다.
+  협의 없이 `gh pr create --base main` 을 만들거나 다른 브랜치로 밀지 말 것 — 개발자 브랜치와 어긋나면
+  복구 비용이 크다(2026-08-05에 실제로 작업분이 갈라져 재적용이 필요했다).
+- 브랜치 정리·머지 시점도 개발자 결정 사항이다. 이쪽에서는 `2026-07-29` 만 최신으로 유지한다.
 
 ### 코드 품질
 

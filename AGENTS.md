@@ -261,7 +261,9 @@ cd frontend && npm run test              # Vitest
 ### Git
 
 - 커밋: `feat: 예약 통계 페이지 구현`, `fix: 달성률 소수점 계산 오류`
-- 브랜치: `feature/reservation-stats`, `fix/export-encoding`
+- **커밋·푸시는 작업 브랜치 `2026-07-29` 안에서만 한다** (`git push origin 2026-07-29`).
+- 🚫 **`main`·`develop` 으로 임의 push·PR 금지** — 운영 반영은 **개발자와 협의**해서 진행한다.
+  (자세한 배경은 `CLAUDE.md` 의 같은 항목 참조)
 
 ### 코드 품질
 
