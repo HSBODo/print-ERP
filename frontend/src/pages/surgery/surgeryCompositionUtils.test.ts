@@ -68,8 +68,9 @@ describe('COLS — PIOL 합계와 프레스비욘드', () => {
   const PIOL_TOTAL = 4
   const PRESBYOND = 10
 
-  it('PIOL 합계는 유형별 합산이 아니라 piolPatients(실인원)를 쓴다', () => {
-    // 양안에 다른 렌즈를 넣은 환자가 있어 합산(168)과 실인원(148)이 다른 상황.
+  it('PIOL 합계는 유형별 합산이 아니라 piolPatients 를 쓴다', () => {
+    // 유형별은 환자당 대표유형 1건만 세므로 정상적으로는 합계와 일치한다(41+68+16+22+1=148).
+    // 여기서는 화면이 자체 합산을 하지 않는다는 것 자체를 고정한다 — 일부러 어긋나게 준 값.
     const d = cell({
       icl: 44, tIcl: 76, kpl: 19, tKpl: 28, viva: 1,
       piolPatients: 148,
@@ -78,6 +79,16 @@ describe('COLS — PIOL 합계와 프레스비욘드', () => {
     const rendered = COLS[PIOL_TOTAL].render(d)
     expect(rendered).toContain('148')
     expect(rendered).not.toContain('168') // 44+76+19+28+1 로 더하면 안 된다
+  })
+
+  it('대표유형 기준에서는 유형별 합이 PIOL 합계와 일치한다 (2026-07 실측)', () => {
+    const d = cell({
+      icl: 41, tIcl: 68, kpl: 16, tKpl: 22, viva: 1,
+      piolPatients: 148,
+      visionPatients: 784,
+    })
+    expect(d.icl + d.tIcl + d.kpl + d.tKpl + d.viva).toBe(d.piolPatients)
+    expect(COLS[PIOL_TOTAL].render(d)).toContain('148')
   })
 
   it('PIOL 합계는 유형별 값이 0이어도 piolPatients 를 그대로 보여준다', () => {

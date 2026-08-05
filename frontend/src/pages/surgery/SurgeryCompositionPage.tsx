@@ -56,13 +56,12 @@ function CompositionHead() {
         <th rowSpan={2} className={TH_V}>단초점</th>
       </tr>
       <tr className="border-b border-border text-muted-foreground">
-        {/* PIOL 은 '합계'가 아니라 '실인원'이다 — 양안에 다른 렌즈를 넣은 환자가 유형별로
-            각각 잡혀 ICL+T-ICL+… 을 더하면 실제 환자 수보다 커진다(2026-07: 168 vs 148). */}
+        {/* 유형별이 환자당 대표유형 1건만 세므로 이 합계는 유형별 값의 합과 일치한다. */}
         <th
           className={THL_B}
-          title="PIOL 수술을 받은 실제 환자 수. 양안에 서로 다른 렌즈를 넣은 환자는 유형별로 각각 집계되므로 오른쪽 유형별 값의 합보다 작습니다."
+          title="PIOL 수술 환자 수. 유형별은 환자당 대표유형(우안 우선) 한 곳에만 집계되므로 오른쪽 값들의 합과 같습니다."
         >
-          실인원
+          합계
         </th>
         <th className={TH_B}>ICL</th>
         <th className={TH_B}>T-ICL</th>
