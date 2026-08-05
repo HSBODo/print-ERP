@@ -114,6 +114,141 @@ export const reopCandidateToRow = (
   surgeryL: c.againL,
 })
 
+/* ────────────────────────────────────────────────────────────
+ * 수술 유형 필터 — 수술별 비중 표(/stats/surgery-composition)의 항목과 같은 구성.
+ *
+ * 분류 키워드는 백엔드 SQL 과 같은 규칙이다. 바꿀 때 반드시 같이 고칠 것:
+ *   sql/surgery/find-vision-{daily,monthly}-by-type.sql
+ *   sql/surgery/find-cataract-{daily,monthly}-by-type.sql
+ *   sql/surgery/find-reoperation-candidates.sql (렌즈/레이저)
+ *
+ * ⚠️ 운영 DB 컬레이션이 Korean_Wansung_CI_AS(대소문자 구분 안 함)라 SQL 의 LIKE 도
+ *    대소문자를 안 가린다. 여기서도 소문자로 낮춰 비교해 동작을 맞춘다.
+ *
+ * ⚠️ PIOL 필터는 "그 렌즈를 **받은** 사람"을 고른다. 비중 표의 PIOL 유형별은 환자당
+ *    대표유형(우안 우선) 하나만 세므로 **두 숫자는 다를 수 있다**
+ *    (2026-07 ICL: 받은 사람 44명 / 대표유형 41명). 리스트는 사람을 찾는 화면이라
+ *    "받은 사람" 기준이 자연스럽다.
+ * ──────────────────────────────────────────────────────────── */
+
+export const VISION_FILTERS = ['전체', '스마일', '스마일프로', 'PIOL', '프레스비욘드', '라식계', '라섹계'] as const
+export const PIOL_FILTERS = ['전체', 'ICL', 'T-ICL', 'KPL', 'T-KPL', 'VIVA'] as const
+export const OPTION_FILTERS = ['전체', '엑스트라', '퍼스널', '콘트라', '웨이브비전', '모노비전'] as const
+export const CATARACT_FILTERS = ['전체', '다초점', '프리미엄', '단초점'] as const
+export const REOP_FILTERS = ['전체', '레이저', '렌즈'] as const
+
+export type VisionType =
+  | 'presbyond' | 'smilePro' | 'smile' | 'viva'
+  | 'tIcl' | 'icl' | 'tKpl' | 'kpl'
+  | 'lasik' | 'lasek' | 'other'
+
+const has = (raw: string, ...keys: string[]) => {
+  const s = (raw ?? '').toLowerCase()
+  return keys.some((k) => s.includes(k.toLowerCase()))
+}
+
+/** 수술명 한 건(한쪽 눈)의 시력교정 유형. SQL CASE 와 판정 순서까지 같아야 한다. */
+export function classifyVision(raw: string): VisionType {
+  if (!raw || !raw.trim()) return 'other'
+  if (has(raw, 'PRESBYOND')) return 'presbyond'
+  if (has(raw, 'SMILE Pro', 'SMILEpro', 'SMILE PRO')) return 'smilePro'
+  if (has(raw, 'SMILE')) return 'smile'
+  if (has(raw, 'VIVA')) return 'viva'
+  if (has(raw, 'T-ICL', 'T-IPCL', 'T-GLAZE', 'T-ECHO')) return 'tIcl'
+  if (has(raw, 'ICL', 'IPCL', 'ARF', 'ART', 'ARTIFLEX', 'GLAZE', 'ECHO')) return 'icl'
+  if (has(raw, 'T-KPL')) return 'tKpl'
+  if (has(raw, 'KPL')) return 'kpl'
+  if (has(raw, 'FLAP LIFT', 'OPTI', 'iFS', 'VISU', 'fs200', 'Micro+', 'Hybrid')) return 'lasik'
+  if (has(raw, 'EYECLE', 'T-prk', 'EYE CLE', 'EYE+', 'FLAP PRK', 'PtK', 'M-LE')) return 'lasek'
+  return 'other'
+}
+
+export type CataractType = 'catEdof' | 'catMulti' | 'catMono'
+
+/** EDOF 를 먼저 본다 — `T-Clareon Vivity` 처럼 두 목록에 다 걸리는 이름이 있다. */
+export function classifyCataract(raw: string): CataractType {
+  if (has(raw, 'EDOF', 'Vivity', 'Eyhance', 'PureSee', 'Isopure', 'Symfony')) return 'catEdof'
+  if (has(raw, 'Clareon', 'Panoptix', 'RESTOR', 'Lara', 'LISA', 'CTR(M)', 'CTRmulti',
+    '3PodF', 'T-CTR', 'T-CATARACT', 'Precizon', 'LAL', 'ELANA', 'Gemetric')) return 'catMulti'
+  return 'catMono'
+}
+
+export function classifyReoperation(raw: string): 'reopLens' | 'reopLaser' {
+  return has(raw, 'remo', 'exch', 'ICL', 'ARF', 'ART', 'EVO', 'ECHO', 'GLAZE',
+    'precizon', 'Lisa', 'Gemetric', 'encla')
+    ? 'reopLens'
+    : 'reopLaser'
+}
+
+const PIOL_TYPES: VisionType[] = ['icl', 'tIcl', 'kpl', 'tKpl', 'viva']
+const PIOL_BY_LABEL: Record<string, VisionType> = {
+  'ICL': 'icl', 'T-ICL': 'tIcl', 'KPL': 'kpl', 'T-KPL': 'tKpl', 'VIVA': 'viva',
+}
+const VISION_BY_LABEL: Record<string, VisionType[]> = {
+  '스마일': ['smile'],
+  '스마일프로': ['smilePro'],
+  'PIOL': PIOL_TYPES,
+  '프레스비욘드': ['presbyond'],
+  '라식계': ['lasik'],
+  '라섹계': ['lasek'],
+}
+const CATARACT_BY_LABEL: Record<string, CataractType> = {
+  '다초점': 'catMulti', '프리미엄': 'catEdof', '단초점': 'catMono',
+}
+const OPTION_BY_LABEL: Record<string, (raw: string) => boolean> = {
+  '엑스트라': (r) => has(r, '+X'),
+  '퍼스널': (r) => has(r, 'P.E'),
+  '콘트라': (r) => has(r, 'CONT'),
+  '웨이브비전': (r) => has(r, 'W.V'),
+  '모노비전': (r) => (r ?? '').trim().toLowerCase().startsWith('mono'),
+}
+
+export interface SurgeryFilterRow {
+  surgeryR: string
+  surgeryL: string
+}
+
+/** 좌·우 중 한쪽이라도 만족하면 그 행은 해당한다(양안에 다른 수술을 하는 경우가 흔하다). */
+const eitherEye = (row: SurgeryFilterRow, ok: (raw: string) => boolean) =>
+  ok(row.surgeryR ?? '') || ok(row.surgeryL ?? '')
+
+/** 값이 빈 눈은 수술하지 않은 눈이라 분류 대상에서 뺀다(빈 문자열이 단초점·레이저로 떨어지는 걸 막는다). */
+const filled = (raw: string) => Boolean(raw && raw.trim())
+
+export function matchesVision(row: SurgeryFilterRow, filter: string): boolean {
+  if (filter === '전체') return true
+  const types = VISION_BY_LABEL[filter]
+  if (!types) return true
+  return eitherEye(row, (raw) => types.includes(classifyVision(raw)))
+}
+
+export function matchesPiol(row: SurgeryFilterRow, filter: string): boolean {
+  if (filter === '전체') return true
+  const type = PIOL_BY_LABEL[filter]
+  if (!type) return true
+  return eitherEye(row, (raw) => classifyVision(raw) === type)
+}
+
+export function matchesOption(row: SurgeryFilterRow, filter: string): boolean {
+  if (filter === '전체') return true
+  const ok = OPTION_BY_LABEL[filter]
+  if (!ok) return true
+  return eitherEye(row, ok)
+}
+
+export function matchesCataract(row: SurgeryFilterRow, filter: string): boolean {
+  if (filter === '전체') return true
+  const type = CATARACT_BY_LABEL[filter]
+  if (!type) return true
+  return eitherEye(row, (raw) => filled(raw) && classifyCataract(raw) === type)
+}
+
+export function matchesReoperation(row: SurgeryFilterRow, filter: string): boolean {
+  if (filter === '전체') return true
+  const want = filter === '렌즈' ? 'reopLens' : 'reopLaser'
+  return eitherEye(row, (raw) => filled(raw) && classifyReoperation(raw) === want)
+}
+
 export const compareSortValue = (a: string | number | null, b: string | number | null) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
