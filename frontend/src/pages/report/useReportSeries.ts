@@ -172,10 +172,20 @@ export function useReportSeries(): ReportSeriesResult {
       examWorker: buildFromOverall((s) => s.jobOffice),
       examStudent: buildFromOverall((s) => s.jobStudent),
       examEtc: buildFromOverall((s) => s.jobEtc),
-      examGeneral: buildFromOverall((s) => s.visionExam - s.oneDay),
-      ratioGeneral: buildFromOverall((s) =>
-        s.visionExam > 0 ? ((s.visionExam - s.oneDay) / s.visionExam) * 100 : null,
-      ),
+      // 일반 검사 = 검사수(전체) − 원데이. 둘 다 procedure(=검사자 리스트와 같은 모집단)에서 뽑아
+      // '원데이 + 일반 = 검사수' 가 성립하게 한다 (2026-07: 561 + 643 = 1,204).
+      // 종전에는 시력교정 기준(visionExam − overall.oneDay = 1,074 − 558 = 516)이라
+      // 리스트의 examType 집계와 어긋났다.
+      examGeneral: build((y, i) => {
+        const it = procedure.dataMap[y]?.[i]
+        return it ? it.examCount - it.oneDayExamCount : undefined
+      }),
+      ratioGeneral: build((y, i) => {
+        const it = procedure.dataMap[y]?.[i]
+        return it && it.examCount > 0
+          ? ((it.examCount - it.oneDayExamCount) / it.examCount) * 100
+          : null
+      }),
       rateVisionGeneral: build((y, i) => consult.dataMap[y]?.[i]?.visionGeneralBookRate),
       rateOneday: buildFromOverall((s) =>
         s.oneDay > 0 ? (s.oneDayBooked / s.oneDay) * 100 : null,

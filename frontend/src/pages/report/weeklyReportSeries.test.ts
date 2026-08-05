@@ -45,8 +45,8 @@ describe('buildWeeklySeries', () => {
   it('예약률·비율은 분자/분모로 계산하고 분모가 0이면 null', () => {
     const series = buildWeeklySeries(
       [
-        week({ week: 1, visionExam: 200, visionBooked: 150, oneDay: 80, oneDayBooked: 60, stopCount: 10 }),
-        week({ week: 2, visionExam: 0, visionBooked: 0, oneDay: 0, oneDayBooked: 0, stopCount: 0 }),
+        week({ week: 1, examTotal: 250, visionExam: 200, visionBooked: 150, oneDay: 80, oneDayBooked: 60, stopCount: 10 }),
+        week({ week: 2, examTotal: 0, visionExam: 0, visionBooked: 0, oneDay: 0, oneDayBooked: 0, stopCount: 0 }),
       ],
       weeks2026,
       YEARS,
@@ -54,9 +54,10 @@ describe('buildWeeklySeries', () => {
     expect(series.visionRate?.[2026][0]).toBeCloseTo(75, 6)
     expect(series.rateOneday?.[2026][0]).toBeCloseTo(75, 6)
     expect(series.stopRate?.[2026][0]).toBeCloseTo(5, 6)
-    // 일반검사 = 시력교정 - 원데이 = 120, 일반검사 비율 = 60%
-    expect(series.examGeneral?.[2026][0]).toBe(120)
-    expect(series.ratioGeneral?.[2026][0]).toBeCloseTo(60, 6)
+    // 일반검사 = 검사수(전체) - 원데이 = 250 - 80 = 170 → '원데이 + 일반 = 검사수' 가 성립한다.
+    // (시력교정 기준이면 120 이었다 — 2026-08-05 정의 변경)
+    expect(series.examGeneral?.[2026][0]).toBe(170)
+    expect(series.ratioGeneral?.[2026][0]).toBeCloseTo(68, 6)
     // 분모 0 → null
     expect(series.visionRate?.[2026][1]).toBeNull()
     expect(series.ratioGeneral?.[2026][1]).toBeNull()
