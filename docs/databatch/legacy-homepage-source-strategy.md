@@ -3,7 +3,7 @@
 > 작성일: 2026-07-15 · 최신화: 2026-08-05
 > 상태: **1단계 완료**(SQLite/MariaDB 직결) · **2단계도 완료**(마트 배치 이관 — §3)
 > 관련 커밋: `212ea93` (초기 SQLite 스냅샷 도입) · `b61ff05` (MariaDB 직결 추가, 2026-07-15)
-> 배경 문서: [`strategy.md`](./strategy.md) · [`mart-menu-mapping.md`](./mart-menu-mapping.md)
+> 배경 문서: [`strategy.md`](./strategy.md) (§11 마트↔메뉴 매핑 · §12 배치 실행 규칙 포함)
 
 ---
 
@@ -20,7 +20,7 @@
 > 아래 본문의 `LEGACY_*` 표기는 옛 이름이니 그대로 쓰지 말 것.
 >
 > 현행 동작(실행 순서·소스 미설정 시 skip·delete+insert 범위)은
-> [`batch-execution-rules.md`](./batch-execution-rules.md) §2-1·§4-2 가 정본이다.
+> [`strategy.md`](./strategy.md) **§12-2-1 · §12-4-2** 가 정본이다.
 
 ## 0. TL;DR
 
@@ -224,7 +224,7 @@ API → 프론트
 - 표준 마트 패턴(예약통계·수술·검사 등)과 동일한 구조.
 - 앱은 **마트만** 조회. MariaDB 접속은 배치 노드에만 국한.
 - SSH 터널 상시성은 배치 시점(하루 1~2회 · 짧게)만 필요 → 상시 운영 부담 해소.
-- `docs/databatch/mart-menu-mapping.md` §6 "새 메뉴 추가 표준" 절차와 일치.
+- `strategy.md` §11-6 "새 메뉴 추가 표준" 절차와 일치.
 
 ### 3-3. 구현 스케치
 
@@ -378,7 +378,6 @@ A. 원본 `TBL_COUNSEL` 컬럼명이 오타 상태로 굳어 있습니다. 대�
 - **이 문서가 정본이다.** 구 `docs/2026-07-15-예약자리스트_홈페이지-추가.md`(초기 SQLite 도입 +
   온라인 예약 공식 변경)는 2026-08-05 에 이 문서로 흡수하고 삭제했다.
 - 관련 커밋: `212ea93`(SQLite 스냅샷 도입) · `b61ff05`(MariaDB 직결) · `ceca8a0`(진행월 부분값 노출)
-- 배치 실행 규칙(정본): [`batch-execution-rules.md`](./batch-execution-rules.md) §2-1·§4-2
-- 배치 전략: [`strategy.md`](./strategy.md) · 마트-메뉴 매핑: [`mart-menu-mapping.md`](./mart-menu-mapping.md)
+- 배치 전략·실행 규칙·마트↔메뉴 매핑(정본): [`strategy.md`](./strategy.md) — 실행 규칙 §12-2-1·§12-4-2
 - 빌드 사전 조건(Nexus 계정)·환경변수: [`../deployment.md`](../deployment.md) §2
 - 두 화면의 홈페이지 예약수가 다른 이유: [`../점검/홈페이지-CRM-예약수-비교_2026-07.md`](../점검/홈페이지-CRM-예약수-비교_2026-07.md)
