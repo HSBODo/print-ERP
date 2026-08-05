@@ -1,6 +1,12 @@
 # 테이블 카탈로그 인덱스
 
 > 자동 생성: 2026-04-20 | 재생성: `node tools/generate-table-catalog.js`
+>
+> ⚠️ **이 폴더는 softcrm 리포에서 동기화된 사본이다.** 개별 테이블 문서 안의
+> `../db-structure-overview.md` · `../db-customer.md` · `../db-code-tables.md` ·
+> `../db-referral.md` · `../db-sms.md` · `../db-reservation.md` · `../../specs/...` ·
+> `./PrcItmLst.md` 링크는 **원본 리포에만 있는 형제 문서**라 이 리포에서는 열리지 않는다.
+> 동기화가 깨지므로 여기서 고치지 말 것 — 필요하면 원본 리포에서 볼 것.
 
 ---
 
