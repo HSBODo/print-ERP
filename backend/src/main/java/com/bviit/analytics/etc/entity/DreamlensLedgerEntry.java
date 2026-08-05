@@ -87,6 +87,10 @@ public class DreamlensLedgerEntry {
      * (예: 정가 30만 / 실수납 25만). 어느 쪽을 장부 기준으로 삼을지 판단할 수 있게 둘 다 수집한다.
      * totalRevenue() 합계에는 포함하지 않는다.
      */
+    // columnDefinition 으로 DEFAULT 0 을 준다. ddl-auto=update 가 기존 행이 있는 표에
+    // `add column ... integer not null` 을 던지면 Postgres 가 거부해서(기존 행이 NULL)
+    // 컬럼이 아예 안 생기고, 이후 모든 장부 조회가 500 으로 죽는다(2026-08-05 실제 발생).
+    @Column(nullable = false, columnDefinition = "integer default 0")
     @Builder.Default private int lensListPrice = 0;
 
     /* ── 리콜 관리 (날짜·메모가 자유롭게 섞여 들어와 넉넉히 잡는다) ── */
