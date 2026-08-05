@@ -24,7 +24,7 @@ import { YEARS, isIncompleteMonth } from './monthlyReportUtils'
  */
 
 /**
- * 월간레포트 수술 3종 골든 override — 담당자 확정값(docs/databatch/월간레포트_2026_01_05월.csv).
+ * 월간레포트 수술 3종 골든 override — 담당자 확정값.
  *
  * 마트(`mart_surgery_monthly`) 는 세부 수술방법 컬럼(lasik/smile/cat_mono/…)으로 세분화돼 있어
  * CSV 의 aggregate(백내장 수술·시력교정 수술·총 수술수) 를 subcolumn 으로 분해할 수 없다.
