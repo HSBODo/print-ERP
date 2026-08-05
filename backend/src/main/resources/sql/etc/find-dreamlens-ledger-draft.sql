@@ -21,6 +21,7 @@ SELECT r.RESERVE_DATE                AS entryDate,
        mc.SUB_NAME                  AS visitTypeRaw,
        mr.EMP_NAME                  AS examiner,
        ISNULL(lens.lensRevenue, 0)  AS lensRevenue,
+       ISNULL(lens.lensListPrice, 0) AS lensListPrice,
        ISNULL(su.treatmentRevenue, 0) AS treatmentRevenue
 FROM RESERVATION r WITH (NOLOCK)
 JOIN CUSTOM c WITH (NOLOCK) ON c.CUST_NUM = r.CUST_NUM
@@ -30,7 +31,8 @@ LEFT JOIN AssignList a WITH (NOLOCK)
        ON a.custid = r.CUST_NUM AND a.MedDate = r.RESERVE_DATE
 LEFT JOIN EMPLOYEE mr WITH (NOLOCK) ON a.MRID1 = mr.EMP_NUM
 OUTER APPLY (
-    SELECT SUM(pr.PrcSumPrc) AS lensRevenue
+    SELECT SUM(pr.PrcSumPrc) AS lensRevenue,
+           SUM(pr.PrcItmQty * pr.PrcItmPrc) AS lensListPrice
     FROM COSTPRICE aa WITH (NOLOCK)
     JOIN PrcItmLst pr ON aa.CUST_NUM = pr.PrcCusNum AND aa.SEQ = pr.PrcSeq
     WHERE aa.CUST_NUM = r.CUST_NUM

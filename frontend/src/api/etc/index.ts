@@ -47,7 +47,12 @@ const dreamlensLedgerRowSchema = z.object({
   hlNewRevenue: money, hlRepurchaseRevenue: money,
   depositRevenue: money, fittingRevenue: money,
   supplyRevenue: money, treatmentRevenue: money,
+  /** 렌즈 정가(참고) — 매출 버킷은 실수납이라 할인·분납 시 둘이 다르다. 행 합계 미포함. */
+  lensListPrice: money.catch(0),
   totalRevenue: money,
+
+  /** 'AUTO' = 배치 초안(검안사가 렌즈 정보 보완 필요) / 'MANUAL' = 사람 입력·수정. */
+  source: z.string().catch('MANUAL'),
 
   nextReservation: text,
   recall1: text, recall1Reservation: text, recall1Absent: text,
@@ -56,8 +61,8 @@ const dreamlensLedgerRowSchema = z.object({
 })
 export type DreamlensLedgerRow = z.infer<typeof dreamlensLedgerRowSchema>
 
-/** 서버가 계산해 내려주는 값이라 저장 요청에서는 제외한다. */
-export type DreamlensLedgerRequest = Omit<DreamlensLedgerRow, 'id' | 'totalRevenue'>
+/** 서버가 계산·관리하는 값(id·합계·source)이라 저장 요청에서는 제외한다. */
+export type DreamlensLedgerRequest = Omit<DreamlensLedgerRow, 'id' | 'totalRevenue' | 'source'>
 
 const ledgerListSchema = apiResponseOf(z.array(dreamlensLedgerRowSchema))
 const ledgerRowSchema = apiResponseOf(dreamlensLedgerRowSchema)
@@ -66,6 +71,7 @@ const toRequest = (row: DreamlensLedgerRow | DreamlensLedgerRequest): DreamlensL
   const { ...rest } = row as DreamlensLedgerRow
   delete (rest as Partial<DreamlensLedgerRow>).id
   delete (rest as Partial<DreamlensLedgerRow>).totalRevenue
+  delete (rest as Partial<DreamlensLedgerRow>).source
   return rest
 }
 

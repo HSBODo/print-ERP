@@ -1,6 +1,6 @@
 import type { DreamlensLedgerRequest, DreamlensLedgerRow } from '@/api/etc'
 
-export type LedgerFieldKey = Exclude<keyof DreamlensLedgerRow, 'id' | 'totalRevenue'>
+export type LedgerFieldKey = Exclude<keyof DreamlensLedgerRow, 'id' | 'totalRevenue' | 'source'>
 
 export type LedgerColumn = {
   key: LedgerFieldKey
@@ -141,6 +141,8 @@ export const LEDGER_GROUPS: LedgerGroup[] = [
       { key: 'fittingRevenue', label: '피팅비', type: 'number', width: 92 },
       { key: 'supplyRevenue', label: '용품', type: 'number', width: 92 },
       { key: 'treatmentRevenue', label: '진료비', type: 'number', width: 92 },
+      // CRM 수납 정가 — 매출 버킷(실수납)과 다르면 할인·분납이 있었다는 뜻. 행 합계 미포함.
+      { key: 'lensListPrice', label: '렌즈 정가(참고)', type: 'number', width: 110 },
     ],
   },
   {
@@ -211,6 +213,7 @@ export function emptyRow(today: string): DreamlensLedgerRequest {
     mNewRevenue: 0, mRepurchaseRevenue: 0,
     hlNewRevenue: 0, hlRepurchaseRevenue: 0,
     depositRevenue: 0, fittingRevenue: 0, supplyRevenue: 0, treatmentRevenue: 0,
+    lensListPrice: 0,
     nextReservation: null,
     recall1: null, recall1Reservation: null, recall1Absent: null,
     recall2: null, recall2Reservation: null, recall2Absent: null,

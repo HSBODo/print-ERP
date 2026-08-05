@@ -580,14 +580,21 @@ export function DreamlensLedgerPage() {
                   )}
                   {!busy && visibleRows.map((row) => {
                     const isSelected = selected.has(row.id)
+                    // 배치 초안(AUTO) 행 — CRM 내원·수납으로 자동 생성됨. 렌즈 정보 보완 필요.
+                    // 어느 셀이든 수정하면 서버가 MANUAL 로 승격해 뱃지가 사라진다.
+                    const isAuto = row.source === 'AUTO'
                     // 고정 셀은 뒤 내용이 비치므로 불투명 배경이 필요하다.
                     // 행 hover 는 group-hover 로 고정 셀에도 그대로 전달한다.
-                    const frozenBg = isSelected ? 'bg-rose-50' : 'bg-white group-hover:bg-blue-50'
+                    const frozenBg = isSelected
+                      ? 'bg-rose-50'
+                      : isAuto
+                        ? 'bg-amber-50 group-hover:bg-blue-50'
+                        : 'bg-white group-hover:bg-blue-50'
 
                     return (
                       <tr
                         key={row.id}
-                        className={`group ${isSelected ? 'bg-rose-50/50' : 'hover:bg-blue-50/40'}`}
+                        className={`group ${isSelected ? 'bg-rose-50/50' : isAuto ? 'bg-amber-50/40 hover:bg-blue-50/40' : 'hover:bg-blue-50/40'}`}
                       >
                         <td
                           style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
@@ -600,6 +607,14 @@ export function DreamlensLedgerPage() {
                             onChange={() => toggleOne(row.id)}
                             className="h-3.5 w-3.5 align-middle accent-rose-600"
                           />
+                          {isAuto && (
+                            <span
+                              title="배치가 CRM 내원·수납으로 만든 초안입니다. 렌즈 정보를 채우면 일반 행이 됩니다."
+                              className="mt-0.5 block rounded bg-amber-200/80 px-0.5 text-[9px] font-semibold leading-3 text-amber-900"
+                            >
+                              자동
+                            </span>
+                          )}
                         </td>
                         {LEDGER_COLUMNS.map((column) => (
                           <LedgerCell

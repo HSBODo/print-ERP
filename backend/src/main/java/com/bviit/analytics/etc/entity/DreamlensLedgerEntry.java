@@ -81,6 +81,14 @@ public class DreamlensLedgerEntry {
     @Builder.Default private int supplyRevenue = 0;
     @Builder.Default private int treatmentRevenue = 0;
 
+    /**
+     * 렌즈 정가(참고) — CRM 수납의 정가 합(PrcItmQty×PrcItmPrc).
+     * 매출 버킷에 넣는 값은 실수납(PrcSumPrc)이라 할인·분납이 있으면 둘이 다르다
+     * (예: 정가 30만 / 실수납 25만). 어느 쪽을 장부 기준으로 삼을지 판단할 수 있게 둘 다 수집한다.
+     * totalRevenue() 합계에는 포함하지 않는다.
+     */
+    @Builder.Default private int lensListPrice = 0;
+
     /* ── 리콜 관리 (날짜·메모가 자유롭게 섞여 들어와 넉넉히 잡는다) ── */
     @Column(length = 200) private String nextReservation;
     @Column(length = 200) private String recall1;
@@ -162,6 +170,7 @@ public class DreamlensLedgerEntry {
         this.fittingRevenue = src.fittingRevenue;
         this.supplyRevenue = src.supplyRevenue;
         this.treatmentRevenue = src.treatmentRevenue;
+        this.lensListPrice = src.lensListPrice;
 
         this.nextReservation = src.nextReservation;
         this.recall1 = src.recall1;
@@ -185,7 +194,8 @@ public class DreamlensLedgerEntry {
      */
     public void refreshDraft(String visitType, String customerName, String examiner,
                              int dlNew, int dlRepurchase, int mNew, int mRepurchase,
-                             int hlNew, int hlRepurchase, int treatment, LocalDateTime now) {
+                             int hlNew, int hlRepurchase, int treatment, int lensListPrice,
+                             LocalDateTime now) {
         this.visitType = visitType;
         this.customerName = customerName;
         this.examiner = examiner;
@@ -196,6 +206,7 @@ public class DreamlensLedgerEntry {
         this.hlNewRevenue = hlNew;
         this.hlRepurchaseRevenue = hlRepurchase;
         this.treatmentRevenue = treatment;
+        this.lensListPrice = lensListPrice;
         this.updatedAt = now;
     }
 }

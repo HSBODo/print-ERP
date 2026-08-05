@@ -91,7 +91,7 @@ public class DreamlensLedgerImportService {
             if (autoRow != null) {
                 autoRow.refreshDraft(draft.visitType, draft.customerName, draft.examiner,
                         draft.dlNew, draft.dlRepurchase, draft.mNew, draft.mRepurchase,
-                        draft.hlNew, draft.hlRepurchase, draft.treatment, now);
+                        draft.hlNew, draft.hlRepurchase, draft.treatment, draft.listPrice, now);
                 refreshed++;
             } else {
                 DreamlensLedgerEntry entry = DreamlensLedgerEntry.builder()
@@ -107,6 +107,7 @@ public class DreamlensLedgerImportService {
                         .hlNewRevenue(draft.hlNew)
                         .hlRepurchaseRevenue(draft.hlRepurchase)
                         .treatmentRevenue(draft.treatment)
+                        .lensListPrice(draft.listPrice)
                         .source(DreamlensLedgerEntry.SOURCE_AUTO)
                         .build();
                 entry.stampCreated(now);
@@ -131,6 +132,7 @@ public class DreamlensLedgerImportService {
         d.customerName = str(row, "customerName");
         d.examiner = str(row, "examiner");
         d.treatment = treatment;
+        d.listPrice = intVal(row, "lensListPrice");
 
         switch (raw == null ? "" : raw.trim()) {
             case "D/L_신규" -> { d.visitType = "신규"; d.dlNew = lens; }
@@ -168,5 +170,6 @@ public class DreamlensLedgerImportService {
         int hlNew;
         int hlRepurchase;
         int treatment;
+        int listPrice;
     }
 }

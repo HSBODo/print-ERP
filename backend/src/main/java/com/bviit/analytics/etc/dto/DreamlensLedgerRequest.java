@@ -67,6 +67,8 @@ public class DreamlensLedgerRequest {
     @PositiveOrZero(message = NEGATIVE) private int fittingRevenue;
     @PositiveOrZero(message = NEGATIVE) private int supplyRevenue;
     @PositiveOrZero(message = NEGATIVE) private int treatmentRevenue;
+    /** 렌즈 정가(참고) — 실수납과 비교용. 행 합계에는 안 들어간다. */
+    @PositiveOrZero(message = NEGATIVE) private int lensListPrice;
 
     @Size(max = 200, message = TOO_LONG) private String nextReservation;
     @Size(max = 200, message = TOO_LONG) private String recall1;
@@ -100,6 +102,7 @@ public class DreamlensLedgerRequest {
                 .fittingRevenue(fittingRevenue)
                 .supplyRevenue(supplyRevenue)
                 .treatmentRevenue(treatmentRevenue)
+                .lensListPrice(lensListPrice)
                 .nextReservation(nextReservation)
                 .recall1(recall1).recall1Reservation(recall1Reservation).recall1Absent(recall1Absent)
                 .recall2(recall2).recall2Reservation(recall2Reservation).recall2Absent(recall2Absent)
