@@ -143,20 +143,20 @@ project-root/
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
-| overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (2026-07-07 전체지표→검사 이동) |
-| overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (2026-07-07 전체지표→검사 이동) |
-| exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 |
-| cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 |
+| overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
+| overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
+| exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 (**관리자 전용**) |
+| cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 (**관리자 전용**) |
 | all-exam-list | 전체 검사자 리스트 | /stats/all-exam-list | 검사 | 완료 (시력교정+백내장 통합, 종합지표 정합) |
 | eoeis-checkup | 아이리더 검사통계 | /stats/eoeis-checkup | 검사 | 완료 (2026-08-05 신규 · 검사자×장비/기간 피벗 · `EOEIS_DATASOURCE_URL` 미설정 시 503) |
 | examination | 시술별 | /stats/examination | 검사 | 완료 |
 | procedure-exam | 검사건수 | /stats/procedure-exam | 검사 | 완료 |
-| consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 |
+| consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 (**관리자 전용**) |
 | cataract-reservation-rate | 예약률 | /stats/cataract-reservation-rate | 전환&성공률 | 완료 |
 | stop-rate | 중단률 | /stats/stop-rate | 전환&성공률 | 완료 (2026-07-07 신규, 중단수/시력교정 검사자) |
 | stop-reason | 중단 사유 | /stats/stop-reason | 전환&성공률 | 완료 |
 | surgery-list | 수술자 리스트 | /stats/surgery-list | 수술 | 완료 |
-| surgery | 수술 건수 | /stats/surgery | 수술 | 완료 |
+| surgery | 수술 건수 | /stats/surgery | 수술 | 완료 (**관리자 전용**) |
 | surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술 | 완료 |
 | surgery-composition | 수술별 비중 | /stats/surgery-composition | 수술 | 완료 (mart_surgery_daily 조회, 파일 스냅샷 폐지 · 주차=ISO 8601) |
 | outpatient-list | 외래수 리스트 | /stats/outpatient-list | 외래 | 완료 (RESERVATION F + I/H, 외래수와 정합) |
