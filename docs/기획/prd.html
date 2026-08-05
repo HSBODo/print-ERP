@@ -305,7 +305,6 @@
           <span class="lg" style="color:var(--muted-2)">→ User navigation flow</span>
         </div>
         <div class="swim">
-          <!-- 인증 -->
           <div class="lane first">
             <div class="lane-label">인증</div><div class="lane-rail"></div>
             <div class="lane-body">
@@ -316,137 +315,84 @@
               </div>
             </div>
           </div>
-          <!-- KPI 종합 대시보드 -->
           <div class="lane">
-            <div class="lane-label">KPI 종합 대시보드</div><div class="lane-rail"></div>
+            <div class="lane-label">HOME</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
                 <div class="fn section">KPI 종합 대시보드</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn action">KPI 카드 확인</div></div>
-                  <div class="branch"><div class="fn action">월별 추이 보기</div></div>
-                  <div class="branch"><div class="fn action">수술·유입 비중 보기</div></div>
-                </div>
+                <div class="kids"><div class="branch"><div class="fn action">KPI 카드 확인</div></div><div class="branch"><div class="fn action">월별 추이 보기</div></div><div class="branch"><div class="fn action">수술·유입 비중 보기</div></div></div>
               </div>
             </div>
           </div>
-          <!-- 검사 & 예약 -->
           <div class="lane">
-            <div class="lane-label">검사 &amp; 예약</div><div class="lane-rail"></div>
+            <div class="lane-label">Report</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
-                <div class="fn section">검사 &amp; 예약</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">유입(검사예약)</div></div>
-                  <div class="branch">
-                    <div class="subtree">
-                      <div class="fn page">예약 건수</div><div class="hstub"></div>
-                      <div class="kids">
-                        <div class="branch"><div class="fn action">기간 선택</div></div>
-                        <div class="branch"><div class="fn action">채널별 필터</div></div>
-                        <div class="branch"><div class="fn action">조회 결과 차트/표</div></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="branch"><div class="fn page">검사 건수</div></div>
-                </div>
+                <div class="fn section">Report</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">월간 레포트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">연도 선택 (3개년 비교)</div></div><div class="branch"><div class="fn action">28개 도표 조회</div></div></div></div></div><div class="branch"><div class="subtree"><div class="fn page">주차 레포트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">전체 / 월별 주차 전환</div></div><div class="branch"><div class="fn action">ISO 주차축 조회</div></div></div></div></div></div>
               </div>
             </div>
           </div>
-          <!-- 상담 건수 -->
           <div class="lane">
-            <div class="lane-label">상담 건수</div><div class="lane-rail"></div>
+            <div class="lane-label">예약</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
-                <div class="fn section">상담 건수</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch">
-                    <div class="subtree">
-                      <div class="fn page">상담 전환율</div><div class="hstub"></div>
-                      <div class="kids">
-                        <div class="branch"><div class="fn action">기간 선택</div></div>
-                        <div class="branch"><div class="fn action">시술 종류 필터</div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <div class="fn section">예약</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">예약자 리스트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간 선택 (등록일)</div></div><div class="branch"><div class="fn action">채널·상담사 필터</div></div><div class="branch"><div class="fn action">CSV 내보내기</div></div></div></div></div><div class="branch"><div class="fn page">예약자 리스트_홈페이지</div></div><div class="branch"><div class="subtree"><div class="fn page">예약 종합</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">종합 / 온라인 / 콜 탭</div></div></div></div></div><div class="branch"><div class="fn page">예약통계_시력교정</div></div><div class="branch"><div class="fn page">예약통계_백내장</div></div></div>
               </div>
             </div>
           </div>
-          <!-- 수술 -->
+          <div class="lane">
+            <div class="lane-label">검사</div><div class="lane-rail"></div>
+            <div class="lane-body">
+              <div class="subtree">
+                <div class="fn section">검사</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="fn page">월별 검사자 종합지표</div></div><div class="branch"><div class="fn page">주간 검사자 종합지표</div></div><div class="branch"><div class="subtree"><div class="fn page">검사자 리스트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간 선택</div></div><div class="branch"><div class="fn action">CSV 내보내기</div></div></div></div></div><div class="branch"><div class="fn page">백내장 검사자 리스트</div></div><div class="branch"><div class="fn page">전체 검사자 리스트</div></div><div class="branch"><div class="fn page">아이리더 검사통계</div></div><div class="branch"><div class="subtree"><div class="fn page">시술별</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">시력교정 / 드림렌즈 / 백내장 탭</div></div></div></div></div><div class="branch"><div class="subtree"><div class="fn page">검사건수</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">검사수 / 원데이 검사 탭</div></div></div></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="lane">
+            <div class="lane-label">전환&성공률</div><div class="lane-rail"></div>
+            <div class="lane-body">
+              <div class="subtree">
+                <div class="fn section">전환&성공률</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">전환율</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">전체 / 원데이 / 일반 계열</div></div></div></div></div><div class="branch"><div class="fn page">예약률</div></div><div class="branch"><div class="fn page">중단률</div></div><div class="branch"><div class="subtree"><div class="fn page">중단 사유</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">사유 7버킷 분해</div></div></div></div></div></div>
+              </div>
+            </div>
+          </div>
           <div class="lane">
             <div class="lane-label">수술</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
                 <div class="fn section">수술</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch">
-                    <div class="subtree">
-                      <div class="fn page">수술 건수</div><div class="hstub"></div>
-                      <div class="kids">
-                        <div class="branch"><div class="fn action">기간 선택</div></div>
-                        <div class="branch"><div class="fn action">수술 종류 필터</div></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="branch"><div class="fn page">주요 수술별 비중</div></div>
-                </div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">수술자 리스트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간 선택</div></div><div class="branch"><div class="fn action">CSV 내보내기</div></div></div></div></div><div class="branch"><div class="fn page">수술 건수</div></div><div class="branch"><div class="fn page">주요 수술별 비중</div></div><div class="branch"><div class="subtree"><div class="fn page">수술별 비중</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">주차 / 월별 전환</div></div></div></div></div></div>
               </div>
             </div>
           </div>
-          <!-- 마케팅 -->
           <div class="lane">
-            <div class="lane-label">마케팅</div><div class="lane-rail"></div>
+            <div class="lane-label">외래</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
-                <div class="fn section">마케팅</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">해외 환자 관련 지표</div></div>
-                  <div class="branch"><div class="fn page">마케팅 유입 및 효율</div></div>
-                </div>
+                <div class="fn section">외래</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="fn page">외래수 리스트</div></div><div class="branch"><div class="fn page">외래수</div></div></div>
               </div>
             </div>
           </div>
-          <!-- 취소 & 부도 -->
           <div class="lane">
-            <div class="lane-label">취소 &amp; 부도</div><div class="lane-rail"></div>
-            <div class="lane-body">
-              <div class="subtree">
-                <div class="fn section">취소 &amp; 부도</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">예약취소율</div></div>
-                  <div class="branch"><div class="fn page">부도율</div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- 객단가 -->
-          <div class="lane">
-            <div class="lane-label">객단가</div><div class="lane-rail"></div>
-            <div class="lane-body">
-              <div class="subtree">
-                <div class="fn section">객단가</div><div class="hstub"></div>
-                <div class="kids"><div class="branch"><div class="fn action">기간별 객단가 조회</div></div></div>
-              </div>
-            </div>
-          </div>
-          <!-- 기타 -->
-          <div class="lane last">
             <div class="lane-label">기타</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
                 <div class="fn section">기타</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">드림렌즈 매출</div></div>
-                  <div class="branch"><div class="fn page">B2B 매출</div></div>
-                  <div class="branch"><div class="fn page">직원 포인트</div></div>
-                  <div class="branch"><div class="fn page">PRP 시술율</div></div>
-                  <div class="branch"><div class="fn page">재수술율</div></div>
-                  <div class="branch"><div class="fn page">당일OP 비율</div></div>
-                  <div class="branch"><div class="fn page">지정의 수술 비율</div></div>
-                  <div class="branch"><div class="fn page">내원동기별 비중</div></div>
-                  <div class="branch"><div class="fn page">일일 접수/응대</div></div>
-                </div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">드림렌즈 장부</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">행 추가·수정·삭제 (직접 입력)</div></div></div></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="lane">
+            <div class="lane-label">관리자</div><div class="lane-rail"></div>
+            <div class="lane-body">
+              <div class="subtree">
+                <div class="fn section">관리자</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">데이터 배치 관리</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간·도메인 재적재</div></div><div class="branch"><div class="fn action">실행 이력 확인</div></div></div></div></div></div>
               </div>
             </div>
           </div>
@@ -483,9 +429,8 @@
             <div class="wf-top"><div class="wf-dot" style="width:120px"></div><div style="flex:1"></div><div class="wf-dot" style="width:50px"></div><div class="wf-dot" style="width:50px"></div></div>
             <div class="wf-body">
               <div class="wf-side">
-                <div class="si on">HOME</div><div class="si">검사&amp;예약</div><div class="si">상담 건수</div>
-                <div class="si">수술</div><div class="si">마케팅</div><div class="si">취소&amp;부도</div>
-                <div class="si">객단가</div><div class="si">기타</div>
+                <div class="si on">HOME</div><div class="si">Report</div><div class="si">예약</div><div class="si">검사</div><div class="si">전환&amp;성공률</div>
+                <div class="si">수술</div><div class="si">외래</div><div class="si">기타</div><div class="si">관리자</div>
               </div>
               <div class="wf-content">
                 <div class="wf-kpis">
@@ -511,9 +456,8 @@
             <div class="wf-top"><div class="wf-dot" style="width:120px"></div><div style="flex:1"></div><div class="wf-dot" style="width:50px"></div><div class="wf-dot" style="width:50px"></div></div>
             <div class="wf-body">
               <div class="wf-side">
-                <div class="si">HOME</div><div class="si on">검사&amp;예약</div><div class="si">상담 건수</div>
-                <div class="si">수술</div><div class="si">마케팅</div><div class="si">취소&amp;부도</div>
-                <div class="si">객단가</div><div class="si">기타</div>
+                <div class="si">HOME</div><div class="si">Report</div><div class="si">예약</div><div class="si on">검사</div><div class="si">전환&amp;성공률</div>
+                <div class="si">수술</div><div class="si">외래</div><div class="si">기타</div><div class="si">관리자</div>
               </div>
               <div class="wf-content">
                 <div class="wf-h" id="wf-stats-title">예약 건수</div>
