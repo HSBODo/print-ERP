@@ -82,6 +82,29 @@
 | Node.js | 20 이상 | `node -v` |
 | npm | 10 이상 | `npm -v` |
 
+### 🔑 사내 Nexus 계정 — 없으면 백엔드 빌드 자체가 안 된다
+
+`build.gradle` 의 `com.visuworks.lib:slack-logger` 가 사내 Nexus 인증을 요구한다.
+계정이 없으면 도커든 로컬이든 **컴파일 단계에서 실패**한다.
+
+```properties
+# ~/.gradle/gradle.properties  (리포 밖 — 커밋 안 됨)
+nexusUsername=<아이디>
+nexusPassword=<비밀번호>
+```
+
+리포 안에는 `gradle.properties` 를 만들지 말 것(`.gitignore` 로 막혀 있지만 원칙이 그렇다).
+**도커 빌드는 이 파일을 못 읽으므로** BuildKit secret 을 쓴다:
+
+```bash
+DOCKER_BUILDKIT=1 docker build \
+  --secret id=nexus_id,env=NEXUS_USERNAME \
+  --secret id=nexus_pw,env=NEXUS_PASSWORD \
+  -t bviit-analytics:latest .
+```
+
+테스트 실행 시에도 필요하다: `./gradlew test -PnexusUsername=... -PnexusPassword=...`
+
 ## 2.2 폴더 구조
 
 ```
@@ -124,8 +147,13 @@ STATS_DB_PASSWORD=비밀번호
 
 > **주의**: SELECT 만 가능한 읽기 전용 계정을 사용할 것. INSERT/UPDATE/DELETE 권한이 없는 계정이 안전하다.
 
-> 예약자 리스트_홈페이지 화면과 예약 마트 배치는 레거시 홈페이지 소스(`LEGACY_DATASOURCE_URL`)를
-> 추가로 요구한다 — [2026-07-15-예약자리스트_홈페이지-추가.md](2026-07-15-예약자리스트_홈페이지-추가.md) §2-2 참조.
+> 예약자 리스트_홈페이지 화면과 예약 마트 배치는 홈페이지 소스(**`HOMEPAGE_DATASOURCE_URL`**)를
+> 추가로 요구한다. URL 접두사(`jdbc:sqlite:` / `jdbc:mariadb:`)가 방언·드라이버·실시간 여부를 모두 결정하며,
+> 값이 비면 해당 API 만 503 이고 앱 기동은 정상이다.
+> 설정 방법·SSH 터널 구성은 [databatch/legacy-homepage-source-strategy.md](databatch/legacy-homepage-source-strategy.md) §2 참조.
+>
+> ⚠️ 운영에 SSH 터널 사이드카 구조를 쓰지 말 것 — 터널이 끊기면 그 메뉴만 503 이 된다.
+> 운영은 배치가 `mart_list_reservation_homepage` 에 적재한 값을 읽는다.
 
 ### frontend/.env
 

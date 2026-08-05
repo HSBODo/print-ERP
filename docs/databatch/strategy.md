@@ -1,8 +1,25 @@
 # 데이터 배치 & 마트 전환 전략
 
-> 작성일: 2026-07-02 · 최신화: 2026-07-31
-> 상태: **진행 중** — 배치 파이프라인·마트 스키마·Cutover 프로파일 골격 완료, 페이지별 전환은 도메인마다 진행률 상이, 스냅샷 스토어 흡수(§7)는 수술 완료 · 예약 2종 미착수
+> 작성일: 2026-07-02 · 최신화: 2026-08-05
+> 상태: **Cutover 실질 완료** — 배치 파이프라인·마트 스키마·프로파일 전환 완료, 스냅샷 스토어 흡수(§7)도 완료
 > 목적: CRM MSSQL 직결 조회 구조를 **Postgres 마트(Mart) 기반**으로 전환하기 위한 설계·마이그레이션 계획 및 **현재 이행 현황 기록**
+
+> 📌 **이 문서는 "왜 이렇게 만들었나"(설계 근거·결정 이력)를 담는다.**
+> 지금 배치가 **어떻게 도는지**(스케줄·마트별 write 정책·수동 실행 동작·min-year 가드)는
+> [`batch-execution-rules.md`](./batch-execution-rules.md)가 정본이다. 둘이 어긋나면 그쪽이 맞다.
+
+---
+
+## 0. MSSQL 절대 규칙 — 배치가 원본을 읽을 때
+
+> 구 `기획/dashboard-spec.md` §2 에서 옮겨왔다. CRM MSSQL 은 EyeChartPro 와 공유하는 **운영계** DB다.
+
+- **SELECT only** — INSERT/UPDATE/DELETE 엄격 금지
+- 모든 통계·배치 조회 서비스는 `@Transactional(readOnly = true)`
+- HikariCP `read-only=true`, `maximum-pool-size=3`
+- ⚠️ **MSSQL 2014 호환** — `STRING_AGG`, `TRIM` 등 최신 함수 **사용 불가**
+- 대용량 테이블은 `WITH(NOLOCK)` + 날짜 범위 필수
+- 접속 정보: `220.85.109.247:1433 / SOFTCRM` (자격증명은 `backend/.env`, gitignored)
 
 ---
 
@@ -53,7 +70,7 @@
 | 2 | 리스트 실시간성 | **불필요** — 리스트도 T-1 마트로 통합 | ✅ 이행 완료 (`list_*` 4종) |
 | 3 | PII 처리 | **CRM 원본 그대로 복제** (익명화·마스킹 없음) | ✅ 이행 완료 |
 | 4 | Cutover 방식 | **페이지별 `@Profile` 전환** (안전, 롤백 쉬움) | ✅ 이행 완료 (프로파일: `mssql`, `postgres-mart`) |
-| 5 | 스냅샷 스토어 | **마트로 흡수 후 삭제** (`SurgerySnapshotStore` 등) | ⚠️ 부분 이행 — 수술(surgery-composition) 완료, 예약통계 2종 미착수. §7 참조 |
+| 5 | 스냅샷 스토어 | **마트로 흡수 후 삭제** (`SurgerySnapshotStore` 등) | ✅ 이행 완료 — 수술 2026-07-31, 예약통계 2종은 V19/V20 마트 + `period_lock`. §7 참조 |
 | 6 | 배치 러너 | **Spring `@Scheduled`** (Airflow는 이번 스코프 밖) | ✅ 이행 완료 |
 
 ### 결정 1의 함의 및 완화책 — ⚠️ 중요
@@ -98,9 +115,13 @@
 
 ## 4. 마트 스키마 카탈로그
 
-마이그레이션 스크립트: `backend/src/main/resources/sql/mart/V{1..9}__*.sql`
+마이그레이션 스크립트: `backend/src/main/resources/sql/mart/V{1..32}__*.sql`
+(Flyway 가 아니라 `MartSchemaInitializer` 가 순서대로 실행한다 — 새 `V**.sql` 은 **거기 등록해야** 적용된다.)
 
-### 4.1 집계 마트 (aggregate) — **구현된 13개**
+> **마트 ↔ 메뉴 대응표는 [`mart-menu-mapping.md`](./mart-menu-mapping.md)** 가 정본이다.
+> 아래 표는 도입 순서를 남기려는 것이라 최신 목록은 `sql/mart/` 디렉토리를 직접 볼 것.
+
+### 4.1 집계 마트 (aggregate) — 도입 순서
 
 | 마트 테이블 | DDL 위치 | 페이지 | 상태 |
 |-----------|--------|-------|------|
@@ -118,11 +139,22 @@
 | `mart_b2b_revenue_monthly` | V8 | b2b-revenue | ✅ |
 | `mart_overall_exam_monthly` | V10 | overall-exam (26년+ 라이브, 24·25는 프론트 하드코딩) | ✅ |
 
-**초안 대비 미구현/변경 항목** (착수 여부 재검토 필요):
-- ⚠️ `mart_surgery_ratio_monthly`, `mart_surgery_composition_monthly` 별도 신설은 하지 않음 — `surgery-composition` 일별 조회는 **기존 `mart_surgery_daily`** 를 그대로 재활용해 2026-07-31 Cutover 완료 (`SurgeryCompositionMartQueryService` @Primary). 파일 스냅샷(`SurgerySnapshotStore`)은 삭제됨. `surgery-ratio` 는 여전히 `mart_surgery_monthly` 기반
-- ❌ `mart_reservation_trend`, `mart_reservation_composition` — 예약 채널 분해/유입 경로 마트 없음. 트렌드는 `mart_reservation_monthly`에서 파생하고 있음
-- ❌ `mart_reservation_overall_monthly` — 대신 `mart_reservation_kakao_daily`(일별 카카오 채널)만 존재
-- ❌ `mart_outpatient_count_daily` → 일별 아닌 **월별**(`mart_outpatient_count_monthly`)로 변경됨
+**V10 이후 추가된 마트** (2026-08-05 기준 V32 까지):
+
+| 마트 테이블 | DDL | 페이지 |
+|-----------|-----|-------|
+| `mart_reservation_stats_system_daily` | V11 (+V19 시드·`period_lock`) | 예약통계_시력교정 |
+| `mart_reservation_stats_cataract_daily` | V11 (+V20 시드·`period_lock`) | 예약통계_백내장 |
+| `mart_reservation_overall_monthly` | V12 (+V24 2026-H1 골든 시드) | 예약 종합 · 월간 레포트 |
+| `mart_list_reservation_homepage` | V21 | 예약자 리스트_홈페이지 (MariaDB 소스) |
+| `mart_outpatient_list` | V25 | 외래수 리스트 |
+| `mart_weekly_report` | V28 (+V29~V31 드림렌즈) | 주차 레포트 |
+| `mart_exam_count_by_class` | V28 | 고객분류별 검사수 |
+
+**초안 대비 변경된 결정**:
+- `mart_surgery_ratio_monthly`, `mart_surgery_composition_monthly` **별도 신설 안 함** — `surgery-composition` 일별 조회는 **기존 `mart_surgery_daily`** 재활용으로 2026-07-31 Cutover 완료 (`SurgeryCompositionMartQueryService` @Primary). 파일 스냅샷(`SurgerySnapshotStore`)은 삭제됨. `surgery-ratio` 는 `mart_surgery_monthly` 기반
+- `mart_reservation_trend`, `mart_reservation_composition` **신설 안 함** — 트렌드는 `mart_reservation_monthly`에서 파생
+- `mart_outpatient_count_daily` → 일별 아닌 **월별**(`mart_outpatient_count_monthly`)로 변경
 
 ### 4.2 리스트 마트 (list) — **구현된 4개**
 
@@ -163,14 +195,18 @@ com.bviit.analytics.batch/
 ├── repository/
 │   ├── BatchRunLogRepository       // batch_run_log CRUD
 │   └── WatermarkRepository         // batch_watermark 조회·갱신
-├── job/  (도메인 7개 × 2 = 14 파일)
-│   ├── SurgeryMartJob      + SurgeryMartWriter
-│   ├── ReservationMartJob  + ReservationMartWriter
-│   ├── ExamMartJob         + ExamMartWriter
-│   ├── ConsultationMartJob + ConsultationMartWriter
-│   ├── OutpatientMartJob   + OutpatientMartWriter
-│   ├── OverallMartJob      + OverallMartWriter
-│   └── EtcMartJob          + EtcMartWriter
+├── BatchSlackNotifier               // 실패 시 Slack 알림
+├── job/  (Job + Writer 페어 10쌍 = 20 파일)
+│   ├── SurgeryMartJob               + SurgeryMartWriter
+│   ├── ReservationMartJob           + ReservationMartWriter
+│   ├── ReservationListHomepageMartJob + …Writer   // MariaDB 소스, 가장 먼저 실행
+│   ├── ReservationStatsDailyMartJob + …Writer     // 예약통계 2종 (period_lock)
+│   ├── ExamMartJob                  + ExamMartWriter
+│   ├── ReportMartJob                + ReportMartWriter   // 주차 레포트·고객분류별
+│   ├── ConsultationMartJob          + ConsultationMartWriter
+│   ├── OutpatientMartJob            + OutpatientMartWriter
+│   ├── OverallMartJob               + OverallMartWriter
+│   └── EtcMartJob                   + EtcMartWriter
 └── admin/
     ├── BatchAdminController              // /api/admin/batch/**
     ├── SurgeryReconcileService
@@ -196,17 +232,23 @@ com.bviit.analytics.batch/
 6. `BatchRunLogRepository`에 성공 기록
 7. 커밋
 
-**실패 시**: 롤백 후 `batch_run_log`에 `FAILED` + `error_message` 기록. **알림 채널(Slack/이메일)은 미구현** (§10 오픈 이슈).
+**실패 시**: 롤백 후 `batch_run_log`에 `FAILED` + `error_message` 기록 → **Slack 알림 발송**
+(`BatchSlackNotifier`, `LOGGING_SLACK_*` 프로파일별 활성).
+
+> ⚠️ **`POST /rerun` 은 실패해도 `{"ok":true}` 를 돌려준다.** 오케스트레이터가 요청을 접수했다는 뜻일 뿐이다.
+> 실제 성공 여부는 반드시 `GET /api/admin/batch/run-logs?limit=1` 로 `status=SUCCESS`·`errorMessage=null` 을 확인할 것.
 
 ### 5.3 스케줄 (실제 크론)
 
 | 잡 | 주기 | 처리 범위 | 진입점 |
 |----|-----|---------|-------|
 | Daily append | `0 0 3 * * *` (Asia/Seoul) | D-1 하루 | `BatchOrchestrator.runDaily()` |
-| Monthly reconcile | `0 30 3 1 * *` | 전월 전체 upsert | `BatchOrchestrator.runMonthlyReconcile()` |
+| Intraday | `매일 10:00` | D-1 | 예약통계 일별 마트만 재실행 (콜센터 늦반영 흡수) |
+| Monthly reconcile | `0 30 3 1 * *` | 전월 전체 upsert | `BatchOrchestrator.runMonthlyReconcile()` — **현재 비활성**(cron `-`) |
 | Admin rerun | 수동 | 지정 범위 | `BatchAdminController` |
 
 로컬 개발 시 `application-local.yml`의 `batch.mart.enabled: false`로 배치 스케줄 자체가 비활성화된다.
+정확한 현행 스케줄·마트별 정책은 [`batch-execution-rules.md`](./batch-execution-rules.md) §1 참조.
 
 ---
 
@@ -251,18 +293,25 @@ class SurgeryMartQueryService { ... }                                        // 
 
 ---
 
-## 7. 스냅샷 스토어 마이그레이션 — ⚠️ 부분 이행
+## 7. 스냅샷 스토어 마이그레이션 — ✅ 완료
 
-> 2026-07-31: **수술(surgery-composition)** 은 파일 스냅샷을 폐지하고 `mart_surgery_daily` 로 통합 완료.
-> 예약통계 2종(시력교정·백내장)은 여전히 파일 기반 스냅샷 유지 중.
+> 2026-07-31: **수술(surgery-composition)** 은 파일 스냅샷을 폐지하고 `mart_surgery_daily` 로 통합.
+> **예약통계 2종**도 마트로 이관 완료 — `mart_reservation_stats_{system,cataract}_daily`(V11)
+> + 2026-H1 시드(V19/V20) + `reservation_stats_period_lock` 잠금 + `reservation_stats_override` 셀 보정.
 
-### 7.1 현재 사용처
+### 7.1 이관 결과
 
-- ✅ ~~`surgery/service/SurgerySnapshotStore`~~ — 2026-07-31 삭제. `mart_surgery_daily` 조회로 대체(`SurgeryCompositionMartQueryService` @Primary).
-- ⚠️ `reservation/service/ReservationStatsSnapshotStore` — 예약통계_시력교정 스냅샷 (파일 유지)
-- ⚠️ `reservation/service/CataractStatsSnapshotStore` — 예약통계_백내장 스냅샷 (파일 유지)
+| 종전 파일 스토어 | 대체 |
+|---|---|
+| ~~`surgery/service/SurgerySnapshotStore`~~ | `mart_surgery_daily` (`SurgeryCompositionMartQueryService` @Primary) |
+| ~~`ReservationStatsSnapshotStore`~~ | `mart_reservation_stats_system_daily` + `period_lock` + `override` |
+| ~~`CataractStatsSnapshotStore`~~ | `mart_reservation_stats_cataract_daily` + `period_lock` + `override` |
 
-남은 두 스냅샷 스토어는 **관리자 확정 워크플로우**(`locked` 상태·`fillSnapshot`·셀 편집)를 지원하기 위해 별도 유지 중.
+**§7.3 이 제기했던 "편집 vs 재적재 충돌" 문제는 이렇게 풀렸다** — 관리자 확정 워크플로우는
+`locked` 컬럼이 아니라 **별도 잠금 테이블**(`reservation_stats_period_lock`)로, 셀 수기 보정은
+**INSERT-only audit 테이블**(`reservation_stats_override`)로 분리했다. 배치는 잠긴 period 를 스킵하고,
+override 는 조회 시점에 서비스가 얹는다 — 즉 **배치 write 경로와 편집 경로가 서로 안 만난다.**
+자세한 동작은 [`mart-menu-mapping.md`](./mart-menu-mapping.md) §2-4·§3-3·§4-2 참조.
 
 ### 7.2 수술 이행 결과 (2026-07-31)
 
@@ -272,19 +321,6 @@ class SurgeryMartQueryService { ... }                                        // 
 - `SurgeryStatsService`의 `fillSnapshot`/`saveSnapshot` 삭제. `SurgerySnapshot` DTO·`SurgerySnapshotStore` 삭제. 컨트롤러의 `/fill`·`/snapshot`·`/snapshots` 엔드포인트 삭제.
 - 프론트 `SurgeryDailyMeta`에서 `confirmedAt`/`confirmedBy` 필드 제거, `SNAPSHOT` source 삭제 · `MART` 배지 추가.
 - 조회 시점에 MSSQL 을 두드리는 경로가 완전히 사라짐 — 배치가 유일한 write 창.
-
-### 7.3 남은 예약 2종 흡수 계획 (진행률 0%)
-
-1. ❌ 마트 테이블에 `locked BOOLEAN`, `confirmed_by VARCHAR`, `confirmed_at TIMESTAMP` 컬럼 추가
-2. ❌ 기존 스냅샷 파일 → 마트로 마이그레이션 스크립트 1회 실행
-3. ❌ `*SnapshotStore` API를 마트 upsert/read로 재구현 (외부 인터페이스 유지)
-4. ❌ 안정화 후 파일 스토어 코드·`data/` 디렉토리 제거
-
-### 7.3 착수 전 결정 필요 사항
-
-- 편집 워크플로우가 실시간(사용자 세션 중 즉시 반영)임에 반해 배치는 T-1이므로, 스냅샷을 마트에 통합할 경우 **읽기 경로/편집 경로/재적재 잡의 상호작용 규칙**을 재설계해야 함
-- 재적재가 관리자 편집분을 덮어쓰지 않도록 `locked=true` 행은 upsert 대상에서 제외하는 조건이 필요
-- 리스트 마트에서 이 컬럼들이 어떻게 존재해야 하는지도 별도 결정 필요 (리스트는 세션 단위가 아니라 행 단위 편집)
 
 ---
 
@@ -299,11 +335,12 @@ class SurgeryMartQueryService { ... }                                        // 
 | **PR-5** | 검사 마트 + Phase 3 Cutover | ✅ 완료 (`V4__exam_mart.sql`) |
 | **PR-6** | 전환·성공률 마트 + Phase 4 Cutover | ✅ 완료 (`V5__consultation_mart.sql`) |
 | **PR-7** | 나머지 마트(외래·전체·기타) + Phase 5 Cutover | ✅ 완료 (`V6..V8`, `V10__overall_exam_monthly.sql`) |
-| **PR-8** | Monthly reconcile 잡, Admin rerun API, 파일캐시·스냅샷 스토어 코드 제거 | ⚠️ Monthly reconcile ✅ / Admin rerun ✅ / 스냅샷 제거 ❌ (§7) |
-| **PR-9** *(신규)* | 미구현 마트 5종(surgery-ratio/composition, reservation-trend/composition/overall-monthly, outpatient-count-daily, overall-exam-monthly) 착수 여부 결정 | 백로그 |
-| **PR-10** *(신규)* | 스냅샷 스토어 흡수 (§7 전체) | ⚠️ 수술 완료(2026-07-31) · 예약통계 2종 백로그 |
-| **PR-11** *(신규)* | 배치 실패 알림 채널 (Slack/이메일) | 백로그 (§10) |
+| **PR-8** | Monthly reconcile 잡, Admin rerun API, 파일캐시·스냅샷 스토어 코드 제거 | ✅ 완료 (§7) |
+| **PR-9** *(신규)* | 미구현 마트 착수 여부 결정 (surgery-ratio/composition, reservation-trend/composition) | ✅ 결정 완료 — 신설 안 함(§4.1) |
+| **PR-10** *(신규)* | 스냅샷 스토어 흡수 (§7 전체) | ✅ 완료 — 수술 2026-07-31 · 예약통계 2종 V19/V20 |
+| **PR-11** *(신규)* | 배치 실패 알림 채널 (Slack/이메일) | ✅ 완료 (`BatchSlackNotifier`) |
 | **PR-12** *(신규)* | 리스트 마트 파티셔닝 도입 시점 판단 | 백로그 (§10) |
+| **PR-13** *(신규)* | 주차 레포트·고객분류별 마트(`ReportMartJob`, V28~V31) | ✅ 완료 — 화면의 MSSQL 의존 제거 |
 
 ---
 
@@ -312,13 +349,13 @@ class SurgeryMartQueryService { ... }                                        // 
 | 리스크 | 완화책 | 상태 |
 |-------|-------|-----|
 | CRM 소급 수정이 마트에 반영 안 됨 | 월말 자동 재계산 + 관리자 수동 재적재 API + 도메인별 reconcile 엔드포인트 | ✅ 이행 |
-| 배치 실패 시 데이터 공백 | `batch_run_log` 모니터링, 재실행 idempotent (upsert/delete+insert) | ⚠️ 로그는 이행 / **실시간 알림 미구현** |
+| 배치 실패 시 데이터 공백 | `batch_run_log` 모니터링, 재실행 idempotent (upsert/delete+insert) | ✅ 이행 — 로그 + Slack 알림 |
 | 마트 vs 직결 값 차이 (검증 실패) | Phase마다 대사 스크립트 필수 — 최근 3개월 값 일치 확인 후 스위치 | ⚠️ 통합테스트는 Writer→Repo 왕복 검증만 있음, 마트 vs 직결 대사 자동화 부재 |
 | Postgres 디스크 증가 (리스트 마트) | 월별 파티션 + 오래된 파티션 아카이빙 (2년 이상 zip/삭제) | ❌ **미구현** — 데이터 볼륨 도달 전까지 보류 |
 | CRM 스키마 변경 시 배치 깨짐 | `docs/db/tables/*.md` 갱신 + 배치 통합테스트 스키마 스모크 | ⚠️ 문서 갱신 정책은 존재, 스모크 테스트는 부분 |
 | PII 확산 (Postgres 복제) | 배치·API 서비스 계정으로만 접근 제한, 감사 로그 활성화 | ⚠️ 접근 통제는 인프라 계정 레벨, 감사 로그 활성화 여부는 운영측 확인 필요 |
 | **레거시 24·25 데이터 소실** | `V9__legacy_seed.sql` + `batch.mart.min-year=2026` 가드 | ✅ 이행 완료 (2026-06-02 이후 확립) |
-| **스냅샷 파일 유실** | 파일 스토어 백업 정책 필요 (마트 흡수 완료 전까지) | ⚠️ 별도 백업 절차 문서화 필요 |
+| ~~스냅샷 파일 유실~~ | 마트 흡수 완료로 소멸 (§7) | ✅ 해소 |
 
 ---
 
@@ -333,11 +370,20 @@ class SurgeryMartQueryService { ... }                                        // 
 
 ### 남아 있는 이슈
 
-- [ ] **배치 실패 알림 채널** — Slack? 이메일? 우선 SLF4J 로그 + `batch_run_log` 조회만으로 대응 중 (PR-11)
 - [ ] **리스트 파티션 도입 시점 & 보관 기간** — 현재 미도입, 데이터 볼륨 임계치 정의 필요 (PR-12)
-- [ ] **미구현 마트 4종 착수 여부** — `mart_surgery_ratio_monthly`, `mart_surgery_composition_monthly`, `mart_reservation_trend`, `mart_reservation_composition`, `mart_reservation_overall_monthly`. 현재 스냅샷/서비스 레이어로 대응 가능한데, 마트로 이관할 이득이 있는지 재평가 필요 (PR-9)
-- [ ] **스냅샷 스토어 흡수 착수 여부·시점** — §7 참조. 편집 워크플로우와 배치 재적재의 상호작용 규칙이 사전 결정되어야 함 (PR-10)
-- [ ] **마트 vs 직결 값 대사 자동화** — 통합테스트는 왕복 검증만, MSSQL 직결 값과 실제 대사하는 자동화 테스트 부재
+- [ ] **마트 vs 직결 값 대사 자동화** — 통합테스트는 왕복 검증만, MSSQL 직결 값과 실제 대사하는 자동화 테스트 부재.
+      단 도메인별 `reconcile-*` 엔드포인트로 **수동 대조는 가능**하다(예: `GET /api/admin/batch/exam/reconcile-procedure-exam?years=2026`)
+- [ ] **Monthly reconcile 재활성 여부** — 현재 cron `-` 로 꺼져 있다. 소급 수정 흡수는 수동 rerun 에 의존 중
+
+### 대시보드 전반의 보류된 결정 (Deferred)
+
+> 구 `기획/dashboard-spec.md` §9 에서 옮겨왔다. 배치 범위 밖이지만 기록을 남긴다.
+
+- 토큰 갱신 / httpOnly 쿠키 마이그레이션
+- 역할 기반 인가(RBAC) — 현재는 `/api/admin/**` = `hasRole("ADMIN")` 단일 구분만
+- 의사·채널 마스터 데이터 소스
+- 실시간 WebSocket 업데이트
+- 타임존 정규화 (MSSQL 서버 vs Spring 서버)
 
 ---
 
@@ -345,17 +391,19 @@ class SurgeryMartQueryService { ... }                                        // 
 
 ### 코드 자산
 
-- 마트 마이그레이션 스크립트: `backend/src/main/resources/sql/mart/V{1..9}__*.sql`
+- 마트 마이그레이션 스크립트: `backend/src/main/resources/sql/mart/V{1..32}__*.sql` (`MartSchemaInitializer` 가 실행)
 - 마트 upsert/select/delete SQL: `backend/src/main/resources/sql/mart/*.sql`
 - 도메인별 원본 SQL(직결 시절): `backend/src/main/resources/sql/{domain}/*.sql`
 - 배치 컴포넌트: `backend/src/main/java/com/bviit/analytics/batch/`
-- 스냅샷 저장 위치: `backend/data/{reservation-stats-system,cataract-stats-system}/` (§7 마이그레이션 대상 · surgery-composition은 2026-07-31 폐지)
 - 통합테스트: `backend/src/test/java/com/bviit/analytics/batch/job/*MartWriterIT.java` (Testcontainers Postgres)
 
 ### 참조 문서
 
-- DB 테이블 문서(CRM MSSQL 스키마): `docs/db/tables/`
-- Airflow 스크립트(참고용, 이번 스코프 밖): `docs/airflow/`
+- 배치 실행 규칙·마트별 정책(정본): [`batch-execution-rules.md`](./batch-execution-rules.md)
+- 마트 ↔ 메뉴 매핑: [`mart-menu-mapping.md`](./mart-menu-mapping.md)
+- 홈페이지 소스 전략: [`legacy-homepage-source-strategy.md`](./legacy-homepage-source-strategy.md)
+- DB 테이블 문서(CRM MSSQL 스키마): [`../db/tables/`](../db/tables/)
+- 레거시 Airflow ETL 대조: [`../db/airflow-레거시-대조.md`](../db/airflow-레거시-대조.md)
 - 프로젝트 표준·컨벤션: `CLAUDE.md`, `AGENTS.md`
 
 ### 관련 프로파일

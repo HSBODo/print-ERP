@@ -61,6 +61,10 @@ Postgres 마트 테이블 (계산된 최종 숫자만 저장)
 | `list_exam` | 검사자 리스트 |
 | `list_cataract_exam` | 백내장 검사자 리스트 |
 | `list_surgery` | 수술자 리스트 |
+| `mart_list_reservation_homepage` | 예약자 리스트_홈페이지 (V21 · MariaDB 소스) |
+| `mart_outpatient_list` | 외래수 리스트 (V25) |
+| `mart_weekly_report` | 주차 레포트 (V28 · ISO 8601 주차) |
+| `mart_exam_count_by_class` | 고객분류별 검사수 (V28) |
 
 ### 2-2. 1:N (한 테이블 → 여러 화면)
 
@@ -91,9 +95,16 @@ Postgres 마트 테이블 (계산된 최종 숫자만 저장)
 - `reservation_stats_override` (셀 수기 보정 audit)
 - `reservation_stats_period_lock` (월 확정 잠금)
 
-### 2-5. 아직 마트 없는 메뉴 (14개, `StatsPlaceholderPage` 표시)
+### 2-5. 아직 마트 없는 메뉴 (12개, `StatsPlaceholderPage` 표시)
 
-`overseas` · `marketing` · `cancel-rate` · `no-show-rate` · `unit-price` · `dreamlens-revenue` · `staff-point` · `prp-rate` · `reoperation-rate` · `same-day-op` · `designated-doctor` · `visit-reason` · `daily-reception` · (`intake-conversion` 숨김)
+`overseas` · `marketing` · `cancel-rate` · `no-show-rate` · `unit-price` · `staff-point` ·
+`prp-rate` · `reoperation-rate` · `same-day-op` · `designated-doctor` · `visit-reason` ·
+`daily-reception` · (`intake-conversion` 숨김)
+
+> ✍️ **`dreamlens-revenue`(드림렌즈 장부)는 이 목록에서 빠졌다** — 마트가 없는 게 아니라
+> **마트 대상이 아니다.** MSSQL 원천이 없고 사용자가 화면에서 직접 입력하는 데이터라
+> `dreamlens_ledger` JPA 엔티티 + `/api/dreamlens-ledger` CRUD 로 구성돼 있다.
+> 배치·마트를 태우지 말 것 (CLAUDE.md "직접 입력 장부" 예외 항목).
 
 ### 2-6. 인프라 테이블 (메뉴 아님, 배치 지원용)
 
