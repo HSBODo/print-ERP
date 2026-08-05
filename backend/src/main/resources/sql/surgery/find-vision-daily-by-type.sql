@@ -9,6 +9,12 @@
                     COUNT(DISTINCT CASE WHEN e.op_type = 'kpl'      THEN e.cust_num END) AS kpl,
                     COUNT(DISTINCT CASE WHEN e.op_type = 'tKpl'     THEN e.cust_num END) AS tKpl,
                     COUNT(DISTINCT CASE WHEN e.op_type = 'viva'     THEN e.cust_num END) AS viva,
+                    COUNT(DISTINCT CASE WHEN e.op_type = 'presbyond' THEN e.cust_num END) AS presbyond,
+                    -- PIOL 합계는 유형별 단순 합산이 아니라 DISTINCT 환자 수다.
+                    -- 양안에 다른 렌즈를 넣은 환자가 유형별로 각각 잡혀 합산하면 이중 계상된다
+                    -- (2026-07 실측: 단순 합산 168 vs 실인원 148, 20명 중복).
+                    COUNT(DISTINCT CASE WHEN e.op_type IN ('icl','tIcl','kpl','tKpl','viva')
+                                        THEN e.cust_num END) AS piolPatients,
                     COUNT(DISTINCT CASE WHEN e.raw LIKE '%+X%'  THEN e.cust_num END) AS xtra,
                     COUNT(DISTINCT CASE WHEN e.raw LIKE '%W.V%' THEN e.cust_num END) AS waveVision,
                     COUNT(DISTINCT CASE WHEN e.raw LIKE 'MONO%' THEN e.cust_num END) AS monoVision,
@@ -22,6 +28,10 @@
                            o.CUST_NUM AS cust_num,
                            o.OPERATIONR AS raw,
                 CASE
+                    -- PRESBYOND(노안 레이저)를 맨 앞에 둔다. 'Mono+PRESBYOND' 처럼 다른 표기와
+                    -- 섞여 들어와도 노안 시술로 잡아야 해서다. 이전에는 분기가 없어 other 로
+                    -- 떨어져 총계에만 들어가고 유형별 표에서는 보이지 않았다.
+                    WHEN o.OPERATIONR LIKE '%PRESBYOND%' THEN 'presbyond'
                     WHEN o.OPERATIONR LIKE '%SMILE Pro%' OR o.OPERATIONR LIKE '%SMILEpro%'
                          OR o.OPERATIONR LIKE '%SMILE PRO%' THEN 'smilePro'
                     WHEN o.OPERATIONR LIKE '%SMILE%' THEN 'smile'
@@ -64,6 +74,8 @@
                            o.CUST_NUM AS cust_num,
                            o.OPERATIONL AS raw,
                 CASE
+                    -- 우안 CASE 와 동일 규칙 (§PRESBYOND 주석 참조)
+                    WHEN o.OPERATIONL LIKE '%PRESBYOND%' THEN 'presbyond'
                     WHEN o.OPERATIONL LIKE '%SMILE Pro%' OR o.OPERATIONL LIKE '%SMILEpro%'
                          OR o.OPERATIONL LIKE '%SMILE PRO%' THEN 'smilePro'
                     WHEN o.OPERATIONL LIKE '%SMILE%' THEN 'smile'

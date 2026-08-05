@@ -26,6 +26,14 @@ export type RowTier = 'month' | 'week' | 'day'
 export interface Cell {
   lasek: number; lasik: number; smile: number; smilePro: number
   icl: number; tIcl: number; kpl: number; tKpl: number; viva: number
+  /** 노안 레이저(PRESBYOND) — PIOL 그룹 밖의 독립 항목 */
+  presbyond: number
+  /**
+   * PIOL DISTINCT 환자 수. icl+tIcl+kpl+tKpl+viva 를 더하면 안 된다 —
+   * 양안에 다른 렌즈를 넣은 환자가 유형별로 각각 잡혀 이중 계상된다
+   * (2026-07: 합산 168 vs 실인원 148).
+   */
+  piolPatients: number
   catMulti: number; catMono: number; catEdof: number
   xtra: number; waveVision: number; monoVision: number; contra: number; personal: number
   lasekEx: number; lasekRed: number
@@ -35,6 +43,7 @@ export interface Cell {
 
 export const EMPTY: Cell = {
   lasek: 0, lasik: 0, smile: 0, smilePro: 0, icl: 0, tIcl: 0, kpl: 0, tKpl: 0, viva: 0,
+  presbyond: 0, piolPatients: 0,
   catMulti: 0, catMono: 0, catEdof: 0,
   xtra: 0, waveVision: 0, monoVision: 0, contra: 0, personal: 0,
   lasekEx: 0, lasekRed: 0,
@@ -185,7 +194,6 @@ export function buildSurgeryRows(
 }
 
 /* ── 셀 표시 헬퍼 ── */
-const piolSum = (d: Cell) => d.icl + d.tIcl + d.kpl + d.tKpl + d.viva
 const pct = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0)
 /** 값(비중%) — 그룹 합계 대비 */
 const vp = (v: number, base: number) => (v > 0 ? `${formatAxisNumber(v)} (${pct(v, base)}%)` : '-')
@@ -202,18 +210,21 @@ export interface ColDef {
   bg?: string
 }
 
-// 본문 26개 컬럼(구분 컬럼 제외) — 헤더 leaf 순서와 1:1 대응.
+// 본문 27개 컬럼(구분 컬럼 제외) — 헤더 leaf 순서와 1:1 대응.
 export const COLS: ColDef[] = [
   { render: (d) => vc(d.total), border: true, strong: true, bg: 'bg-slate-50' },                 // 합계
   { render: (d) => vc(d.visionPatients), border: true, strong: true, tone: 'blue', bg: 'bg-blue-50' }, // 시력교정
   { render: (d) => vp(d.smile, d.visionPatients) },                                              // 스마일
   { render: (d) => vp(d.smilePro, d.visionPatients) },                                           // 스마일프로
-  { render: (d) => vp(piolSum(d), d.visionPatients), border: true, strong: true },               // PIOL 합계
+  // PIOL 합계는 유형별 합산이 아니라 원천이 세어 준 DISTINCT 환자 수(piolPatients)다.
+  // 양안에 다른 렌즈를 넣은 환자가 이중 계상되므로 icl+tIcl+… 로 더하면 안 된다.
+  { render: (d) => vp(d.piolPatients, d.visionPatients), border: true, strong: true },           // PIOL 합계
   { render: (d) => vc(d.icl), muted: true },                                                     // ICL
   { render: (d) => vc(d.tIcl), muted: true },                                                    // T-ICL
   { render: (d) => vc(d.kpl), muted: true },                                                     // KPL
   { render: (d) => vc(d.tKpl), muted: true },                                                    // T-KPL
   { render: (d) => vc(d.viva), muted: true },                                                    // VIVA
+  { render: (d) => vp(d.presbyond, d.visionPatients), border: true, bg: 'bg-yellow-50' },        // 프레스비욘드
   { render: (d) => vp(d.lasik, d.visionPatients), border: true },                                // 라식계
   { render: (d) => vp(d.lasekEx + d.lasekRed, d.visionPatients), border: true, strong: true },   // 라섹계 합계
   { render: (d) => vp(d.lasekEx, d.lasekEx + d.lasekRed) },                                       // 라섹계 EX

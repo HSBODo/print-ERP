@@ -20,6 +20,8 @@ const THL = `${TH} border-l border-border`
 const TH_B = `${TH} bg-blue-50/70`
 const THL_B = `${THL} bg-blue-50/70`
 const TH_V = `${TH} bg-violet-50/70`
+// 프레스비욘드(노안 레이저) — PIOL 그룹 밖의 독립 항목이라 노란색으로 구분한다.
+const THL_Y = `${THL} bg-yellow-100 text-yellow-800`
 
 /** 공통 3단 헤더 — 시력교정(파랑)/백내장(보라) 그룹 밴드 색상. */
 function CompositionHead() {
@@ -28,7 +30,7 @@ function CompositionHead() {
       <tr className="border-y border-border">
         <th rowSpan={3} className={`${TH} bg-muted/40`}>구분</th>
         <th rowSpan={3} className={`${THL} bg-slate-100`}>합계</th>
-        <th colSpan={21} className={`${THL} border-b bg-blue-100 text-blue-800`}>시력교정수술</th>
+        <th colSpan={22} className={`${THL} border-b bg-blue-100 text-blue-800`}>시력교정수술</th>
         <th colSpan={4} className={`${THL} border-b bg-violet-100 text-violet-800`}>백내장</th>
       </tr>
       <tr className="border-b border-border">
@@ -36,6 +38,7 @@ function CompositionHead() {
         <th rowSpan={2} className={TH_B}>스마일</th>
         <th rowSpan={2} className={TH_B}>스마일프로</th>
         <th colSpan={6} className={`${THL_B} border-b`}>PIOL</th>
+        <th rowSpan={2} className={THL_Y}>프레스비욘드</th>
         <th rowSpan={2} className={THL_B}>라식계</th>
         <th colSpan={3} className={`${THL_B} border-b`}>라섹계</th>
         <th colSpan={3} className={`${THL_B} border-b`}>재수술</th>

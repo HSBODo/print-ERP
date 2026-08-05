@@ -10,6 +10,8 @@ SELECT
     kpl,
     t_kpl             AS "tKpl",
     viva,
+    presbyond,
+    piol_patients     AS "piolPatients",
     cat_multi         AS "catMulti",
     cat_mono          AS "catMono",
     cat_edof          AS "catEdof",
