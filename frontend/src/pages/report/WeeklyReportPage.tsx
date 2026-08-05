@@ -99,6 +99,7 @@ export function WeeklyReportPage() {
           years={it.chart.years ?? YEARS}
           weeks={weeks}
           data={weekCharts[it.chart.series] ?? {}}
+          singleTable={it.id === 'dreamlens-new'}
         />
       : it.node,
   }))
