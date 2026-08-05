@@ -7,8 +7,11 @@ B&VIIT Analytics 대시보드 문서 모음. 카테고리별 진입점입니다.
 | 문서 | 내용 |
 |------|------|
 | [기획/dashboard-spec.md](기획/dashboard-spec.md) | **대시보드 종합 기획서** (메뉴·API·구현 현황) — 현행 기준 |
-| [기획/prd.html](기획/prd.html) | PRD 통합 문서 (PRD·Features·User Flow·Wireframe 탭, 브라우저로 열기) |
 | [기획/report-chart-status.md](기획/report-chart-status.md) | 월간/주차 레포트 28개 도표 현황 + 레거시 검증 |
+| [기획/월간레포트-예약섹션-확정값.md](기획/월간레포트-예약섹션-확정값.md) | 월간 레포트 예약 섹션 2026 확정값 |
+| [기획/아이리더-검사통계-기획개발평가.md](기획/아이리더-검사통계-기획개발평가.md) | 아이리더 검사통계 화면 기획·개발 평가 |
+| [기획/아이리더-수집프로그램(DDD)-평가.md](기획/아이리더-수집프로그램%28DDD%29-평가.md) | 외부 제작 아이리더 수집프로그램 MVP 평가 |
+| [기획/prd.html](기획/prd.html) | PRD 통합 문서 (PRD·Features·User Flow·Wireframe 탭, 브라우저로 열기) |
 
 ## 지표정의 — 환자 흐름별 ([지표정의/](지표정의/))
 
@@ -29,12 +32,25 @@ B&VIIT Analytics 대시보드 문서 모음. 카테고리별 진입점입니다.
 
 | 문서 | 내용 |
 |------|------|
+| [점검/수정-대기목록_2026-07.md](점검/수정-대기목록_2026-07.md) | **미반영 수정 건 목록** — 착수 전 여기부터 |
 | [점검/시력교정-검사자_2026-06~07.md](점검/시력교정-검사자_2026-06~07.md) | 검사 예약 없이 외래·백내장으로 온 건 혼입 |
 | [점검/백내장-검사수_2026-06.md](점검/백내장-검사수_2026-06.md) | 눈→사람 단위 교체, 레거시 골든 재현 |
-| [점검/원데이-레거시-비교_2026-07.md](점검/원데이-레거시-비교_2026-07.md) | 원데이(당일OP) 레거시 대조 (+ Word 배포본) |
-| [점검/원데이-레거시-비교_2026-07-2탄.md](점검/원데이-레거시-비교_2026-07-2탄.md) | **2탄** — 반영 결과 요약 (숫자·차트번호·구현 상태) |
+| [점검/시력교정-수술자_2026-07.md](점검/시력교정-수술자_2026-07.md) | 수술 유형 분류·PIOL 합계 대조 |
+| [점검/월간보고-대조_2026-07.md](점검/월간보고-대조_2026-07.md) | 월간보고 PDF ↔ 대시보드 항목별 대조 |
+| [점검/원데이-레거시-비교_2026-07.md](점검/원데이-레거시-비교_2026-07.md) | 원데이(당일OP) 레거시 대조 + 반영 결과 |
 | [점검/재수술-분류_2026-01~07.md](점검/재수술-분류_2026-01~07.md) | 재수술 판정 기준 (`REASON_CD` 전환 검토) |
 | [점검/홈페이지-CRM-예약수-비교_2026-07.md](점검/홈페이지-CRM-예약수-비교_2026-07.md) | 홈페이지 집계 vs 홈페이지(CRM) 예약수 차이 (건별 1:1 대조) |
+
+## 데이터 배치 · 마트 ([databatch/](databatch/))
+
+> 화면은 MSSQL 직결이 아니라 **배치가 적재한 Postgres 마트**를 읽는다. 그 규칙이 여기 있다.
+
+| 문서 | 내용 |
+|------|------|
+| [databatch/strategy.md](databatch/strategy.md) | **배치·마트 전환 전략** — 코드 주석이 가장 많이 가리키는 문서 |
+| [databatch/batch-execution-rules.md](databatch/batch-execution-rules.md) | 배치 실행 규칙과 마트별 정책 |
+| [databatch/mart-menu-mapping.md](databatch/mart-menu-mapping.md) | 마트 테이블 ↔ 메뉴 매핑과 데이터 흐름 |
+| [databatch/legacy-homepage-source-strategy.md](databatch/legacy-homepage-source-strategy.md) | 예약자 리스트_홈페이지 소스 접근 전략 |
 
 ## 데이터 상세 ([db/](db/))
 
@@ -42,26 +58,28 @@ B&VIIT Analytics 대시보드 문서 모음. 카테고리별 진입점입니다.
 |------|------|
 | [db/지표정의.md](db/지표정의.md) | **상세 레퍼런스** — 검증 이력·코드 반영 상태·월별 확정값 |
 | [db/중단사유-분류-정의.md](db/중단사유-분류-정의.md) | 중단 사유 7버킷 분류 (`EXAM.CANCEL_CD` 기준) — 매핑 변경 절차·검증 쿼리 |
-| [db/지표-마감스냅샷-기획.md](db/지표-마감스냅샷-기획.md) | 주간 승인 + 월 마감 스냅샷 아키텍처 (기획) |
 | [db/검사자리스트-컬럼정의.md](db/검사자리스트-컬럼정의.md) | 시력교정 검사자 리스트 컬럼↔DB 매핑 |
 | [db/백내장검사리스트-컬럼정의.md](db/백내장검사리스트-컬럼정의.md) | 백내장 검사자 리스트 컬럼↔DB 매핑 |
 | [db/검사리스트-ERD-DDL.md](db/검사리스트-ERD-DDL.md) | 검사·백내장 리스트 참조 테이블 ERD/DDL |
 | [db/검사자리스트-월별건수.md](db/검사자리스트-월별건수.md) | 검사자 리스트 월별 행수 (레거시 대조) |
-| [db/tables/](db/tables/) | **35개 운영 테이블 카탈로그** (컬럼·PK/FK·JOIN·함정) |
+| [db/예약통계_백내장-데이터소스-분석.md](db/예약통계_백내장-데이터소스-분석.md) | 예약통계_백내장 데이터소스 분석 |
+| [db/지표-마감스냅샷-기획.md](db/지표-마감스냅샷-기획.md) | 주간 승인 + 월 마감 스냅샷 아키텍처 (기획) |
+| [db/airflow-레거시-대조.md](db/airflow-레거시-대조.md) | 레거시 Airflow Dataloader 쿼리 분석 (우리 집계와 대조용) |
+| [db/tables/](db/tables/) | **운영 테이블 카탈로그** (컬럼·PK/FK·JOIN·함정) — softcrm 레포와 동기화 |
 
-## 개발 / 배포
+> ⚠️ `db/tables/` 문서 안의 `../db-structure-overview.md` 류 링크는 **원본 softcrm 레포 기준**이라
+> 이 저장소에서는 열리지 않는다. 동기화 대상이므로 고치지 말 것.
+
+## 개발 / 배포 / 핸드오버
 
 | 문서 | 내용 |
 |------|------|
-| [screen-first-development.md](screen-first-development.md) | 화면 우선 개발 원칙 + 로컬 3계층 DB 전략 |
-| [sqlite-mock-data-guide.md](sqlite-mock-data-guide.md) | 통계 더미 데이터 SQLite 세팅 |
+| [deployment.md](deployment.md) | **배포 통합 가이드** — 전략·CI / 로컬 실행 / 운영 배포 |
 | [responsive-panel-architecture.md](responsive-panel-architecture.md) | 반응형 패널·패널별 독립 API 패턴 (2026-04 핸드오버) |
-| [2026-07-15-예약자리스트_홈페이지-추가.md](2026-07-15-예약자리스트_홈페이지-추가.md) | 예약자 리스트_홈페이지 이관 + 온라인 예약 공식 변경 (2026-07 핸드오버) — 실행 설정·실시간 연결·함정 |
-| [feature-timeline.md](feature-timeline.md) | 기능 구현 타임라인 (2026-04 계획, 현황은 report-chart-status 참조) |
-| [deployment-strategy.md](deployment-strategy.md) | ① 배포 전략·CI |
-| [deployment-local.md](deployment-local.md) | ② 로컬 개발 실행 |
-| [deployment-release.md](deployment-release.md) | ③ 운영 배포 |
+| [2026-07-15-예약자리스트_홈페이지-추가.md](2026-07-15-예약자리스트_홈페이지-추가.md) | 예약자 리스트_홈페이지 이관 + 온라인 예약 공식 변경 (2026-07 핸드오버) |
+| [인수인계_2026-08-05_백내장검사.md](인수인계_2026-08-05_백내장검사.md) | 백내장 검사 통계 개편 (모집단 102·분류 4종·아이리더) — **§1~§5 배경·함정은 유효, §6 재적용은 완료** |
 
-## 보관 ([archive/](archive/))
+---
 
-구현 완료되어 현행 기준 역할이 끝난 설계·초안 문서. 설계 근거 참고용. → [archive/README.md](archive/README.md)
+> 구현 완료로 역할이 끝난 설계·초안 문서(`archive/`)와 중복 가이드는 2026-08-05에 정리했다.
+> 필요하면 git 이력에서 찾을 수 있다.
