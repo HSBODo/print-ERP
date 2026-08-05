@@ -622,14 +622,16 @@ export function DreamlensLedgerPage() {
                           style={{ width: SOURCE_COL_WIDTH, minWidth: SOURCE_COL_WIDTH, left: SELECT_COL_WIDTH }}
                           className={`sticky z-10 border border-border/60 px-1 py-1 text-center ${frozenBg}`}
                         >
-                          {isAuto && (
-                            <span
-                              title="배치가 CRM 내원·수납으로 만든 초안입니다. 렌즈 정보를 채우면 일반 행이 됩니다."
-                              className="inline-block rounded bg-amber-200/80 px-1 text-[9px] font-semibold leading-4 text-amber-900"
-                            >
-                              자동
-                            </span>
-                          )}
+                          <span
+                            title={isAuto
+                              ? '배치가 CRM 내원·수납으로 만든 초안입니다. 셀을 고치면 수기로 바뀝니다.'
+                              : '사람이 입력하거나 수정한 행입니다. 배치가 덮어쓰지 않습니다.'}
+                            className={`inline-block rounded px-1 text-[9px] font-semibold leading-4 ${
+                              isAuto ? 'bg-amber-200/80 text-amber-900' : 'bg-slate-200/80 text-slate-700'
+                            }`}
+                          >
+                            {isAuto ? '자동' : '수기'}
+                          </span>
                         </td>
                         {LEDGER_COLUMNS.map((column) => (
                           <LedgerCell
