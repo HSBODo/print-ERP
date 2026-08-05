@@ -2,9 +2,9 @@ package com.bviit.analytics.surgery.service;
 
 import com.bviit.analytics.surgery.dto.SurgeryDailyItem;
 import com.bviit.analytics.surgery.dto.SurgeryMonthlyItem;
-import com.bviit.analytics.surgery.dto.SurgerySnapshot;
+import com.bviit.analytics.surgery.repository.ReoperationCandidateRepository;
+import com.bviit.analytics.surgery.repository.ReoperationDecisionRepository;
 import com.bviit.analytics.surgery.repository.SurgeryStatsRepository;
-import com.bviit.analytics.common.stats.SnapshotWindow;
 import com.bviit.analytics.common.util.MonthlyBuckets;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -41,8 +40,9 @@ public class SurgeryStatsService implements SurgeryStatsReader {
     );
 
     private final SurgeryStatsRepository repository;
+    private final ReoperationCandidateRepository reopCandidateRepository;
+    private final ReoperationDecisionRepository reopDecisionRepository;
     private final ObjectMapper objectMapper;
-    private final SurgerySnapshotStore snapshotStore;
 
     @Value("${stats.cache.surgery.enabled:true}")
     private boolean cacheEnabled;
@@ -65,7 +65,6 @@ public class SurgeryStatsService implements SurgeryStatsReader {
 
         List<Map<String, Object>> visionRows = repository.findVisionMonthlyByType(normalizedYears);
         List<Map<String, Object>> cataractRows = repository.findCataractMonthlyByType(normalizedYears);
-        List<Map<String, Object>> reopRows = repository.findReoperationMonthly(normalizedYears);
 
         LinkedHashMap<String, Bucket> map = MonthlyBuckets.initialize(normalizedYears, Bucket::new);
 
@@ -75,10 +74,17 @@ public class SurgeryStatsService implements SurgeryStatsReader {
             if (b != null) mergeVision(b, row);
         }
 
-        // 재수술 병합 (RE_OPERATION, 레코드 단위 + 레이저/렌즈 분리)
-        for (Map<String, Object> row : reopRows) {
-            Bucket b = map.get(MonthlyBuckets.key(toInt(row.get("yr")), toInt(row.get("mo"))));
-            if (b != null) mergeReop(b, row);
+        // 재수술 병합 — candidates raw + 저장 판정 오버레이. 자바에서 laser/lens 분류.
+        int minYear = normalizedYears.get(0);
+        int maxYear = normalizedYears.get(normalizedYears.size() - 1);
+        String from = minYear + "-01-01";
+        String to = maxYear + "-12-31";
+        for (Map<String, Object> row : loadFinalReoperationRows(from, to)) {
+            String opDate = String.valueOf(row.get("reopDate"));
+            int yr = Integer.parseInt(opDate.substring(0, 4));
+            int mo = Integer.parseInt(opDate.substring(5, 7));
+            Bucket b = map.get(MonthlyBuckets.key(yr, mo));
+            if (b != null) addReoperationRow(b, row);
         }
 
         // 백내장 병합
@@ -125,12 +131,16 @@ public class SurgeryStatsService implements SurgeryStatsReader {
     public List<SurgeryDailyItem> getDailyStats(String from, String to) {
         List<Map<String, Object>> visionRows = repository.findVisionDailyByType(from, to);
         List<Map<String, Object>> cataractRows = repository.findCataractDailyByType(from, to);
-        List<Map<String, Object>> reopRows = repository.findReoperationDaily(from, to);
 
         // 데이터가 있는 일자만 버킷 생성(비어 있는 날은 프론트가 채움). 날짜 오름차순 정렬 유지.
         Map<String, Bucket> map = new TreeMap<>();
         for (Map<String, Object> row : visionRows) mergeVision(dailyBucket(map, row), row);
-        for (Map<String, Object> row : reopRows) mergeReop(dailyBucket(map, row), row);
+        // 재수술 병합 — candidates raw + 저장 판정 오버레이. 자바에서 laser/lens 분류.
+        for (Map<String, Object> row : loadFinalReoperationRows(from, to)) {
+            String opDate = String.valueOf(row.get("reopDate"));
+            Bucket b = map.computeIfAbsent(opDate, k -> new Bucket(0, 0));
+            addReoperationRow(b, row);
+        }
         for (Map<String, Object> row : cataractRows) mergeCataract(dailyBucket(map, row), row);
 
         List<SurgeryDailyItem> result = new ArrayList<>();
@@ -151,58 +161,6 @@ public class SurgeryStatsService implements SurgeryStatsReader {
                     .build());
         }
         return result;
-    }
-
-    /**
-     * 호출(증분 채움) — 해당 월을 전일(D-1)까지 라이브 조회해 기존 스냅샷에 <b>비어있는 날짜만</b> 추가한다.
-     * 이미 적재된 날짜(이전 호출분)는 그대로 보존(덮어쓰기 금지)하므로 과거 일자가 흔들리지 않는다.
-     * 오늘(미마감) 데이터는 적재하지 않는다 — 진행 중인 달을 매일 이어붙이는 용도.
-     */
-    public SurgerySnapshot fillSnapshot(String period, String by) {
-        Optional<LocalDate> end = SnapshotWindow.completedEnd(period, LocalDate.now());
-        if (end.isEmpty()) {
-            // 오늘이 1일이면 마감된 날(전일)이 이 달에 없음 → 채움 생략(오늘 데이터는 내일 반영).
-            return snapshotStore.find(period).orElseGet(() -> emptySnapshot(period, by));
-        }
-
-        List<SurgeryDailyItem> fetched = getDailyStats(period + "-01", end.get().toString());
-        return snapshotStore.withPeriodLock(period, () -> {
-            Optional<SurgerySnapshot> existing = snapshotStore.find(period);
-            List<SurgeryDailyItem> merged = snapshotStore.mergeDays(existing, fetched);
-            if (merged.isEmpty()) {
-                return existing.orElseGet(() -> emptySnapshot(period, by));
-            }
-            boolean locked = existing.map(SurgerySnapshot::locked).orElse(false);
-            String confirmedBy = existing.map(SurgerySnapshot::confirmedBy).orElse(by);
-            SurgerySnapshot snapshot =
-                    new SurgerySnapshot(period, LocalDateTime.now().toString(), confirmedBy, locked, merged);
-            snapshotStore.save(snapshot);
-            return snapshot;
-        });
-    }
-
-    /**
-     * 확정(재집계) — 해당 월 전일(D-1)까지 1회 조회해 월 전체를 덮어쓴다(머지 아님).
-     * 기존 적재값을 최신 라이브로 새로 고정하고 싶을 때만 사용.
-     */
-    public SurgerySnapshot saveSnapshot(String period, String by) {
-        Optional<LocalDate> end = SnapshotWindow.completedEnd(period, LocalDate.now());
-        if (end.isEmpty()) {
-            return snapshotStore.find(period).orElseGet(() -> emptySnapshot(period, by));
-        }
-
-        List<SurgeryDailyItem> days = getDailyStats(period + "-01", end.get().toString());
-        return snapshotStore.withPeriodLock(period, () -> {
-            SurgerySnapshot snapshot =
-                    new SurgerySnapshot(period, LocalDateTime.now().toString(), by, false, days);
-            if (!days.isEmpty()) snapshotStore.save(snapshot);
-            return snapshot;
-        });
-    }
-
-    /** 적재할 완료일이 없을 때(월초) 저장 없이 돌려주는 빈 스냅샷. */
-    private static SurgerySnapshot emptySnapshot(String period, String by) {
-        return new SurgerySnapshot(period, LocalDateTime.now().toString(), by, false, List.of());
     }
 
     /** 일자 키('dt')로 버킷을 찾거나 생성한다(연/월은 일별에서 사용하지 않으므로 0). */
@@ -231,10 +189,38 @@ public class SurgeryStatsService implements SurgeryStatsReader {
         b.visionPatients = toInt(row.get("visionPatients"));
     }
 
-    private static void mergeReop(Bucket b, Map<String, Object> row) {
-        b.reoperation = toInt(row.get("reoperation"));
-        b.reopLaser = toInt(row.get("reopLaser"));
-        b.reopLens = toInt(row.get("reopLens"));
+    /**
+     * candidates raw 조회 + 저장 판정 병합 결과 중 "재수술로 확정된 행"만 반환.
+     * 저장 판정이 없는 (chartNo, opDate) 는 자동판정(autoIncluded) 을 그대로 쓴다.
+     * 반환 행에는 candidates 원본 컬럼(reopDate·againR·againL 등) 이 그대로 들어있다.
+     */
+    private List<Map<String, Object>> loadFinalReoperationRows(String from, String to) {
+        List<Map<String, Object>> candidates = reopCandidateRepository.findCandidates(from, to);
+        Map<String, Boolean> decisionMap = ReoperationOverlay.decisionMap(
+                reopDecisionRepository.findByOpDateBetween(
+                        ReoperationOverlay.parseDate(from),
+                        ReoperationOverlay.parseDate(to)));
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> row : candidates) {
+            String chartNo = String.valueOf(row.get("chartNo"));
+            String opDate = String.valueOf(row.get("reopDate"));
+            String againR = String.valueOf(row.get("againR"));
+            String againL = String.valueOf(row.get("againL"));
+            if (ReoperationOverlay.isReoperation(decisionMap, chartNo, opDate, againR, againL, row)) {
+                result.add(row);
+            }
+        }
+        return result;
+    }
+
+    /** 재수술 확정 행 1건을 버킷에 카운트. laser/lens 는 시술명 패턴으로 자바에서 분류. */
+    private static void addReoperationRow(Bucket b, Map<String, Object> row) {
+        b.reoperation++;
+        boolean lens = ReoperationOverlay.isLensCategory(
+                String.valueOf(row.get("againR")),
+                String.valueOf(row.get("againL")));
+        if (lens) b.reopLens++;
+        else b.reopLaser++;
     }
 
     private static void mergeCataract(Bucket b, Map<String, Object> row) {

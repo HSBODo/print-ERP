@@ -5,14 +5,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useSurgeryList } from '@/hooks/surgery/useSurgeryList'
 import { useReoperationCandidates } from '@/hooks/surgery/useReoperationCandidates'
-import { useWeeklyApproval } from '@/hooks/useWeeklyApproval'
-import { WeeklyApprovalPanel } from '@/components/stats/WeeklyApprovalPanel'
+import { useReoperationDecisions } from '@/hooks/surgery/useReoperationDecisions'
 import { ReoperationCandidatesModal } from './ReoperationCandidatesModal'
 import type { SurgeryListItem } from '@/api/surgery/surgeryList'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './surgeryListColumns'
 import {
   dash,
-  surgeryDateOf,
   formatCount,
   CATEGORY_OPTIONS,
   defaultFrom,
@@ -52,35 +50,60 @@ export function SurgeryListPage() {
   const [reopRange, setReopRange] = useState<{ from: string; to: string }>({ from: defaultFrom(), to: defaultTo() })
 
   const isReopTab = queryCategory === '재수술'
+  const isAllTab = queryCategory === '전체'
   const isCataractTab = queryCategory === '백내장'
   const { rows, isLoading, isFetching, isError } = useSurgeryList(queryFrom, queryTo, hasSearched && !isReopTab)
 
-  // '재수술' 필터용 데이터 — 자동 포함분(레포트 반영분)만 리스트 행으로 변환. 재수술 탭일 때만 조회.
+  // 재수술은 RE_OPERATION 별도 테이블이라 수술자 리스트(OPERATIONDATA·Cataract_Operationdata)에 들어있지 않다.
+  // 자동 포함분(레포트 반영분)만 리스트 행으로 변환하며, '재수술' 탭과 '전체' 탭에서 조회한다.
+  const reopEnabled = hasSearched && (isReopTab || isAllTab)
   const { candidates: reopCandidates, isLoading: reopLoading, isFetching: reopFetching, isError: reopError } =
-    useReoperationCandidates(queryFrom, queryTo, hasSearched && isReopTab)
+    useReoperationCandidates(queryFrom, queryTo, reopEnabled)
+  // 저장된 재수술 판정 — 자동판정보다 우선. 저장 없음 = 자동판정 그대로.
+  // 키는 (차트번호, 수술일, 우안, 좌안) — 같은 사람·같은 날 시술명이 다른 재수술을 별건으로 구분.
+  const { decisions: reopDecisions } = useReoperationDecisions(queryFrom, queryTo, reopEnabled)
+  const reopDecisionKey = (chartNo: string, opDate: string, againR: string, againL: string) =>
+    `${chartNo}|${opDate}|${againR}|${againL}`
+  const reopDecisionMap = useMemo(() => {
+    const map = new Map<string, boolean>()
+    for (const d of reopDecisions) map.set(reopDecisionKey(d.chartNo, d.opDate, d.againR, d.againL), d.isReoperation)
+    return map
+  }, [reopDecisions])
   const reopRows = useMemo(
-    () => reopCandidates.filter((c) => c.autoIncluded === 1).map(reopCandidateToRow),
-    [reopCandidates],
+    () =>
+      reopCandidates
+        .filter(
+          (c) =>
+            reopDecisionMap.get(reopDecisionKey(c.chartNo, c.reopDate, c.againR, c.againL)) ??
+            c.autoIncluded === 1,
+        )
+        .map(reopCandidateToRow),
+    [reopCandidates, reopDecisionMap],
   )
 
-  const activeError = isReopTab ? reopError : isError
-  const showSkeleton = hasSearched && (isReopTab ? (reopLoading || reopFetching) : (isLoading || isFetching))
+  const activeError = isReopTab ? reopError : (isAllTab ? (isError || reopError) : isError)
+  const showSkeleton = hasSearched && (
+    isReopTab
+      ? (reopLoading || reopFetching)
+      : (isLoading || isFetching || (isAllTab && (reopLoading || reopFetching)))
+  )
 
   const filtered = useMemo(() => {
     const q = queryKeyword.trim().toLowerCase()
-    const base = queryCategory === '재수술'
+    // 전체 = 시력교정 + 백내장 + 재수술. 월간 레포트 총수술과 동일한 가산 기준이라 조회건수가 레포트와 맞는다
+    //   (2026-07: 726 + 43 + 29 = 798 = 레포트 총수술).
+    // 같은 사람·같은 날이 수술자 리스트와 재수술에 함께 잡히는 건이 있으나(2026-07 6건, 렌즈 제거+삽입처럼
+    // 한 세션이 두 테이블에 각각 기록된 경우) 레포트도 같은 방식으로 더하므로 여기서 걸러내지 않는다.
+    const base = isReopTab
       ? reopRows
-      : rows.filter((r) => queryCategory === '전체' || r.surgeryCategory === queryCategory)
+      : isAllTab
+        ? [...rows, ...reopRows].sort((a, b) => a.surgeryDate.localeCompare(b.surgeryDate))
+        : rows.filter((r) => r.surgeryCategory === queryCategory)
     if (!q) return base
     return base.filter((r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q))
-  }, [rows, reopRows, queryCategory, queryKeyword])
+  }, [rows, reopRows, isReopTab, isAllTab, queryCategory, queryKeyword])
 
-  // 주별 승인(주차 버킷 + 승인/선택) — 수술일 기준. 같은 달 조회일 때만 패널 노출(weeksInRange 제약).
-  const approval = useWeeklyApproval(filtered, surgeryDateOf, queryFrom, queryTo)
-  const sameMonth = queryFrom.slice(0, 7) === queryTo.slice(0, 7)
-  const showApproval = hasSearched && !activeError && !showSkeleton && sameMonth
-  // 선택 주차로 거른 행이 표/페이지네이션 소스(미선택 시 filtered 그대로)
-  const tableRows = approval.selectedRows
+  const tableRows = filtered
 
   // 백내장 안(眼) 수 — 리스트는 사람·수술일(행) 단위(62), 레포트는 눈 단위(65: 같은날 양안=2안).
   // 행의 우/좌 수술값이 채워진 개수를 세면 레포트 기준 안 수와 일치. (백엔드 호출 불필요)
@@ -118,7 +141,6 @@ export function SurgeryListPage() {
   const handleSearch = () => {
     setHasSearched(true)
     setCurrentPage(1)
-    approval.clearSelection()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryCategory(draftCategory)
@@ -138,7 +160,6 @@ export function SurgeryListPage() {
     setQueryKeyword('')
     setPageSize(50)
     setCurrentPage(1)
-    approval.reset()
     setHasSearched(false)
   }
 
@@ -277,7 +298,14 @@ export function SurgeryListPage() {
               className={`min-w-[4.25rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 ${
                 draftCategory === category ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
               }`}
-              onClick={() => setDraftCategory(category)}
+              onClick={() => {
+                setDraftCategory(category)
+                // 카테고리는 클라이언트 필터(이미 조회된 rows 를 걸러냄)라 조회 버튼 없이 즉시 반영.
+                if (hasSearched) {
+                  setQueryCategory(category)
+                  setCurrentPage(1)
+                }
+              }}
             >
               {category}
             </button>
@@ -292,7 +320,13 @@ export function SurgeryListPage() {
             className="h-full w-[15.1rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
         </div>
-        <div className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs" aria-live="polite">
+        <div
+          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
+          aria-live="polite"
+          title={isAllTab
+            ? '전체 = 시력교정 + 백내장 + 재수술. 월간 레포트 총수술과 같은 기준이다.'
+            : '선택한 구분의 행 수(사람·수술일 기준).'}
+        >
           <span className="text-muted-foreground">조회건수</span>
           <strong className="tabular-nums text-gray-900">{formatCount(tableRows.length)}건</strong>
         </div>
@@ -326,7 +360,7 @@ export function SurgeryListPage() {
             size="sm"
             className="bg-violet-600 text-xs text-white hover:bg-violet-700"
             onClick={openReoperation}
-            title="재수술 검토 — 자동 집계 포함/제외 확인 (조회·미리보기 전용)"
+            title="재수술 검토 — 자동 집계 포함/제외를 확인·수정하고 저장 (저장 판정은 자동판정보다 우선)"
           >
             <Repeat className="h-3.5 w-3.5" />
             재수술 검토
@@ -344,18 +378,6 @@ export function SurgeryListPage() {
           </Button>
         </div>
       </div>
-
-      {showApproval && (
-        <WeeklyApprovalPanel
-          weeks={approval.weeks}
-          approved={approval.approved}
-          selectedWeek={approval.selectedWeek}
-          onToggleApprove={approval.toggleApprove}
-          onSelectWeek={approval.selectWeek}
-          subtitle={`수술자 · ${queryCategory} (수술일 기준)`}
-          totalLabel="월 합계"
-        />
-      )}
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">

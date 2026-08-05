@@ -1,15 +1,15 @@
-# 월간/주간 레포트 차트 — 구현 현황 + 레거시 검증 (28종)
+# 월간/주차 레포트 차트 — 구현 현황 + 레거시 검증 (28종)
 
 월간보고 28개 도표를 **우리 대시보드 API 기준**으로 ① 상태 분류(완료/비교/미완성), ② 레거시 대비 월별 평균 차이를 정리한다.
 
 | 항목 | 내용 |
 |------|------|
-| 대상 화면 | `/report/monthly` — 월간(28개 도표 구현) · `/report/weekly` — 주간(골격 페이지, 차트 미구현) |
-| 코드 | [MonthlyReportPage.tsx](../../frontend/src/pages/report/MonthlyReportPage.tsx) · [ReportPage.tsx](../../frontend/src/pages/report/ReportPage.tsx) · [ReportLineChart.tsx](../../frontend/src/components/report/ReportLineChart.tsx) |
+| 대상 화면 | `/report/monthly` — 월간(28개 도표) · `/report/weekly` — 주차(같은 28개 도표를 ISO 주차 축으로, 라인차트 24종) |
+| 코드 | [MonthlyReportPage.tsx](../../frontend/src/pages/report/MonthlyReportPage.tsx) · [WeeklyReportPage.tsx](../../frontend/src/pages/report/WeeklyReportPage.tsx) · 공용 [reportItems.tsx](../../frontend/src/pages/report/reportItems.tsx)·[useReportSeries.ts](../../frontend/src/pages/report/useReportSeries.ts) · [ReportLineChart.tsx](../../frontend/src/components/report/ReportLineChart.tsx)·[ReportWeekLineChart.tsx](../../frontend/src/components/report/ReportWeekLineChart.tsx) |
 | 원본(레거시) | `◆월간보고◆_2026년_4월.pdf` (수기 엑셀 월간보고, 28개 도표) |
 | 데이터 | 운영 MSSQL(`SOFTCRM`) 연동 API · 포트 `18080` |
 | 표시 연도 | 당해·전년·전전년 3개년 비교 (`YEARS = [기준−2, 기준−1, 기준]`, 현재 2024·2025·2026 · 매년 자동 이동) |
-| 갱신 | 2026-06-19 작성 · 2026-06-22 라이브 재검증(1~5월, mssql-prod 실측) · 브랜치 `dev` |
+| 갱신 | 2026-06-19 작성 · 2026-06-22 라이브 재검증(1~5월, mssql-prod 실측) · 2026-07-30 주차 레포트 연동 |
 
 **표시 규칙** — 전전년·전년은 레거시 확정값, 당해연도는 운영 DB 라이브. 색상은 절대연도가 아닌 위치 매핑(당해 = 🔴빨강 · 전년 = ⚫진회색 · 전전년 = 🔵연파랑)이라 연도가 넘어가도 유지된다.
 
@@ -64,7 +64,13 @@
 
 **남은 작업**
 - **#7 고객분류별 검사수** — 군인·기업 B2B 분류, 레거시 표에도 없어 전부 신규. 기획서 §6.1·§6.3 (2단계).
-- **주간 레포트(`/report/weekly`)** — 골격 페이지, 월간과 동일 차트 미구현.
+- **주차 레포트 월 기준 잔여 4종**(#7 고객분류별·#21 상담성공률·#23 중단사유·#27 수술상세표) — 주차 분해 미구현이라 월 기준 표시(목차·본문에 '월' 표시).
+
+**주차 레포트(`/report/weekly`, 2026-07-30)**
+- 월간과 **같은 도표 목록**을 ISO 8601 연간 주차(월~일)로 본다. 툴바에서 전체(52/53주) ↔ 월별(그 달에 걸친 주차, 월 경계 주차 포함) 선택.
+- API: `GET /api/report/weekly?years=…` (`WeeklyReportService`). 기존 월별 SQL의 **일별 버전**(`sql/report/*.sql`)을 ISO 주차로 묶는다 — 일별↔월별 합계 일치를 운영 DB로 대조 검증(2026-06: 예약 1345/462/883 · 백내장검사 55 · 외래 3477 · 상담 925/880/750 전부 일치).
+- 라인차트 24종 주차 지원. **전 구간 라이브**라 2024·2025는 월간 레포트의 레거시 확정값과 미세하게 다를 수 있다(주간 검사자 종합지표와 같은 성격).
+- **온라인·예약 종합**은 2026-06 컷오버 이후 홈페이지 소스(레거시 DB/마트)가 필요하다 — 미연결 환경에서는 그 구간만 `null`(선 끊김)로 두고 나머지 도표는 정상 표시한다.
 
 **완료·검증 메모**
 - **검사유입·세그먼트 11종**(#4·5·6·8·9·10·15·16·19·20·22) — 레거시 하드코딩 → `overall-exam/weekly` 월합산 라이브로 전환 완료. `MONTHLY_LEGACY_CHARTS` 하드코딩 렌더 없음(상수는 2024·2025 확정값·메타데이터로만 사용).

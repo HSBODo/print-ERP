@@ -4,8 +4,8 @@
             FROM EXAM e WITH(NOLOCK)
             JOIN CUSTOM cu WITH(NOLOCK) ON cu.CUST_NUM = e.CUST_NUM
             WHERE e.EXAM_DATE >= :from AND e.EXAM_DATE <= :to
-              AND ISNULL(e.STOP_YN, '') <> 'Y'
-              AND ISNULL(e.CANCEL_CD, '') = ''
+              -- 2026-07-30 확정: 중단/취소(STOP_YN·CANCEL_CD) 단서 제거 — 원데이 = 당일OP 예약 기준
+              -- (docs/점검/원데이-레거시-비교_2026-07.md §5)
               AND NOT (
                 ISNULL(cu.CUST_NAME, '') LIKE N'%테스트%'
                 OR LOWER(ISNULL(cu.CUST_NAME, '')) LIKE '%test%'

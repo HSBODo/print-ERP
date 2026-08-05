@@ -94,6 +94,8 @@ export function TrendPanel({
           data={trendData}
           lines={lines}
           yTickFormatter={formatAxisNumber}
+          className="h-96 w-full"
+          showValueLabels
         />
       </CardContent>
     </Card>

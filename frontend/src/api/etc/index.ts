@@ -22,3 +22,64 @@ export const b2bApi = {
   getB2bRevenueMonthly: async (years: number[]) =>
     b2bRevenueResponseSchema.parse(await api.get<unknown>(withQuery('/stats/b2b-revenue', { years }))).data,
 }
+
+/* ── 드림렌즈 장부 (직접 입력 테이블) ── */
+
+/** 빈 셀은 서버가 null 로 주거나 키를 생략할 수 있어 nullish 로 받는다. */
+const text = z.string().nullish()
+const money = z.number()
+
+const dreamlensLedgerRowSchema = z.object({
+  id: z.number(),
+
+  entryDate: z.string(),
+  visitType: text,
+  customerNo: text,
+  customerName: text,
+  examiner: text,
+  purchaseType: text,
+
+  rLensName: text, rBox: text, rLensSpec: text, rColor: text, rReturnDate: text,
+  lLensName: text, lBox: text, lLensSpec: text, lColor: text, lReturnDate: text,
+
+  dlNewRevenue: money, dlRepurchaseRevenue: money,
+  mNewRevenue: money, mRepurchaseRevenue: money,
+  hlNewRevenue: money, hlRepurchaseRevenue: money,
+  depositRevenue: money, fittingRevenue: money,
+  supplyRevenue: money, treatmentRevenue: money,
+  totalRevenue: money,
+
+  nextReservation: text,
+  recall1: text, recall1Reservation: text, recall1Absent: text,
+  recall2: text, recall2Reservation: text, recall2Absent: text,
+  recall3: text, recall3Reservation: text, recall3Absent: text,
+})
+export type DreamlensLedgerRow = z.infer<typeof dreamlensLedgerRowSchema>
+
+/** 서버가 계산해 내려주는 값이라 저장 요청에서는 제외한다. */
+export type DreamlensLedgerRequest = Omit<DreamlensLedgerRow, 'id' | 'totalRevenue'>
+
+const ledgerListSchema = apiResponseOf(z.array(dreamlensLedgerRowSchema))
+const ledgerRowSchema = apiResponseOf(dreamlensLedgerRowSchema)
+
+const toRequest = (row: DreamlensLedgerRow | DreamlensLedgerRequest): DreamlensLedgerRequest => {
+  const { ...rest } = row as DreamlensLedgerRow
+  delete (rest as Partial<DreamlensLedgerRow>).id
+  delete (rest as Partial<DreamlensLedgerRow>).totalRevenue
+  return rest
+}
+
+export const dreamlensLedgerApi = {
+  list: async (from: string, to: string) =>
+    ledgerListSchema.parse(await api.get<unknown>(withQuery('/dreamlens-ledger', { from, to }))).data,
+
+  create: async (row: DreamlensLedgerRequest) =>
+    ledgerRowSchema.parse(await api.post<unknown>('/dreamlens-ledger', toRequest(row))).data,
+
+  update: async (id: number, row: DreamlensLedgerRow | DreamlensLedgerRequest) =>
+    ledgerRowSchema.parse(await api.put<unknown>(`/dreamlens-ledger/${id}`, toRequest(row))).data,
+
+  remove: async (id: number) => {
+    await api.delete<unknown>(`/dreamlens-ledger/${id}`)
+  },
+}

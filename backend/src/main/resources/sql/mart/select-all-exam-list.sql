@@ -19,15 +19,16 @@ WITH src AS (
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
            phone1, phone2, email, counselor, doctor, optometrist,
-           last_visit, memo, one_day
+           last_visit, memo, one_day, '' AS classification
       FROM list_exam
      WHERE exam_date >= CAST(:from AS DATE)
        AND exam_date <= CAST(:to   AS DATE)
     UNION ALL
+    -- classification: 백내장 리스트의 분류(백내장/중단, V23) — 전체 리스트에서는 '백내장분류' 컬럼.
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
            phone1, phone2, email, counselor, doctor, optometrist,
-           last_visit, memo, 'N' AS one_day
+           last_visit, memo, 'N' AS one_day, classification
       FROM list_cataract_exam
      WHERE exam_date >= CAST(:from AS DATE)
        AND exam_date <= CAST(:to   AS DATE)
@@ -43,12 +44,24 @@ SELECT
         WHEN one_day = 'Y'              THEN '원데이'
         ELSE '일반'
     END                                         AS "examType",
+    COALESCE(classification, '')                AS "cataractClass",
     COALESCE(patient_type, '')                 AS "patientType",
     CASE
         WHEN motive_l IN ('소개고객', '소개미확인') THEN '고객소개'
         WHEN motive_l = '소개직원'                  THEN '직원소개'
         ELSE '일반'
     END                                         AS "introType",
+    -- 내원동기(레포트): 내원동기(대) → 레포트 9계열 매핑 (2026-07-30 담당자 엑셀 기준).
+    --   B2B(기업) ← B2B(기업)·B2B(비앤빛)·B2B(백내장)·제휴 / 소개고객 ← VIP고객관리팀·소개고객·소개미확인
+    --   B2B(군인)·소개직원·광고·바이럴·프로모션·홈페이지는 그대로. 미기재 포함 그 외 전부 '기타'.
+    --   월간 레포트 도표 #7(find-exam-count-by-class-monthly.sql)·find-all-exam-list.sql 과 동일 규칙 — 함께 고칠 것.
+    CASE
+        WHEN motive_l = 'B2B(군인)'                                THEN 'B2B(군인)'
+        WHEN motive_l IN ('B2B(기업)', 'B2B(비앤빛)', 'B2B(백내장)', '제휴') THEN 'B2B(기업)'
+        WHEN motive_l IN ('VIP고객관리팀', '소개고객', '소개미확인') THEN '소개고객'
+        WHEN motive_l IN ('소개직원', '광고', '바이럴', '프로모션', '홈페이지') THEN motive_l
+        ELSE '기타'
+    END                                         AS "motiveReport",
     COALESCE(motive_l, '')                      AS "motiveL",
     COALESCE(motive_m, '')                      AS "motiveM",
     COALESCE(motive_s, '')                      AS "motiveS",

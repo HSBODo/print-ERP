@@ -56,3 +56,46 @@ export function niceAxisFor(min: number, max: number): Axis {
   const step = niceStep(max - min)
   return { domain: [min, max], ticks: ticksBetween(min, max, step) }
 }
+
+/**
+ * 지정 등분 수에 맞춘 nice step. 후보를 1·2·2.5·5·10 ×10ⁿ 으로 두어
+ * 눈금 값이 0·5 로 떨어지게 한다(step 20 → 20·40·60, step 25 → 25·50·75, step 50 → 50·100).
+ */
+function niceStepFor(range: number, divisions: number): number {
+  if (!(range > 0)) return 1
+  const rough = range / divisions
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)))
+  const norm = rough / mag
+  const factor = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10
+  return factor * mag
+}
+
+/**
+ * 데이터 구간을 꽉 채우는 축 — 주 단위처럼 **변동 폭을 읽어야 하는** 차트용.
+ *
+ * {@link niceAxis} 와의 차이:
+ *   - 여백 15% → 8% (위아래 빈 공간 축소)
+ *   - 5등분 → 8등분 (눈금 간격을 촘촘하게)
+ *   - 하한을 0 으로 스냅하는 조건을 좁힘 — 데이터가 0 에서 한 칸 넘게 떨어져 있으면
+ *     0 부터 그리지 않는다. (주차 예약: 88~470 인데 축이 0~600 이라 36% 가 빈 공간이던 문제)
+ *
+ * 음수 하한은 여전히 금지(카운트·비율 모두 ≥0).
+ */
+export function tightAxis(values: Array<number | null | undefined>): Axis {
+  const nums = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  if (!nums.length) return { domain: [0, 1], ticks: [0, 1] }
+
+  const min = Math.min(...nums)
+  const max = Math.max(...nums)
+  const span = max - min || Math.abs(max) || 1
+  const step = niceStepFor(span, 8)
+  const pad = span * 0.08
+
+  const top = Math.ceil((max + pad) / step) * step
+  // 데이터 하단이 한 눈금 이내로 0 에 가까우면 0 기준선이 의미 있으니 0 부터,
+  // 아니면 데이터에 붙여 잘라낸다.
+  const padded = min - pad
+  const bottom = padded <= step ? 0 : Math.max(0, Math.floor(padded / step) * step)
+
+  return { domain: [bottom, top], ticks: ticksBetween(bottom, top, step) }
+}

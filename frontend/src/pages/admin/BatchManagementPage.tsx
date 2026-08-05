@@ -182,6 +182,104 @@ export function BatchManagementPage() {
       </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle className="text-base">안전 장치 · 중복 방지 안내</CardTitle>
+          <CardDescription>
+            같은 날짜를 여러 번 실행해도 마트에 중복 행이 생기지 않는 이유
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <details className="text-sm">
+            <summary className="cursor-pointer select-none font-medium text-foreground">
+              펼쳐서 보기 (upsert · 방어 가드 · 실행 이력)
+            </summary>
+            <div className="mt-4 space-y-4 text-muted-foreground">
+              <section>
+                <h4 className="font-medium text-foreground">1) 중복 방지 — upsert / delete+insert</h4>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  <li>
+                    월별·일별 집계 마트(<code className="rounded bg-muted px-1 text-xs">mart_surgery_monthly</code>,{' '}
+                    <code className="rounded bg-muted px-1 text-xs">mart_surgery_daily</code>,{' '}
+                    <code className="rounded bg-muted px-1 text-xs">mart_reservation_monthly</code> 등)는{' '}
+                    <code className="rounded bg-muted px-1 text-xs">ON CONFLICT (yr, mo)</code> /{' '}
+                    <code className="rounded bg-muted px-1 text-xs">ON CONFLICT (dt)</code> 로 <b>upsert</b> — 같은 키가 있으면 새 값으로 덮어쓴다.
+                  </li>
+                  <li>
+                    리스트 마트(<code className="rounded bg-muted px-1 text-xs">list_reservation</code>,{' '}
+                    <code className="rounded bg-muted px-1 text-xs">list_exam</code>, 수술자 리스트 등)는 지정 기간을{' '}
+                    <b>delete → insert</b> — 사후 취소·수정분까지 반영된다.
+                  </li>
+                  <li>같은 날짜 범위를 여러 번 재실행해도 <b>행 수가 늘지 않고 최신 값으로만 갱신</b>된다.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h4 className="font-medium text-foreground">2) Min-year 가드 (자동 스케줄 전용)</h4>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  <li>자동 배치(매일 03:00 daily / 매월 1일 03:30 reconcile)는 <b>2026년 이후</b> 데이터만 처리한다.</li>
+                  <li>2024·2025 확정값(하드코딩·수동 seed)을 자동 배치가 실수로 덮어쓰지 않도록 방어한다.</li>
+                  <li>이 화면의 <b>관리자 수동 실행은 min-year 가드를 우회</b>한다 — 초기 backfill·보정 시 자유롭게 사용. (단, 아래 3)의 골든 확정값 잠금은 수동도 못 뚫는다.)</li>
+                </ul>
+              </section>
+
+              <section>
+                <h4 className="font-medium text-foreground">
+                  3) 2026 상반기 골든 확정값 잠금 <span className="text-xs text-red-600">(수동도 우회 불가)</span>
+                </h4>
+                <p className="mt-1">
+                  Min-year 와 별개로, <b>지표 정의가 과거와 달라진 특정 월</b>은 SQL·잡 로직 안에서 개별 방어된다. 수동 실행도 이 로직을 그대로 통과하므로 덮어쓰지 못한다.
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  <li>
+                    <b>백내장 검사수 · 2026-01~05</b> —{' '}
+                    <code className="rounded bg-muted px-1 text-xs">mart_examination_monthly.cataract</code> 컬럼만{' '}
+                    <code className="rounded bg-muted px-1 text-xs">upsert-examination-monthly.sql</code> 의 <b>CASE 문에서 기존값 유지</b>. 백내장 검사수는 CUSTOM 담당자 값을 참조해 과거 달이 소급 변동하므로, 신규 정의(사람 기준)는 2026-06 부터 적용. 2026-01~05 는 골든 seed(V22) 고정.
+                  </li>
+                  <li>
+                    <b>예약통계(시력교정·백내장) · 2026-01~06</b> —{' '}
+                    <code className="rounded bg-muted px-1 text-xs">reservation_stats_period_lock</code> 테이블에 (product_type, period)로 잠금 등록.{' '}
+                    <code className="rounded bg-muted px-1 text-xs">ReservationStatsDailyMartJob</code> 이 실행 시 잠긴 월을 skip. 손보정(override)은 이력 남겨서 별도 허용.
+                  </li>
+                </ul>
+                <p className="mt-2 text-xs">
+                  🔒 24·25 확정값은 "옛날 데이터라 통째 자동만 막으면 됨" → min-year. 2026-01~05 는 "지표 정의가 달라져서 새 SQL 로 재계산하면 안 됨" → SQL/잡 안쪽 개별 잠금.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-medium text-foreground">4) 동시 실행 · Watermark</h4>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  <li>
+                    앱 레벨 락은 없다. 아래 실행 이력에서{' '}
+                    <span className="rounded bg-blue-100 px-1 text-xs text-blue-700">RUNNING</span> 상태가 있으면 겹치지 않게 대기.
+                  </li>
+                  <li>
+                    자동 스케줄은 <code className="rounded bg-muted px-1 text-xs">batch_watermark</code>(마트별 마지막 적재일)를 기준으로 이미 적재된 범위는 건너뛴다. 수동 재실행은 watermark와 무관하게 지정 기간을 그대로 재적재한다.
+                  </li>
+                </ul>
+              </section>
+
+              <section>
+                <h4 className="font-medium text-foreground">
+                  5) 실행 이력 (<code className="rounded bg-muted px-1 text-xs">batch_run_log</code>)
+                </h4>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  <li>
+                    시작 시 <span className="rounded bg-blue-100 px-1 text-xs text-blue-700">RUNNING</span> 삽입 → 완료 시{' '}
+                    <span className="rounded bg-emerald-100 px-1 text-xs text-emerald-700">SUCCESS</span>(행수·테이블 통계) / 실패 시{' '}
+                    <span className="rounded bg-red-100 px-1 text-xs text-red-700">FAILED</span>(에러 메시지)로 업데이트.
+                  </li>
+                  <li>
+                    유일성 제약 없이 append-only. 같은 기간을 여러 번 재실행하면 <b>이력이 여러 줄로 남아</b> 재실행 시점을 그대로 볼 수 있다(마트 행은 갱신, 이력은 누적).
+                  </li>
+                </ul>
+              </section>
+            </div>
+          </details>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-base">실행 이력 (batch_run_log)</CardTitle>

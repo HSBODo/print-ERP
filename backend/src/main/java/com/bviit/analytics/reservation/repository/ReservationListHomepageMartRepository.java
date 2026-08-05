@@ -35,6 +35,7 @@ public class ReservationListHomepageMartRepository implements HomepageOverallSou
     private static final String LIST_SQL             = SqlLoader.load("sql/mart/select-list-reservation-homepage.sql");
     private static final String LAST_REG_DATE_SQL    = SqlLoader.load("sql/mart/select-list-reservation-homepage-last-reg-date.sql");
     private static final String MONTHLY_LIST_RAW_SQL = SqlLoader.load("sql/mart/select-list-reservation-homepage-monthly-list-raw.sql");
+    private static final String DAILY_LIST_RAW_SQL   = SqlLoader.load("sql/mart/select-list-reservation-homepage-daily-list-raw.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -52,6 +53,14 @@ public class ReservationListHomepageMartRepository implements HomepageOverallSou
     @Override
     public List<Map<String, Object>> findMonthlyListRawCounts(String from, String to) {
         return jdbc.queryForList(MONTHLY_LIST_RAW_SQL, new MapSqlParameterSource()
+                .addValue("from", from)
+                .addValue("to", to));
+    }
+
+    /** 일별 홈페이지 예약 건수 — 주차 레포트용. 월별판과 같은 raw 건수를 일 단위로 묶은 것. */
+    @Override
+    public List<Map<String, Object>> findDailyListRawCounts(String from, String to) {
+        return jdbc.queryForList(DAILY_LIST_RAW_SQL, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

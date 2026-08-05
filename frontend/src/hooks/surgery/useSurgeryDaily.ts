@@ -34,8 +34,8 @@ function toDataMap(items: SurgeryDailyItem[]): Record<string, SurgeryDailyData> 
 
 /**
  * 일자별 수술 유형별 건수 (수술일 기준). from/to는 'YYYY-MM-DD'.
- * 스냅샷 우선(적재) — 적재된 일자는 동결되어 흔들리지 않고, 비는 날은 호출부에서 EMPTY로 보완한다.
- * meta는 출처(스냅샷/라이브) 표시, latestDate는 적재된 마지막 일자.
+ * postgres-mart 는 mart_surgery_daily 조회(D-1 배치 적재), mssql-only 는 소스 라이브 집계.
+ * 비는 날은 호출부에서 EMPTY로 보완한다. meta는 출처(MART/LIVE) 표시.
  */
 export function useSurgeryDaily(from: string, to: string, enabled: boolean) {
   const { data, isLoading, isError } = useQuery({

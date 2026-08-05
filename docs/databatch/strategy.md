@@ -1,7 +1,7 @@
 # 데이터 배치 & 마트 전환 전략
 
-> 작성일: 2026-07-02 · 최신화: 2026-07-07
-> 상태: **진행 중** — 배치 파이프라인·마트 스키마·Cutover 프로파일 골격 완료, 페이지별 전환은 도메인마다 진행률 상이, 스냅샷 스토어 흡수(§7) 미착수
+> 작성일: 2026-07-02 · 최신화: 2026-07-31
+> 상태: **진행 중** — 배치 파이프라인·마트 스키마·Cutover 프로파일 골격 완료, 페이지별 전환은 도메인마다 진행률 상이, 스냅샷 스토어 흡수(§7)는 수술 완료 · 예약 2종 미착수
 > 목적: CRM MSSQL 직결 조회 구조를 **Postgres 마트(Mart) 기반**으로 전환하기 위한 설계·마이그레이션 계획 및 **현재 이행 현황 기록**
 
 ---
@@ -53,7 +53,7 @@
 | 2 | 리스트 실시간성 | **불필요** — 리스트도 T-1 마트로 통합 | ✅ 이행 완료 (`list_*` 4종) |
 | 3 | PII 처리 | **CRM 원본 그대로 복제** (익명화·마스킹 없음) | ✅ 이행 완료 |
 | 4 | Cutover 방식 | **페이지별 `@Profile` 전환** (안전, 롤백 쉬움) | ✅ 이행 완료 (프로파일: `mssql`, `postgres-mart`) |
-| 5 | 스냅샷 스토어 | **마트로 흡수 후 삭제** (`SurgerySnapshotStore` 등) | ❌ **미착수** — §7 참조 |
+| 5 | 스냅샷 스토어 | **마트로 흡수 후 삭제** (`SurgerySnapshotStore` 등) | ⚠️ 부분 이행 — 수술(surgery-composition) 완료, 예약통계 2종 미착수. §7 참조 |
 | 6 | 배치 러너 | **Spring `@Scheduled`** (Airflow는 이번 스코프 밖) | ✅ 이행 완료 |
 
 ### 결정 1의 함의 및 완화책 — ⚠️ 중요
@@ -119,7 +119,7 @@
 | `mart_overall_exam_monthly` | V10 | overall-exam (26년+ 라이브, 24·25는 프론트 하드코딩) | ✅ |
 
 **초안 대비 미구현/변경 항목** (착수 여부 재검토 필요):
-- ❌ `mart_surgery_ratio_monthly`, `mart_surgery_composition_monthly` — 여전히 서비스 레이어(`SurgeryStatsService`) + `SurgerySnapshotStore`(파일) 기반. `surgery-ratio`/`surgery-composition` 페이지는 아직 완전 Cutover 안 됨
+- ⚠️ `mart_surgery_ratio_monthly`, `mart_surgery_composition_monthly` 별도 신설은 하지 않음 — `surgery-composition` 일별 조회는 **기존 `mart_surgery_daily`** 를 그대로 재활용해 2026-07-31 Cutover 완료 (`SurgeryCompositionMartQueryService` @Primary). 파일 스냅샷(`SurgerySnapshotStore`)은 삭제됨. `surgery-ratio` 는 여전히 `mart_surgery_monthly` 기반
 - ❌ `mart_reservation_trend`, `mart_reservation_composition` — 예약 채널 분해/유입 경로 마트 없음. 트렌드는 `mart_reservation_monthly`에서 파생하고 있음
 - ❌ `mart_reservation_overall_monthly` — 대신 `mart_reservation_kakao_daily`(일별 카카오 채널)만 존재
 - ❌ `mart_outpatient_count_daily` → 일별 아닌 **월별**(`mart_outpatient_count_monthly`)로 변경됨
@@ -240,7 +240,8 @@ class SurgeryMartQueryService { ... }                                        // 
 | Phase | 도메인 | 페이지 | 상태 |
 |-------|-------|-------|-----|
 | 1 | 수술 | surgery, surgery-list | ✅ 마트 스위치 완료 |
-| 1 | 수술 | surgery-ratio, surgery-composition | ⚠️ 아직 스냅샷·서비스 레이어 의존 (§4.1 미구현 마트 참조) |
+| 1 | 수술 | surgery-composition | ✅ 마트 스위치 완료 (2026-07-31, `mart_surgery_daily` 재활용, 스냅샷 삭제) |
+| 1 | 수술 | surgery-ratio | ✅ 마트 스위치 완료 (`mart_surgery_monthly` 기반) |
 | 2 | 예약 | reservation, reservation-list, reservation-overall(카카오) | ✅ 마트 스위치 완료 |
 | 2 | 예약 | reservation-stats-system, reservation-stats-cataract | ⚠️ 스냅샷 스토어 유지 중 |
 | 3 | 검사 | examination, procedure-exam, exam-list, cataract-exam-list, all-exam-list | ✅ 마트 스위치 완료 (all-exam-list 는 list_exam + list_cataract_exam UNION 조회로 재활용) |
@@ -250,20 +251,29 @@ class SurgeryMartQueryService { ... }                                        // 
 
 ---
 
-## 7. 스냅샷 스토어 마이그레이션 — ❌ **미착수**
+## 7. 스냅샷 스토어 마이그레이션 — ⚠️ 부분 이행
 
-> 이 섹션 전체가 **계획 상태**이며, 코드에는 어떤 진행도 없음. 결정만 남아 있는 상태.
+> 2026-07-31: **수술(surgery-composition)** 은 파일 스냅샷을 폐지하고 `mart_surgery_daily` 로 통합 완료.
+> 예약통계 2종(시력교정·백내장)은 여전히 파일 기반 스냅샷 유지 중.
 
-### 7.1 현재 사용처 (여전히 파일 기반)
+### 7.1 현재 사용처
 
-- `surgery/service/SurgerySnapshotStore` — `MonthlySnapshotStore<SurgerySnapshot, SurgeryDailyItem>`, 저장 경로 `./data/surgery-composition/`
-- `reservation/service/ReservationStatsSnapshotStore` — 예약 통계 시스템 스냅샷
-- `reservation/service/CataractStatsSnapshotStore` — 백내장 통계 시스템 스냅샷
-- 파일 캐시 및 `data/` 하위 디렉토리 유지 중
+- ✅ ~~`surgery/service/SurgerySnapshotStore`~~ — 2026-07-31 삭제. `mart_surgery_daily` 조회로 대체(`SurgeryCompositionMartQueryService` @Primary).
+- ⚠️ `reservation/service/ReservationStatsSnapshotStore` — 예약통계_시력교정 스냅샷 (파일 유지)
+- ⚠️ `reservation/service/CataractStatsSnapshotStore` — 예약통계_백내장 스냅샷 (파일 유지)
 
-이들은 **관리자 확정 워크플로우**(`locked` 상태·`fillSnapshot`·셀 편집)를 지원하기 위해 마트로 대체되지 않고 별도 유지 중.
+남은 두 스냅샷 스토어는 **관리자 확정 워크플로우**(`locked` 상태·`fillSnapshot`·셀 편집)를 지원하기 위해 별도 유지 중.
 
-### 7.2 흡수 계획 (진행률 0%)
+### 7.2 수술 이행 결과 (2026-07-31)
+
+- `SurgeryCompositionReader` 인터페이스 신설 — 두 프로파일 대칭 규약.
+- `SurgeryCompositionMartQueryService` (@Primary, postgres-mart) — `mart_surgery_daily` 조회.
+- `SurgeryCompositionQueryService` (mssql 전용) — 소스 라이브 집계로 단순화, read-through fill 폐지.
+- `SurgeryStatsService`의 `fillSnapshot`/`saveSnapshot` 삭제. `SurgerySnapshot` DTO·`SurgerySnapshotStore` 삭제. 컨트롤러의 `/fill`·`/snapshot`·`/snapshots` 엔드포인트 삭제.
+- 프론트 `SurgeryDailyMeta`에서 `confirmedAt`/`confirmedBy` 필드 제거, `SNAPSHOT` source 삭제 · `MART` 배지 추가.
+- 조회 시점에 MSSQL 을 두드리는 경로가 완전히 사라짐 — 배치가 유일한 write 창.
+
+### 7.3 남은 예약 2종 흡수 계획 (진행률 0%)
 
 1. ❌ 마트 테이블에 `locked BOOLEAN`, `confirmed_by VARCHAR`, `confirmed_at TIMESTAMP` 컬럼 추가
 2. ❌ 기존 스냅샷 파일 → 마트로 마이그레이션 스크립트 1회 실행
@@ -284,14 +294,14 @@ class SurgeryMartQueryService { ... }                                        // 
 |----|------|-----|
 | **PR-1** | Datasource 이중화, Postgres 스키마 초안, `batch_run_log`/`batch_watermark`, `BatchOrchestrator` 뼈대 | ✅ 완료 (`MartDataSourceConfig`, `StatsDataSourceConfig`, `V1__batch_meta.sql`) |
 | **PR-2** | 수술 도메인 마트(monthly/daily/list) + `SurgeryMartJob`·`SurgeryMartWriter`·`SurgeryStatsMartRepository` | ✅ 완료 (`V2__surgery_mart.sql`) |
-| **PR-3** | Phase 1 Cutover (surgery 페이지 프로파일 스위치) | ⚠️ 부분 완료 — surgery/surgery-list 마트로, surgery-ratio/composition은 스냅샷 유지 |
+| **PR-3** | Phase 1 Cutover (surgery 페이지 프로파일 스위치) | ✅ 완료 — surgery/surgery-list/surgery-ratio/surgery-composition 모두 마트. 2026-07-31 surgery-composition도 `mart_surgery_daily` 로 스위치, 스냅샷 파일 폐지 |
 | **PR-4** | 예약 마트 + Phase 2 Cutover | ⚠️ 부분 완료 (`V3__reservation_mart.sql`) — reservation-stats-system/cataract는 스냅샷 유지 |
 | **PR-5** | 검사 마트 + Phase 3 Cutover | ✅ 완료 (`V4__exam_mart.sql`) |
 | **PR-6** | 전환·성공률 마트 + Phase 4 Cutover | ✅ 완료 (`V5__consultation_mart.sql`) |
 | **PR-7** | 나머지 마트(외래·전체·기타) + Phase 5 Cutover | ✅ 완료 (`V6..V8`, `V10__overall_exam_monthly.sql`) |
 | **PR-8** | Monthly reconcile 잡, Admin rerun API, 파일캐시·스냅샷 스토어 코드 제거 | ⚠️ Monthly reconcile ✅ / Admin rerun ✅ / 스냅샷 제거 ❌ (§7) |
 | **PR-9** *(신규)* | 미구현 마트 5종(surgery-ratio/composition, reservation-trend/composition/overall-monthly, outpatient-count-daily, overall-exam-monthly) 착수 여부 결정 | 백로그 |
-| **PR-10** *(신규)* | 스냅샷 스토어 흡수 (§7 전체) | 백로그 |
+| **PR-10** *(신규)* | 스냅샷 스토어 흡수 (§7 전체) | ⚠️ 수술 완료(2026-07-31) · 예약통계 2종 백로그 |
 | **PR-11** *(신규)* | 배치 실패 알림 채널 (Slack/이메일) | 백로그 (§10) |
 | **PR-12** *(신규)* | 리스트 마트 파티셔닝 도입 시점 판단 | 백로그 (§10) |
 
@@ -339,7 +349,7 @@ class SurgeryMartQueryService { ... }                                        // 
 - 마트 upsert/select/delete SQL: `backend/src/main/resources/sql/mart/*.sql`
 - 도메인별 원본 SQL(직결 시절): `backend/src/main/resources/sql/{domain}/*.sql`
 - 배치 컴포넌트: `backend/src/main/java/com/bviit/analytics/batch/`
-- 스냅샷 저장 위치: `backend/data/{surgery-composition,reservation-stats-system,cataract-stats-system}/` (§7 마이그레이션 대상)
+- 스냅샷 저장 위치: `backend/data/{reservation-stats-system,cataract-stats-system}/` (§7 마이그레이션 대상 · surgery-composition은 2026-07-31 폐지)
 - 통합테스트: `backend/src/test/java/com/bviit/analytics/batch/job/*MartWriterIT.java` (Testcontainers Postgres)
 
 ### 참조 문서

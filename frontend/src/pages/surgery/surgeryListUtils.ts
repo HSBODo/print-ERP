@@ -9,9 +9,6 @@ export type SortState = { key: string; direction: SortDirection } | null
 
 export const dash = (v: string) => (v && v.trim() ? v : '—')
 
-/** 주별 승인 패널의 주차 버킷 기준일 = 수술일 */
-export const surgeryDateOf = (r: SurgeryListItem) => r.surgeryDate
-
 export const calcAge = (birth: string) => {
   if (!/^\d{4}-\d{2}-\d{2}/.test(birth)) return '—'
   const b = new Date(birth)

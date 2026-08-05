@@ -4,13 +4,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useCataractExamList } from '@/hooks/exam/useCataractExamList'
-import { useWeeklyApproval } from '@/hooks/useWeeklyApproval'
-import { WeeklyApprovalPanel } from '@/components/stats/WeeklyApprovalPanel'
 import type { CataractExamListItem } from '@/api/exam/cataractExamList'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './cataractExamListColumns'
 import {
   dash,
-  examDateOf,
   formatCount,
   defaultFrom,
   defaultTo,
@@ -62,14 +59,9 @@ export function CataractExamListPage() {
     })
   }, [rows, queryType, queryKeyword])
 
-  // 주별 승인(주차 버킷 + 승인/선택) — 검사일 기준. 같은 달 조회일 때만 패널 노출(weeksInRange 제약).
-  const approval = useWeeklyApproval(filtered, examDateOf, queryFrom, queryTo)
-  const sameMonth = queryFrom.slice(0, 7) === queryTo.slice(0, 7)
-  const showApproval = hasSearched && !isError && !showSkeleton && sameMonth
-  // 선택 주차로 거른 행이 표/페이지네이션·집계 소스(미선택 시 filtered 그대로)
-  const tableRows = approval.selectedRows
+  const tableRows = filtered
 
-  // 분류(백내장/중단) 건수 — 월간 레포트 백내장 검사수 = 총건수. 주차 선택 시 그 주차로 한정.
+  // 분류(백내장/중단) 건수 — 월간 레포트 백내장 검사수 = 총건수.
   const classCounts = useMemo(() => {
     let cataract = 0
     let stopped = 0
@@ -109,7 +101,6 @@ export function CataractExamListPage() {
   const handleSearch = () => {
     setHasSearched(true)
     setCurrentPage(1)
-    approval.clearSelection()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryType(draftType)
@@ -146,7 +137,6 @@ export function CataractExamListPage() {
     setPageSize(50)
     setCurrentPage(1)
     setSortState(null)
-    approval.reset()
     setHasSearched(false)
   }
 
@@ -327,18 +317,6 @@ export function CataractExamListPage() {
           </Button>
         </div>
       </div>
-
-      {showApproval && (
-        <WeeklyApprovalPanel
-          weeks={approval.weeks}
-          approved={approval.approved}
-          selectedWeek={approval.selectedWeek}
-          onToggleApprove={approval.toggleApprove}
-          onSelectWeek={approval.selectWeek}
-          subtitle="백내장 검사자 (검사일 기준)"
-          totalLabel="월 합계"
-        />
-      )}
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">

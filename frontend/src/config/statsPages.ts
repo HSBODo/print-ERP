@@ -45,11 +45,11 @@ export const getStatsPageById = (id: string): StatsPageDefinition => {
 export const statsPages: StatsPageDefinition[] = [
   statsPage(
     'weekly-report',
-    '주간 레포트',
+    '주차 레포트',
     '/report/weekly',
     'report-group',
     'Report',
-    '한 주간의 핵심 KPI(예약·검사·수술·전환율 등)를 요약한 주간 리포트입니다.',
+    '🚧 개발예정 · 임시 프로토타입 — 지표 정의·집계 방식이 확정되기 전 참고용 화면입니다. 월간 레포트와 같은 도표를 주차(월~일) 단위로 본 리포트로, 전체 주차 또는 특정 월에 걸친 주차(월 경계 주차 포함)를 선택할 수 있습니다.',
     '/api/report/weekly'
   ),
   statsPage(
@@ -67,7 +67,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/overall-exam',
     'exam-group',
     '검사',
-    '총검사자와 소개유형·직업 구성을 월별로 정리한 종합표입니다. 2024·2025년 확정값, 2026년부터 운영 DB 집계 예정.',
+    '총검사자와 소개유형·직업 구성을 월별로 정리한 종합표입니다. 2024·2025년 확정값(마트 시드), 2026년부터는 운영 DB 배치 적재 마트를 조회합니다.',
     '/api/stats/overall-exam'
   ),
   statsPage(
@@ -130,7 +130,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/reservation-list',
     'reservation-group',
     '예약',
-    '예약 종합(콜·온라인) 건수를 구성하는 검사예약 인원 명단입니다. 등록일 기준 월 단위 조회 + 주별 승인 → 월별 체크(마감) 워크플로우.',
+    '예약 종합(콜·온라인) 건수를 구성하는 검사예약 인원 명단입니다. 등록일 기준 월 단위로 조회합니다.',
     '/api/reservation-list'
   ),
   statsPage(
@@ -202,7 +202,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/cataract-reservation-rate',
     'consultation',
     '전환&성공률',
-    '백내장 검사자 대비 수술예약건 비율을 월별로 확인하는 화면입니다.',
+    '시력교정 검사자 대비 수술예약률과, 백내장 진단자 대비 수술예약률을 탭으로 나눠 월별로 확인하는 화면입니다.',
     '/api/stats/cataract-reservation-rate'
   ),
   statsPage(
@@ -247,7 +247,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/surgery-ratio',
     'surgery-ratio',
     '주요 수술별 비중',
-    '주요 수술 종류별 비중과 분포를 보여주는 화면입니다.',
+    '기준 연도와 월(연간 전체 가능)을 선택해 주요 수술 유형별 KPI·점유율과 상위 수술의 월별 추이를 함께 보는 화면입니다.',
     '/api/stats/surgery-ratio'
   ),
   statsPage(
@@ -256,7 +256,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/surgery-composition',
     'surgery',
     '수술',
-    '시술별(라섹·라식·스마일·ICL·백내장 등) 월별 수술 건수와 그룹 내 비중을 표로 보는 화면입니다.',
+    '시술별(라섹·라식·스마일·ICL·백내장 등) 수술 건수와 그룹 내 비중을 월별/주차(ISO)/주별/일별/전체 단위로 골라 보는 표 화면입니다.',
     '/api/stats/surgery-ratio'
   ),
   statsPage(
@@ -324,12 +324,12 @@ export const statsPages: StatsPageDefinition[] = [
   ),
   statsPage(
     'dreamlens-revenue',
-    '드림렌즈 매출',
+    '드림렌즈 장부',
     '/stats/dreamlens-revenue',
     'etc',
     '기타',
-    '드림렌즈 매출 추이와 기간별 비교를 확인하는 화면입니다.',
-    '/api/stats/dreamlens-revenue'
+    'D/L 장부를 직접 입력·수정하는 화면입니다.',
+    '/api/dreamlens-ledger'
   ),
   statsPage(
     'b2b-revenue',

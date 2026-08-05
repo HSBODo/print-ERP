@@ -42,7 +42,7 @@ project-root/
 │   │   ├── consultation/                # 상담/전환율/중단사유
 │   │   ├── outpatient/                  # 외래/내원 관련 통계
 │   │   ├── overall/                     # 종합 주간 지표
-│   │   └── etc/                         # B2B 등 기타 통계
+│   │   └── etc/                         # B2B 매출 · 드림렌즈 장부(직접 입력 CRUD) 등 기타
 │   ├── src/main/resources/
 │   │   ├── application.yml                  # H2 인메모리 (개발 기본)
 │   │   └── application-postgres.yml         # PostgreSQL (운영)

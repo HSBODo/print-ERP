@@ -10,11 +10,24 @@
                    WHEN vis.hasDreamlens = 1 AND vis.hasMedical = 0 THEN ''
                    WHEN src.isOneDay = 1 THEN N'원데이'
                    ELSE N'일반' END                         AS examType,
+              -- 백내장분류: 백내장 리스트의 분류와 동일 기준(상담사 BS0808=BS미지정 → 중단, 그 외 → 백내장).
+              CASE WHEN src.isCat = 1 AND cu.MY_COUNSELOR = 'BS0808' THEN N'중단'
+                   WHEN src.isCat = 1 THEN N'백내장'
+                   ELSE '' END                              AS cataractClass,
               CASE WHEN ISNULL(cu.FIRST_DAY, '') >= :from AND ISNULL(cu.FIRST_DAY, '') <= :to
                    THEN N'신환' ELSE N'구환' END            AS patientType,
               CASE WHEN mv.motiveL IN (N'소개고객', N'소개미확인') THEN N'고객소개'
                    WHEN mv.motiveL = N'소개직원' THEN N'직원소개'
                    ELSE N'일반' END                         AS introType,
+              -- 내원동기(레포트): 내원동기(대) → 레포트 9계열 매핑. 미기재 포함 그 외 전부 '기타'.
+              -- select-all-exam-list.sql·find-exam-count-by-class-monthly.sql(도표 #7)과 동일 규칙 — 함께 고칠 것.
+              CASE
+                WHEN mv.motiveL = N'B2B(군인)' THEN N'B2B(군인)'
+                WHEN mv.motiveL IN (N'B2B(기업)', N'B2B(비앤빛)', N'B2B(백내장)', N'제휴') THEN N'B2B(기업)'
+                WHEN mv.motiveL IN (N'소개고객', N'소개미확인', N'VIP고객관리팀') THEN N'소개고객'
+                WHEN mv.motiveL IN (N'소개직원', N'광고', N'바이럴', N'프로모션', N'홈페이지') THEN mv.motiveL
+                ELSE N'기타'
+              END                                          AS motiveReport,
               ISNULL(mv.motiveL, '')                       AS motiveL,
               ISNULL(mv.motiveM, '')                       AS motiveM,
               ISNULL(mv.motiveS, '')                       AS motiveS,
@@ -48,9 +61,9 @@
               ISNULL(cu.ETC, '')                           AS memo
             FROM (
               SELECT e.CUST_NUM AS cn, e.EXAM_DATE AS d, 0 AS isCat,
-                     -- 원데이 검사: 같은날 시력교정 검사OP 예약(M/5, 내원 I/H). 레포트 정합 위해 중단/취소/테스트메모 제외.
-                     CASE WHEN ISNULL(e.STOP_YN, '') <> 'Y' AND ISNULL(e.CANCEL_CD, '') = ''
-                           AND NOT (ISNULL(e.EXAM_MEMO, '') LIKE N'%테스트%' OR LOWER(ISNULL(e.EXAM_MEMO, '')) LIKE '%test%')
+                     -- 원데이 검사: 같은날 시력교정 검사OP 예약(M/5, 내원 I/H), 테스트메모만 제외.
+                     -- 2026-07-30 확정: 중단/취소(STOP_YN·CANCEL_CD) 단서 제거 (점검/원데이-레거시-비교 §5).
+                     CASE WHEN NOT (ISNULL(e.EXAM_MEMO, '') LIKE N'%테스트%' OR LOWER(ISNULL(e.EXAM_MEMO, '')) LIKE '%test%')
                            AND EXISTS (SELECT 1 FROM RESERVATION r WITH(NOLOCK)
                                        WHERE r.CUST_NUM = e.CUST_NUM AND r.RESERVE_DATE = e.EXAM_DATE
                                          AND r.RESERVE_FLAG = 'M' AND r.RESERVE_JINRYO = '5' AND r.RESERVE_STATE IN ('I','H'))
@@ -100,4 +113,18 @@
             OUTER APPLY (SELECT TOP 1 ISNULL(EMP_NAME, '') AS nm FROM EMPLOYEE WITH(NOLOCK) WHERE EMP_NUM = cu.MY_COUNSELOR) ec
             OUTER APPLY (SELECT TOP 1 ISNULL(EMP_NAME, '') AS nm FROM EMPLOYEE WITH(NOLOCK) WHERE EMP_NUM = cu.MY_DOCTOR) ed
             OUTER APPLY (SELECT TOP 1 ISNULL(EMP_NAME, '') AS nm FROM EMPLOYEE WITH(NOLOCK) WHERE EMP_NUM = cu.MY_OPTOMETRIST) eo
+            -- 순수 외래 유입 제외(2026-07-30 확정, docs/점검/시력교정-검사자_2026-06~07.md):
+            -- 시력교정 그룹(isCat=0, 드림렌즈 아님) 중 그날 검사(M) 내원도 수술 연계도 없는 행 제외.
+            -- find-exam-list.sql 의 hasSurgeryLink 와 동일 기준. 백내장·드림렌즈 그룹은 영향 없음.
+            WHERE NOT (
+              src.isCat = 0
+              AND vis.hasMedical = 0
+              AND vis.hasDreamlens = 0
+              AND NOT EXISTS (SELECT 1 FROM RESERVATION ro WITH(NOLOCK)
+                              WHERE ro.CUST_NUM = src.cn AND ro.RESERVE_FLAG = 'O'
+                                AND ro.RESERVE_STATE <> 'C' AND ro.RESERVE_DATE >= src.d)
+              AND NOT EXISTS (SELECT 1 FROM OPERATIONDATA od WITH(NOLOCK)
+                              WHERE od.CUST_NUM = src.cn AND ISNULL(od.OPERATION_DATE, '') <> ''
+                                AND od.OPERATION_DATE >= src.d)
+            )
             ORDER BY src.d, src.isCat, cu.CUST_NAME

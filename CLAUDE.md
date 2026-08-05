@@ -31,7 +31,8 @@ project-root/
 │   │   ├── consultation/                # 전환율·예약률·중단사유
 │   │   ├── outpatient/                  # 외래수
 │   │   ├── overall/                     # 주간 종합지표
-│   │   └── etc/                         # B2B 매출 등 기타
+│   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
+│   │   └── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) 등 기타
 │   ├── src/main/resources/
 │   │   ├── application.yml                     # H2 인메모리 (개발 기본)
 │   │   ├── application-postgres.yml            # PostgreSQL (운영)
@@ -55,6 +56,7 @@ project-root/
 │   │   │   ├── consultation/           # index.ts(consultationApi)
 │   │   │   ├── outpatient/             # index.ts(outpatientApi)
 │   │   │   ├── overall/                # index.ts(overallApi)
+│   │   │   ├── report/                 # index.ts(reportApi · 주차 레포트)
 │   │   │   └── etc/                    # index.ts(b2bApi · B2B 매출)
 │   │   ├── hooks/                       # 도메인별 TanStack Query 훅
 │   │   │   ├── reservation/            # useReservationKpi/Trend/Composition/List/OverallTrend …
@@ -62,14 +64,14 @@ project-root/
 │   │   │   ├── consultation/           # useConsultationRate*·useCataractReservationRateTrend·useStopReasonMonthly
 │   │   │   ├── surgery/                # useSurgery*·useSurgeryRatio*
 │   │   │   ├── overall/                # useOverallExamWeekly
+│   │   │   ├── report/                 # useWeeklyReport
 │   │   │   ├── outpatient/             # useOutpatientCountTrend
-│   │   │   ├── useIsMobile.ts          # (공용) 반응형 분기
-│   │   │   └── useWeeklyApproval.ts    # (공용) 리스트 주별 승인 워크플로우
+│   │   │   └── useIsMobile.ts          # (공용) 반응형 분기
 │   │   ├── components/
 │   │   │   ├── layout/                  # AppLayout·Sidebar·Topbar + desktop/·mobile/
 │   │   │   ├── filters/                 # FilterBar·PeriodChip·Select
-│   │   │   ├── stats/                   # KpiCard·StatsPrimitives·WeeklyApprovalPanel (공용)
-│   │   │   ├── report/                  # ReportLineChart
+│   │   │   ├── stats/                   # KpiCard·StatsPrimitives (공용)
+│   │   │   ├── report/                  # ReportLineChart·ReportWeekLineChart·reportWeeks(ISO 주차)
 │   │   │   └── ui/                      # shadcn 컴포넌트 (button, card, chart)
 │   │   ├── config/
 │   │   │   ├── statsPages.ts            # 통계 페이지 정의 (id/path/section/apiDraftPath)
@@ -81,7 +83,7 @@ project-root/
 │   │   │   ├── exam/                   # ExamList·CataractExamList·Examination(±Vision/Dreamlens)·ProcedureExam
 │   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
 │   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
-│   │   │   ├── report/                 # ReportPage(주간)·MonthlyReportPage
+│   │   │   ├── report/                 # MonthlyReportPage(월간)·WeeklyReportPage(주차) + 공용 ReportShell·useReportSeries·reportItems
 │   │   │   ├── overall/ · outpatient/ · marketing/ · cancel-noshow/ · unit-price/ · etc/
 │   │   │   ├── LoginPage.tsx           # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx       # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
@@ -103,7 +105,7 @@ project-root/
 도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation`(예약) / `exam`(검사) / `surgery`(수술) / `consultation`(전환&성공률) / `report` / `overall`(전체지표) / `outpatient`(외래) / `marketing` / `cancel-noshow` / `unit-price` / `etc`.
 
 - **백엔드(도메인 중심)**: `<domain>/{controller,service,repository,dto}` (예: `reservation/controller`, `reservation/service`). 인증은 `auth/`, 공통 응답·예외·유틸·통계 helper(`StatsPanelSupport`·`StatsRequestValidator`·`StatsResponseMeta`)는 `common/`(특히 `common/stats/`)에 둔다. `Mock*Repository`는 해당 도메인 `repository/`에 둔다.
-- **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `hooks/useWeeklyApproval.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
+- **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
 - **신규 추가**: 새 통계 기능은 해당 도메인 폴더/패키지에 파일을 추가한다(새 레이어 루트에 흩뿌리지 말 것). 도메인이 없으면 메뉴 그룹 기준으로 새 폴더를 만든다.
 
 > ✅ **이관 완료**: 백엔드는 **도메인 중심 패키지**(`<domain>/{controller,service,repository,dto}` + `auth`·`common`)로, 프론트(api·hooks·pages·pageRegistry)는 레이어 우선 + 도메인 하위 분할로 정리 완료. 공용 통계 유틸은 `common/stats/`. 검증 기준: frontend lint/build/test green, backend test green.
@@ -117,22 +119,22 @@ project-root/
 - DashboardPage (KPI 카드 4개 + 차트 5개, 하드코딩 목업)
 - ReservationPage (월별/연도별 비교, TanStack Query 기반 API 연동)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
-- 통계 전용 페이지 24종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
+- 통계 전용 페이지 25종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
 
 ### 미구현 (플레이스홀더)
 
-통계 페이지 14종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
+통계 페이지 13종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 38개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 24개 / **미구현(pending)** 14개.
+`statsPages.ts`에 38개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 25개 / **미구현(pending)** 13개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
 |----|------|------|------|------|
-| weekly-report | 주간 레포트 | /report/weekly | Report | 완료 (메뉴 숨김·라우트 유지) |
+| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 ISO 주차축으로 · `/api/report/weekly` 운영 DB 라이브) |
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
 | intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
@@ -154,7 +156,7 @@ project-root/
 | surgery-list | 수술자 리스트 | /stats/surgery-list | 수술 | 완료 |
 | surgery | 수술 건수 | /stats/surgery | 수술 | 완료 |
 | surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술 | 완료 |
-| surgery-composition | 수술별 비중 | /stats/surgery-composition | 수술 | 완료 |
+| surgery-composition | 수술별 비중 | /stats/surgery-composition | 수술 | 완료 (mart_surgery_daily 조회, 파일 스냅샷 폐지 · 주차=ISO 8601) |
 | outpatient-list | 외래수 리스트 | /stats/outpatient-list | 외래 | 완료 (RESERVATION F + I/H, 외래수와 정합) |
 | outpatient-count | 외래수 | /stats/outpatient-count | 외래 | 완료 |
 | overseas | 해외 환자 관련 지표 | /stats/overseas | 마케팅 | 미구현 |
@@ -162,7 +164,7 @@ project-root/
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
 | unit-price | 객단가 | /stats/unit-price | 객단가 | 미구현 |
-| dreamlens-revenue | 드림렌즈 매출 | /stats/dreamlens-revenue | 기타 | 미구현 |
+| dreamlens-revenue | 드림렌즈 장부 | /stats/dreamlens-revenue | 기타 | 완료 (**직접 입력 테이블** · `dreamlens_ledger` JPA CRUD · `/api/dreamlens-ledger`) |
 | b2b-revenue | B2B 매출 | /stats/b2b-revenue | 기타 | 완료 |
 | staff-point | 직원 포인트 | /stats/staff-point | 기타 | 미구현 |
 | prp-rate | PRP 시술율 | /stats/prp-rate | 기타 | 미구현 |
@@ -174,7 +176,7 @@ project-root/
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
-> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `weekly-report`(주간 레포트), `intake-conversion`·`reservation`(예약), 그리고 **마케팅·취소&부도·객단가·기타 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price·dreamlens-revenue·b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출은 `HIDDEN_MENU_IDS`에서 빼면 됨.
+> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `intake-conversion`·`reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
 
 ## 백엔드 컨벤션
 
@@ -190,7 +192,29 @@ GET    /api/stats/{pageId}/kpi?years=2024,2025&mock=false
 GET    /api/stats/{pageId}/trend?years=2024,2025&mock=false
 GET    /api/stats/{pageId}/composition?years=2024,2025&mock=false
 GET    /api/{listPageId}?from=2026-01-01&to=2026-01-31  # 리스트 계열
+GET    /api/report/weekly?years=2024,2025,2026       # 주차 레포트 (ISO 8601 연간 주차 원시 집계)
+
+# 직접 입력 장부 (조회 전용 통계와 달리 CRUD)
+GET    /api/dreamlens-ledger?from=2026-07-01&to=2026-08-31
+POST   /api/dreamlens-ledger                          # 행 추가
+PUT    /api/dreamlens-ledger/{id}                     # 행 수정 (전체 필드 교체)
+DELETE /api/dreamlens-ledger/{id}                     # 행 삭제
 ```
+
+> ✍️ **예외 — 사용자가 직접 입력하는 원천 데이터**는 마트가 아니라 JPA 엔티티로 다룬다.
+> 현재 `드림렌즈 장부`(`dreamlens_ledger`)가 유일하다. MSSQL 원천이 없고 화면에서 CRUD 하므로
+> 배치·마트 대신 `etc/entity` + `JpaRepository` + `/api/dreamlens-ledger` 로 구성한다.
+> 스키마는 `ddl-auto: update` 가 생성하고, 초기 10행은 `DreamlensLedgerSeeder` 가 표가 비었을 때만 넣는다.
+
+> 🔌 **화면은 마트를 읽는다.** 통계 API 는 배치가 적재한 Postgres 마트를 조회하고, MSSQL 직결은
+> 배치(적재) 시간대에만 쓴다. 그래서 SSH 터널·VPN 이 끊겨도 화면은 마지막 적재분으로 동작한다.
+> 신규 통계 API 를 만들 때 `statsJdbcTemplate`(MSSQL) 로 화면을 직접 붙이지 말 것 —
+> 마트 테이블 + `@Primary` 마트 QueryService + 배치 Job 을 함께 만든다(예: `report` 도메인).
+
+> 📅 **주차 개념 3종 주의** — 이름이 비슷하지만 버킷 규칙이 다르다.
+> - **ISO 연간 주차**(`utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.
+> - **그 달의 주차**(`OverallExamWeeklyService`): 월 경계에서 잘라 각 달에 귀속 → 월 합계 = 그 달 주 합계. 주간 검사자 종합지표가 쓴다(백엔드 산정).
+> - **월별**: 마트 확정값(2024·2025 레거시 시드 포함).
 
 ### 응답 포맷
 

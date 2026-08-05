@@ -111,6 +111,28 @@ INSERT INTO list_* (...) VALUES (...);
 | `list_exam` | DELETE+INSERT (exam_date) | 없음 | |
 | `list_cataract_exam` | DELETE+INSERT (exam_date) | 없음 | Cataract_Exam 스냅샷 특성상 과거월 소급 변동 가능 |
 
+> ⚠️ **`list_cataract_exam` 수동 재적재는 반드시 월 단위로 나눠서** (`/api/admin/batch/rerun?...&domain=EXAM`).
+> 검사일 = "요청 범위 내 첫 H 예약일"이라, 여러 달을 한 범위로 돌리면 월 경계를 넘는 재방문자의
+> 뒷달 행이 앞달로 흡수돼 `리스트 건수 = 월별 백내장 검사수` 정합이 깨진다
+> (실사례 2026-07-30: 05~07월 한 번에 돌리자 6월 55 → 54). 일 단위 야간 크론은 창이 작아 무관.
+
+### 2-3-1. REPORT 도메인 (`ReportMartJob`)
+
+| 마트 | 패턴 | min-year | 특수 조건 |
+|---|---|---|---|
+| `mart_weekly_report` | UPSERT (yr, wk) | 없음 | ISO 8601 연간 주차. 1주차가 전년 12월을 물어도 주차연도로 귀속 |
+| `mart_exam_count_by_class` | UPSERT (yr, mo, motive_report) | 없음 | 내원동기(레포트) 9계열 |
+
+> 💡 **이 도메인은 화면의 MSSQL 의존을 끊기 위해 만들었다.** 주차 레포트(`/api/report/weekly`)와
+> 고객분류별 검사수(`/api/stats/exam-count/by-class`)가 종전에는 MSSQL 직결이라 SSH 터널·VPN 이
+> 끊기면 그 화면만 503 이었다. 이제 배치가 적재하고 화면은 마트를 읽는다
+> (`WeeklyReportMartQueryService`·`ExamCountMartQueryService` 가 `@Primary`).
+>
+> 골든 시드 구간이 없어 min-year 가드를 두지 않는다 — 주차 값은 전 구간 라이브이고(월 단위 레거시
+> 확정값은 주로 쪼갤 수 없다), 고객분류는 24·25 에 존재하지 않던 분류다.
+>
+> 수동 재적재: `POST /api/admin/batch/rerun?from=2026-01-01&to=2026-12-31&domain=REPORT`
+
 ### 2-4. CONSULTATION 도메인 (`ConsultationMartJob`)
 
 | 마트 | 패턴 | min-year | 특수 조건 |

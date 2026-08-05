@@ -40,6 +40,7 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     private final String listSql;
     private final String lastRegDateSql;
     private final String monthlyListRawSql;
+    private final String dailyListRawSql;
 
     public ReservationListHomepageRepository(
             @Qualifier("homepageJdbcTemplate") NamedParameterJdbcTemplate jdbc,
@@ -50,6 +51,7 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
         this.listSql = SqlLoader.load(sqlPath(dialect, "reservation-list-homepage.sql"));
         this.lastRegDateSql = SqlLoader.load(sqlPath(dialect, "last-reg-date.sql"));
         this.monthlyListRawSql = SqlLoader.load(sqlPath(dialect, "monthly-list-raw.sql"));
+        this.dailyListRawSql = SqlLoader.load(sqlPath(dialect, "daily-list-raw.sql"));
     }
 
     /** sql/reservation-list-homepage/{sqlite|mariadb}/{fileName} */
@@ -80,6 +82,19 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     @Override
     public List<Map<String, Object>> findMonthlyListRawCounts(String from, String to) {
         return jdbc.queryForList(monthlyListRawSql, new MapSqlParameterSource()
+                .addValue("from", from)
+                .addValue("to", to));
+    }
+
+    /**
+     * 일별 홈페이지 예약 건수 — 주차 레포트의 온라인 예약 구성요소 ③.
+     * 월별판과 같은 필터·계산이고 버킷만 일 단위다.
+     *
+     * @return d, cnt 를 담은 행들(데이터가 없는 날은 행 자체가 없다)
+     */
+    @Override
+    public List<Map<String, Object>> findDailyListRawCounts(String from, String to) {
+        return jdbc.queryForList(dailyListRawSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

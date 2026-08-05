@@ -22,13 +22,12 @@ describe('navigation menu', () => {
     ).toEqual([])
   })
 
-  it('숨김 메뉴는 사이드바에 노출되지 않는다(유입·예약건수·주간레포트·마케팅~기타)', () => {
+  it('숨김 메뉴는 사이드바에 노출되지 않는다(유입·예약건수·마케팅~기타)', () => {
     const paths = menuPaths()
 
-    // 예약: 유입·예약 건수 숨김 / Report: 주간 숨김
+    // 예약: 유입·예약 건수 숨김
     expect(paths).not.toContain('/stats/intake-conversion')
     expect(paths).not.toContain('/stats/reservation')
-    expect(paths).not.toContain('/report/weekly')
     // 외래 아래: 마케팅·취소&부도·객단가·기타 그룹 전체 숨김(샘플 경로)
     expect(paths).not.toContain('/stats/marketing')
     expect(paths).not.toContain('/stats/cancel-rate')
@@ -36,10 +35,11 @@ describe('navigation menu', () => {
     expect(paths).not.toContain('/stats/b2b-revenue')
   })
 
-  it('숨기지 않은 핵심 메뉴는 그대로 노출된다(월간레포트·예약자리스트·예약종합)', () => {
+  it('숨기지 않은 핵심 메뉴는 그대로 노출된다(월간·주차 레포트·예약자리스트·예약종합)', () => {
     const paths = menuPaths()
 
     expect(paths).toContain('/report/monthly')
+    expect(paths).toContain('/report/weekly')
     expect(paths).toContain('/stats/reservation-list')
     expect(paths).toContain('/stats/reservation-overall')
   })

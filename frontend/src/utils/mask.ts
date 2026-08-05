@@ -56,6 +56,20 @@ export const maskPhone = (value: string): string => {
 }
 
 /**
+ * 주소 — 앞 2개 토큰(시/도 + 시/군/구)만 남기고 상세주소를 가린다.
+ *
+ * '경기 성남시 분당구 분당로 190 (분당동, 샛별...) 101동 1101호' → '경기 성남시 ***'
+ * 지역 단위는 남겨야 배송 권역 분석이 가능하고, 동·호수까지 남기면 집을 특정할 수 있다.
+ * 토큰이 2개 이하면 애초에 상세주소가 아니므로 그대로 둔다.
+ */
+export const maskAddress = (value: string): string => {
+  if (isBlank(value)) return value
+  const tokens = value.trim().split(/\s+/)
+  if (tokens.length <= 2) return value.trim()
+  return `${tokens[0]} ${tokens[1]} ***`
+}
+
+/**
  * 주민번호 — 뒷자리는 성별 1자리만 남기고 가린다(관행상 최소 기준).
  *
  * 900101-1234567 → 900101-1****** · 9001011234567 → 900101-1******

@@ -31,6 +31,12 @@ public interface HomepageOverallSource {
     List<Map<String, Object>> findMonthlyListRawCounts(String from, String to);
 
     /**
+     * 일별 홈페이지 예약 건수 (d / cnt) — 주차 레포트가 주(월~일)로 다시 묶어 쓴다.
+     * 필터·계산은 {@link #findMonthlyListRawCounts} 와 동일하고 버킷만 월→일이다.
+     */
+    List<Map<String, Object>> findDailyListRawCounts(String from, String to);
+
+    /**
      * 소스가 담고 있는 마지막 등록일시. 값이 없으면 빈 문자열.
      * 마트 구현에서는 배치 이후로의 '천장' 의미 — 화면·계산이 부분 월을 null 로 끊는 데 쓴다.
      */

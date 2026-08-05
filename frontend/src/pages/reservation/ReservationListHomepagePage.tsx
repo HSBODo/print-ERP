@@ -299,8 +299,8 @@ export function ReservationListHomepagePage() {
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
           <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" />
           <span>
-            현재 데이터 소스는 <strong className="tabular-nums">{lastRegDate}</strong> 까지의 스냅샷입니다.
-            조회 종료일({queryTo})이 이 시점을 넘어서 <strong>그 이후 등록건은 집계되지 않았습니다</strong> — 실제보다 적은 건수입니다.
+            홈페이지 예약 데이터는 매일 새벽 배치로 반영됩니다.
+            마지막 반영: <strong className="tabular-nums">{lastRegDate}</strong> — 이후 등록건은 다음 배치까지 표시되지 않습니다.
           </span>
         </div>
       )}

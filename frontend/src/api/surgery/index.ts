@@ -35,12 +35,10 @@ const surgeryDailyItemSchema = z.object({
 })
 export type SurgeryDailyItem = z.infer<typeof surgeryDailyItemSchema>
 
-/** 응답 메타 — 출처(스냅샷/라이브) 표시용. NON_NULL이라 대부분 optional. */
+/** 응답 메타 — 출처(마트/라이브) 표시용. NON_NULL이라 대부분 optional. */
 const surgeryDailyMetaSchema = z.object({
-  source: z.enum(['SNAPSHOT', 'LIVE', 'MART', 'UNAVAILABLE']).optional(),
+  source: z.enum(['LIVE', 'MART', 'UNAVAILABLE']).optional(),
   period: z.string().optional(),
-  confirmedAt: z.string().optional(),
-  confirmedBy: z.string().optional(),
 }).optional()
 export type SurgeryDailyMeta = z.infer<typeof surgeryDailyMetaSchema>
 const surgeryDailyResponseSchema = apiResponseOf(z.array(surgeryDailyItemSchema), surgeryDailyMetaSchema)
@@ -61,7 +59,7 @@ export const surgeryApi = {
   getSurgeryComposition: async (years: number[]) =>
     surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/composition', { years }))).data,
 
-  /** 수술별 비중 일별 — 스냅샷 우선(적재) + 당월 조회 시 전일까지 증분. data+meta 반환. */
+  /** 수술별 비중 일별 — mart_surgery_daily 조회(postgres-mart) 또는 소스 라이브(mssql). data+meta 반환. */
   getSurgeryDaily: async (from: string, to: string) => {
     const res = surgeryDailyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/daily', { from, to })))
     return { data: res.data, meta: res.meta }
