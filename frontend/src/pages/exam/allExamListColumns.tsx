@@ -87,6 +87,7 @@ export const COLUMNS: Column[] = [
   { key: 'motiveReport', label: '내원동기(레포트)', align: 'center', min: '7.5rem', render: (r) => dash(r.motiveReport) },
   { key: 'motiveL', label: '내원동기(대)', align: 'center', min: '6.5rem', render: (r) => dash(r.motiveL) },
   { key: 'motiveM', label: '내원동기(중)', align: 'center', min: '6.5rem', render: (r) => dash(r.motiveM) },
+  { key: 'motiveS', label: '내원동기(세)', align: 'center', min: '6.5rem', render: (r) => dash(r.motiveS) },
   { key: 'jobBucket', label: '직업구분', align: 'center', min: '5rem', render: (r) => cell.badge(r.jobBucket, JOB_STYLE[r.jobBucket]) },
   { key: 'job', label: '직업', align: 'center', min: '5.5rem', render: (r) => dash(r.job) },
   { key: 'chartNo', label: '차트번호', align: 'center', min: '5.5rem', text: true },
