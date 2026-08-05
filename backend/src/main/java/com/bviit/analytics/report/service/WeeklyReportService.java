@@ -1,5 +1,6 @@
 package com.bviit.analytics.report.service;
 
+import com.bviit.analytics.exam.repository.ExamStatsMartRepository;
 import com.bviit.analytics.overall.repository.OverallExamWeeklyRepository;
 import com.bviit.analytics.report.dto.WeeklyReportItem;
 import com.bviit.analytics.report.repository.WeeklyReportRepository;
@@ -65,6 +66,8 @@ public class WeeklyReportService implements WeeklyReportReader {
     private final SurgeryStatsService surgeryStatsService;
     /** 온라인 예약 구성요소 ③ 홈페이지. 미설정 환경에서는 비어 있다(컷오버 이후 구간만 영향). */
     private final Optional<HomepageOverallSource> homepageRepository;
+    /** 마트(postgres-mart)에서만 존재. 검사 지표를 전체 검사자 리스트 뷰에서 뽑는다. */
+    private final Optional<ExamStatsMartRepository> examAggRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -86,20 +89,41 @@ public class WeeklyReportService implements WeeklyReportReader {
 
         Map<String, Acc> buckets = new LinkedHashMap<>();
 
-        /* ── 검사 유입·총검사자 ── */
-        accumulate(buckets, wanted, overallRepository.findDemographicsDaily(fromDate, toDate), "d", (acc, row) -> {
-            acc.examTotal = plus(acc.examTotal, toInt(row.get("popTotal")));
-            acc.introGeneral = plus(acc.introGeneral, toInt(row.get("introGeneral")));
-            acc.introCustomer = plus(acc.introCustomer, toInt(row.get("introCustomer")));
-            acc.introStaff = plus(acc.introStaff, toInt(row.get("introStaff")));
-            acc.jobOffice = plus(acc.jobOffice, toInt(row.get("jobOffice")));
-            acc.jobStudent = plus(acc.jobStudent, toInt(row.get("jobStudent")));
-            acc.jobEtc = plus(acc.jobEtc, toInt(row.get("jobEtc")));
-        });
+        /* ── 검사 유입·총검사자·시력교정·원데이·백내장 검사수 ──
+         * 마트가 있으면 **전체 검사자 리스트(v_all_exam_list)** 하나에서 뽑는다.
+         * 월간 레포트·리스트 화면과 같은 정의라 세 화면이 어긋날 수 없다.
+         * mssql 단독 프로파일(마트 없음)에서는 종전대로 MSSQL 쿼리로 떨어진다. */
+        boolean fromList = examAggRepository.isPresent();
+        if (fromList) {
+            accumulate(buckets, wanted, examAggRepository.get().findExamDailyAgg(fromDate, toDate), "d", (acc, row) -> {
+                acc.examTotal = plus(acc.examTotal, toInt(row.get("total")));
+                acc.introGeneral = plus(acc.introGeneral, toInt(row.get("intro_general")));
+                acc.introCustomer = plus(acc.introCustomer, toInt(row.get("intro_customer")));
+                acc.introStaff = plus(acc.introStaff, toInt(row.get("intro_staff")));
+                acc.jobOffice = plus(acc.jobOffice, toInt(row.get("job_office")));
+                acc.jobStudent = plus(acc.jobStudent, toInt(row.get("job_student")));
+                acc.jobEtc = plus(acc.jobEtc, toInt(row.get("job_etc")));
+                acc.visionExam = plus(acc.visionExam, toInt(row.get("vision")));
+                acc.oneDay = plus(acc.oneDay, toInt(row.get("one_day")));
+                acc.cataractExam = plus(acc.cataractExam, toInt(row.get("cataract_exam")));
+            });
+        } else {
+            accumulate(buckets, wanted, overallRepository.findDemographicsDaily(fromDate, toDate), "d", (acc, row) -> {
+                acc.examTotal = plus(acc.examTotal, toInt(row.get("popTotal")));
+                acc.introGeneral = plus(acc.introGeneral, toInt(row.get("introGeneral")));
+                acc.introCustomer = plus(acc.introCustomer, toInt(row.get("introCustomer")));
+                acc.introStaff = plus(acc.introStaff, toInt(row.get("introStaff")));
+                acc.jobOffice = plus(acc.jobOffice, toInt(row.get("jobOffice")));
+                acc.jobStudent = plus(acc.jobStudent, toInt(row.get("jobStudent")));
+                acc.jobEtc = plus(acc.jobEtc, toInt(row.get("jobEtc")));
+            });
+        }
 
-        /* ── 시력교정 검사 + 예약률 ── */
+        /* ── 시력교정 예약률 (검사수는 위 리스트 집계가 이미 채웠다) ── */
         accumulate(buckets, wanted, overallRepository.findVisionDaily(fromDate, toDate), "d", (acc, row) -> {
-            acc.visionExam = plus(acc.visionExam, toInt(row.get("examCount")));
+            if (!fromList) {
+                acc.visionExam = plus(acc.visionExam, toInt(row.get("examCount")));
+            }
             acc.visionBooked = plus(acc.visionBooked, toInt(row.get("surgeryBooked")));
         });
 
@@ -109,9 +133,11 @@ public class WeeklyReportService implements WeeklyReportReader {
             acc.cataractBooked = plus(acc.cataractBooked, toInt(row.get("surgeryBooked")));
         });
 
-        /* ── 원데이 + 원데이 예약률 ── */
+        /* ── 원데이 예약률 (원데이 수는 위 리스트 집계가 이미 채웠다) ── */
         accumulate(buckets, wanted, overallRepository.findOneDayDaily(fromDate, toDate), "d", (acc, row) -> {
-            acc.oneDay = plus(acc.oneDay, toInt(row.get("oneDay")));
+            if (!fromList) {
+                acc.oneDay = plus(acc.oneDay, toInt(row.get("oneDay")));
+            }
             acc.oneDayBooked = plus(acc.oneDayBooked, toInt(row.get("oneDayBooked")));
         });
 
@@ -119,9 +145,11 @@ public class WeeklyReportService implements WeeklyReportReader {
         accumulate(buckets, wanted, overallRepository.findStopCountDaily(fromDate, toDate), "d", (acc, row) ->
                 acc.stopCount = plus(acc.stopCount, toInt(row.get("cnt"))));
 
-        /* ── 백내장 검사수(사람 단위) ── */
-        accumulate(buckets, wanted, repository.findCataractExamDaily(fromDate, toDate), "d", (acc, row) ->
-                acc.cataractExam = plus(acc.cataractExam, toInt(row.get("cnt"))));
+        /* ── 백내장 검사수(사람 단위) — 마트가 있으면 위 리스트 집계가 이미 채웠다 ── */
+        if (!fromList) {
+            accumulate(buckets, wanted, repository.findCataractExamDaily(fromDate, toDate), "d", (acc, row) ->
+                    acc.cataractExam = plus(acc.cataractExam, toInt(row.get("cnt"))));
+        }
 
         /* ── 외래수 ── */
         accumulate(buckets, wanted, repository.findOutpatientDaily(fromDate, toDate), "d", (acc, row) ->

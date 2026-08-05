@@ -33,8 +33,22 @@ public class ExamStatsMartRepository {
     private static final String SELECT_PROCEDURE_EXAM_MONTHLY_SQL = SqlLoader.load("sql/mart/select-procedure-exam-monthly.sql");
     private static final String SELECT_LIST_EXAM_SQL              = SqlLoader.load("sql/mart/select-list-exam.sql");
     private static final String SELECT_LIST_CATARACT_EXAM_SQL     = SqlLoader.load("sql/mart/select-list-cataract-exam.sql");
+    private static final String SELECT_EXAM_DAILY_AGG_SQL         = SqlLoader.load("sql/mart/select-exam-daily-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
+
+    /**
+     * 검사 일별 집계 — v_all_exam_list(= 전체 검사자 리스트) 하나에서 뽑는다.
+     * 월별은 월로, 주차는 ISO 주차로 각자 접어 쓴다. 두 축이 같은 행에서 나오므로 어긋날 수 없다.
+     *
+     * ⚠️ 리스트가 적재된 뒤에 호출해야 한다. 배치에서는 list_exam/list_cataract_exam 적재 이후 단계.
+     */
+    public List<Map<String, Object>> findExamDailyAgg(String from, String to) {
+        return jdbc.queryForList(
+                SELECT_EXAM_DAILY_AGG_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to)
+        );
+    }
 
     public List<ExaminationMonthlyItem> findExaminationMonthly(List<Integer> years) {
         return jdbc.query(
