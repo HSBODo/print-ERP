@@ -926,7 +926,6 @@ A. `batch.mart.enabled=false` 이거나 cron `-` 인지 확인. `application-{pr
 - 배치 실행 규칙·마트별 정책: **이 문서 §12** · 마트 ↔ 메뉴 매핑: **이 문서 §11**
 - 홈페이지 소스 전략: [`legacy-homepage-source-strategy.md`](./legacy-homepage-source-strategy.md)
 - DB 테이블 문서(CRM MSSQL 스키마): [`../db/tables/`](../db/tables/)
-- 레거시 Airflow ETL 대조: [`../db/airflow-레거시-대조.md`](../db/airflow-레거시-대조.md)
 - 프로젝트 표준·컨벤션: `CLAUDE.md`, `AGENTS.md`
 
 ### 관련 프로파일
