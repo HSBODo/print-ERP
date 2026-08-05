@@ -9,7 +9,7 @@ import { getStatsPageById } from './statsPages'
 
 export { getStatsPageById, statsPages, type StatsPageDefinition } from './statsPages'
 
-export type MenuStatus = 'complete' | 'backend-only' | 'pending'
+export type MenuStatus = 'complete' | 'frontend-only' | 'backend-only' | 'pending'
 
 /**
  * 사이드바 트리의 단일 노드. 재귀적으로 children 을 가질 수 있어 다단(3단) 표현이 가능하다.
@@ -35,6 +35,7 @@ export type MenuLink = MenuItem
 /**
  * 메뉴별 구현 상태 맵.
  *   complete     — 백엔드 API + 프론트 페이지 모두 연결 완료 (회색 기본)
+ *   frontend-only — 프론트 UI만 구현, 목업 데이터로 운영 미리보기 가능 (파랑)
  *   backend-only — 백엔드 API만 완료, 프론트 페이지는 placeholder (주황)
  *   pending      — 백엔드·프론트 모두 미착수 (빨강)
  */
