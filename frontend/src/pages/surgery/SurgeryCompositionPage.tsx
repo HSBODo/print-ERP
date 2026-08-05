@@ -21,7 +21,10 @@ const TH_B = `${TH} bg-blue-50/70`
 const THL_B = `${THL} bg-blue-50/70`
 const TH_V = `${TH} bg-violet-50/70`
 // 프레스비욘드(노안 레이저) — PIOL 그룹 밖의 독립 항목이라 노란색으로 구분한다.
-const THL_Y = `${THL} bg-yellow-100 text-yellow-800`
+// 한글 6자('프레스비욘드')는 칼럼 폭을 과하게 벌려서 영문 표기 + 좁은 여백·자간으로 붙인다.
+// TH 를 확장하지 않고 새로 쓰는 이유: px-1.5 와 px-0.5 를 같이 넣으면 어느 쪽이 이길지 불확실하다.
+const THL_Y =
+  'px-0.5 py-1 font-semibold border-l border-border bg-yellow-100 text-yellow-800 text-[9px] tracking-tighter'
 
 /** 공통 3단 헤더 — 시력교정(파랑)/백내장(보라) 그룹 밴드 색상. */
 function CompositionHead() {
@@ -38,7 +41,7 @@ function CompositionHead() {
         <th rowSpan={2} className={TH_B}>스마일</th>
         <th rowSpan={2} className={TH_B}>스마일프로</th>
         <th colSpan={6} className={`${THL_B} border-b`}>PIOL</th>
-        <th rowSpan={2} className={THL_Y}>프레스비욘드</th>
+        <th rowSpan={2} className={THL_Y} title="프레스비욘드 (노안 레이저)">PRESBYOND</th>
         <th rowSpan={2} className={THL_B}>라식계</th>
         <th colSpan={3} className={`${THL_B} border-b`}>라섹계</th>
         <th colSpan={3} className={`${THL_B} border-b`}>재수술</th>
@@ -99,7 +102,7 @@ function DataRow({ row }: { row: SurgeryRow }) {
       {COLS.map((c, i) => (
         <td
           key={i}
-          className={`px-1.5 py-1.5 tabular-nums ${c.border ? 'border-l border-border' : ''} ${c.strong ? 'font-semibold' : ''} ${c.muted ? 'text-muted-foreground' : ''} ${muted ? '' : `${toneClass(c.tone)} ${c.bg ?? ''}`}`}
+          className={`${c.tight ? 'px-0.5' : 'px-1.5'} py-1.5 tabular-nums whitespace-nowrap ${c.border ? 'border-l border-border' : ''} ${c.strong ? 'font-semibold' : ''} ${c.muted ? 'text-muted-foreground' : ''} ${muted ? '' : `${toneClass(c.tone)} ${c.bg ?? ''}`}`}
         >
           {c.render(row.d)}
         </td>

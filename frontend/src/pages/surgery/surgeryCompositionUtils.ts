@@ -208,6 +208,8 @@ export interface ColDef {
   tone?: Tone
   /** 본문 셀 배경(앵커 컬럼 강조) */
   bg?: string
+  /** 좌우 여백을 좁힌다 — 헤더가 긴 데 견줘 값이 짧은 칼럼용. */
+  tight?: boolean
 }
 
 // 본문 27개 컬럼(구분 컬럼 제외) — 헤더 leaf 순서와 1:1 대응.
@@ -224,7 +226,7 @@ export const COLS: ColDef[] = [
   { render: (d) => vc(d.kpl), muted: true },                                                     // KPL
   { render: (d) => vc(d.tKpl), muted: true },                                                    // T-KPL
   { render: (d) => vc(d.viva), muted: true },                                                    // VIVA
-  { render: (d) => vp(d.presbyond, d.visionPatients), border: true, bg: 'bg-yellow-50' },        // 프레스비욘드
+  { render: (d) => vp(d.presbyond, d.visionPatients), border: true, bg: 'bg-yellow-50', tight: true }, // PRESBYOND
   { render: (d) => vp(d.lasik, d.visionPatients), border: true },                                // 라식계
   { render: (d) => vp(d.lasekEx + d.lasekRed, d.visionPatients), border: true, strong: true },   // 라섹계 합계
   { render: (d) => vp(d.lasekEx, d.lasekEx + d.lasekRed) },                                       // 라섹계 EX
