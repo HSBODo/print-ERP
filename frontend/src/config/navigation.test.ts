@@ -35,13 +35,14 @@ describe('navigation menu', () => {
     expect(paths).not.toContain('/stats/b2b-revenue')
   })
 
-  it('숨기지 않은 핵심 메뉴는 그대로 노출된다(월간·주차 레포트·예약자리스트·예약종합)', () => {
+  it('숨기지 않은 핵심 메뉴는 그대로 노출된다(레포트·예약·아이리더 검사통계)', () => {
     const paths = menuPaths()
 
     expect(paths).toContain('/report/monthly')
     expect(paths).toContain('/report/weekly')
     expect(paths).toContain('/stats/reservation-list')
     expect(paths).toContain('/stats/reservation-overall')
+    expect(paths).toContain('/stats/eoeis-checkup')
   })
 
   it('메뉴의 통계 링크는 statsPages에 정의된 경로만 사용해야 한다', () => {

@@ -170,6 +170,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/all-exam-list'
   ),
   statsPage(
+    'eoeis-checkup',
+    '아이리더 검사통계',
+    '/stats/eoeis-checkup',
+    'exam-group',
+    '검사',
+    '아이리더 검사기록을 검사자×장비 또는 검사자×기간으로 피벗해 건수와 장비 가중 점수를 확인하는 화면입니다.',
+    '/api/eoeis-checkup'
+  ),
+  statsPage(
     'examination',
     '시술별',
     '/stats/examination',
