@@ -82,8 +82,6 @@ const COLUMNS: { label: string; key: SortKey | null; tight?: boolean }[] = [
   { label: '채널', key: 'channel', tight: true },
   { label: '내원동기(중)', key: 'motiveM' },
   { label: '상태', key: 'reserveState' },
-  { label: '담당의', key: 'doctor' },
-  { label: '상담사', key: 'counselor' },
   { label: '검사등록일', key: 'examRegDate' },
   { label: '검사중단', key: 'examStop' },
   { label: '수술등록일', key: 'surgeryRegDate' },
@@ -105,8 +103,6 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'channel', label: '채널' },
   { key: 'motiveM', label: '내원동기(중)' },
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
-  { key: 'doctor', label: '담당의' },
-  { key: 'counselor', label: '상담사' },
   { key: 'examRegDate', label: '검사등록일' },
   { key: 'examStop', label: '검사중단' },
   { key: 'surgeryRegDate', label: '수술등록일' },
@@ -325,7 +321,7 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={14} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr><td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
                   {!showLoading && visible.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
@@ -351,8 +347,6 @@ export function ReservationListPage() {
                           {r.motiveMSource === 'MEMO' && <span className="ml-0.5 text-[10px]">*</span>}
                         </td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={st?.label ?? r.reserveState} className={st?.className} /></td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.doctor)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.counselor)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.examRegDate)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">
                           {r.examStop === 'Y'
@@ -370,7 +364,7 @@ export function ReservationListPage() {
                   })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={14} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">
                         {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
                       </td>
                     </tr>
