@@ -169,7 +169,7 @@ const rawMenuItems: MenuItem[] = [
         kind: 'group',
         // 유입(intake-conversion)·예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 순.
         children: kids(
-          'reservation-list', 'reservation-channel', 'reservation-list-homepage', 'reservation-overall',
+          'reservation-list', 'reservation-list-homepage', 'reservation-overall',
           'reservation-stats-system', 'reservation-stats-cataract',
         ),
       },
@@ -240,8 +240,9 @@ const rawMenuItems: MenuItem[] = [
     href: '#',
     icon: Megaphone,
     kind: 'section',
-    // 아직 페이지 없음. 섹션은 자식이 비어도 유지된다.
-    children: [],
+    // 예약통계_채널별은 유입 채널 효율을 보는 화면이라 예약보다 마케팅에 가깝다(2026-08-06 이동).
+    // 해외 환자·마케팅 효율(overseas·marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
+    children: kids('reservation-channel'),
   },
   {
     id: 'admin-section',
