@@ -101,7 +101,8 @@ export function ReservationChannelPage() {
   const [mode, setMode] = useState<BarMode>('abs')
   const [sel, setSel] = useState<string | null>(null)
   const [hover, setHover] = useState<number | null>(null)
-  const [typeOpen, setTypeOpen] = useState(false)
+  // 기본 열림 — 정보를 먼저 보여주고, 필요 없으면 ✕ 로 닫게 한다.
+  const [typeOpen, setTypeOpen] = useState(true)
 
   const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
   const { rows, isLoading, isFetching, isError } = useReservationChannel(from, to)
@@ -183,7 +184,7 @@ export function ReservationChannelPage() {
 
   const handleReset = () => {
     setDraftMonth(currentMonth()); setQueryMonth(currentMonth())
-    setSort('default'); setMode('abs'); setSel(null); setTypeOpen(false)
+    setSort('default'); setMode('abs'); setSel(null); setTypeOpen(true)
   }
 
   const seg = (active: boolean) =>
