@@ -66,15 +66,20 @@ const SUB_CHANNELS: Record<Exclude<Channel, '전체'>, string[]> = {
 }
 const PAGE_SIZE_OPTIONS = [50, 100, 200]
 
-/** 상세 테이블 칼럼 — key가 있으면 헤더 클릭 정렬 가능('No'는 행 번호라 정렬 제외). 순서는 tbody 셀 순서와 일치. */
+/**
+ * 상세 테이블 칼럼 — key가 있으면 헤더 클릭 정렬 가능('No'는 행 번호라 정렬 제외). 순서는 tbody 셀 순서와 일치.
+ *
+ * `tight` 는 값이 짧아 기본 여백(px-2.5)이 남아도는 칼럼 — 좌우를 좁혀 메모 칼럼에 폭을 넘긴다.
+ * 지정하면 tbody 의 같은 순서 셀에도 `TIGHT_CELL` 을 함께 줘야 헤더와 본문 폭이 맞는다.
+ */
 type SortKey = keyof ReservationListItem
-const COLUMNS: { label: string; key: SortKey | null }[] = [
+const COLUMNS: { label: string; key: SortKey | null; tight?: boolean }[] = [
   { label: 'No', key: null },
   { label: '예약등록일', key: 'registeredAt' },
   { label: '예약등록시간', key: 'registeredTime' },
-  { label: '차트번호', key: 'chartNo' },
-  { label: '고객명', key: 'name' },
-  { label: '채널', key: 'channel' },
+  { label: '차트번호', key: 'chartNo', tight: true },
+  { label: '고객명', key: 'name', tight: true },
+  { label: '채널', key: 'channel', tight: true },
   { label: '내원동기(중)', key: 'motiveM' },
   { label: '상태', key: 'reserveState' },
   { label: '담당의', key: 'doctor' },
@@ -292,7 +297,10 @@ export function ReservationListPage() {
                     {COLUMNS.map((col) => {
                       const active = col.key !== null && sort?.key === col.key
                       return (
-                        <th key={col.label} className="sticky top-0 z-10 whitespace-nowrap border-b border-border/60 bg-gray-50 px-2.5 py-1.5 text-center font-semibold">
+                        <th
+                          key={col.label}
+                          className={`sticky top-0 z-10 whitespace-nowrap border-b border-border/60 bg-gray-50 py-1.5 text-center font-semibold ${col.tight ? 'px-1' : 'px-2.5'}`}
+                        >
                           {col.key ? (
                             <button
                               type="button"
@@ -326,9 +334,10 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-500">{formatCount((safePage - 1) * pageSize + i + 1)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.registeredAt)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">{dash(r.registeredTime)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.chartNo)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
+                        {/* 아래 3칸은 COLUMNS 의 tight 칼럼 — 헤더와 같은 px-1 을 써야 폭이 맞는다. */}
+                        <td className="whitespace-nowrap px-1 py-1 text-center">{dash(r.chartNo)}</td>
+                        <td className="whitespace-nowrap px-1 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
+                        <td className="whitespace-nowrap px-1 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
                         {/* 메모에서 끌어온 값은 흐리게 + 물음표로 구분한다 — CRM 등록값과 섞어 세면 안 된다. */}
                         <td
                           className={`whitespace-nowrap px-2.5 py-1 text-center ${
