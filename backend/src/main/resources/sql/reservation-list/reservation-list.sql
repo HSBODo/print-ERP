@@ -34,8 +34,33 @@ SELECT
   ISNULL(NULLIF(mv.motiveM, ''), ISNULL(memoMv.motiveM, '')) AS motiveM,
   CASE WHEN ISNULL(mv.motiveM, '') <> '' THEN 'CRM'
        WHEN ISNULL(memoMv.motiveM, '') <> '' THEN 'MEMO'
-       ELSE '' END                                        AS motiveMSource
+       ELSE '' END                                        AS motiveMSource,
+  -- 예약 이후 흐름 3종 — 이 예약으로 이어진 첫 건만 본다(예약일 이전 기록은 무관).
+  --   검사등록일 : EXAM 에 등록 시각 컬럼이 없어 **검사일**을 쓴다.
+  --   검사중단   : 그 검사의 STOP_YN (2026-07 예약 14,025건 중 Y 49건).
+  --   수술등록일 : 수술예약(FLAG='O')을 잡은 날. 취소(C)는 뺀다. 날짜만.
+  ISNULL(ex.examDate, '')                                 AS examRegDate,
+  CASE WHEN ex.stopYn = 'Y' THEN 'Y'
+       WHEN ex.examDate IS NULL THEN ''
+       ELSE 'N' END                                       AS examStop,
+  ISNULL(sx.regDate, '')                                  AS surgeryRegDate
 FROM RESERVATION r WITH(NOLOCK)
+OUTER APPLY (
+  SELECT TOP 1 e.EXAM_DATE AS examDate, ISNULL(LTRIM(RTRIM(e.STOP_YN)), '') AS stopYn
+  FROM EXAM e WITH(NOLOCK)
+  WHERE e.CUST_NUM = r.CUST_NUM
+    AND e.EXAM_DATE >= ISNULL(NULLIF(r.RESERVE_DATE, ''), '9999-12-31')
+  ORDER BY e.EXAM_DATE
+) ex
+OUTER APPLY (
+  SELECT TOP 1 CONVERT(varchar(10), op.InsertedDateTime, 23) AS regDate
+  FROM RESERVATION op WITH(NOLOCK)
+  WHERE op.CUST_NUM = r.CUST_NUM
+    AND op.RESERVE_FLAG = 'O'
+    AND op.RESERVE_STATE <> 'C'
+    AND CONVERT(varchar(10), op.InsertedDateTime, 23) >= ISNULL(NULLIF(r.RESERVE_DATE, ''), '9999-12-31')
+  ORDER BY op.InsertedDateTime
+) sx
 OUTER APPLY (
   SELECT TOP 1 ISNULL(m2.category02_name, '') AS motiveM
   FROM MOTIVE_NEW02 m2 WITH(NOLOCK)

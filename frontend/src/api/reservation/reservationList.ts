@@ -27,6 +27,12 @@ const reservationListItemSchema = z.object({
   motiveM: z.string().optional(),
   /** CRM = 등록값 · MEMO = 메모의 TM고객(대/중) 에서 추출 */
   motiveMSource: z.string().optional(),
+  /** 예약 이후 첫 검사의 검사일(EXAM 에 등록 시각 컬럼이 없어 검사일을 쓴다) */
+  examRegDate: z.string().optional(),
+  /** 그 검사의 중단 여부 Y/N (검사 없으면 빈값) */
+  examStop: z.string().optional(),
+  /** 예약 이후 첫 수술예약(FLAG=O)을 잡은 날 — 날짜만 */
+  surgeryRegDate: z.string().optional(),
 })
 
 export type ReservationListItem = z.infer<typeof reservationListItemSchema>

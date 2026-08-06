@@ -70,8 +70,8 @@ const PAGE_SIZE_OPTIONS = [50, 100, 200]
 type SortKey = keyof ReservationListItem
 const COLUMNS: { label: string; key: SortKey | null }[] = [
   { label: 'No', key: null },
-  { label: '등록일', key: 'registeredAt' },
-  { label: '등록시간', key: 'registeredTime' },
+  { label: '예약등록일', key: 'registeredAt' },
+  { label: '예약등록시간', key: 'registeredTime' },
   { label: '채널', key: 'channel' },
   { label: '내원동기(중)', key: 'motiveM' },
   { label: '차트번호', key: 'chartNo' },
@@ -80,6 +80,9 @@ const COLUMNS: { label: string; key: SortKey | null }[] = [
   { label: '상태', key: 'reserveState' },
   { label: '담당의', key: 'doctor' },
   { label: '상담사', key: 'counselor' },
+  { label: '검사등록일', key: 'examRegDate' },
+  { label: '검사중단', key: 'examStop' },
+  { label: '수술등록일', key: 'surgeryRegDate' },
   { label: '메모', key: 'comment' },
 ]
 
@@ -91,8 +94,8 @@ const COLUMNS: { label: string; key: SortKey | null }[] = [
  */
 const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'rowNo', label: 'No', csv: (_r, n) => n },
-  { key: 'registeredAt', label: '등록일' },
-  { key: 'registeredTime', label: '등록시간' },
+  { key: 'registeredAt', label: '예약등록일' },
+  { key: 'registeredTime', label: '예약등록시간' },
   { key: 'channel', label: '채널' },
   { key: 'motiveM', label: '내원동기(중)' },
   { key: 'chartNo', label: '차트번호', text: true },
@@ -101,6 +104,9 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
   { key: 'doctor', label: '담당의' },
   { key: 'counselor', label: '상담사' },
+  { key: 'examRegDate', label: '검사등록일' },
+  { key: 'examStop', label: '검사중단' },
+  { key: 'surgeryRegDate', label: '수술등록일' },
   { key: 'comment', label: '메모' },
 ]
 
@@ -313,7 +319,7 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr><td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
                   {!showLoading && visible.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
@@ -341,6 +347,15 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={st?.label ?? r.reserveState} className={st?.className} /></td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.doctor)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.counselor)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.examRegDate)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center">
+                          {r.examStop === 'Y'
+                            ? <span className="rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">Y</span>
+                            : r.examStop === 'N'
+                              ? <span className="text-gray-500">N</span>
+                              : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.surgeryRegDate)}</td>
                         <td className="w-full max-w-0 px-2.5 py-1 text-left">
                           <span className="block truncate text-gray-700" title={r.comment}>{dash(r.comment)}</span>
                         </td>
@@ -349,7 +364,7 @@ export function ReservationListPage() {
                   })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">
                         {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
                       </td>
                     </tr>
