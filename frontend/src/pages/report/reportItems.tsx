@@ -85,9 +85,11 @@ export function buildReportItems(
     { group: '전환&성공', id: 'success-rate', label: '시력교정 상담성공률', node: <ReportSuccessRateChart year={CURRENT_YEAR} all={charts.successAll[CURRENT_YEAR] ?? []} oneday={charts.successOneday[CURRENT_YEAR] ?? []} general={charts.successGeneral[CURRENT_YEAR] ?? []} /> },
     { group: '중단', id: 'stop-rate', label: '중단율', chart: { ...MONTHLY_CHART_LABELS['stop-rate'], series: 'stopRate', years: s.stopRateYears.length ? s.stopRateYears : [CURRENT_YEAR], percentFractionDigits: 1 } },
     { group: '중단', id: 'stop-reason', label: '중단 사유', node: <StopReasonBar year={CURRENT_YEAR} items={s.stopReasonDataMap[CURRENT_YEAR] ?? []} month={stopReasonMonth} onMonthChange={onStopReasonMonthChange} /> },
+    // 순서 주의 — 총 수술수(합계)를 먼저 보이고 그 아래에 백내장·시력교정 분해를 둔다.
+    // monthlyReportCsv.ts 의 수술 그룹 순서와 반드시 같아야 한다(화면과 CSV가 어긋나면 대조가 꼬인다).
+    { group: '수술', id: 'surgery-total', label: '총 수술수', chart: { title: '총 수술수', series: 'totalSurgery' } },
     { group: '수술', id: 'surgery-cataract', label: '백내장 수술', chart: { title: '백내장 수술', series: 'cataractSurgery' } },
     { group: '수술', id: 'surgery-vision', label: '시력교정 수술', chart: { title: '시력교정 수술', series: 'visionSurgery' } },
-    { group: '수술', id: 'surgery-total', label: '총 수술수', chart: { title: '총 수술수', series: 'totalSurgery' } },
     { group: '수술', id: 'surgery-detail', label: '수술 상세표', node: <ReportSurgeryTable dataMap={s.surgeryDataMap} /> },
     { group: '외래', id: 'outpatient', label: '외래수', chart: { title: '외래수', series: 'outpatient' } },
   ]

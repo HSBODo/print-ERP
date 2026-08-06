@@ -40,9 +40,10 @@ const ROWS: RowSpec[] = [
   { type: 'success' },
   { type: 'series', group: '중단', label: '중단율', unit: '%', key: 'stopRate', fractionDigits: 1 },
   { type: 'stopReason' },
+  // 순서는 reportItems.tsx 의 '수술' 그룹과 맞춘다 — 총 수술수(합계) 먼저, 그 다음 분해.
+  { type: 'series', group: '수술', label: '총 수술수', unit: '건', key: 'totalSurgery' },
   { type: 'series', group: '수술', label: '백내장 수술', unit: '건', key: 'cataractSurgery' },
   { type: 'series', group: '수술', label: '시력교정 수술', unit: '건', key: 'visionSurgery' },
-  { type: 'series', group: '수술', label: '총 수술수', unit: '건', key: 'totalSurgery' },
   { type: 'series', group: '외래', label: '외래수', unit: '건', key: 'outpatient' },
 ]
 
