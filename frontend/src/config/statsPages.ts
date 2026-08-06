@@ -134,6 +134,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/reservation-list'
   ),
   statsPage(
+    'reservation-channel',
+    '예약통계_채널별',
+    '/stats/reservation-channel',
+    'reservation-group',
+    '예약',
+    '예약자 리스트를 유입 채널로 묶어 예약 → 취소제외 → 접수 → 검사 → 수술 단계로 좁혀 보는 퍼널입니다. 합계는 예약자 리스트와 같습니다.',
+    '/api/stats/reservation-channel'
+  ),
+  statsPage(
     'reservation-list-homepage',
     '예약자 리스트_홈페이지',
     '/stats/reservation-list-homepage',
