@@ -3,13 +3,13 @@ INSERT INTO list_reservation (
     reserve_date, reserve_time,
     chart_no, name, reserve_state,
     channel, channel_group,
-    doctor, counselor, comment, motive_m,
+    doctor, counselor, comment, motive_m, motive_m_source,
     loaded_at
 ) VALUES (
     CAST(NULLIF(:registeredAt, '') AS DATE), :registeredTime,
     :reserveDate, :reserveTime,
     :chartNo, :name, :reserveState,
     :channel, :channelGroup,
-    :doctor, :counselor, :comment, :motiveM,
+    :doctor, :counselor, :comment, :motiveM, :motiveMSource,
     CURRENT_TIMESTAMP
 )

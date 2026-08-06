@@ -323,7 +323,18 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.registeredAt)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">{dash(r.registeredTime)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.motiveM ?? '')}</td>
+                        {/* 메모에서 끌어온 값은 흐리게 + 물음표로 구분한다 — CRM 등록값과 섞어 세면 안 된다. */}
+                        <td
+                          className={`whitespace-nowrap px-2.5 py-1 text-center ${
+                            r.motiveMSource === 'MEMO' ? 'text-amber-700' : 'text-gray-700'
+                          }`}
+                          title={r.motiveMSource === 'MEMO'
+                            ? 'CRM 내원동기가 비어 있어 메모의 TM고객(대/중) 문구에서 가져온 값입니다.'
+                            : undefined}
+                        >
+                          {dash(r.motiveM ?? '')}
+                          {r.motiveMSource === 'MEMO' && <span className="ml-0.5 text-[10px]">*</span>}
+                        </td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.chartNo)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.reserveDate)}</td>

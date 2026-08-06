@@ -25,7 +25,16 @@ SELECT
   ISNULL(r.COMMENT, '')                                   AS comment,
   -- 내원동기(중) — 실제 유입처가 들어온다('모두닥'·'인터넷검색(홈페이지)' 등).
   -- 검사자 리스트(find-exam-list.sql)와 같은 규칙: Idx='1' 최신 1건.
-  ISNULL(mv.motiveM, '')                                  AS motiveM
+  --
+  -- CRM 에 값이 없으면 메모의 `TM고객(대분류/중분류)` 정형 문구에서 끌어온다.
+  -- 상담사가 메모엔 적어 뒀는데 MOTIVE_NEW02 로 옮기지 않은 건이 많다
+  -- (2026-07: 139건 — 이벤트상담신청 58·전화상담관리 52·본인 15·모두닥 10·바비톡 2·카페 2).
+  -- ⚠️ 원천(CRM)은 고치지 않는다. 조회 시점 보완이라 CRM 에 값이 채워지면 그쪽이 우선된다.
+  -- ⚠️ motiveMSource 로 출처를 구분한다 — 등록값과 메모 추출값을 섞어 세면 안 된다.
+  ISNULL(NULLIF(mv.motiveM, ''), ISNULL(memoMv.motiveM, '')) AS motiveM,
+  CASE WHEN ISNULL(mv.motiveM, '') <> '' THEN 'CRM'
+       WHEN ISNULL(memoMv.motiveM, '') <> '' THEN 'MEMO'
+       ELSE '' END                                        AS motiveMSource
 FROM RESERVATION r WITH(NOLOCK)
 OUTER APPLY (
   SELECT TOP 1 ISNULL(m2.category02_name, '') AS motiveM
@@ -33,6 +42,23 @@ OUTER APPLY (
   WHERE m2.cust_num = r.CUST_NUM AND m2.Idx = '1'
   ORDER BY m2.pkey DESC
 ) mv
+-- 메모 파싱 — `TM고객(` 뒤 첫 '/' 부터, 다음 '/' 또는 ')' 중 먼저 오는 것까지가 중분류.
+-- 끝 문자를 덧붙여 CHARINDEX 가 0 을 돌려주는 경우(구분자 없음)를 없앤다.
+OUTER APPLY (
+  SELECT sp = CASE WHEN CHARINDEX(N'TM고객(', r.COMMENT) > 0
+                   THEN CHARINDEX(N'/', r.COMMENT, CHARINDEX(N'TM고객(', r.COMMENT) + 5)
+                   ELSE 0 END
+) tm
+OUTER APPLY (
+  SELECT pClose = CASE WHEN tm.sp > 0 THEN CHARINDEX(N')', r.COMMENT + N')', tm.sp + 1) ELSE 0 END,
+         pSlash = CASE WHEN tm.sp > 0 THEN CHARINDEX(N'/', r.COMMENT + N'/', tm.sp + 1) ELSE 0 END
+) tp
+OUTER APPLY (
+  SELECT motiveM = CASE WHEN tm.sp > 0
+                        THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tm.sp + 1,
+                               (CASE WHEN tp.pClose < tp.pSlash THEN tp.pClose ELSE tp.pSlash END) - tm.sp - 1)))
+                        ELSE '' END
+) memoMv
 LEFT JOIN EMPLOYEE doc WITH(NOLOCK)
   ON doc.EMP_NUM = ISNULL(NULLIF(r.SELECT_DOC, ''), r.RESERVE_DOC)
  AND doc.EMP_STATE <> 'N'

@@ -11,7 +11,8 @@ SELECT
     COALESCE(doctor, '')                       AS "doctor",
     COALESCE(counselor, '')                    AS "counselor",
     COALESCE(comment, '')                      AS "comment",
-    COALESCE(motive_m, '')                     AS "motiveM"
+    COALESCE(motive_m, '')                     AS "motiveM",
+    COALESCE(motive_m_source, '')              AS "motiveMSource"
   FROM list_reservation
  WHERE registered_at >= CAST(:from AS DATE)
    AND registered_at <= CAST(:to   AS DATE)

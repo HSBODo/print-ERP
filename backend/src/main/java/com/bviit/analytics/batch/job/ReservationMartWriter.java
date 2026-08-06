@@ -167,7 +167,7 @@ public class ReservationMartWriter {
             "reserveDate", "reserveTime",
             "chartNo", "name", "reserveState",
             "channel", "channelGroup",
-            "doctor", "counselor", "comment", "motiveM"
+            "doctor", "counselor", "comment", "motiveM", "motiveMSource"
     };
 
     private static int sum(int[] counts) {
