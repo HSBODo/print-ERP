@@ -56,10 +56,11 @@ class WeeklyReportServiceTest {
     }
 
     private WeeklyReportService service() {
-        // examAggRepository 는 비움 — 마트 없는(mssql 단독) 경로를 검증한다.
-        // 마트 경로는 검사 지표를 v_all_exam_list 에서 뽑으며 통합 대조로 확인한다.
+        // exam/surgery Agg 리포지토리는 비움 — 마트 없는(mssql 단독) 경로를 검증한다.
+        // 마트 경로는 검사 지표를 v_all_exam_list, 수술 지표를 v_all_surgery_list 에서 뽑으며
+        // 통합 대조로 확인한다(주차합 = 일별 마트합 = 월별).
         return new WeeklyReportService(repository, overallRepository, surgeryStatsService,
-                Optional.of(homepageRepository), Optional.empty());
+                Optional.of(homepageRepository), Optional.empty(), Optional.empty());
     }
 
     @Test

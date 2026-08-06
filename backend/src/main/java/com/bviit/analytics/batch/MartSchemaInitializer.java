@@ -61,6 +61,9 @@ public class MartSchemaInitializer implements org.springframework.beans.factory.
         applyScript("sql/mart/V32__list_cataract_exam_one_day.sql");
         applyScript("sql/mart/V33__surgery_presbyond_piol.sql");
         applyScript("sql/mart/V34__v_all_exam_list.sql");
+        applyScript("sql/mart/V35__surgery_monthly_2026_01_05_golden.sql");
+        applyScript("sql/mart/V36__list_reoperation.sql");
+        applyScript("sql/mart/V37__v_all_surgery_list.sql");
     }
 
     private void applyScript(String classpathLocation) {

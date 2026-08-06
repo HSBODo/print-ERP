@@ -36,6 +36,8 @@ public class SurgeryMartWriter {
     private static final String UPSERT_DAILY_SQL       = SqlLoader.load("sql/mart/upsert-surgery-daily.sql");
     private static final String DELETE_LIST_RANGE_SQL  = SqlLoader.load("sql/mart/delete-list-surgery-range.sql");
     private static final String INSERT_LIST_SQL        = SqlLoader.load("sql/mart/insert-list-surgery.sql");
+    private static final String DELETE_REOP_RANGE_SQL  = SqlLoader.load("sql/mart/delete-list-reoperation-range.sql");
+    private static final String INSERT_REOP_SQL        = SqlLoader.load("sql/mart/insert-list-reoperation.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -86,6 +88,61 @@ public class SurgeryMartWriter {
         int inserted = sum(updated);
         log.info("list_surgery deleted={} inserted={}", deleted, inserted);
         return inserted;
+    }
+
+    /**
+     * 재수술 리스트도 delete+insert. list_surgery 와 같은 이유(취소·수정 자연 반영).
+     *
+     * rows 는 find-reoperation-candidates.sql 결과 그대로이고, isLens 만 호출측이
+     * 자바 ReoperationOverlay 로 계산해 넣어 준다 — 시술명 패턴을 SQL 로 복제하지 않기 위해서다.
+     * 저장 판정(reoperation_decision)은 여기서 반영하지 않는다. 화면에서 판정을 고쳐도
+     * 배치 없이 즉시 반영돼야 하므로 뷰가 조회 시점에 조인한다.
+     */
+    @Transactional
+    public int replaceReoperation(LocalDate from, LocalDate to, List<Map<String, Object>> rows) {
+        int deleted = jdbc.update(
+                DELETE_REOP_RANGE_SQL,
+                new MapSqlParameterSource()
+                        .addValue("from", from, Types.DATE)
+                        .addValue("to", to, Types.DATE)
+        );
+        if (rows.isEmpty()) {
+            log.info("list_reoperation deleted={} inserted=0 (empty)", deleted);
+            return 0;
+        }
+        SqlParameterSource[] batch = rows.stream()
+                .map(SurgeryMartWriter::toReoperationParams)
+                .toArray(SqlParameterSource[]::new);
+        int[] updated = jdbc.batchUpdate(INSERT_REOP_SQL, batch);
+        int inserted = sum(updated);
+        log.info("list_reoperation deleted={} inserted={}", deleted, inserted);
+        return inserted;
+    }
+
+    private static SqlParameterSource toReoperationParams(Map<String, Object> r) {
+        return new MapSqlParameterSource()
+                .addValue("reopDate", str(r.get("reopDate")))
+                .addValue("chartNo", str(r.get("chartNo")))
+                .addValue("name", str(r.get("name")))
+                .addValue("nameEng", str(r.get("nameEng")))
+                .addValue("patientType", str(r.get("patientType")))
+                .addValue("surgeon", str(r.get("surgeon")))
+                .addValue("payment", str(r.get("payment")))
+                .addValue("againR", str(r.get("againR")))
+                .addValue("againL", str(r.get("againL")))
+                .addValue("reasonCd", str(r.get("reasonCd")))
+                .addValue("autoIncluded", toInt(r.get("autoIncluded")))
+                .addValue("excludeReason", str(r.get("excludeReason")))
+                // 호출측(SurgeryMartJob)이 ReoperationOverlay 로 계산해 넣어 둔 값
+                .addValue("isLens", Boolean.TRUE.equals(r.get("isLens")));
+    }
+
+    private static String str(Object v) {
+        return v == null ? "" : String.valueOf(v);
+    }
+
+    private static int toInt(Object v) {
+        return v instanceof Number n ? n.intValue() : 0;
     }
 
     private static SqlParameterSource toMonthlyParams(SurgeryMonthlyItem m) {

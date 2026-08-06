@@ -6,6 +6,7 @@ import com.bviit.analytics.report.dto.WeeklyReportItem;
 import com.bviit.analytics.report.repository.WeeklyReportRepository;
 import com.bviit.analytics.reservation.repository.HomepageOverallSource;
 import com.bviit.analytics.surgery.dto.SurgeryDailyItem;
+import com.bviit.analytics.surgery.repository.SurgeryStatsMartRepository;
 import com.bviit.analytics.surgery.service.SurgeryStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +69,7 @@ public class WeeklyReportService implements WeeklyReportReader {
     private final Optional<HomepageOverallSource> homepageRepository;
     /** 마트(postgres-mart)에서만 존재. 검사 지표를 전체 검사자 리스트 뷰에서 뽑는다. */
     private final Optional<ExamStatsMartRepository> examAggRepository;
+    private final Optional<SurgeryStatsMartRepository> surgeryAggRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -161,15 +163,30 @@ public class WeeklyReportService implements WeeklyReportReader {
             acc.bookedGeneral = plus(acc.bookedGeneral, toInt(row.get("bookedGeneral")));
         });
 
-        /* ── 수술 3종 (수술일 기준) ── */
-        for (SurgeryDailyItem day : surgeryStatsService.getDailyStats(fromDate, toDate)) {
-            Acc acc = bucketOf(buckets, wanted, day.getDate());
-            if (acc == null) {
-                continue;
+        /* ── 수술 3종 (수술일 기준) ──
+         * 마트가 있으면 v_all_surgery_list 일별 집계에서 받는다 — 월간 레포트·수술 건수와
+         * 같은 행을 ISO 주차로 접는 것뿐이라 월↔주가 어긋날 수 없다.
+         * 마트 없는 mssql 단독 프로파일만 종전 MSSQL 직결 경로를 탄다(검사 쪽과 같은 구조).
+         *
+         * ⚠️ cataractSurgery 는 **안(눈)** 단위다. visionSurgery 는 사람.
+         *    이름과 단위가 다르니 합산·비교 시 주의(정의는 v_all_surgery_list 머리주석). */
+        if (surgeryAggRepository.isPresent()) {
+            accumulate(buckets, wanted,
+                    surgeryAggRepository.get().findSurgeryDailyAgg(fromDate, toDate), "dt", (acc, row) -> {
+                acc.visionSurgery = plus(acc.visionSurgery, toInt(row.get("vision_patients")));
+                acc.cataractSurgery = plus(acc.cataractSurgery, toInt(row.get("cataract_patients")));
+                acc.totalSurgery = plus(acc.totalSurgery, toInt(row.get("total")));
+            });
+        } else {
+            for (SurgeryDailyItem day : surgeryStatsService.getDailyStats(fromDate, toDate)) {
+                Acc acc = bucketOf(buckets, wanted, day.getDate());
+                if (acc == null) {
+                    continue;
+                }
+                acc.visionSurgery = plus(acc.visionSurgery, day.getVisionPatients());
+                acc.cataractSurgery = plus(acc.cataractSurgery, day.getCataractPatients());
+                acc.totalSurgery = plus(acc.totalSurgery, day.getTotal());
             }
-            acc.visionSurgery = plus(acc.visionSurgery, day.getVisionPatients());
-            acc.cataractSurgery = plus(acc.cataractSurgery, day.getCataractPatients());
-            acc.totalSurgery = plus(acc.totalSurgery, day.getTotal());
         }
 
         /* ── 예약 (콜·온라인·종합) ── */

@@ -3,6 +3,9 @@ package com.bviit.analytics.batch.job;
 import com.bviit.analytics.batch.repository.WatermarkRepository;
 import com.bviit.analytics.surgery.dto.SurgeryDailyItem;
 import com.bviit.analytics.surgery.dto.SurgeryMonthlyItem;
+import com.bviit.analytics.surgery.service.ReoperationCandidateService;
+import com.bviit.analytics.surgery.service.ReoperationOverlay;
+import com.bviit.analytics.surgery.repository.SurgeryStatsMartRepository;
 import com.bviit.analytics.surgery.service.SurgeryListService;
 import com.bviit.analytics.surgery.service.SurgeryStatsService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -42,8 +46,28 @@ public class SurgeryMartJob {
 
     static final String MART_NAME = "surgery";
 
+    /**
+     * 이 날짜부터만 마트를 다시 쓴다. 그 앞 구간은 확정값(골든)이라 배치가 건드리지 않는다.
+     *
+     * 왜 필요한가 — 수술 집계 정의를 v_all_surgery_list 기준으로 바꾸면서,
+     * 이미 보고에 나간 2026-01~05 값이 소급해 바뀌는 걸 막아야 했다.
+     * (실측: 2026-02 시력교정이 리스트 1386 vs 월별 1388 로 2 차이, 2026-06 백내장이
+     *  사람×날짜 62 vs 눈 65 로 3 차이. 새 정의로 다시 쓰면 앞 구간 숫자가 움직인다.)
+     *
+     * 보호 범위는 daily·monthly·list 셋 다다. monthly 만 막으면 주차 레포트·수술별 비중이
+     * 읽는 daily 가 바뀌어 같은 화면 안에서 월↔주가 어긋난다.
+     *
+     * 확정값의 원천:
+     *   2024·2025      → V15__surgery_monthly_seed.sql
+     *   2026-01~05     → V35__surgery_monthly_2026_01_05_golden.sql
+     *   (daily 는 24·25 도 시드가 없다 — 이 가드가 현재 적재분을 지키는 유일한 장치다)
+     */
+    static final LocalDate MART_LIVE_FROM = LocalDate.of(2026, 6, 1);
+
     private final SurgeryStatsService statsService;
     private final SurgeryListService listService;
+    private final ReoperationCandidateService reopCandidateService;
+    private final SurgeryStatsMartRepository martRepository;
     private final SurgeryMartWriter writer;
     private final WatermarkRepository watermarkRepository;
 
@@ -64,24 +88,51 @@ public class SurgeryMartJob {
      */
     @Transactional
     public Map<String, Integer> run(LocalDate from, LocalDate to) {
-        log.info("SurgeryMartJob start: range={}..{}", from, to);
+        // 확정 구간(MART_LIVE_FROM 이전)은 요청 범위에서 잘라낸다. 통째로 확정 구간이면 아무것도 쓰지 않는다.
+        // 잘라내지 않고 필터만 걸면 list 의 delete+insert 가 범위 전체를 지워버려 골든이 사라진다.
+        LocalDate effectiveFrom = from.isBefore(MART_LIVE_FROM) ? MART_LIVE_FROM : from;
+        if (to.isBefore(effectiveFrom)) {
+            log.info("SurgeryMartJob skip: range={}..{} 는 전부 확정 구간({} 이전)", from, to, MART_LIVE_FROM);
+            return Map.of("mart_surgery_daily", 0, "mart_surgery_monthly", 0, "list_surgery", 0);
+        }
+        if (!effectiveFrom.equals(from)) {
+            log.info("SurgeryMartJob clamp: 요청 {}..{} → 적재 {}..{} (확정 구간 보호)", from, to, effectiveFrom, to);
+        }
+        log.info("SurgeryMartJob start: range={}..{}", effectiveFrom, to);
 
-        // 1) Daily upsert
-        List<SurgeryDailyItem> daily = statsService.getDailyStats(from.toString(), to.toString());
+        // ── 순서 주의 ──
+        // 집계(2·3)가 리스트(1)를 읽는 뷰에서 나오므로 **리스트를 먼저** 적재한다.
+        // 순서를 뒤집으면 집계가 직전 배치분을 보고 계산해 하루씩 밀린다.
+
+        // 1a) 수술자 리스트 delete+insert
+        List<Map<String, Object>> listRows = listService.getSurgeryList(effectiveFrom.toString(), to.toString());
+        int listRowsCount = writer.replaceList(effectiveFrom, to, listRows);
+
+        // 1b) 재수술 리스트 delete+insert.
+        //     렌즈/레이저는 여기서 자바로 판정해 넣는다 — SQL 로 옮기면 시술명 패턴이 두 벌이 된다
+        //     (2026-08-06 KPL 누락이 정확히 그 유형의 사고였다).
+        //     포함/제외 최종 판정은 넣지 않는다. 화면에서 고치면 즉시 반영돼야 해서 뷰가 조회 시점에 조인한다.
+        List<Map<String, Object>> reopRows = reopCandidateService.getCandidates(
+                effectiveFrom.toString(), to.toString());
+        for (Map<String, Object> row : reopRows) {
+            row.put("isLens", ReoperationOverlay.isLensCategory(
+                    asText(row.get("againR")), asText(row.get("againL"))));
+        }
+        int reopRowsCount = writer.replaceReoperation(effectiveFrom, to, reopRows);
+
+        // 2) 일별 집계 — 방금 적재한 리스트를 v_all_surgery_list 로 접는다(= 화면 리스트와 같은 정의).
+        List<Map<String, Object>> dailyAgg =
+                martRepository.findSurgeryDailyAgg(effectiveFrom.toString(), to.toString());
+        List<SurgeryDailyItem> daily = dailyAgg.stream().map(SurgeryMartJob::toDailyItem).toList();
         int dailyRows = writer.upsertDaily(daily);
 
-        // 2) Monthly upsert — 기간에 걸친 연도들만 재계산
-        //    min-year 미만 연도는 백필된 값(24·25)을 보존하기 위해 write 차단
-        List<Integer> years = yearsInRange(from, to);
-        List<SurgeryMonthlyItem> monthly = statsService.getMonthlyStats(years).stream()
+        // 3) 월별 집계 — 같은 일별 행을 월로 접는다. 주차 레포트는 같은 행을 ISO 주차로 접는다.
+        //    min-year 미만 연도는 백필된 값(24·25)을 보존하기 위해 write 차단.
+        List<SurgeryMonthlyItem> monthly = aggregateByMonth(daily).stream()
                 .filter(m -> m.getYear() >= minYear)
-                .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
+                .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), effectiveFrom, to))
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
-
-        // 3) List delete+insert
-        List<Map<String, Object>> listRows = listService.getSurgeryList(from.toString(), to.toString());
-        int listRowsCount = writer.replaceList(from, to, listRows);
 
         // 4) Watermark 갱신 (성공 시에만)
         watermarkRepository.upsert(MART_NAME, to);
@@ -89,10 +140,90 @@ public class SurgeryMartJob {
         Map<String, Integer> stats = Map.of(
                 "mart_surgery_daily", dailyRows,
                 "mart_surgery_monthly", monthlyRows,
-                "list_surgery", listRowsCount
+                "list_surgery", listRowsCount,
+                "list_reoperation", reopRowsCount
         );
         log.info("SurgeryMartJob done: {}", stats);
         return stats;
+    }
+
+    /** candidates SQL 은 ISNULL 로 항상 문자열을 주지만, 마트 경유 시 null 방어를 한 번 더 둔다. */
+    private static String asText(Object v) {
+        return v == null ? "" : String.valueOf(v);
+    }
+
+    /** select-surgery-daily-agg.sql 한 행 → DTO. 컬럼명은 SQL 의 AS 별칭과 1:1. */
+    private static SurgeryDailyItem toDailyItem(Map<String, Object> r) {
+        return SurgeryDailyItem.builder()
+                .date(String.valueOf(r.get("dt")))
+                .lasek(num(r, "lasek")).lasik(num(r, "lasik"))
+                .smile(num(r, "smile")).smilePro(num(r, "smile_pro"))
+                .presbyond(num(r, "presbyond"))
+                .icl(num(r, "icl")).tIcl(num(r, "t_icl"))
+                .kpl(num(r, "kpl")).tKpl(num(r, "t_kpl")).viva(num(r, "viva"))
+                .piolPatients(num(r, "piol_patients"))
+                .catMulti(num(r, "cat_multi")).catMono(num(r, "cat_mono")).catEdof(num(r, "cat_edof"))
+                .xtra(num(r, "xtra")).waveVision(num(r, "wave_vision"))
+                .monoVision(num(r, "mono_vision")).contra(num(r, "contra")).personal(num(r, "personal"))
+                .lasekEx(num(r, "lasek_ex")).lasekRed(num(r, "lasek_red"))
+                .reoperation(num(r, "reoperation"))
+                .reopLaser(num(r, "reop_laser")).reopLens(num(r, "reop_lens"))
+                .visionPatients(num(r, "vision_patients"))
+                .cataractPatients(num(r, "cataract_patients"))
+                .total(num(r, "total"))
+                .build();
+    }
+
+    private static int num(Map<String, Object> r, String key) {
+        Object v = r.get(key);
+        return v instanceof Number n ? n.intValue() : 0;
+    }
+
+    /**
+     * 일별을 월로 접는다.
+     *
+     * ⚠️ 환자 단위 지표(시력교정·유형별·부가시술)는 일별 DISTINCT 를 **더하는** 방식이라,
+     *    같은 사람이 한 달에 다른 날 두 번 수술하면 2 로 센다.
+     *    2026-01~08 실측으로 그런 케이스가 0 건임을 확인하고 채택했다(검사 쪽도 같은 구조).
+     *    백내장·재수술은 원래 눈/건 단위라 이 문제가 없다.
+     */
+    private static List<SurgeryMonthlyItem> aggregateByMonth(List<SurgeryDailyItem> daily) {
+        Map<YearMonth, int[]> byMonth = new LinkedHashMap<>();
+        for (SurgeryDailyItem d : daily) {
+            YearMonth ym = YearMonth.from(LocalDate.parse(d.getDate()));
+            // 27 = 아래 누적 순서의 항목 수(lasek..total). 인덱스와 builder 순서를 반드시 같이 고칠 것.
+            int[] a = byMonth.computeIfAbsent(ym, k -> new int[27]);
+            int i = 0;
+            a[i++] += d.getLasek();      a[i++] += d.getLasik();
+            a[i++] += d.getSmile();      a[i++] += d.getSmilePro();
+            a[i++] += d.getPresbyond();
+            a[i++] += d.getIcl();        a[i++] += d.getTIcl();
+            a[i++] += d.getKpl();        a[i++] += d.getTKpl();       a[i++] += d.getViva();
+            a[i++] += d.getPiolPatients();
+            a[i++] += d.getCatMulti();   a[i++] += d.getCatMono();    a[i++] += d.getCatEdof();
+            a[i++] += d.getXtra();       a[i++] += d.getWaveVision();
+            a[i++] += d.getMonoVision(); a[i++] += d.getContra();     a[i++] += d.getPersonal();
+            a[i++] += d.getLasekEx();    a[i++] += d.getLasekRed();
+            a[i++] += d.getReoperation();
+            a[i++] += d.getReopLaser();  a[i++] += d.getReopLens();
+            a[i++] += d.getVisionPatients();
+            a[i++] += d.getCataractPatients();
+            a[i] += d.getTotal();
+        }
+        return byMonth.entrySet().stream().map(e -> {
+            int[] a = e.getValue();
+            return SurgeryMonthlyItem.builder()
+                    .year(e.getKey().getYear()).month(e.getKey().getMonthValue())
+                    .lasek(a[0]).lasik(a[1]).smile(a[2]).smilePro(a[3]).presbyond(a[4])
+                    .icl(a[5]).tIcl(a[6]).kpl(a[7]).tKpl(a[8]).viva(a[9])
+                    .piolPatients(a[10])
+                    .catMulti(a[11]).catMono(a[12]).catEdof(a[13])
+                    .xtra(a[14]).waveVision(a[15]).monoVision(a[16]).contra(a[17]).personal(a[18])
+                    .lasekEx(a[19]).lasekRed(a[20])
+                    .reoperation(a[21]).reopLaser(a[22]).reopLens(a[23])
+                    .visionPatients(a[24]).cataractPatients(a[25]).total(a[26])
+                    .build();
+        }).toList();
     }
 
     /** from..to에 걸친 연도 목록 (오름차순, 중복 제거). */
