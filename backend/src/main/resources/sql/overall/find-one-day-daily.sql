@@ -5,9 +5,27 @@
 --   '원데이 + 일반 = 검사수(전체)' 방침에 따라 백내장 갈래를 UNION 한다.
 --   규칙은 sql/exam/find-one-day-exam-count-monthly.sql · find-all-exam-list.sql 과 같아야 한다.
 --
--- ⚠️ oneDayBooked(원데이 예약률 분자)는 시력교정 수술예약만 센다. 백내장 갈래는 0 으로 들어가므로
---    분모만 늘어 예약률이 소폭 낮아진다(2026-07: 483/558=86.6% → 483/561=86.1%).
---    백내장 수술예약을 분자에 넣으려면 별도 작업이 필요하다.
+-- 2026-08-06 변경: oneDayBooked(분자)를 '수술 실시' 에서 '수술 예약' 으로 바로잡았다.
+--   종전 분자는 OPERATIONDATA(수술 실시)에서 **검사일~+7일** 사이 수술한 사람을 셌다.
+--   화면 라벨은 "수술예약건/검사자" 인데 실제로는 수술한 사람을 세고 있어서,
+--   ① 7일 넘겨 수술한 사람 ② 예약만 하고 아직 수술 안 한 사람 이 빠졌다.
+--   (월말 검사자는 수술까지 갈 시간이 없어 구조적으로 불리했다.)
+--   그 결과 레거시 대비 매달 3~4%p 씩 일정하게 낮았다.
+--
+--   새 분자 = 검사일 이후 수술예약 보유 (RESERVE_FLAG='O' · RESERVE_STATE<>'C' · 예약일 >= 검사일)
+--   백내장 예약률(find-cataract-reservation-rate-monthly.sql)과 같은 규칙이다.
+--
+--   실측 대조 (ceil 표시값)
+--     레거시  90 · 91 · 90 · 87 · 91 ·  — · 92   (1~5월 골든 · 7월 PDF)
+--     종전    87 · 88 · 87 · 83 · 88 · 89 · 87
+--     새정의  91 · 91 · 90 · 87 · 90 · 92 · 92   ← 4개월 정확히 일치, 나머지 ±1%p
+--
+--   ⚠️ 월간 레포트의 2026-01~05 는 OverallMartJob 의 is2026H1Seeded 가드가 막아 바뀌지 않는다.
+--      주간 검사자 종합지표·주차 레포트는 원래 전 구간 라이브라 과거 구간도 새 정의로 다시 계산된다.
+--
+-- 백내장 갈래도 분자를 센다(종전엔 0 이라 분모만 늘려 예약률을 끌어내렸다).
+--   진료구분(JINRYO)은 걸지 않는다 — 모집단이 이미 백내장 원데이 내원자라
+--   그 사람의 수술예약은 백내장 수술이다. 시력교정 갈래와 같은 술어를 쓴다.
             SELECT d, SUM(oneDay) AS oneDay, SUM(oneDayBooked) AS oneDayBooked
             FROM (
             SELECT e.EXAM_DATE AS d,
@@ -17,20 +35,11 @@
             JOIN CUSTOM cu WITH(NOLOCK) ON cu.CUST_NUM = e.CUST_NUM
             OUTER APPLY (
                 SELECT TOP 1 1 AS hit
-                FROM OPERATIONDATA o WITH(NOLOCK)
-                WHERE o.CUST_NUM = e.CUST_NUM
-                  AND o.OPERATION_DATE >= e.EXAM_DATE
-                  AND o.OPERATION_DATE <= CONVERT(varchar(10), DATEADD(day, 7, CONVERT(date, e.EXAM_DATE)), 23)
-                  AND NOT EXISTS (
-                      SELECT 1 FROM Cataract_Operationdata co WITH(NOLOCK)
-                      WHERE co.CUST_NUM = o.CUST_NUM
-                  )
-                  AND (
-                    (o.OPERATIONR IS NOT NULL AND RTRIM(o.OPERATIONR) <> ''
-                       AND o.OPERATIONR NOT IN ('X','OP불가','모든수술가능','op x','Strabismus','TEST-TEST'))
-                    OR (o.OPERATIONL IS NOT NULL AND RTRIM(o.OPERATIONL) <> ''
-                       AND o.OPERATIONL NOT IN ('X','OP불가','모든수술가능','op x','Strabismus','TEST-TEST'))
-                  )
+                FROM RESERVATION op WITH(NOLOCK)
+                WHERE op.CUST_NUM = e.CUST_NUM
+                  AND op.RESERVE_FLAG = 'O'
+                  AND op.RESERVE_STATE <> 'C'
+                  AND op.RESERVE_DATE >= e.EXAM_DATE
             ) booked
             WHERE e.EXAM_DATE >= :from AND e.EXAM_DATE <= :to
               -- 2026-07-30 확정: 중단/취소(STOP_YN·CANCEL_CD) 단서 제거 — 원데이 = 당일OP 예약 기준
@@ -56,8 +65,22 @@
             UNION ALL
 
             -- 백내장 원데이 — 고객 × 검사일로 접은 뒤 그날 예약에 진료구분 7·9 가 있으면 원데이.
-            SELECT c.d AS d, COUNT(*) AS oneDay, 0 AS oneDayBooked
+            -- ⚠️ 예약 보유 판정을 SUM(CASE WHEN EXISTS(...)) 로 쓰면 MSSQL 이 거부한다
+            --    ("Cannot perform an aggregate function on an expression containing a subquery").
+            --    그래서 집계하지 않는 계층(bk)에서 0/1 로 만든 뒤 바깥에서 SUM 한다.
+            SELECT bk.d AS d,
+                   COUNT(*) AS oneDay,
+                   SUM(bk.booked) AS oneDayBooked
             FROM (
+                SELECT c.cn, c.d, c.isOneDay,
+                       CASE WHEN EXISTS (
+                           SELECT 1 FROM RESERVATION op WITH(NOLOCK)
+                           WHERE op.CUST_NUM = c.cn
+                             AND op.RESERVE_FLAG = 'O'
+                             AND op.RESERVE_STATE <> 'C'
+                             AND op.RESERVE_DATE >= c.d
+                       ) THEN 1 ELSE 0 END AS booked
+                FROM (
                 SELECT B.CUST_NUM AS cn, D2.RESERVE_DATE AS d,
                        MAX(CASE WHEN ISNULL(D2.RESERVE_JINRYO, '') IN ('7', '9') THEN 1 ELSE 0 END) AS isOneDay
                 FROM CUSTOM B WITH(NOLOCK)
@@ -73,9 +96,10 @@
                     OR LOWER(ISNULL(B.CUST_NAME, '')) LIKE '%test%'
                   )
                 GROUP BY B.CUST_NUM, D2.RESERVE_DATE
-            ) c
-            WHERE c.isOneDay = 1
-            GROUP BY c.d
+                ) c
+            ) bk
+            WHERE bk.isOneDay = 1
+            GROUP BY bk.d
             ) u
             GROUP BY d
             ORDER BY d
