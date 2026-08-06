@@ -10,8 +10,13 @@
 -- ★ 건수와 사람수를 같이 낸다 — 세는 단위가 다르고 둘 다 필요하다.
 --     건수   채널이 몇 번 일했나. 취소 후 재예약도 채널이 두 번 유치한 것이라 2 로 센다(광고 효율)
 --     사람수 실제 몇 명이 왔나. 환자 규모·검사실 부하를 볼 때 쓴다
---   2026-07 실측 — 예약 1,555건/1,460명, 접수 935건/891명.
---   즉 그 달에 44명이 두 번 이상 내원 예약을 했다.
+--   2026-07 실측 — 예약 1,555건/1,540명, 접수 935건/933명.
+--
+-- ★ 조회 기간에 유입이 0 인 채널도 행으로 낸다(all_channels LEFT JOIN).
+--   빠뜨리면 "채널이 없는 것"과 "이번 달 0명"이 화면에서 구분되지 않고,
+--   달을 바꿀 때마다 행 수가 흔들려 표를 읽기 어렵다.
+--   목록은 뷰 **전 기간**의 DISTINCT 라 화면에 채널 이름을 하드코딩하지 않는다 —
+--   분류 규칙을 뷰에서 고치면 목록도 따라온다.
 --
 -- ⚠️ 사람수는 채널별 DISTINCT 라 **채널 합계 ≠ 전체 사람수** 다.
 --    한 사람이 두 채널로 예약하면 채널마다 1 명씩 세어진다.
@@ -20,7 +25,9 @@
 --
 -- ⚠️ COUNT(DISTINCT ...) OVER () 는 Postgres 가 지원하지 않는다("DISTINCT is not
 --    implemented for window functions"). 전체 집계는 반드시 별도 CTE 로 구한다.
-WITH src AS (
+WITH all_channels AS (
+    SELECT DISTINCT channel FROM v_reservation_channel
+), src AS (
     SELECT channel, person, reserve_state, exam_reg_date, surgery_reg_date
       FROM v_reservation_channel
      WHERE registered_at >= CAST(:from AS DATE)
@@ -56,6 +63,24 @@ WITH src AS (
                                          AND surgery_reg_date <> '')                    AS total_surgery_persons
       FROM src
 )
-SELECT p.*, t.*
-  FROM per_channel p CROSS JOIN tot t
- ORDER BY p.reserved DESC
+SELECT
+    a.channel,
+    COALESCE(p.reserved, 0)            AS reserved,
+    COALESCE(p.not_cancel, 0)          AS not_cancel,
+    COALESCE(p.visited, 0)             AS visited,
+    COALESCE(p.examined, 0)            AS examined,
+    COALESCE(p.surgery, 0)             AS surgery,
+    COALESCE(p.reserved_persons, 0)    AS reserved_persons,
+    COALESCE(p.not_cancel_persons, 0)  AS not_cancel_persons,
+    COALESCE(p.visited_persons, 0)     AS visited_persons,
+    COALESCE(p.examined_persons, 0)    AS examined_persons,
+    COALESCE(p.surgery_persons, 0)     AS surgery_persons,
+    t.total_reserved_persons,
+    t.total_not_cancel_persons,
+    t.total_visited_persons,
+    t.total_examined_persons,
+    t.total_surgery_persons
+  FROM all_channels a
+  LEFT JOIN per_channel p ON p.channel = a.channel
+  CROSS JOIN tot t
+ ORDER BY COALESCE(p.reserved, 0) DESC, a.channel

@@ -72,13 +72,6 @@ const monthRange = (month: string) => {
   if (to > today) to = today
   return { from, to }
 }
-/** 전월 대비용 — 이전 달 */
-const prevMonthOf = (month: string) => {
-  const [y, m] = month.split('-').map(Number)
-  const d = new Date(y, m - 2, 1)
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
-}
-
 const nf = (n: number) => n.toLocaleString('ko-KR')
 /** 소수 1자리. 딱 떨어지면 정수로 — 숫자가 많은 화면이라 자릿수를 줄인다. */
 const pct = (num: number, den: number) => {
@@ -119,18 +112,7 @@ export function ReservationChannelPage() {
 
   const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
   const { rows, isLoading, isFetching, isError } = useReservationChannel(from, to)
-  // 전월 대비는 추정하지 않고 이전 달을 실제로 조회해 계산한다.
-  const prev = useMemo(() => monthRange(prevMonthOf(queryMonth)), [queryMonth])
-  const { rows: prevRows } = useReservationChannel(prev.from, prev.to)
   const loading = isLoading || isFetching
-
-  const prevFinalByChannel = useMemo(() => {
-    const map: Record<string, number> = {}
-    prevRows.forEach((r) => {
-      if (r.reservedPersons) map[r.channel] = (r.surgeryPersons * 100) / r.reservedPersons
-    })
-    return map
-  }, [prevRows])
 
   /** 합계는 채널 값을 더하지 않고 서버가 준 전체 기준값을 쓴다 —
    *  한 사람이 두 채널로 예약하면 채널마다 1명씩 세어져 더하면 중복된다. */
@@ -205,7 +187,7 @@ export function ReservationChannelPage() {
     setSort({ key: '0', dir: 'desc' }); setSel(null); setTypeOpen(true)
   }
 
-  const gridCols = '112px repeat(5, minmax(0,1fr)) 104px'
+  const gridCols = '112px repeat(5, minmax(0,1fr)) 64px'
 
   return (
     <PanelShell variant="bar" isLoading={loading} isError={isError}>
@@ -442,21 +424,22 @@ export function ReservationChannelPage() {
                 ))}
                 <button onClick={() => toggleSort('final')}
                   className="flex items-center justify-end gap-1 text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
-                  최종 · 전월비 <SortIcon active={sort.key === 'final'} dir={sort.dir} />
+                  최종 <SortIcon active={sort.key === 'final'} dir={sort.dir} />
                 </button>
               </div>
 
               {sortedRows.map((r) => {
                 const final = r.reservedPersons ? (r.surgeryPersons * 100) / r.reservedPersons : 0
-                const p = prevFinalByChannel[r.channel]
-                const delta = p == null ? null : final - p
+                // 이 기간에 유입이 0 인 채널 — 행은 남기되 회색으로 죽여 둔다.
+                // 지우면 "채널이 없는 것"과 "이번 달 0명"이 구분되지 않고 달마다 행 수가 흔들린다.
+                const empty = r.reservedPersons === 0
                 return (
-                  <div key={r.channel} onClick={() => setSel(sel === r.channel ? null : r.channel)}
-                    className="grid h-11 cursor-pointer items-center border-b border-slate-50 px-6 transition-colors hover:bg-slate-50"
+                  <div key={r.channel} onClick={empty ? undefined : () => setSel(sel === r.channel ? null : r.channel)}
+                    className={`grid h-11 items-center border-b border-slate-50 px-6 transition-colors ${empty ? 'cursor-default' : 'cursor-pointer hover:bg-slate-50'}`}
                     style={{ gridTemplateColumns: gridCols, background: sel === r.channel ? '#f1f6fd' : undefined }}>
                     <div className="flex min-w-0 items-center gap-1.5">
                       <span className="h-4 w-[3px] rounded-sm" style={{ background: sel === r.channel ? '#2563eb' : 'transparent' }} />
-                      <span className={`truncate text-[13px] text-slate-900 ${sel === r.channel ? 'font-bold' : 'font-medium'}`}>{r.channel}</span>
+                      <span className={`truncate text-[13px] ${empty ? 'font-normal text-slate-300' : sel === r.channel ? 'font-bold text-slate-900' : 'font-medium text-slate-900'}`}>{r.channel}</span>
                     </div>
                     {STAGES.map((s, j) => {
                       const v = r[s.personKey]
@@ -469,7 +452,7 @@ export function ReservationChannelPage() {
                             <div className="absolute inset-y-0 left-0 rounded-full"
                               style={{ width: `${Math.max(w, v > 0 ? 2 : 0)}%`, background: s.color, opacity: sel == null || sel === r.channel ? 1 : 0.3 }} />
                           </div>
-                          <span className="w-10 flex-none text-right text-[13.5px] font-bold tabular-nums text-slate-900">{nf(v)}</span>
+                          <span className={`w-10 flex-none text-right text-[13.5px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-bold text-slate-900'}`}>{nf(v)}</span>
                           <span className="w-10 flex-none text-right text-[11.5px] tabular-nums"
                             style={{ color: j > 0 && prevV && v / prevV < 0.7 ? '#dc2626' : '#94a3b8' }}>
                             {j === 0 ? '' : pct(v, prevV)}
@@ -478,10 +461,8 @@ export function ReservationChannelPage() {
                       )
                     })}
                     <div className="flex items-center justify-end gap-2">
-                      <span className="text-[13px] font-bold tabular-nums text-slate-900">{final.toFixed(1).replace(/\.0$/, '')}%</span>
-                      <span className="w-14 text-right text-[11.5px] font-semibold tabular-nums"
-                        style={{ color: delta == null ? '#cbd5e1' : Math.abs(delta) < 0.05 ? '#94a3b8' : delta > 0 ? '#16a34a' : '#dc2626' }}>
-                        {delta == null ? '—' : `${delta >= 0 ? '+' : '−'}${Math.abs(delta).toFixed(1)}%p`}
+                      <span className={`text-[13px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-bold text-slate-900'}`}>
+                        {empty ? '—' : `${final.toFixed(1).replace(/\.0$/, '')}%`}
                       </span>
                     </div>
                   </div>
