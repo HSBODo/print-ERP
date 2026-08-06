@@ -30,7 +30,7 @@ const STAGES: { key: StageKey; personKey: PersonKey; totalKey: TotalKey; label: 
   { key: 'notCancel', personKey: 'notCancelPersons', totalKey: 'totalNotCancelPersons', label: '취소 제외', hint: '예약 상태가 취소(C)가 아닌 건', color: '#2563EB' },
   { key: 'visited',   personKey: 'visitedPersons',   totalKey: 'totalVisitedPersons',   label: '접수',    hint: '미내원(Y)까지 뺀, 실제 내원한 건', color: '#0EA5E9' },
   { key: 'examined',  personKey: 'examinedPersons',  totalKey: 'totalExaminedPersons',  label: '검사',    hint: '검사등록일이 있는 건', color: '#10B981' },
-  { key: 'surgery',   personKey: 'surgeryPersons',   totalKey: 'totalSurgeryPersons',   label: '수술',    hint: '수술등록일이 있는 건', color: '#F59E0B' },
+  { key: 'surgery',   personKey: 'surgeryPersons',   totalKey: 'totalSurgeryPersons',   label: '수술등록', hint: '수술예약을 등록한 건 — 수술한 날이 아니다', color: '#F59E0B' },
 ]
 
 /* ── 기간 헬퍼 (예약자 리스트와 같은 규칙: 진행 중인 달은 오늘까지) ── */
@@ -248,6 +248,10 @@ export function ReservationChannelPage() {
             <b>사람수는 채널 합계가 전체와 다릅니다</b> — 한 사람이 두 채널로 예약하면 채널마다 1명씩 세어지므로, 합계행은 전체 기준값을 씁니다.
             단계는 뒤로 갈수록 앞 단계의 부분집합이며, 막대 폭은 채널 간 비교가 되도록 <b>가장 큰 채널의 예약 건수</b>를 100%로 잡았습니다.
             퍼센트는 <b>직전 단계 대비</b> 잔존율(건수 기준)입니다.
+            <br />
+            ※ <b>수술등록</b>은 수술한 날이 아니라 <b>수술예약을 등록한 날</b> 기준입니다. 그래서 수술 통계(실제 수술)와 숫자가 다릅니다.
+            이 화면은 <b>시력교정 유입만</b> 다룹니다 — 백내장 검사예약은 예약자 리스트 모집단에 들어오지 않아 0건입니다(2026-07 실측).
+            따라서 백내장 수술의 <b>안(눈) 단위</b> 문제는 여기에 해당하지 않습니다. 모두 건·사람 단위입니다.
             <br />
             ※ 채널은 <b>내원동기(중)의 매체명 → 자사 담당자 → 예약경로</b> 순으로 판정합니다.
             모두닥·카페처럼 매체를 보고 전화로 예약하면 경로는 인콜이지만 채널은 매체로 잡힙니다.
