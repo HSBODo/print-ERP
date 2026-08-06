@@ -67,8 +67,10 @@ OUTER APPLY (
   WHERE m2.cust_num = r.CUST_NUM AND m2.Idx = '1'
   ORDER BY m2.pkey DESC
 ) mv
--- 메모 파싱 — `TM고객(` 뒤 첫 '/' 부터, 다음 '/' 또는 ')' 중 먼저 오는 것까지가 중분류.
+-- 메모 파싱 — `TM고객(` 뒤 첫 '/' 부터, 다음 '/' · ')' · 줄바꿈 중 먼저 오는 것까지가 중분류.
 -- 끝 문자를 덧붙여 CHARINDEX 가 0 을 돌려주는 경우(구분자 없음)를 없앤다.
+-- ⚠️ 줄바꿈도 종결로 본다 — `TM고객(` 괄호를 안 닫은 메모가 있어(2026-01: 1건)
+--    다음 줄 "1)렌즈종류" 의 ')' 까지 끌고 와 값에 개행이 섞였다.
 OUTER APPLY (
   SELECT sp = CASE WHEN CHARINDEX(N'TM고객(', r.COMMENT) > 0
                    THEN CHARINDEX(N'/', r.COMMENT, CHARINDEX(N'TM고객(', r.COMMENT) + 5)
@@ -76,12 +78,16 @@ OUTER APPLY (
 ) tm
 OUTER APPLY (
   SELECT pClose = CASE WHEN tm.sp > 0 THEN CHARINDEX(N')', r.COMMENT + N')', tm.sp + 1) ELSE 0 END,
-         pSlash = CASE WHEN tm.sp > 0 THEN CHARINDEX(N'/', r.COMMENT + N'/', tm.sp + 1) ELSE 0 END
+         pSlash = CASE WHEN tm.sp > 0 THEN CHARINDEX(N'/', r.COMMENT + N'/', tm.sp + 1) ELSE 0 END,
+         pCr    = CASE WHEN tm.sp > 0 THEN CHARINDEX(CHAR(13), r.COMMENT + CHAR(13), tm.sp + 1) ELSE 0 END,
+         pLf    = CASE WHEN tm.sp > 0 THEN CHARINDEX(CHAR(10), r.COMMENT + CHAR(10), tm.sp + 1) ELSE 0 END
 ) tp
 OUTER APPLY (
+  SELECT pEnd = (SELECT MIN(v) FROM (VALUES (tp.pClose), (tp.pSlash), (tp.pCr), (tp.pLf)) x(v))
+) te
+OUTER APPLY (
   SELECT motiveM = CASE WHEN tm.sp > 0
-                        THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tm.sp + 1,
-                               (CASE WHEN tp.pClose < tp.pSlash THEN tp.pClose ELSE tp.pSlash END) - tm.sp - 1)))
+                        THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tm.sp + 1, te.pEnd - tm.sp - 1)))
                         ELSE '' END
 ) memoMv
 LEFT JOIN EMPLOYEE doc WITH(NOLOCK)
