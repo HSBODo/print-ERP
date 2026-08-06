@@ -13,7 +13,8 @@ import type { ReservationListItem } from '@/api/reservation/reservationList'
  */
 
 /* ── 표시 헬퍼 ── */
-const dash = (v: string) => (v && v.trim() ? v : '—')
+// 값이 optional 인 컬럼(내원동기 중 등)도 그대로 넘길 수 있게 undefined 를 받는다.
+const dash = (v: string | undefined) => (v && v.trim() ? v : '—')
 const formatCount = (n: number) => n.toLocaleString('ko-KR')
 
 const CHANNEL_STYLE: Record<string, string> = {
@@ -312,7 +313,7 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={11} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr><td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
                   {!showLoading && visible.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
@@ -322,6 +323,7 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.registeredAt)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">{dash(r.registeredTime)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.motiveM ?? '')}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.chartNo)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.reserveDate)}</td>
@@ -336,7 +338,7 @@ export function ReservationListPage() {
                   })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={11} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">
                         {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
                       </td>
                     </tr>
