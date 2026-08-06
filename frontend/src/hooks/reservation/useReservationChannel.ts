@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { reservationChannelApi, type ReservationChannelFunnelItem } from '@/api/reservation/reservationChannel'
+import {
+  reservationChannelApi,
+  type ReservationChannelFunnelItem,
+  type ReservationChannelOpType,
+} from '@/api/reservation/reservationChannel'
 
 /**
  * 예약통계_채널별 조회 훅. 등록일 범위(from~to)로 채널별 퍼널을 받는다.
@@ -18,4 +22,14 @@ export function useReservationChannel(from: string, to: string, enabled = true) 
     isFetching,
     isError,
   }
+}
+
+/** 채널 × 실제 수술 유형. 유형별 패널이 쓴다. */
+export function useReservationChannelOpTypes(from: string, to: string, enabled = true) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['reservation-channel-op-types', from, to],
+    queryFn: () => reservationChannelApi.getOpTypes(from, to),
+    enabled: enabled && Boolean(from && to),
+  })
+  return { rows: (data ?? []) as ReservationChannelOpType[], isLoading, isError }
 }

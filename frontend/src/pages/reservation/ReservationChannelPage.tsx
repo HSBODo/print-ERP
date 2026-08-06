@@ -2,9 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronsUpDown, ChevronUp, RotateCcw, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PanelShell } from '@/components/PanelShell'
-import { useReservationChannel } from '@/hooks/reservation/useReservationChannel'
-import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'
-import { CURRENT_YEAR } from '@/constants/chart'
+import { useReservationChannel, useReservationChannelOpTypes } from '@/hooks/reservation/useReservationChannel'
 import type { ReservationChannelFunnelItem } from '@/api/reservation/reservationChannel'
 
 /**
@@ -39,23 +37,24 @@ const STAGES: { personKey: PersonKey; totalKey: TotalKey; label: string; hint: s
   { personKey: 'surgeryPersons',   totalKey: 'totalSurgeryPersons',   label: '수술등록',  hint: '수술예약을 등록한 사람 — 수술한 날이 아니다', color: '#f59e0b' },
 ]
 
-/** 수술 유형 — 비중은 하드코딩하지 않고 수술 통계 API 에서 그 해 누적으로 가져온다.
- *  수술 정의가 바뀌면(KPL·PIOL 처럼) 이 화면도 자동으로 따라온다. */
-const TYPE_DEFS: { key: string; name: string; color: string }[] = [
-  { key: 'smilePro',   name: '스마일프로',       color: '#F58A93' },
-  { key: 'smile',      name: '스마일',           color: '#ED0F8C' },
-  { key: 'lasek',      name: '라섹',             color: '#2C7BE5' },
-  { key: 'tIcl',       name: 'T-ICL',            color: '#F5A623' },
-  { key: 'icl',        name: 'ICL',              color: '#F26522' },
-  { key: 'lasik',      name: '라식',             color: '#3B82F6' },
-  { key: 'catMulti',   name: '백내장(다초점)',   color: '#F97316' },
-  { key: 'catEdof',    name: '백내장(연속초점)', color: '#EF4444' },
-  { key: 'tKpl',       name: 'T-KPL',            color: '#2DD4A7' },
-  { key: 'kpl',        name: 'KPL',              color: '#10B981' },
-  { key: 'catMono',    name: '백내장(단초점)',   color: '#64748B' },
-  { key: 'presbyond',  name: '프레스비욘드',     color: '#8B5CF6' },
-  { key: 'viva',       name: 'VIVA',             color: '#6366F1' },
-]
+/** 수술 유형 라벨·색. 건수는 API 가 실제 수술명에서 분류해 준다(추정 아님).
+ *  분류 규칙은 surgery_op_type() 함수 하나뿐이라 수술 통계와 항상 같은 기준이다. */
+const TYPE_LABELS: Record<string, { name: string; color: string }> = {
+  smilePro:  { name: '스마일프로',       color: '#F58A93' },
+  smile:     { name: '스마일',           color: '#ED0F8C' },
+  lasek:     { name: '라섹',             color: '#2C7BE5' },
+  tIcl:      { name: 'T-ICL',            color: '#F5A623' },
+  icl:       { name: 'ICL',              color: '#F26522' },
+  lasik:     { name: '라식',             color: '#3B82F6' },
+  catMulti:  { name: '백내장(다초점)',   color: '#F97316' },
+  catEdof:   { name: '백내장(연속초점)', color: '#EF4444' },
+  tKpl:      { name: 'T-KPL',            color: '#2DD4A7' },
+  kpl:       { name: 'KPL',              color: '#10B981' },
+  catMono:   { name: '백내장(단초점)',   color: '#64748B' },
+  presbyond: { name: '프레스비욘드',     color: '#8B5CF6' },
+  viva:      { name: 'VIVA',             color: '#6366F1' },
+  other:     { name: '기타',             color: '#94A3B8' },
+}
 
 /* ── 기간 헬퍼 (예약자 리스트와 같은 규칙: 진행 중인 달은 오늘까지) ── */
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -135,32 +134,30 @@ export function ReservationChannelPage() {
   const drops = useMemo(() => funnel.slice(0, -1).map((v, i) => v - funnel[i + 1]), [funnel])
   const maxDrop = Math.max(0, ...drops)
 
-  /* ── 수술 유형별 (참고) ──
-   * 비중은 수술 통계(mart_surgery_monthly)의 그 해 누적을 실시간으로 읽는다.
-   * ⚠️ '수술등록'은 수술예약이라 유형 정보가 없다 — 그래서 인원은 비중으로 나눈 **추정치**다. */
-  const { dataMap: surgeryMap } = useSurgeryTrend([CURRENT_YEAR])
-  const typeTotals = useMemo(() => {
-    const cells = surgeryMap[CURRENT_YEAR] ?? []
-    return TYPE_DEFS.map((t) => ({
-      ...t,
-      n: cells.reduce((sum, c) => sum + ((c as unknown as Record<string, number | undefined>)?.[t.key] ?? 0), 0),
-    })).filter((t) => t.n > 0).sort((a, b) => b.n - a.n)
-  }, [surgeryMap])
-  const typeSum = useMemo(() => typeTotals.reduce((s, t) => s + t.n, 0), [typeTotals])
-  const surgeryPeople = funnel[4]
+  /* ── 수술 유형별 (실데이터) ──
+   * 예약자 리스트의 수술명(OPERATIONDATA·Cataract_Operationdata)에서 분류한 값이라 추정이 아니다.
+   * ⚠️ 수술등록이 있어도 아직 수술 전이면 유형이 없다 — 합계가 수술등록 인원보다 적은 게 정상.
+   *    (2026-07: 수술등록 735건 중 수술명 574건) */
+  const { rows: opTypeRows } = useReservationChannelOpTypes(from, to)
   const types = useMemo(() => {
-    if (!typeSum) return []
-    const top = typeTotals[0]?.n ?? 1
-    return typeTotals.map((t) => {
-      const est = (t.n / typeSum) * surgeryPeople
-      return {
-        ...t,
-        w: `${(t.n / top) * 100}%`,
-        count: est > 0 && est < 0.5 ? '<1명' : `${nf(Math.round(est))}명`,
-        share: pct(t.n, typeSum),
-      }
-    })
-  }, [typeTotals, typeSum, surgeryPeople])
+    const scoped = opTypeRows.filter((r) => (sel ? r.channel === sel : r.channel == null))
+    const sorted = [...scoped].sort((a, b) => b.persons - a.persons)
+    const top = sorted[0]?.persons ?? 1
+    const sum = sorted.reduce((acc, r) => acc + r.persons, 0)
+    return sorted.map((r) => ({
+      key: r.opType,
+      name: TYPE_LABELS[r.opType]?.name ?? r.opType,
+      color: TYPE_LABELS[r.opType]?.color ?? '#94A3B8',
+      w: `${(r.persons / top) * 100}%`,
+      count: `${nf(r.persons)}명`,
+      share: pct(r.persons, sum),
+    }))
+  }, [opTypeRows, sel])
+  /** 유형이 확인된 인원(= 실제 수술까지 간 사람). 수술등록 인원과 다르다. */
+  const typedPeople = useMemo(
+    () => opTypeRows.filter((r) => (sel ? r.channel === sel : r.channel == null)).reduce((a, r) => a + r.persons, 0),
+    [opTypeRows, sel],
+  )
 
   const finalRate = (r: ReservationChannelFunnelItem) =>
     r.reservedPersons ? (r.surgeryPersons * 100) / r.reservedPersons : 0
@@ -350,7 +347,7 @@ export function ReservationChannelPage() {
               </div>
             </div>
 
-            {/* ── 수술 유형별 (참고·추정) ── */}
+            {/* ── 수술 유형별 (실데이터) ── */}
             {typeOpen && (
               <div className="ml-7 flex min-w-[340px] flex-1 flex-col justify-center border-l border-slate-100 pl-7" style={{ flexBasis: '360px' }}>
                 <div className="flex items-start justify-between gap-3">
@@ -358,10 +355,9 @@ export function ReservationChannelPage() {
                     <div className="flex items-center gap-1.5">
                       <span className="h-2.5 w-2.5 rounded" style={{ background: '#f59e0b' }} />
                       <span className="text-sm font-bold text-slate-900">수술 유형별</span>
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">추정</span>
                     </div>
                     <span className="text-[11.5px] leading-relaxed text-slate-400">
-                      {selRow ? `${selRow.channel} · ` : ''}수술등록 {nf(surgeryPeople)}명을 {CURRENT_YEAR}년 누적 유형 비중으로 배분
+                      {selRow ? `${selRow.channel} · ` : ''}실제 수술까지 간 {nf(typedPeople)}명의 시술
                     </span>
                   </div>
                   <button onClick={() => setTypeOpen(false)}
@@ -388,9 +384,9 @@ export function ReservationChannelPage() {
                 </div>
 
                 <p className="mt-3 border-t border-slate-100 pt-2.5 text-[11px] leading-relaxed text-slate-400">
-                  ⚠️ <b className="font-semibold text-slate-500">추정치입니다.</b> 수술등록은 <b className="font-semibold text-slate-500">수술예약</b>이라
-                  유형 정보가 없어, {CURRENT_YEAR}년 누적 실제 수술의 유형 비중({nf(typeSum)}건 기준)으로 나눈 값입니다.
-                  유형별 확정값은 <b className="font-semibold text-slate-500">수술 통계·월간 레포트</b>를 보세요.
+                  실제 수술명에서 분류한 값입니다(수술 통계와 같은 기준).
+                  <b className="font-semibold text-slate-500"> 수술등록 {nf(funnel[4])}명보다 적은 건</b> 예약만 잡고 아직 수술 전인 분이 있어서입니다.
+                  좌우에 다른 시술을 받으면 두 유형 모두에 잡혀 합이 인원보다 클 수 있습니다.
                 </p>
               </div>
             )}

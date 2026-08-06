@@ -33,11 +33,30 @@ export type ReservationChannelFunnelItem = z.infer<typeof reservationChannelFunn
 
 const responseSchema = apiResponseOf(z.array(reservationChannelFunnelItemSchema))
 
+/**
+ * 채널 × 실제 수술 유형. channel 이 null 이면 전체 기준 행이다.
+ * 수술명(OPERATIONDATA)에서 분류한 값이라 추정이 아니다.
+ */
+export const reservationChannelOpTypeSchema = z.object({
+  channel: z.string().nullable(),
+  opType: z.string(),
+  persons: z.number(),
+})
+export type ReservationChannelOpType = z.infer<typeof reservationChannelOpTypeSchema>
+const opTypeResponseSchema = apiResponseOf(z.array(reservationChannelOpTypeSchema))
+
 export const reservationChannelApi = {
   getFunnel: async (from: string, to: string): Promise<ReservationChannelFunnelItem[]> => {
     const res = await api.get<unknown>(
       `/stats/reservation-channel?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
     )
     return responseSchema.parse(res).data
+  },
+
+  getOpTypes: async (from: string, to: string): Promise<ReservationChannelOpType[]> => {
+    const res = await api.get<unknown>(
+      `/stats/reservation-channel/op-types?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    )
+    return opTypeResponseSchema.parse(res).data
   },
 }

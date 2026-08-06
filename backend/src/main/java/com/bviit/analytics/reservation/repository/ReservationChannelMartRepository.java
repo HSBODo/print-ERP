@@ -2,6 +2,7 @@ package com.bviit.analytics.reservation.repository;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.reservation.dto.ReservationChannelFunnelItem;
+import com.bviit.analytics.reservation.dto.ReservationChannelOpTypeItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +24,8 @@ public class ReservationChannelMartRepository {
 
     private static final String SELECT_FUNNEL_SQL =
             SqlLoader.load("sql/mart/select-reservation-channel-funnel.sql");
+    private static final String SELECT_OPTYPE_SQL =
+            SqlLoader.load("sql/mart/select-reservation-channel-optype.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -47,6 +50,22 @@ public class ReservationChannelMartRepository {
                         .totalVisitedPersons(rs.getInt("total_visited_persons"))
                         .totalExaminedPersons(rs.getInt("total_examined_persons"))
                         .totalSurgeryPersons(rs.getInt("total_surgery_persons"))
+                        .build()
+        );
+    }
+
+    /**
+     * 채널 × 실제 수술 유형. channel 이 null 인 행은 전체 기준이다.
+     * 수술등록이 있어도 아직 수술 전이면 유형이 없다 — 합계가 수술등록 인원보다 적은 게 정상.
+     */
+    public List<ReservationChannelOpTypeItem> findOpTypes(String from, String to) {
+        return jdbc.query(
+                SELECT_OPTYPE_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to),
+                (rs, i) -> ReservationChannelOpTypeItem.builder()
+                        .channel(rs.getString("channel"))
+                        .opType(rs.getString("op_type"))
+                        .persons(rs.getInt("persons"))
                         .build()
         );
     }

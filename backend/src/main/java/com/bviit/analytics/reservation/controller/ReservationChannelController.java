@@ -4,6 +4,7 @@ import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.common.stats.StatsPanelSupport;
 import com.bviit.analytics.common.stats.StatsRequestValidator;
 import com.bviit.analytics.reservation.dto.ReservationChannelFunnelItem;
+import com.bviit.analytics.reservation.dto.ReservationChannelOpTypeItem;
 import com.bviit.analytics.reservation.repository.ReservationChannelMartRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -42,6 +43,22 @@ public class ReservationChannelController {
         return StatsPanelSupport.require(
                 repository,
                 repo -> repo.findFunnel(from.toString(), to.toString())
+        );
+    }
+
+    /**
+     * 채널 × 실제 수술 유형.
+     * GET /api/stats/reservation-channel/op-types?from=&amp;to=
+     */
+    @GetMapping("/op-types")
+    public ResponseEntity<ApiResponse<List<ReservationChannelOpTypeItem>>> getOpTypes(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        StatsRequestValidator.validateDateRange(from, to, MAX_RANGE_DAYS);
+        return StatsPanelSupport.require(
+                repository,
+                repo -> repo.findOpTypes(from.toString(), to.toString())
         );
     }
 }
