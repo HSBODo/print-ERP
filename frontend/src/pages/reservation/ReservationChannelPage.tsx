@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { RotateCcw, Search, X } from 'lucide-react'
+import { ChevronDown, ChevronsUpDown, ChevronUp, RotateCcw, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PanelShell } from '@/components/PanelShell'
 import { useReservationChannel } from '@/hooks/reservation/useReservationChannel'
@@ -96,14 +96,22 @@ const CY = VB_H / 2
 const BAND_W = VB_W / STAGES.length
 const MAX_H = 232
 
-type SortKey = 'default' | 'volume' | 'rate'
-type BarMode = 'abs' | 'rate'
+/** 정렬 키 — 'channel' | 단계 인덱스('0'~'4') | 'final'. 헤더를 눌러 바꾼다. */
+type SortKey = string
+type SortDir = 'asc' | 'desc'
+
+/** 머리글 정렬 표시. 컴포넌트 밖에 둔다 — 렌더마다 새로 만들면 매번 다시 마운트된다. */
+const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
+  if (!active) return <ChevronsUpDown className="h-3 w-3 flex-none text-slate-300" />
+  return dir === 'asc'
+    ? <ChevronUp className="h-3 w-3 flex-none text-slate-600" />
+    : <ChevronDown className="h-3 w-3 flex-none text-slate-600" />
+}
 
 export function ReservationChannelPage() {
   const [draftMonth, setDraftMonth] = useState(currentMonth())
   const [queryMonth, setQueryMonth] = useState(currentMonth())
-  const [sort, setSort] = useState<SortKey>('default')
-  const [mode, setMode] = useState<BarMode>('abs')
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: '0', dir: 'desc' })
   const [sel, setSel] = useState<string | null>(null)
   const [hover, setHover] = useState<number | null>(null)
   // 기본 열림 — 정보를 먼저 보여주고, 필요 없으면 ✕ 로 닫게 한다.
@@ -172,30 +180,38 @@ export function ReservationChannelPage() {
     })
   }, [typeTotals, typeSum, surgeryPeople])
 
+  const finalRate = (r: ReservationChannelFunnelItem) =>
+    r.reservedPersons ? (r.surgeryPersons * 100) / r.reservedPersons : 0
+
   const sortedRows = useMemo(() => {
-    const arr = [...rows]
-    const rate = (r: ReservationChannelFunnelItem) => (r.reservedPersons ? r.surgeryPersons / r.reservedPersons : 0)
-    if (sort === 'volume') arr.sort((a, b) => b.surgeryPersons - a.surgeryPersons)
-    else if (sort === 'rate') arr.sort((a, b) => rate(b) - rate(a))
-    else arr.sort((a, b) => b.reservedPersons - a.reservedPersons)
-    return arr
+    const dir = sort.dir === 'asc' ? 1 : -1
+    return [...rows].sort((a, b) => {
+      if (sort.key === 'channel') return a.channel.localeCompare(b.channel, 'ko') * dir
+      if (sort.key === 'final') return (finalRate(a) - finalRate(b)) * dir
+      const s = STAGES[Number(sort.key)]
+      return ((a[s.personKey] ?? 0) - (b[s.personKey] ?? 0)) * dir
+    })
   }, [rows, sort])
+
+  /** 같은 칸을 다시 누르면 방향만 뒤집는다. 다른 칸은 큰 값부터(내림차순) 시작 —
+   *  인원 칸은 보통 많은 쪽을 먼저 보고 싶어서다. 채널명만 가나다순(오름차순)으로 시작한다. */
+  const toggleSort = (key: SortKey) =>
+    setSort((p) => (p.key === key ? { key, dir: p.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'channel' ? 'asc' : 'desc' }))
+
   const maxReserved = useMemo(() => Math.max(0, ...rows.map((r) => r.reservedPersons)), [rows])
 
   const handleReset = () => {
     setDraftMonth(currentMonth()); setQueryMonth(currentMonth())
-    setSort('default'); setMode('abs'); setSel(null); setTypeOpen(true)
+    setSort({ key: '0', dir: 'desc' }); setSel(null); setTypeOpen(true)
   }
 
-  const seg = (active: boolean) =>
-    active ? 'bg-white text-slate-900 shadow-sm' : 'bg-transparent text-slate-500 hover:text-slate-700'
   const gridCols = '112px repeat(5, minmax(0,1fr)) 104px'
 
   return (
     <PanelShell variant="bar" isLoading={loading} isError={isError}>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
         {/* ── 헤더 ── */}
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex shrink-0 flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2.5">
               <h1 className="text-[22px] font-bold tracking-tight text-slate-900">예약 퍼널 · 채널별</h1>
@@ -225,7 +241,7 @@ export function ReservationChannelPage() {
         </div>
 
         {/* ── 퍼널 카드 ── */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white px-7 pb-6 pt-6 shadow-sm">
+        <div className="shrink-0 rounded-2xl border border-slate-200/80 bg-white px-7 pb-6 pt-6 shadow-sm">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex min-w-0 flex-wrap items-baseline gap-3">
               <span className="whitespace-nowrap text-[15px] font-bold text-slate-900">
@@ -400,46 +416,34 @@ export function ReservationChannelPage() {
         </div>
 
         {/* ── 채널별 표 ── */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-5 border-b border-slate-100 px-6 pb-4 pt-4">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-bold text-slate-900">채널별 단계 통과</span>
-              <span className="text-[11.5px] text-slate-400">행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다 · 단위는 명</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold tracking-wide text-slate-400">정렬</span>
-                <div className="flex rounded-lg bg-slate-100 p-0.5">
-                  {([['default', '기본'], ['volume', '물량순'], ['rate', '전환율순']] as const).map(([k, label]) => (
-                    <button key={k} onClick={() => setSort(k)}
-                      className={`h-[26px] rounded-md px-2.5 text-xs font-semibold transition-colors ${seg(sort === k)}`}>{label}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold tracking-wide text-slate-400">막대</span>
-                <div className="flex rounded-lg bg-slate-100 p-0.5">
-                  {([['abs', '절대값'], ['rate', '전환율']] as const).map(([k, label]) => (
-                    <button key={k} onClick={() => setMode(k)}
-                      className={`h-[26px] rounded-md px-2.5 text-xs font-semibold transition-colors ${seg(mode === k)}`}>{label}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <div className="flex shrink-0 flex-col gap-0.5 border-b border-slate-100 px-6 pb-3 pt-4">
+            <span className="text-[15px] font-bold text-slate-900">채널별 단계 통과</span>
+            <span className="text-[11.5px] text-slate-400">
+              행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다 · 머리글을 클릭하면 정렬됩니다 · 단위는 명
+            </span>
           </div>
 
-          <div className="w-full overflow-x-auto">
+          <div className="min-h-0 w-full flex-1 overflow-auto">
             <div className="min-w-[1040px]">
-              <div className="grid h-[38px] items-center border-b border-slate-100 bg-slate-50/60 px-6"
+              <div className="sticky top-0 z-10 grid h-[38px] items-center border-b border-slate-100 bg-slate-50 px-6"
                 style={{ gridTemplateColumns: gridCols }}>
-                <span className="text-[11.5px] font-semibold text-slate-400">채널</span>
-                {STAGES.map((s) => (
-                  <div key={s.label} className="flex min-w-0 items-center gap-1.5 pl-2.5" title={s.hint}>
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color }} />
+                <button onClick={() => toggleSort('channel')}
+                  className="flex items-center gap-1 text-left text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
+                  채널 <SortIcon active={sort.key === 'channel'} dir={sort.dir} />
+                </button>
+                {STAGES.map((s, i) => (
+                  <button key={s.label} onClick={() => toggleSort(String(i))} title={s.hint}
+                    className="flex min-w-0 items-center gap-1.5 pl-2.5 hover:opacity-80">
+                    <span className="h-1.5 w-1.5 flex-none rounded-full" style={{ background: s.color }} />
                     <span className="whitespace-nowrap text-[11.5px] font-semibold text-slate-500">{s.label}</span>
-                  </div>
+                    <SortIcon active={sort.key === String(i)} dir={sort.dir} />
+                  </button>
                 ))}
-                <span className="text-right text-[11.5px] font-semibold text-slate-400">최종 · 전월비</span>
+                <button onClick={() => toggleSort('final')}
+                  className="flex items-center justify-end gap-1 text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
+                  최종 · 전월비 <SortIcon active={sort.key === 'final'} dir={sort.dir} />
+                </button>
               </div>
 
               {sortedRows.map((r) => {
@@ -457,9 +461,8 @@ export function ReservationChannelPage() {
                     {STAGES.map((s, j) => {
                       const v = r[s.personKey]
                       const prevV = j === 0 ? 0 : r[STAGES[j - 1].personKey]
-                      const w = mode === 'abs'
-                        ? (maxReserved ? (v / maxReserved) * 100 : 0)
-                        : (j === 0 ? 100 : (prevV ? (v / prevV) * 100 : 0))
+                      // 막대 폭은 최대 채널 인원 기준 — 채널끼리 규모가 비교돼야 한다.
+                      const w = maxReserved ? (v / maxReserved) * 100 : 0
                       return (
                         <div key={s.label} className="flex min-w-0 items-center gap-2 pl-2.5 pr-3.5">
                           <div className="relative h-[9px] min-w-[20px] flex-1 overflow-hidden rounded-full bg-slate-100">
@@ -504,24 +507,6 @@ export function ReservationChannelPage() {
           </div>
         </div>
 
-        {/* ── 각주 ── */}
-        <div className="flex flex-col gap-1 px-1">
-          <p className="text-[11.5px] leading-relaxed text-slate-400">
-            ※ 모든 숫자는 <b className="font-semibold text-slate-500">사람 수</b>입니다 — 같은 사람이 취소 후 다시 잡아도 1명입니다.
-            식별은 휴대폰 &gt; 이메일 &gt; 차트번호 &gt; 이름 순이며 커버리지는 99.9%입니다(연락처는 화면·CSV에 나가지 않습니다).
-            <b className="font-semibold text-slate-500"> 맨 아래 '전체'는 채널 값을 더한 값이 아닙니다</b> — 한 사람이 두 채널로 예약하면 채널마다 1명씩 세어지므로, 전체는 따로 구한 실제 인원입니다.
-          </p>
-          <p className="text-[11.5px] leading-relaxed text-slate-400">
-            ※ 채널은 <b className="font-semibold text-slate-500">내원동기(중)의 매체명 → 자사 담당자 → 예약경로</b> 순으로 판정합니다.
-            모두닥·카페처럼 매체를 보고 전화로 예약하면 경로는 인콜이지만 채널은 매체로 잡힙니다.
-            카카오는 해피톡 소스라 예약자 리스트에 들어오지 않아 채널에 두지 않았습니다.
-          </p>
-          <p className="text-[11.5px] leading-relaxed text-slate-400">
-            ※ <b className="font-semibold text-slate-500">수술등록</b>은 수술한 날이 아니라 <b className="font-semibold text-slate-500">수술예약을 등록한 날</b> 기준이라 수술 통계(실제 수술)와 숫자가 다릅니다.
-            이 화면은 <b className="font-semibold text-slate-500">시력교정 유입만</b> 다룹니다 — 백내장은 예약 경로가 달라(내원 기준) 예약자 리스트에 들어오지 않습니다.
-            <b className="font-semibold text-slate-500"> 전월 대비</b>는 이전 달을 실제로 조회해 계산한 값입니다(추정 아님). <b className="font-semibold text-slate-500">수술 유형별</b>만 추정치입니다.
-          </p>
-        </div>
       </div>
     </PanelShell>
   )
