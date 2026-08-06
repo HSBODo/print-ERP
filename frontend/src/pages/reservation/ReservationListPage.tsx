@@ -72,13 +72,13 @@ const COLUMNS: { label: string; key: SortKey | null }[] = [
   { label: '등록일', key: 'registeredAt' },
   { label: '등록시간', key: 'registeredTime' },
   { label: '채널', key: 'channel' },
+  { label: '내원동기(중)', key: 'motiveM' },
   { label: '차트번호', key: 'chartNo' },
   { label: '고객명', key: 'name' },
   { label: '예약일', key: 'reserveDate' },
   { label: '상태', key: 'reserveState' },
   { label: '담당의', key: 'doctor' },
   { label: '상담사', key: 'counselor' },
-  { label: '내원동기(중)', key: 'motiveM' },
   { label: '메모', key: 'comment' },
 ]
 
@@ -93,13 +93,13 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'registeredAt', label: '등록일' },
   { key: 'registeredTime', label: '등록시간' },
   { key: 'channel', label: '채널' },
+  { key: 'motiveM', label: '내원동기(중)' },
   { key: 'chartNo', label: '차트번호', text: true },
   { key: 'name', label: '고객명', csv: (r) => maskName(r.name) },
   { key: 'reserveDate', label: '예약일' },
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
   { key: 'doctor', label: '담당의' },
   { key: 'counselor', label: '상담사' },
-  { key: 'motiveM', label: '내원동기(중)' },
   { key: 'comment', label: '메모' },
 ]
 
