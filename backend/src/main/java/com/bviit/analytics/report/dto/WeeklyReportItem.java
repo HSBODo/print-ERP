@@ -62,7 +62,11 @@ public class WeeklyReportItem {
     /* ── 수술 (수술일 기준) ── */
     private final Integer visionSurgery;
     private final Integer cataractSurgery;
-    private final Integer totalSurgery;   // 시력교정 + 백내장 + 재수술(레코드)
+    private final Integer totalSurgery;
+    /** 재수술 — 건 단위. 레이저 + 렌즈 = 합계. 수술 건수 화면·월간과 같은 정의. */
+    private final Integer reoperation;
+    private final Integer reopLaser;
+    private final Integer reopLens;   // 시력교정 + 백내장 + 재수술(레코드)
 
     /* ── 외래 ── */
     private final Integer outpatient;

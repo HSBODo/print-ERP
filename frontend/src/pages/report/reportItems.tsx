@@ -90,6 +90,7 @@ export function buildReportItems(
     { group: '수술', id: 'surgery-total', label: '총 수술수', chart: { title: '총 수술수', series: 'totalSurgery' } },
     { group: '수술', id: 'surgery-cataract', label: '백내장 수술', chart: { title: '백내장 수술', series: 'cataractSurgery' } },
     { group: '수술', id: 'surgery-vision', label: '시력교정 수술', chart: { title: '시력교정 수술', series: 'visionSurgery' } },
+    { group: '수술', id: 'surgery-reop', label: '재수술 (레이저+렌즈)', chart: { title: '재수술', suffix: '(레이저+렌즈)', series: 'reoperation' } },
     { group: '수술', id: 'surgery-detail', label: '수술 상세표', node: <ReportSurgeryTable dataMap={s.surgeryDataMap} /> },
     { group: '외래', id: 'outpatient', label: '외래수', chart: { title: '외래수', series: 'outpatient' } },
   ]

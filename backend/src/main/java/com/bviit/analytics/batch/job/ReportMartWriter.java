@@ -93,6 +93,9 @@ public class ReportMartWriter {
                 .addValue("visionSurgery", w.getVisionSurgery())
                 .addValue("cataractSurgery", w.getCataractSurgery())
                 .addValue("totalSurgery", w.getTotalSurgery())
+                .addValue("reoperation", w.getReoperation())
+                .addValue("reopLaser", w.getReopLaser())
+                .addValue("reopLens", w.getReopLens())
                 .addValue("outpatient", w.getOutpatient());
     }
 

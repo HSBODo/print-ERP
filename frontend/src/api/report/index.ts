@@ -45,6 +45,9 @@ const weeklyReportItemSchema = z.object({
   visionSurgery: count,
   cataractSurgery: count,
   totalSurgery: count,
+  reoperation: count,
+  reopLaser: count,
+  reopLens: count,
 
   // 외래
   outpatient: count,

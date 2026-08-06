@@ -176,6 +176,9 @@ public class WeeklyReportService implements WeeklyReportReader {
                 acc.visionSurgery = plus(acc.visionSurgery, toInt(row.get("vision_patients")));
                 acc.cataractSurgery = plus(acc.cataractSurgery, toInt(row.get("cataract_patients")));
                 acc.totalSurgery = plus(acc.totalSurgery, toInt(row.get("total")));
+                acc.reoperation = plus(acc.reoperation, toInt(row.get("reoperation")));
+                acc.reopLaser = plus(acc.reopLaser, toInt(row.get("reop_laser")));
+                acc.reopLens = plus(acc.reopLens, toInt(row.get("reop_lens")));
             });
         } else {
             for (SurgeryDailyItem day : surgeryStatsService.getDailyStats(fromDate, toDate)) {
@@ -186,6 +189,9 @@ public class WeeklyReportService implements WeeklyReportReader {
                 acc.visionSurgery = plus(acc.visionSurgery, day.getVisionPatients());
                 acc.cataractSurgery = plus(acc.cataractSurgery, day.getCataractPatients());
                 acc.totalSurgery = plus(acc.totalSurgery, day.getTotal());
+                acc.reoperation = plus(acc.reoperation, day.getReoperation());
+                acc.reopLaser = plus(acc.reopLaser, day.getReopLaser());
+                acc.reopLens = plus(acc.reopLens, day.getReopLens());
             }
         }
 
@@ -417,6 +423,7 @@ public class WeeklyReportService implements WeeklyReportReader {
         private Integer visionBooked, cataractExamEyes, cataractBooked, oneDayBooked, stopCount;
         private Integer examGeneralBase, bookedGeneral;
         private Integer visionSurgery, cataractSurgery, totalSurgery;
+        private Integer reoperation, reopLaser, reopLens;
         private Integer outpatient;
 
         private Acc(int year, int week) {
@@ -440,6 +447,7 @@ public class WeeklyReportService implements WeeklyReportReader {
                     .oneDayBooked(oneDayBooked).stopCount(stopCount)
                     .examGeneralBase(examGeneralBase).bookedGeneral(bookedGeneral)
                     .visionSurgery(visionSurgery).cataractSurgery(cataractSurgery).totalSurgery(totalSurgery)
+                    .reoperation(reoperation).reopLaser(reopLaser).reopLens(reopLens)
                     .outpatient(outpatient)
                     .build();
         }

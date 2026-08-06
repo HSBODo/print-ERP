@@ -83,6 +83,7 @@ export function buildWeeklySeries(
     cataractSurgery: pick((it) => num(it.cataractSurgery)),
     visionSurgery: pick((it) => num(it.visionSurgery)),
     totalSurgery: pick((it) => num(it.totalSurgery)),
+    reoperation: pick((it) => num(it.reoperation)),
 
     outpatient: pick((it) => num(it.outpatient)),
   }

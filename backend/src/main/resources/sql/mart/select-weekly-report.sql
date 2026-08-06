@@ -26,6 +26,9 @@ SELECT
     vision_surgery      AS "visionSurgery",
     cataract_surgery    AS "cataractSurgery",
     total_surgery       AS "totalSurgery",
+    reoperation,
+    reop_laser          AS "reopLaser",
+    reop_lens           AS "reopLens",
     outpatient,
     dreamlens_new       AS "dreamlensNew",
     dreamlens_fu        AS "dreamlensFu"

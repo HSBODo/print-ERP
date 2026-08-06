@@ -49,7 +49,7 @@ export type ReportSeriesKey =
   | 'reservations' | 'call' | 'online'
   | 'cataractExam' | 'visionExam' | 'examCount' | 'oneDayExam'
   | 'cataractRate' | 'visionRate'
-  | 'cataractSurgery' | 'visionSurgery' | 'totalSurgery'
+  | 'cataractSurgery' | 'visionSurgery' | 'totalSurgery' | 'reoperation'
   | 'outpatient'
   | 'successAll' | 'successOneday' | 'successGeneral'
   | 'examGeneralCustomer' | 'examReferralCustomer' | 'examReferralStaff'
@@ -145,6 +145,8 @@ export function useReportSeries(): ReportSeriesResult {
       cataractSurgery: build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.cataract ?? surgery.dataMap[y]?.[i]?.cataractPatients),
       visionSurgery:   build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.vision   ?? surgery.dataMap[y]?.[i]?.visionPatients),
       totalSurgery:    build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.total    ?? surgery.dataMap[y]?.[i]?.total),
+      // 재수술 — 건 단위(레이저+렌즈). 주차 레포트도 같은 정의로 그린다.
+      reoperation: build((y, i) => surgery.dataMap[y]?.[i]?.reoperation),
       outpatient: build((y, i) => outpatient.dataMap[y]?.[i]?.outpatientCount),
       // 드림렌즈 신규/FU 는 주차 단위 확정값만 존재한다 — 월간 레포트에서는 항목 자체를 감춘다
       // (ReportItem.weeklyOnly). 여기서는 타입을 채우기 위한 빈 계열.

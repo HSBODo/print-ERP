@@ -7,6 +7,7 @@ INSERT INTO mart_weekly_report (
     vision_booked, cataract_exam_eyes, cataract_booked, one_day_booked,
     stop_count, exam_general_base, booked_general,
     vision_surgery, cataract_surgery, total_surgery,
+    reoperation, reop_laser, reop_lens,
     outpatient,
     loaded_at
 ) VALUES (
@@ -18,6 +19,7 @@ INSERT INTO mart_weekly_report (
     :visionBooked, :cataractExamEyes, :cataractBooked, :oneDayBooked,
     :stopCount, :examGeneralBase, :bookedGeneral,
     :visionSurgery, :cataractSurgery, :totalSurgery,
+    :reoperation, :reopLaser, :reopLens,
     :outpatient,
     CURRENT_TIMESTAMP
 )
@@ -44,6 +46,9 @@ ON CONFLICT (yr, wk) DO UPDATE SET
     stop_count         = EXCLUDED.stop_count,
     exam_general_base  = EXCLUDED.exam_general_base,
     booked_general     = EXCLUDED.booked_general,
+    reoperation        = EXCLUDED.reoperation,
+    reop_laser         = EXCLUDED.reop_laser,
+    reop_lens          = EXCLUDED.reop_lens,
     vision_surgery     = EXCLUDED.vision_surgery,
     cataract_surgery   = EXCLUDED.cataract_surgery,
     total_surgery      = EXCLUDED.total_surgery,
