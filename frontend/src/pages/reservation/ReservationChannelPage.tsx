@@ -179,6 +179,13 @@ export function ReservationChannelPage() {
 
   const maxReserved = useMemo(() => Math.max(0, ...rows.map((r) => r.reservedPersons)), [rows])
 
+  /** 표 상태만 되돌린다. 이미 기본값이면 버튼을 눌러도 바뀔 게 없어 비활성으로 둔다. */
+  const isTablePristine = sort.key === '0' && sort.dir === 'desc' && sel == null
+  const handleTableReset = () => {
+    setSort({ key: '0', dir: 'desc' })
+    setSel(null)
+  }
+
   const handleReset = () => {
     setDraftMonth(currentMonth()); setQueryMonth(currentMonth())
     setSort({ key: '0', dir: 'desc' }); setSel(null); setTypeOpen(true)
@@ -395,11 +402,19 @@ export function ReservationChannelPage() {
 
         {/* ── 채널별 표 ── */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <div className="flex shrink-0 flex-col gap-0.5 border-b border-slate-100 px-6 pb-3 pt-4">
-            <span className="text-[15px] font-bold text-slate-900">채널별 단계 통과</span>
-            <span className="text-[11.5px] text-slate-400">
-              행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다 · 머리글을 클릭하면 정렬됩니다 · 단위는 명
-            </span>
+          <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 pb-3 pt-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[15px] font-bold text-slate-900">채널별 단계 통과</span>
+              <span className="text-[11.5px] text-slate-400">
+                행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다 · 머리글을 클릭하면 정렬됩니다 · 단위는 명
+              </span>
+            </div>
+            {/* 표 상태(정렬·채널 선택)만 되돌린다 — 조회 월은 위 헤더의 초기화가 맡는다. */}
+            <button onClick={handleTableReset} disabled={isTablePristine}
+              title="정렬과 채널 선택을 되돌립니다"
+              className="flex h-[30px] flex-none items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-default disabled:border-slate-100 disabled:text-slate-300 disabled:hover:bg-white">
+              <RotateCcw className="h-3.5 w-3.5" /> 초기화
+            </button>
           </div>
 
           <div className="min-h-0 w-full flex-1 overflow-auto">
