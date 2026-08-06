@@ -72,11 +72,10 @@ const COLUMNS: { label: string; key: SortKey | null }[] = [
   { label: 'No', key: null },
   { label: '예약등록일', key: 'registeredAt' },
   { label: '예약등록시간', key: 'registeredTime' },
-  { label: '채널', key: 'channel' },
-  { label: '내원동기(중)', key: 'motiveM' },
   { label: '차트번호', key: 'chartNo' },
   { label: '고객명', key: 'name' },
-  { label: '예약일', key: 'reserveDate' },
+  { label: '채널', key: 'channel' },
+  { label: '내원동기(중)', key: 'motiveM' },
   { label: '상태', key: 'reserveState' },
   { label: '담당의', key: 'doctor' },
   { label: '상담사', key: 'counselor' },
@@ -96,11 +95,10 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'rowNo', label: 'No', csv: (_r, n) => n },
   { key: 'registeredAt', label: '예약등록일' },
   { key: 'registeredTime', label: '예약등록시간' },
-  { key: 'channel', label: '채널' },
-  { key: 'motiveM', label: '내원동기(중)' },
   { key: 'chartNo', label: '차트번호', text: true },
   { key: 'name', label: '고객명', csv: (r) => maskName(r.name) },
-  { key: 'reserveDate', label: '예약일' },
+  { key: 'channel', label: '채널' },
+  { key: 'motiveM', label: '내원동기(중)' },
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
   { key: 'doctor', label: '담당의' },
   { key: 'counselor', label: '상담사' },
@@ -319,7 +317,7 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr><td colSpan={14} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
                   {!showLoading && visible.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
@@ -328,6 +326,8 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-500">{formatCount((safePage - 1) * pageSize + i + 1)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.registeredAt)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">{dash(r.registeredTime)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.chartNo)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
                         {/* 메모에서 끌어온 값은 흐리게 + 물음표로 구분한다 — CRM 등록값과 섞어 세면 안 된다. */}
                         <td
@@ -341,9 +341,6 @@ export function ReservationListPage() {
                           {dash(r.motiveM ?? '')}
                           {r.motiveMSource === 'MEMO' && <span className="ml-0.5 text-[10px]">*</span>}
                         </td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.chartNo)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.reserveDate)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={st?.label ?? r.reserveState} className={st?.className} /></td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.doctor)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.counselor)}</td>
@@ -364,7 +361,7 @@ export function ReservationListPage() {
                   })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td colSpan={14} className="px-3 py-12 text-center text-sm text-muted-foreground">
                         {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
                       </td>
                     </tr>
