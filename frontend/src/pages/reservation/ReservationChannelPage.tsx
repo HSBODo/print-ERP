@@ -10,32 +10,37 @@ import type { ReservationChannelFunnelItem } from '@/api/reservation/reservation
 /**
  * 예약통계_채널별 — 예약자 리스트를 채널로 묶어 단계별로 좁혀 보는 화면.
  *
- * 단계는 예약자 리스트에서 차례로 걸러낸 것이라 합계가 항상 리스트와 맞는다.
+ * 단계는 예약자 리스트에서 차례로 걸러낸 것이다.
  *   예약 → 취소 제외 → 접수(내원) → 검사 → 수술등록
+ *
+ * ★ 이 화면은 **사람 수만** 센다(건수 아님).
+ *   같은 사람이 취소 후 다시 잡아도 1명이다. 실제 몇 명이 왔는지가 알고 싶은 값이라서다.
+ *   식별은 휴대폰 > 이메일 > 차트번호 > 이름 순(v_reservation_channel.person, 커버리지 99.9%).
+ *   API 는 건수도 같이 주지만 화면에서는 쓰지 않는다 — 숫자가 두 벌이면 읽기 어렵다.
  *
  * 채널 판정은 v_reservation_channel 이 한다(내원동기 매체명 > 직원 설정표 > 예약경로).
  * 화면은 판정을 하지 않는다 — 규칙을 바꾸려면 뷰만 고치면 된다.
  */
 
 /* ── 단계 정의 ── 순서가 곧 퍼널 순서다.
- * personKey/totalKey 는 같은 단계의 사람수. 건수와 세는 단위가 다르다 —
- * 건수는 채널이 몇 번 일했나, 사람수는 실제 몇 명이 왔나. */
-type StageKey = keyof Pick<ReservationChannelFunnelItem, 'reserved' | 'notCancel' | 'visited' | 'examined' | 'surgery'>
+ * personKey  채널별 사람 수
+ * totalKey   전체(채널 무관) 사람 수 — 합계행 전용.
+ *            채널별 값을 더하면 안 된다: 한 사람이 두 채널로 예약하면 채널마다 1명씩 세어진다. */
 type PersonKey = keyof Pick<ReservationChannelFunnelItem,
   'reservedPersons' | 'notCancelPersons' | 'visitedPersons' | 'examinedPersons' | 'surgeryPersons'>
 type TotalKey = keyof Pick<ReservationChannelFunnelItem,
   'totalReservedPersons' | 'totalNotCancelPersons' | 'totalVisitedPersons' | 'totalExaminedPersons' | 'totalSurgeryPersons'>
 
-const STAGES: { key: StageKey; personKey: PersonKey; totalKey: TotalKey; label: string; hint: string; color: string }[] = [
-  { key: 'reserved',  personKey: 'reservedPersons',  totalKey: 'totalReservedPersons',  label: '예약',     hint: '등록일 기준 전체 예약 건', color: '#1e3a8a' },
-  { key: 'notCancel', personKey: 'notCancelPersons', totalKey: 'totalNotCancelPersons', label: '취소 제외', hint: '예약 상태가 취소(C)가 아닌 건', color: '#2563eb' },
-  { key: 'visited',   personKey: 'visitedPersons',   totalKey: 'totalVisitedPersons',   label: '접수',     hint: '미내원(Y)까지 뺀, 실제 내원한 건', color: '#0ea5e9' },
-  { key: 'examined',  personKey: 'examinedPersons',  totalKey: 'totalExaminedPersons',  label: '검사',     hint: '검사등록일이 있는 건', color: '#10b981' },
-  { key: 'surgery',   personKey: 'surgeryPersons',   totalKey: 'totalSurgeryPersons',   label: '수술등록',  hint: '수술예약을 등록한 건 — 수술한 날이 아니다', color: '#f59e0b' },
+const STAGES: { personKey: PersonKey; totalKey: TotalKey; label: string; hint: string; color: string }[] = [
+  { personKey: 'reservedPersons',  totalKey: 'totalReservedPersons',  label: '예약',     hint: '등록일 기준 예약한 사람', color: '#1e3a8a' },
+  { personKey: 'notCancelPersons', totalKey: 'totalNotCancelPersons', label: '취소 제외', hint: '예약을 취소하지 않은 사람', color: '#2563eb' },
+  { personKey: 'visitedPersons',   totalKey: 'totalVisitedPersons',   label: '접수',     hint: '미내원까지 빼고 실제 내원한 사람', color: '#0ea5e9' },
+  { personKey: 'examinedPersons',  totalKey: 'totalExaminedPersons',  label: '검사',     hint: '검사등록일이 있는 사람', color: '#10b981' },
+  { personKey: 'surgeryPersons',   totalKey: 'totalSurgeryPersons',   label: '수술등록',  hint: '수술예약을 등록한 사람 — 수술한 날이 아니다', color: '#f59e0b' },
 ]
 
 /** 수술 유형 — 비중은 하드코딩하지 않고 수술 통계 API 에서 그 해 누적으로 가져온다.
- *  수술 정의가 바뀌면(오늘 KPL·PIOL 처럼) 이 화면도 자동으로 따라온다. */
+ *  수술 정의가 바뀌면(KPL·PIOL 처럼) 이 화면도 자동으로 따라온다. */
 const TYPE_DEFS: { key: string; name: string; color: string }[] = [
   { key: 'smilePro',   name: '스마일프로',       color: '#F58A93' },
   { key: 'smile',      name: '스마일',           color: '#ED0F8C' },
@@ -113,29 +118,24 @@ export function ReservationChannelPage() {
 
   const prevFinalByChannel = useMemo(() => {
     const map: Record<string, number> = {}
-    prevRows.forEach((r) => { if (r.reserved) map[r.channel] = (r.surgery * 100) / r.reserved })
+    prevRows.forEach((r) => {
+      if (r.reservedPersons) map[r.channel] = (r.surgeryPersons * 100) / r.reservedPersons
+    })
     return map
   }, [prevRows])
 
-  /** 건수 합계는 채널을 더하면 되지만, 사람수는 더하면 안 된다 —
-   *  한 사람이 두 채널로 예약하면 채널마다 1명씩 세어져 중복된다. 서버가 준 전체값을 쓴다. */
+  /** 합계는 채널 값을 더하지 않고 서버가 준 전체 기준값을 쓴다 —
+   *  한 사람이 두 채널로 예약하면 채널마다 1명씩 세어져 더하면 중복된다. */
   const total = useMemo(
-    () => STAGES.reduce((acc, s) => ({ ...acc, [s.key]: rows.reduce((sum, r) => sum + r[s.key], 0) }), {} as Record<StageKey, number>),
-    [rows],
-  )
-  const totalPersons = useMemo(
-    () => STAGES.reduce((acc, s) => ({ ...acc, [s.key]: rows[0]?.[s.totalKey] ?? 0 }), {} as Record<StageKey, number>),
+    () => STAGES.map((s) => rows[0]?.[s.totalKey] ?? 0),
     [rows],
   )
 
   const selRow = sel ? rows.find((r) => r.channel === sel) ?? null : null
+  /** 퍼널이 그리는 값 — 채널을 고르면 그 채널, 아니면 전체 */
   const funnel = useMemo(
-    () => STAGES.map((s) => (selRow ? selRow[s.key] : total[s.key] ?? 0)),
+    () => STAGES.map((s, i) => (selRow ? selRow[s.personKey] : total[i])),
     [selRow, total],
-  )
-  const funnelPersons = useMemo(
-    () => STAGES.map((s) => (selRow ? selRow[s.personKey] : totalPersons[s.key] ?? 0)),
-    [selRow, totalPersons],
   )
 
   const base = funnel[0] || 0
@@ -147,8 +147,7 @@ export function ReservationChannelPage() {
 
   /* ── 수술 유형별 (참고) ──
    * 비중은 수술 통계(mart_surgery_monthly)의 그 해 누적을 실시간으로 읽는다.
-   * ⚠️ 다만 '수술등록'은 수술예약이라 유형 정보가 없다 — 그래서 건수는 비중으로 나눈 **추정치**다.
-   *    실제 수술 유형별 확정값은 수술 통계·월간 레포트를 볼 것. 화면에도 그렇게 밝힌다. */
+   * ⚠️ '수술등록'은 수술예약이라 유형 정보가 없다 — 그래서 인원은 비중으로 나눈 **추정치**다. */
   const { dataMap: surgeryMap } = useSurgeryTrend([CURRENT_YEAR])
   const typeTotals = useMemo(() => {
     const cells = surgeryMap[CURRENT_YEAR] ?? []
@@ -158,29 +157,30 @@ export function ReservationChannelPage() {
     })).filter((t) => t.n > 0).sort((a, b) => b.n - a.n)
   }, [surgeryMap])
   const typeSum = useMemo(() => typeTotals.reduce((s, t) => s + t.n, 0), [typeTotals])
-  const surgeryCount = funnel[4]
+  const surgeryPeople = funnel[4]
   const types = useMemo(() => {
     if (!typeSum) return []
     const top = typeTotals[0]?.n ?? 1
     return typeTotals.map((t) => {
-      const est = (t.n / typeSum) * surgeryCount
+      const est = (t.n / typeSum) * surgeryPeople
       return {
         ...t,
         w: `${(t.n / top) * 100}%`,
-        count: est > 0 && est < 0.5 ? '<1건' : `${nf(Math.round(est))}건`,
+        count: est > 0 && est < 0.5 ? '<1명' : `${nf(Math.round(est))}명`,
         share: pct(t.n, typeSum),
       }
     })
-  }, [typeTotals, typeSum, surgeryCount])
+  }, [typeTotals, typeSum, surgeryPeople])
 
   const sortedRows = useMemo(() => {
     const arr = [...rows]
-    if (sort === 'volume') arr.sort((a, b) => b.surgery - a.surgery)
-    else if (sort === 'rate') arr.sort((a, b) => (b.reserved ? b.surgery / b.reserved : 0) - (a.reserved ? a.surgery / a.reserved : 0))
-    else arr.sort((a, b) => b.reserved - a.reserved)
+    const rate = (r: ReservationChannelFunnelItem) => (r.reservedPersons ? r.surgeryPersons / r.reservedPersons : 0)
+    if (sort === 'volume') arr.sort((a, b) => b.surgeryPersons - a.surgeryPersons)
+    else if (sort === 'rate') arr.sort((a, b) => rate(b) - rate(a))
+    else arr.sort((a, b) => b.reservedPersons - a.reservedPersons)
     return arr
   }, [rows, sort])
-  const maxReserved = useMemo(() => Math.max(0, ...rows.map((r) => r.reserved)), [rows])
+  const maxReserved = useMemo(() => Math.max(0, ...rows.map((r) => r.reservedPersons)), [rows])
 
   const handleReset = () => {
     setDraftMonth(currentMonth()); setQueryMonth(currentMonth())
@@ -189,7 +189,7 @@ export function ReservationChannelPage() {
 
   const seg = (active: boolean) =>
     active ? 'bg-white text-slate-900 shadow-sm' : 'bg-transparent text-slate-500 hover:text-slate-700'
-  const gridCols = '112px repeat(5, minmax(0,1fr)) 96px'
+  const gridCols = '112px repeat(5, minmax(0,1fr)) 104px'
 
   return (
     <PanelShell variant="bar" isLoading={loading} isError={isError}>
@@ -202,9 +202,10 @@ export function ReservationChannelPage() {
               <span className="rounded-md bg-slate-200/70 px-2 py-[3px] text-[11px] font-semibold text-slate-600">
                 {queryMonth.replace('-', '년 ')}월
               </span>
+              <span className="rounded-md bg-slate-900 px-2 py-[3px] text-[11px] font-semibold text-white">사람 수</span>
             </div>
             <p className="text-[13px] leading-relaxed text-slate-500">
-              예약자 리스트를 채널로 묶어 단계별로 좁혀 봅니다. 합계는 예약자 리스트와 같습니다.
+              예약자 리스트를 채널로 묶어 단계별로 좁혀 봅니다. 모든 숫자는 <b className="font-semibold text-slate-700">사람 수</b>입니다.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -231,7 +232,7 @@ export function ReservationChannelPage() {
                 {selRow ? `${selRow.channel} 퍼널` : '전체 퍼널'}
               </span>
               <span className="text-xs text-slate-400">
-                예약 {nf(funnel[0])}건 · 최종 전환 {pct(funnel[4], funnel[0])}
+                예약 {nf(funnel[0])}명 · 최종 전환 {pct(funnel[4], funnel[0])}
                 {maxDrop > 0 && ` · 가장 큰 이탈은 ${STAGES[drops.indexOf(maxDrop)].label} → ${STAGES[drops.indexOf(maxDrop) + 1].label}`}
               </span>
             </div>
@@ -245,12 +246,12 @@ export function ReservationChannelPage() {
 
           <div className="flex flex-wrap items-stretch">
             <div className="flex min-w-0 flex-1 flex-col justify-center" style={{ flexBasis: '640px' }}>
-              {/* 단계 카드 — 건수 · 잔존율 · 사람수 */}
+              {/* 단계 카드 — 사람 수(검정) + 직전 대비 잔존율 */}
               <div className="grid grid-cols-2 sm:grid-cols-5">
                 {STAGES.map((s, i) => {
                   const last = i === STAGES.length - 1
                   return (
-                    <div key={s.key} title={s.hint}
+                    <div key={s.label} title={s.hint}
                       onClick={last ? () => setTypeOpen((v) => !v) : undefined}
                       className={`flex min-w-0 flex-col gap-1.5 rounded-xl p-2.5 transition-colors ${last ? 'cursor-pointer' : ''}`}
                       style={{ background: last && typeOpen ? '#fff8eb' : 'transparent' }}>
@@ -258,17 +259,17 @@ export function ReservationChannelPage() {
                         <span className="h-2.5 w-2.5 flex-none rounded" style={{ background: s.color }} />
                         <span className="truncate text-[12.5px] font-semibold text-slate-500">{s.label}</span>
                       </div>
-                      <div className="flex flex-wrap items-baseline gap-2">
-                        <span className="text-[25px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
+                      <div className="flex flex-wrap items-baseline gap-1.5">
+                        <span className="text-[26px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
                           {nf(funnel[i])}
                         </span>
-                        <span className="text-xs font-bold tabular-nums" style={{ color: i === 0 ? '#94a3b8' : s.color }}>
+                        <span className="text-[13px] font-semibold text-slate-500">명</span>
+                        <span className="ml-1 text-xs font-bold tabular-nums" style={{ color: i === 0 ? '#94a3b8' : s.color }}>
                           {i === 0 ? '전체' : pct(funnel[i], funnel[i - 1])}
                         </span>
                       </div>
-                      <span className="min-h-[14px] text-[11px] font-medium tabular-nums text-slate-400">
-                        {nf(funnelPersons[i])}명
-                        {last && <span className="ml-1.5 font-semibold text-amber-600">{typeOpen ? '유형 닫기 ✕' : '유형 보기 →'}</span>}
+                      <span className="min-h-[14px] text-[11px] font-semibold text-amber-600">
+                        {last ? (typeOpen ? '유형 닫기 ✕' : '유형 보기 →') : ''}
                       </span>
                     </div>
                   )
@@ -286,7 +287,7 @@ export function ReservationChannelPage() {
                     const t0 = CY - h0 / 2, b0 = CY + h0 / 2, t1 = CY - h1 / 2, b1 = CY + h1 / 2
                     const cx0 = x0 + BAND_W * 0.45, cx1 = x0 + BAND_W * 0.55
                     return (
-                      <g key={s.key} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+                      <g key={s.label} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
                         onClick={last ? () => setTypeOpen((v) => !v) : undefined}
                         style={{ cursor: last ? 'pointer' : 'default' }}>
                         <rect x={x0} y={0} width={BAND_W} height={VB_H} fill="transparent" />
@@ -312,7 +313,7 @@ export function ReservationChannelPage() {
                         background: big ? '#fef2f2' : '#fff', borderColor: big ? '#fecaca' : '#e8ecf1',
                       }}>
                       <span className="whitespace-nowrap text-xs font-bold tabular-nums text-red-600">
-                        {d > 0 ? `−${nf(d)}` : '0'}
+                        {d > 0 ? `−${nf(d)}명` : '0'}
                       </span>
                       <span className="whitespace-nowrap text-[10.5px] font-semibold tabular-nums text-slate-400">
                         {pct(d, funnel[i])}
@@ -330,12 +331,12 @@ export function ReservationChannelPage() {
                       <span className="text-xs font-bold text-white">{STAGES[hover].label}</span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
-                      <span>진입</span><span className="font-semibold text-white">{nf(funnel[hover])}건 · {nf(funnelPersons[hover])}명</span>
+                      <span>진입</span><span className="font-semibold text-white">{nf(funnel[hover])}명</span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
                       <span>다음 단계 이탈</span>
                       <span className="font-semibold text-red-300">
-                        {hover === STAGES.length - 1 ? '—' : `${nf(drops[hover])}건 (${pct(drops[hover], funnel[hover])})`}
+                        {hover === STAGES.length - 1 ? '—' : `${nf(drops[hover])}명 (${pct(drops[hover], funnel[hover])})`}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
@@ -343,7 +344,7 @@ export function ReservationChannelPage() {
                       <span className="font-semibold text-white">
                         {hover === STAGES.length - 1
                           ? `최종 ${pct(funnel[4], funnel[0])}`
-                          : `${nf(funnel[hover + 1])}건 (${pct(funnel[hover + 1], funnel[hover])})`}
+                          : `${nf(funnel[hover + 1])}명 (${pct(funnel[hover + 1], funnel[hover])})`}
                       </span>
                     </div>
                   </div>
@@ -362,7 +363,7 @@ export function ReservationChannelPage() {
                       <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">추정</span>
                     </div>
                     <span className="text-[11.5px] leading-relaxed text-slate-400">
-                      {selRow ? `${selRow.channel} · ` : ''}수술등록 {nf(surgeryCount)}건을 {CURRENT_YEAR}년 누적 유형 비중으로 배분
+                      {selRow ? `${selRow.channel} · ` : ''}수술등록 {nf(surgeryPeople)}명을 {CURRENT_YEAR}년 누적 유형 비중으로 배분
                     </span>
                   </div>
                   <button onClick={() => setTypeOpen(false)}
@@ -376,13 +377,13 @@ export function ReservationChannelPage() {
                     <p className="py-6 text-center text-xs text-slate-400">수술 통계를 불러오지 못했습니다.</p>
                   ) : types.map((t) => (
                     <div key={t.key} className="grid h-[26px] items-center gap-2.5"
-                      style={{ gridTemplateColumns: '104px 1fr 46px 42px' }}>
+                      style={{ gridTemplateColumns: '104px 1fr 48px 42px' }}>
                       <span className="truncate text-right text-[11.5px] font-semibold text-slate-500">{t.name}</span>
                       <div className="relative h-2.5 min-w-0">
                         <div className="absolute left-0 top-0 h-2.5 rounded-full"
                           style={{ width: t.w, minWidth: 4, background: t.color }} />
                       </div>
-                      <span className="whitespace-nowrap text-right text-xs font-semibold tabular-nums text-slate-700">{t.count}</span>
+                      <span className="whitespace-nowrap text-right text-xs font-bold tabular-nums text-slate-900">{t.count}</span>
                       <span className="whitespace-nowrap text-right text-[11px] tabular-nums text-slate-400">{t.share}</span>
                     </div>
                   ))}
@@ -403,7 +404,7 @@ export function ReservationChannelPage() {
           <div className="flex flex-wrap items-center justify-between gap-5 border-b border-slate-100 px-6 pb-4 pt-4">
             <div className="flex flex-col gap-0.5">
               <span className="text-[15px] font-bold text-slate-900">채널별 단계 통과</span>
-              <span className="text-[11.5px] text-slate-400">행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다</span>
+              <span className="text-[11.5px] text-slate-400">행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다 · 단위는 명</span>
             </div>
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
@@ -428,22 +429,21 @@ export function ReservationChannelPage() {
           </div>
 
           <div className="w-full overflow-x-auto">
-            <div className="min-w-[1180px]">
+            <div className="min-w-[1040px]">
               <div className="grid h-[38px] items-center border-b border-slate-100 bg-slate-50/60 px-6"
                 style={{ gridTemplateColumns: gridCols }}>
                 <span className="text-[11.5px] font-semibold text-slate-400">채널</span>
                 {STAGES.map((s) => (
-                  <div key={s.key} className="flex min-w-0 items-center gap-1.5 pl-2.5" title={s.hint}>
+                  <div key={s.label} className="flex min-w-0 items-center gap-1.5 pl-2.5" title={s.hint}>
                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color }} />
                     <span className="whitespace-nowrap text-[11.5px] font-semibold text-slate-500">{s.label}</span>
-                    <span className="text-[10px] font-normal text-slate-300">건/명</span>
                   </div>
                 ))}
                 <span className="text-right text-[11.5px] font-semibold text-slate-400">최종 · 전월비</span>
               </div>
 
               {sortedRows.map((r) => {
-                const final = r.reserved ? (r.surgery * 100) / r.reserved : 0
+                const final = r.reservedPersons ? (r.surgeryPersons * 100) / r.reservedPersons : 0
                 const p = prevFinalByChannel[r.channel]
                 const delta = p == null ? null : final - p
                 return (
@@ -455,19 +455,18 @@ export function ReservationChannelPage() {
                       <span className={`truncate text-[13px] text-slate-900 ${sel === r.channel ? 'font-bold' : 'font-medium'}`}>{r.channel}</span>
                     </div>
                     {STAGES.map((s, j) => {
-                      const v = r[s.key]
-                      const prevV = j === 0 ? 0 : r[STAGES[j - 1].key]
+                      const v = r[s.personKey]
+                      const prevV = j === 0 ? 0 : r[STAGES[j - 1].personKey]
                       const w = mode === 'abs'
                         ? (maxReserved ? (v / maxReserved) * 100 : 0)
                         : (j === 0 ? 100 : (prevV ? (v / prevV) * 100 : 0))
                       return (
-                        <div key={s.key} className="flex min-w-0 items-center gap-2 pl-2.5 pr-3.5">
+                        <div key={s.label} className="flex min-w-0 items-center gap-2 pl-2.5 pr-3.5">
                           <div className="relative h-[9px] min-w-[20px] flex-1 overflow-hidden rounded-full bg-slate-100">
                             <div className="absolute inset-y-0 left-0 rounded-full"
                               style={{ width: `${Math.max(w, v > 0 ? 2 : 0)}%`, background: s.color, opacity: sel == null || sel === r.channel ? 1 : 0.3 }} />
                           </div>
-                          <span className="w-9 flex-none text-right text-[12.5px] font-semibold tabular-nums text-slate-800">{nf(v)}</span>
-                          <span className="w-8 flex-none text-right text-[11px] tabular-nums text-slate-400" title="사람 수">{nf(r[s.personKey])}명</span>
+                          <span className="w-10 flex-none text-right text-[13.5px] font-bold tabular-nums text-slate-900">{nf(v)}</span>
                           <span className="w-10 flex-none text-right text-[11.5px] tabular-nums"
                             style={{ color: j > 0 && prevV && v / prevV < 0.7 ? '#dc2626' : '#94a3b8' }}>
                             {j === 0 ? '' : pct(v, prevV)}
@@ -487,19 +486,18 @@ export function ReservationChannelPage() {
               })}
 
               <div className="grid h-12 items-center bg-slate-50/60 px-6" style={{ gridTemplateColumns: gridCols }}>
-                <span className="text-[13px] font-bold text-slate-900">합계</span>
+                <span className="text-[13px] font-bold text-slate-900">전체</span>
                 {STAGES.map((s, i) => (
-                  <div key={s.key} className="flex min-w-0 items-center gap-2 pl-2.5 pr-3.5">
+                  <div key={s.label} className="flex min-w-0 items-center gap-2 pl-2.5 pr-3.5">
                     <div className="min-w-[20px] flex-1" />
-                    <span className="w-9 flex-none text-right text-[13px] font-bold tabular-nums text-slate-900">{nf(total[s.key] ?? 0)}</span>
-                    <span className="w-8 flex-none text-right text-[11px] font-semibold tabular-nums text-slate-500">{nf(totalPersons[s.key] ?? 0)}명</span>
+                    <span className="w-10 flex-none text-right text-[13.5px] font-bold tabular-nums text-slate-900">{nf(total[i])}</span>
                     <span className="w-10 flex-none text-right text-[11.5px] font-semibold tabular-nums text-slate-500">
-                      {i === 0 ? '' : pct(total[s.key], total[STAGES[i - 1].key])}
+                      {i === 0 ? '' : pct(total[i], total[i - 1])}
                     </span>
                   </div>
                 ))}
                 <span className="text-right text-[13px] font-bold tabular-nums text-slate-900">
-                  {pct(total.surgery, total.reserved)}
+                  {pct(total[4], total[0])}
                 </span>
               </div>
             </div>
@@ -509,9 +507,9 @@ export function ReservationChannelPage() {
         {/* ── 각주 ── */}
         <div className="flex flex-col gap-1 px-1">
           <p className="text-[11.5px] leading-relaxed text-slate-400">
-            ※ <b className="font-semibold text-slate-500">건수</b>는 채널이 몇 번 유치했나, <b className="font-semibold text-slate-500">명</b>은 실제 몇 명인가입니다 — 같은 사람이 취소 후 다시 잡으면 2건 1명입니다.
-            사람 식별은 휴대폰 &gt; 이메일 &gt; 차트번호 &gt; 이름 순이며 커버리지는 99.9%입니다(연락처는 화면·CSV에 나가지 않습니다).
-            <b className="font-semibold text-slate-500"> 사람수는 채널 합계가 전체와 다릅니다</b> — 한 사람이 두 채널로 예약하면 채널마다 1명씩 세어지므로, 합계행은 전체 기준값을 씁니다.
+            ※ 모든 숫자는 <b className="font-semibold text-slate-500">사람 수</b>입니다 — 같은 사람이 취소 후 다시 잡아도 1명입니다.
+            식별은 휴대폰 &gt; 이메일 &gt; 차트번호 &gt; 이름 순이며 커버리지는 99.9%입니다(연락처는 화면·CSV에 나가지 않습니다).
+            <b className="font-semibold text-slate-500"> 맨 아래 '전체'는 채널 값을 더한 값이 아닙니다</b> — 한 사람이 두 채널로 예약하면 채널마다 1명씩 세어지므로, 전체는 따로 구한 실제 인원입니다.
           </p>
           <p className="text-[11.5px] leading-relaxed text-slate-400">
             ※ 채널은 <b className="font-semibold text-slate-500">내원동기(중)의 매체명 → 자사 담당자 → 예약경로</b> 순으로 판정합니다.
@@ -521,8 +519,7 @@ export function ReservationChannelPage() {
           <p className="text-[11.5px] leading-relaxed text-slate-400">
             ※ <b className="font-semibold text-slate-500">수술등록</b>은 수술한 날이 아니라 <b className="font-semibold text-slate-500">수술예약을 등록한 날</b> 기준이라 수술 통계(실제 수술)와 숫자가 다릅니다.
             이 화면은 <b className="font-semibold text-slate-500">시력교정 유입만</b> 다룹니다 — 백내장은 예약 경로가 달라(내원 기준) 예약자 리스트에 들어오지 않습니다.
-            <b className="font-semibold text-slate-500"> 전월 대비</b>는 이전 달을 실제로 조회해 계산한 값입니다(추정 아님).
-            <b className="font-semibold text-slate-500"> 수술 유형별</b>만 추정치입니다.
+            <b className="font-semibold text-slate-500"> 전월 대비</b>는 이전 달을 실제로 조회해 계산한 값입니다(추정 아님). <b className="font-semibold text-slate-500">수술 유형별</b>만 추정치입니다.
           </p>
         </div>
       </div>
