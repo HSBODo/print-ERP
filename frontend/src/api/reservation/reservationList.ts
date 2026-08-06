@@ -22,6 +22,9 @@ const reservationListItemSchema = z.object({
   doctor: z.string(),
   counselor: z.string(),
   comment: z.string(),
+  // 내원동기(중) — 실제 유입처("모두닥"·"인터넷검색(홈페이지)" 등).
+  // 마트 재적재 전 옛 응답과의 호환을 위해 optional.
+  motiveM: z.string().optional(),
 })
 
 export type ReservationListItem = z.infer<typeof reservationListItemSchema>

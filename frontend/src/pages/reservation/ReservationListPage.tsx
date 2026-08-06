@@ -78,6 +78,7 @@ const COLUMNS: { label: string; key: SortKey | null }[] = [
   { label: '상태', key: 'reserveState' },
   { label: '담당의', key: 'doctor' },
   { label: '상담사', key: 'counselor' },
+  { label: '내원동기(중)', key: 'motiveM' },
   { label: '메모', key: 'comment' },
 ]
 
@@ -98,6 +99,7 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
   { key: 'doctor', label: '담당의' },
   { key: 'counselor', label: '상담사' },
+  { key: 'motiveM', label: '내원동기(중)' },
   { key: 'comment', label: '메모' },
 ]
 

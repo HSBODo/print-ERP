@@ -22,8 +22,17 @@ SELECT
   END                                                     AS channelGroup,
   ISNULL(doc.EMP_NAME, '')                                AS doctor,
   ISNULL(cns.EMP_NAME, '')                                AS counselor,
-  ISNULL(r.COMMENT, '')                                   AS comment
+  ISNULL(r.COMMENT, '')                                   AS comment,
+  -- 내원동기(중) — 실제 유입처가 들어온다('모두닥'·'인터넷검색(홈페이지)' 등).
+  -- 검사자 리스트(find-exam-list.sql)와 같은 규칙: Idx='1' 최신 1건.
+  ISNULL(mv.motiveM, '')                                  AS motiveM
 FROM RESERVATION r WITH(NOLOCK)
+OUTER APPLY (
+  SELECT TOP 1 ISNULL(m2.category02_name, '') AS motiveM
+  FROM MOTIVE_NEW02 m2 WITH(NOLOCK)
+  WHERE m2.cust_num = r.CUST_NUM AND m2.Idx = '1'
+  ORDER BY m2.pkey DESC
+) mv
 LEFT JOIN EMPLOYEE doc WITH(NOLOCK)
   ON doc.EMP_NUM = ISNULL(NULLIF(r.SELECT_DOC, ''), r.RESERVE_DOC)
  AND doc.EMP_STATE <> 'N'

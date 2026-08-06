@@ -10,7 +10,8 @@ SELECT
     COALESCE(channel_group, '')                AS "channelGroup",
     COALESCE(doctor, '')                       AS "doctor",
     COALESCE(counselor, '')                    AS "counselor",
-    COALESCE(comment, '')                      AS "comment"
+    COALESCE(comment, '')                      AS "comment",
+    COALESCE(motive_m, '')                     AS "motiveM"
   FROM list_reservation
  WHERE registered_at >= CAST(:from AS DATE)
    AND registered_at <= CAST(:to   AS DATE)
