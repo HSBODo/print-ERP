@@ -23,9 +23,17 @@ public final class ReoperationOverlay {
     private ReoperationOverlay() {
     }
 
-    /** 렌즈로 분류할 시술명 패턴. 하나라도 매칭되면 lens, 아니면 laser. */
+    /**
+     * 렌즈로 분류할 시술명 패턴. 하나라도 매칭되면 lens, 아니면 laser.
+     *
+     * "kpl" 은 T-KPL 도 함께 잡는다(부분일치). 수술 유형별 집계에서 KPL·T-KPL 은
+     * PIOL(렌즈) 그룹이므로 재수술에서도 렌즈여야 한다 — 빠져 있어 2026-07 의
+     * `KPL`·`Mono+KPL` 2건이 레이저로 샜다(레이저 8/렌즈 24 → 6/26).
+     * 2024-01~ 전 이력에서 "KPL" 을 포함한 시술명 9종은 모두 실제 KPL/T-KPL 이라
+     * 부분일치로 인한 오탐은 없다.
+     */
     private static final String[] LENS_PATTERNS = {
-            "remo", "exch", "icl", "arf", "art", "evo", "echo", "glaze",
+            "remo", "exch", "icl", "kpl", "arf", "art", "evo", "echo", "glaze",
             "precizon", "lisa", "gemetric", "encla"
     };
 
