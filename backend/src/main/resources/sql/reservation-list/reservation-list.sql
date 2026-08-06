@@ -31,6 +31,10 @@ SELECT
   -- (2026-07: 139건 — 이벤트상담신청 58·전화상담관리 52·본인 15·모두닥 10·바비톡 2·카페 2).
   -- ⚠️ 원천(CRM)은 고치지 않는다. 조회 시점 보완이라 CRM 에 값이 채워지면 그쪽이 우선된다.
   -- ⚠️ motiveMSource 로 출처를 구분한다 — 등록값과 메모 추출값을 섞어 세면 안 된다.
+  -- 내원동기(대)는 (중)과 짝이라 같은 행(같은 출처)에서 뽑는다 — CRM 값이 있으면 CRM 쌍,
+  -- 없으면 메모 쌍. 섞으면 대=CRM/중=메모 같은 어긋난 조합이 나온다.
+  CASE WHEN ISNULL(mv.motiveM, '') <> '' THEN ISNULL(mv.motiveL, '')
+       ELSE ISNULL(memoMv.motiveL, '') END                AS motiveL,
   ISNULL(NULLIF(mv.motiveM, ''), ISNULL(memoMv.motiveM, '')) AS motiveM,
   CASE WHEN ISNULL(mv.motiveM, '') <> '' THEN 'CRM'
        WHEN ISNULL(memoMv.motiveM, '') <> '' THEN 'MEMO'
@@ -62,7 +66,8 @@ OUTER APPLY (
   ORDER BY op.InsertedDateTime
 ) sx
 OUTER APPLY (
-  SELECT TOP 1 ISNULL(m2.category02_name, '') AS motiveM
+  SELECT TOP 1 ISNULL(m2.category01_name, '') AS motiveL,
+               ISNULL(m2.category02_name, '') AS motiveM
   FROM MOTIVE_NEW02 m2 WITH(NOLOCK)
   WHERE m2.cust_num = r.CUST_NUM AND m2.Idx = '1'
   ORDER BY m2.pkey DESC
@@ -72,9 +77,11 @@ OUTER APPLY (
 -- ⚠️ 줄바꿈도 종결로 본다 — `TM고객(` 괄호를 안 닫은 메모가 있어(2026-01: 1건)
 --    다음 줄 "1)렌즈종류" 의 ')' 까지 끌고 와 값에 개행이 섞였다.
 OUTER APPLY (
-  SELECT sp = CASE WHEN CHARINDEX(N'TM고객(', r.COMMENT) > 0
-                   THEN CHARINDEX(N'/', r.COMMENT, CHARINDEX(N'TM고객(', r.COMMENT) + 5)
-                   ELSE 0 END
+  -- pos = 'TM고객(' 의 T 위치. 'TM고객(' 은 5자라 내용은 pos+5 부터 — 거기서 첫 '/' 를 찾는다.
+  SELECT pos = CHARINDEX(N'TM고객(', r.COMMENT)
+) tg
+OUTER APPLY (
+  SELECT sp = CASE WHEN tg.pos > 0 THEN CHARINDEX(N'/', r.COMMENT, tg.pos + 5) ELSE 0 END
 ) tm
 OUTER APPLY (
   SELECT pClose = CASE WHEN tm.sp > 0 THEN CHARINDEX(N')', r.COMMENT + N')', tm.sp + 1) ELSE 0 END,
@@ -88,6 +95,12 @@ OUTER APPLY (
 OUTER APPLY (
   SELECT motiveM = CASE WHEN tm.sp > 0
                         THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tm.sp + 1, te.pEnd - tm.sp - 1)))
+                        ELSE '' END,
+         -- 대분류 = 'TM고객(' 과 첫 '/' 사이. 그 사이에 줄바꿈이 끼면 문구가 깨진 것이라 버린다.
+         motiveL = CASE WHEN tm.sp > tg.pos + 5
+                             AND CHARINDEX(CHAR(13), SUBSTRING(r.COMMENT, tg.pos + 5, tm.sp - tg.pos - 5)) = 0
+                             AND CHARINDEX(CHAR(10), SUBSTRING(r.COMMENT, tg.pos + 5, tm.sp - tg.pos - 5)) = 0
+                        THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tg.pos + 5, tm.sp - tg.pos - 5)))
                         ELSE '' END
 ) memoMv
 LEFT JOIN EMPLOYEE doc WITH(NOLOCK)

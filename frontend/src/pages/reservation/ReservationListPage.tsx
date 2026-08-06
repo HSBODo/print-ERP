@@ -80,6 +80,7 @@ const COLUMNS: { label: string; key: SortKey | null; tight?: boolean }[] = [
   { label: '차트번호', key: 'chartNo', tight: true },
   { label: '고객명', key: 'name', tight: true },
   { label: '채널', key: 'channel', tight: true },
+  { label: '내원동기(대)', key: 'motiveL' },
   { label: '내원동기(중)', key: 'motiveM' },
   { label: '상태', key: 'reserveState' },
   { label: '검사등록일', key: 'examRegDate' },
@@ -101,6 +102,7 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'chartNo', label: '차트번호', text: true },
   { key: 'name', label: '고객명', csv: (r) => maskName(r.name) },
   { key: 'channel', label: '채널' },
+  { key: 'motiveL', label: '내원동기(대)' },
   { key: 'motiveM', label: '내원동기(중)' },
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
   { key: 'examRegDate', label: '검사등록일' },
@@ -321,7 +323,7 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr><td colSpan={13} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
                   {!showLoading && visible.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
@@ -334,6 +336,14 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-1 py-1 text-center">{dash(r.chartNo)}</td>
                         <td className="whitespace-nowrap px-1 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
                         <td className="whitespace-nowrap px-1 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
+                        {/* 내원동기 대/중 — 같은 출처의 짝이라 메모 추출분은 둘 다 흐리게. */}
+                        <td
+                          className={`whitespace-nowrap px-2.5 py-1 text-center ${
+                            r.motiveMSource === 'MEMO' ? 'text-amber-700' : 'text-gray-700'
+                          }`}
+                        >
+                          {dash(r.motiveL)}
+                        </td>
                         {/* 메모에서 끌어온 값은 흐리게 + 물음표로 구분한다 — CRM 등록값과 섞어 세면 안 된다. */}
                         <td
                           className={`whitespace-nowrap px-2.5 py-1 text-center ${
@@ -343,7 +353,7 @@ export function ReservationListPage() {
                             ? 'CRM 내원동기가 비어 있어 메모의 TM고객(대/중) 문구에서 가져온 값입니다.'
                             : undefined}
                         >
-                          {dash(r.motiveM ?? '')}
+                          {dash(r.motiveM)}
                           {r.motiveMSource === 'MEMO' && <span className="ml-0.5 text-[10px]">*</span>}
                         </td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={st?.label ?? r.reserveState} className={st?.className} /></td>
@@ -364,7 +374,7 @@ export function ReservationListPage() {
                   })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={12} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td colSpan={13} className="px-3 py-12 text-center text-sm text-muted-foreground">
                         {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
                       </td>
                     </tr>

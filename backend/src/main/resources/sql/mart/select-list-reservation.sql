@@ -11,6 +11,7 @@ SELECT
     COALESCE(doctor, '')                       AS "doctor",
     COALESCE(counselor, '')                    AS "counselor",
     COALESCE(comment, '')                      AS "comment",
+    COALESCE(motive_l, '')                     AS "motiveL",
     COALESCE(motive_m, '')                     AS "motiveM",
     COALESCE(motive_m_source, '')              AS "motiveMSource",
     COALESCE(exam_reg_date, '')                AS "examRegDate",

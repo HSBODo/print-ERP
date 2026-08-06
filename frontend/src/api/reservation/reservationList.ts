@@ -22,8 +22,10 @@ const reservationListItemSchema = z.object({
   doctor: z.string(),
   counselor: z.string(),
   comment: z.string(),
-  // 내원동기(중) — 실제 유입처("모두닥"·"인터넷검색(홈페이지)" 등).
+  // 내원동기 대/중 — (대)는 상위 갈래(광고·바이럴·소개고객 등), (중)은 실제 유입처
+  // ("모두닥"·"인터넷검색(홈페이지)" 등). 둘은 항상 같은 출처(CRM 또는 메모)에서 나온 짝이다.
   // 마트 재적재 전 옛 응답과의 호환을 위해 optional.
+  motiveL: z.string().optional(),
   motiveM: z.string().optional(),
   /** CRM = 등록값 · MEMO = 메모의 TM고객(대/중) 에서 추출 */
   motiveMSource: z.string().optional(),

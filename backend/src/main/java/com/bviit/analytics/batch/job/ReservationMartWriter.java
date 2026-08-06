@@ -167,7 +167,7 @@ public class ReservationMartWriter {
             "reserveDate", "reserveTime",
             "chartNo", "name", "reserveState",
             "channel", "channelGroup",
-            "doctor", "counselor", "comment", "motiveM", "motiveMSource",
+            "doctor", "counselor", "comment", "motiveL", "motiveM", "motiveMSource",
             "examRegDate", "examStop", "surgeryRegDate"
     };
 
