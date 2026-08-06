@@ -35,6 +35,9 @@ const reservationListItemSchema = z.object({
   examStop: z.string().optional(),
   /** 예약 이후 첫 수술예약(FLAG=O)을 잡은 날 — 날짜만 */
   surgeryRegDate: z.string().optional(),
+  /** 이 예약으로 이어진 첫 수술의 시술명 우/좌. 수술자 리스트와 같은 원천이라 표기가 일치한다. */
+  surgeryR: z.string().optional(),
+  surgeryL: z.string().optional(),
 })
 
 export type ReservationListItem = z.infer<typeof reservationListItemSchema>

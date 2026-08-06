@@ -86,6 +86,8 @@ const COLUMNS: { label: string; key: SortKey | null; tight?: boolean }[] = [
   { label: '검사등록일', key: 'examRegDate' },
   { label: '검사중단', key: 'examStop' },
   { label: '수술등록일', key: 'surgeryRegDate' },
+  { label: '수술명(우)', key: 'surgeryR' },
+  { label: '수술명(좌)', key: 'surgeryL' },
   { label: '메모', key: 'comment' },
 ]
 
@@ -108,6 +110,8 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'examRegDate', label: '검사등록일' },
   { key: 'examStop', label: '검사중단' },
   { key: 'surgeryRegDate', label: '수술등록일' },
+  { key: 'surgeryR', label: '수술명(우)' },
+  { key: 'surgeryL', label: '수술명(좌)' },
   { key: 'comment', label: '메모' },
 ]
 
@@ -323,7 +327,7 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={13} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr><td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
                   {!showLoading && visible.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
@@ -366,6 +370,9 @@ export function ReservationListPage() {
                               : <span className="text-gray-300">—</span>}
                         </td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.surgeryRegDate)}</td>
+                        {/* 수술명 우/좌 — 수술자 리스트와 같은 원천이라 표기가 그대로 일치한다. */}
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryR)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryL)}</td>
                         <td className="w-full max-w-0 px-2.5 py-1 text-left">
                           <span className="block truncate text-gray-700" title={r.comment}>{dash(r.comment)}</span>
                         </td>
@@ -374,7 +381,7 @@ export function ReservationListPage() {
                   })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={13} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">
                         {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
                       </td>
                     </tr>

@@ -53,8 +53,41 @@ SELECT
   CASE WHEN ex.stopYn = 'Y' THEN 'Y'
        WHEN ex.examDate IS NULL THEN ''
        ELSE 'N' END                                       AS examStop,
-  ISNULL(sx.regDate, '')                                  AS surgeryRegDate
+  ISNULL(sx.regDate, '')                                  AS surgeryRegDate,
+  -- 수술명 우/좌 — 수술자 리스트(find-surgery-list.sql)와 같은 원천·같은 제외목록이라 표기가 일치한다.
+  --   시력교정 = OPERATIONDATA · 백내장 = Cataract_Operationdata(좌·우가 각각 날짜를 갖는다).
+  -- 이 예약으로 이어진 **첫 수술** 1건만 붙인다(예약일 이전 수술은 다른 건).
+  -- 2026-01~08 실측: 5,687건에 붙고 그중 백내장은 1건 — 드물지만 있어서 둘 다 본다.
+  ISNULL(sg.opR, '')                                      AS surgeryR,
+  ISNULL(sg.opL, '')                                      AS surgeryL
 FROM RESERVATION r WITH(NOLOCK)
+OUTER APPLY (
+  SELECT TOP 1 u.opR, u.opL
+  FROM (
+    SELECT op.OPERATION_DATE AS opDate,
+           ISNULL(op.OPERATIONR, '') AS opR, ISNULL(op.OPERATIONL, '') AS opL
+    FROM OPERATIONDATA op WITH(NOLOCK)
+    WHERE op.CUST_NUM = r.CUST_NUM
+      AND op.OPERATION_DATE >= ISNULL(NULLIF(r.RESERVE_DATE, ''), '9999-12-31')
+      AND ( (ISNULL(op.OPERATIONR, '') <> '' AND op.OPERATIONR NOT IN ('X','OP불가','모든수술가능','op x','Strabismus','TEST-TEST'))
+         OR (ISNULL(op.OPERATIONL, '') <> '' AND op.OPERATIONL NOT IN ('X','OP불가','모든수술가능','op x','Strabismus','TEST-TEST')) )
+    UNION ALL
+    SELECT c.OPERATIONR_DATE, ISNULL(c.OPERATIONR, ''), ''
+    FROM Cataract_Operationdata c WITH(NOLOCK)
+    WHERE c.CUST_NUM = r.CUST_NUM
+      AND ISNULL(c.OPERATIONR_DATE, '') <> ''
+      AND ISNULL(c.OPERATIONR, '') NOT IN ('', 'X', 'OP불가', 'TEST-TEST')
+      AND c.OPERATIONR_DATE >= ISNULL(NULLIF(r.RESERVE_DATE, ''), '9999-12-31')
+    UNION ALL
+    SELECT c.OPERATIONL_DATE, '', ISNULL(c.OPERATIONL, '')
+    FROM Cataract_Operationdata c WITH(NOLOCK)
+    WHERE c.CUST_NUM = r.CUST_NUM
+      AND ISNULL(c.OPERATIONL_DATE, '') <> ''
+      AND ISNULL(c.OPERATIONL, '') NOT IN ('', 'X', 'OP불가', 'TEST-TEST')
+      AND c.OPERATIONL_DATE >= ISNULL(NULLIF(r.RESERVE_DATE, ''), '9999-12-31')
+  ) u
+  ORDER BY u.opDate
+) sg
 OUTER APPLY (
   SELECT TOP 1 e.EXAM_DATE AS examDate, ISNULL(LTRIM(RTRIM(e.STOP_YN)), '') AS stopYn
   FROM EXAM e WITH(NOLOCK)

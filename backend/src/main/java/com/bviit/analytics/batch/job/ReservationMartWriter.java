@@ -168,7 +168,7 @@ public class ReservationMartWriter {
             "chartNo", "name", "reserveState",
             "channel", "channelGroup",
             "doctor", "counselor", "comment", "motiveL", "motiveM", "motiveMSource",
-            "examRegDate", "examStop", "surgeryRegDate",
+            "examRegDate", "examStop", "surgeryRegDate", "surgeryR", "surgeryL",
             // 사람 식별용 — 화면·CSV 로는 안 나간다(select-list-reservation.sql 이 뽑지 않음)
             "hp", "email"
     };
