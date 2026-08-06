@@ -26,4 +26,24 @@ public class ReservationChannelFunnelItem {
     private final int examined;
     /** 그중 수술등록일이 있는 건 */
     private final int surgery;
+
+    /* ── 사람 수 ──
+     * 같은 사람이 그 달에 두 번 예약하면 건수는 2, 사람수는 1 이다.
+     * 식별은 휴대폰 > 이메일 > 차트번호 > 이름 순(v_reservation_channel.person).
+     *
+     * ⚠️ 채널별 DISTINCT 라 **채널 합계 ≠ 전체 사람수** 다. 한 사람이 두 채널로 예약하면
+     *    채널마다 1 명씩 세어진다. 합계는 아래 total* 을 쓸 것(모든 행에 같은 값이 실려 온다).
+     */
+    private final int reservedPersons;
+    private final int notCancelPersons;
+    private final int visitedPersons;
+    private final int examinedPersons;
+    private final int surgeryPersons;
+
+    /* ── 전체(채널 무관) 사람 수 — 합계행 전용. 모든 행에 같은 값. ── */
+    private final int totalReservedPersons;
+    private final int totalNotCancelPersons;
+    private final int totalVisitedPersons;
+    private final int totalExaminedPersons;
+    private final int totalSurgeryPersons;
 }

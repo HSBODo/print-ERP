@@ -37,6 +37,16 @@ public class ReservationChannelMartRepository {
                         .visited(rs.getInt("visited"))
                         .examined(rs.getInt("examined"))
                         .surgery(rs.getInt("surgery"))
+                        .reservedPersons(rs.getInt("reserved_persons"))
+                        .notCancelPersons(rs.getInt("not_cancel_persons"))
+                        .visitedPersons(rs.getInt("visited_persons"))
+                        .examinedPersons(rs.getInt("examined_persons"))
+                        .surgeryPersons(rs.getInt("surgery_persons"))
+                        .totalReservedPersons(rs.getInt("total_reserved_persons"))
+                        .totalNotCancelPersons(rs.getInt("total_not_cancel_persons"))
+                        .totalVisitedPersons(rs.getInt("total_visited_persons"))
+                        .totalExaminedPersons(rs.getInt("total_examined_persons"))
+                        .totalSurgeryPersons(rs.getInt("total_surgery_persons"))
                         .build()
         );
     }

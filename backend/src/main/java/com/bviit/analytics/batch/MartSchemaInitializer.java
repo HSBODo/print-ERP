@@ -69,6 +69,7 @@ public class MartSchemaInitializer implements org.springframework.beans.factory.
         applyScript("sql/mart/V40__list_reservation_motive_source.sql");
         applyScript("sql/mart/V41__list_reservation_funnel.sql");
         applyScript("sql/mart/V42__list_reservation_motive_l.sql");
+        applyScript("sql/mart/V44__list_reservation_contact.sql");
         applyScript("sql/mart/V43__v_reservation_channel.sql");
     }
 

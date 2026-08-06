@@ -5,6 +5,12 @@ SELECT
   ISNULL(LTRIM(RTRIM(r.START_TIME)), '')                  AS reserveTime,
   ISNULL(LTRIM(RTRIM(r.CUST_NUM)), '')                    AS chartNo,
   ISNULL(r.CUST_NAME, '')                                 AS name,
+  -- 사람 식별용 연락처 2종 — 화면·CSV 에 내보내지 않는다(개인정보). 마트에만 싣고 중복 판별에만 쓴다.
+  --   CALL_NUM2 가 휴대폰이다. CALL_NUM1 은 208/2227 건뿐이고 CALL_NUM3 은 0 건(2026-07).
+  --   커버리지 휴대폰 98.2% → 이메일까지 합치면 99.94%(둘 다 없는 건 1건).
+  --   하이픈·공백을 없애 저장한다 — 같은 번호가 표기만 달라 다른 사람으로 세는 걸 막는다.
+  REPLACE(REPLACE(ISNULL(r.CALL_NUM2, ''), '-', ''), ' ', '') AS hp,
+  LOWER(LTRIM(RTRIM(ISNULL(r.Email, ''))))                AS email,
   ISNULL(r.RESERVE_STATE, '')                             AS reserveState,
   CASE
     WHEN r.RESERVE_PATH = 'CTI' THEN '인콜'

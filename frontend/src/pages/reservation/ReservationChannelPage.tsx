@@ -16,14 +16,21 @@ import type { ReservationChannelFunnelItem } from '@/api/reservation/reservation
  * 화면은 판정을 하지 않는다 — 규칙을 바꾸려면 뷰만 고치면 된다.
  */
 
-/* ── 단계 정의 ── 순서가 곧 퍼널 순서다. */
+/* ── 단계 정의 ── 순서가 곧 퍼널 순서다.
+ * personKey/totalKey 는 같은 단계의 사람수. 건수와 세는 단위가 다르다 —
+ * 건수는 채널이 몇 번 일했나, 사람수는 실제 몇 명이 왔나. */
 type StageKey = keyof Pick<ReservationChannelFunnelItem, 'reserved' | 'notCancel' | 'visited' | 'examined' | 'surgery'>
-const STAGES: { key: StageKey; label: string; hint: string; color: string }[] = [
-  { key: 'reserved',  label: '예약',   hint: '등록일 기준 전체 예약 건', color: '#1E3A8A' },
-  { key: 'notCancel', label: '취소 제외', hint: '예약 상태가 취소(C)가 아닌 건', color: '#2563EB' },
-  { key: 'visited',   label: '접수',   hint: '미내원(Y)까지 뺀, 실제 내원한 건', color: '#0EA5E9' },
-  { key: 'examined',  label: '검사',   hint: '검사등록일이 있는 건', color: '#10B981' },
-  { key: 'surgery',   label: '수술',   hint: '수술등록일이 있는 건', color: '#F59E0B' },
+type PersonKey = keyof Pick<ReservationChannelFunnelItem,
+  'reservedPersons' | 'notCancelPersons' | 'visitedPersons' | 'examinedPersons' | 'surgeryPersons'>
+type TotalKey = keyof Pick<ReservationChannelFunnelItem,
+  'totalReservedPersons' | 'totalNotCancelPersons' | 'totalVisitedPersons' | 'totalExaminedPersons' | 'totalSurgeryPersons'>
+
+const STAGES: { key: StageKey; personKey: PersonKey; totalKey: TotalKey; label: string; hint: string; color: string }[] = [
+  { key: 'reserved',  personKey: 'reservedPersons',  totalKey: 'totalReservedPersons',  label: '예약',    hint: '등록일 기준 전체 예약 건', color: '#1E3A8A' },
+  { key: 'notCancel', personKey: 'notCancelPersons', totalKey: 'totalNotCancelPersons', label: '취소 제외', hint: '예약 상태가 취소(C)가 아닌 건', color: '#2563EB' },
+  { key: 'visited',   personKey: 'visitedPersons',   totalKey: 'totalVisitedPersons',   label: '접수',    hint: '미내원(Y)까지 뺀, 실제 내원한 건', color: '#0EA5E9' },
+  { key: 'examined',  personKey: 'examinedPersons',  totalKey: 'totalExaminedPersons',  label: '검사',    hint: '검사등록일이 있는 건', color: '#10B981' },
+  { key: 'surgery',   personKey: 'surgeryPersons',   totalKey: 'totalSurgeryPersons',   label: '수술',    hint: '수술등록일이 있는 건', color: '#F59E0B' },
 ]
 
 /* ── 기간 헬퍼 (예약자 리스트와 같은 규칙: 진행 중인 달은 오늘까지) ── */
@@ -62,10 +69,20 @@ export function ReservationChannelPage() {
   /** 예약 건수 내림차순. 막대 폭은 최대 채널 기준이라 채널 간 규모가 한눈에 비교된다. */
   const sorted = useMemo(() => [...rows].sort((a, b) => b.reserved - a.reserved), [rows])
   const maxReserved = sorted[0]?.reserved ?? 0
+  // 건수 합계는 채널을 더하면 되지만, 사람수는 더하면 안 된다 —
+  // 한 사람이 두 채널로 예약하면 채널마다 1 명씩 세어져 중복된다. 서버가 준 전체값을 쓴다.
   const total = useMemo(
     () =>
       STAGES.reduce(
         (acc, s) => ({ ...acc, [s.key]: rows.reduce((sum, r) => sum + r[s.key], 0) }),
+        {} as Record<StageKey, number>,
+      ),
+    [rows],
+  )
+  const totalPersons = useMemo(
+    () =>
+      STAGES.reduce(
+        (acc, s) => ({ ...acc, [s.key]: rows[0]?.[s.totalKey] ?? 0 }),
         {} as Record<StageKey, number>,
       ),
     [rows],
@@ -119,8 +136,15 @@ export function ReservationChannelPage() {
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
                     {s.label}
                   </div>
-                  <div className="mt-0.5 text-lg font-bold tabular-nums" style={{ color: s.color }}>
-                    {nf(total[s.key] ?? 0)}
+                  <div className="mt-0.5 flex items-baseline gap-1.5">
+                    <span className="text-lg font-bold tabular-nums" style={{ color: s.color }}>
+                      {nf(total[s.key] ?? 0)}
+                    </span>
+                    <span className="text-[11px] tabular-nums text-gray-400">건</span>
+                    <span className="ml-auto text-sm font-semibold tabular-nums text-gray-600">
+                      {nf(totalPersons[s.key] ?? 0)}
+                    </span>
+                    <span className="text-[11px] tabular-nums text-gray-400">명</span>
                   </div>
                   <div className="text-[11px] tabular-nums text-gray-400">
                     {i === 0 ? '전체' : `직전 대비 ${pct(total[s.key], prev)}`}
@@ -145,6 +169,7 @@ export function ReservationChannelPage() {
                         <span className="inline-flex items-center gap-1.5">
                           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
                           {s.label}
+                          <span className="font-normal text-gray-400">건/명</span>
                         </span>
                       </th>
                     ))}
@@ -170,10 +195,16 @@ export function ReservationChannelPage() {
                                   style={{ width: `${Math.max(w, v > 0 ? 1.5 : 0)}%`, backgroundColor: s.color }}
                                 />
                               </div>
-                              <span className="w-11 shrink-0 text-right font-semibold tabular-nums text-gray-900">
+                              <span className="w-10 shrink-0 text-right font-semibold tabular-nums text-gray-900">
                                 {nf(v)}
                               </span>
-                              <span className="w-11 shrink-0 text-right tabular-nums text-[11px] text-gray-400">
+                              <span
+                                className="w-9 shrink-0 text-right tabular-nums text-[11px] text-gray-500"
+                                title="사람 수 (같은 사람의 재예약은 1명)"
+                              >
+                                {nf(r[s.personKey])}명
+                              </span>
+                              <span className="w-10 shrink-0 text-right tabular-nums text-[11px] text-gray-400">
                                 {i === 0 ? '' : pct(v, prev)}
                               </span>
                             </div>
@@ -193,8 +224,11 @@ export function ReservationChannelPage() {
                         <td key={s.key} className="px-2 py-2">
                           <div className="flex items-center gap-2">
                             <div className="flex-1" />
-                            <span className="w-11 shrink-0 text-right tabular-nums">{nf(total[s.key] ?? 0)}</span>
-                            <span className="w-11 shrink-0 text-right tabular-nums text-[11px] text-gray-500">
+                            <span className="w-10 shrink-0 text-right tabular-nums">{nf(total[s.key] ?? 0)}</span>
+                            <span className="w-9 shrink-0 text-right tabular-nums text-[11px] text-gray-600">
+                              {nf(totalPersons[s.key] ?? 0)}명
+                            </span>
+                            <span className="w-10 shrink-0 text-right tabular-nums text-[11px] text-gray-400">
                               {i === 0 ? '' : pct(total[s.key], prev)}
                             </span>
                           </div>
@@ -209,9 +243,11 @@ export function ReservationChannelPage() {
           )}
 
           <p className="mt-3 shrink-0 text-[11px] leading-relaxed text-muted-foreground">
-            ※ <b>예약 건</b> 단위입니다(사람 아님) — 같은 사람이 취소 후 다시 잡으면 2건입니다.
-            단계는 뒤로 갈수록 앞 단계의 부분집합이며, 막대 폭은 채널 간 비교가 되도록 <b>가장 큰 채널의 예약수</b>를 100%로 잡았습니다.
-            퍼센트는 <b>직전 단계 대비</b> 잔존율입니다.
+            ※ <b>건수</b>는 채널이 몇 번 유치했나, <b>명</b>은 실제 몇 명인가입니다 — 같은 사람이 취소 후 다시 잡으면 2건 1명입니다.
+            사람 식별은 휴대폰 &gt; 이메일 &gt; 차트번호 &gt; 이름 순이며 커버리지는 99.9%입니다(연락처는 화면·CSV에 나가지 않습니다).
+            <b>사람수는 채널 합계가 전체와 다릅니다</b> — 한 사람이 두 채널로 예약하면 채널마다 1명씩 세어지므로, 합계행은 전체 기준값을 씁니다.
+            단계는 뒤로 갈수록 앞 단계의 부분집합이며, 막대 폭은 채널 간 비교가 되도록 <b>가장 큰 채널의 예약 건수</b>를 100%로 잡았습니다.
+            퍼센트는 <b>직전 단계 대비</b> 잔존율(건수 기준)입니다.
             <br />
             ※ 채널은 <b>내원동기(중)의 매체명 → 자사 담당자 → 예약경로</b> 순으로 판정합니다.
             모두닥·카페처럼 매체를 보고 전화로 예약하면 경로는 인콜이지만 채널은 매체로 잡힙니다.

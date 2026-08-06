@@ -37,7 +37,11 @@ INSERT INTO reservation_channel_staff (channel, motive_m, memo) VALUES
     ('자사해외', '김지은(외)', '자사 해외마케팅 담당 (사내 동명이인 구분 접미사 (외))')
 ON CONFLICT (channel, motive_m) DO NOTHING;
 
-CREATE OR REPLACE VIEW v_reservation_channel AS
+-- ⚠️ CREATE OR REPLACE 를 쓰지 않는다. 그 문법은 기존 뷰의 컬럼 이름·순서를 바꾸지 못해
+--    ("cannot change name of view column") 컬럼을 중간에 추가하면 기동이 실패한다.
+--    이 뷰는 저장하는 게 없어 언제 지웠다 만들어도 안전하다.
+DROP VIEW IF EXISTS v_reservation_channel;
+CREATE VIEW v_reservation_channel AS
 SELECT
     r.registered_at,
     r.chart_no,
@@ -46,6 +50,18 @@ SELECT
     r.channel        AS reserve_path_channel,   -- 원래 경로(참고용)
     r.motive_m,
     r.exam_reg_date,
+    -- 사람 식별자 — 건수와 사람수를 같이 세기 위한 키.
+    -- 휴대폰 > 이메일 > 차트번호 > 이름 순(V44 머리주석 참조). 접두사로 종류를 구분해
+    -- 번호와 차트번호가 우연히 같아도 섞이지 않게 한다.
+    -- ⚠️ 더미 번호를 거른다. 연락처를 모르는 예약에 0 을 채워 넣는 관행이 있어
+    --    2026-07 에 '00000000000' 74건·'0000' 9건·'0' 4건이 있었다.
+    --    거르지 않으면 **서로 다른 87명이 3명으로 뭉개진다**(크리에이트립 3건이 1명이 되는 식).
+    --    숫자 9자리 이상이면서 0 만으로 이뤄지지 않은 값만 식별자로 인정한다.
+    --    이메일도 '@' 가 있어야 인정한다.
+    CASE WHEN r.hp ~ '^[0-9]{9,}$' AND r.hp !~ '^0+$' THEN 'H|' || r.hp
+         WHEN r.email LIKE '%@%'                      THEN 'E|' || r.email
+         WHEN r.chart_no <> '9999999999999'           THEN 'C|' || r.chart_no
+         ELSE 'N|' || r.name END AS person,
     r.exam_stop,
     r.surgery_reg_date,
     COALESCE(
