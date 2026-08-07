@@ -1,110 +1,29 @@
-import type { ReactNode } from 'react'
+import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
 
 /**
- * 모두닥 채널 분석 — 정적 문서 페이지.
+ * 모두닥 채널 분석 문서 (2026-01~08 실측).
  *
- * 조회를 하지 않는다. 수치는 2026-01~08 실측을 본문에 고정해 둔 것이다.
- * 이유: 이 문서의 값어치는 숫자 자체가 아니라 **어떤 가설이 검증되고 어떤 가설이 죽었는지**에 있다.
- * 매달 갱신되는 화면으로 만들면 그때그때 숫자만 바뀌고 결론의 근거가 사라진다.
- * 숫자를 다시 뽑고 싶으면 `예약통계_채널별`·`채널별 수익성` 을 보면 된다.
+ * 조회를 하지 않는다. 수치를 본문에 고정한 이유는 이 문서의 값어치가 숫자가 아니라
+ * **어떤 가설이 검증되고 어떤 가설이 죽었는지**에 있기 때문이다.
+ * 매달 갱신되는 화면으로 만들면 숫자만 바뀌고 결론의 근거가 사라진다.
+ * 최신 수치는 `예약 퍼널`·`채널별 수익성` 에서 본다.
  *
- * ⚠️ 유지보수 시 주의 — 4번 항목(철회 기록)을 지우지 말 것.
- *    "스마일→프로 상담 전환" 은 한 번 제안됐다가 데이터로 반박된 안이다.
- *    기록을 지우면 같은 제안이 다시 올라온다.
+ * ⚠️ 4번(철회 기록)을 지우지 말 것. "스마일→프로 상담 전환" 은 한 번 제안됐다가
+ *    데이터로 반박된 안이다. 기록이 없으면 같은 제안이 다시 올라온다.
  */
 
-/* 출처를 한 곳에 모은다 — 본문 수치를 고칠 때 어디를 다시 돌려야 하는지 바로 알 수 있게. */
 const PERIOD = '2026-01-01 ~ 2026-08-31 (등록일 기준)'
-const N_MODOODOC = 475
 
-function Section({ no, title, children }: { no: string; title: string; children: ReactNode }) {
+export function ModoodocDoc() {
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white px-7 py-6 shadow-sm">
-      <div className="mb-4 flex items-baseline gap-2.5">
-        <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-slate-900 text-[12px] font-bold text-white">
-          {no}
-        </span>
-        <h2 className="text-[16px] font-bold tracking-tight text-slate-900">{title}</h2>
-      </div>
-      {children}
-    </section>
-  )
-}
+    <div className="flex flex-col gap-4">
+      <DocHeader title="모두닥" badges={[PERIOD, '수술 완료 475명']} />
 
-/** 표 — 마지막 열은 오른쪽 정렬이 기본이다(숫자 칸). */
-function Table({ head, rows }: { head: string[]; rows: (string | ReactNode)[][] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] border-collapse text-[13px]">
-        <thead>
-          <tr className="border-b border-slate-200">
-            {head.map((h, i) => (
-              <th key={h} className={`whitespace-nowrap py-2 text-[11.5px] font-semibold text-slate-400 ${i === 0 ? 'text-left' : 'text-right'}`}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, ri) => (
-            <tr key={ri} className="border-b border-slate-50">
-              {r.map((cell, ci) => (
-                <td key={ci} className={`py-[7px] tabular-nums ${ci === 0 ? 'text-left font-medium text-slate-700' : 'text-right text-slate-900'}`}>
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-const Hi = ({ children }: { children: ReactNode }) => (
-  <b className="font-bold text-slate-900">{children}</b>
-)
-
-/** 결론 박스 — 색으로 성격을 구분한다. good=검증됨 / bad=철회됨 / warn=미확인 */
-function Callout({ tone, title, children }: { tone: 'good' | 'bad' | 'warn'; title: string; children: ReactNode }) {
-  const s = {
-    good: { bg: 'bg-emerald-50/70', bd: 'border-emerald-200', tx: 'text-emerald-800' },
-    bad: { bg: 'bg-red-50/70', bd: 'border-red-200', tx: 'text-red-800' },
-    warn: { bg: 'bg-amber-50/70', bd: 'border-amber-200', tx: 'text-amber-800' },
-  }[tone]
-  return (
-    <div className={`rounded-xl border ${s.bd} ${s.bg} px-4 py-3`}>
-      <p className={`mb-1 text-[13px] font-bold ${s.tx}`}>{title}</p>
-      <div className="text-[13px] leading-relaxed text-slate-600">{children}</div>
-    </div>
-  )
-}
-
-export function ModoodocPage() {
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto pb-8">
-      {/* ── 헤더 ── */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2.5">
-        <h1 className="text-[22px] font-bold tracking-tight text-slate-900">모두닥 채널 분석</h1>
-        <span className="rounded-md bg-slate-200/70 px-2 py-[3px] text-[11px] font-semibold text-slate-600">
-          {PERIOD}
-        </span>
-        <span className="rounded-md bg-slate-200/70 px-2 py-[3px] text-[11px] font-semibold text-slate-600">
-          수술 완료 {N_MODOODOC}명
-        </span>
-      </div>
-
-      {/* ── 한 줄 요약 ── */}
-      <div className="rounded-2xl border border-slate-900 bg-slate-900 px-7 py-5 shadow-sm">
-        <p className="text-[11.5px] font-semibold uppercase tracking-wider text-slate-400">한 줄 요약</p>
-        <p className="mt-1.5 text-[17px] font-bold leading-relaxed text-white">
-          국내 20대 후반 직장인이, 정가가 낮은 스마일을 골라, 플랫폼 할인을 받고 수술한다.
-        </p>
-        <p className="mt-2 text-[13px] leading-relaxed text-slate-300">
-          객단가 326만원은 <b className="font-semibold text-white">깎아준 결과가 아니라 이 채널의 고정 특성</b>이다.
-          타채널과의 차이 43만원 중 36만원(84%)이 시술 구성 차이이고, 그 구성은 검사 단계의 임상 판단으로 이미 정해져 있다.
-        </p>
-      </div>
+      <Summary headline="국내 20대 후반 직장인이, 정가가 낮은 스마일을 골라, 플랫폼 할인을 받고 수술한다.">
+        객단가 326만원은 <b className="font-semibold text-white">깎아준 결과가 아니라 이 채널의 고정 특성</b>이다.
+        타채널과의 차이 43만원 중 36만원(84%)이 시술 구성 차이이고,
+        그 구성은 검사 단계의 임상 판단으로 이미 정해져 있다.
+      </Summary>
 
       <Section no="1" title="누가 오는가">
         <div className="grid gap-5 lg:grid-cols-2">
@@ -215,7 +134,7 @@ export function ModoodocPage() {
             ['할인율', '19.2%', '16.1%', '+3.1%p'],
           ]}
         />
-        <p className="mt-4 mb-2 text-[12px] font-semibold text-slate-500">정가가 낮은 원인 — 스마일 편중</p>
+        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">정가가 낮은 원인 — 스마일 편중</p>
         <Table
           head={['시술', '모두닥 비중', '전체 비중', '평균 단가']}
           rows={[
@@ -291,16 +210,15 @@ export function ModoodocPage() {
         </div>
       </Section>
 
-      <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 px-7 py-5">
-        <p className="mb-2 text-[12px] font-bold text-slate-500">출처와 한계</p>
-        <ul className="ml-4 list-disc space-y-1 text-[12.5px] leading-relaxed text-slate-500">
-          <li>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 모두 통과한 사람이다(예약통계_채널별과 같은 정의).</li>
-          <li>정가·할인은 검사 시점 <b>견적</b>이라 실수납액과 편차가 있다. 매출 분석에는 수납액을, 가격 정책 분석에는 견적을 쓴다.</li>
-          <li>견적 파싱 커버리지는 시력교정 100%(6,349건). 백내장은 형식이 달라 빠지지만 예약 퍼널에 1건뿐이라 영향이 없다.</li>
-          <li>할인 컬럼(COSTPRICE.DicPrc 등)은 사실상 비어 있어(0.09%) 쓰지 않았다. 할인은 견적 텍스트에서 파싱했다.</li>
-          <li>성별 미확인. 광고비 미입력 상태라 CAC·ROAS는 아직 계산할 수 없다.</li>
-        </ul>
-      </div>
+      <Sources
+        items={[
+          <>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 모두 통과한 사람이다(<b>예약 퍼널</b>과 같은 정의).</>,
+          <>정가·할인은 검사 시점 <b>견적</b>이라 실수납액과 편차가 있다. 매출 분석에는 수납액을, 가격 정책 분석에는 견적을 쓴다.</>,
+          <>견적 파싱 커버리지는 시력교정 100%(6,349건). 백내장은 형식이 달라 빠지지만 예약 퍼널에 1건뿐이라 영향이 없다.</>,
+          <>할인 컬럼(COSTPRICE.DicPrc 등)은 사실상 비어 있어(0.09%) 쓰지 않았다. 할인은 견적 텍스트에서 파싱했다.</>,
+          <>성별 미확인. 광고비 미입력 상태라 CAC·ROAS 는 아직 계산할 수 없다.</>,
+        ]}
+      />
     </div>
   )
 }

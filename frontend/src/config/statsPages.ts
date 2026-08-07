@@ -135,7 +135,7 @@ export const statsPages: StatsPageDefinition[] = [
   ),
   statsPage(
     'reservation-channel',
-    '예약통계_채널별',
+    '예약 퍼널',
     '/stats/reservation-channel',
     'marketing-section',
     '마케팅',
@@ -152,12 +152,12 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/channel-profit'
   ),
   statsPage(
-    'channel-modoodoc',
-    '모두닥',
-    '/stats/channel-modoodoc',
+    'channel-analysis',
+    '채널별 분석',
+    '/stats/channel-analysis',
     'marketing-section',
     '마케팅',
-    '모두닥 유입 고객이 누구이고 왜 객단가가 낮은지 정리한 분석 문서입니다. 2026-01~08 실측 기준이며 화면은 조회를 하지 않습니다(수치는 본문에 고정).',
+    '유입 채널별로 고객이 누구이고 객단가가 왜 그런지 정리한 분석 문서 모음입니다. 좌측에서 채널을 고르면 해당 문서가 열립니다. 실측 기준이며 화면은 조회를 하지 않습니다(수치는 본문에 고정).',
     '(없음 — 정적 문서)'
   ),
   statsPage(
