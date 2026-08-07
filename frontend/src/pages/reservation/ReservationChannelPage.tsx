@@ -57,6 +57,10 @@ const STAGES: { personKey: PersonKey; totalKey: TotalKey; label: string; hint: s
 /** 수술등록 → 수술완료 구간. 이 사이의 이탈은 "빠져나간 사람"이 아니라 **수술 대기**다.
  *  다른 구간과 같은 말로 부르면 오해를 부르므로 화면에서 따로 이름을 붙인다. */
 const WAIT_GAP_INDEX = 5
+/** 수술완료 → 재수술 구간. 여기서 '줄어든 수'는 의미가 없다 —
+ *  완료 579명 중 재수술이 0명이면 그건 −579 가 아니라 재수술 0 이다.
+ *  게다가 이 구간은 적을수록 좋아서 빨간 이탈로 칠하면 정반대로 읽힌다. */
+const REOP_GAP_INDEX = 6
 /** '최종 전환' 의 기준 단계 = 수술등록. 재수술까지 세면 0 이라 최종 전환이 될 수 없다. */
 const FINAL_INDEX = 5
 
@@ -407,24 +411,30 @@ export function ReservationChannelPage() {
                   })}
                 </svg>
 
-                {/* 구간 알약 — 대부분은 이탈이지만 수술등록→수술완료만 '대기'다.
-                    수술을 아직 안 한 사람은 빠져나간 게 아니라서 빨강으로 칠하면 안 된다. */}
+                {/* 구간 알약 — 세 종류다. 같은 모양으로 그리면 정반대로 읽힌다.
+                      이탈   빠져나간 사람. 빨강, 가장 큰 곳을 강조
+                      대기   수술등록→수술완료. 아직 수술일이 안 온 사람이라 이탈이 아니다 → 노랑
+                      재수술 수술완료→재수술. '줄어든 수'가 아니라 재수술 인원 자체를 쓴다.
+                             적을수록 좋은 구간이라 빨강을 쓰지 않는다 → 회색 */}
                 {drops.map((d, i) => {
                   const wait = i === WAIT_GAP_INDEX
-                  const big = !wait && d === maxDrop && d > 0
+                  const reop = i === REOP_GAP_INDEX
+                  const big = !wait && !reop && d === maxDrop && d > 0
+                  const v = reop ? funnel[i + 1] : d
                   return (
                     <div key={i}
                       className="pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-baseline gap-1.5 rounded-full border px-2.5 py-1 shadow-sm"
                       style={{
                         left: `${(((i + 1) * BAND_W) / VB_W) * 100}%`, top: '50%',
-                        background: wait ? '#fffbeb' : big ? '#fef2f2' : '#fff',
-                        borderColor: wait ? '#fde68a' : big ? '#fecaca' : '#e8ecf1',
+                        background: wait ? '#fffbeb' : reop ? '#f8fafc' : big ? '#fef2f2' : '#fff',
+                        borderColor: wait ? '#fde68a' : reop ? '#e2e8f0' : big ? '#fecaca' : '#e8ecf1',
                       }}>
-                      <span className={`whitespace-nowrap text-xs font-bold tabular-nums ${wait ? 'text-amber-600' : 'text-red-600'}`}>
-                        {wait ? (d > 0 ? `대기 ${nf(d)}명` : '대기 0') : d > 0 ? `−${nf(d)}명` : '0'}
+                      <span className={`whitespace-nowrap text-xs font-bold tabular-nums ${
+                        wait ? 'text-amber-600' : reop ? 'text-slate-500' : 'text-red-600'}`}>
+                        {wait ? `대기 ${nf(v)}명` : reop ? `재수술 ${nf(v)}명` : v > 0 ? `−${nf(v)}명` : '0'}
                       </span>
                       <span className="whitespace-nowrap text-[10.5px] font-semibold tabular-nums text-slate-400">
-                        {pct(d, funnel[i])}
+                        {pct(v, funnel[i])}
                       </span>
                     </div>
                   )
@@ -442,9 +452,14 @@ export function ReservationChannelPage() {
                       <span>진입</span><span className="font-semibold text-white">{nf(funnel[hover])}명</span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
-                      <span>{hover === WAIT_GAP_INDEX ? '수술 대기' : '다음 단계 이탈'}</span>
-                      <span className={`font-semibold ${hover === WAIT_GAP_INDEX ? 'text-amber-300' : 'text-red-300'}`}>
-                        {hover === STAGES.length - 1 ? '—' : `${nf(drops[hover])}명 (${pct(drops[hover], funnel[hover])})`}
+                      <span>{hover === WAIT_GAP_INDEX ? '수술 대기' : hover === REOP_GAP_INDEX ? '재수술' : '다음 단계 이탈'}</span>
+                      <span className={`font-semibold ${
+                        hover === WAIT_GAP_INDEX ? 'text-amber-300' : hover === REOP_GAP_INDEX ? 'text-slate-200' : 'text-red-300'}`}>
+                        {hover === STAGES.length - 1
+                          ? '—'
+                          : hover === REOP_GAP_INDEX
+                            ? `${nf(funnel[hover + 1])}명 (${pct(funnel[hover + 1], funnel[hover])})`
+                            : `${nf(drops[hover])}명 (${pct(drops[hover], funnel[hover])})`}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
@@ -452,7 +467,10 @@ export function ReservationChannelPage() {
                       <span className="font-semibold text-white">
                         {hover === STAGES.length - 1
                           ? `최종 ${pct(funnel[FINAL_INDEX], funnel[0])}`
-                          : `${nf(funnel[hover + 1])}명 (${pct(funnel[hover + 1], funnel[hover])})`}
+                          /* 재수술 구간은 위 줄이 이미 같은 값을 보여줘 잔존을 또 쓰면 중복이다 */
+                          : hover === REOP_GAP_INDEX
+                            ? '—'
+                            : `${nf(funnel[hover + 1])}명 (${pct(funnel[hover + 1], funnel[hover])})`}
                       </span>
                     </div>
                   </div>
