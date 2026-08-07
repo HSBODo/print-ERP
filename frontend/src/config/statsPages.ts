@@ -143,6 +143,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/reservation-channel'
   ),
   statsPage(
+    'channel-profit',
+    '채널별 수익성',
+    '/stats/channel-profit',
+    'marketing-section',
+    '마케팅',
+    '유입채널이 얼마를 남겼는지(수납액·객단가·공헌이익)와 광고매체가 얼마를 회수했는지(CPA·ROAS)를 나눠서 봅니다. 예약통계_채널별과 같은 뷰를 읽어 인원이 일치합니다.',
+    '/api/stats/channel-profit'
+  ),
+  statsPage(
     'reservation-list-homepage',
     '예약자 리스트_홈페이지',
     '/stats/reservation-list-homepage',

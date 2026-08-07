@@ -51,6 +51,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'reservation-stats-cataract': 'complete',
   'reservation-list': 'complete',
   'reservation-channel': 'complete',
+  'channel-profit': 'complete',
   // 소스(legacy.datasource.url) 미설정 환경에서는 503 — 다른 통계 페이지가 데이터소스 부재 시
   // 503 을 주는 것과 동일한 패턴이라 'complete' 가 맞다(상태는 구현 완료 여부를 뜻한다).
   'reservation-list-homepage': 'complete',
@@ -241,8 +242,9 @@ const rawMenuItems: MenuItem[] = [
     icon: Megaphone,
     kind: 'section',
     // 예약통계_채널별은 유입 채널 효율을 보는 화면이라 예약보다 마케팅에 가깝다(2026-08-06 이동).
+    // 채널별 수익성은 그 짝이다 — 퍼널이 '얼마나 오나'(전환 축), 이쪽이 '얼마 버나'(가치 축).
     // 해외 환자·마케팅 효율(overseas·marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
-    children: kids('reservation-channel'),
+    children: kids('reservation-channel', 'channel-profit'),
   },
   {
     id: 'admin-section',
