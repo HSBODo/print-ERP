@@ -11,9 +11,12 @@ import type { ReservationChannelFunnelItem } from '@/api/reservation/reservation
  * 단계는 예약자 리스트에서 차례로 걸러낸 것이다.
  *   예약 → 취소 제외 → 접수(내원) → 검사 → 중단 제외 → 수술등록 → 수술완료 → 재수술
  *
- * ★ 수술대기는 단계가 아니라 **수술등록 − 수술완료** 다(WAIT_GAP_INDEX).
- *   대기와 완료는 형제라 둘 다 단계로 두면 뒤 단계가 앞 단계보다 커져 퍼널이 깨진다.
- *   그래서 구간 알약에 '대기 N명' 으로 노랗게 표시한다 — 이탈이 아니므로 빨강을 쓰지 않는다.
+ * ★ 수술대기( = 수술등록 − 수술완료 )는 **칸으로는 보여주되 퍼널 밴드에는 넣지 않는다**.
+ *   대기와 완료는 형제라 밴드에 끼우면 735 → 156 → 579 로 줄었다 늘어 퍼널이 거짓말을 한다.
+ *   그래서 그리는 목록이 둘이다:
+ *     STAGES  퍼널 밴드 8단계 (예약 … 수술등록 → 수술완료 → 재수술)
+ *     COLS    카드·표 9칸 (STAGES + 수술대기를 수술등록 뒤에 끼움)
+ *   대기는 이탈이 아니므로 빨강을 쓰지 않고 노랑·점선으로 파생 칸임을 드러낸다.
  *
  * ★ 이 화면은 **사람 수만** 센다(건수 아님).
  *   같은 사람이 취소 후 다시 잡아도 1명이다. 실제 몇 명이 왔는지가 알고 싶은 값이라서다.
@@ -41,8 +44,6 @@ const STAGES: { personKey: PersonKey; totalKey: TotalKey; label: string; hint: s
   { personKey: 'visitedPersons',    totalKey: 'totalVisitedPersons',    label: '접수',     hint: '미내원까지 빼고 실제 내원한 사람', color: '#0ea5e9' },
   { personKey: 'examinedPersons',   totalKey: 'totalExaminedPersons',   label: '검사',     hint: '검사등록일이 있는 사람', color: '#10b981' },
   { personKey: 'notStopPersons',    totalKey: 'totalNotStopPersons',    label: '중단 제외', hint: '검사 후 중단(검사중단=Y)하지 않은 사람 — 중단하면 수술로 가지 않는다', color: '#14b8a6' },
-  // 수술등록 → 수술완료 사이의 이탈이 곧 **수술대기**다. 별도 단계로 두지 않는다 —
-  // 대기 = 등록 − 완료 라서 칸을 따로 만들면 같은 숫자가 두 벌이 되고, 부분집합 관계도 깨진다.
   { personKey: 'surgeryPersons',    totalKey: 'totalSurgeryPersons',    label: '수술등록',  hint: '수술예약을 등록한 사람 — 수술한 날이 아니다', color: '#f59e0b' },
   { personKey: 'surgeryDonePersons', totalKey: 'totalSurgeryDonePersons', label: '수술완료', hint: '실제 수술일이 있는 사람. 수술등록과의 차이가 수술 대기 인원이다', color: '#f97316' },
   { personKey: 'reopPersons',       totalKey: 'totalReopPersons',       label: '재수술',   hint: '수술 후 재수술까지 간 사람(코호트 기준) — 재수술은 몇 달~몇 년 뒤라 최근 달일수록 0 이다', color: '#dc2626' },
@@ -53,8 +54,57 @@ const STAGES: { personKey: PersonKey; totalKey: TotalKey; label: string; hint: s
 const WAIT_GAP_INDEX = 5
 /** '최종 전환' 의 기준 단계 = 수술등록. 재수술까지 세면 0 이라 최종 전환이 될 수 없다. */
 const FINAL_INDEX = 5
-/** '수술 유형별' 패널을 여는 단계 = 수술완료. 유형은 실제 수술한 사람에게만 있다. */
-const TYPE_INDEX = 6
+
+/* ── 칸 정의 ── 카드와 표가 그리는 열. 퍼널 단계(STAGES) + 파생 칸(수술대기).
+ *
+ * 수술대기는 **퍼널 밴드로는 그리지 않는다**. 등록의 부분집합이라 완료와 형제이고,
+ * 밴드에 끼우면 735 → 156 → 579 로 줄었다 늘어 퍼널이 거짓말을 한다.
+ * 대신 숫자로는 보여야 하는 값이라 카드·표에는 칸으로 넣는다.
+ *
+ * prev  통과율 분모가 되는 칸의 인덱스(-1 이면 비율 없음).
+ *       수술완료는 대기(6)가 아니라 등록(5) 대비여야 한다 — 대기를 건너뛴다. */
+type ColDef = {
+  label: string
+  hint: string
+  color: string
+  value: (r: ReservationChannelFunnelItem) => number
+  total: (r: ReservationChannelFunnelItem) => number
+  prev: number
+  /** 퍼널 단계가 아닌 파생 칸 — 표에서 점선 테두리로 구분한다. */
+  derived?: boolean
+}
+
+const stageCol = (i: number, prev: number): ColDef => {
+  const s = STAGES[i]
+  return {
+    label: s.label, hint: s.hint, color: s.color, prev,
+    value: (r) => r[s.personKey],
+    total: (r) => r[s.totalKey],
+  }
+}
+
+const COLS: ColDef[] = [
+  stageCol(0, -1), stageCol(1, 0), stageCol(2, 1), stageCol(3, 2), stageCol(4, 3),
+  stageCol(5, 4),                       // 수술등록
+  {                                     // 수술대기 — 파생
+    label: '수술대기',
+    hint: '수술예약은 잡았지만 아직 수술일이 오지 않은 사람 = 수술등록 − 수술완료. 이탈이 아니다',
+    color: '#eab308',
+    prev: 5,
+    derived: true,
+    value: (r) => r.surgeryPersons - r.surgeryDonePersons,
+    total: (r) => r.totalSurgeryPersons - r.totalSurgeryDonePersons,
+  },
+  stageCol(6, 5),                       // 수술완료 — 대기(6)를 건너뛰고 등록(5) 대비
+  stageCol(7, 7),                       // 재수술 — 수술완료(7) 대비
+]
+
+/** '수술 유형별' 패널을 여는 수술완료 칸. 유형은 실제 수술한 사람에게만 있다.
+ *  COLS 와 STAGES 는 대기 칸 때문에 인덱스가 한 칸 어긋나 각각 둔다. */
+const TYPE_COL = 7
+const TYPE_STAGE = 6
+/** 통과율이 낮을 때 빨갛게 칠할 마지막 칸. 그 뒤(대기·완료·재수술)는 이탈이 아니다. */
+const LAST_DROP_COL = 5
 
 /** 수술 유형 라벨·색. 건수는 API 가 실제 수술명에서 분류해 준다(추정 아님).
  *  분류 규칙은 surgery_op_type() 함수 하나뿐이라 수술 통계와 항상 같은 기준이다. */
@@ -152,6 +202,15 @@ export function ReservationChannelPage() {
     [selRow, total],
   )
 
+  /** 카드가 그리는 값 — 퍼널과 달리 파생 칸(수술대기)도 포함한다.
+   *  채널을 고르면 그 채널, 아니면 전체 기준. */
+  const cardValues = useMemo(
+    () => COLS.map((c) => (selRow ? c.value(selRow) : rows[0] ? c.total(rows[0]) : 0)),
+    [selRow, rows],
+  )
+  /** 표 합계행 — 채널을 골라도 항상 전체 기준이다(카드와 달리 선택을 따라가지 않는다). */
+  const colTotals = useMemo(() => COLS.map((c) => (rows[0] ? c.total(rows[0]) : 0)), [rows])
+
   const base = funnel[0] || 0
   const hOf = (v: number) => (base ? (v / base) * MAX_H : 0)
 
@@ -204,8 +263,8 @@ export function ReservationChannelPage() {
       if (sort.key === 'final') return (finalRate(a) - finalRate(b)) * dir
       if (sort.key === 'amount') return (a.surgeryAmount - b.surgeryAmount) * dir
       if (sort.key === 'aov') return (aov(a) - aov(b)) * dir
-      const s = STAGES[Number(sort.key)]
-      return ((a[s.personKey] ?? 0) - (b[s.personKey] ?? 0)) * dir
+      const c = COLS[Number(sort.key)]
+      return c ? (c.value(a) - c.value(b)) * dir : 0
     })
   }, [rows, sort])
 
@@ -228,8 +287,8 @@ export function ReservationChannelPage() {
     setSort({ key: '0', dir: 'desc' }); setSel(null); setTypeOpen(true)
   }
 
-  // 단계 칸은 STAGES 길이에서 뽑는다 — 단계를 늘렸는데 여기가 6 으로 남으면 열이 어긋난다.
-  const gridCols = `104px repeat(${STAGES.length}, minmax(0,1fr)) 78px 82px 82px`
+  // 칸 수는 COLS 길이에서 뽑는다 — 칸을 늘렸는데 여기가 고정이면 열이 통째로 어긋난다.
+  const gridCols = `104px repeat(${COLS.length}, minmax(0,1fr)) 78px 82px 82px`
 
   return (
     <PanelShell variant="bar" isLoading={loading} isError={isError}>
@@ -288,29 +347,29 @@ export function ReservationChannelPage() {
           <div className="flex flex-wrap items-stretch">
             <div className="flex min-w-0 flex-1 flex-col justify-center" style={{ flexBasis: '640px' }}>
               {/* 단계 카드 — 사람 수(검정) + 직전 대비 잔존율 */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8">
-                {STAGES.map((s, i) => {
-                  const isType = i === TYPE_INDEX
+              <div className="grid grid-cols-3 sm:grid-cols-5 xl:grid-cols-9">
+                {COLS.map((c, i) => {
+                  const isType = i === TYPE_COL
                   return (
-                    <div key={s.label} title={s.hint}
+                    <div key={c.label} title={c.hint}
                       onClick={isType ? () => setTypeOpen((v) => !v) : undefined}
-                      className={`flex min-w-0 flex-col gap-1.5 rounded-xl p-2.5 transition-colors ${isType ? 'cursor-pointer' : ''}`}
-                      style={{ background: isType && typeOpen ? '#fff8eb' : 'transparent' }}>
+                      className={`flex min-w-0 flex-col gap-1.5 rounded-xl p-2.5 transition-colors ${isType ? 'cursor-pointer' : ''} ${c.derived ? 'border border-dashed border-amber-200 bg-amber-50/40' : ''}`}
+                      style={{ background: isType && typeOpen ? '#fff8eb' : undefined }}>
                       <div className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 flex-none rounded" style={{ background: s.color }} />
-                        <span className="truncate text-[12.5px] font-semibold text-slate-500">{s.label}</span>
+                        <span className="h-2.5 w-2.5 flex-none rounded" style={{ background: c.color }} />
+                        <span className="truncate text-[12.5px] font-semibold text-slate-500">{c.label}</span>
                       </div>
                       <div className="flex flex-wrap items-baseline gap-1.5">
-                        <span className="text-[24px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
-                          {nf(funnel[i])}
+                        <span className="text-[23px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
+                          {nf(cardValues[i])}
                         </span>
                         <span className="text-[13px] font-semibold text-slate-500">명</span>
-                        <span className="ml-1 text-xs font-bold tabular-nums" style={{ color: i === 0 ? '#94a3b8' : s.color }}>
-                          {i === 0 ? '전체' : pct(funnel[i], funnel[i - 1])}
+                        <span className="ml-1 text-xs font-bold tabular-nums" style={{ color: c.prev < 0 ? '#94a3b8' : c.color }}>
+                          {c.prev < 0 ? '전체' : pct(cardValues[i], cardValues[c.prev])}
                         </span>
                       </div>
                       <span className="min-h-[14px] text-[11px] font-semibold text-amber-600">
-                        {isType ? (typeOpen ? '유형 닫기 ✕' : '유형 보기 →') : ''}
+                        {isType ? (typeOpen ? '유형 닫기 ✕' : '유형 보기 →') : c.derived ? '수술일 대기 중' : ''}
                       </span>
                     </div>
                   )
@@ -329,8 +388,8 @@ export function ReservationChannelPage() {
                     const cx0 = x0 + BAND_W * 0.45, cx1 = x0 + BAND_W * 0.55
                     return (
                       <g key={s.label} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
-                        onClick={i === TYPE_INDEX ? () => setTypeOpen((v) => !v) : undefined}
-                        style={{ cursor: i === TYPE_INDEX ? 'pointer' : 'default' }}>
+                        onClick={i === TYPE_STAGE ? () => setTypeOpen((v) => !v) : undefined}
+                        style={{ cursor: i === TYPE_STAGE ? 'pointer' : 'default' }}>
                         <rect x={x0} y={0} width={BAND_W} height={VB_H} fill="transparent" />
                         <path
                           d={`M${x0} ${t0}C${cx0} ${t0},${cx1} ${t1},${x1} ${t1}L${x1} ${b1}C${cx1} ${b1},${cx0} ${b0},${x0} ${b0}Z`}
@@ -460,18 +519,18 @@ export function ReservationChannelPage() {
           </div>
 
           <div className="min-h-0 w-full flex-1 overflow-auto">
-            <div className="min-w-[1520px]">
+            <div className="min-w-[1660px]">
               <div className="sticky top-0 z-10 grid h-[38px] items-center border-b border-slate-100 bg-slate-50 px-6"
                 style={{ gridTemplateColumns: gridCols }}>
                 <button onClick={() => toggleSort('channel')}
                   className="flex items-center gap-1 text-left text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
                   채널 <SortIcon active={sort.key === 'channel'} dir={sort.dir} />
                 </button>
-                {STAGES.map((s, i) => (
-                  <button key={s.label} onClick={() => toggleSort(String(i))} title={s.hint}
+                {COLS.map((c, i) => (
+                  <button key={c.label} onClick={() => toggleSort(String(i))} title={c.hint}
                     className="flex min-w-0 items-center gap-1.5 pl-2.5 hover:opacity-80">
-                    <span className="h-1.5 w-1.5 flex-none rounded-full" style={{ background: s.color }} />
-                    <span className="whitespace-nowrap text-[11.5px] font-semibold text-slate-500">{s.label}</span>
+                    <span className={`h-1.5 w-1.5 flex-none rounded-full ${c.derived ? 'ring-1 ring-amber-300' : ''}`} style={{ background: c.color }} />
+                    <span className={`whitespace-nowrap text-[11.5px] font-semibold ${c.derived ? 'text-amber-700' : 'text-slate-500'}`}>{c.label}</span>
                     <SortIcon active={sort.key === String(i)} dir={sort.dir} />
                   </button>
                 ))}
@@ -502,24 +561,25 @@ export function ReservationChannelPage() {
                       <span className="h-4 w-[3px] rounded-sm" style={{ background: sel === r.channel ? '#2563eb' : 'transparent' }} />
                       <span className={`truncate text-[13px] ${empty ? 'font-normal text-slate-300' : sel === r.channel ? 'font-bold text-slate-900' : 'font-medium text-slate-900'}`}>{r.channel}</span>
                     </div>
-                    {STAGES.map((s, j) => {
-                      const v = r[s.personKey]
-                      const prevV = j === 0 ? 0 : r[STAGES[j - 1].personKey]
+                    {COLS.map((c, j) => {
+                      const v = c.value(r)
+                      const prevV = c.prev < 0 ? 0 : COLS[c.prev].value(r)
                       // 막대 폭은 최대 채널 인원 기준 — 채널끼리 규모가 비교돼야 한다.
                       const w = maxReserved ? (v / maxReserved) * 100 : 0
                       return (
-                        <div key={s.label} className="flex min-w-0 items-center gap-2 pl-2.5 pr-3.5">
+                        <div key={c.label}
+                          className={`flex min-w-0 items-center gap-2 pl-2.5 pr-3.5 ${c.derived ? 'bg-amber-50/50' : ''}`}>
                           <div className="relative h-[9px] min-w-[20px] flex-1 overflow-hidden rounded-full bg-slate-100">
                             <div className="absolute inset-y-0 left-0 rounded-full"
-                              style={{ width: `${Math.max(w, v > 0 ? 2 : 0)}%`, background: s.color, opacity: sel == null || sel === r.channel ? 1 : 0.3 }} />
+                              style={{ width: `${Math.max(w, v > 0 ? 2 : 0)}%`, background: c.color, opacity: sel == null || sel === r.channel ? 1 : 0.3 }} />
                           </div>
                           <span className={`w-10 flex-none text-right text-[13.5px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-bold text-slate-900'}`}>{nf(v)}</span>
-                          {/* 통과율이 낮으면 빨강. 단, 수술등록 이후 구간은 제외한다 —
-                              수술완료는 아직 날짜를 기다리는 것뿐이고 재수술은 늘 0 이라
-                              칠하면 매달 빨간 칸 두 개가 고정으로 남아 신호가 죽는다. */}
+                          {/* 통과율이 낮으면 빨강. 단, 수술등록 이후 칸은 제외한다 —
+                              대기·완료는 아직 날짜를 기다리는 것뿐이고 재수술은 늘 0 이라
+                              칠하면 매달 빨간 칸이 고정으로 남아 신호가 죽는다. */}
                           <span className="w-10 flex-none text-right text-[11.5px] tabular-nums"
-                            style={{ color: j > 0 && j <= WAIT_GAP_INDEX && prevV && v / prevV < 0.7 ? '#dc2626' : '#94a3b8' }}>
-                            {j === 0 ? '' : pct(v, prevV)}
+                            style={{ color: j > 0 && j <= LAST_DROP_COL && prevV && v / prevV < 0.7 ? '#dc2626' : '#94a3b8' }}>
+                            {c.prev < 0 ? '' : pct(v, prevV)}
                           </span>
                         </div>
                       )
@@ -539,12 +599,12 @@ export function ReservationChannelPage() {
 
               <div className="grid h-12 items-center bg-slate-50/60 px-6" style={{ gridTemplateColumns: gridCols }}>
                 <span className="text-[13px] font-bold text-slate-900">전체</span>
-                {STAGES.map((s, i) => (
-                  <div key={s.label} className="flex min-w-0 items-center gap-2 pl-2.5 pr-3.5">
+                {COLS.map((c, i) => (
+                  <div key={c.label} className={`flex min-w-0 items-center gap-2 pl-2.5 pr-3.5 ${c.derived ? 'bg-amber-50/50' : ''}`}>
                     <div className="min-w-[20px] flex-1" />
-                    <span className="w-10 flex-none text-right text-[13.5px] font-bold tabular-nums text-slate-900">{nf(total[i])}</span>
+                    <span className="w-10 flex-none text-right text-[13.5px] font-bold tabular-nums text-slate-900">{nf(colTotals[i])}</span>
                     <span className="w-10 flex-none text-right text-[11.5px] font-semibold tabular-nums text-slate-500">
-                      {i === 0 ? '' : pct(total[i], total[i - 1])}
+                      {c.prev < 0 ? '' : pct(colTotals[i], colTotals[c.prev])}
                     </span>
                   </div>
                 ))}
