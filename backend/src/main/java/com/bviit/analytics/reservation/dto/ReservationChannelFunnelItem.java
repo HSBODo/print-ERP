@@ -26,8 +26,16 @@ public class ReservationChannelFunnelItem {
     private final int examined;
     /** 그중 검사중단(exam_stop='Y')이 아닌 건 — 중단하면 수술로 가지 않는다(2026-07 중단 40건 전부 수술 0) */
     private final int notStop;
-    /** 그중 수술등록일이 있는 건 */
+    /** 그중 수술등록일이 있는 건 — 수술예약을 잡은 것이지 수술한 날이 아니다 */
     private final int surgery;
+    /** 그중 실제 수술일이 있는 건 (= 수술 완료). surgery − surgeryDone 이 수술 대기 인원. */
+    private final int surgeryDone;
+    /**
+     * 그중 나중에 재수술까지 간 건 — 코호트 기준("그 달 예약자가 재수술까지 갔나").
+     * 재수술은 원수술 몇 달~몇 년 뒤라 최근 코호트일수록 0 이다(2026-01 코호트 3명, 07 코호트 0명).
+     * 정상이며 데이터가 쌓일수록 채워진다. "그 달에 재수술한 사람"이 아니다.
+     */
+    private final int reop;
     /** 그 수술들의 수납액 합(원). 아직 수술 전이면 0 이라 인원보다 늦게 찬다. */
     private final long surgeryAmount;
 
@@ -44,6 +52,8 @@ public class ReservationChannelFunnelItem {
     private final int examinedPersons;
     private final int notStopPersons;
     private final int surgeryPersons;
+    private final int surgeryDonePersons;
+    private final int reopPersons;
     /** 실제로 수납이 잡힌 사람 수 — 객단가 분모. 수술등록 인원과 다르다(아직 수술 전이면 0원). */
     private final int surgeryPaidPersons;
 
@@ -54,6 +64,8 @@ public class ReservationChannelFunnelItem {
     private final int totalExaminedPersons;
     private final int totalNotStopPersons;
     private final int totalSurgeryPersons;
+    private final int totalSurgeryDonePersons;
+    private final int totalReopPersons;
     /** 전체 기준 수술 수납액 합(원) — 합계행 전용. */
     private final long totalSurgeryAmount;
     private final int totalSurgeryPaidPersons;

@@ -9,7 +9,11 @@ import type { ReservationChannelFunnelItem } from '@/api/reservation/reservation
  * 예약통계_채널별 — 예약자 리스트를 채널로 묶어 단계별로 좁혀 보는 화면.
  *
  * 단계는 예약자 리스트에서 차례로 걸러낸 것이다.
- *   예약 → 취소 제외 → 접수(내원) → 검사 → 수술등록
+ *   예약 → 취소 제외 → 접수(내원) → 검사 → 중단 제외 → 수술등록 → 수술완료 → 재수술
+ *
+ * ★ 수술대기는 단계가 아니라 **수술등록 − 수술완료** 다(WAIT_GAP_INDEX).
+ *   대기와 완료는 형제라 둘 다 단계로 두면 뒤 단계가 앞 단계보다 커져 퍼널이 깨진다.
+ *   그래서 구간 알약에 '대기 N명' 으로 노랗게 표시한다 — 이탈이 아니므로 빨강을 쓰지 않는다.
  *
  * ★ 이 화면은 **사람 수만** 센다(건수 아님).
  *   같은 사람이 취소 후 다시 잡아도 1명이다. 실제 몇 명이 왔는지가 알고 싶은 값이라서다.
@@ -25,18 +29,32 @@ import type { ReservationChannelFunnelItem } from '@/api/reservation/reservation
  * totalKey   전체(채널 무관) 사람 수 — 합계행 전용.
  *            채널별 값을 더하면 안 된다: 한 사람이 두 채널로 예약하면 채널마다 1명씩 세어진다. */
 type PersonKey = keyof Pick<ReservationChannelFunnelItem,
-  'reservedPersons' | 'notCancelPersons' | 'visitedPersons' | 'examinedPersons' | 'notStopPersons' | 'surgeryPersons'>
+  'reservedPersons' | 'notCancelPersons' | 'visitedPersons' | 'examinedPersons' | 'notStopPersons'
+  | 'surgeryPersons' | 'surgeryDonePersons' | 'reopPersons'>
 type TotalKey = keyof Pick<ReservationChannelFunnelItem,
-  'totalReservedPersons' | 'totalNotCancelPersons' | 'totalVisitedPersons' | 'totalExaminedPersons' | 'totalNotStopPersons' | 'totalSurgeryPersons'>
+  'totalReservedPersons' | 'totalNotCancelPersons' | 'totalVisitedPersons' | 'totalExaminedPersons'
+  | 'totalNotStopPersons' | 'totalSurgeryPersons' | 'totalSurgeryDonePersons' | 'totalReopPersons'>
 
 const STAGES: { personKey: PersonKey; totalKey: TotalKey; label: string; hint: string; color: string }[] = [
-  { personKey: 'reservedPersons',  totalKey: 'totalReservedPersons',  label: '예약',     hint: '등록일 기준 예약한 사람', color: '#1e3a8a' },
-  { personKey: 'notCancelPersons', totalKey: 'totalNotCancelPersons', label: '취소 제외', hint: '예약을 취소하지 않은 사람', color: '#2563eb' },
-  { personKey: 'visitedPersons',   totalKey: 'totalVisitedPersons',   label: '접수',     hint: '미내원까지 빼고 실제 내원한 사람', color: '#0ea5e9' },
-  { personKey: 'examinedPersons',  totalKey: 'totalExaminedPersons',  label: '검사',     hint: '검사등록일이 있는 사람', color: '#10b981' },
-  { personKey: 'notStopPersons',   totalKey: 'totalNotStopPersons',   label: '중단 제외', hint: '검사 후 중단(검사중단=Y)하지 않은 사람 — 중단하면 수술로 가지 않는다', color: '#14b8a6' },
-  { personKey: 'surgeryPersons',   totalKey: 'totalSurgeryPersons',   label: '수술등록',  hint: '수술예약을 등록한 사람 — 수술한 날이 아니다', color: '#f59e0b' },
+  { personKey: 'reservedPersons',   totalKey: 'totalReservedPersons',   label: '예약',     hint: '등록일 기준 예약한 사람', color: '#1e3a8a' },
+  { personKey: 'notCancelPersons',  totalKey: 'totalNotCancelPersons',  label: '취소 제외', hint: '예약을 취소하지 않은 사람', color: '#2563eb' },
+  { personKey: 'visitedPersons',    totalKey: 'totalVisitedPersons',    label: '접수',     hint: '미내원까지 빼고 실제 내원한 사람', color: '#0ea5e9' },
+  { personKey: 'examinedPersons',   totalKey: 'totalExaminedPersons',   label: '검사',     hint: '검사등록일이 있는 사람', color: '#10b981' },
+  { personKey: 'notStopPersons',    totalKey: 'totalNotStopPersons',    label: '중단 제외', hint: '검사 후 중단(검사중단=Y)하지 않은 사람 — 중단하면 수술로 가지 않는다', color: '#14b8a6' },
+  // 수술등록 → 수술완료 사이의 이탈이 곧 **수술대기**다. 별도 단계로 두지 않는다 —
+  // 대기 = 등록 − 완료 라서 칸을 따로 만들면 같은 숫자가 두 벌이 되고, 부분집합 관계도 깨진다.
+  { personKey: 'surgeryPersons',    totalKey: 'totalSurgeryPersons',    label: '수술등록',  hint: '수술예약을 등록한 사람 — 수술한 날이 아니다', color: '#f59e0b' },
+  { personKey: 'surgeryDonePersons', totalKey: 'totalSurgeryDonePersons', label: '수술완료', hint: '실제 수술일이 있는 사람. 수술등록과의 차이가 수술 대기 인원이다', color: '#f97316' },
+  { personKey: 'reopPersons',       totalKey: 'totalReopPersons',       label: '재수술',   hint: '수술 후 재수술까지 간 사람(코호트 기준) — 재수술은 몇 달~몇 년 뒤라 최근 달일수록 0 이다', color: '#dc2626' },
 ]
+
+/** 수술등록 → 수술완료 구간. 이 사이의 이탈은 "빠져나간 사람"이 아니라 **수술 대기**다.
+ *  다른 구간과 같은 말로 부르면 오해를 부르므로 화면에서 따로 이름을 붙인다. */
+const WAIT_GAP_INDEX = 5
+/** '최종 전환' 의 기준 단계 = 수술등록. 재수술까지 세면 0 이라 최종 전환이 될 수 없다. */
+const FINAL_INDEX = 5
+/** '수술 유형별' 패널을 여는 단계 = 수술완료. 유형은 실제 수술한 사람에게만 있다. */
+const TYPE_INDEX = 6
 
 /** 수술 유형 라벨·색. 건수는 API 가 실제 수술명에서 분류해 준다(추정 아님).
  *  분류 규칙은 surgery_op_type() 함수 하나뿐이라 수술 통계와 항상 같은 기준이다. */
@@ -139,7 +157,12 @@ export function ReservationChannelPage() {
 
   /** 단계 사이 이탈. 가장 큰 이탈을 빨갛게 강조해 병목이 바로 보이게 한다. */
   const drops = useMemo(() => funnel.slice(0, -1).map((v, i) => v - funnel[i + 1]), [funnel])
-  const maxDrop = Math.max(0, ...drops)
+  /** 수술등록 − 수술완료. 이건 이탈이 아니라 아직 수술 날짜를 기다리는 사람이다. */
+  const waitCount = drops[WAIT_GAP_INDEX] ?? 0
+  /** 병목 강조 대상은 **진짜 이탈 구간**만이다.
+   *  수술등록→수술완료는 대기이고, 수술완료→재수술은 오히려 안 갈수록 좋은 구간이라
+   *  둘을 섞으면 "가장 큰 이탈"이 늘 맨 뒤를 가리켜 병목을 못 찾는다. */
+  const maxDrop = Math.max(0, ...drops.slice(0, WAIT_GAP_INDEX))
 
   /* ── 수술 유형별 (실데이터) ──
    * 예약자 리스트의 수술명(OPERATIONDATA·Cataract_Operationdata)에서 분류한 값이라 추정이 아니다.
@@ -205,7 +228,8 @@ export function ReservationChannelPage() {
     setSort({ key: '0', dir: 'desc' }); setSel(null); setTypeOpen(true)
   }
 
-  const gridCols = '104px repeat(6, minmax(0,1fr)) 78px 82px 82px'
+  // 단계 칸은 STAGES 길이에서 뽑는다 — 단계를 늘렸는데 여기가 6 으로 남으면 열이 어긋난다.
+  const gridCols = `104px repeat(${STAGES.length}, minmax(0,1fr)) 78px 82px 82px`
 
   return (
     <PanelShell variant="bar" isLoading={loading} isError={isError}>
@@ -248,7 +272,8 @@ export function ReservationChannelPage() {
                 {selRow ? `${selRow.channel} 퍼널` : '전체 퍼널'}
               </span>
               <span className="text-xs text-slate-400">
-                예약 {nf(funnel[0])}명 · 최종 전환 {pct(funnel[5], funnel[0])}
+                예약 {nf(funnel[0])}명 · 최종 전환 {pct(funnel[FINAL_INDEX], funnel[0])}
+                {waitCount > 0 && ` · 수술 대기 ${nf(waitCount)}명`}
                 {maxDrop > 0 && ` · 가장 큰 이탈은 ${STAGES[drops.indexOf(maxDrop)].label} → ${STAGES[drops.indexOf(maxDrop) + 1].label}`}
               </span>
             </div>
@@ -263,20 +288,20 @@ export function ReservationChannelPage() {
           <div className="flex flex-wrap items-stretch">
             <div className="flex min-w-0 flex-1 flex-col justify-center" style={{ flexBasis: '640px' }}>
               {/* 단계 카드 — 사람 수(검정) + 직전 대비 잔존율 */}
-              <div className="grid grid-cols-2 sm:grid-cols-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8">
                 {STAGES.map((s, i) => {
-                  const last = i === STAGES.length - 1
+                  const isType = i === TYPE_INDEX
                   return (
                     <div key={s.label} title={s.hint}
-                      onClick={last ? () => setTypeOpen((v) => !v) : undefined}
-                      className={`flex min-w-0 flex-col gap-1.5 rounded-xl p-2.5 transition-colors ${last ? 'cursor-pointer' : ''}`}
-                      style={{ background: last && typeOpen ? '#fff8eb' : 'transparent' }}>
+                      onClick={isType ? () => setTypeOpen((v) => !v) : undefined}
+                      className={`flex min-w-0 flex-col gap-1.5 rounded-xl p-2.5 transition-colors ${isType ? 'cursor-pointer' : ''}`}
+                      style={{ background: isType && typeOpen ? '#fff8eb' : 'transparent' }}>
                       <div className="flex items-center gap-1.5">
                         <span className="h-2.5 w-2.5 flex-none rounded" style={{ background: s.color }} />
                         <span className="truncate text-[12.5px] font-semibold text-slate-500">{s.label}</span>
                       </div>
                       <div className="flex flex-wrap items-baseline gap-1.5">
-                        <span className="text-[26px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
+                        <span className="text-[24px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
                           {nf(funnel[i])}
                         </span>
                         <span className="text-[13px] font-semibold text-slate-500">명</span>
@@ -285,7 +310,7 @@ export function ReservationChannelPage() {
                         </span>
                       </div>
                       <span className="min-h-[14px] text-[11px] font-semibold text-amber-600">
-                        {last ? (typeOpen ? '유형 닫기 ✕' : '유형 보기 →') : ''}
+                        {isType ? (typeOpen ? '유형 닫기 ✕' : '유형 보기 →') : ''}
                       </span>
                     </div>
                   )
@@ -304,8 +329,8 @@ export function ReservationChannelPage() {
                     const cx0 = x0 + BAND_W * 0.45, cx1 = x0 + BAND_W * 0.55
                     return (
                       <g key={s.label} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
-                        onClick={last ? () => setTypeOpen((v) => !v) : undefined}
-                        style={{ cursor: last ? 'pointer' : 'default' }}>
+                        onClick={i === TYPE_INDEX ? () => setTypeOpen((v) => !v) : undefined}
+                        style={{ cursor: i === TYPE_INDEX ? 'pointer' : 'default' }}>
                         <rect x={x0} y={0} width={BAND_W} height={VB_H} fill="transparent" />
                         <path
                           d={`M${x0} ${t0}C${cx0} ${t0},${cx1} ${t1},${x1} ${t1}L${x1} ${b1}C${cx1} ${b1},${cx0} ${b0},${x0} ${b0}Z`}
@@ -318,18 +343,21 @@ export function ReservationChannelPage() {
                   })}
                 </svg>
 
-                {/* 이탈 알약 */}
+                {/* 구간 알약 — 대부분은 이탈이지만 수술등록→수술완료만 '대기'다.
+                    수술을 아직 안 한 사람은 빠져나간 게 아니라서 빨강으로 칠하면 안 된다. */}
                 {drops.map((d, i) => {
-                  const big = d === maxDrop && d > 0
+                  const wait = i === WAIT_GAP_INDEX
+                  const big = !wait && d === maxDrop && d > 0
                   return (
                     <div key={i}
                       className="pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-baseline gap-1.5 rounded-full border px-2.5 py-1 shadow-sm"
                       style={{
                         left: `${(((i + 1) * BAND_W) / VB_W) * 100}%`, top: '50%',
-                        background: big ? '#fef2f2' : '#fff', borderColor: big ? '#fecaca' : '#e8ecf1',
+                        background: wait ? '#fffbeb' : big ? '#fef2f2' : '#fff',
+                        borderColor: wait ? '#fde68a' : big ? '#fecaca' : '#e8ecf1',
                       }}>
-                      <span className="whitespace-nowrap text-xs font-bold tabular-nums text-red-600">
-                        {d > 0 ? `−${nf(d)}명` : '0'}
+                      <span className={`whitespace-nowrap text-xs font-bold tabular-nums ${wait ? 'text-amber-600' : 'text-red-600'}`}>
+                        {wait ? (d > 0 ? `대기 ${nf(d)}명` : '대기 0') : d > 0 ? `−${nf(d)}명` : '0'}
                       </span>
                       <span className="whitespace-nowrap text-[10.5px] font-semibold tabular-nums text-slate-400">
                         {pct(d, funnel[i])}
@@ -350,8 +378,8 @@ export function ReservationChannelPage() {
                       <span>진입</span><span className="font-semibold text-white">{nf(funnel[hover])}명</span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
-                      <span>다음 단계 이탈</span>
-                      <span className="font-semibold text-red-300">
+                      <span>{hover === WAIT_GAP_INDEX ? '수술 대기' : '다음 단계 이탈'}</span>
+                      <span className={`font-semibold ${hover === WAIT_GAP_INDEX ? 'text-amber-300' : 'text-red-300'}`}>
                         {hover === STAGES.length - 1 ? '—' : `${nf(drops[hover])}명 (${pct(drops[hover], funnel[hover])})`}
                       </span>
                     </div>
@@ -359,7 +387,7 @@ export function ReservationChannelPage() {
                       <span>잔존</span>
                       <span className="font-semibold text-white">
                         {hover === STAGES.length - 1
-                          ? `최종 ${pct(funnel[5], funnel[0])}`
+                          ? `최종 ${pct(funnel[FINAL_INDEX], funnel[0])}`
                           : `${nf(funnel[hover + 1])}명 (${pct(funnel[hover + 1], funnel[hover])})`}
                       </span>
                     </div>
@@ -432,7 +460,7 @@ export function ReservationChannelPage() {
           </div>
 
           <div className="min-h-0 w-full flex-1 overflow-auto">
-            <div className="min-w-[1280px]">
+            <div className="min-w-[1520px]">
               <div className="sticky top-0 z-10 grid h-[38px] items-center border-b border-slate-100 bg-slate-50 px-6"
                 style={{ gridTemplateColumns: gridCols }}>
                 <button onClick={() => toggleSort('channel')}
@@ -447,7 +475,7 @@ export function ReservationChannelPage() {
                     <SortIcon active={sort.key === String(i)} dir={sort.dir} />
                   </button>
                 ))}
-                <button onClick={() => toggleSort('final')}
+                <button onClick={() => toggleSort('final')} title="수술등록 ÷ 예약 — 재수술까지 세면 0 이라 최종 전환의 기준이 될 수 없다"
                   className="flex items-center justify-end gap-1 text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
                   최종 <SortIcon active={sort.key === 'final'} dir={sort.dir} />
                 </button>
@@ -486,8 +514,11 @@ export function ReservationChannelPage() {
                               style={{ width: `${Math.max(w, v > 0 ? 2 : 0)}%`, background: s.color, opacity: sel == null || sel === r.channel ? 1 : 0.3 }} />
                           </div>
                           <span className={`w-10 flex-none text-right text-[13.5px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-bold text-slate-900'}`}>{nf(v)}</span>
+                          {/* 통과율이 낮으면 빨강. 단, 수술등록 이후 구간은 제외한다 —
+                              수술완료는 아직 날짜를 기다리는 것뿐이고 재수술은 늘 0 이라
+                              칠하면 매달 빨간 칸 두 개가 고정으로 남아 신호가 죽는다. */}
                           <span className="w-10 flex-none text-right text-[11.5px] tabular-nums"
-                            style={{ color: j > 0 && prevV && v / prevV < 0.7 ? '#dc2626' : '#94a3b8' }}>
+                            style={{ color: j > 0 && j <= WAIT_GAP_INDEX && prevV && v / prevV < 0.7 ? '#dc2626' : '#94a3b8' }}>
                             {j === 0 ? '' : pct(v, prevV)}
                           </span>
                         </div>
@@ -517,7 +548,7 @@ export function ReservationChannelPage() {
                     </span>
                   </div>
                 ))}
-                <span className="text-right text-[13px] font-bold tabular-nums text-slate-900">{pct(total[5], total[0])}</span>
+                <span className="text-right text-[13px] font-bold tabular-nums text-slate-900">{pct(total[FINAL_INDEX], total[0])}</span>
                 <span className="text-right text-[12.5px] font-bold tabular-nums text-emerald-700">
                   {won(rows[0]?.totalSurgeryAmount ?? 0)}
                 </span>

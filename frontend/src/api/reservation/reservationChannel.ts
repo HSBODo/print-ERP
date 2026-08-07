@@ -16,6 +16,10 @@ export const reservationChannelFunnelItemSchema = z.object({
   examined: z.number(),
   notStop: z.number(),
   surgery: z.number(),
+  /** 실제 수술일이 있는 건(= 수술 완료). surgery − surgeryDone 이 수술 대기다. */
+  surgeryDone: z.number(),
+  /** 나중에 재수술까지 간 건 — 코호트 기준이라 최근 달일수록 0 이다(정상). */
+  reop: z.number(),
   /** 수술 수납액 합(원). 아직 수술 전이면 0 이라 인원보다 늦게 찬다. */
   surgeryAmount: z.number(),
   // 사람 수 — 같은 사람이 그 달에 두 번 예약하면 건수 2 · 사람수 1.
@@ -26,6 +30,8 @@ export const reservationChannelFunnelItemSchema = z.object({
   examinedPersons: z.number(),
   notStopPersons: z.number(),
   surgeryPersons: z.number(),
+  surgeryDonePersons: z.number(),
+  reopPersons: z.number(),
   /** 실제 수납이 잡힌 사람 수 — 객단가 분모. 수술등록 인원과 다르다(수술 전이면 0원). */
   surgeryPaidPersons: z.number(),
   totalReservedPersons: z.number(),
@@ -34,6 +40,8 @@ export const reservationChannelFunnelItemSchema = z.object({
   totalExaminedPersons: z.number(),
   totalNotStopPersons: z.number(),
   totalSurgeryPersons: z.number(),
+  totalSurgeryDonePersons: z.number(),
+  totalReopPersons: z.number(),
   totalSurgeryAmount: z.number(),
   totalSurgeryPaidPersons: z.number(),
 })
