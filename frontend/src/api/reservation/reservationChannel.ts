@@ -26,6 +26,8 @@ export const reservationChannelFunnelItemSchema = z.object({
   examinedPersons: z.number(),
   notStopPersons: z.number(),
   surgeryPersons: z.number(),
+  /** 실제 수납이 잡힌 사람 수 — 객단가 분모. 수술등록 인원과 다르다(수술 전이면 0원). */
+  surgeryPaidPersons: z.number(),
   totalReservedPersons: z.number(),
   totalNotCancelPersons: z.number(),
   totalVisitedPersons: z.number(),
@@ -33,6 +35,7 @@ export const reservationChannelFunnelItemSchema = z.object({
   totalNotStopPersons: z.number(),
   totalSurgeryPersons: z.number(),
   totalSurgeryAmount: z.number(),
+  totalSurgeryPaidPersons: z.number(),
 })
 
 export type ReservationChannelFunnelItem = z.infer<typeof reservationChannelFunnelItemSchema>

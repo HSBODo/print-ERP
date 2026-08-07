@@ -44,6 +44,8 @@ public class ReservationChannelFunnelItem {
     private final int examinedPersons;
     private final int notStopPersons;
     private final int surgeryPersons;
+    /** 실제로 수납이 잡힌 사람 수 — 객단가 분모. 수술등록 인원과 다르다(아직 수술 전이면 0원). */
+    private final int surgeryPaidPersons;
 
     /* ── 전체(채널 무관) 사람 수 — 합계행 전용. 모든 행에 같은 값. ── */
     private final int totalReservedPersons;
@@ -54,4 +56,5 @@ public class ReservationChannelFunnelItem {
     private final int totalSurgeryPersons;
     /** 전체 기준 수술 수납액 합(원) — 합계행 전용. */
     private final long totalSurgeryAmount;
+    private final int totalSurgeryPaidPersons;
 }

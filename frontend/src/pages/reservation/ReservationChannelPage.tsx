@@ -168,12 +168,19 @@ export function ReservationChannelPage() {
 
   const finalRate = (r: ReservationChannelFunnelItem) =>
     r.reservedPersons ? (r.surgeryPersons * 100) / r.reservedPersons : 0
+  /** 객단가 = 수술 매출 ÷ **실제 수납이 잡힌 사람**.
+   *  수술등록 인원으로 나누면 아직 수술 전인 사람(0원)이 섞여 낮게 나온다
+   *  (2026-07: 274만 vs 실제 353만). */
+  const aov = (r: ReservationChannelFunnelItem) =>
+    r.surgeryPaidPersons ? r.surgeryAmount / r.surgeryPaidPersons : 0
 
   const sortedRows = useMemo(() => {
     const dir = sort.dir === 'asc' ? 1 : -1
     return [...rows].sort((a, b) => {
       if (sort.key === 'channel') return a.channel.localeCompare(b.channel, 'ko') * dir
       if (sort.key === 'final') return (finalRate(a) - finalRate(b)) * dir
+      if (sort.key === 'amount') return (a.surgeryAmount - b.surgeryAmount) * dir
+      if (sort.key === 'aov') return (aov(a) - aov(b)) * dir
       const s = STAGES[Number(sort.key)]
       return ((a[s.personKey] ?? 0) - (b[s.personKey] ?? 0)) * dir
     })
@@ -198,7 +205,7 @@ export function ReservationChannelPage() {
     setSort({ key: '0', dir: 'desc' }); setSel(null); setTypeOpen(true)
   }
 
-  const gridCols = '104px repeat(6, minmax(0,1fr)) 132px'
+  const gridCols = '104px repeat(6, minmax(0,1fr)) 78px 82px 82px'
 
   return (
     <PanelShell variant="bar" isLoading={loading} isError={isError}>
@@ -442,7 +449,15 @@ export function ReservationChannelPage() {
                 ))}
                 <button onClick={() => toggleSort('final')}
                   className="flex items-center justify-end gap-1 text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
-                  최종 · 매출 <SortIcon active={sort.key === 'final'} dir={sort.dir} />
+                  최종 <SortIcon active={sort.key === 'final'} dir={sort.dir} />
+                </button>
+                <button onClick={() => toggleSort('amount')} title="수술 수납액 합"
+                  className="flex items-center justify-end gap-1 text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
+                  총매출 <SortIcon active={sort.key === 'amount'} dir={sort.dir} />
+                </button>
+                <button onClick={() => toggleSort('aov')} title="총매출 ÷ 실제 수납 인원 (수술 전인 사람은 제외)"
+                  className="flex items-center justify-end gap-1 text-[11.5px] font-semibold text-slate-400 hover:text-slate-600">
+                  객단가 <SortIcon active={sort.key === 'aov'} dir={sort.dir} />
                 </button>
               </div>
 
@@ -478,15 +493,15 @@ export function ReservationChannelPage() {
                         </div>
                       )
                     })}
-                    <div className="flex items-center justify-end gap-2.5">
-                      <span className={`text-[13px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-bold text-slate-900'}`}>
-                        {empty ? '—' : `${final.toFixed(1).replace(/\.0$/, '')}%`}
-                      </span>
-                      <span className={`w-16 text-right text-[12.5px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-semibold text-emerald-700'}`}
-                        title="수술 수납액 합">
-                        {won(r.surgeryAmount)}
-                      </span>
-                    </div>
+                    <span className={`text-right text-[13px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-bold text-slate-900'}`}>
+                      {empty ? '—' : `${final.toFixed(1).replace(/\.0$/, '')}%`}
+                    </span>
+                    <span className={`text-right text-[12.5px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-semibold text-emerald-700'}`}>
+                      {won(r.surgeryAmount)}
+                    </span>
+                    <span className={`text-right text-[12.5px] tabular-nums ${empty ? 'font-normal text-slate-300' : 'font-medium text-slate-600'}`}>
+                      {won(aov(r))}
+                    </span>
                   </div>
                 )
               })}
@@ -502,12 +517,14 @@ export function ReservationChannelPage() {
                     </span>
                   </div>
                 ))}
-                <div className="flex items-center justify-end gap-2.5">
-                  <span className="text-[13px] font-bold tabular-nums text-slate-900">{pct(total[5], total[0])}</span>
-                  <span className="w-16 text-right text-[12.5px] font-bold tabular-nums text-emerald-700">
-                    {won(rows[0]?.totalSurgeryAmount ?? 0)}
-                  </span>
-                </div>
+                <span className="text-right text-[13px] font-bold tabular-nums text-slate-900">{pct(total[5], total[0])}</span>
+                <span className="text-right text-[12.5px] font-bold tabular-nums text-emerald-700">
+                  {won(rows[0]?.totalSurgeryAmount ?? 0)}
+                </span>
+                <span className="text-right text-[12.5px] font-semibold tabular-nums text-slate-600">
+                  {won(rows[0]?.totalSurgeryPaidPersons
+                    ? (rows[0]?.totalSurgeryAmount ?? 0) / rows[0].totalSurgeryPaidPersons : 0)}
+                </span>
               </div>
             </div>
           </div>

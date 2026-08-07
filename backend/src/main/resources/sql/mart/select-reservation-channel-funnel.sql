@@ -53,7 +53,11 @@ WITH all_channels AS (
         COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '')                       AS examined_persons,
         COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y')                     AS not_stop_persons,
         COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
-                           AND surgery_reg_date <> '')                    AS surgery_persons
+                           AND surgery_reg_date <> '')                    AS surgery_persons,
+        -- 객단가 분모 — 실제로 수납이 잡힌 사람만. 수술등록 인원으로 나누면
+        -- 아직 수술 전인 사람(매출 0)이 섞여 객단가가 낮게 나온다(2026-07: 274만 vs 실제 353만).
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
+                           AND surgery_reg_date <> '' AND surgery_payment > 0)                    AS surgery_paid_persons
       FROM src
      GROUP BY channel
 ), tot AS (
@@ -66,7 +70,9 @@ WITH all_channels AS (
         COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
                            AND surgery_reg_date <> '')                    AS total_surgery_persons,
         COALESCE(SUM(surgery_payment) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
-                           AND surgery_reg_date <> ''), 0)          AS total_surgery_amount
+                           AND surgery_reg_date <> ''), 0)          AS total_surgery_amount,
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
+                           AND surgery_reg_date <> '' AND surgery_payment > 0)              AS total_surgery_paid_persons
       FROM src
 )
 SELECT
@@ -84,13 +90,15 @@ SELECT
     COALESCE(p.examined_persons, 0)    AS examined_persons,
     COALESCE(p.not_stop_persons, 0)    AS not_stop_persons,
     COALESCE(p.surgery_persons, 0)     AS surgery_persons,
+    COALESCE(p.surgery_paid_persons, 0) AS surgery_paid_persons,
     t.total_reserved_persons,
     t.total_not_cancel_persons,
     t.total_visited_persons,
     t.total_examined_persons,
     t.total_not_stop_persons,
     t.total_surgery_persons,
-    t.total_surgery_amount
+    t.total_surgery_amount,
+    t.total_surgery_paid_persons
   FROM all_channels a
   LEFT JOIN per_channel p ON p.channel = a.channel
   CROSS JOIN tot t
