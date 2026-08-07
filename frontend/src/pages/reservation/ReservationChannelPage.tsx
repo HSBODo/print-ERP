@@ -375,6 +375,10 @@ export function ReservationChannelPage() {
                       <div className="flex items-center gap-1.5">
                         <span className="h-2.5 w-2.5 flex-none rounded" style={{ background: c.color }} />
                         <span className="truncate text-[12.5px] font-semibold text-slate-500">{c.label}</span>
+                        {/* 유형 패널 토글은 아이콘으로 옮긴다 — 아래 줄은 전체 대비가 쓴다 */}
+                        {isType && (typeOpen
+                          ? <ChevronUp className="h-3 w-3 flex-none text-amber-500" />
+                          : <ChevronDown className="h-3 w-3 flex-none text-amber-500" />)}
                       </div>
                       <div className="flex flex-wrap items-baseline gap-1.5">
                         <span className="text-[23px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
@@ -382,11 +386,15 @@ export function ReservationChannelPage() {
                         </span>
                         <span className="text-[13px] font-semibold text-slate-500">명</span>
                         <span className="ml-1 text-xs font-bold tabular-nums" style={{ color: c.prev < 0 ? '#94a3b8' : c.color }}>
-                          {c.prev < 0 ? '전체' : pct(cardValues[i], cardValues[c.prev])}
+                          {c.prev < 0 ? '기준' : pct(cardValues[i], cardValues[c.prev])}
                         </span>
                       </div>
-                      <span className="min-h-[14px] text-[11px] font-semibold text-amber-600">
-                        {isType ? (typeOpen ? '유형 닫기 ✕' : '유형 보기 →') : c.derived ? '수술일 대기 중' : ''}
+                      {/* 두 비율을 같이 둔다 — 성격이 다르다.
+                            직전 대비(윗줄)  어느 단계에서 빠지는지 = 병목
+                            전체 대비(이 줄) 예약 100명 중 몇 명이 여기까지 왔는지 = 누적 생존율
+                          하나만 두면 "82.1% 인데 왜 이렇게 적지?" 같은 오해가 생긴다. */}
+                      <span className="min-h-[14px] whitespace-nowrap text-[11px] font-semibold tabular-nums text-slate-400">
+                        전체 {i === 0 ? '100%' : pct(cardValues[i], cardValues[0])}
                       </span>
                     </div>
                   )
@@ -458,7 +466,10 @@ export function ReservationChannelPage() {
                       <span className="text-xs font-bold text-white">{STAGES[hover].label}</span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
-                      <span>진입</span><span className="font-semibold text-white">{nf(funnel[hover])}명</span>
+                      <span>진입</span>
+                      <span className="font-semibold text-white">
+                        {nf(funnel[hover])}명 <span className="font-normal text-slate-400">(전체 {pct(funnel[hover], funnel[0])})</span>
+                      </span>
                     </div>
                     <div className="flex justify-between gap-3.5 text-[11.5px] leading-relaxed text-slate-300">
                       <span>{hover === WAIT_GAP_INDEX ? '수술 대기' : hover === REOP_GAP_INDEX ? '재수술' : '다음 단계 이탈'}</span>
