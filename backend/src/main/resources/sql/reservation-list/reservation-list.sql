@@ -59,10 +59,17 @@ SELECT
   -- 이 예약으로 이어진 **첫 수술** 1건만 붙인다(예약일 이전 수술은 다른 건).
   -- 2026-01~08 실측: 5,687건에 붙고 그중 백내장은 1건 — 드물지만 있어서 둘 다 본다.
   ISNULL(sg.opR, '')                                      AS surgeryR,
-  ISNULL(sg.opL, '')                                      AS surgeryL
+  ISNULL(sg.opL, '')                                      AS surgeryL,
+  ISNULL(sg.opDate, '')                                   AS surgeryDate,
+  -- 수술 수납액 — 수술자 리스트(find-surgery-list.sql)와 같은 규칙: (고객, 수술일) 의 COSTPRICE 합.
+  --   PayStt='A'(취소분)는 뺀다. 대소문자가 섞여 들어와 UPPER 로 비교한다
+  --   (MSSQL 은 CI 라 원래 같이 걸리지만 규칙을 명시해 둔다).
+  -- 숫자만 담는다 — 화면 표기(콤마)는 프론트가 한다. 리스트는 문자열로 보여주지만
+  -- 이 값은 매출·객단가 집계에 쓰이므로 계산 가능한 형태여야 한다.
+  ISNULL(pay.receipt, 0)                                  AS surgeryPayment
 FROM RESERVATION r WITH(NOLOCK)
 OUTER APPLY (
-  SELECT TOP 1 u.opR, u.opL
+  SELECT TOP 1 u.opDate, u.opR, u.opL
   FROM (
     SELECT op.OPERATION_DATE AS opDate,
            ISNULL(op.OPERATIONR, '') AS opR, ISNULL(op.OPERATIONL, '') AS opL
@@ -88,6 +95,14 @@ OUTER APPLY (
   ) u
   ORDER BY u.opDate
 ) sg
+OUTER APPLY (
+  -- 그 수술일의 수납 합계. sg 가 고른 '이 예약으로 이어진 첫 수술' 과 같은 날짜를 본다.
+  SELECT SUM(ISNULL(cp.COST_PRICE, 0)) AS receipt
+  FROM COSTPRICE cp WITH(NOLOCK)
+  WHERE cp.CUST_NUM = r.CUST_NUM
+    AND cp.COST_DATE = sg.opDate
+    AND UPPER(ISNULL(cp.PayStt, '')) <> 'A'
+) pay
 OUTER APPLY (
   SELECT TOP 1 e.EXAM_DATE AS examDate, ISNULL(LTRIM(RTRIM(e.STOP_YN)), '') AS stopYn
   FROM EXAM e WITH(NOLOCK)
