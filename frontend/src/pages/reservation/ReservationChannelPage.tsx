@@ -311,18 +311,14 @@ export function ReservationChannelPage() {
     <PanelShell variant="bar" isLoading={loading} isError={isError}>
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         {/* ── 헤더 ── */}
-        <div className="flex shrink-0 flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-[22px] font-bold tracking-tight text-slate-900">예약 퍼널 · 채널별</h1>
-              <span className="rounded-md bg-slate-200/70 px-2 py-[3px] text-[11px] font-semibold text-slate-600">
-                {queryMonth.replace('-', '년 ')}월
-              </span>
-              <span className="rounded-md bg-slate-900 px-2 py-[3px] text-[11px] font-semibold text-white">사람 수</span>
-            </div>
-            <p className="text-[13px] leading-relaxed text-slate-500">
-              예약자 리스트를 채널로 묶어 단계별로 좁혀 봅니다. 모든 숫자는 <b className="font-semibold text-slate-700">사람 수</b>입니다.
-            </p>
+        {/* '사람 수' 배지와 설명 문단은 뺐다 — 단위는 아래 표 안내에도 적혀 있어 중복이고,
+            헤더가 두 줄이면 그만큼 퍼널이 밀린다. items-end → items-center 로 맞춘다. */}
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-[22px] font-bold tracking-tight text-slate-900">예약 퍼널 · 채널별</h1>
+            <span className="rounded-md bg-slate-200/70 px-2 py-[3px] text-[11px] font-semibold text-slate-600">
+              {queryMonth.replace('-', '년 ')}월
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -501,18 +497,18 @@ export function ReservationChannelPage() {
             {typeOpen && (
               <div className="ml-4 flex min-w-[218px] flex-1 flex-col justify-center border-l border-slate-100 pl-4" style={{ flexBasis: '224px' }}>
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex min-w-0 flex-col gap-0.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded" style={{ background: '#f59e0b' }} />
-                      <span className="text-[13px] font-bold text-slate-900">수술 유형별</span>
+                      <span className="h-2.5 w-2.5 flex-none rounded" style={{ background: '#f59e0b' }} />
+                      <span className="text-[14.5px] font-bold text-slate-900">수술 유형별</span>
                     </div>
-                    <span className="text-[10.5px] leading-relaxed text-slate-400">
+                    <span className="text-[11.5px] leading-relaxed text-slate-400">
                       {selRow ? `${selRow.channel} · ` : ''}수술완료 {nf(funnel[TYPE_STAGE])}명의 시술
                     </span>
                   </div>
                   <button onClick={() => setTypeOpen(false)}
-                    className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600">
-                    <X className="h-2.5 w-2.5" />
+                    className="flex h-[24px] w-[24px] flex-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+                    <X className="h-3 w-3" />
                   </button>
                 </div>
 
@@ -521,37 +517,35 @@ export function ReservationChannelPage() {
                     <p className="py-5 text-center text-[11px] text-slate-400">수술 통계를 불러오지 못했습니다.</p>
                   ) : (
                     <>
+                      {/* 폭은 그대로 두고 글자만 키운다 — 고정 칸을 줄여 그만큼을 막대에서 뺀다.
+                          막대는 비중을 눈으로만 훑는 용도라 좁아져도 되지만, 숫자는 읽혀야 한다. */}
                       {types.map((t) => (
-                        <div key={t.key} className="grid h-[21px] items-center gap-2"
-                          style={{ gridTemplateColumns: '62px 1fr 38px 34px' }}>
-                          <span className="truncate text-right text-[10.5px] font-semibold text-slate-500">{t.name}</span>
-                          <div className="relative h-2 min-w-0">
-                            <div className="absolute left-0 top-0 h-2 rounded-full"
+                        <div key={t.key} className="grid h-[24px] items-center gap-1.5"
+                          style={{ gridTemplateColumns: '66px 1fr 42px 36px' }}>
+                          <span className="truncate text-right text-[12px] font-semibold text-slate-500">{t.name}</span>
+                          <div className="relative h-2.5 min-w-0">
+                            <div className="absolute left-0 top-0 h-2.5 rounded-full"
                               style={{ width: t.w, minWidth: 3, background: t.color }} />
                           </div>
-                          <span className="whitespace-nowrap text-right text-[11px] font-bold tabular-nums text-slate-900">{t.count}</span>
-                          <span className="whitespace-nowrap text-right text-[10px] tabular-nums text-slate-400">{t.share}</span>
+                          <span className="whitespace-nowrap text-right text-[12.5px] font-bold tabular-nums text-slate-900">{t.count}</span>
+                          <span className="whitespace-nowrap text-right text-[11px] tabular-nums text-slate-400">{t.share}</span>
                         </div>
                       ))}
                       {/* 합계 — 유형 건수의 합이다. 좌우에 다른 시술을 받으면 두 유형에 잡히므로
                           실제 수술 인원(수술완료)보다 클 수 있다. 비교 기준인 완료 인원은
                           패널 부제에 적었다 — 폭이 좁아 이 줄에 두 숫자가 들어가지 않는다. */}
-                      <div className="mt-1.5 grid h-[24px] items-center gap-2 border-t border-slate-200 pt-1"
-                        style={{ gridTemplateColumns: '62px 1fr 38px 34px' }}>
-                        <span className="truncate text-right text-[10.5px] font-bold text-slate-700">합계</span>
+                      <div className="mt-1.5 grid h-[26px] items-center gap-1.5 border-t border-slate-200 pt-1"
+                        title="실제 수술명에서 분류한 값입니다(수술 통계와 같은 기준). 좌우에 다른 시술을 받으면 두 유형 모두에 잡혀 합이 수술완료 인원보다 클 수 있습니다."
+                        style={{ gridTemplateColumns: '66px 1fr 42px 36px' }}>
+                        <span className="truncate text-right text-[12px] font-bold text-slate-700">합계</span>
                         <span />
-                        <span className="whitespace-nowrap text-right text-[11px] font-bold tabular-nums text-slate-900">{nf(typedPeople)}명</span>
-                        <span className="whitespace-nowrap text-right text-[10px] font-semibold tabular-nums text-slate-500">100%</span>
+                        <span className="whitespace-nowrap text-right text-[12.5px] font-bold tabular-nums text-slate-900">{nf(typedPeople)}명</span>
+                        <span className="whitespace-nowrap text-right text-[11px] font-semibold tabular-nums text-slate-500">100%</span>
                       </div>
                     </>
                   )}
                 </div>
 
-                <p className="mt-2.5 border-t border-slate-100 pt-2 text-[10px] leading-relaxed text-slate-400">
-                  실제 수술명에서 분류한 값입니다(수술 통계와 같은 기준).
-                  <b className="font-semibold text-slate-500"> 수술등록 {nf(funnel[FINAL_INDEX])}명보다 적은 건</b> 예약만 잡고 아직 수술 전인 분이 있어서입니다.
-                  좌우에 다른 시술을 받으면 두 유형 모두에 잡혀 합이 인원보다 클 수 있습니다.
-                </p>
               </div>
             )}
           </div>
@@ -563,7 +557,7 @@ export function ReservationChannelPage() {
             <div className="flex flex-col gap-0.5">
               <span className="text-[15px] font-bold text-slate-900">채널별 단계 통과</span>
               <span className="text-[11.5px] text-slate-400">
-                행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다 · 머리글을 클릭하면 정렬됩니다 · 단위는 명
+                행을 클릭하면 위 퍼널이 해당 채널 기준으로 바뀝니다 · 머리글을 클릭하면 정렬됩니다 · 모든 숫자는 사람 수(명)
               </span>
             </div>
             {/* 표 상태(정렬·채널 선택)만 되돌린다 — 조회 월은 위 헤더의 초기화가 맡는다. */}
