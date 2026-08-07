@@ -362,7 +362,8 @@ export function ReservationChannelPage() {
           </div>
 
           <div className="flex flex-wrap items-stretch">
-            <div className="flex min-w-0 flex-1 flex-col justify-center" style={{ flexBasis: '780px' }}>
+            {/* 카드 9칸이 한 줄로 유지되려면 여기가 넓어야 한다 — 유형 패널보다 우선 배분한다. */}
+            <div className="flex min-w-0 flex-1 flex-col justify-center" style={{ flexBasis: '900px' }}>
               {/* 단계 카드 — 사람 수(검정) + 직전 대비 잔존율 */}
               <div className="grid grid-cols-3 sm:grid-cols-5 xl:grid-cols-9">
                 {COLS.map((c, i) => {
@@ -370,32 +371,28 @@ export function ReservationChannelPage() {
                   return (
                     <div key={c.label} title={c.hint}
                       onClick={isType ? () => setTypeOpen((v) => !v) : undefined}
-                      className={`flex min-w-0 flex-col gap-1.5 rounded-xl p-2.5 transition-colors ${isType ? 'cursor-pointer' : ''} ${c.derived ? 'border border-dashed border-amber-200 bg-amber-50/40' : ''}`}
+                      className={`flex min-w-0 flex-col gap-1.5 rounded-xl px-2 py-2.5 transition-colors ${isType ? 'cursor-pointer' : ''} ${c.derived ? 'border border-dashed border-amber-200 bg-amber-50/40' : ''}`}
                       style={{ background: isType && typeOpen ? '#fff8eb' : undefined }}>
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 flex-none rounded" style={{ background: c.color }} />
-                        <span className="truncate text-[12.5px] font-semibold text-slate-500">{c.label}</span>
-                        {/* 유형 패널 토글은 아이콘으로 옮긴다 — 아래 줄은 전체 대비가 쓴다 */}
+                      <div className="flex items-center gap-1">
+                        <span className="h-2 w-2 flex-none rounded" style={{ background: c.color }} />
+                        <span className="truncate text-[12px] font-semibold text-slate-500">{c.label}</span>
                         {isType && (typeOpen
                           ? <ChevronUp className="h-3 w-3 flex-none text-amber-500" />
                           : <ChevronDown className="h-3 w-3 flex-none text-amber-500" />)}
                       </div>
-                      <div className="flex flex-wrap items-baseline gap-1.5">
-                        <span className="text-[23px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
+                      {/* 비율은 **전체 대비 하나만** 둔다 — 예약 100명 중 몇 명이 여기까지 왔나(누적 생존율).
+                          직전 대비까지 같이 두니 카드마다 숫자가 셋이라 읽히지 않았다.
+                          단계별 병목은 바로 아래 퍼널의 이탈 알약이 이미 보여준다.
+                          한 줄로 유지해야 하므로 flex-wrap 을 쓰지 않는다 — 줄바꿈되면 카드 높이가 들쭉날쭉해진다. */}
+                      <div className="flex items-baseline gap-1 whitespace-nowrap">
+                        <span className="text-[19px] font-bold leading-none tracking-tight tabular-nums text-slate-900">
                           {nf(cardValues[i])}
                         </span>
-                        <span className="text-[13px] font-semibold text-slate-500">명</span>
-                        <span className="ml-1 text-xs font-bold tabular-nums" style={{ color: c.prev < 0 ? '#94a3b8' : c.color }}>
-                          {c.prev < 0 ? '기준' : pct(cardValues[i], cardValues[c.prev])}
+                        <span className="text-[11px] font-semibold text-slate-400">명</span>
+                        <span className="ml-auto text-[11px] font-bold tabular-nums" style={{ color: i === 0 ? '#94a3b8' : c.color }}>
+                          {i === 0 ? '100%' : pct(cardValues[i], cardValues[0])}
                         </span>
                       </div>
-                      {/* 두 비율을 같이 둔다 — 성격이 다르다.
-                            직전 대비(윗줄)  어느 단계에서 빠지는지 = 병목
-                            전체 대비(이 줄) 예약 100명 중 몇 명이 여기까지 왔는지 = 누적 생존율
-                          하나만 두면 "82.1% 인데 왜 이렇게 적지?" 같은 오해가 생긴다. */}
-                      <span className="min-h-[14px] whitespace-nowrap text-[11px] font-semibold tabular-nums text-slate-400">
-                        전체 {i === 0 ? '100%' : pct(cardValues[i], cardValues[0])}
-                      </span>
                     </div>
                   )
                 })}
@@ -502,7 +499,7 @@ export function ReservationChannelPage() {
                 폭은 퍼널에 양보한다 — 유형 목록은 짧은 라벨과 숫자뿐이라 좁혀도 읽히지만,
                 퍼널은 넓을수록 밴드 기울기와 카드 정렬이 살아난다. */}
             {typeOpen && (
-              <div className="ml-5 flex min-w-[236px] flex-1 flex-col justify-center border-l border-slate-100 pl-5" style={{ flexBasis: '250px' }}>
+              <div className="ml-4 flex min-w-[218px] flex-1 flex-col justify-center border-l border-slate-100 pl-4" style={{ flexBasis: '224px' }}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-1.5">
@@ -510,7 +507,7 @@ export function ReservationChannelPage() {
                       <span className="text-[13px] font-bold text-slate-900">수술 유형별</span>
                     </div>
                     <span className="text-[10.5px] leading-relaxed text-slate-400">
-                      {selRow ? `${selRow.channel} · ` : ''}실제 수술까지 간 시술
+                      {selRow ? `${selRow.channel} · ` : ''}수술완료 {nf(funnel[TYPE_STAGE])}명의 시술
                     </span>
                   </div>
                   <button onClick={() => setTypeOpen(false)}
@@ -526,7 +523,7 @@ export function ReservationChannelPage() {
                     <>
                       {types.map((t) => (
                         <div key={t.key} className="grid h-[21px] items-center gap-2"
-                          style={{ gridTemplateColumns: '72px 1fr 38px 34px' }}>
+                          style={{ gridTemplateColumns: '62px 1fr 38px 34px' }}>
                           <span className="truncate text-right text-[10.5px] font-semibold text-slate-500">{t.name}</span>
                           <div className="relative h-2 min-w-0">
                             <div className="absolute left-0 top-0 h-2 rounded-full"
@@ -537,13 +534,12 @@ export function ReservationChannelPage() {
                         </div>
                       ))}
                       {/* 합계 — 유형 건수의 합이다. 좌우에 다른 시술을 받으면 두 유형에 잡히므로
-                          실제 수술 인원(수술완료)보다 클 수 있다. 그래서 옆에 완료 인원을 같이 적는다. */}
+                          실제 수술 인원(수술완료)보다 클 수 있다. 비교 기준인 완료 인원은
+                          패널 부제에 적었다 — 폭이 좁아 이 줄에 두 숫자가 들어가지 않는다. */}
                       <div className="mt-1.5 grid h-[24px] items-center gap-2 border-t border-slate-200 pt-1"
-                        style={{ gridTemplateColumns: '72px 1fr 38px 34px' }}>
+                        style={{ gridTemplateColumns: '62px 1fr 38px 34px' }}>
                         <span className="truncate text-right text-[10.5px] font-bold text-slate-700">합계</span>
-                        <span className="min-w-0 truncate text-[9.5px] text-slate-400">
-                          수술완료 {nf(funnel[TYPE_STAGE])}명
-                        </span>
+                        <span />
                         <span className="whitespace-nowrap text-right text-[11px] font-bold tabular-nums text-slate-900">{nf(typedPeople)}명</span>
                         <span className="whitespace-nowrap text-right text-[10px] font-semibold tabular-nums text-slate-500">100%</span>
                       </div>
