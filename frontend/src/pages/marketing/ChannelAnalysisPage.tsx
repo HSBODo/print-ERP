@@ -60,8 +60,10 @@ export function ChannelAnalysisPage() {
 
   return (
     <div className="flex min-h-0 flex-1 gap-5 overflow-hidden">
-      {/* ── 좌측 LNB ── 문서가 있는 채널을 위에, 준비 중을 아래에 둔다. */}
-      <aside className="flex w-[196px] flex-none flex-col overflow-y-auto rounded-2xl border border-slate-200/80 bg-white py-3 shadow-sm">
+      {/* ── 좌측 LNB ── 문서가 있는 채널을 위에, 준비 중을 아래에 둔다.
+          self-start 로 내용 높이만 차지한다 — 기본값(stretch)이면 채널이 10개뿐인데도
+          카드가 화면 끝까지 늘어나 빈 흰 판이 된다. 채널이 많아지면 max-h-full 안에서 스크롤. */}
+      <aside className="flex max-h-full w-[196px] flex-none flex-col self-start overflow-y-auto rounded-2xl border border-slate-200/80 bg-white py-3 shadow-sm">
         <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">채널</p>
         {CHANNELS.map((c) => {
           const active = c.id === sel
