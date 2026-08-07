@@ -5,6 +5,9 @@
 --   notCancel 취소(C) 제외
 --   visited   미내원(Y)까지 제외 → 접수(I)·퇴원(H). 실제 내원한 건
 --   examined  검사등록일 있음
+--   notStop   그중 검사중단(exam_stop='Y')이 아닌 건
+--             2026-07 실측: 검사 936건 중 중단 40건이고 **그 40건은 수술등록이 0건**이다.
+--             중단하면 수술로 가지 않으므로 검사와 수술등록 사이에 두는 게 맞다.
 --   surgery   수술등록일 있음
 --
 -- ★ 건수와 사람수를 같이 낸다 — 세는 단위가 다르고 둘 다 필요하다.
@@ -28,7 +31,7 @@
 WITH all_channels AS (
     SELECT DISTINCT channel FROM v_reservation_channel
 ), src AS (
-    SELECT channel, person, reserve_state, exam_reg_date, surgery_reg_date
+    SELECT channel, person, reserve_state, exam_reg_date, exam_stop, surgery_reg_date, surgery_payment
       FROM v_reservation_channel
      WHERE registered_at >= CAST(:from AS DATE)
        AND registered_at <= CAST(:to   AS DATE)
@@ -39,16 +42,18 @@ WITH all_channels AS (
         COUNT(*) FILTER (WHERE reserve_state <> 'C')                                    AS not_cancel,
         COUNT(*) FILTER (WHERE reserve_state NOT IN ('C', 'Y'))                         AS visited,
         COUNT(*) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '') AS examined,
-        COUNT(*) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> ''
+        COUNT(*) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y') AS not_stop,
+        COUNT(*) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
                            AND surgery_reg_date <> '')                                  AS surgery,
+        COALESCE(SUM(surgery_payment) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
+                           AND surgery_reg_date <> ''), 0)         AS surgery_amount,
         COUNT(DISTINCT person)                                                          AS reserved_persons,
         COUNT(DISTINCT person) FILTER (WHERE reserve_state <> 'C')                      AS not_cancel_persons,
         COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y'))           AS visited_persons,
-        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y')
-                                         AND exam_reg_date <> '')                       AS examined_persons,
-        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y')
-                                         AND exam_reg_date <> ''
-                                         AND surgery_reg_date <> '')                    AS surgery_persons
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '')                       AS examined_persons,
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y')                     AS not_stop_persons,
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
+                           AND surgery_reg_date <> '')                    AS surgery_persons
       FROM src
      GROUP BY channel
 ), tot AS (
@@ -56,11 +61,12 @@ WITH all_channels AS (
         COUNT(DISTINCT person)                                                          AS total_reserved_persons,
         COUNT(DISTINCT person) FILTER (WHERE reserve_state <> 'C')                      AS total_not_cancel_persons,
         COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y'))           AS total_visited_persons,
-        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y')
-                                         AND exam_reg_date <> '')                       AS total_examined_persons,
-        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y')
-                                         AND exam_reg_date <> ''
-                                         AND surgery_reg_date <> '')                    AS total_surgery_persons
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '')                       AS total_examined_persons,
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y')                     AS total_not_stop_persons,
+        COUNT(DISTINCT person) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
+                           AND surgery_reg_date <> '')                    AS total_surgery_persons,
+        COALESCE(SUM(surgery_payment) FILTER (WHERE reserve_state NOT IN ('C', 'Y') AND exam_reg_date <> '' AND exam_stop <> 'Y'
+                           AND surgery_reg_date <> ''), 0)          AS total_surgery_amount
       FROM src
 )
 SELECT
@@ -69,17 +75,22 @@ SELECT
     COALESCE(p.not_cancel, 0)          AS not_cancel,
     COALESCE(p.visited, 0)             AS visited,
     COALESCE(p.examined, 0)            AS examined,
+    COALESCE(p.not_stop, 0)            AS not_stop,
     COALESCE(p.surgery, 0)             AS surgery,
+    COALESCE(p.surgery_amount, 0)      AS surgery_amount,
     COALESCE(p.reserved_persons, 0)    AS reserved_persons,
     COALESCE(p.not_cancel_persons, 0)  AS not_cancel_persons,
     COALESCE(p.visited_persons, 0)     AS visited_persons,
     COALESCE(p.examined_persons, 0)    AS examined_persons,
+    COALESCE(p.not_stop_persons, 0)    AS not_stop_persons,
     COALESCE(p.surgery_persons, 0)     AS surgery_persons,
     t.total_reserved_persons,
     t.total_not_cancel_persons,
     t.total_visited_persons,
     t.total_examined_persons,
-    t.total_surgery_persons
+    t.total_not_stop_persons,
+    t.total_surgery_persons,
+    t.total_surgery_amount
   FROM all_channels a
   LEFT JOIN per_channel p ON p.channel = a.channel
   CROSS JOIN tot t

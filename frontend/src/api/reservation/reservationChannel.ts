@@ -14,19 +14,25 @@ export const reservationChannelFunnelItemSchema = z.object({
   notCancel: z.number(),
   visited: z.number(),
   examined: z.number(),
+  notStop: z.number(),
   surgery: z.number(),
+  /** 수술 수납액 합(원). 아직 수술 전이면 0 이라 인원보다 늦게 찬다. */
+  surgeryAmount: z.number(),
   // 사람 수 — 같은 사람이 그 달에 두 번 예약하면 건수 2 · 사람수 1.
   // ⚠️ 채널별 DISTINCT 라 채널 합계 ≠ 전체 사람수. 합계행은 total* 을 쓸 것.
   reservedPersons: z.number(),
   notCancelPersons: z.number(),
   visitedPersons: z.number(),
   examinedPersons: z.number(),
+  notStopPersons: z.number(),
   surgeryPersons: z.number(),
   totalReservedPersons: z.number(),
   totalNotCancelPersons: z.number(),
   totalVisitedPersons: z.number(),
   totalExaminedPersons: z.number(),
+  totalNotStopPersons: z.number(),
   totalSurgeryPersons: z.number(),
+  totalSurgeryAmount: z.number(),
 })
 
 export type ReservationChannelFunnelItem = z.infer<typeof reservationChannelFunnelItemSchema>

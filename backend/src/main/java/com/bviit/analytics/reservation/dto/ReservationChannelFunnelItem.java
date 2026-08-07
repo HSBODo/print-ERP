@@ -24,8 +24,12 @@ public class ReservationChannelFunnelItem {
     private final int visited;
     /** 그중 검사등록일이 있는 건 */
     private final int examined;
+    /** 그중 검사중단(exam_stop='Y')이 아닌 건 — 중단하면 수술로 가지 않는다(2026-07 중단 40건 전부 수술 0) */
+    private final int notStop;
     /** 그중 수술등록일이 있는 건 */
     private final int surgery;
+    /** 그 수술들의 수납액 합(원). 아직 수술 전이면 0 이라 인원보다 늦게 찬다. */
+    private final long surgeryAmount;
 
     /* ── 사람 수 ──
      * 같은 사람이 그 달에 두 번 예약하면 건수는 2, 사람수는 1 이다.
@@ -38,6 +42,7 @@ public class ReservationChannelFunnelItem {
     private final int notCancelPersons;
     private final int visitedPersons;
     private final int examinedPersons;
+    private final int notStopPersons;
     private final int surgeryPersons;
 
     /* ── 전체(채널 무관) 사람 수 — 합계행 전용. 모든 행에 같은 값. ── */
@@ -45,5 +50,8 @@ public class ReservationChannelFunnelItem {
     private final int totalNotCancelPersons;
     private final int totalVisitedPersons;
     private final int totalExaminedPersons;
+    private final int totalNotStopPersons;
     private final int totalSurgeryPersons;
+    /** 전체 기준 수술 수납액 합(원) — 합계행 전용. */
+    private final long totalSurgeryAmount;
 }
