@@ -169,8 +169,16 @@ const pct = (num: number, den: number) => {
 const VB_W = 1200
 const VB_H = 280
 const CY = VB_H / 2
-const BAND_W = VB_W / STAGES.length
 const MAX_H = 232
+
+/* ── 밴드 x 좌표 ──
+ * 위 카드는 9칸(COLS), 아래 밴드는 8개(STAGES)라 그냥 8등분하면 둘이 어긋난다.
+ * 그래서 밴드도 **카드 칸을 단위로** 넓이를 준다. 수술완료 밴드가 2칸을 덮는데,
+ * 그 2칸이 수술완료 카드 + 수술대기 카드이기 때문이다 — 대기는 완료에서 갈라져
+ * 나온 값이라 밴드로는 같은 구간이다. 이렇게 하면 모든 밴드가 제 카드 밑에 선다. */
+const BAND_SPAN = [1, 1, 1, 1, 1, 1, 2, 1]
+const COL_W = VB_W / BAND_SPAN.reduce((a, b) => a + b, 0)
+const BAND_X = BAND_SPAN.map((_, i) => BAND_SPAN.slice(0, i).reduce((a, b) => a + b, 0))
 
 /** 정렬 키 — 'channel' | 단계 인덱스('0'~'4') | 'final'. 헤더를 눌러 바꾼다. */
 type SortKey = string
@@ -354,7 +362,7 @@ export function ReservationChannelPage() {
           </div>
 
           <div className="flex flex-wrap items-stretch">
-            <div className="flex min-w-0 flex-1 flex-col justify-center" style={{ flexBasis: '640px' }}>
+            <div className="flex min-w-0 flex-1 flex-col justify-center" style={{ flexBasis: '780px' }}>
               {/* 단계 카드 — 사람 수(검정) + 직전 대비 잔존율 */}
               <div className="grid grid-cols-3 sm:grid-cols-5 xl:grid-cols-9">
                 {COLS.map((c, i) => {
@@ -391,15 +399,16 @@ export function ReservationChannelPage() {
                   {STAGES.map((s, i) => {
                     const last = i === STAGES.length - 1
                     const vNext = last ? funnel[i] : funnel[i + 1]
-                    const x0 = i * BAND_W, x1 = x0 + BAND_W
+                    const w = BAND_SPAN[i] * COL_W
+                    const x0 = BAND_X[i] * COL_W, x1 = x0 + w
                     const h0 = hOf(funnel[i]), h1 = hOf(vNext)
                     const t0 = CY - h0 / 2, b0 = CY + h0 / 2, t1 = CY - h1 / 2, b1 = CY + h1 / 2
-                    const cx0 = x0 + BAND_W * 0.45, cx1 = x0 + BAND_W * 0.55
+                    const cx0 = x0 + w * 0.45, cx1 = x0 + w * 0.55
                     return (
                       <g key={s.label} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
                         onClick={i === TYPE_STAGE ? () => setTypeOpen((v) => !v) : undefined}
                         style={{ cursor: i === TYPE_STAGE ? 'pointer' : 'default' }}>
-                        <rect x={x0} y={0} width={BAND_W} height={VB_H} fill="transparent" />
+                        <rect x={x0} y={0} width={w} height={VB_H} fill="transparent" />
                         <path
                           d={`M${x0} ${t0}C${cx0} ${t0},${cx1} ${t1},${x1} ${t1}L${x1} ${b1}C${cx1} ${b1},${cx0} ${b0},${x0} ${b0}Z`}
                           fill={s.color}
@@ -425,7 +434,7 @@ export function ReservationChannelPage() {
                     <div key={i}
                       className="pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-baseline gap-1.5 rounded-full border px-2.5 py-1 shadow-sm"
                       style={{
-                        left: `${(((i + 1) * BAND_W) / VB_W) * 100}%`, top: '50%',
+                        left: `${(((BAND_X[i] + BAND_SPAN[i]) * COL_W) / VB_W) * 100}%`, top: '50%',
                         background: wait ? '#fffbeb' : reop ? '#f8fafc' : big ? '#fef2f2' : '#fff',
                         borderColor: wait ? '#fde68a' : reop ? '#e2e8f0' : big ? '#fecaca' : '#e8ecf1',
                       }}>
@@ -443,7 +452,7 @@ export function ReservationChannelPage() {
                 {/* 호버 툴팁 */}
                 {hover != null && (
                   <div className="pointer-events-none absolute z-10 min-w-[178px] -translate-x-1/2 -translate-y-[110%] rounded-xl bg-slate-900 px-3 py-2.5 shadow-lg"
-                    style={{ left: `${((hover * BAND_W + BAND_W / 2) / VB_W) * 100}%`, top: `${((CY - hOf(funnel[hover]) / 2) / VB_H) * 100}%` }}>
+                    style={{ left: `${(((BAND_X[hover] + BAND_SPAN[hover] / 2) * COL_W) / VB_W) * 100}%`, top: `${((CY - hOf(funnel[hover]) / 2) / VB_H) * 100}%` }}>
                     <div className="mb-1.5 flex items-center gap-1.5">
                       <span className="h-[7px] w-[7px] rounded-full" style={{ background: STAGES[hover].color }} />
                       <span className="text-xs font-bold text-white">{STAGES[hover].label}</span>
@@ -478,45 +487,62 @@ export function ReservationChannelPage() {
               </div>
             </div>
 
-            {/* ── 수술 유형별 (실데이터) ── */}
+            {/* ── 수술 유형별 (실데이터) ──
+                폭은 퍼널에 양보한다 — 유형 목록은 짧은 라벨과 숫자뿐이라 좁혀도 읽히지만,
+                퍼널은 넓을수록 밴드 기울기와 카드 정렬이 살아난다. */}
             {typeOpen && (
-              <div className="ml-7 flex min-w-[340px] flex-1 flex-col justify-center border-l border-slate-100 pl-7" style={{ flexBasis: '360px' }}>
-                <div className="flex items-start justify-between gap-3">
+              <div className="ml-5 flex min-w-[236px] flex-1 flex-col justify-center border-l border-slate-100 pl-5" style={{ flexBasis: '250px' }}>
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded" style={{ background: '#f59e0b' }} />
-                      <span className="text-sm font-bold text-slate-900">수술 유형별</span>
+                      <span className="h-2 w-2 rounded" style={{ background: '#f59e0b' }} />
+                      <span className="text-[13px] font-bold text-slate-900">수술 유형별</span>
                     </div>
-                    <span className="text-[11.5px] leading-relaxed text-slate-400">
-                      {selRow ? `${selRow.channel} · ` : ''}실제 수술까지 간 {nf(typedPeople)}명의 시술
+                    <span className="text-[10.5px] leading-relaxed text-slate-400">
+                      {selRow ? `${selRow.channel} · ` : ''}실제 수술까지 간 시술
                     </span>
                   </div>
                   <button onClick={() => setTypeOpen(false)}
-                    className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600">
-                    <X className="h-3 w-3" />
+                    className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+                    <X className="h-2.5 w-2.5" />
                   </button>
                 </div>
 
-                <div className="mt-3.5 flex flex-col">
+                <div className="mt-2.5 flex flex-col">
                   {types.length === 0 ? (
-                    <p className="py-6 text-center text-xs text-slate-400">수술 통계를 불러오지 못했습니다.</p>
-                  ) : types.map((t) => (
-                    <div key={t.key} className="grid h-[26px] items-center gap-2.5"
-                      style={{ gridTemplateColumns: '104px 1fr 48px 42px' }}>
-                      <span className="truncate text-right text-[11.5px] font-semibold text-slate-500">{t.name}</span>
-                      <div className="relative h-2.5 min-w-0">
-                        <div className="absolute left-0 top-0 h-2.5 rounded-full"
-                          style={{ width: t.w, minWidth: 4, background: t.color }} />
+                    <p className="py-5 text-center text-[11px] text-slate-400">수술 통계를 불러오지 못했습니다.</p>
+                  ) : (
+                    <>
+                      {types.map((t) => (
+                        <div key={t.key} className="grid h-[21px] items-center gap-2"
+                          style={{ gridTemplateColumns: '72px 1fr 38px 34px' }}>
+                          <span className="truncate text-right text-[10.5px] font-semibold text-slate-500">{t.name}</span>
+                          <div className="relative h-2 min-w-0">
+                            <div className="absolute left-0 top-0 h-2 rounded-full"
+                              style={{ width: t.w, minWidth: 3, background: t.color }} />
+                          </div>
+                          <span className="whitespace-nowrap text-right text-[11px] font-bold tabular-nums text-slate-900">{t.count}</span>
+                          <span className="whitespace-nowrap text-right text-[10px] tabular-nums text-slate-400">{t.share}</span>
+                        </div>
+                      ))}
+                      {/* 합계 — 유형 건수의 합이다. 좌우에 다른 시술을 받으면 두 유형에 잡히므로
+                          실제 수술 인원(수술완료)보다 클 수 있다. 그래서 옆에 완료 인원을 같이 적는다. */}
+                      <div className="mt-1.5 grid h-[24px] items-center gap-2 border-t border-slate-200 pt-1"
+                        style={{ gridTemplateColumns: '72px 1fr 38px 34px' }}>
+                        <span className="truncate text-right text-[10.5px] font-bold text-slate-700">합계</span>
+                        <span className="min-w-0 truncate text-[9.5px] text-slate-400">
+                          수술완료 {nf(funnel[TYPE_STAGE])}명
+                        </span>
+                        <span className="whitespace-nowrap text-right text-[11px] font-bold tabular-nums text-slate-900">{nf(typedPeople)}명</span>
+                        <span className="whitespace-nowrap text-right text-[10px] font-semibold tabular-nums text-slate-500">100%</span>
                       </div>
-                      <span className="whitespace-nowrap text-right text-xs font-bold tabular-nums text-slate-900">{t.count}</span>
-                      <span className="whitespace-nowrap text-right text-[11px] tabular-nums text-slate-400">{t.share}</span>
-                    </div>
-                  ))}
+                    </>
+                  )}
                 </div>
 
-                <p className="mt-3 border-t border-slate-100 pt-2.5 text-[11px] leading-relaxed text-slate-400">
+                <p className="mt-2.5 border-t border-slate-100 pt-2 text-[10px] leading-relaxed text-slate-400">
                   실제 수술명에서 분류한 값입니다(수술 통계와 같은 기준).
-                  <b className="font-semibold text-slate-500"> 수술등록 {nf(funnel[5])}명보다 적은 건</b> 예약만 잡고 아직 수술 전인 분이 있어서입니다.
+                  <b className="font-semibold text-slate-500"> 수술등록 {nf(funnel[FINAL_INDEX])}명보다 적은 건</b> 예약만 잡고 아직 수술 전인 분이 있어서입니다.
                   좌우에 다른 시술을 받으면 두 유형 모두에 잡혀 합이 인원보다 클 수 있습니다.
                 </p>
               </div>
