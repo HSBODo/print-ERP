@@ -15,7 +15,12 @@ import type { ReservationChannelFunnelItem } from '@/api/reservation/reservation
  *   대기와 완료는 형제라 밴드에 끼우면 735 → 156 → 579 로 줄었다 늘어 퍼널이 거짓말을 한다.
  *   그래서 그리는 목록이 둘이다:
  *     STAGES  퍼널 밴드 8단계 (예약 … 수술등록 → 수술완료 → 재수술)
- *     COLS    카드·표 9칸 (STAGES + 수술대기를 수술등록 뒤에 끼움)
+ *     COLS    카드·표 9칸 (STAGES + 수술대기를 **수술완료 뒤**에 끼움)
+ *
+ *   ⚠️ 대기는 완료 **뒤**다. 등록과 완료 사이에 두면 "대기를 거쳐 완료로 간다"로 읽히는데,
+ *      대기와 완료는 서로 배타다(완료한 사람은 대기에 없다). 게다가 완료한 사람도 전부
+ *      대기를 거쳤으니 시간 순서로도 틀리다 — 대기는 오늘 기준 아직 안 한 사람의 스냅샷이다.
+ *      완료 뒤에 두면 숫자도 735 → 579 → 156 으로 계속 줄어 퍼널처럼 읽힌다.
  *   대기는 이탈이 아니므로 빨강을 쓰지 않고 노랑·점선으로 파생 칸임을 드러낸다.
  *
  * ★ 이 화면은 **사람 수만** 센다(건수 아님).
@@ -86,22 +91,22 @@ const stageCol = (i: number, prev: number): ColDef => {
 const COLS: ColDef[] = [
   stageCol(0, -1), stageCol(1, 0), stageCol(2, 1), stageCol(3, 2), stageCol(4, 3),
   stageCol(5, 4),                       // 수술등록
-  {                                     // 수술대기 — 파생
+  stageCol(6, 5),                       // 수술완료 — 등록 바로 뒤. 이 표의 핵심 전환율이라 붙여 둔다
+  {                                     // 수술대기 — 파생. 완료의 **잔여**라 완료 뒤에 온다
     label: '수술대기',
     hint: '수술예약은 잡았지만 아직 수술일이 오지 않은 사람 = 수술등록 − 수술완료. 이탈이 아니다',
     color: '#eab308',
-    prev: 5,
+    prev: 5,                            // 비율의 분모는 앞칸(완료)이 아니라 수술등록이다
     derived: true,
     value: (r) => r.surgeryPersons - r.surgeryDonePersons,
     total: (r) => r.totalSurgeryPersons - r.totalSurgeryDonePersons,
   },
-  stageCol(6, 5),                       // 수술완료 — 대기(6)를 건너뛰고 등록(5) 대비
-  stageCol(7, 7),                       // 재수술 — 수술완료(7) 대비
+  stageCol(7, 6),                       // 재수술 — 대기(7)가 아니라 수술완료(6) 대비
 ]
 
 /** '수술 유형별' 패널을 여는 수술완료 칸. 유형은 실제 수술한 사람에게만 있다.
- *  COLS 와 STAGES 는 대기 칸 때문에 인덱스가 한 칸 어긋나 각각 둔다. */
-const TYPE_COL = 7
+ *  대기 칸이 뒤에 끼어 있어 COLS 와 STAGES 의 인덱스가 마지막 칸에서만 어긋난다. */
+const TYPE_COL = 6
 const TYPE_STAGE = 6
 /** 통과율이 낮을 때 빨갛게 칠할 마지막 칸. 그 뒤(대기·완료·재수술)는 이탈이 아니다. */
 const LAST_DROP_COL = 5
