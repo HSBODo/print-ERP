@@ -38,6 +38,8 @@ const reservationListItemSchema = z.object({
   /** 이 예약으로 이어진 첫 수술의 시술명 우/좌. 수술자 리스트와 같은 원천이라 표기가 일치한다. */
   surgeryR: z.string().optional(),
   surgeryL: z.string().optional(),
+  /** 그 수술의 수납액(원). 수술 전이면 0. (고객, 수술일)의 COSTPRICE 합 — 수술자 리스트와 같은 규칙. */
+  surgeryPayment: z.number().optional(),
 })
 
 export type ReservationListItem = z.infer<typeof reservationListItemSchema>

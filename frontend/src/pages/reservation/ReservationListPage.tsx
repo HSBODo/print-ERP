@@ -16,6 +16,8 @@ import type { ReservationListItem } from '@/api/reservation/reservationList'
 // 값이 optional 인 컬럼(내원동기 중 등)도 그대로 넘길 수 있게 undefined 를 받는다.
 const dash = (v: string | undefined) => (v && v.trim() ? v : '—')
 const formatCount = (n: number) => n.toLocaleString('ko-KR')
+/** 수술 수납액. 아직 수술 전이면 0 으로 오는데 '0원'으로 보이면 무료로 오해하므로 대시로 둔다. */
+const formatPayment = (v?: number) => (v ? v.toLocaleString('ko-KR') : <span className="text-gray-300">—</span>)
 
 const CHANNEL_STYLE: Record<string, string> = {
   인콜: 'bg-blue-50 text-blue-700',
@@ -88,6 +90,7 @@ const COLUMNS: { label: string; key: SortKey | null; tight?: boolean }[] = [
   { label: '수술등록일', key: 'surgeryRegDate' },
   { label: '수술명(우)', key: 'surgeryR' },
   { label: '수술명(좌)', key: 'surgeryL' },
+  { label: '수술금액', key: 'surgeryPayment' },
   { label: '메모', key: 'comment' },
 ]
 
@@ -112,6 +115,8 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'surgeryRegDate', label: '수술등록일' },
   { key: 'surgeryR', label: '수술명(우)' },
   { key: 'surgeryL', label: '수술명(좌)' },
+  // 금액은 숫자 그대로 내보낸다 — 엑셀에서 합계·평균을 바로 낼 수 있어야 한다.
+  { key: 'surgeryPayment', label: '수술금액', csv: (r) => (r.surgeryPayment ? String(r.surgeryPayment) : '') },
   { key: 'comment', label: '메모' },
 ]
 
@@ -373,6 +378,7 @@ export function ReservationListPage() {
                         {/* 수술명 우/좌 — 수술자 리스트와 같은 원천이라 표기가 그대로 일치한다. */}
                         <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryR)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryL)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-800">{formatPayment(r.surgeryPayment)}</td>
                         <td className="w-full max-w-0 px-2.5 py-1 text-left">
                           <span className="block truncate text-gray-700" title={r.comment}>{dash(r.comment)}</span>
                         </td>

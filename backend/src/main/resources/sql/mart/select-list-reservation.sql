@@ -18,7 +18,8 @@ SELECT
     COALESCE(exam_stop, '')                    AS "examStop",
     COALESCE(surgery_reg_date, '')             AS "surgeryRegDate",
     COALESCE(surgery_r, '')                    AS "surgeryR",
-    COALESCE(surgery_l, '')                    AS "surgeryL"
+    COALESCE(surgery_l, '')                    AS "surgeryL",
+    COALESCE(surgery_payment, 0)               AS "surgeryPayment"
   FROM list_reservation
  WHERE registered_at >= CAST(:from AS DATE)
    AND registered_at <= CAST(:to   AS DATE)
