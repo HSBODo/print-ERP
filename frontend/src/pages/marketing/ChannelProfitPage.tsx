@@ -72,20 +72,20 @@ const COLS: { key: SortKey; label: string; bl?: boolean; hl?: boolean }[] = [
 ]
 
 const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) =>
-  !active ? <ChevronsUpDown className="h-3 w-3 flex-none text-slate-300" />
-  : dir === 'asc' ? <ChevronUp className="h-3 w-3 flex-none text-slate-600" />
-  : <ChevronDown className="h-3 w-3 flex-none text-slate-600" />
+  !active ? <ChevronsUpDown className="h-3 w-3 flex-none text-slate-400" />
+  : dir === 'asc' ? <ChevronUp className="h-3 w-3 flex-none text-slate-800" />
+  : <ChevronDown className="h-3 w-3 flex-none text-slate-800" />
 
 const Kpi = ({ label, value, unit, hint }: { label: string; value: string; unit: string; hint: string }) => (
   <div className="flex items-center gap-3.5 rounded-xl border border-border/70 bg-white px-5 py-4 shadow-sm">
     <div className="flex min-w-0 flex-col gap-0.5">
-      <span className="text-[11.5px] font-semibold text-slate-500">{label}</span>
+      <span className="text-[11.5px] font-semibold text-slate-700">{label}</span>
       <div className="flex flex-wrap items-baseline gap-1.5">
         <span className="whitespace-nowrap text-[23px] font-bold tracking-tight text-slate-900 tabular-nums">
           {value}
-          <span className="text-[13px] font-semibold text-slate-400"> {unit}</span>
+          <span className="text-[13px] font-semibold text-slate-600"> {unit}</span>
         </span>
-        <span className="whitespace-nowrap text-[11px] text-slate-400">{hint}</span>
+        <span className="whitespace-nowrap text-[11px] text-slate-600">{hint}</span>
       </div>
     </div>
   </div>
@@ -163,7 +163,7 @@ export function ChannelProfitPage() {
       className={`flex items-center justify-end px-4 py-2 text-right text-[12.5px] tabular-nums ${
         opts?.bl ? 'border-l border-border/50' : ''
       } ${opts?.hl ? 'bg-slate-50' : ''} ${
-        opts?.dim ? 'text-slate-300' : opts?.strong ? 'font-bold text-slate-900' : 'text-slate-600'
+        opts?.dim ? 'text-slate-400' : opts?.strong ? 'font-bold text-slate-900' : 'text-slate-800'
       }`}
     >
       {v}
@@ -178,7 +178,7 @@ export function ChannelProfitPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-[22px] font-bold tracking-tight text-slate-900">채널별 수익성</h1>
-          <p className="text-[13px] text-slate-500">
+          <p className="text-[13px] text-slate-700">
             유입채널의 수익성과 광고매체의 투자 효율을 나눠서 봅니다.
           </p>
         </div>
@@ -222,11 +222,11 @@ export function ChannelProfitPage() {
                 type="button"
                 onClick={() => setTab(k)}
                 className={`-mb-px flex flex-col justify-center gap-0.5 border-b-[3px] px-4 py-3 text-left transition-colors ${
-                  tab === k ? 'border-blue-700 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+                  tab === k ? 'border-blue-700 text-slate-900' : 'border-transparent text-slate-600 hover:text-slate-800'
                 }`}
               >
                 <span className="text-sm font-bold">{label}</span>
-                <span className="text-[11px] text-slate-400">{sub}</span>
+                <span className="text-[11px] text-slate-600">{sub}</span>
               </button>
             ))}
           </div>
@@ -236,11 +236,11 @@ export function ChannelProfitPage() {
               <div className="flex flex-wrap items-center justify-between gap-4 px-5 pb-3 pt-4">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[15px] font-bold text-slate-900">유입채널 수익성 비교</span>
-                  <span className="text-[11.5px] text-slate-400">
+                  <span className="text-[11.5px] text-slate-600">
                     광고 매체가 아닌 실제 예약·유입경로 기준입니다. 인원은 예약통계_채널별과 같습니다.
                   </span>
                 </div>
-                <label className="flex cursor-pointer items-center gap-2 text-[12.5px] font-semibold text-slate-600">
+                <label className="flex cursor-pointer items-center gap-2 text-[12.5px] font-semibold text-slate-800">
                   <input
                     type="checkbox"
                     checked={onlyComparable}
@@ -255,7 +255,7 @@ export function ChannelProfitPage() {
                 <div className="min-w-[1120px]">
                   {/* 머리글 */}
                   <div className={`${GRID} h-9 items-center border-y border-border/50 bg-slate-50/60`}>
-                    <span className="pl-5 text-[11.5px] font-semibold text-slate-400">채널</span>
+                    <span className="pl-5 text-[11.5px] font-semibold text-slate-600">채널</span>
                     {COLS.map((c) => (
                       <button
                         key={c.key}
@@ -264,7 +264,7 @@ export function ChannelProfitPage() {
                         className={`flex h-9 items-center justify-end gap-1 px-4 text-[11.5px] transition-colors hover:text-slate-900 ${
                           c.bl ? 'border-l border-border/50' : ''
                         } ${c.hl ? 'bg-slate-100/70' : ''} ${
-                          sort.key === c.key ? 'font-bold text-slate-900' : 'font-semibold text-slate-400'
+                          sort.key === c.key ? 'font-bold text-slate-900' : 'font-semibold text-slate-600'
                         }`}
                       >
                         {c.label}
@@ -276,7 +276,7 @@ export function ChannelProfitPage() {
                   {visible.map((r) => (
                     <div key={r.channel} className={`${GRID} items-stretch border-b border-border/40 hover:bg-slate-50/70`}>
                       <div className="flex items-center gap-2 py-2 pl-5">
-                        <span className={`text-[12.5px] font-bold ${r.grade === 'low' ? 'text-slate-400' : 'text-slate-900'}`}>
+                        <span className={`text-[12.5px] font-bold ${r.grade === 'low' ? 'text-slate-600' : 'text-slate-900'}`}>
                           {r.channel}
                         </span>
                         {r.grade !== 'ok' && (
@@ -311,7 +311,7 @@ export function ChannelProfitPage() {
                   <div className={`${GRID} items-stretch bg-slate-50/80`}>
                     <div className="flex flex-col justify-center py-2.5 pl-5">
                       <span className="text-[12.5px] font-bold text-slate-900">전체</span>
-                      <span className="text-[10.5px] text-slate-400">모든 유입채널</span>
+                      <span className="text-[10.5px] text-slate-600">모든 유입채널</span>
                     </div>
                     {cell(fmtInt(totals.surgeryDone), { strong: true })}
                     {cell(`${fmtEok(totals.revenue)}억`, { strong: true })}
@@ -328,8 +328,8 @@ export function ChannelProfitPage() {
               </div>
 
               <div className="flex items-start gap-2 px-5 pb-4 pt-3">
-                <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-400" />
-                <span className="text-[11.5px] leading-relaxed text-slate-400">
+                <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-600" />
+                <span className="text-[11.5px] leading-relaxed text-slate-700">
                   표본 {SAMPLE_LOW}명 미만은 <b>n</b> 을 함께 표시하고, {SAMPLE_LOW}~{SAMPLE_WARN - 1}명은 &lsquo;표본 주의&rsquo;로
                   둡니다 — 렌즈 환자 몇 명이 객단가를 좌우합니다. 공헌이익 = 수납액 − 렌즈원가이며, 단가가 비어 있는 시술이
                   있으면 부풀려 보이지 않도록 &lsquo;—&rsquo; 로 둡니다.
@@ -343,7 +343,7 @@ export function ChannelProfitPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[15px] font-bold text-slate-900">광고매체 효율</span>
-                  <span className="text-[11.5px] text-slate-400">
+                  <span className="text-[11.5px] text-slate-600">
                     비용과 성과의 귀속 근거가 있는 광고상품만 계산합니다. 광고비는 만원 단위입니다.
                   </span>
                 </div>
@@ -370,7 +370,7 @@ export function ChannelProfitPage() {
               <div className="w-full overflow-x-auto">
                 <table className="w-full min-w-[1080px] border-collapse text-[12.5px]">
                   <thead>
-                    <tr className="border-y border-border/50 bg-slate-50/60 text-[11.5px] font-semibold text-slate-400">
+                    <tr className="border-y border-border/50 bg-slate-50/60 text-[11.5px] font-semibold text-slate-600">
                       <th className="px-4 py-2 text-left">매체·상품</th>
                       <th className="px-4 py-2 text-left">성과 귀속</th>
                       <th className="border-l border-border/50 px-4 py-2 text-right">예약</th>
@@ -387,7 +387,7 @@ export function ChannelProfitPage() {
                     {adRows.map((a) => {
                       const blocked = a.blockedReason !== null
                       const num = (v: string) => (
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-600">{v}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-800">{v}</td>
                       )
                       return (
                         <tr key={a.media} className={`border-b border-border/40 ${blocked ? 'bg-amber-50/40' : ''}`}>
@@ -401,7 +401,7 @@ export function ChannelProfitPage() {
                               </span>
                               <div className="flex flex-col">
                                 <span className="whitespace-nowrap font-bold text-slate-900">{a.label}</span>
-                                <span className="whitespace-nowrap text-[10.5px] text-slate-400">{a.sub}</span>
+                                <span className="whitespace-nowrap text-[10.5px] text-slate-600">{a.sub}</span>
                               </div>
                             </div>
                           </td>
@@ -412,12 +412,12 @@ export function ChannelProfitPage() {
                               </span>
                             ) : (
                               <div className="flex flex-col">
-                                <span className="font-semibold text-slate-700">{a.channel}</span>
-                                <span className="text-[10px] text-slate-400">채널 직접 연결</span>
+                                <span className="font-semibold text-slate-800">{a.channel}</span>
+                                <span className="text-[10px] text-slate-600">채널 직접 연결</span>
                               </div>
                             )}
                           </td>
-                          <td className="border-l border-border/40 px-4 py-3 text-right tabular-nums text-slate-600">
+                          <td className="border-l border-border/40 px-4 py-3 text-right tabular-nums text-slate-800">
                             {a.reserved === null ? '—' : `${fmtInt(a.reserved)}명`}
                           </td>
                           {num(a.surgeryDone === null ? '—' : `${fmtInt(a.surgeryDone)}명`)}
@@ -443,7 +443,7 @@ export function ChannelProfitPage() {
                           {num(fmtRatio(a.revenueRoas))}
                           <td
                             className={`bg-slate-50 px-4 py-3 text-right font-bold tabular-nums ${
-                              a.contribRoas === null ? 'text-slate-300'
+                              a.contribRoas === null ? 'text-slate-400'
                               : a.contribRoas >= 1 ? 'text-emerald-600' : 'text-red-600'
                             }`}
                           >
@@ -462,7 +462,7 @@ export function ChannelProfitPage() {
                   <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-amber-600" />
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[12.5px] font-bold text-amber-900">{a.label}는 ROAS 산출 보류</span>
-                    <span className="text-[11.5px] leading-relaxed text-amber-700">{a.blockedReason}</span>
+                    <span className="text-[11.5px] leading-relaxed text-amber-800">{a.blockedReason}</span>
                   </div>
                 </div>
               ))}
@@ -472,7 +472,7 @@ export function ChannelProfitPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-4 py-3">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[13px] font-bold text-slate-900">렌즈 매입 단가</span>
-                    <span className="text-[11.5px] text-slate-400">
+                    <span className="text-[11.5px] text-slate-600">
                       안(眼) 1개당 만원. 양안이면 2개가 나갑니다. T- 는 난시교정이라 단가가 다릅니다.
                     </span>
                   </div>
@@ -497,7 +497,7 @@ export function ChannelProfitPage() {
                 <div className="flex flex-wrap gap-4 px-4 py-3">
                   {prices.rows.map((p) => (
                     <label key={p.opType} className="flex items-center gap-2">
-                      <span className="w-14 text-[11.5px] font-semibold text-slate-500">{p.opType}</span>
+                      <span className="w-14 text-[11.5px] font-semibold text-slate-700">{p.opType}</span>
                       <input
                         type="number"
                         min={0}
@@ -515,8 +515,8 @@ export function ChannelProfitPage() {
               </div>
 
               <div className="flex items-start gap-2">
-                <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-400" />
-                <span className="text-[11.5px] leading-relaxed text-slate-400">
+                <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-600" />
+                <span className="text-[11.5px] leading-relaxed text-slate-700">
                   예약 CPA = 광고비 ÷ 귀속 예약 · 수술 CPA = 광고비 ÷ 귀속 수술완료 · 공헌이익 ROAS = 추정 공헌이익 ÷ 광고비.
                   손익분기는 <b className="text-blue-700">1.0배</b>입니다. 광고비는 저장하면 모든 사용자에게 같은 값이 보입니다.
                 </span>
