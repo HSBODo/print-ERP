@@ -25,6 +25,43 @@ import type { AdSpend, ChannelLensCost } from '@/api/marketing/channelProfit'
  *   정가합(215.7억) ≈ 실납부합(215.6억) 이다. 즉 수납액이 곧 순매출이다.
  */
 
+/**
+ * 코호트 성숙도 — 이 화면은 **예약 코호트**다.
+ * "그 달에 예약한 사람이 (언제든) 수술까지 갔나" 를 세므로, 최근 달일수록 아직 수술 전인
+ * 사람이 많아 전환율·수납액·ROAS 가 구조적으로 낮게 나온다. 그걸 실적 악화로 읽으면 오판이다.
+ *
+ * 관찰기간을 90일 같은 임의값으로 두지 않고 **실측 분포**로 정했다.
+ * 2026-01~06 코호트 5,008건의 예약등록일 → 수술일 소요:
+ *   평균 13.9일 · p50 7일 · p80 21일 · p90 33일 · p95 47일
+ * 즉 월말로부터 47일이 지나면 그 달 코호트의 95% 가 이미 수술을 마쳤다.
+ */
+export const COHORT_DAYS = { p80: 21, p90: 33, p95: 47 } as const
+
+export type CohortMaturity = { level: 'final' | 'near' | 'watching' | 'early'; label: string; note: string }
+
+/** 월말로부터 며칠 지났는지로 성숙도를 판정한다. today 를 인자로 받아 테스트 가능하게 둔다. */
+export function cohortMaturity(ym: string, today: Date): CohortMaturity {
+  const [y, m] = ym.split('-').map(Number)
+  const monthEnd = new Date(y, m, 0)
+  const days = Math.floor((today.getTime() - monthEnd.getTime()) / 86400000)
+  if (days >= COHORT_DAYS.p95) {
+    return { level: 'final', label: '성과 확정', note: `월말 +${days}일 — 이 달 코호트의 95% 이상이 수술을 마쳤습니다.` }
+  }
+  if (days >= COHORT_DAYS.p90) {
+    return { level: 'near', label: '거의 확정', note: `월말 +${days}일 — 약 90%가 수술을 마쳤습니다. 남은 건이 반영되면 수치가 조금 올라갑니다.` }
+  }
+  if (days >= COHORT_DAYS.p80) {
+    return { level: 'watching', label: '관찰 중', note: `월말 +${days}일 — 약 80%만 수술을 마쳤습니다. 전환율·ROAS 가 실제보다 낮게 보입니다.` }
+  }
+  return {
+    level: 'early',
+    label: '미성숙 코호트',
+    note: days < 0
+      ? '진행 중인 달입니다. 예약한 사람의 상당수가 아직 수술 전이라 전환율·ROAS 를 다른 달과 비교하면 안 됩니다.'
+      : `월말 +${days}일 — 아직 수술 전인 사람이 많습니다(중앙값 7일·95% 47일). 전환율·ROAS 를 다른 달과 비교하면 안 됩니다.`,
+  }
+}
+
 /** 표본 임계 — 이 아래는 순위·색상 평가에서 뺀다. 렌즈 환자 몇 명이 객단가를 좌우한다. */
 export const SAMPLE_LOW = 30
 /** 표본 주의 — 30~99명. 값은 보여주되 신뢰도를 낮게 본다. */
@@ -36,8 +73,15 @@ export const AD_MEDIA_META: {
   label: string
   sub: string
   channel: string | null
-  /** 귀속 불가 사유. null 이면 직접 연결이다. */
+  /** 귀속 불가 사유. null 이면 예약경로·내원동기로 추정 가능하다는 뜻이다. */
   blockedReason: string | null
+  /**
+   * 귀속 수준. '광고 직접 귀속' 은 캠페인·클릭 ID·UTM·광고 전용 번호처럼
+   * **유료 클릭을 증명하는 식별자**가 있을 때만 쓸 수 있다. 지금은 어느 매체도 없다.
+   */
+  attribution: string
+  /** 그 추정이 무엇을 포함해 버리는지 — 화면 툴팁으로 그대로 내보낸다. */
+  attributionNote: string
   badge: string
 }[] = [
   {
@@ -46,6 +90,10 @@ export const AD_MEDIA_META: {
     sub: '네이버 · 예약 상품',
     channel: '네이버',
     blockedReason: null,
+    // RESERVE_PATH='NAVER' 는 '네이버에서 예약했다' 이지 '예약광고를 클릭했다' 가 아니다.
+    // 자연검색·지도·플레이스·재방문 환자도 네이버 예약을 쓴다.
+    attribution: '예약경로 기반 추정',
+    attributionNote: '네이버 예약 이용자를 광고 성과로 추정합니다. 자연검색·지도·재방문 유입이 섞여 있어 실제 광고 기여보다 크게 잡힐 수 있습니다.',
     badge: 'N',
   },
   {
@@ -53,6 +101,8 @@ export const AD_MEDIA_META: {
     label: '네이버 검색광고',
     sub: '네이버 · 검색 상품',
     channel: null,
+    attribution: '귀속 불가',
+    attributionNote: '유입이 여러 채널로 흩어져 매출을 붙일 수 없습니다. 비용만 기록합니다.',
     // 2026-01~08 실측: 포털 유입으로 보이는 내원동기 1,582건 중 네이버 채널에 잡힌 건 440건뿐이고
     // 나머지는 홈페이지·인콜·아웃콜로 흩어진다. 분모는 광고비 전액인데 분자는 일부라
     // ROAS 를 내면 네이버가 실제보다 나쁘게 나오고, 그 숫자로 예산을 줄이면 오판이다.
@@ -65,6 +115,9 @@ export const AD_MEDIA_META: {
     sub: '모두닥 · 제휴 상품',
     channel: '모두닥',
     blockedReason: null,
+    // 내원동기(중)='모두닥' 은 환자 자기신고다. 유료 리드인지 자연 노출인지 구분되지 않는다.
+    attribution: '내원동기 기반 추정',
+    attributionNote: '환자가 내원동기에 모두닥이라 적은 건을 광고 성과로 추정합니다. 유료 리드 여부는 구분되지 않습니다.',
     badge: 'M',
   },
 ]
@@ -140,6 +193,8 @@ export interface AdEfficiencyRow {
   badge: string
   channel: string | null
   blockedReason: string | null
+  attribution: string
+  attributionNote: string
   adManwon: number
   /** 귀속 채널의 예약·수술완료·수납액·공헌이익. 귀속 불가면 전부 null */
   reserved: number | null
@@ -177,6 +232,8 @@ export function buildAdRows(
       badge: m.badge,
       channel: m.channel,
       blockedReason: m.blockedReason,
+      attribution: m.attribution,
+      attributionNote: m.attributionNote,
       adManwon,
       reserved: f?.reservedPersons ?? null,
       surgeryDone: f?.surgeryDonePersons ?? null,

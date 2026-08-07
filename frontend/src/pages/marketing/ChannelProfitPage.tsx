@@ -13,6 +13,7 @@ import {
 import {
   buildAdRows,
   buildChannelRows,
+  cohortMaturity,
   fmtEok,
   fmtInt,
   fmtPct,
@@ -109,6 +110,9 @@ export function ChannelProfitPage() {
   const loading = funnel.isLoading || funnel.isFetching || lens.isLoading
   const isError = funnel.isError || lens.isError
 
+  // 코호트 성숙도 — 예약 코호트라 최근 달은 아직 수술 전인 사람이 많다.
+  const maturity = useMemo(() => cohortMaturity(queryMonth, new Date()), [queryMonth])
+
   const rows = useMemo(() => buildChannelRows(funnel.rows, lens.rows), [funnel.rows, lens.rows])
   const adRows = useMemo(() => buildAdRows(funnel.rows, rows, ads.rows), [funnel.rows, rows, ads.rows])
 
@@ -196,10 +200,21 @@ export function ChannelProfitPage() {
         </div>
       </div>
 
+      {/* 코호트 성숙도 — 확정된 달에는 띄우지 않는다. 늘 떠 있으면 아무도 읽지 않는다. */}
+      {maturity.level !== 'final' && (
+        <div className="flex gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+          <Info className="mt-0.5 h-4 w-4 flex-none text-amber-700" />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[12.5px] font-bold text-amber-900">{queryMonth} · {maturity.label}</span>
+            <span className="text-[11.5px] leading-relaxed text-amber-800">{maturity.note}</span>
+          </div>
+        </div>
+      )}
+
       {/* KPI */}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi label="전체 수술완료" value={fmtInt(totals.surgeryDone)} unit="명" hint={`${rows.length}개 유입채널`} />
-        <Kpi label="수납액" value={fmtEok(totals.revenue)} unit="억" hint="할인·환불 미기록" />
+        <Kpi label="귀속 수술수납액" value={fmtEok(totals.revenue)} unit="억" hint="CRM 수납 기준 · 회계매출 아님" />
         <Kpi
           label="공헌이익(렌즈만)"
           value={totals.contrib === null ? '—' : fmtEok(totals.contrib)}
@@ -237,7 +252,8 @@ export function ChannelProfitPage() {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[15px] font-bold text-slate-900">유입채널 수익성 비교</span>
                   <span className="text-[11.5px] text-slate-600">
-                    광고 매체가 아닌 실제 예약·유입경로 기준입니다. 인원은 예약통계_채널별과 같습니다.
+                    광고 매체가 아닌 실제 예약·유입경로 기준입니다. 인원은 예약 퍼널과 같습니다.
+                    <b>그 달에 예약한 사람</b>이 나중에 수술까지 갔는지를 세는 예약 코호트라, 수술한 달 기준이 아닙니다.
                   </span>
                 </div>
                 <label className="flex cursor-pointer items-center gap-2 text-[12.5px] font-semibold text-slate-800">
@@ -374,14 +390,14 @@ export function ChannelProfitPage() {
                   <thead>
                     <tr className="border-y border-border/50 bg-slate-50/60 text-[11.5px] font-semibold text-slate-600">
                       <th className="px-4 py-2 text-left">매체·상품</th>
-                      <th className="px-4 py-2 text-left">성과 귀속</th>
+                      <th className="px-4 py-2 text-left">광고성과 귀속 수준</th>
                       <th className="border-l border-border/50 px-4 py-2 text-right">예약</th>
                       <th className="px-4 py-2 text-right">수술완료</th>
                       <th className="px-4 py-2 text-right">전환율</th>
                       <th className="border-l border-border/50 px-4 py-2 text-right">광고비(만원)</th>
                       <th className="px-4 py-2 text-right">예약 CPA</th>
                       <th className="px-4 py-2 text-right">수술 CPA</th>
-                      <th className="px-4 py-2 text-right">매출 ROAS</th>
+                      <th className="px-4 py-2 text-right">수납 ROAS</th>
                       <th className="bg-slate-100/70 px-4 py-2 text-right">공헌이익 ROAS<br /><span className="text-[10px] font-medium text-slate-500">(렌즈만)</span></th>
                     </tr>
                   </thead>
@@ -413,9 +429,9 @@ export function ChannelProfitPage() {
                                 부분 추적
                               </span>
                             ) : (
-                              <div className="flex flex-col">
+                              <div className="flex flex-col" title={a.attributionNote}>
                                 <span className="font-semibold text-slate-800">{a.channel}</span>
-                                <span className="text-[10px] text-slate-600">채널 직접 연결</span>
+                                <span className="text-[10px] text-amber-700">{a.attribution}</span>
                               </div>
                             )}
                           </td>
@@ -519,8 +535,12 @@ export function ChannelProfitPage() {
               <div className="flex items-start gap-2">
                 <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-600" />
                 <span className="text-[11.5px] leading-relaxed text-slate-700">
-                  예약 CPA = 광고비 ÷ 귀속 예약 · 수술 CPA = 광고비 ÷ 귀속 수술완료 · 공헌이익 ROAS = 공헌이익(렌즈만) ÷ 광고비.
-                  손익분기는 <b className="text-blue-700">1.0배</b>입니다. 광고비는 저장하면 모든 사용자에게 같은 값이 보입니다.
+                  예약 CPA = 광고비 ÷ 광고귀속 <b>예약환자</b>(중복 제거) · 수술 CPA = 광고비 ÷ 광고귀속 <b>수술완료 환자</b> ·
+                  공헌이익 ROAS = 공헌이익(렌즈만) ÷ 광고비.
+                  <br />
+                  <b className="text-blue-700">1.0배는 광고비 회수 기준</b>이며 병원 전체 영업손익의 손익분기점이 아닙니다 —
+                  고정급여·임대료·감가상각은 차감하지 않았습니다. 광고비는 회계장부상 실제 부담액(면세 관련 불공제 부가세가
+                  있으면 포함)을 넣고, 기준은 세무대리인과 맞춰 주세요. 저장하면 모든 사용자에게 같은 값이 보입니다.
                 </span>
               </div>
             </div>
