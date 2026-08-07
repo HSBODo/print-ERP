@@ -158,6 +158,37 @@ public class SurgeryMartJob {
         return stats;
     }
 
+    /**
+     * 재수술 리스트만 백필한다 — 확정 구간(MART_LIVE_FROM 이전)용.
+     *
+     * 왜 별도 메서드인가 — run() 은 확정 구간을 통째로 잘라내므로 골든을 지키는 대신
+     * 그 구간의 **리스트도** 영영 비어 있게 된다. 실제로 2026-01~05 의 list_reoperation 이
+     * 그렇게 비어 있었다(집계는 V35 골든에 이미 재수술 32/33/18/19/23 이 들어 있는데
+     * 원본 행만 없는 상태 — 화면에서 근거를 못 펼친다).
+     *
+     * 이 메서드는 원본 행만 채운다:
+     *   - list_reoperation  범위 delete+insert  ← 유일한 write
+     *   - mart_surgery_daily / mart_surgery_monthly / list_surgery / watermark  → 손대지 않음
+     * 따라서 골든 집계는 그대로 유지된다("골든값은 사용한다" 원칙).
+     *
+     * ⚠️ v_all_surgery_list 는 list_reoperation 을 UNION 하므로, 백필하면 그 구간 뷰에
+     *    재수술 행이 새로 보인다. 이건 집계와 리스트의 불일치를 **없애는** 방향이라 의도된 것이다.
+     *    다만 이 구간에 대해 SURGERY/REPORT 배치를 다시 돌리면 안 된다 —
+     *    run() 의 클램프가 SURGERY 는 막아 주지만, 레포트 마트는 별도 가드를 확인할 것.
+     */
+    @Transactional
+    public int backfillReoperation(LocalDate from, LocalDate to) {
+        List<Map<String, Object>> rows = reopCandidateService.getCandidates(from.toString(), to.toString());
+        for (Map<String, Object> row : rows) {
+            row.put("isLens", ReoperationOverlay.isLensCategory(
+                    asText(row.get("againR")), asText(row.get("againL"))));
+        }
+        int inserted = writer.replaceReoperation(from, to, rows);
+        log.info("SurgeryMartJob backfillReoperation: range={}..{} list_reoperation={} (집계 미변경)",
+                from, to, inserted);
+        return inserted;
+    }
+
     /** candidates SQL 은 ISNULL 로 항상 문자열을 주지만, 마트 경유 시 null 방어를 한 번 더 둔다. */
     private static String asText(Object v) {
         return v == null ? "" : String.valueOf(v);

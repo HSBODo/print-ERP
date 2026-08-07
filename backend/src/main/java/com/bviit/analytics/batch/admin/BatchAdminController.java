@@ -3,6 +3,7 @@ package com.bviit.analytics.batch.admin;
 import com.bviit.analytics.batch.BatchOrchestrator;
 import com.bviit.analytics.batch.BatchOrchestrator.Domain;
 import com.bviit.analytics.batch.dto.BatchRunLog;
+import com.bviit.analytics.batch.job.SurgeryMartJob;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -37,6 +38,7 @@ import java.util.Map;
 public class BatchAdminController {
 
     private final BatchOrchestrator orchestrator;
+    private final SurgeryMartJob surgeryMartJob;
     private final BatchRunLogRepository batchRunLogRepository;
     private final SurgeryReconcileService reconcileService;
     private final ReservationReconcileService reservationReconcileService;
@@ -100,6 +102,27 @@ public class BatchAdminController {
     @GetMapping("/surgery/reconcile-list")
     public Map<String, Object> reconcileList(@RequestParam String from, @RequestParam String to) {
         return reconcileService.reconcileList(from, to);
+    }
+
+    /**
+     * 재수술 리스트만 백필한다(확정 구간용).
+     *
+     * /rerun 은 MART_LIVE_FROM(2026-06-01) 이전을 통째로 잘라내므로 그 구간의 원본 행을
+     * 채울 방법이 없다. 이 엔드포인트는 list_reoperation 만 다시 쓰고
+     * 집계(mart_surgery_daily·monthly)와 list_surgery 는 건드리지 않는다 — 골든값 보존.
+     *
+     * 예: POST /api/admin/batch/surgery/backfill-reoperation?from=2026-01-01&amp;to=2026-05-31
+     */
+    @PostMapping("/surgery/backfill-reoperation")
+    public Map<String, Object> backfillReoperation(@RequestParam String from, @RequestParam String to) {
+        int rows = surgeryMartJob.backfillReoperation(LocalDate.parse(from), LocalDate.parse(to));
+        return Map.of(
+                "ok", true,
+                "from", from,
+                "to", to,
+                "list_reoperation", rows,
+                "note", "집계(daily·monthly)와 list_surgery 는 변경하지 않음"
+        );
     }
 
     // ─── 예약 도메인 ─────────────────────────────────────────
