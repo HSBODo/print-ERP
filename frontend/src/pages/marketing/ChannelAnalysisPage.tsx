@@ -2,6 +2,7 @@ import { useState, type FC } from 'react'
 import { FileText, Lock } from 'lucide-react'
 import { ModoodocDoc } from './channel-analysis/ModoodocDoc'
 import { OverseasAgencyDoc } from './channel-analysis/OverseasAgencyDoc'
+import { HomepageDoc } from './channel-analysis/HomepageDoc'
 
 /**
  * 채널별 분석 — 좌측에서 채널을 고르면 오른쪽에 그 채널 문서가 열린다.
@@ -26,11 +27,11 @@ type ChannelDoc = {
 
 /** 수술 완료 인원(2026-01~08) 많은 순. 분석이 끝난 채널을 맨 위에 둔다. */
 const CHANNELS: ChannelDoc[] = [
+  { id: 'homepage', label: '홈페이지', doc: HomepageDoc },
   { id: 'modoodoc', label: '모두닥', doc: ModoodocDoc },
   { id: 'agency-overseas', label: '해외에이전시', doc: OverseasAgencyDoc },
   { id: 'incall', label: '인콜', note: '2,190명 · 최대 채널' },
   { id: 'naver', label: '네이버', note: '986명' },
-  { id: 'homepage', label: '홈페이지', note: '834명' },
   { id: 'outcall', label: '아웃콜', note: '642명 · 외국인 46.6%' },
   { id: 'app', label: '앱', note: '108명 · 외국인 95.4%' },
   { id: 'cafe', label: '카페', note: '99명' },
