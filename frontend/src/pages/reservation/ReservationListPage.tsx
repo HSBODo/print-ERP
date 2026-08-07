@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { RotateCcw, Search, ChevronDown, ChevronUp, ChevronsUpDown, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv, type CsvColumn } from '@/utils/csv'
 import { maskName } from '@/utils/mask'
@@ -206,14 +207,7 @@ export function ReservationListPage() {
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
       {/* 필터 바 */}
       <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
-        <input
-          aria-label="기준 월"
-          type="month"
-          value={draftMonth}
-          max={currentMonth()}
-          onChange={(e) => setDraftMonth(e.target.value)}
-          className="h-8 w-[9rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-        />
+        <MonthPicker ariaLabel="기준 월" value={draftMonth} onChange={setDraftMonth} defaultValue={currentMonth()} />
         <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
           {CHANNELS.map((c) => (
             <button

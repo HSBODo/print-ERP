@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronsUpDown, ChevronUp, Info, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { PanelShell } from '@/components/PanelShell'
 import { useReservationChannel } from '@/hooks/reservation/useReservationChannel'
 import {
@@ -181,19 +182,17 @@ export function ChannelProfitPage() {
       {/* 헤더 + 기간 */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-[22px] font-bold tracking-tight text-slate-900">채널별 수익성</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-[22px] font-bold tracking-tight text-slate-900">채널별 수익성</h1>
+            {/* 선택 즉시 갱신되는 배지 — 조회 전이라도 지금 고른 달이 보인다 */}
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11.5px] font-semibold tabular-nums text-slate-700">{draftMonth.replace('-', '년 ')}월</span>
+          </div>
           <p className="text-[13px] text-slate-700">
             유입채널의 수익성과 광고매체의 투자 효율을 나눠서 봅니다.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            aria-label="기준 월"
-            type="month"
-            value={draftMonth}
-            onChange={(e) => setDraftMonth(e.target.value)}
-            className="h-8 rounded-md border border-border/70 bg-white px-2 text-xs"
-          />
+          <MonthPicker ariaLabel="기준 월" value={draftMonth} onChange={setDraftMonth} defaultValue={currentMonth()} />
           <Button size="sm" className="h-8 gap-1 px-3 text-xs" onClick={() => setQueryMonth(draftMonth)}>
             <Search className="h-3.5 w-3.5" /> 조회
           </Button>

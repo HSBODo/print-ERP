@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronsUpDown, ChevronUp, RotateCcw, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { PanelShell } from '@/components/PanelShell'
 import { useReservationChannel, useReservationChannelOpTypes } from '@/hooks/reservation/useReservationChannel'
 import type { ReservationChannelFunnelItem } from '@/api/reservation/reservationChannel'
@@ -321,10 +322,9 @@ export function ReservationChannelPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <input
-              aria-label="기준 월" type="month" value={draftMonth}
-              onChange={(e) => setDraftMonth(e.target.value)}
-              className="h-[34px] rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-900"
+            <MonthPicker
+              ariaLabel="기준 월" value={draftMonth} onChange={setDraftMonth} defaultValue={currentMonth()}
+              className="flex h-[34px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] font-medium text-slate-900 transition-colors hover:border-blue-300"
             />
             <Button className="h-[34px] gap-1.5 rounded-lg bg-slate-900 px-4 text-[13px] font-semibold hover:bg-slate-800"
               onClick={() => setQueryMonth(draftMonth)}>

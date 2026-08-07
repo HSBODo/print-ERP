@@ -141,7 +141,9 @@ describe('ReservationListHomepagePage', () => {
     expect(screen.queryByLabelText('등록 종료일')).not.toBeInTheDocument()
 
     // 지난 달을 고르면 1일~말일 전체가 조회 구간이 된다.
-    fireEvent.change(screen.getByLabelText('등록 기준 월'), { target: { value: '2026-05' } })
+    // MonthPicker 는 input 이 아니라 버튼+월 그리드다 — 열고 5월을 클릭한다.
+    fireEvent.click(screen.getByLabelText('등록 기준 월'))
+    fireEvent.click(screen.getByRole('button', { name: '5' }))
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
     expect(mockHook).toHaveBeenLastCalledWith('2026-05-01', '2026-05-31', true)
   })
@@ -153,9 +155,8 @@ describe('ReservationListHomepagePage', () => {
     render(<ReservationListHomepagePage />)
 
     fireEvent.change(screen.getByLabelText('기간 단위'), { target: { value: 'monthly' } })
-    fireEvent.change(screen.getByLabelText('등록 기준 월'), {
-      target: { value: todayIso().slice(0, 7) },
-    })
+    fireEvent.click(screen.getByLabelText('등록 기준 월'))
+    fireEvent.click(screen.getByRole('button', { name: '이번 달' }))
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
 
     expect(mockHook).toHaveBeenLastCalledWith(monthStartOf(todayIso()), todayIso(), true)

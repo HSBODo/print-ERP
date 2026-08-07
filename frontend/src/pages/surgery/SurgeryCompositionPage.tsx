@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { useSurgeryDaily } from '@/hooks/surgery/useSurgeryDaily'
 import {
   COLS,
@@ -156,12 +157,11 @@ export function SurgeryCompositionPage() {
             ))}
           </select>
         ) : (
-          <input
-            aria-label="조회 월"
-            type="month"
+          <MonthPicker
+            ariaLabel="조회 월"
             value={month}
-            onChange={(e) => { if (e.target.value) setMonth(e.target.value) }}
-            className="h-9 w-[9rem] rounded-md border border-border/80 bg-white px-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            onChange={setMonth}
+            className="flex h-9 items-center gap-1.5 rounded-md border border-border/80 bg-white px-2.5 text-sm text-gray-800 outline-none transition-colors hover:border-blue-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           />
         )}
 

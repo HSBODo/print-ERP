@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, Download, Loader2, Plus, RotateCcw, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { dreamlensLedgerApi, type DreamlensLedgerRow } from '@/api/etc'
@@ -358,17 +359,14 @@ export function DreamlensLedgerPage() {
               </span>
             </>
           ) : draftPeriodMode === 'monthly' ? (
-            <input
-              aria-label="조회 월"
-              type="month"
+            <MonthPicker
+              ariaLabel="조회 월"
               value={toMonthValue(draftFrom)}
               max={toMonthValue(defaultTo())}
-              onChange={(e) => {
-                if (!e.target.value) return
-                setDraftFrom(toMonthStart(e.target.value))
-                setDraftTo(toMonthEnd(e.target.value))
+              onChange={(v) => {
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
               }}
-              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           ) : (
             <>
