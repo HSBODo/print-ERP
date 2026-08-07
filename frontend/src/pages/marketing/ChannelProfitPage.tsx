@@ -68,7 +68,7 @@ const COLS: { key: SortKey; label: string; bl?: boolean; hl?: boolean }[] = [
   { key: 'lensRate', label: '렌즈삽입률', bl: true },
   { key: 'lensCostManwon', label: '렌즈원가' },
   { key: 'reop', label: '재수술' },
-  { key: 'contribManwon', label: '추정 공헌이익', bl: true, hl: true },
+  { key: 'contribManwon', label: '공헌이익(렌즈만)', bl: true, hl: true },
 ]
 
 const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) =>
@@ -201,7 +201,7 @@ export function ChannelProfitPage() {
         <Kpi label="전체 수술완료" value={fmtInt(totals.surgeryDone)} unit="명" hint={`${rows.length}개 유입채널`} />
         <Kpi label="수납액" value={fmtEok(totals.revenue)} unit="억" hint="할인·환불 미기록" />
         <Kpi
-          label="추정 공헌이익"
+          label="공헌이익(렌즈만)"
           value={totals.contrib === null ? '—' : fmtEok(totals.contrib)}
           unit="억"
           hint={totals.anyUnpriced ? '렌즈 단가 미입력' : '렌즈원가 반영'}
@@ -331,8 +331,10 @@ export function ChannelProfitPage() {
                 <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-600" />
                 <span className="text-[11.5px] leading-relaxed text-slate-700">
                   표본 {SAMPLE_LOW}명 미만은 <b>n</b> 을 함께 표시하고, {SAMPLE_LOW}~{SAMPLE_WARN - 1}명은 &lsquo;표본 주의&rsquo;로
-                  둡니다 — 렌즈 환자 몇 명이 객단가를 좌우합니다. 공헌이익 = 수납액 − 렌즈원가이며, 단가가 비어 있는 시술이
-                  있으면 부풀려 보이지 않도록 &lsquo;—&rsquo; 로 둡니다.
+                  둡니다 — 렌즈 환자 몇 명이 객단가를 좌우합니다.
+                  <b>공헌이익(렌즈만) = 수납액 − 렌즈 매입원가</b> 입니다. 약품·수술재료·결제수수료·건별 인센티브는
+                  원가 데이터가 없어 빠져 있으므로 <b>실제 공헌이익보다 높습니다</b> — 절대값이 아니라 채널 간 비교로
+                  보세요. 단가가 비어 있는 시술이 있으면 부풀려 보이지 않도록 &lsquo;—&rsquo; 로 둡니다.
                 </span>
               </div>
             </>
@@ -380,7 +382,7 @@ export function ChannelProfitPage() {
                       <th className="px-4 py-2 text-right">예약 CPA</th>
                       <th className="px-4 py-2 text-right">수술 CPA</th>
                       <th className="px-4 py-2 text-right">매출 ROAS</th>
-                      <th className="bg-slate-100/70 px-4 py-2 text-right">공헌이익 ROAS</th>
+                      <th className="bg-slate-100/70 px-4 py-2 text-right">공헌이익 ROAS<br /><span className="text-[10px] font-medium text-slate-500">(렌즈만)</span></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -517,7 +519,7 @@ export function ChannelProfitPage() {
               <div className="flex items-start gap-2">
                 <Info className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-600" />
                 <span className="text-[11.5px] leading-relaxed text-slate-700">
-                  예약 CPA = 광고비 ÷ 귀속 예약 · 수술 CPA = 광고비 ÷ 귀속 수술완료 · 공헌이익 ROAS = 추정 공헌이익 ÷ 광고비.
+                  예약 CPA = 광고비 ÷ 귀속 예약 · 수술 CPA = 광고비 ÷ 귀속 수술완료 · 공헌이익 ROAS = 공헌이익(렌즈만) ÷ 광고비.
                   손익분기는 <b className="text-blue-700">1.0배</b>입니다. 광고비는 저장하면 모든 사용자에게 같은 값이 보입니다.
                 </span>
               </div>

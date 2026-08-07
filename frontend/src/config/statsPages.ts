@@ -148,7 +148,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/channel-profit',
     'marketing-section',
     '마케팅',
-    '유입채널이 얼마를 남겼는지(수납액·객단가·공헌이익)와 광고매체가 얼마를 회수했는지(CPA·ROAS)를 나눠서 봅니다. 예약통계_채널별과 같은 뷰를 읽어 인원이 일치합니다.',
+    '유입채널이 얼마를 남겼는지(수납액·객단가·공헌이익(렌즈만))와 광고매체가 얼마를 회수했는지(CPA·ROAS)를 나눠서 봅니다. 예약통계_채널별과 같은 뷰를 읽어 인원이 일치합니다.',
     '/api/stats/channel-profit'
   ),
   statsPage(
