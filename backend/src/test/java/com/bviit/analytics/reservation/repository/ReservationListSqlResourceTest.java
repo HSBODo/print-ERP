@@ -26,6 +26,31 @@ class ReservationListSqlResourceTest {
     }
 
     @Test
+    void reservation_list_sql은_TMDB_CRM_MEMO_순으로_내원동기를_뽑는다() {
+        String sql = SqlLoader.load(ReservationListRepository.RESERVATION_LIST_SQL);
+
+        assertThat(sql)
+                // 텔레매니저 TM 배정 DB(모두닥 이벤트) 가 최우선 — 2026-07 실측 5건 누락 보완
+                .contains("FROM DB_CUSTOM d WITH(NOLOCK)")
+                .contains("LIKE N'%모두닥%'")
+                .contains("CASE WHEN tmdb.hit = 1 THEN N'모두닥'")
+                .contains("CASE WHEN tmdb.hit = 1 THEN 'TMDB'")
+                .contains("WHEN ISNULL(mv.motiveM, '') <> '' THEN 'CRM'")
+                .contains("WHEN ISNULL(resolvedMemoMv.motiveM, '') <> '' THEN 'MEMO'")
+                .contains("CHARINDEX(N'TM고객(', r.COMMENT)")
+                .contains("CHARINDEX(N'CTI고객(', r.COMMENT)")
+                .contains("CHARINDEX(N'모두닥', ISNULL(r.COMMENT, '')) > 0 THEN N'모두닥'")
+                .contains("CHARINDEX(N'크리에이트립', ISNULL(r.COMMENT, '')) > 0 THEN N'크리에이트립'")
+                .contains("CHARINDEX(LTRIM(RTRIM(e.EMP_NAME)) + N't 소개'")
+                .contains("CHARINDEX(N'직원소개', ISNULL(r.COMMENT, '')) > 0")
+                .contains("THEN N'소개직원'")
+                .contains("THEN staffReferral.employeeName")
+                .contains("CHARINDEX(N'소개고객', ISNULL(r.COMMENT, '')) > 0 THEN N'소개미확인'")
+                .contains("CHARINDEX(N'소개고객', ISNULL(r.COMMENT, '')) > 0 THEN N'소개고객'")
+                .contains("THEN memoMv.motiveM ELSE fallbackMv.motiveM END");
+    }
+
+    @Test
     void kakao_count_sql은_happytalk_기준과_named_parameter를_보존한다() {
         String sql = SqlLoader.load(ReservationListRepository.KAKAO_COUNT_SQL);
 

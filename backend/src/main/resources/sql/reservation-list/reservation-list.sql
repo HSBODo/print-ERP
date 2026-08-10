@@ -32,18 +32,28 @@ SELECT
   -- 내원동기(중) — 실제 유입처가 들어온다('모두닥'·'인터넷검색(홈페이지)' 등).
   -- 검사자 리스트(find-exam-list.sql)와 같은 규칙: Idx='1' 최신 1건.
   --
-  -- CRM 에 값이 없으면 메모의 `TM고객(대분류/중분류)` 정형 문구에서 끌어온다.
+  -- CRM 에 값이 없으면 메모의 `TM고객(대분류/중분류)` 또는
+  -- `CTI고객(대분류/중분류)` 정형 문구에서 끌어온다.
+  -- 정형 문구도 없으면 매체명이 명확한 모두닥·크리에이트립만 문자열 fallback 한다.
   -- 상담사가 메모엔 적어 뒀는데 MOTIVE_NEW02 로 옮기지 않은 건이 많다
   -- (2026-07: 139건 — 이벤트상담신청 58·전화상담관리 52·본인 15·모두닥 10·바비톡 2·카페 2).
   -- ⚠️ 원천(CRM)은 고치지 않는다. 조회 시점 보완이라 CRM 에 값이 채워지면 그쪽이 우선된다.
   -- ⚠️ motiveMSource 로 출처를 구분한다 — 등록값과 메모 추출값을 섞어 세면 안 된다.
   -- 내원동기(대)는 (중)과 짝이라 같은 행(같은 출처)에서 뽑는다 — CRM 값이 있으면 CRM 쌍,
   -- 없으면 메모 쌍. 섞으면 대=CRM/중=메모 같은 어긋난 조합이 나온다.
-  CASE WHEN ISNULL(mv.motiveM, '') <> '' THEN ISNULL(mv.motiveL, '')
-       ELSE ISNULL(memoMv.motiveL, '') END                AS motiveL,
-  ISNULL(NULLIF(mv.motiveM, ''), ISNULL(memoMv.motiveM, '')) AS motiveM,
-  CASE WHEN ISNULL(mv.motiveM, '') <> '' THEN 'CRM'
-       WHEN ISNULL(memoMv.motiveM, '') <> '' THEN 'MEMO'
+  --
+  -- 텔레매니저 TM 배정 DB(tmdb)가 모두닥 리드로 갖고 있는 예약은 **CRM 보다도 앞세운다**.
+  -- 2026-07 실측 누락 5건: CRM 내원동기에 B2B(비앤빛) 등 다른 값이 먼저 들어가 모두닥이 묻힌 게 2건,
+  -- CRM·메모 어디에도 흔적이 없는 게 3건. 배정 DB 의 Gubun='M_모두닥이벤트' 가 가장 깨끗한 식별자다.
+  -- 출처는 motiveMSource='TMDB' 로 남긴다.
+  CASE WHEN tmdb.hit = 1 THEN N'광고'
+       WHEN ISNULL(mv.motiveM, '') <> '' THEN ISNULL(mv.motiveL, '')
+       ELSE ISNULL(resolvedMemoMv.motiveL, '') END        AS motiveL,
+  CASE WHEN tmdb.hit = 1 THEN N'모두닥'
+       ELSE ISNULL(NULLIF(mv.motiveM, ''), ISNULL(resolvedMemoMv.motiveM, '')) END AS motiveM,
+  CASE WHEN tmdb.hit = 1 THEN 'TMDB'
+       WHEN ISNULL(mv.motiveM, '') <> '' THEN 'CRM'
+       WHEN ISNULL(resolvedMemoMv.motiveM, '') <> '' THEN 'MEMO'
        ELSE '' END                                        AS motiveMSource,
   -- 예약 이후 흐름 3종 — 이 예약으로 이어진 첫 건만 본다(예약일 이전 기록은 무관).
   --   검사등록일 : EXAM 에 등록 시각 컬럼이 없어 **검사일**을 쓴다.
@@ -126,16 +136,31 @@ OUTER APPLY (
   WHERE m2.cust_num = r.CUST_NUM AND m2.Idx = '1'
   ORDER BY m2.pkey DESC
 ) mv
--- 메모 파싱 — `TM고객(` 뒤 첫 '/' 부터, 다음 '/' · ')' · 줄바꿈 중 먼저 오는 것까지가 중분류.
+-- 메모 파싱 — `TM고객(` 또는 `CTI고객(` 뒤 첫 '/' 부터,
+-- 다음 '/' · ')' · 줄바꿈 중 먼저 오는 것까지가 중분류.
 -- 끝 문자를 덧붙여 CHARINDEX 가 0 을 돌려주는 경우(구분자 없음)를 없앤다.
 -- ⚠️ 줄바꿈도 종결로 본다 — `TM고객(` 괄호를 안 닫은 메모가 있어(2026-01: 1건)
 --    다음 줄 "1)렌즈종류" 의 ')' 까지 끌고 와 값에 개행이 섞였다.
 OUTER APPLY (
-  -- pos = 'TM고객(' 의 T 위치. 'TM고객(' 은 5자라 내용은 pos+5 부터 — 거기서 첫 '/' 를 찾는다.
-  SELECT pos = CHARINDEX(N'TM고객(', r.COMMENT)
+  SELECT tmPos = CHARINDEX(N'TM고객(', r.COMMENT),
+         ctiPos = CHARINDEX(N'CTI고객(', r.COMMENT)
+) marker
+OUTER APPLY (
+  -- 둘 다 있으면 메모에서 먼저 나온 문구를 쓴다. markerLen 은 여는 괄호까지의 길이.
+  SELECT pos = CASE
+                 WHEN marker.tmPos > 0 AND (marker.ctiPos = 0 OR marker.tmPos < marker.ctiPos)
+                   THEN marker.tmPos
+                 ELSE marker.ctiPos
+               END,
+         markerLen = CASE
+                       WHEN marker.tmPos > 0 AND (marker.ctiPos = 0 OR marker.tmPos < marker.ctiPos)
+                         THEN 5
+                       WHEN marker.ctiPos > 0 THEN 6
+                       ELSE 0
+                     END
 ) tg
 OUTER APPLY (
-  SELECT sp = CASE WHEN tg.pos > 0 THEN CHARINDEX(N'/', r.COMMENT, tg.pos + 5) ELSE 0 END
+  SELECT sp = CASE WHEN tg.pos > 0 THEN CHARINDEX(N'/', r.COMMENT, tg.pos + tg.markerLen) ELSE 0 END
 ) tm
 OUTER APPLY (
   SELECT pClose = CASE WHEN tm.sp > 0 THEN CHARINDEX(N')', r.COMMENT + N')', tm.sp + 1) ELSE 0 END,
@@ -151,12 +176,62 @@ OUTER APPLY (
                         THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tm.sp + 1, te.pEnd - tm.sp - 1)))
                         ELSE '' END,
          -- 대분류 = 'TM고객(' 과 첫 '/' 사이. 그 사이에 줄바꿈이 끼면 문구가 깨진 것이라 버린다.
-         motiveL = CASE WHEN tm.sp > tg.pos + 5
-                             AND CHARINDEX(CHAR(13), SUBSTRING(r.COMMENT, tg.pos + 5, tm.sp - tg.pos - 5)) = 0
-                             AND CHARINDEX(CHAR(10), SUBSTRING(r.COMMENT, tg.pos + 5, tm.sp - tg.pos - 5)) = 0
-                        THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tg.pos + 5, tm.sp - tg.pos - 5)))
+         motiveL = CASE WHEN tm.sp > tg.pos + tg.markerLen
+                             AND CHARINDEX(CHAR(13), SUBSTRING(r.COMMENT, tg.pos + tg.markerLen, tm.sp - tg.pos - tg.markerLen)) = 0
+                             AND CHARINDEX(CHAR(10), SUBSTRING(r.COMMENT, tg.pos + tg.markerLen, tm.sp - tg.pos - tg.markerLen)) = 0
+                        THEN LTRIM(RTRIM(SUBSTRING(r.COMMENT, tg.pos + tg.markerLen, tm.sp - tg.pos - tg.markerLen)))
                         ELSE '' END
 ) memoMv
+-- 직원 소개 fallback — 직원 마스터의 실제 이름이 `이름t 소개` 형태로 적혔거나,
+-- `직원소개` 문구와 직원명이 함께 있을 때만 직원명으로 인정한다.
+OUTER APPLY (
+  SELECT TOP 1 LTRIM(RTRIM(e.EMP_NAME)) AS employeeName
+  FROM EMPLOYEE e WITH(NOLOCK)
+  WHERE ISNULL(LTRIM(RTRIM(e.EMP_NAME)), '') <> ''
+    AND (
+         CHARINDEX(LTRIM(RTRIM(e.EMP_NAME)) + N't 소개', ISNULL(r.COMMENT, '')) > 0
+      OR CHARINDEX(LTRIM(RTRIM(e.EMP_NAME)) + N' t 소개', ISNULL(r.COMMENT, '')) > 0
+      OR (
+           CHARINDEX(N'직원소개', ISNULL(r.COMMENT, '')) > 0
+       AND CHARINDEX(LTRIM(RTRIM(e.EMP_NAME)), ISNULL(r.COMMENT, '')) > 0
+      )
+    )
+  ORDER BY CASE WHEN e.EMP_STATE <> 'N' THEN 0 ELSE 1 END, e.EMP_NUM
+) staffReferral
+-- 비정형 메모 fallback — CRM/정형 문구가 모두 비었을 때만 위 SELECT 에서 사용된다.
+-- 매체명, 직원 마스터로 검증한 소개, 명시적인 소개고객만 허용한다.
+OUTER APPLY (
+  SELECT motiveL = CASE
+                     WHEN CHARINDEX(N'모두닥', ISNULL(r.COMMENT, '')) > 0 THEN N'광고'
+                     WHEN CHARINDEX(N'크리에이트립', ISNULL(r.COMMENT, '')) > 0 THEN N'광고'
+                     WHEN ISNULL(staffReferral.employeeName, '') <> '' THEN N'소개직원'
+                     WHEN CHARINDEX(N'소개고객', ISNULL(r.COMMENT, '')) > 0 THEN N'소개미확인'
+                     ELSE ''
+                   END,
+         motiveM = CASE
+                     WHEN CHARINDEX(N'모두닥', ISNULL(r.COMMENT, '')) > 0 THEN N'모두닥'
+                     WHEN CHARINDEX(N'크리에이트립', ISNULL(r.COMMENT, '')) > 0 THEN N'크리에이트립'
+                     WHEN ISNULL(staffReferral.employeeName, '') <> '' THEN staffReferral.employeeName
+                     WHEN CHARINDEX(N'소개고객', ISNULL(r.COMMENT, '')) > 0 THEN N'소개고객'
+                     ELSE ''
+                   END
+) fallbackMv
+OUTER APPLY (
+  SELECT motiveL = CASE WHEN ISNULL(memoMv.motiveM, '') <> ''
+                        THEN memoMv.motiveL ELSE fallbackMv.motiveL END,
+         motiveM = CASE WHEN ISNULL(memoMv.motiveM, '') <> ''
+                        THEN memoMv.motiveM ELSE fallbackMv.motiveM END
+) resolvedMemoMv
+-- 텔레매니저 TM 배정 DB 대조 — 이 예약이 모두닥 이벤트 리드(Gubun='M_모두닥이벤트')에서 왔으면 1.
+-- RESERVE_NUM 은 char 라 뒤 공백이 달라도 = 비교로 매칭된다. 빈 예약번호끼리 붙는 걸 막으려고
+-- 배정 DB 쪽 예약번호가 채워진 행만 본다.
+OUTER APPLY (
+  SELECT TOP 1 1 AS hit
+  FROM DB_CUSTOM d WITH(NOLOCK)
+  WHERE d.RESERVE_NUM = r.RESERVE_NUM
+    AND ISNULL(RTRIM(d.RESERVE_NUM), '') <> ''
+    AND ISNULL(d.Gubun, '') LIKE N'%모두닥%'
+) tmdb
 LEFT JOIN EMPLOYEE doc WITH(NOLOCK)
   ON doc.EMP_NUM = ISNULL(NULLIF(r.SELECT_DOC, ''), r.RESERVE_DOC)
  AND doc.EMP_STATE <> 'N'

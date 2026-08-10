@@ -27,7 +27,7 @@ const reservationListItemSchema = z.object({
   // 마트 재적재 전 옛 응답과의 호환을 위해 optional.
   motiveL: z.string().optional(),
   motiveM: z.string().optional(),
-  /** CRM = 등록값 · MEMO = 메모의 TM고객(대/중) 에서 추출 */
+  /** TMDB = 텔레매니저 TM 배정 DB(모두닥 이벤트) · CRM = 등록값 · MEMO = 메모의 TM고객(대/중) 에서 추출 */
   motiveMSource: z.string().optional(),
   /** 예약 이후 첫 검사의 검사일(EXAM 에 등록 시각 컬럼이 없어 검사일을 쓴다) */
   examRegDate: z.string().optional(),

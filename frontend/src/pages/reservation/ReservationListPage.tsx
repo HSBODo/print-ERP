@@ -339,25 +339,32 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-1 py-1 text-center">{dash(r.chartNo)}</td>
                         <td className="whitespace-nowrap px-1 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
                         <td className="whitespace-nowrap px-1 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
-                        {/* 내원동기 대/중 — 같은 출처의 짝이라 메모 추출분은 둘 다 흐리게. */}
+                        {/* 내원동기 대/중 — 같은 출처의 짝이라 메모 추출분(amber)·TM 배정 DB 확인분(sky)은 둘 다 색으로 구분. */}
                         <td
                           className={`whitespace-nowrap px-2.5 py-1 text-center ${
-                            r.motiveMSource === 'MEMO' ? 'text-amber-700' : 'text-gray-700'
+                            r.motiveMSource === 'MEMO' ? 'text-amber-700'
+                              : r.motiveMSource === 'TMDB' ? 'text-sky-700'
+                              : 'text-gray-700'
                           }`}
                         >
                           {dash(r.motiveL)}
                         </td>
-                        {/* 메모에서 끌어온 값은 흐리게 + 물음표로 구분한다 — CRM 등록값과 섞어 세면 안 된다. */}
+                        {/* CRM 등록값이 아닌 출처는 색 + 마커로 구분한다 — 섞어 세면 안 된다. */}
                         <td
                           className={`whitespace-nowrap px-2.5 py-1 text-center ${
-                            r.motiveMSource === 'MEMO' ? 'text-amber-700' : 'text-gray-700'
+                            r.motiveMSource === 'MEMO' ? 'text-amber-700'
+                              : r.motiveMSource === 'TMDB' ? 'text-sky-700'
+                              : 'text-gray-700'
                           }`}
                           title={r.motiveMSource === 'MEMO'
                             ? 'CRM 내원동기가 비어 있어 메모의 TM고객(대/중) 문구에서 가져온 값입니다.'
-                            : undefined}
+                            : r.motiveMSource === 'TMDB'
+                              ? '텔레매니저 TM 배정 DB(모두닥 이벤트 리드)에서 확인된 유입입니다. CRM 내원동기보다 우선합니다.'
+                              : undefined}
                         >
                           {dash(r.motiveM)}
                           {r.motiveMSource === 'MEMO' && <span className="ml-0.5 text-[10px]">*</span>}
+                          {r.motiveMSource === 'TMDB' && <span className="ml-0.5 text-[10px]">†</span>}
                         </td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={st?.label ?? r.reserveState} className={st?.className} /></td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.examRegDate)}</td>
