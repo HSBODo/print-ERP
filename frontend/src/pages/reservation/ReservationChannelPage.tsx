@@ -142,14 +142,17 @@ const todayIso = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 const currentMonth = () => todayIso().slice(0, 7)
-const monthRange = (month: string) => {
-  const [y, m] = month.split('-').map(Number)
-  const from = `${month}-01`
-  let to = `${month}-${pad(new Date(y, m, 0).getDate())}`
+/** 시작월 1일 ~ 끝월 말일. 역순으로 골라도 바꿔서 계산한다 — 에러 상태를 만들지 않는다. */
+const monthSpan = (a: string, b: string) => {
+  const [start, end] = a <= b ? [a, b] : [b, a]
+  const [y, m] = end.split('-').map(Number)
+  const from = `${start}-01`
+  let to = `${end}-${pad(new Date(y, m, 0).getDate())}`
   const today = todayIso()
   if (to > today) to = today
   return { from, to }
 }
+const monthLabel = (m: string) => `${m.replace('-', '년 ')}월`
 const nf = (n: number) => n.toLocaleString('ko-KR')
 /** 수술 매출 — 억 단위로 줄인다. 원 단위로 찍으면 자릿수가 길어 표가 읽히지 않는다. */
 const won = (v: number) => {
@@ -194,15 +197,16 @@ const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
 }
 
 export function ReservationChannelPage() {
-  const [draftMonth, setDraftMonth] = useState(currentMonth())
-  const [queryMonth, setQueryMonth] = useState(currentMonth())
+  // 시작월~끝월 범위 조회. 같은 달로 두면 기존 단일 월 조회와 동일하다.
+  const [draft, setDraft] = useState({ start: currentMonth(), end: currentMonth() })
+  const [query, setQuery] = useState({ start: currentMonth(), end: currentMonth() })
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: '0', dir: 'desc' })
   const [sel, setSel] = useState<string | null>(null)
   const [hover, setHover] = useState<number | null>(null)
   // 기본 열림 — 정보를 먼저 보여주고, 필요 없으면 ✕ 로 닫게 한다.
   const [typeOpen, setTypeOpen] = useState(true)
 
-  const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
+  const { from, to } = useMemo(() => monthSpan(query.start, query.end), [query])
   const { rows, isLoading, isFetching, isError } = useReservationChannel(from, to)
   const loading = isLoading || isFetching
 
@@ -301,7 +305,8 @@ export function ReservationChannelPage() {
   }
 
   const handleReset = () => {
-    setDraftMonth(currentMonth()); setQueryMonth(currentMonth())
+    const cur = { start: currentMonth(), end: currentMonth() }
+    setDraft(cur); setQuery(cur)
     setSort({ key: '0', dir: 'desc' }); setSel(null); setTypeOpen(true)
   }
 
@@ -318,16 +323,23 @@ export function ReservationChannelPage() {
           <div className="flex items-center gap-2.5">
             <h1 className="text-[22px] font-bold tracking-tight text-slate-900">예약 퍼널 · 채널별</h1>
             <span className="rounded-md bg-slate-200/70 px-2 py-[3px] text-[11px] font-semibold text-slate-600">
-              {queryMonth.replace('-', '년 ')}월
+              {query.start === query.end
+                ? monthLabel(query.start)
+                : `${monthLabel(query.start)} ~ ${monthLabel(query.end)}`}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <MonthPicker
-              ariaLabel="기준 월" value={draftMonth} onChange={setDraftMonth} defaultValue={currentMonth()}
+              ariaLabel="시작 월" value={draft.start} onChange={(m) => setDraft((p) => ({ ...p, start: m }))} defaultValue={currentMonth()}
+              className="flex h-[34px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] font-medium text-slate-900 transition-colors hover:border-blue-300"
+            />
+            <span className="text-[13px] font-medium text-slate-400">~</span>
+            <MonthPicker
+              ariaLabel="끝 월" value={draft.end} onChange={(m) => setDraft((p) => ({ ...p, end: m }))} defaultValue={currentMonth()}
               className="flex h-[34px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] font-medium text-slate-900 transition-colors hover:border-blue-300"
             />
             <Button className="h-[34px] gap-1.5 rounded-lg bg-slate-900 px-4 text-[13px] font-semibold hover:bg-slate-800"
-              onClick={() => setQueryMonth(draftMonth)}>
+              onClick={() => setQuery(draft)}>
               <Search className="h-3.5 w-3.5" /> 조회
             </Button>
             <Button variant="outline" className="h-[34px] gap-1.5 rounded-lg px-3.5 text-[13px]" onClick={handleReset}>
