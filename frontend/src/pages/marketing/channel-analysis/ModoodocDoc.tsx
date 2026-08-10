@@ -1,9 +1,10 @@
 import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
+import { ModoodocMonthlyFunnelChart } from './ModoodocMonthlyFunnelChart'
 
 /**
  * 모두닥 채널 분석 문서 (2026-01~08 실측).
  *
- * 조회를 하지 않는다. 수치를 본문에 고정한 이유는 이 문서의 값어치가 숫자가 아니라
+ * 월별 퍼널 차트만 최신 데이터를 조회한다. 분석 본문의 수치를 고정한 이유는 이 문서의 값어치가 숫자가 아니라
  * **어떤 가설이 검증되고 어떤 가설이 죽었는지**에 있기 때문이다.
  * 매달 갱신되는 화면으로 만들면 숫자만 바뀌고 결론의 근거가 사라진다.
  * 최신 수치는 `예약 퍼널`·`채널별 수익성` 에서 본다.
@@ -18,6 +19,8 @@ export function ModoodocDoc() {
   return (
     <div className="flex flex-col gap-4">
       <DocHeader title="모두닥" badges={[PERIOD, '수술 완료 475명']} />
+
+      <ModoodocMonthlyFunnelChart />
 
       <Summary headline="국내 20대 후반 직장인이, 정가가 낮은 스마일을 골라, 플랫폼 할인을 받고 수술한다.">
         객단가 326만원은 <b className="font-semibold text-white">깎아준 결과가 아니라 이 채널의 고정 특성</b>이다.
