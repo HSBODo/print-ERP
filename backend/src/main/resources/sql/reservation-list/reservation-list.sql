@@ -244,7 +244,16 @@ WHERE r.InsertedDateTime >= :from
   AND NOT (r.CUST_NAME LIKE '%테스트%' OR r.CUST_NAME LIKE '%TEST%' OR r.CUST_NUM = '8888888888888')
   AND r.RESERVE_PATH IN ('CTI', 'CRM', 'ONLINE', 'APP', 'NAVER')
   AND ISNULL(r.RESERVE_SEQ, '') NOT IN ('8', '5')
-  AND ISNULL(r.COMMENT, '') NOT LIKE '%B2B(군인)%' AND ISNULL(r.COMMENT, '') NOT LIKE '%재검%'
+  AND ISNULL(r.COMMENT, '') NOT LIKE '%B2B(군인)%'
+  -- '재검' 제외는 **상담 안내 문구를 걷어낸 뒤** 검사한다. "산동거부(추후 재검가능성ok)",
+  -- "수술 진행시 재검 필요함 안내ok" 같은 신규 예약 메모가 재검으로 오인돼 빠졌다
+  -- (2026-01~08 실측 오탐 17건 — 전부 안내 문구, 진짜 재검 예약 5건은 아래 패턴에 안 걸려 유지).
+  -- 공백을 없앤 사본에서 안내 문구 6종을 지운 뒤 '재검'이 남는 경우만 제외한다.
+  AND REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+        ISNULL(r.COMMENT, ''), ' ', ''),
+        N'재검가능성', ''), N'재검사안내', ''), N'재검안내', ''),
+        N'재검사필요', ''), N'재검필요', ''), N'재검사진행', '')
+      NOT LIKE '%재검%'
   AND ISNULL(r.COMMENT, '') NOT LIKE '%중복%' AND ISNULL(r.COMMENT, '') NOT LIKE '%시뮬%'
   AND ISNULL(r.COMMENT, '') NOT LIKE '%차트있음%'
 ORDER BY r.InsertedDateTime, r.RESERVE_NUM

@@ -21,6 +21,12 @@ class ReservationListSqlResourceTest {
                 .contains("r.RESERVE_PATH IN ('CTI', 'CRM', 'ONLINE', 'APP', 'NAVER')")
                 .contains("ISNULL(r.RESERVE_SEQ, '') NOT IN ('8', '5')")
                 .contains("'%B2B(군인)%'", "'%재검%'", "'%중복%'", "'%시뮬%'", "'%차트있음%'")
+                // 재검 제외는 상담 안내 문구(재검가능성·재검(사)안내·재검(사)필요·재검사진행)를
+                // 걷어낸 뒤 검사한다 — 신규 예약 메모의 재검 언급 오탐 방지
+                .contains("N'재검가능성', ''")
+                .contains("N'재검사안내', ''")
+                .contains("N'재검필요', ''")
+                .contains("NOT LIKE '%재검%'")
                 .contains("ORDER BY r.InsertedDateTime, r.RESERVE_NUM")
                 .doesNotContain("OPENQUERY", "__OQ_");
     }
