@@ -9,7 +9,7 @@ const week = (over: Partial<WeeklyReportItem>): WeeklyReportItem => ({
   introGeneral: null, introCustomer: null, introStaff: null,
   jobOffice: null, jobStudent: null, jobEtc: null,
   examTotal: null, visionExam: null, cataractExam: null, oneDay: null,
-  visionBooked: null, cataractExamEyes: null, cataractBooked: null,
+  visionBooked: null, cataractBooked: null,
   oneDayBooked: null, stopCount: null,
   examGeneralBase: null, bookedGeneral: null,
   visionSurgery: null, cataractSurgery: null, totalSurgery: null,

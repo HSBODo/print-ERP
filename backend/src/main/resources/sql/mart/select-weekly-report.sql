@@ -17,7 +17,6 @@ SELECT
     cataract_exam       AS "cataractExam",
     one_day             AS "oneDay",
     vision_booked       AS "visionBooked",
-    cataract_exam_eyes  AS "cataractExamEyes",
     cataract_booked     AS "cataractBooked",
     one_day_booked      AS "oneDayBooked",
     stop_count          AS "stopCount",

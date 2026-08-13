@@ -1,5 +1,8 @@
 package com.bviit.analytics.report.service;
 
+import com.bviit.analytics.consultation.repository.ConsultationRateBridgeRepository;
+import com.bviit.analytics.consultation.repository.ConsultationRateBridgeRepository.OReservationSummary;
+import com.bviit.analytics.consultation.repository.ConsultationRateBridgeRepository.OpSummary;
 import com.bviit.analytics.exam.repository.ExamStatsMartRepository;
 import com.bviit.analytics.outpatient.repository.OutpatientCountStatsMartRepository;
 import com.bviit.analytics.overall.repository.OverallExamWeeklyRepository;
@@ -23,6 +26,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +87,13 @@ public class WeeklyReportService implements WeeklyReportReader {
     private final Optional<SurgeryStatsMartRepository> surgeryAggRepository;
     /** 마트(postgres-mart)에서만 존재. 외래수를 외래수 리스트에서 뽑는다. */
     private final Optional<OutpatientCountStatsMartRepository> outpatientAggRepository;
+    /**
+     * MSSQL 브릿지 — chart_no 셋의 O 예약·수술 요약을 실시간 조회.
+     * 예약률·상담성공률 배치와 같은 방식으로 배치 range 밖(미래) 예약까지 반영한다.
+     * mssql·postgres-mart 프로파일에서 항상 존재하지만, 마트 세션 SQL 이 필요해 실제로는
+     * examAggRepository 가 있을 때(postgres-mart)만 쓴다.
+     */
+    private final ConsultationRateBridgeRepository bridgeRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -114,6 +125,9 @@ public class WeeklyReportService implements WeeklyReportReader {
          * mart_stop_reason_monthly 와 같은 성격의 정상 diff. */
         boolean fromList = examAggRepository.isPresent();
         if (fromList) {
+            /* ── 유입·직업·시력교정·원데이·중단수 (검사수 카테고리) — v_all_exam_list 하나에서 ──
+             * 백내장 검사수(cataract_exam 컬럼)는 여기서 안 담는다 — 아래 예약률 계열이 세션 리스트를
+             * (chart_no × 주) 사람 단위로 접으며 함께 채우기 때문(cataractExam 필드는 예약률 분모와 정합). */
             accumulate(buckets, wanted, examAggRepository.get().findExamDailyAgg(fromDate, toDate), "d", (acc, row) -> {
                 acc.examTotal = plus(acc.examTotal, toInt(row.get("total")));
                 acc.introGeneral = plus(acc.introGeneral, toInt(row.get("intro_general")));
@@ -124,10 +138,16 @@ public class WeeklyReportService implements WeeklyReportReader {
                 acc.jobEtc = plus(acc.jobEtc, toInt(row.get("job_etc")));
                 acc.visionExam = plus(acc.visionExam, toInt(row.get("vision")));
                 acc.oneDay = plus(acc.oneDay, toInt(row.get("one_day")));
-                acc.cataractExam = plus(acc.cataractExam, toInt(row.get("cataract_exam")));
                 acc.stopCount = plus(acc.stopCount, toInt(row.get("stop_count")));
             });
+
+            /* ── 예약률 계열 (세션 리스트 + MSSQL 브릿지) ──
+             * 시력교정 3개(예약률·일반예약률·원데이 예약률) + 백내장 예약률(사람 단위) 을 함께 계산.
+             * booked 판정은 배치 range 밖(미래) O 예약까지 봐야 정확하므로 chart_no 셋을 브릿지에 넘긴다. */
+            accumulateRatesFromSessions(buckets, wanted, fromDate, toDate);
         } else {
+            /* ── mssql 단독 프로파일 폴백 (마트 없음) ──
+             * 각 지표를 raw MSSQL 일별 SQL 로 계산. 정의는 마트 경로와 미세하게 다를 수 있음(dev-only). */
             accumulate(buckets, wanted, overallRepository.findDemographicsDaily(fromDate, toDate), "d", (acc, row) -> {
                 acc.examTotal = plus(acc.examTotal, toInt(row.get("popTotal")));
                 acc.introGeneral = plus(acc.introGeneral, toInt(row.get("introGeneral")));
@@ -137,40 +157,39 @@ public class WeeklyReportService implements WeeklyReportReader {
                 acc.jobStudent = plus(acc.jobStudent, toInt(row.get("jobStudent")));
                 acc.jobEtc = plus(acc.jobEtc, toInt(row.get("jobEtc")));
             });
-        }
 
-        /* ── 시력교정 예약률 (검사수는 위 리스트 집계가 이미 채웠다) ── */
-        accumulate(buckets, wanted, overallRepository.findVisionDaily(fromDate, toDate), "d", (acc, row) -> {
-            if (!fromList) {
+            /* 시력교정 예약률 */
+            accumulate(buckets, wanted, overallRepository.findVisionDaily(fromDate, toDate), "d", (acc, row) -> {
                 acc.visionExam = plus(acc.visionExam, toInt(row.get("examCount")));
-            }
-            acc.visionBooked = plus(acc.visionBooked, toInt(row.get("surgeryBooked")));
-        });
+                acc.visionBooked = plus(acc.visionBooked, toInt(row.get("surgeryBooked")));
+            });
 
-        /* ── 백내장 예약률(눈 단위 분모) ── */
-        accumulate(buckets, wanted, overallRepository.findCataractDaily(fromDate, toDate), "d", (acc, row) -> {
-            acc.cataractExamEyes = plus(acc.cataractExamEyes, toInt(row.get("examCount")));
-            acc.cataractBooked = plus(acc.cataractBooked, toInt(row.get("surgeryBooked")));
-        });
+            /* 백내장 예약률 — mssql 폴백에서는 눈 단위 라이브 SQL 사용.
+             * 값은 사람 단위 필드에 매핑되지만 실제 정의는 눈 단위. dev-only 감수. */
+            accumulate(buckets, wanted, overallRepository.findCataractDaily(fromDate, toDate), "d", (acc, row) -> {
+                acc.cataractExam = plus(acc.cataractExam, toInt(row.get("examCount")));
+                acc.cataractBooked = plus(acc.cataractBooked, toInt(row.get("surgeryBooked")));
+            });
 
-        /* ── 원데이 예약률 (원데이 수는 위 리스트 집계가 이미 채웠다) ── */
-        accumulate(buckets, wanted, overallRepository.findOneDayDaily(fromDate, toDate), "d", (acc, row) -> {
-            if (!fromList) {
+            /* 원데이 예약률 */
+            accumulate(buckets, wanted, overallRepository.findOneDayDaily(fromDate, toDate), "d", (acc, row) -> {
                 acc.oneDay = plus(acc.oneDay, toInt(row.get("oneDay")));
-            }
-            acc.oneDayBooked = plus(acc.oneDayBooked, toInt(row.get("oneDayBooked")));
-        });
+                acc.oneDayBooked = plus(acc.oneDayBooked, toInt(row.get("oneDayBooked")));
+            });
 
-        /* ── 중단수 — 마트가 있으면 위 리스트 집계가 이미 채웠다 ── */
-        if (!fromList) {
+            /* 중단수 */
             accumulate(buckets, wanted, overallRepository.findStopCountDaily(fromDate, toDate), "d", (acc, row) ->
                     acc.stopCount = plus(acc.stopCount, toInt(row.get("cnt"))));
-        }
 
-        /* ── 백내장 검사수(사람 단위) — 마트가 있으면 위 리스트 집계가 이미 채웠다 ── */
-        if (!fromList) {
+            /* 백내장 검사수(사람 단위 raw) */
             accumulate(buckets, wanted, repository.findCataractExamDaily(fromDate, toDate), "d", (acc, row) ->
                     acc.cataractExam = plus(acc.cataractExam, toInt(row.get("cnt"))));
+
+            /* 시력교정 일반예약률 */
+            accumulate(buckets, wanted, repository.findVisionRatesDaily(fromDate, toDate), "d", (acc, row) -> {
+                acc.examGeneralBase = plus(acc.examGeneralBase, toInt(row.get("examGeneral")));
+                acc.bookedGeneral = plus(acc.bookedGeneral, toInt(row.get("bookedGeneral")));
+            });
         }
 
         /* ── 외래수 ──
@@ -185,12 +204,6 @@ public class WeeklyReportService implements WeeklyReportReader {
             accumulate(buckets, wanted, repository.findOutpatientDaily(fromDate, toDate), "d", (acc, row) ->
                     acc.outpatient = plus(acc.outpatient, toInt(row.get("cnt"))));
         }
-
-        /* ── 시력교정 일반예약률 ── */
-        accumulate(buckets, wanted, repository.findVisionRatesDaily(fromDate, toDate), "d", (acc, row) -> {
-            acc.examGeneralBase = plus(acc.examGeneralBase, toInt(row.get("examGeneral")));
-            acc.bookedGeneral = plus(acc.bookedGeneral, toInt(row.get("bookedGeneral")));
-        });
 
         /* ── 수술 3종 (수술일 기준) ──
          * 마트가 있으면 v_all_surgery_list 일별 집계에서 받는다 — 월간 레포트·수술 건수와
@@ -232,6 +245,95 @@ public class WeeklyReportService implements WeeklyReportReader {
                 .sorted(Comparator.comparingInt((Acc a) -> a.year).thenComparingInt(a -> a.week))
                 .forEach(acc -> result.add(acc.toItem()));
         return result;
+    }
+
+    /* ── 예약률 계열 (세션 리스트 + MSSQL 브릿지) ───────────────── */
+
+    /**
+     * 마트 경로에서 예약률 계열을 세션 리스트로 접어 만든다.
+     *
+     * <p>계산 대상:
+     * <ul>
+     *   <li>시력교정 예약률       : visionBooked / visionExam</li>
+     *   <li>시력교정 일반예약률   : bookedGeneral / examGeneralBase (원데이 제외)</li>
+     *   <li>원데이 예약률          : oneDayBooked / oneDay</li>
+     *   <li>백내장 예약률(사람)    : cataractBooked / cataractExam  (chart_no × 주 유니크)</li>
+     * </ul>
+     *
+     * <p>booked 판정은 배치 range 밖(미래) O 예약까지 봐야 하므로 chart_no 셋을 MSSQL 브릿지에 넘겨
+     * 요약(min/max O·O(4)·수술일)을 받아 Java 에서 결합한다. 원데이 예약률만 예외 —
+     * "검사일 이후 O 예약" 이 조건이라 브릿지의 max_o_any >= exam_date 로 판정.
+     */
+    private void accumulateRatesFromSessions(Map<String, Acc> buckets, Set<Integer> wanted,
+                                             String fromDate, String toDate) {
+        List<Map<String, Object>> visionRows = examAggRepository.get().findVisionSessions(fromDate, toDate);
+        List<Map<String, Object>> cataractRows = examAggRepository.get().findCataractSessions(fromDate, toDate);
+
+        Set<String> chartNos = new HashSet<>();
+        for (Map<String, Object> row : visionRows) {
+            String s = str(row.get("chartNo"));
+            if (!s.isEmpty()) chartNos.add(s);
+        }
+        for (Map<String, Object> row : cataractRows) {
+            String s = str(row.get("chartNo"));
+            if (!s.isEmpty()) chartNos.add(s);
+        }
+        Map<String, OReservationSummary> oResMap = bridgeRepository.findOReservationSummary(chartNos);
+        // OpSummary 는 이번 지표에서 필요 없음 — 상담성공률 actualSurgery 만 씀. 브릿지 조회 생략.
+
+        /* ── 시력교정 세션 (세션 단위) ── */
+        for (Map<String, Object> row : visionRows) {
+            LocalDate examDate = toLocalDate(row.get("examDate"));
+            if (examDate == null) continue;
+            Acc acc = bucketOf(buckets, wanted, examDate.toString());
+            if (acc == null) continue;
+            String chartNo = str(row.get("chartNo"));
+            String examType = str(row.get("examType"));
+            OReservationSummary o = oResMap.get(chartNo);
+            boolean bookedAny  = o != null && o.hasAnyO();
+            boolean bookedFrom = o != null && o.hasOOnOrAfter(examDate);
+            boolean isOneday = "원데이".equals(examType);
+            boolean isGeneral = "일반".equals(examType);
+
+            if (bookedAny) acc.visionBooked = plus(acc.visionBooked, 1);
+            if (isGeneral) {
+                acc.examGeneralBase = plus(acc.examGeneralBase, 1);
+                if (bookedAny) acc.bookedGeneral = plus(acc.bookedGeneral, 1);
+            }
+            if (isOneday && bookedFrom) acc.oneDayBooked = plus(acc.oneDayBooked, 1);
+        }
+
+        /* ── 백내장 세션 → (chart_no × 주) 사람 단위로 접기 ──
+         *   examCount     = 그 주에 검사받은 유니크 사람 수
+         *   surgeryBooked = 그중 firstExamDate(주 안 min) 이후 O(백내장) 예약 보유
+         *   배치의 monthly cataract 정의(chart_no × 월) 를 주 단위로 옮긴 것과 같은 규칙. */
+        Map<String, Map<String, LocalDate>> cataractByWeekPerson = new LinkedHashMap<>();
+        for (Map<String, Object> row : cataractRows) {
+            LocalDate examDate = toLocalDate(row.get("examDate"));
+            if (examDate == null) continue;
+            int weekYear = examDate.get(IsoFields.WEEK_BASED_YEAR);
+            if (!wanted.contains(weekYear)) continue;
+            int week = examDate.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+            String weekKey = weekYear + "-" + week;
+            String chartNo = str(row.get("chartNo"));
+            if (chartNo.isEmpty()) continue;
+
+            cataractByWeekPerson
+                    .computeIfAbsent(weekKey, k -> new HashMap<>())
+                    .merge(chartNo, examDate, (a, b) -> a.isBefore(b) ? a : b);
+        }
+        for (Map<String, LocalDate> personsInWeek : cataractByWeekPerson.values()) {
+            for (Map.Entry<String, LocalDate> personEntry : personsInWeek.entrySet()) {
+                LocalDate firstExamDate = personEntry.getValue();
+                Acc acc = bucketOf(buckets, wanted, firstExamDate.toString());
+                if (acc == null) continue;
+                acc.cataractExam = plus(acc.cataractExam, 1);
+                OReservationSummary o = oResMap.get(personEntry.getKey());
+                if (o != null && o.hasOCataractOnOrAfter(firstExamDate)) {
+                    acc.cataractBooked = plus(acc.cataractBooked, 1);
+                }
+            }
+        }
     }
 
     /* ── 예약 종합 ─────────────────────────────────────────────── */
@@ -412,6 +514,16 @@ public class WeeklyReportService implements WeeklyReportReader {
         return s.length() < 10 ? null : s.substring(0, 10);
     }
 
+    private static String str(Object v) { return v == null ? "" : v.toString().trim(); }
+
+    private static LocalDate toLocalDate(Object v) {
+        if (v == null) return null;
+        if (v instanceof java.sql.Date d) return d.toLocalDate();
+        if (v instanceof LocalDate d) return d;
+        String s = v.toString();
+        return s.length() < 10 ? null : LocalDate.parse(s.substring(0, 10));
+    }
+
     private static LocalDate parseDate(String value) {
         if (value == null || value.length() < 10) {
             return null;
@@ -449,7 +561,7 @@ public class WeeklyReportService implements WeeklyReportReader {
         private Integer introGeneral, introCustomer, introStaff;
         private Integer jobOffice, jobStudent, jobEtc;
         private Integer examTotal, visionExam, cataractExam, oneDay;
-        private Integer visionBooked, cataractExamEyes, cataractBooked, oneDayBooked, stopCount;
+        private Integer visionBooked, cataractBooked, oneDayBooked, stopCount;
         private Integer examGeneralBase, bookedGeneral;
         private Integer visionSurgery, cataractSurgery, totalSurgery;
         private Integer reoperation, reopLaser, reopLens;
@@ -472,7 +584,7 @@ public class WeeklyReportService implements WeeklyReportReader {
                     .jobOffice(jobOffice).jobStudent(jobStudent).jobEtc(jobEtc)
                     .examTotal(examTotal).visionExam(visionExam).cataractExam(cataractExam).oneDay(oneDay)
                     .visionBooked(visionBooked)
-                    .cataractExamEyes(cataractExamEyes).cataractBooked(cataractBooked)
+                    .cataractBooked(cataractBooked)
                     .oneDayBooked(oneDayBooked).stopCount(stopCount)
                     .examGeneralBase(examGeneralBase).bookedGeneral(bookedGeneral)
                     .visionSurgery(visionSurgery).cataractSurgery(cataractSurgery).totalSurgery(totalSurgery)

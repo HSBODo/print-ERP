@@ -55,7 +55,6 @@ public class WeeklyReportMartRepository {
                 .cataractExam(nullableInt(rs, "cataractExam"))
                 .oneDay(nullableInt(rs, "oneDay"))
                 .visionBooked(nullableInt(rs, "visionBooked"))
-                .cataractExamEyes(nullableInt(rs, "cataractExamEyes"))
                 .cataractBooked(nullableInt(rs, "cataractBooked"))
                 .oneDayBooked(nullableInt(rs, "oneDayBooked"))
                 .stopCount(nullableInt(rs, "stopCount"))

@@ -74,7 +74,7 @@ export function buildWeeklySeries(
     examGeneral: pick((it) => diff(it.examTotal, it.oneDay)),
 
     ratioGeneral: pick((it) => rate(diff(it.examTotal, it.oneDay), it.examTotal)),
-    cataractRate: pick((it) => rate(it.cataractBooked, it.cataractExamEyes)),
+    cataractRate: pick((it) => rate(it.cataractBooked, it.cataractExam)),
     visionRate: pick((it) => rate(it.visionBooked, it.visionExam)),
     rateVisionGeneral: pick((it) => rate(it.bookedGeneral, it.examGeneralBase)),
     rateOneday: pick((it) => rate(it.oneDayBooked, it.oneDay)),

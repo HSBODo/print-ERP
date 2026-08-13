@@ -94,7 +94,6 @@ class ReportMartWriterIT {
         assertThat(out.getCataractExam()).isEqualTo(21);
         assertThat(out.getOneDay()).isEqualTo(22);
         assertThat(out.getVisionBooked()).isEqualTo(23);
-        assertThat(out.getCataractExamEyes()).isEqualTo(24);
         assertThat(out.getCataractBooked()).isEqualTo(25);
         assertThat(out.getOneDayBooked()).isEqualTo(26);
         assertThat(out.getStopCount()).isEqualTo(27);
@@ -188,7 +187,7 @@ class ReportMartWriterIT {
                 .introGeneral(13).introCustomer(14).introStaff(15)
                 .jobOffice(16).jobStudent(17).jobEtc(18)
                 .examTotal(19).visionExam(20).cataractExam(21).oneDay(22)
-                .visionBooked(23).cataractExamEyes(24).cataractBooked(25).oneDayBooked(26)
+                .visionBooked(23).cataractBooked(25).oneDayBooked(26)
                 .stopCount(27).examGeneralBase(28).bookedGeneral(29)
                 .visionSurgery(30).cataractSurgery(31).totalSurgery(32)
                 .outpatient(33)

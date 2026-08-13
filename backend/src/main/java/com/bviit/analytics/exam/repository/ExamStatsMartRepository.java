@@ -34,6 +34,8 @@ public class ExamStatsMartRepository {
     private static final String SELECT_LIST_EXAM_SQL              = SqlLoader.load("sql/mart/select-list-exam.sql");
     private static final String SELECT_LIST_CATARACT_EXAM_SQL     = SqlLoader.load("sql/mart/select-list-cataract-exam.sql");
     private static final String SELECT_EXAM_DAILY_AGG_SQL         = SqlLoader.load("sql/mart/select-exam-daily-agg.sql");
+    private static final String SELECT_VISION_SESSIONS_SQL        = SqlLoader.load("sql/mart/select-vision-sessions.sql");
+    private static final String SELECT_CATARACT_SESSIONS_SQL      = SqlLoader.load("sql/mart/select-cataract-sessions.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -90,6 +92,28 @@ public class ExamStatsMartRepository {
     public List<Map<String, Object>> findCataractExamList(String from, String to) {
         return jdbc.queryForList(
                 SELECT_LIST_CATARACT_EXAM_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to)
+        );
+    }
+
+    /**
+     * 시력교정 세션 리스트 — (exam_date, chart_no, exam_type).
+     * 주차 레포트가 브릿지와 결합해 시력교정 예약률·일반예약률·원데이 예약률 계산.
+     */
+    public List<Map<String, Object>> findVisionSessions(String from, String to) {
+        return jdbc.queryForList(
+                SELECT_VISION_SESSIONS_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to)
+        );
+    }
+
+    /**
+     * 백내장 세션 리스트 — (exam_date, chart_no). 사람 단위 그룹핑용.
+     * 주차 레포트가 브릿지와 결합해 백내장 예약률(사람 단위) 계산.
+     */
+    public List<Map<String, Object>> findCataractSessions(String from, String to) {
+        return jdbc.queryForList(
+                SELECT_CATARACT_SESSIONS_SQL,
                 new MapSqlParameterSource().addValue("from", from).addValue("to", to)
         );
     }

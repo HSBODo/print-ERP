@@ -84,7 +84,6 @@ public class ReportMartWriter {
                 .addValue("cataractExam", w.getCataractExam())
                 .addValue("oneDay", w.getOneDay())
                 .addValue("visionBooked", w.getVisionBooked())
-                .addValue("cataractExamEyes", w.getCataractExamEyes())
                 .addValue("cataractBooked", w.getCataractBooked())
                 .addValue("oneDayBooked", w.getOneDayBooked())
                 .addValue("stopCount", w.getStopCount())

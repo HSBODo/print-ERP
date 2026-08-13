@@ -52,8 +52,7 @@ public class WeeklyReportItem {
 
     /* ── 비율 계산용 원시값 (분자/분모) ── */
     private final Integer visionBooked;      // 시력교정 예약률 분자 (분모 = visionExam)
-    private final Integer cataractExamEyes;  // 백내장 예약률 분모 (추천 눈 수)
-    private final Integer cataractBooked;    // 백내장 예약률 분자
+    private final Integer cataractBooked;    // 백내장 예약률 분자 (분모 = cataractExam, 사람 단위 — 2026-08 통일)
     private final Integer oneDayBooked;      // 원데이 예약률 분자 (분모 = oneDay)
     private final Integer stopCount;         // 중단율 분자 (분모 = visionExam)
     private final Integer examGeneralBase;   // 시력교정 일반예약률 분모 (원데이 아닌 검사)
