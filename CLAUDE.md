@@ -134,7 +134,7 @@ project-root/
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
 |----|------|------|------|------|
-| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 ISO 주차축으로 · `/api/report/weekly` 운영 DB 라이브) |
+| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 ISO 주차축으로 · `mart_weekly_report` 조회, 2025 골든시드 · 2026+ 는 배치가 채널 마트에서 접기) |
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
 | intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |

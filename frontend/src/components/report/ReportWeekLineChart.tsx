@@ -262,17 +262,21 @@ export function ReportWeekLineChart({
                 {chunk[0].w.week}~{chunk[chunk.length - 1].w.week}주
               </p>
             )}
+            {/*
+             * denseTable(전체 52/53주) 은 화면에서 min-w-[1900px] + text-[13px] 로 넉넉히 벌려 가로 스크롤을 유도한다.
+             * 화면 가독성을 살리고, 인쇄는 index.css 의 @media print .report-week-table 압축(min-width 0 + 6.5px)이 담당.
+             */}
             <table
               className={denseTable
-                ? 'w-full min-w-[960px] table-fixed border-collapse text-center text-[10px]'
-                : 'w-full min-w-[840px] table-fixed border-collapse text-center text-[11px]'}
+                ? 'report-week-table w-full min-w-[1900px] table-fixed border-collapse text-center text-[13px]'
+                : 'report-week-table w-full min-w-[840px] table-fixed border-collapse text-center text-[11px]'}
             >
               <colgroup>
-                <col className={denseTable ? 'w-9' : 'w-16'} />
+                <col className={denseTable ? 'w-16' : 'w-16'} />
                 {chunk.map((c) => (
                   <col key={c.i} />
                 ))}
-                <col className={denseTable ? 'w-10' : 'w-16'} />
+                <col className={denseTable ? 'w-20' : 'w-16'} />
               </colgroup>
               <thead>
                 <tr className="border-y border-border bg-muted/40">

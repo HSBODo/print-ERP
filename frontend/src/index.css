@@ -201,6 +201,20 @@
   .report-chart .overflow-x-auto {
     overflow: visible !important;
   }
+  /* 주차 레포트 표 인쇄 압축 — 52/53주 + 연도라벨 + 합계 = 55셀을 A4 가로 한 페이지에 담는다.
+     계산: A4 가로 297mm - 6mm×2 margin = 285mm ≈ 1077px @ 96dpi → 셀당 ≈ 19.5px.
+     4자리 숫자(예 1075) 를 담으려면 폰트 6.5px + padding 1px 가 안전선. */
+  .report-week-table {
+    min-width: 0 !important;
+    font-size: 6.5px !important;
+    line-height: 1.15 !important;
+    table-layout: fixed;
+  }
+  .report-week-table th,
+  .report-week-table td {
+    padding: 1px 0 !important;
+    letter-spacing: -0.02em;
+  }
   @page {
     size: A4 landscape;
     margin: 6mm;
