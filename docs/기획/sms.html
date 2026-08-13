@@ -169,26 +169,27 @@
     <h3>컬럼 순서와 매핑</h3>
     <table>
       <thead>
-        <tr><th>#</th><th>헤더</th><th>폭</th><th>API 필드</th><th>DB 컬럼</th><th>원천</th><th>클릭 동작</th></tr>
+        <tr><th>#</th><th>헤더</th><th>폭</th><th>API 필드</th><th>DB 컬럼</th><th>타입</th><th>원천</th><th>클릭 동작</th></tr>
       </thead>
       <tbody>
-        <tr><td>1</td><td>☐ (체크박스)</td><td>2.0rem</td><td>—</td><td>—</td><td><span class="tag t-user">조작</span></td><td>행 선택 (홀딩/해제 대상)</td></tr>
-        <tr><td>2</td><td>No</td><td>2.4rem</td><td>—</td><td>—</td><td><span class="tag t-user">화면</span></td><td>—</td></tr>
-        <tr><td>3</td><td>수술일</td><td>4.6rem</td><td><code>surgeryDate</code></td><td><code>sms_target.surgery_date</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
-        <tr><td>4</td><td>차트</td><td>4.6rem</td><td><code>chartNo</code></td><td><code>sms_target.chart_no</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
-        <tr><td>5</td><td>이름</td><td>3.5rem</td><td><code>name</code></td><td><code>sms_target.name</code></td><td><span class="tag t-auto">마트</span></td><td><b>발송 문구 미리보기</b></td></tr>
-        <tr><td>6</td><td>연락처</td><td>6.6rem</td><td><code>phone</code> · <code>phoneValid</code></td><td><code>sms_target.phone</code></td><td><span class="tag t-auto">마트</span> <span class="tag t-user">수정</span></td><td><b>연락처 수정 모달</b></td></tr>
-        <tr><td>7</td><td>구분</td><td>4.6rem</td><td><code>surgeryType</code></td><td><code>sms_target.surgery_type</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
-        <tr><td>8</td><td>수술 종류</td><td>6.0rem</td><td><code>opType</code></td><td><code>sms_target.op_type</code></td><td><span class="tag t-auto">마트</span></td><td>헤더 <code>?</code> → 배지 색 설명</td></tr>
-        <tr><td>9</td><td>우안</td><td>7.0rem</td><td><code>surgeryR</code></td><td><code>sms_target.surgery_r</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
-        <tr><td>10</td><td>좌안</td><td>7.0rem</td><td><code>surgeryL</code></td><td><code>sms_target.surgery_l</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
-        <tr><td>11</td><td>상태</td><td>4.8rem</td><td><code>status</code> + <code>phoneValid</code> + <code>logs</code></td><td><code>sms_target.status</code> (파생)</td><td><span class="tag t-user">판정</span></td><td><b>홀딩 ↔ 해제 토글</b></td></tr>
-        <tr><td>12</td><td>1차 <span style="color:#8a909a">+7</span></td><td>6.4rem</td><td><code>logs[T1]</code></td><td><code>sms_send_log</code> (T1)</td><td><span class="tag t-api">솔라피</span></td><td>1차 문구 미리보기</td></tr>
-        <tr><td>13</td><td>2차 <span style="color:#8a909a">+14</span></td><td>6.4rem</td><td><code>logs[T2]</code></td><td><code>sms_send_log</code> (T2)</td><td><span class="tag t-api">솔라피</span></td><td>2차 문구 미리보기</td></tr>
-        <tr><td>14</td><td>3차 <span style="color:#8a909a">+21</span></td><td>6.4rem</td><td><code>logs[T3]</code></td><td><code>sms_send_log</code> (T3)</td><td><span class="tag t-api">솔라피</span></td><td>3차 문구 미리보기</td></tr>
-        <tr><td>15</td><td>(여백)</td><td>auto</td><td>—</td><td>—</td><td>—</td><td>남는 폭 흡수. 헤더 없음</td></tr>
+        <tr><td>1</td><td>☐ (체크박스)</td><td>2.0rem</td><td>—</td><td>—</td><td>—</td><td><span class="tag t-user">조작</span></td><td>행 선택 (홀딩/해제 대상)</td></tr>
+        <tr><td>2</td><td>No</td><td>2.4rem</td><td>—</td><td>—</td><td>—</td><td><span class="tag t-user">화면</span></td><td>—</td></tr>
+        <tr><td>3</td><td>수술일</td><td>4.6rem</td><td><code>surgeryDate</code></td><td><code>sms_target.surgery_date</code></td><td><code>DATE</code> <b>NN</b></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>4</td><td>차트</td><td>4.6rem</td><td><code>chartNo</code></td><td><code>sms_target.chart_no</code></td><td><code>VARCHAR(50)</code> <b>NN</b></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>5</td><td>이름</td><td>3.5rem</td><td><code>name</code></td><td><code>sms_target.name</code></td><td><code>VARCHAR(100)</code> <b>NN</b></td><td><span class="tag t-auto">마트</span></td><td><b>발송 문구 미리보기</b></td></tr>
+        <tr><td>6</td><td>연락처</td><td>6.6rem</td><td><code>phone</code> · <code>phoneValid</code></td><td><code>sms_target.phone</code></td><td><code>VARCHAR(20)</code></td><td><span class="tag t-auto">마트</span> <span class="tag t-user">수정</span></td><td><b>연락처 수정 모달</b></td></tr>
+        <tr><td>7</td><td>구분</td><td>4.6rem</td><td><code>surgeryType</code></td><td><code>sms_target.surgery_type</code></td><td><code>VARCHAR(50)</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>8</td><td>수술 종류</td><td>6.0rem</td><td><code>opType</code></td><td><code>sms_target.op_type</code></td><td><code>VARCHAR(20)</code></td><td><span class="tag t-auto">마트</span></td><td>헤더 <code>?</code> → 배지 색 설명</td></tr>
+        <tr><td>9</td><td>우안</td><td>7.0rem</td><td><code>surgeryR</code></td><td><code>sms_target.surgery_r</code></td><td><code>VARCHAR(100)</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>10</td><td>좌안</td><td>7.0rem</td><td><code>surgeryL</code></td><td><code>sms_target.surgery_l</code></td><td><code>VARCHAR(100)</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>11</td><td>상태</td><td>4.8rem</td><td><code>status</code> + <code>phoneValid</code> + <code>logs</code></td><td><code>sms_target.status</code> (파생)</td><td><code>VARCHAR(20)</code> <b>NN</b></td><td><span class="tag t-user">판정</span></td><td><b>홀딩 ↔ 해제 토글</b></td></tr>
+        <tr><td>12</td><td>1차 <span style="color:#8a909a">+7</span></td><td>6.4rem</td><td><code>logs[T1]</code></td><td><code>sms_send_log</code> (T1)</td><td>파생</td><td><span class="tag t-api">솔라피</span></td><td>1차 문구 미리보기</td></tr>
+        <tr><td>13</td><td>2차 <span style="color:#8a909a">+14</span></td><td>6.4rem</td><td><code>logs[T2]</code></td><td><code>sms_send_log</code> (T2)</td><td>파생</td><td><span class="tag t-api">솔라피</span></td><td>2차 문구 미리보기</td></tr>
+        <tr><td>14</td><td>3차 <span style="color:#8a909a">+21</span></td><td>6.4rem</td><td><code>logs[T3]</code></td><td><code>sms_send_log</code> (T3)</td><td>파생</td><td><span class="tag t-api">솔라피</span></td><td>3차 문구 미리보기</td></tr>
+        <tr><td>15</td><td>(여백)</td><td>auto</td><td>—</td><td>—</td><td>—</td><td>—</td><td>남는 폭 흡수. 헤더 없음</td></tr>
       </tbody>
     </table>
+    <p><b>NN</b> = <code>NOT NULL</code>. 「타입」은 <code>sms_target</code> 실제 스키마(<code>V52__sms_management.sql</code>)를 그대로 옮긴 값이며, 「파생」은 저장 컬럼이 아니라 화면이 계산해 그리는 칸이다.</p>
 
     <div class="note">
       <div class="h">차수 컬럼은 고정이 아니다</div>
@@ -331,47 +332,76 @@
   <!-- 8 -->
   <div class="card" id="s8">
     <div class="card-head"><div class="chip">8</div><h2>데이터 모델</h2></div>
-    <p>드림렌즈 장부와 같은 <b>"사용자 원천 데이터"</b>라 마트가 아니라 <b>JPA 엔티티</b>로 관리한다. 스키마는 <code>V52__sms_management.sql</code>.</p>
+    <p>드림렌즈 장부와 같은 <b>"사용자 원천 데이터"</b>라 마트가 아니라 <b>JPA 엔티티</b>로 관리한다.
+       운영은 <code>ddl-auto: none</code> 이라 JPA 가 표를 만들지 않으므로, 생성 스크립트
+       <code>V52__sms_management.sql</code> 를 마트 스키마 초기화에 함께 실어 만든다.</p>
+    <div class="note warn">
+      <div class="h">엔티티와 스크립트는 반드시 같아야 한다</div>
+      <p>컬럼 이름·길이가 <code>SmsTarget</code>·<code>SmsSendLog</code> 엔티티와 <b>한 글자라도 다르면</b> 운영에서 조회부터 실패한다.
+         JPA 기본 네이밍(카멜 → 스네이크)을 그대로 따른다: <code>surgeryDate</code> → <code>surgery_date</code>.</p>
+    </div>
 
     <h3>sms_target — 발송 대상</h3>
     <table>
-      <thead><tr><th>컬럼</th><th>타입</th><th>역할</th></tr></thead>
+      <thead><tr><th>컬럼</th><th>타입</th><th>NULL</th><th>기본값</th><th>역할</th></tr></thead>
       <tbody>
-        <tr><td>id</td><td>BIGSERIAL</td><td><span class="tag t-key">PK</span></td></tr>
-        <tr><td>chart_no</td><td>VARCHAR(50)</td><td>차트번호 (필수)</td></tr>
-        <tr><td>name</td><td>VARCHAR(100)</td><td>이름 (필수)</td></tr>
-        <tr><td>phone</td><td>VARCHAR(20)</td><td>연락처 — 하이픈·공백 제거 형식</td></tr>
-        <tr><td>surgery_date</td><td>DATE</td><td>수술일 (필수)</td></tr>
-        <tr><td>schedule_base</td><td>DATE</td><td><b>예정일 기준일</b>. NULL 이면 수술일로 본다</td></tr>
-        <tr><td>surgery_type</td><td>VARCHAR(50)</td><td>구분 — 시력교정/백내장/재수술</td></tr>
-        <tr><td>op_type</td><td>VARCHAR(20)</td><td>수술 종류 코드 — <code>surgery_op_type()</code> 분류값</td></tr>
-        <tr><td>surgery_r / surgery_l</td><td>VARCHAR(100)</td><td>실제 수술명 우/좌</td></tr>
-        <tr><td>status</td><td>VARCHAR(20)</td><td><code>SENDABLE</code> / <code>HOLD</code> (구버전 <code>CANCELED</code>도 홀딩 취급)</td></tr>
-        <tr><td>source</td><td>VARCHAR(10)</td><td><code>AUTO</code> / <code>MANUAL</code></td></tr>
-        <tr><td>created_at / updated_at</td><td>TIMESTAMP</td><td>감사용</td></tr>
+        <tr><td>id</td><td><code>BIGSERIAL</code></td><td>NOT NULL</td><td>시퀀스</td><td><span class="tag t-key">PK</span></td></tr>
+        <tr><td>chart_no</td><td><code>VARCHAR(50)</code></td><td>NOT NULL</td><td>—</td><td>차트번호</td></tr>
+        <tr><td>name</td><td><code>VARCHAR(100)</code></td><td>NOT NULL</td><td>—</td><td>이름</td></tr>
+        <tr><td>phone</td><td><code>VARCHAR(20)</code></td><td>NULL</td><td>—</td><td>연락처 — 하이픈·공백 없는 <code>01012345678</code> 형식(솔라피 요건)</td></tr>
+        <tr><td>surgery_date</td><td><code>DATE</code></td><td>NOT NULL</td><td>—</td><td>수술일</td></tr>
+        <tr><td>schedule_base</td><td><code>DATE</code></td><td>NULL</td><td>—</td><td><b>예정일 기준일.</b> 도입 이전 행은 수술일로 백필됨</td></tr>
+        <tr><td>surgery_type</td><td><code>VARCHAR(50)</code></td><td>NULL</td><td>—</td><td>구분 — 시력교정/백내장/재수술</td></tr>
+        <tr><td>op_type</td><td><code>VARCHAR(20)</code></td><td>NULL</td><td>—</td><td>수술 종류 코드 — <code>surgery_op_type()</code> 분류값</td></tr>
+        <tr><td>surgery_r</td><td><code>VARCHAR(100)</code></td><td>NULL</td><td>—</td><td>우안 수술명</td></tr>
+        <tr><td>surgery_l</td><td><code>VARCHAR(100)</code></td><td>NULL</td><td>—</td><td>좌안 수술명</td></tr>
+        <tr><td>status</td><td><code>VARCHAR(20)</code></td><td>NOT NULL</td><td>—</td><td><code>SENDABLE</code> / <code>HOLD</code> (구버전 <code>CANCELED</code>도 홀딩)</td></tr>
+        <tr><td>source</td><td><code>VARCHAR(10)</code></td><td>NOT NULL</td><td>—</td><td><code>AUTO</code> / <code>MANUAL</code></td></tr>
+        <tr><td>created_at</td><td><code>TIMESTAMP</code></td><td>NULL</td><td>—</td><td>등록 시각</td></tr>
+        <tr><td>updated_at</td><td><code>TIMESTAMP</code></td><td>NULL</td><td>—</td><td>수정 시각</td></tr>
       </tbody>
     </table>
+    <p><b>인덱스</b> — <code>UNIQUE (chart_no, surgery_date)</code> 로 같은 사람·같은 수술일의 중복 등록을 막는다(자동 적재의 중복 방지 키).
+       조회용으로 <code>surgery_date</code> · <code>status</code> · <code>schedule_base</code> 각각 인덱스를 둔다.</p>
 
     <h3>sms_send_log — 발송 이력</h3>
     <p><b>발송 시도마다 1행씩 누적</b>한다(재발송도 새 행). <b>지우지 않는다.</b></p>
     <table>
-      <thead><tr><th>컬럼</th><th>역할</th></tr></thead>
+      <thead><tr><th>컬럼</th><th>타입</th><th>NULL</th><th>기본값</th><th>역할</th></tr></thead>
       <tbody>
-        <tr><td>target_id</td><td>대상 FK</td></tr>
-        <tr><td>chart_no / name</td><td><b>스냅샷</b> — 대상이 지워져도 이력만으로 읽히게</td></tr>
-        <tr><td>template_code / template_label</td><td>차수 (T1~T3)</td></tr>
-        <tr><td>requested_channel</td><td>요청 채널 — <code>ALIMTALK</code> / <code>SMS</code></td></tr>
-        <tr><td>from_number / to_number</td><td>발신·수신 번호</td></tr>
-        <tr><td>message_type</td><td>솔라피 <b>실제</b> 타입 — SMS/LMS/ATA 등</td></tr>
-        <tr><td>solapi_group_id / solapi_message_id</td><td><span class="tag t-key">조회 키</span> 솔라피 재조회용 (G4V… / M4V…)</td></tr>
-        <tr><td>status</td><td><code>PENDING</code>(대기) / <code>SUCCESS</code>(완료) / <code>FAILED</code>(실패) — <b>접수가 아니라 도달 기준</b></td></tr>
-        <tr><td>status_code</td><td>솔라피 결과 코드</td></tr>
-        <tr><td>fail_reason</td><td>실패 사유</td></tr>
-        <tr><td><b>delivered_at</b></td><td><b>단말 도달 시각.</b> 비면 미도달</td></tr>
-        <tr><td><b>replacement</b></td><td><b>알림톡 실패 → 문자 대체발송 여부</b></td></tr>
-        <tr><td>sent_at / sent_by</td><td>발송 시각·주체</td></tr>
+        <tr><td>id</td><td><code>BIGSERIAL</code></td><td>NOT NULL</td><td>시퀀스</td><td><span class="tag t-key">PK</span></td></tr>
+        <tr><td>target_id</td><td><code>BIGINT</code></td><td>NOT NULL</td><td>—</td><td>대상 FK</td></tr>
+        <tr><td>chart_no</td><td><code>VARCHAR(50)</code></td><td>NULL</td><td>—</td><td><b>스냅샷</b> — 대상이 지워져도 읽히게</td></tr>
+        <tr><td>name</td><td><code>VARCHAR(100)</code></td><td>NULL</td><td>—</td><td><b>스냅샷</b></td></tr>
+        <tr><td>template_code</td><td><code>VARCHAR(20)</code></td><td>NOT NULL</td><td>—</td><td>차수 — <code>T1</code>/<code>T2</code>/<code>T3</code></td></tr>
+        <tr><td>template_label</td><td><code>VARCHAR(100)</code></td><td>NULL</td><td>—</td><td>차수 라벨 스냅샷</td></tr>
+        <tr><td>requested_channel</td><td><code>VARCHAR(20)</code></td><td>NOT NULL</td><td>—</td><td><code>ALIMTALK</code> / <code>SMS</code></td></tr>
+        <tr><td>from_number</td><td><code>VARCHAR(20)</code></td><td>NULL</td><td>—</td><td>발신번호</td></tr>
+        <tr><td>to_number</td><td><code>VARCHAR(20)</code></td><td>NULL</td><td>—</td><td>수신번호</td></tr>
+        <tr><td>message_type</td><td><code>VARCHAR(20)</code></td><td>NULL</td><td>—</td><td>솔라피 <b>실제</b> 타입 — SMS/LMS/ATA 등</td></tr>
+        <tr><td>solapi_group_id</td><td><code>VARCHAR(40)</code></td><td>NULL</td><td>—</td><td><span class="tag t-key">조회 키</span> G4V…</td></tr>
+        <tr><td>solapi_message_id</td><td><code>VARCHAR(40)</code></td><td>NULL</td><td>—</td><td><span class="tag t-key">조회 키</span> M4V…</td></tr>
+        <tr><td>status_code</td><td><code>VARCHAR(20)</code></td><td>NULL</td><td>—</td><td>솔라피 결과 코드</td></tr>
+        <tr><td>status</td><td><code>VARCHAR(20)</code></td><td>NOT NULL</td><td>—</td><td><code>PENDING</code>(접수·도달 확인 전) / <code>SUCCESS</code>(단말 도달) / <code>FAILED</code></td></tr>
+        <tr><td>fail_reason</td><td><code>VARCHAR(500)</code></td><td>NULL</td><td>—</td><td>실패 사유</td></tr>
+        <tr><td><b>delivered_at</b></td><td><code>TIMESTAMP</code></td><td>NULL</td><td>—</td><td><b>단말 도달 시각.</b> 비면 미도달</td></tr>
+        <tr><td><b>replacement</b></td><td><code>BOOLEAN</code></td><td>NOT NULL</td><td><code>FALSE</code></td><td><b>알림톡 실패 → 문자 대체발송 여부</b></td></tr>
+        <tr><td><b>cycle_base</b></td><td><code>DATE</code></td><td>NULL</td><td>—</td><td><b>이 발송이 속한 사이클</b> = 발송 시점의 대상 기준일. 멱등키의 일부</td></tr>
+        <tr><td>sent_at</td><td><code>TIMESTAMP</code></td><td>NOT NULL</td><td>—</td><td>발송 시각</td></tr>
+        <tr><td>sent_by</td><td><code>VARCHAR(50)</code></td><td>NULL</td><td>—</td><td>발송 주체</td></tr>
       </tbody>
     </table>
+
+    <div class="note">
+      <div class="h">멱등키 — 중복 발송을 DB 가 막는다</div>
+      <p><code>UNIQUE (target_id, template_code, cycle_base) WHERE status &lt;&gt; 'FAILED'</code></p>
+      <p>같은 사람에게 같은 차수를 <b>같은 사이클에 두 번 보내는 사고</b>를 DB 레벨에서 차단한다.
+         애플리케이션 검사만으로는 동시 요청·재시도를 막지 못한다.</p>
+      <ul>
+        <li><b>왜 <code>cycle_base</code> 를 넣나</b> — 기준일이 다시 깔리면 새 사이클이므로 <b>의도된 재발송은 통과</b>해야 한다.</li>
+        <li><b>왜 <code>FAILED</code> 를 빼나</b> — 실패한 시도는 같은 사이클이라도 다시 보낼 수 있어야 한다.</li>
+      </ul>
+    </div>
 
     <div class="note">
       <div class="h">이력을 지우지 않는 이유</div>
