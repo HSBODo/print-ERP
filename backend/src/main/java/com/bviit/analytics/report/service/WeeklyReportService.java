@@ -1,6 +1,7 @@
 package com.bviit.analytics.report.service;
 
 import com.bviit.analytics.exam.repository.ExamStatsMartRepository;
+import com.bviit.analytics.outpatient.repository.OutpatientCountStatsMartRepository;
 import com.bviit.analytics.overall.repository.OverallExamWeeklyRepository;
 import com.bviit.analytics.report.dto.WeeklyReportItem;
 import com.bviit.analytics.report.repository.WeeklyReportRepository;
@@ -43,8 +44,18 @@ import static com.bviit.analytics.reservation.service.OverallOnlineFormula.CUTOV
  *
  * <h2>전 구간 라이브</h2>
  * 월간 레포트의 2024·2025 는 레거시 확정값(마트 시드)이라 월 단위로만 존재해 주로 쪼갤 수 없다.
- * 그래서 여기서는 전 구간을 운영 DB 일별 집계로 계산한다 — 같은 달이라도 월간 레포트와 미세하게
+ * 그래서 여기서는 전 구간을 일별 집계로 계산한다 — 같은 달이라도 월간 레포트와 미세하게
  * 다를 수 있다(주간 검사자 종합지표와 같은 성격).
+ *
+ * <h2>소스 우선순위 (마트 → MSSQL 폴백)</h2>
+ * postgres-mart 프로파일에서는 primary list(마트) 를 접어 만든다 — 월간 레포트·리스트 화면과
+ * 같은 정의 하나만 봄. 마트 없는 mssql 단독 프로파일에서는 종전대로 MSSQL 직결 SQL 로 떨어진다.
+ * <ul>
+ *   <li>검사 유입·총·시력교정·원데이·백내장·중단수 : {@code v_all_exam_list}</li>
+ *   <li>수술 3종 : {@code v_all_surgery_list}</li>
+ *   <li>외래수 : {@code list_outpatient}</li>
+ *   <li>예약률·일반예약률·예약 종합 : 아직 MSSQL 직결 (Phase 2·3 대상)</li>
+ * </ul>
  *
  * <h2>온라인 예약</h2>
  * 정의가 2026-06({@code OverallOnlineFormula.CUTOVER})부터 바뀌므로 <b>날짜 단위</b>로 나눠 더한다
@@ -70,6 +81,8 @@ public class WeeklyReportService implements WeeklyReportReader {
     /** 마트(postgres-mart)에서만 존재. 검사 지표를 전체 검사자 리스트 뷰에서 뽑는다. */
     private final Optional<ExamStatsMartRepository> examAggRepository;
     private final Optional<SurgeryStatsMartRepository> surgeryAggRepository;
+    /** 마트(postgres-mart)에서만 존재. 외래수를 외래수 리스트에서 뽑는다. */
+    private final Optional<OutpatientCountStatsMartRepository> outpatientAggRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -91,10 +104,14 @@ public class WeeklyReportService implements WeeklyReportReader {
 
         Map<String, Acc> buckets = new LinkedHashMap<>();
 
-        /* ── 검사 유입·총검사자·시력교정·원데이·백내장 검사수 ──
+        /* ── 검사 유입·총검사자·시력교정·원데이·백내장 검사수·중단수 ──
          * 마트가 있으면 **전체 검사자 리스트(v_all_exam_list)** 하나에서 뽑는다.
          * 월간 레포트·리스트 화면과 같은 정의라 세 화면이 어긋날 수 없다.
-         * mssql 단독 프로파일(마트 없음)에서는 종전대로 MSSQL 쿼리로 떨어진다. */
+         * mssql 단독 프로파일(마트 없음)에서는 종전대로 MSSQL 쿼리로 떨어진다.
+         *
+         * stop_count 도 여기서 함께 받는다(V52 로 v_all_exam_list.stop_yn 붙임). 원본 raw EXAM 대비
+         * list_exam 4개 필터(테스트·pure cataract empty·순수 외래 유입·백내장 중복) 만큼 소폭 적음 —
+         * mart_stop_reason_monthly 와 같은 성격의 정상 diff. */
         boolean fromList = examAggRepository.isPresent();
         if (fromList) {
             accumulate(buckets, wanted, examAggRepository.get().findExamDailyAgg(fromDate, toDate), "d", (acc, row) -> {
@@ -108,6 +125,7 @@ public class WeeklyReportService implements WeeklyReportReader {
                 acc.visionExam = plus(acc.visionExam, toInt(row.get("vision")));
                 acc.oneDay = plus(acc.oneDay, toInt(row.get("one_day")));
                 acc.cataractExam = plus(acc.cataractExam, toInt(row.get("cataract_exam")));
+                acc.stopCount = plus(acc.stopCount, toInt(row.get("stop_count")));
             });
         } else {
             accumulate(buckets, wanted, overallRepository.findDemographicsDaily(fromDate, toDate), "d", (acc, row) -> {
@@ -143,9 +161,11 @@ public class WeeklyReportService implements WeeklyReportReader {
             acc.oneDayBooked = plus(acc.oneDayBooked, toInt(row.get("oneDayBooked")));
         });
 
-        /* ── 중단수 ── */
-        accumulate(buckets, wanted, overallRepository.findStopCountDaily(fromDate, toDate), "d", (acc, row) ->
-                acc.stopCount = plus(acc.stopCount, toInt(row.get("cnt"))));
+        /* ── 중단수 — 마트가 있으면 위 리스트 집계가 이미 채웠다 ── */
+        if (!fromList) {
+            accumulate(buckets, wanted, overallRepository.findStopCountDaily(fromDate, toDate), "d", (acc, row) ->
+                    acc.stopCount = plus(acc.stopCount, toInt(row.get("cnt"))));
+        }
 
         /* ── 백내장 검사수(사람 단위) — 마트가 있으면 위 리스트 집계가 이미 채웠다 ── */
         if (!fromList) {
@@ -153,9 +173,18 @@ public class WeeklyReportService implements WeeklyReportReader {
                     acc.cataractExam = plus(acc.cataractExam, toInt(row.get("cnt"))));
         }
 
-        /* ── 외래수 ── */
-        accumulate(buckets, wanted, repository.findOutpatientDaily(fromDate, toDate), "d", (acc, row) ->
-                acc.outpatient = plus(acc.outpatient, toInt(row.get("cnt"))));
+        /* ── 외래수 ──
+         * 마트가 있으면 **외래수 리스트(list_outpatient)** 를 접어 만든다.
+         * 외래수 화면·월별 마트와 같은 정의 하나 — 셋이 어긋날 수 없다.
+         * mssql 단독 프로파일(마트 없음)에서는 종전대로 MSSQL 쿼리로 떨어진다. */
+        if (outpatientAggRepository.isPresent()) {
+            accumulate(buckets, wanted,
+                    outpatientAggRepository.get().findOutpatientDailyAgg(fromDate, toDate), "d", (acc, row) ->
+                            acc.outpatient = plus(acc.outpatient, toInt(row.get("total"))));
+        } else {
+            accumulate(buckets, wanted, repository.findOutpatientDaily(fromDate, toDate), "d", (acc, row) ->
+                    acc.outpatient = plus(acc.outpatient, toInt(row.get("cnt"))));
+        }
 
         /* ── 시력교정 일반예약률 ── */
         accumulate(buckets, wanted, repository.findVisionRatesDaily(fromDate, toDate), "d", (acc, row) -> {
