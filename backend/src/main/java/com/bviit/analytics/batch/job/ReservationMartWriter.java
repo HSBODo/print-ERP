@@ -35,12 +35,14 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 @RequiredArgsConstructor
 public class ReservationMartWriter {
 
-    private static final String UPSERT_MONTHLY_SQL         = SqlLoader.load("sql/mart/upsert-reservation-monthly.sql");
-    private static final String UPSERT_OVERALL_MONTHLY_SQL = SqlLoader.load("sql/mart/upsert-reservation-overall-monthly.sql");
-    private static final String DELETE_LIST_RANGE_SQL      = SqlLoader.load("sql/mart/delete-list-reservation-range.sql");
-    private static final String INSERT_LIST_SQL            = SqlLoader.load("sql/mart/insert-list-reservation.sql");
-    private static final String DELETE_KAKAO_RANGE_SQL     = SqlLoader.load("sql/mart/delete-kakao-daily-range.sql");
-    private static final String UPSERT_KAKAO_DAILY_SQL     = SqlLoader.load("sql/mart/upsert-reservation-kakao-daily.sql");
+    private static final String UPSERT_MONTHLY_SQL          = SqlLoader.load("sql/mart/upsert-reservation-monthly.sql");
+    private static final String UPSERT_OVERALL_MONTHLY_SQL  = SqlLoader.load("sql/mart/upsert-reservation-overall-monthly.sql");
+    private static final String DELETE_LIST_RANGE_SQL       = SqlLoader.load("sql/mart/delete-list-reservation-range.sql");
+    private static final String INSERT_LIST_SQL             = SqlLoader.load("sql/mart/insert-list-reservation.sql");
+    private static final String DELETE_LIST_ALL_RANGE_SQL   = SqlLoader.load("sql/mart/delete-list-reservation-all-range.sql");
+    private static final String INSERT_LIST_ALL_SQL         = SqlLoader.load("sql/mart/insert-list-reservation-all.sql");
+    private static final String DELETE_KAKAO_RANGE_SQL      = SqlLoader.load("sql/mart/delete-kakao-daily-range.sql");
+    private static final String UPSERT_KAKAO_DAILY_SQL      = SqlLoader.load("sql/mart/upsert-reservation-kakao-daily.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -94,6 +96,33 @@ public class ReservationMartWriter {
         int[] updated = jdbc.batchUpdate(INSERT_LIST_SQL, batch);
         int inserted = sum(updated);
         log.info("list_reservation deleted={} inserted={}", deleted, inserted);
+        return inserted;
+    }
+
+    /**
+     * 예약 전체 얇은 리스트 — 예약일(reserve_date) 기준 범위 delete + insert.
+     * 사후 예약일 변경/취소도 자연히 반영된다.
+     *
+     * mart_reservation_monthly(수술/외래/드림렌즈)의 정의 원천 — 위 리스트를 월로 접어 만든다.
+     */
+    @Transactional
+    public int replaceListReservationAll(LocalDate from, LocalDate to, List<Map<String, Object>> rows) {
+        int deleted = jdbc.update(
+                DELETE_LIST_ALL_RANGE_SQL,
+                new MapSqlParameterSource()
+                        .addValue("from", from, Types.DATE)
+                        .addValue("to", to, Types.DATE)
+        );
+        if (rows.isEmpty()) {
+            log.info("list_reservation_all deleted={} inserted=0 (empty)", deleted);
+            return 0;
+        }
+        SqlParameterSource[] batch = rows.stream()
+                .map(ReservationMartWriter::toListAllParams)
+                .toArray(SqlParameterSource[]::new);
+        int[] updated = jdbc.batchUpdate(INSERT_LIST_ALL_SQL, batch);
+        int inserted = sum(updated);
+        log.info("list_reservation_all deleted={} inserted={}", deleted, inserted);
         return inserted;
     }
 
@@ -154,6 +183,25 @@ public class ReservationMartWriter {
             p.addValue(k, v == null ? "" : v.toString().trim());
         }
         return p;
+    }
+
+    /**
+     * reservation-list-all.sql 의 alias 6개를 파라미터로 매핑. 얇은 리스트라 LIST_KEYS 배열 불필요.
+     * 날짜는 문자열 그대로 넘겨(insert SQL 에서 CAST), 나머지는 trim 만 한다.
+     * chart_no·reserve_num 은 Phase 2 예약률·상담성공률에서 list_exam·list_surgery 와 JOIN 키로 쓴다.
+     */
+    private static SqlParameterSource toListAllParams(Map<String, Object> row) {
+        return new MapSqlParameterSource()
+                .addValue("reserveDate",   nullSafeTrim(row.get("reserveDate")))
+                .addValue("reserveFlag",   nullSafeTrim(row.get("reserveFlag")))
+                .addValue("reserveJinryo", nullSafeTrim(row.get("reserveJinryo")))
+                .addValue("reserveState",  nullSafeTrim(row.get("reserveState")))
+                .addValue("chartNo",       nullSafeTrim(row.get("chartNo")))
+                .addValue("reserveNum",    nullSafeTrim(row.get("reserveNum")));
+    }
+
+    private static String nullSafeTrim(Object v) {
+        return v == null ? "" : v.toString().trim();
     }
 
     private static SqlParameterSource toKakaoDailyParams(Map<String, Object> row) {

@@ -15,9 +15,14 @@
 -- ⚠️ 파생 규칙을 바꾸면 여기만 고친다. 리스트·레포트가 함께 따라온다.
 -- ⚠️ 뷰에는 2026-01 이후 행만 있다(그 전은 마트에 리스트가 없다).
 --    2024·2025 와 2026-01~05 레포트 값은 골든 시드가 우선이라 이 뷰와 무관하다.
+--
+-- ⚠️ 재기동 idempotency — MartSchemaInitializer 가 매 부팅마다 스크립트를 재실행한다.
+--    V52 가 이 뷰에 컬럼을 추가한 이후에는 V34 의 CREATE OR REPLACE 로는 컬럼 축소가
+--    안 돼 재기동이 터진다. 그래서 DROP + CREATE 패턴을 쓴다(V48·V50 과 동일).
 -- =========================================================
 
-CREATE OR REPLACE VIEW v_all_exam_list AS
+DROP VIEW IF EXISTS v_all_exam_list CASCADE;
+CREATE VIEW v_all_exam_list AS
 WITH src AS (
     SELECT exam_date, chart_no, name, exam_category, patient_type,
            motive_l, motive_m, motive_s, job, grade, birth,
