@@ -8,7 +8,11 @@ import com.bviit.analytics.outpatient.repository.OutpatientCountStatsMartReposit
 import com.bviit.analytics.overall.repository.OverallExamWeeklyRepository;
 import com.bviit.analytics.report.dto.WeeklyReportItem;
 import com.bviit.analytics.report.repository.WeeklyReportRepository;
+import com.bviit.analytics.reservation.dto.CataractStatsDailyRow;
+import com.bviit.analytics.reservation.dto.ReservationStatsDailyRow;
+import com.bviit.analytics.reservation.repository.CataractStatsSystemMartRepository;
 import com.bviit.analytics.reservation.repository.HomepageOverallSource;
+import com.bviit.analytics.reservation.repository.ReservationStatsSystemMartRepository;
 import com.bviit.analytics.surgery.dto.SurgeryDailyItem;
 import com.bviit.analytics.surgery.repository.SurgeryStatsMartRepository;
 import com.bviit.analytics.surgery.service.SurgeryStatsService;
@@ -87,6 +91,10 @@ public class WeeklyReportService implements WeeklyReportReader {
     private final Optional<SurgeryStatsMartRepository> surgeryAggRepository;
     /** 마트(postgres-mart)에서만 존재. 외래수를 외래수 리스트에서 뽑는다. */
     private final Optional<OutpatientCountStatsMartRepository> outpatientAggRepository;
+    /** 마트(postgres-mart)에서만 존재. 예약 종합의 채널 원시(시력교정) 를 채널 마트에서 접는다. */
+    private final Optional<ReservationStatsSystemMartRepository> systemDailyRepository;
+    /** 마트(postgres-mart)에서만 존재. 예약 종합의 채널 원시(백내장) 를 채널 마트에서 접는다. */
+    private final Optional<CataractStatsSystemMartRepository> cataractDailyRepository;
     /**
      * MSSQL 브릿지 — chart_no 셋의 O 예약·수술 요약을 실시간 조회.
      * 예약률·상담성공률 배치와 같은 방식으로 배치 range 밖(미래) 예약까지 반영한다.
@@ -341,9 +349,108 @@ public class WeeklyReportService implements WeeklyReportReader {
     /**
      * 콜·온라인·종합을 날짜 단위로 계산해 주에 더한다.
      * 온라인 정의가 달 단위로 갈리므로(컷오버) 주가 아니라 날짜로 판정해야 경계 주가 정확해진다.
+     *
+     * <p>마트 우선: 채널 마트(mart_reservation_stats_system_daily·_cataract_daily) 가 있으면 거기서 뽑아
+     * 화면 예약 종합(ReservationOverallMartQueryService) 과 정의를 통일한다. 없으면 종전 raw MSSQL 유지.
      */
     private void accumulateReservations(Map<String, Acc> buckets, Set<Integer> wanted,
                                         String fromDate, String toDate, String toDateTime) {
+        if (systemDailyRepository.isPresent() && cataractDailyRepository.isPresent()) {
+            accumulateReservationsFromMart(buckets, wanted, fromDate, toDate);
+            return;
+        }
+        accumulateReservationsFromLive(buckets, wanted, fromDate, toDate, toDateTime);
+    }
+
+    /**
+     * 마트 경로 — 화면 예약 종합(ReservationOverallMartQueryService) 과 완전 동일한 계산식.
+     * <ul>
+     *   <li>콜 = 시력교정(인콜 + TM + TM재상담) + 백내장(★신환 + TM예약)</li>
+     *   <li>온라인(2026-06+) = 시력교정(네이버 + 카카오) + 홈페이지</li>
+     *   <li>온라인(2026-05 이전) = 정의 자체가 legacy(RESERVE_PATH ONLINE/APP/NAVER). 채널 마트에 그 값이 없으므로 미상 처리.
+     *       — 2025 는 어차피 V55 시드로 mart_weekly_report 에 이미 있어 이 계산 결과가 나가지 않는다.</li>
+     * </ul>
+     */
+    private void accumulateReservationsFromMart(Map<String, Acc> buckets, Set<Integer> wanted,
+                                                String fromDate, String toDate) {
+        Map<String, Integer> callByDay = new HashMap<>();
+        Map<String, Integer> onlinePostCutoverByDay = new HashMap<>();
+
+        // 시력교정 채널 마트
+        for (ReservationStatsDailyRow r : systemDailyRepository.get().findDailyCounts(fromDate, toDate)) {
+            String d = r.date();
+            if (d == null) continue;
+            callByDay.merge(d, r.callReservation() + r.tmReservation() + r.tmRecounselReservation(), Integer::sum);
+            onlinePostCutoverByDay.merge(d, r.naverReservation() + r.kakaoReservation(), Integer::sum);
+        }
+
+        // 백내장 채널 마트 (콜에만 기여)
+        for (CataractStatsDailyRow r : cataractDailyRepository.get().findDailyCounts(fromDate, toDate)) {
+            String d = r.date();
+            if (d == null) continue;
+            callByDay.merge(d, r.newPatient() + r.tmReservation(), Integer::sum);
+        }
+
+        // 홈페이지 (컷오버 이후 온라인 구성요소)
+        Map<String, Integer> homepageByDay = Map.of();
+        LocalDate homepageCeiling = null;
+        boolean homepageAvailable = false;
+        if (homepageRepository.isPresent()) {
+            LocalDate end = LocalDate.parse(toDate);
+            LocalDate cutoverStart = CUTOVER.atDay(1);
+            LocalDate homepageFrom = cutoverStart.isAfter(LocalDate.parse(fromDate)) ? cutoverStart : LocalDate.parse(fromDate);
+            if (!homepageFrom.isAfter(end)) {
+                try {
+                    homepageByDay = countsByDay(
+                            homepageRepository.get().findDailyListRawCounts(homepageFrom.toString(), toDate), "cnt");
+                    homepageCeiling = parseDate(homepageRepository.get().findLastRegDate());
+                    homepageAvailable = true;
+                } catch (RuntimeException e) {
+                    log.warn("주차 레포트: 홈페이지 소스 조회 실패 — {} 이후 온라인 예약을 미상으로 둡니다. ({})",
+                            CUTOVER, e.toString());
+                }
+            } else {
+                homepageAvailable = true; // 컷오버 이후 구간이 없어 쓸 일 없음
+            }
+        }
+
+        LocalDate end = LocalDate.parse(toDate);
+        LocalDate ceiling = homepageCeiling;
+        for (LocalDate day = LocalDate.parse(fromDate); !day.isAfter(end); day = day.plusDays(1)) {
+            String key = day.toString();
+
+            Integer call = callByDay.get(key);
+            if (call != null) {
+                Acc acc = bucketOf(buckets, wanted, key);
+                if (acc != null) acc.call = plus(acc.call, call);
+            }
+
+            if (YearMonth.from(day).isBefore(CUTOVER)) {
+                // 컷오버 이전 온라인은 legacy 정의라 채널 마트에 없다 → 미상.
+                // (2025 는 V55 시드가 채우고 배치는 write 하지 않음.)
+                Acc acc = existingBucket(buckets, wanted, key);
+                if (acc != null) acc.onlineUnknown = true;
+                continue;
+            }
+
+            if (!homepageAvailable || beyondCoverage(day, ceiling)) {
+                Acc acc = existingBucket(buckets, wanted, key);
+                if (acc != null) acc.onlineUnknown = true;
+                continue;
+            }
+
+            int post = onlinePostCutoverByDay.getOrDefault(key, 0) + homepageByDay.getOrDefault(key, 0);
+            boolean hasSource = onlinePostCutoverByDay.containsKey(key) || homepageByDay.containsKey(key);
+            Acc acc = hasSource ? bucketOf(buckets, wanted, key) : existingBucket(buckets, wanted, key);
+            if (acc != null) acc.online = plus(acc.online, post);
+        }
+    }
+
+    /**
+     * 폴백 경로 — 마트가 없는 mssql 단독 프로파일에서 종전대로 raw MSSQL 로 계산.
+     */
+    private void accumulateReservationsFromLive(Map<String, Acc> buckets, Set<Integer> wanted,
+                                                String fromDate, String toDate, String toDateTime) {
         Map<String, Integer> callByDay = new HashMap<>();
         Map<String, Integer> onlineLegacyByDay = new HashMap<>();
         for (Map<String, Object> row : repository.findReservationOverallDaily(fromDate, toDateTime)) {

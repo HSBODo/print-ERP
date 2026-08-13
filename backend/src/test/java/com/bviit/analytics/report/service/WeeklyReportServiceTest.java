@@ -64,7 +64,7 @@ class WeeklyReportServiceTest {
         // 통합 대조로 확인한다(주차합 = 일별 마트합 = 월별).
         return new WeeklyReportService(repository, overallRepository, surgeryStatsService,
                 Optional.of(homepageRepository), Optional.empty(), Optional.empty(), Optional.empty(),
-                bridgeRepository);
+                Optional.empty(), Optional.empty(), bridgeRepository);
     }
 
     @Test
