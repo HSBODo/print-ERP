@@ -96,12 +96,33 @@
     <div class="card-head"><div class="chip">1</div><h2>개요와 목적</h2></div>
     <h3>무엇을 하는 화면인가</h3>
     <p>수술을 마친 환자에게 <b>정해진 간격으로 안내 문자를 자동 발송</b>하고, 그것이 <b>제대로 나갔는지 점검</b>하는 화면이다.</p>
-    <h3>핵심 전제</h3>
+    <h3>핵심 전제 (목표 구조)</h3>
     <ul>
       <li><b>발송은 자동화가 한다.</b> 화면은 발송 버튼을 누르는 곳이 아니라 <b>결과를 확인하고 예외를 막는 곳</b>이다.</li>
-      <li>대상은 <b>마트(<code>list_surgery</code>)에서 자동 등록</b>된다. 수술한 사람이면 자동으로 목록에 들어온다.</li>
+      <li>대상은 <b>마트(<code>list_surgery</code>)에서 자동 적재</b>된다. 수술한 사람이면 자동으로 목록에 들어온다.</li>
       <li>사람이 개입해야 하는 경우는 셋뿐이다 — <b>연락처가 틀렸을 때 · 보내면 안 될 사람일 때 · 마트에 없는 사람을 추가할 때</b>.</li>
     </ul>
+
+    <div class="note bad">
+      <div class="h">⚠️ 현재 상태 — 자동화 미구현</div>
+      <p>위는 <b>목표</b>다. 지금은 스케줄러가 없어 적재·발송·결과갱신이 <b>자동으로 돌지 않는다</b>(<a href="#s10">10장</a>).
+         그래서 오늘 이 화면의 실제 역할은 <b>대상 관리(추가 · 연락처 수정 · 홀딩)</b>이다.</p>
+    </div>
+
+    <h3>구현 현황 한눈에</h3>
+    <table>
+      <thead><tr><th>영역</th><th>상태</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>대상 표 · 조회 · 필터</td><td><span class="tag t-auto">완료</span></td><td>15컬럼, 상태 4종, 차수 색 규칙</td></tr>
+        <tr><td>대상 추가 · 연락처 수정</td><td><span class="tag t-auto">완료</span></td><td>차트번호 조회 → 마트 값 자동 채움</td></tr>
+        <tr><td>홀딩 · 해제 (단건·일괄)</td><td><span class="tag t-auto">완료</span></td><td>기준일 재조정 포함</td></tr>
+        <tr><td>발송 문구 미리보기</td><td><span class="tag t-auto">완료</span></td><td>이름·차수 칸 클릭</td></tr>
+        <tr><td>솔라피 발송 API</td><td><span class="tag t-api">API만</span></td><td>화면 버튼 미연결</td></tr>
+        <tr><td>수술자 불러오기 · 결과 갱신</td><td><span class="tag t-api">API만</span></td><td>화면 버튼 미연결</td></tr>
+        <tr><td>스케줄러(적재·발송·재조회)</td><td><span class="tag t-warn">미구현</span></td><td><code>@Scheduled</code> 없음</td></tr>
+        <tr><td>템플릿 설정</td><td><span class="tag t-warn">미완료</span></td><td><code>.env</code> 값 비어 있음 — 설정 미완료 경고 노출</td></tr>
+      </tbody>
+    </table>
     <h3>접근 권한</h3>
     <p><b>ADMIN 전용</b>이다. 환자 연락처를 다루므로 일반 사용자에게 노출하지 않는다.</p>
   </div>
@@ -141,7 +162,7 @@
     <table>
       <thead><tr><th>영역</th><th>역할</th></tr></thead>
       <tbody>
-        <tr><td>툴바</td><td>조회 조건(날짜 기준·기간·차수·일별/월별), 대상 추가, 홀딩/해제, 문구 보기</td></tr>
+        <tr><td>툴바</td><td>조회 조건(날짜 기준·기간·차수·일별/월별) + 버튼 6종 — <b>초기화 · 조회 · 발송중지 · 홀딩 해제 · 대상 추가 · 문구 보기</b></td></tr>
         <tr><td>상태 필터 바</td><td>전체 · 발송 대기 · 발송 · 발송 홀딩 · 발송 불가 (건수 표시) + 설정 미완료 경고</td></tr>
         <tr><td>대상 표</td><td>본문. 환자 1명 = 1행. 1~3차 발송 결과를 한 줄에서 읽는다</td></tr>
         <tr><td>대상 등록·수정 모달</td><td>차트번호로 마트 조회 후 등록, 또는 직접 입력</td></tr>
@@ -305,21 +326,31 @@
   <!-- 7 -->
   <div class="card" id="s7">
     <div class="card-head"><div class="chip">7</div><h2>기능 목록</h2></div>
+    <p>기본 경로는 <code>/api/sms-management</code> 이며 <b>전부 ADMIN 전용</b>이다.</p>
     <table>
-      <thead><tr><th>기능</th><th>API</th><th>설명</th></tr></thead>
+      <thead><tr><th>기능</th><th>API</th><th>화면</th><th>설명</th></tr></thead>
       <tbody>
-        <tr><td>대상 조회</td><td><code>GET /targets</code></td><td>날짜 기준(수술일·예정일·실제발송일)·기간·차수로 조회</td></tr>
-        <tr><td>차트번호 조회</td><td><code>GET /lookup</code></td><td>등록 전 마트에서 수술 정보를 찾는다. 없으면 직접 입력으로 진행</td></tr>
-        <tr><td>대상 등록</td><td><code>POST /targets</code></td><td>수동 등록. <code>source=MANUAL</code></td></tr>
-        <tr><td>대상 수정</td><td><code>PUT /targets/{id}</code></td><td>연락처 등 수정. <b>손댄 행은 MANUAL 로 승격</b>돼 자동 등록이 덮지 않는다</td></tr>
-        <tr><td>홀딩 / 해제</td><td><code>PUT /targets/{id}/status</code></td><td>단건 상태 변경</td></tr>
-        <tr><td>홀딩 / 해제 (일괄)</td><td><code>PUT /targets/status</code></td><td>선택한 여러 행을 한 번에</td></tr>
-        <tr><td>마트 동기화</td><td><code>POST /sync</code></td><td>마트에서 수술자를 불러와 대상으로 자동 등록·갱신</td></tr>
-        <tr><td>일괄 등록</td><td><code>POST /targets/import</code></td><td>기간 지정 대량 등록. 결과는 생성/갱신/건너뜀 건수</td></tr>
-        <tr><td>발송</td><td><code>POST /send</code></td><td>수동 발송. 결과는 요청/성공/실패/건너뜀 건수 + 건별 상세</td></tr>
-        <tr><td>템플릿 조회</td><td><code>GET /templates</code></td><td>차수별 라벨·설정 완료 여부·오프셋</td></tr>
+        <tr><td>대상 조회</td><td><code>GET /targets</code></td><td>조회 버튼</td><td>날짜 기준(수술일·예정일·실제발송일)·기간·차수로 조회</td></tr>
+        <tr><td>차트번호 조회</td><td><code>GET /lookup</code></td><td>대상 추가 모달</td><td>등록 전 마트에서 수술 정보를 찾는다. 없으면 직접 입력으로 진행</td></tr>
+        <tr><td>대상 등록</td><td><code>POST /targets</code></td><td>대상 추가</td><td>수동 등록. <code>source=MANUAL</code></td></tr>
+        <tr><td>대상 수정</td><td><code>PUT /targets/{id}</code></td><td>연락처 클릭</td><td>연락처 등 수정. <b>손댄 행은 MANUAL 로 승격</b>돼 자동 적재가 덮지 않는다</td></tr>
+        <tr><td>홀딩 / 해제</td><td><code>PUT /targets/{id}/status</code></td><td>상태 칸 클릭</td><td>단건 상태 변경</td></tr>
+        <tr><td>홀딩 / 해제 (일괄)</td><td><code>PUT /targets/status</code></td><td>발송중지 · 홀딩 해제</td><td>선택한 여러 행을 한 번에</td></tr>
+        <tr><td><b>수술자 불러오기</b></td><td><code>POST /targets/import</code></td><td><span class="tag t-warn">미연결</span></td><td>기간의 마트 수술 완료자를 대상으로 적재. 결과는 생성/갱신/건너뜀 건수</td></tr>
+        <tr><td><b>발송 결과 갱신</b></td><td><code>POST /sync</code></td><td><span class="tag t-warn">미연결</span></td><td>솔라피에 다시 물어 <b>도달시각·대체발송·최종 상태</b>를 채운다</td></tr>
+        <tr><td>발송</td><td><code>POST /send</code></td><td><span class="tag t-warn">미연결</span></td><td>결과는 요청/성공/실패/건너뜀 건수 + 건별 상세</td></tr>
+        <tr><td>템플릿 조회</td><td><code>GET /templates</code></td><td>차수 컬럼·문구 보기</td><td>차수별 라벨·설정 완료 여부·오프셋</td></tr>
       </tbody>
     </table>
+
+    <div class="note warn">
+      <div class="h">POST /sync 는 "마트 동기화"가 아니다</div>
+      <p>이름 때문에 헷갈리기 쉬운데 <b>발송 결과를 솔라피에서 되가져오는 것</b>이다. 마트에서 수술자를 데려오는 건
+         <code>POST /targets/import</code> 다.</p>
+      <p>또한 <code>/sync</code> 의 기간은 수술일이 아니라 <b>발송 시각(<code>sentAt</code>) 기준</b>이다.
+         수술일 조회 범위를 그대로 넘기면 "전일 수술자를 오늘 발송"한 이력을 놓친다.
+         파라미터를 비우면 <b>최근 7일</b>을 본다 — 자동화는 이 형태로 부르면 된다.</p>
+    </div>
 
     <h3>자동 등록 갱신 규칙</h3>
     <ul>
@@ -449,16 +480,58 @@
 
   <!-- 10 -->
   <div class="card" id="s10">
-    <div class="card-head"><div class="chip">10</div><h2>자동화</h2></div>
+    <div class="card-head"><div class="chip">10</div><h2>자동화 — 목표 구조와 현재 상태</h2></div>
+
+    <div class="note bad">
+      <div class="h">⚠️ 자동화는 아직 구현되지 않았다</div>
+      <p><code>@Scheduled</code> 잡이 <b>하나도 없다</b>. 아래 3종은 <b>엔드포인트만 준비된 상태</b>이며,
+         지금은 누군가 API 를 직접 호출해야 동작한다. 그래서 현재 화면은
+         <b>"자동으로 나간 결과를 점검하는 곳"이 아니라 "대상과 홀딩을 관리하는 곳"</b>이다.</p>
+    </div>
+
+    <h3>목표 구조</h3>
     <table>
-      <thead><tr><th>작업</th><th>주기</th><th>내용</th></tr></thead>
+      <thead><tr><th>작업</th><th>주기</th><th>호출</th><th>내용</th><th>상태</th></tr></thead>
       <tbody>
-        <tr><td>대상 적재</td><td>일 1회</td><td>마트에서 신규 수술자를 대상으로 등록, AUTO 행 CRM 값 갱신</td></tr>
-        <tr><td>차수 발송</td><td>일 1회</td><td>예정일이 도래한 차수를 발송. 홀딩·발송 불가는 자동 제외</td></tr>
-        <tr><td><b>결과 재조회</b></td><td>일 1회 (D-1)</td><td>솔라피 <code>getMessageList</code>로 도달 여부를 회수해 <code>status</code>·<code>delivered_at</code>·<code>replacement</code> 갱신</td></tr>
+        <tr>
+          <td>대상 적재</td><td>일 1회</td><td><code>POST /targets/import</code></td>
+          <td>마트에서 신규 수술자를 대상으로 등록, AUTO 행은 CRM 값으로 갱신</td>
+          <td><span class="tag t-warn">미구현</span></td>
+        </tr>
+        <tr>
+          <td>차수 발송</td><td>일 1회</td><td><code>POST /send</code></td>
+          <td>예정일이 도래한 차수를 발송. 홀딩·발송 불가는 자동 제외</td>
+          <td><span class="tag t-warn">미구현</span></td>
+        </tr>
+        <tr>
+          <td>결과 재조회</td><td>일 1회</td><td><code>POST /sync</code> (기간 생략 = 최근 7일)</td>
+          <td>도달 여부를 회수해 <code>status</code>·<code>delivered_at</code>·<code>replacement</code> 갱신</td>
+          <td><span class="tag t-warn">미구현</span></td>
+        </tr>
       </tbody>
     </table>
-    <p>화면의 <b>발송 버튼은 예외 처리용</b>이다 — 자동 발송이 실패했거나 수동으로 추가한 대상을 보낼 때 쓴다.</p>
+
+    <h3>순서가 중요하다</h3>
+    <div class="flow">
+      <span class="step">① 대상 적재</span><span class="arw">→</span>
+      <span class="step">② 차수 발송</span><span class="arw">→</span>
+      <span class="step">③ 결과 재조회</span>
+    </div>
+    <p>③은 ②와 <b>같은 날 붙여 돌리면 안 된다</b>. 통신사 결과가 수 분~수십 분 뒤 확정되므로,
+       <b>다음 날 재조회</b>해야 의미 있는 값이 채워진다. 기간을 비워 부르면 최근 7일을 훑으므로
+       하루 늦게 확정된 건도 함께 회수된다.</p>
+
+    <div class="note">
+      <div class="h">중복 발송은 DB 가 막는다</div>
+      <p>자동화 잡이 두 번 돌거나 수동 발송과 겹쳐도 <b>멱등키</b>(<a href="#s8">8장</a>)가 차단한다.
+         <code>UNIQUE (target_id, template_code, cycle_base) WHERE status &lt;&gt; 'FAILED'</code> —
+         애플리케이션 검사만으로는 동시 요청을 못 막기 때문에 DB 레벨에 둔 것이다.</p>
+    </div>
+
+    <h3>화면의 역할</h3>
+    <p>자동화가 붙으면 화면의 발송 관련 동작은 <b>예외 처리용</b>이 된다 — 자동 발송이 실패했거나
+       수동으로 추가한 대상을 보낼 때. 지금은 그 자동화가 없으므로
+       <b>대상 관리(추가·연락처 수정·홀딩)</b>가 화면의 실제 역할이다.</p>
   </div>
 
   <!-- 11 -->
@@ -492,7 +565,9 @@
 
     <h3>미결 — 정해야 할 것</h3>
     <ul>
-      <li><b>재발송 정책.</b> 실패한 차수를 자동으로 다시 보낼지, 사람이 판단할지 정해지지 않았다.</li>
+      <li><b>자동화 스케줄.</b> 적재·발송·재조회를 몇 시에 돌릴지, 마트 배치(03:00) 뒤 어디에 끼울지 미정. <b>가장 먼저 정해야 한다.</b></li>
+      <li><b>재발송 정책.</b> 실패한 차수를 자동으로 다시 보낼지, 사람이 판단할지 정해지지 않았다. 멱등키가 <code>FAILED</code> 를 빼 두어 <b>기술적으로는 재발송이 열려 있다</b>.</li>
+      <li><b>발송 문구 원문 보존.</b> 이력에 <code>template_code</code> 만 있고 실제 나간 본문이 없다. 템플릿을 고치면 <b>과거에 무엇이 나갔는지 복원할 수 없다</b>.</li>
       <li><b>수신거부 처리.</b> 현재는 수동 홀딩뿐이다. 080 수신거부 연동은 미구현.</li>
       <li><b>수술 종류별 문구 분기.</b> 지금은 차수만 다르고 종류별 문구는 같다.</li>
       <li><b>발송 비용 집계.</b> 솔라피가 제공하지만(<code>GroupLog.totalPrice</code>) 저장하지 않는다.</li>
