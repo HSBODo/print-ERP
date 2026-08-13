@@ -164,27 +164,81 @@
   <!-- 4 -->
   <div class="card" id="s4">
     <div class="card-head"><div class="chip">4</div><h2>표 컬럼 정의</h2></div>
-    <p>컬럼은 <b>사람 정보 → 수술 정보 → 발송 결과</b> 순으로 배치한다.</p>
+    <p>환자 1명 = 1행이다. 컬럼은 <b>식별 → 수술 정보 → 상태 → 발송 결과</b> 순으로 왼쪽부터 배치한다.</p>
+
+    <h3>컬럼 순서와 매핑</h3>
     <table>
-      <thead><tr><th>컬럼</th><th>출처</th><th>역할</th></tr></thead>
+      <thead>
+        <tr><th>#</th><th>헤더</th><th>폭</th><th>API 필드</th><th>DB 컬럼</th><th>원천</th><th>클릭 동작</th></tr>
+      </thead>
       <tbody>
-        <tr><td>선택</td><td><span class="tag t-user">조작</span></td><td>홀딩·해제할 행을 고른다. 발송 불가 행은 고를 수 없다</td></tr>
-        <tr><td>차트번호</td><td><span class="tag t-auto">마트</span></td><td>환자 식별자. CRM·마트와 대사하는 키</td></tr>
-        <tr><td>이름</td><td><span class="tag t-auto">마트</span></td><td>대상 확인용</td></tr>
-        <tr><td>연락처</td><td><span class="tag t-auto">마트</span> <span class="tag t-user">수정 가능</span></td><td>발송 번호. <code>01012345678</code> 형식으로 정규화해 저장(하이픈·공백 제거)</td></tr>
-        <tr><td>구분</td><td><span class="tag t-auto">마트</span></td><td>시력교정 / 백내장 / 재수술 — <code>list_surgery.surgery_category</code></td></tr>
-        <tr><td>수술 종류</td><td><span class="tag t-auto">마트</span></td><td>스마일프로·ICL·다초점 등. 마트 <code>surgery_op_type()</code> 분류값이라 <b>수술 통계·채널 분석과 같은 기준</b>. 배지 색은 계열(레이저·렌즈삽입·백내장·재수술)</td></tr>
-        <tr><td>수술명(우/좌)</td><td><span class="tag t-auto">마트</span></td><td>실제 수술명. 어떤 수술을 받았는지 보고 발송 여부를 판단</td></tr>
-        <tr><td>수술일</td><td><span class="tag t-auto">마트</span></td><td>발송 예정일의 원래 기준</td></tr>
-        <tr><td>상태</td><td><span class="tag t-user">판정</span></td><td>발송 대기 / 발송 / 발송 홀딩 / 발송 불가 — <a href="#s5">5장</a></td></tr>
-        <tr><td><b>1차 · 2차 · 3차</b></td><td><span class="tag t-api">솔라피</span></td><td><b>핵심 컬럼.</b> 날짜 하나와 색 하나로 "잘 갔나"를 읽는다 — <a href="#s6">6장</a></td></tr>
-        <tr><td>등록</td><td><span class="tag t-auto">자동</span></td><td>AUTO(마트 자동) / MANUAL(수동 입력·수정)</td></tr>
+        <tr><td>1</td><td>☐ (체크박스)</td><td>2.0rem</td><td>—</td><td>—</td><td><span class="tag t-user">조작</span></td><td>행 선택 (홀딩/해제 대상)</td></tr>
+        <tr><td>2</td><td>No</td><td>2.4rem</td><td>—</td><td>—</td><td><span class="tag t-user">화면</span></td><td>—</td></tr>
+        <tr><td>3</td><td>수술일</td><td>4.6rem</td><td><code>surgeryDate</code></td><td><code>sms_target.surgery_date</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>4</td><td>차트</td><td>4.6rem</td><td><code>chartNo</code></td><td><code>sms_target.chart_no</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>5</td><td>이름</td><td>3.5rem</td><td><code>name</code></td><td><code>sms_target.name</code></td><td><span class="tag t-auto">마트</span></td><td><b>발송 문구 미리보기</b></td></tr>
+        <tr><td>6</td><td>연락처</td><td>6.6rem</td><td><code>phone</code> · <code>phoneValid</code></td><td><code>sms_target.phone</code></td><td><span class="tag t-auto">마트</span> <span class="tag t-user">수정</span></td><td><b>연락처 수정 모달</b></td></tr>
+        <tr><td>7</td><td>구분</td><td>4.6rem</td><td><code>surgeryType</code></td><td><code>sms_target.surgery_type</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>8</td><td>수술 종류</td><td>6.0rem</td><td><code>opType</code></td><td><code>sms_target.op_type</code></td><td><span class="tag t-auto">마트</span></td><td>헤더 <code>?</code> → 배지 색 설명</td></tr>
+        <tr><td>9</td><td>우안</td><td>7.0rem</td><td><code>surgeryR</code></td><td><code>sms_target.surgery_r</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>10</td><td>좌안</td><td>7.0rem</td><td><code>surgeryL</code></td><td><code>sms_target.surgery_l</code></td><td><span class="tag t-auto">마트</span></td><td>—</td></tr>
+        <tr><td>11</td><td>상태</td><td>4.8rem</td><td><code>status</code> + <code>phoneValid</code> + <code>logs</code></td><td><code>sms_target.status</code> (파생)</td><td><span class="tag t-user">판정</span></td><td><b>홀딩 ↔ 해제 토글</b></td></tr>
+        <tr><td>12</td><td>1차 <span style="color:#8a909a">+7</span></td><td>6.4rem</td><td><code>logs[T1]</code></td><td><code>sms_send_log</code> (T1)</td><td><span class="tag t-api">솔라피</span></td><td>1차 문구 미리보기</td></tr>
+        <tr><td>13</td><td>2차 <span style="color:#8a909a">+14</span></td><td>6.4rem</td><td><code>logs[T2]</code></td><td><code>sms_send_log</code> (T2)</td><td><span class="tag t-api">솔라피</span></td><td>2차 문구 미리보기</td></tr>
+        <tr><td>14</td><td>3차 <span style="color:#8a909a">+21</span></td><td>6.4rem</td><td><code>logs[T3]</code></td><td><code>sms_send_log</code> (T3)</td><td><span class="tag t-api">솔라피</span></td><td>3차 문구 미리보기</td></tr>
+        <tr><td>15</td><td>(여백)</td><td>auto</td><td>—</td><td>—</td><td>—</td><td>남는 폭 흡수. 헤더 없음</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <div class="h">차수 컬럼은 고정이 아니다</div>
+      <p>12~14번은 <code>GET /templates</code> 응답을 그대로 그린다. 차수를 늘리면 <b>컬럼이 자동으로 늘어난다</b>. 헤더의 <code>+7 / +14 / +21</code>도 <code>offsetDays</code>에서 온다.</p>
+    </div>
+
+    <h3>컬럼별 표시 규칙</h3>
+    <table>
+      <thead><tr><th>컬럼</th><th>표시</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr><td>수술일</td><td><code>26-08-07</code> (앞 2자리 절삭)<br><b>↻</b> 위첨자 = 기준일 재조정됨</td><td>연도 4자리는 폭만 먹는다. ↻ 는 예정일 간격이 왜 달라 보이는지 알린다</td></tr>
+        <tr><td>이름</td><td>버튼 (밑줄 없음)</td><td>클릭하면 그 환자에게 나갈 문구가 오른쪽에 뜬다</td></tr>
+        <tr><td>연락처</td><td>점선 밑줄 버튼<br>유효: 회색 / <b style="color:#ef4444">무효: 빨강 + "번호 없음"</b></td><td>고칠 수 있는 값임을 밑줄로 알린다. 무효는 즉시 눈에 띄어야 한다</td></tr>
+        <tr><td>구분</td><td>재수술만 <span class="tag" style="background:#f5f3ff;color:#6d28d9">보라 배지</span>, 나머지는 평문</td><td>재수술은 발송 판단이 달라질 수 있어 눈에 띄게 한다</td></tr>
+        <tr><td>수술 종류</td><td>계열별 색 배지 (짧은 이름)</td><td>종류마다 색을 주면 14색이 되어 시끄럽다. <b>색은 계열</b>, 이름은 종류</td></tr>
+        <tr><td>우안 / 좌안</td><td>실제 수술명 원문</td><td>「수술 종류」는 분류값이라 원문 확인이 필요할 때가 있다</td></tr>
+        <tr><td>상태</td><td>알약 버튼<br>발송 불가는 <b>버튼이 아닌 표시</b></td><td>발송 불가는 데이터 문제라 토글 대상이 아니다</td></tr>
+        <tr><td>1~3차</td><td>날짜(MM-DD) + 라벨 + 색<br><b style="color:#ea580c">문</b> 위첨자 = 문자 대체발송</td><td>색이 곧 의미 — <a href="#s6">6장</a></td></tr>
+      </tbody>
+    </table>
+
+    <h3>배지 색 = 수술 계열</h3>
+    <table>
+      <thead><tr><th>계열</th><th>색</th><th>포함 종류(<code>op_type</code>)</th></tr></thead>
+      <tbody>
+        <tr><td>레이저</td><td><span class="tag" style="background:#eff6ff;color:#1d4ed8">파랑</span></td><td>smilePro · smile · lasek · lasik · presbyond</td></tr>
+        <tr><td>렌즈삽입</td><td><span class="tag" style="background:#fffbeb;color:#b45309">주황</span></td><td>tIcl · icl · tKpl · kpl · viva</td></tr>
+        <tr><td>백내장</td><td><span class="tag" style="background:#f5f3ff;color:#6d28d9">보라</span></td><td>catMulti · catEdof · catMono</td></tr>
+        <tr><td>재수술</td><td><span class="tag" style="background:#fdf4ff;color:#a21caf">자주</span></td><td>reopLens · reopLaser</td></tr>
+        <tr><td>기타</td><td><span class="tag" style="background:#f3f4f6;color:#4b5563">회색</span></td><td>other</td></tr>
+      </tbody>
+    </table>
+    <p><code>op_type</code> 분류는 마트 함수 <code>surgery_op_type()</code>가 정한다 — <b>수술 통계·채널별 분석과 같은 기준</b>이라 화면끼리 숫자가 어긋나지 않는다.</p>
+
+    <h3>화면에 없는 필드</h3>
+    <p>API 는 주지만 <b>컬럼으로 두지 않은</b> 값들이다.</p>
+    <table>
+      <thead><tr><th>필드</th><th>어디에 쓰나</th></tr></thead>
+      <tbody>
+        <tr><td><code>scheduleBase</code></td><td>예정일 계산에 쓰고, 수술일 <b>툴팁</b>에만 노출</td></tr>
+        <tr><td><code>rebased</code></td><td>수술일 옆 <b>↻ 표시</b>로만</td></tr>
+        <tr><td><code>source</code> (AUTO/MANUAL)</td><td><b>미노출.</b> 사람이 판단에 쓰지 않는 값이라 컬럼을 주지 않았다</td></tr>
+        <tr><td><code>phoneValid</code></td><td>연락처 색과 <b>상태</b> 판정에 쓴다</td></tr>
+        <tr><td><code>logs[].solapiMessageId</code> 등</td><td>솔라피 재조회 키. 화면에는 안 쓴다</td></tr>
       </tbody>
     </table>
 
     <div class="note">
       <div class="h">왜 차수 칸에 시각·채널을 펼치지 않는가</div>
-      <p>차수마다 발송시각·도달시각·채널·실패사유를 컬럼으로 펼치면 <b>컬럼이 12개 이상</b>이 되어 표가 읽히지 않는다. 칸에는 <b>날짜와 색</b>만 두고 나머지는 <b>마우스오버 툴팁</b>에 담는다.</p>
+      <p>차수마다 발송시각·도달시각·채널·실패사유를 컬럼으로 펼치면 <b>컬럼이 25개</b>가 되어 표가 읽히지 않는다. 칸에는 <b>날짜와 색</b>만 두고 나머지는 <b>마우스오버 툴팁</b>에 담는다.</p>
     </div>
   </div>
 
