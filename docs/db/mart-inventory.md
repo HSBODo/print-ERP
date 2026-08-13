@@ -35,7 +35,7 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 | `mart_surgery_monthly` | TABLE | V2 | 수술 > 수술 건수 · 리포트 > 월간 레포트 | 시력교정·백내장·전체 월별 수술 건수. **수술 건수 페이지** 및 월간 레포트 소스. |
 | `mart_surgery_daily` | TABLE | V2 | 수술 > 수술별 비중 · 리포트 > 주차 레포트 | 일별 수술 건수 (subtype 분해). **수술별 비중** 페이지 · 주차 레포트 소스. |
 | `list_surgery` | TABLE | V2 | 수술 > 수술자 리스트 | 수술자 리스트 원본 행. **수술자 리스트 페이지** + `v_all_surgery_list` UNION base. |
-| `list_reoperation` | TABLE | V36 | 수술 > 수술자 리스트 (재수술 검토 모달) | 재수술 후보 (RE_OPERATION 원본 + 자동판정 + 제외사유 + is_lens). **재수술 검토 모달** + `v_all_surgery_list` UNION base. |
+| `list_reoperation` | TABLE | V36 | 수술 > 수술자 리스트 (재수술 검토 모달) · 마케팅 > 예약 퍼널 (reop 단계 EXISTS) | 재수술 후보 (RE_OPERATION 원본 + 자동판정 + 제외사유 + is_lens). **재수술 검토 모달** + `v_all_surgery_list` UNION base + 예약 퍼널 재수술 코호트 판정. |
 | `v_all_surgery_list` | VIEW | V37 | 수술 > 수술자 리스트 · 리포트 > 월간/주차 레포트 | `list_surgery` + `list_reoperation` + `reoperation_decision` UNION. 눈 단위로 펼치고 op_type 분류 부여. **전체 수술 리스트·주차 레포트·수술 상세표** 소스. |
 
 ---
@@ -55,7 +55,7 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 | `reservation_stats_period_lock` | TABLE | V11 | — (배치 방어용) | 월 확정(잠금) 상태 — 배치 덮어쓰기 방어. V19·V20 seed 로 2026-01~06 잠금 등록. |
 | `reservation_stats_override` | TABLE | V11 | 예약 > 예약통계_시력교정/백내장 (수기 보정 저장) | 예약통계 셀 수기 보정 이력 (INSERT-only 감사 로그). `ReservationStatsOverrideCellEditService`. |
 | `reservation_channel_staff` | TABLE | V43 | — (`v_reservation_channel` LEFT JOIN base) | 예약 채널 스태프 매핑 (담당자 → 채널). `v_reservation_channel` LEFT JOIN base. |
-| `v_reservation_channel` | VIEW | V43 (+V48/V50 확장) | 마케팅 > 채널별 수익성 | `list_reservation` + `reservation_channel_staff` 파생. 채널 분류 + op_type + 결제금액 컬럼. **채널 퍼널·채널×op_type·채널별 렌즈원가**. |
+| `v_reservation_channel` | VIEW | V43 (+V48/V50 확장) | 마케팅 > 예약 퍼널 · 마케팅 > 채널별 수익성 | `list_reservation` + `reservation_channel_staff` 파생. 채널 분류 + op_type + 결제금액 컬럼. **채널 퍼널·채널×op_type·채널별 렌즈원가**. |
 
 ---
 
