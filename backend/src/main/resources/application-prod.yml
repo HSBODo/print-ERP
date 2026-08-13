@@ -63,8 +63,9 @@ batch:
   mart:
     enabled: true
     daily-cron: ${BATCH_MART_DAILY_CRON:0 0 3 * * *}
-    # 월간 소급 재계산은 현재 비활성. 재활성화하려면 값을 "0 30 3 1 * *" 로 변경.
-    monthly-reconcile-cron: "-"
+    # 매월 1일 03:30 — 전월 전체 재계산(소급 수정 흡수). 등록일 기준 daily 배치가 놓치는
+    # 상태 변경(취소·수정)을 월 단위로 흡수한다. 필요 시 환경변수로 오버라이드.
+    monthly-reconcile-cron: ${BATCH_MART_MONTHLY_RECONCILE_CRON:0 30 3 1 * *}
 
 # --- Slack 로그 알림 (ON) ---
 # 운영에서 배치 실패·에러 즉시 감지. LOGGING_SLACK_WEBHOOK_URL 환경변수 필수(배포 스크립트 주입).
