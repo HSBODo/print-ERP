@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>문자 발송 관리 — 기획서</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root {
+    --bg: #f6f6f7; --card: #ffffff; --border: #ececec; --line: #eaeaec;
+    --ink: #1f2328; --muted: #5b6470; --muted-2: #8a909a;
+    --accent: #7c5cff; --accent-soft: #efebff; --accent-ink: #5b3fd1;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; line-height: 1.7; display: flex; }
+
+  nav { width: 232px; flex-shrink: 0; padding: 26px 14px; border-right: 1px solid var(--border); background: var(--bg); overflow-y: auto; position: sticky; top: 0; height: 100vh; }
+  nav .brand { font-size: 13px; font-weight: 800; color: var(--muted-2); padding: 0 12px 14px; letter-spacing: .02em; }
+  nav a { display: block; padding: 8px 12px; border-radius: 9px; color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 500; }
+  nav a:hover { background: #efeff1; color: var(--ink); }
+
+  main { flex: 1; min-width: 0; overflow-y: auto; display: flex; justify-content: center; padding: 26px 32px 96px; }
+  .content { width: 100%; max-width: 900px; }
+  .topbar { padding: 6px 4px 22px; }
+  .topbar .title { font-size: 23px; font-weight: 800; letter-spacing: -0.02em; }
+  .topbar .sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 30px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(16,18,29,.04); scroll-margin-top: 18px; }
+  .card-head { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; }
+  .chip { width: 28px; height: 28px; border-radius: 9px; background: var(--accent-soft); color: var(--accent-ink);
+    display: grid; place-items: center; flex-shrink: 0; font-size: 13px; font-weight: 800; }
+  .card-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
+  h3 { margin: 22px 0 8px; font-size: 14px; font-weight: 700; }
+  h3:first-child { margin-top: 0; }
+  p { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+  ul { margin: 0 0 10px; padding-left: 18px; font-size: 14px; color: var(--muted); }
+  li { margin-bottom: 4px; }
+  b { color: var(--ink); font-weight: 700; }
+  code { background: #f1f1f3; border-radius: 5px; padding: 1px 5px; font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #3b4048; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 6px 0 12px; }
+  th { text-align: left; font-weight: 700; font-size: 12px; color: var(--muted-2); padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 8px 10px 8px 0; border-bottom: 1px solid #f4f4f5; color: var(--muted); vertical-align: top; }
+  td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; }
+  .t-key { background: #eef2ff; color: #4338ca; }
+  .t-auto { background: #ecfdf5; color: #047857; }
+  .t-user { background: #fff7ed; color: #c2410c; }
+  .t-api { background: #f5f3ff; color: #6d28d9; }
+  .t-warn { background: #fef2f2; color: #b91c1c; }
+
+  .note { border-left: 3px solid var(--accent); background: #faf9ff; padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 12px 0; }
+  .note.warn { border-left-color: #f59e0b; background: #fffbeb; }
+  .note.bad { border-left-color: #ef4444; background: #fef2f2; }
+  .note p:last-child { margin-bottom: 0; }
+  .note .h { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 14px; font-size: 13px; }
+  .flow span.step { background: #f4f4f6; border: 1px solid var(--line); border-radius: 8px; padding: 5px 11px; font-weight: 600; color: var(--ink); }
+  .flow span.arw { color: var(--muted-2); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">문자 발송 관리</div>
+  <a href="#s1">1. 개요와 목적</a>
+  <a href="#s2">2. 발송 정책 (1~3차)</a>
+  <a href="#s3">3. 화면 구성</a>
+  <a href="#s4">4. 표 컬럼 정의</a>
+  <a href="#s5">5. 상태 정의</a>
+  <a href="#s6">6. 차수 칸 색 규칙</a>
+  <a href="#s7">7. 기능 목록</a>
+  <a href="#s8">8. 데이터 모델</a>
+  <a href="#s9">9. 외부 연동 (솔라피)</a>
+  <a href="#s10">10. 자동화</a>
+  <a href="#s11">11. 환경 설정</a>
+  <a href="#s12">12. 제약과 미결</a>
+</nav>
+
+<main>
+<div class="content">
+
+  <div class="topbar">
+    <div class="title">문자 발송 관리 — 기획서</div>
+    <div class="sub">수술 후 안내 문자(알림톡·SMS) 1~3차 발송과 점검 · 관리자 전용 · 2026-08-07</div>
+  </div>
+
+  <!-- 1 -->
+  <div class="card" id="s1">
+    <div class="card-head"><div class="chip">1</div><h2>개요와 목적</h2></div>
+    <h3>무엇을 하는 화면인가</h3>
+    <p>수술을 마친 환자에게 <b>정해진 간격으로 안내 문자를 자동 발송</b>하고, 그것이 <b>제대로 나갔는지 점검</b>하는 화면이다.</p>
+    <h3>핵심 전제</h3>
+    <ul>
+      <li><b>발송은 자동화가 한다.</b> 화면은 발송 버튼을 누르는 곳이 아니라 <b>결과를 확인하고 예외를 막는 곳</b>이다.</li>
+      <li>대상은 <b>마트(<code>list_surgery</code>)에서 자동 등록</b>된다. 수술한 사람이면 자동으로 목록에 들어온다.</li>
+      <li>사람이 개입해야 하는 경우는 셋뿐이다 — <b>연락처가 틀렸을 때 · 보내면 안 될 사람일 때 · 마트에 없는 사람을 추가할 때</b>.</li>
+    </ul>
+    <h3>접근 권한</h3>
+    <p><b>ADMIN 전용</b>이다. 환자 연락처를 다루므로 일반 사용자에게 노출하지 않는다.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="card" id="s2">
+    <div class="card-head"><div class="chip">2</div><h2>발송 정책 — 1~3차</h2></div>
+    <table>
+      <thead><tr><th>차수</th><th>코드</th><th>발송 시점</th><th>기본 라벨</th></tr></thead>
+      <tbody>
+        <tr><td>1차</td><td><code>T1</code></td><td>기준일 <b>+7일</b></td><td>수술 후 안내 1차</td></tr>
+        <tr><td>2차</td><td><code>T2</code></td><td>기준일 <b>+14일</b></td><td>수술 후 안내 2차</td></tr>
+        <tr><td>3차</td><td><code>T3</code></td><td>기준일 <b>+21일</b></td><td>수술 후 안내 3차</td></tr>
+      </tbody>
+    </table>
+    <p>간격은 <code>SOLAPI_INTERVAL_DAYS</code>(기본 7)의 배수다. <b>수술 종류(시력교정·백내장·재수술)와 무관하게 같은 간격</b>을 쓴다.</p>
+
+    <h3>채널 우선순위</h3>
+    <div class="flow">
+      <span class="step">알림톡(ATA)</span><span class="arw">→ 실패 시 →</span><span class="step">문자(SMS/LMS)</span>
+    </div>
+    <p>알림톡 템플릿 ID와 문자 본문을 둘 다 설정하면 <b>알림톡을 먼저 보내고 실패하면 문자로 대체발송</b>된다. 한쪽만 설정하면 그 채널만 쓴다.</p>
+
+    <div class="note warn">
+      <div class="h">설정 미완료 경고</div>
+      <p>어떤 차수에 <b>알림톡 ID와 문자 본문이 모두 비어 있으면</b> 그 차수는 보낼 내용이 없어 자동 발송이 실패한다. 화면 상단에 <code>⚠️ 설정 미완료: 1차 · 2차 · 3차</code> 로 경고한다.</p>
+    </div>
+
+    <h3>기준일(scheduleBase) — 예정일을 세는 시작점</h3>
+    <p>보통은 <b>수술일과 같다</b>. 다만 연락처를 못 고친 채(또는 홀딩된 채) 예정일이 지나버리면 그 차수는 영영 나가지 않는다. 그래서 <b>연락처를 고치거나 홀딩을 풀 때 기준일을 다시 깐다</b> — 안 보낸 차수 중 가장 이른 것이 오늘이 되도록 밀고, 나머지 차수는 원래 간격을 유지한다.</p>
+    <p>기준일이 수술일과 다른 행은 <b>재조정됨</b>으로 표시해, 왜 간격이 달라 보이는지 알 수 있게 한다.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="card" id="s3">
+    <div class="card-head"><div class="chip">3</div><h2>화면 구성</h2></div>
+    <table>
+      <thead><tr><th>영역</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td>툴바</td><td>조회 조건(날짜 기준·기간·차수·일별/월별), 대상 추가, 홀딩/해제, 문구 보기</td></tr>
+        <tr><td>상태 필터 바</td><td>전체 · 발송 대기 · 발송 · 발송 홀딩 · 발송 불가 (건수 표시) + 설정 미완료 경고</td></tr>
+        <tr><td>대상 표</td><td>본문. 환자 1명 = 1행. 1~3차 발송 결과를 한 줄에서 읽는다</td></tr>
+        <tr><td>대상 등록·수정 모달</td><td>차트번호로 마트 조회 후 등록, 또는 직접 입력</td></tr>
+        <tr><td>문구 보기 모달</td><td>수술 종류별 1~3차 발송 문구 (읽기 전용)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>조회 조건</h3>
+    <table>
+      <thead><tr><th>항목</th><th>선택지</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>날짜 기준</td><td>수술일 / 발송예정일 / 실제발송일</td><td>같은 기간이라도 무엇을 기준으로 볼지 바꾼다</td></tr>
+        <tr><td>차수</td><td>전체 / 1차 / 2차 / 3차</td><td>발송예정일 기준일 때 그 차수만 본다</td></tr>
+        <tr><td>단위</td><td>일별 / 월별</td><td>기간 입력 방식</td></tr>
+        <tr><td>기간</td><td>시작~종료</td><td>기본값은 <b>D-1</b> — 당일 수술은 아직 마트에 없다</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4 -->
+  <div class="card" id="s4">
+    <div class="card-head"><div class="chip">4</div><h2>표 컬럼 정의</h2></div>
+    <p>컬럼은 <b>사람 정보 → 수술 정보 → 발송 결과</b> 순으로 배치한다.</p>
+    <table>
+      <thead><tr><th>컬럼</th><th>출처</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td>선택</td><td><span class="tag t-user">조작</span></td><td>홀딩·해제할 행을 고른다. 발송 불가 행은 고를 수 없다</td></tr>
+        <tr><td>차트번호</td><td><span class="tag t-auto">마트</span></td><td>환자 식별자. CRM·마트와 대사하는 키</td></tr>
+        <tr><td>이름</td><td><span class="tag t-auto">마트</span></td><td>대상 확인용</td></tr>
+        <tr><td>연락처</td><td><span class="tag t-auto">마트</span> <span class="tag t-user">수정 가능</span></td><td>발송 번호. <code>01012345678</code> 형식으로 정규화해 저장(하이픈·공백 제거)</td></tr>
+        <tr><td>구분</td><td><span class="tag t-auto">마트</span></td><td>시력교정 / 백내장 / 재수술 — <code>list_surgery.surgery_category</code></td></tr>
+        <tr><td>수술 종류</td><td><span class="tag t-auto">마트</span></td><td>스마일프로·ICL·다초점 등. 마트 <code>surgery_op_type()</code> 분류값이라 <b>수술 통계·채널 분석과 같은 기준</b>. 배지 색은 계열(레이저·렌즈삽입·백내장·재수술)</td></tr>
+        <tr><td>수술명(우/좌)</td><td><span class="tag t-auto">마트</span></td><td>실제 수술명. 어떤 수술을 받았는지 보고 발송 여부를 판단</td></tr>
+        <tr><td>수술일</td><td><span class="tag t-auto">마트</span></td><td>발송 예정일의 원래 기준</td></tr>
+        <tr><td>상태</td><td><span class="tag t-user">판정</span></td><td>발송 대기 / 발송 / 발송 홀딩 / 발송 불가 — <a href="#s5">5장</a></td></tr>
+        <tr><td><b>1차 · 2차 · 3차</b></td><td><span class="tag t-api">솔라피</span></td><td><b>핵심 컬럼.</b> 날짜 하나와 색 하나로 "잘 갔나"를 읽는다 — <a href="#s6">6장</a></td></tr>
+        <tr><td>등록</td><td><span class="tag t-auto">자동</span></td><td>AUTO(마트 자동) / MANUAL(수동 입력·수정)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <div class="h">왜 차수 칸에 시각·채널을 펼치지 않는가</div>
+      <p>차수마다 발송시각·도달시각·채널·실패사유를 컬럼으로 펼치면 <b>컬럼이 12개 이상</b>이 되어 표가 읽히지 않는다. 칸에는 <b>날짜와 색</b>만 두고 나머지는 <b>마우스오버 툴팁</b>에 담는다.</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="card" id="s5">
+    <div class="card-head"><div class="chip">5</div><h2>상태 정의</h2></div>
+    <p>상태는 <b>사람 기준</b>이며, 아래 우선순위대로 판정한다. 위에서 먼저 걸리면 아래는 보지 않는다.</p>
+    <table>
+      <thead><tr><th>상태</th><th>판정 조건</th><th>뜻</th><th>되돌리기</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag t-warn">발송 불가</span></td><td>연락처가 없거나 더미</td><td>보낼 방법이 없다. <b>데이터 문제</b></td><td>불가 — 연락처를 고쳐야 함</td></tr>
+        <tr><td><span class="tag t-user">발송 홀딩</span></td><td><code>status ≠ SENDABLE</code></td><td>보내면 안 되는 사람. <b>사람이 정한 값</b></td><td>가능 — 언제든 해제</td></tr>
+        <tr><td><span class="tag t-api">발송</span></td><td>발송 이력이 1건 이상</td><td>한 번이라도 보낸 사람</td><td>—</td></tr>
+        <tr><td>발송 대기</td><td>위 어디에도 해당 없음</td><td>아직 안 보낸 사람</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <h3>연락처 유효성 — '발송 불가' 판정</h3>
+    <p>번호를 모를 때 자리만 채우는 관행이 있어 <b>더미 번호가 섞여 들어온다</b>. 아래는 발송 불가로 본다.</p>
+    <ul>
+      <li>빈 값 · 형식 오류</li>
+      <li>국번 뒤가 같은 숫자로만 채워진 값 (<code>01000000000</code>, <code>01011111111</code> …)</li>
+    </ul>
+    <div class="note bad">
+      <div class="h">왜 거르는가</div>
+      <p>더미 번호로 발송하면 <b>비용은 나가고 도달은 안 되며</b>, 최악의 경우 <b>무관한 사람에게 환자 안내가 간다</b>. 화면에서 미리 빨간색으로 드러내 손대게 한다.</p>
+    </div>
+
+    <h3>홀딩(HOLD)의 성격</h3>
+    <p>삭제가 아니라 <b>발송 제외</b>다. 대상 행은 남기고 발송에서만 뺀다. 컴플레인·수신거부 등에 쓰며 <b>언제든 되돌릴 수 있다</b>. 이력을 남겨야 하므로 지우지 않는다.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="card" id="s6">
+    <div class="card-head"><div class="chip">6</div><h2>차수 칸 색 규칙</h2></div>
+    <p>1·2·3차 칸은 <b>날짜(MM-DD) 하나와 색 하나</b>로 상태를 나타낸다. 색이 곧 의미다.</p>
+    <table>
+      <thead><tr><th>표시</th><th>조건</th><th>날짜의 뜻</th><th>읽는 법</th></tr></thead>
+      <tbody>
+        <tr><td><b style="color:#111">진한 검정</b></td><td>발송 성공 + 도달 확인</td><td><b>실제 도달일</b></td><td>정상 — 확인 끝</td></tr>
+        <tr><td><b style="color:#d97706">주황</b></td><td>발송했으나 도달 미확인</td><td>발송일</td><td>결과 대기 중 (자동화가 채운다)</td></tr>
+        <tr><td><b style="color:#ef4444">빨강</b></td><td>발송 실패 <b>또는</b> 예정일 경과 후 미발송</td><td>발송일 / 예정일</td><td><b>점검 대상</b></td></tr>
+        <tr><td><span style="color:#9ca3af">회색</span></td><td>아직 예정일 전</td><td>발송 예정일</td><td>정상 — 기다리면 됨</td></tr>
+        <tr><td><span style="color:#9ca3af;text-decoration:line-through">회색 취소선</span></td><td>홀딩 또는 발송 불가</td><td>예정일</td><td>보내지 않음</td></tr>
+        <tr><td>—</td><td>수술일·기준일 없음</td><td>—</td><td>데이터 미비</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note warn">
+      <div class="h">빨강 두 가지를 같은 색으로 두는 이유</div>
+      <p><b>발송 실패</b>와 <b>예정일이 지났는데 안 나감</b>은 원인이 다르지만 <b>둘 다 사람이 봐야 하는 칸</b>이다. 색을 나누면 "어느 쪽이 더 급한가"를 매번 판단해야 해서, <b>점검 필요</b> 하나로 묶었다. 구체적 사유는 툴팁에 있다.</p>
+    </div>
+
+    <h3>툴팁에 담기는 것</h3>
+    <ul>
+      <li>도달 시각 · 발송 시각</li>
+      <li>요청 채널(알림톡/문자)과 <b>대체발송 여부</b></li>
+      <li>실패 사유</li>
+      <li>예정일 (미발송·제외 칸)</li>
+    </ul>
+  </div>
+
+  <!-- 7 -->
+  <div class="card" id="s7">
+    <div class="card-head"><div class="chip">7</div><h2>기능 목록</h2></div>
+    <table>
+      <thead><tr><th>기능</th><th>API</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>대상 조회</td><td><code>GET /targets</code></td><td>날짜 기준(수술일·예정일·실제발송일)·기간·차수로 조회</td></tr>
+        <tr><td>차트번호 조회</td><td><code>GET /lookup</code></td><td>등록 전 마트에서 수술 정보를 찾는다. 없으면 직접 입력으로 진행</td></tr>
+        <tr><td>대상 등록</td><td><code>POST /targets</code></td><td>수동 등록. <code>source=MANUAL</code></td></tr>
+        <tr><td>대상 수정</td><td><code>PUT /targets/{id}</code></td><td>연락처 등 수정. <b>손댄 행은 MANUAL 로 승격</b>돼 자동 등록이 덮지 않는다</td></tr>
+        <tr><td>홀딩 / 해제</td><td><code>PUT /targets/{id}/status</code></td><td>단건 상태 변경</td></tr>
+        <tr><td>홀딩 / 해제 (일괄)</td><td><code>PUT /targets/status</code></td><td>선택한 여러 행을 한 번에</td></tr>
+        <tr><td>마트 동기화</td><td><code>POST /sync</code></td><td>마트에서 수술자를 불러와 대상으로 자동 등록·갱신</td></tr>
+        <tr><td>일괄 등록</td><td><code>POST /targets/import</code></td><td>기간 지정 대량 등록. 결과는 생성/갱신/건너뜀 건수</td></tr>
+        <tr><td>발송</td><td><code>POST /send</code></td><td>수동 발송. 결과는 요청/성공/실패/건너뜀 건수 + 건별 상세</td></tr>
+        <tr><td>템플릿 조회</td><td><code>GET /templates</code></td><td>차수별 라벨·설정 완료 여부·오프셋</td></tr>
+      </tbody>
+    </table>
+
+    <h3>자동 등록 갱신 규칙</h3>
+    <ul>
+      <li><b>AUTO 행</b>은 동기화 때 CRM 최신값으로 갱신된다 — <b>연락처의 정답은 CRM</b>이기 때문.</li>
+      <li>단 <b>상태(홀딩 여부)와 메모는 건드리지 않는다</b> — 사람의 판단을 덮으면 안 된다.</li>
+      <li><b>MANUAL 행</b>은 갱신하지 않는다. 사람이 고친 값이 우선이다.</li>
+    </ul>
+  </div>
+
+  <!-- 8 -->
+  <div class="card" id="s8">
+    <div class="card-head"><div class="chip">8</div><h2>데이터 모델</h2></div>
+    <p>드림렌즈 장부와 같은 <b>"사용자 원천 데이터"</b>라 마트가 아니라 <b>JPA 엔티티</b>로 관리한다. 스키마는 <code>V52__sms_management.sql</code>.</p>
+
+    <h3>sms_target — 발송 대상</h3>
+    <table>
+      <thead><tr><th>컬럼</th><th>타입</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>BIGSERIAL</td><td><span class="tag t-key">PK</span></td></tr>
+        <tr><td>chart_no</td><td>VARCHAR(50)</td><td>차트번호 (필수)</td></tr>
+        <tr><td>name</td><td>VARCHAR(100)</td><td>이름 (필수)</td></tr>
+        <tr><td>phone</td><td>VARCHAR(20)</td><td>연락처 — 하이픈·공백 제거 형식</td></tr>
+        <tr><td>surgery_date</td><td>DATE</td><td>수술일 (필수)</td></tr>
+        <tr><td>schedule_base</td><td>DATE</td><td><b>예정일 기준일</b>. NULL 이면 수술일로 본다</td></tr>
+        <tr><td>surgery_type</td><td>VARCHAR(50)</td><td>구분 — 시력교정/백내장/재수술</td></tr>
+        <tr><td>op_type</td><td>VARCHAR(20)</td><td>수술 종류 코드 — <code>surgery_op_type()</code> 분류값</td></tr>
+        <tr><td>surgery_r / surgery_l</td><td>VARCHAR(100)</td><td>실제 수술명 우/좌</td></tr>
+        <tr><td>status</td><td>VARCHAR(20)</td><td><code>SENDABLE</code> / <code>HOLD</code> (구버전 <code>CANCELED</code>도 홀딩 취급)</td></tr>
+        <tr><td>source</td><td>VARCHAR(10)</td><td><code>AUTO</code> / <code>MANUAL</code></td></tr>
+        <tr><td>created_at / updated_at</td><td>TIMESTAMP</td><td>감사용</td></tr>
+      </tbody>
+    </table>
+
+    <h3>sms_send_log — 발송 이력</h3>
+    <p><b>발송 시도마다 1행씩 누적</b>한다(재발송도 새 행). <b>지우지 않는다.</b></p>
+    <table>
+      <thead><tr><th>컬럼</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td>target_id</td><td>대상 FK</td></tr>
+        <tr><td>chart_no / name</td><td><b>스냅샷</b> — 대상이 지워져도 이력만으로 읽히게</td></tr>
+        <tr><td>template_code / template_label</td><td>차수 (T1~T3)</td></tr>
+        <tr><td>requested_channel</td><td>요청 채널 — <code>ALIMTALK</code> / <code>SMS</code></td></tr>
+        <tr><td>from_number / to_number</td><td>발신·수신 번호</td></tr>
+        <tr><td>message_type</td><td>솔라피 <b>실제</b> 타입 — SMS/LMS/ATA 등</td></tr>
+        <tr><td>solapi_group_id / solapi_message_id</td><td><span class="tag t-key">조회 키</span> 솔라피 재조회용 (G4V… / M4V…)</td></tr>
+        <tr><td>status</td><td><code>PENDING</code>(대기) / <code>SUCCESS</code>(완료) / <code>FAILED</code>(실패) — <b>접수가 아니라 도달 기준</b></td></tr>
+        <tr><td>status_code</td><td>솔라피 결과 코드</td></tr>
+        <tr><td>fail_reason</td><td>실패 사유</td></tr>
+        <tr><td><b>delivered_at</b></td><td><b>단말 도달 시각.</b> 비면 미도달</td></tr>
+        <tr><td><b>replacement</b></td><td><b>알림톡 실패 → 문자 대체발송 여부</b></td></tr>
+        <tr><td>sent_at / sent_by</td><td>발송 시각·주체</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <div class="h">이력을 지우지 않는 이유</div>
+      <p>"이 환자에게 언제 무엇을 보냈나"는 <b>컴플레인 대응의 근거</b>다. 대상을 지워도 이력은 남아야 하므로 차트번호·이름을 <b>스냅샷으로 함께 저장</b>한다.</p>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="card" id="s9">
+    <div class="card-head"><div class="chip">9</div><h2>외부 연동 — 솔라피(SOLAPI)</h2></div>
+    <p>발송은 우리 백엔드가 <b>솔라피 SDK 1.0.3</b>으로 직접 수행한다. 프론트가 외부로 직접 나가지 않는다.</p>
+
+    <h3>발송 후 상태가 확정되는 순서</h3>
+    <div class="flow">
+      <span class="step">PENDING</span><span class="arw">→</span>
+      <span class="step">SENDING</span><span class="arw">→</span>
+      <span class="step">COMPLETE / FAILED</span>
+    </div>
+    <div class="note warn">
+      <div class="h">발송 직후 값은 결과가 아니다</div>
+      <p>발송 API 응답은 <b>"솔라피가 접수했다"</b>까지다. 실제 도달 결과는 통신사 회신 후 <b>수 분~수십 분 뒤</b> 확정된다. 따라서 <b>재조회 배치가 필수</b>이며, 그 전까지 차수 칸은 주황(미도달)으로 남는다.</p>
+    </div>
+
+    <h3>솔라피에서 가져올 수 있는 값</h3>
+    <table>
+      <thead><tr><th>필드</th><th>뜻</th><th>사용</th></tr></thead>
+      <tbody>
+        <tr><td>status / statusCode</td><td>발송 상태·결과 코드</td><td><b>사용</b> — 성공/실패 판정</td></tr>
+        <tr><td>dateReceived</td><td>단말 수신 시각</td><td><b>사용</b> — <code>delivered_at</code></td></tr>
+        <tr><td>replacement / replacements</td><td>대체발송 여부·실제 메시지</td><td><b>사용</b> — <code>replacement</code></td></tr>
+        <tr><td>type</td><td>SMS/LMS/ATA/CTA 등</td><td><b>사용</b> — <code>message_type</code></td></tr>
+        <tr><td>to / from / text</td><td>수신·발신·본문</td><td>사용</td></tr>
+        <tr><td>customFields</td><td>발송 시 심은 값 회수</td><td>미사용 — 대사 키로 쓸 여지 있음</td></tr>
+        <tr><td>dateProcessed / dateReported</td><td>중간 단계 시각</td><td><b>미사용</b> — dateReceived 하나면 충분</td></tr>
+        <tr><td>accountId / country / imageId</td><td>계정·국가·이미지</td><td><b>미사용</b> — 값이 항상 같거나 빈다</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note bad">
+      <div class="h">읽음·열람은 확인할 수 없다</div>
+      <p>SMS·알림톡은 <b>규격 자체에 읽음 확인이 없다</b>. 카카오도 읽음 확인 API를 제공하지 않으며, SDK에 해당 필드가 존재하지 않는다. 확인 가능한 최대치는 <b>단말 도달(dateReceived)</b>까지다.</p>
+      <p>반응을 측정하려면 <b>본문에 자사 도메인 단축 URL을 넣고 접속을 직접 로깅</b>하는 방법뿐이다.</p>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="card" id="s10">
+    <div class="card-head"><div class="chip">10</div><h2>자동화</h2></div>
+    <table>
+      <thead><tr><th>작업</th><th>주기</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td>대상 적재</td><td>일 1회</td><td>마트에서 신규 수술자를 대상으로 등록, AUTO 행 CRM 값 갱신</td></tr>
+        <tr><td>차수 발송</td><td>일 1회</td><td>예정일이 도래한 차수를 발송. 홀딩·발송 불가는 자동 제외</td></tr>
+        <tr><td><b>결과 재조회</b></td><td>일 1회 (D-1)</td><td>솔라피 <code>getMessageList</code>로 도달 여부를 회수해 <code>status</code>·<code>delivered_at</code>·<code>replacement</code> 갱신</td></tr>
+      </tbody>
+    </table>
+    <p>화면의 <b>발송 버튼은 예외 처리용</b>이다 — 자동 발송이 실패했거나 수동으로 추가한 대상을 보낼 때 쓴다.</p>
+  </div>
+
+  <!-- 11 -->
+  <div class="card" id="s11">
+    <div class="card-head"><div class="chip">11</div><h2>환경 설정</h2></div>
+    <p>시크릿이므로 <code>backend/.env</code>(gitignored)에 둔다. <b>변경 후 서버 재시작</b>해야 반영된다.</p>
+    <table>
+      <thead><tr><th>키</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>SOLAPI_API_KEY / SOLAPI_API_SECRET</td><td>솔라피 인증</td></tr>
+        <tr><td>SOLAPI_FROM</td><td>발신번호 (사전 등록 필요)</td></tr>
+        <tr><td>SOLAPI_PFID</td><td>카카오 채널 ID (알림톡용)</td></tr>
+        <tr><td>SOLAPI_TPL{1,2,3}_LABEL</td><td>차수 라벨</td></tr>
+        <tr><td>SOLAPI_TPL{1,2,3}_ID</td><td>알림톡 템플릿 ID</td></tr>
+        <tr><td>SOLAPI_TPL{1,2,3}_SMS</td><td>문자 본문</td></tr>
+        <tr><td>SOLAPI_INTERVAL_DAYS</td><td>차수 간격 (기본 7)</td></tr>
+      </tbody>
+    </table>
+    <p>차수당 <b>알림톡 ID 또는 문자 본문 중 하나 이상</b>을 채워야 그 차수가 동작한다.</p>
+  </div>
+
+  <!-- 12 -->
+  <div class="card" id="s12">
+    <div class="card-head"><div class="chip">12</div><h2>제약과 미결</h2></div>
+    <h3>구조적 제약 — 바꿀 수 없는 것</h3>
+    <ul>
+      <li><b>읽음·열람 측정 불가.</b> 도달까지가 한계다.</li>
+      <li><b>발송 직후 결과 미확정.</b> 재조회 전까지 주황(미도달)으로 남는다.</li>
+      <li><b>당일 수술은 조회되지 않는다.</b> 마트 적재가 D-1이라 기본 조회일이 어제다.</li>
+    </ul>
+
+    <h3>미결 — 정해야 할 것</h3>
+    <ul>
+      <li><b>재발송 정책.</b> 실패한 차수를 자동으로 다시 보낼지, 사람이 판단할지 정해지지 않았다.</li>
+      <li><b>수신거부 처리.</b> 현재는 수동 홀딩뿐이다. 080 수신거부 연동은 미구현.</li>
+      <li><b>수술 종류별 문구 분기.</b> 지금은 차수만 다르고 종류별 문구는 같다.</li>
+      <li><b>발송 비용 집계.</b> 솔라피가 제공하지만(<code>GroupLog.totalPrice</code>) 저장하지 않는다.</li>
+      <li><b>링크 클릭 측정.</b> 유일한 반응 지표가 될 수 있으나 미구현.</li>
+    </ul>
+  </div>
+
+</div>
+</main>
+
+</body>
+</html>
