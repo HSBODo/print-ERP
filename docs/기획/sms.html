@@ -118,7 +118,8 @@
         <tr><td>홀딩 · 해제 (단건·일괄)</td><td><span class="tag t-auto">완료</span></td><td>기준일 재조정 포함</td></tr>
         <tr><td>발송 문구 미리보기</td><td><span class="tag t-auto">완료</span></td><td>이름·차수 칸 클릭</td></tr>
         <tr><td>솔라피 발송 API</td><td><span class="tag t-api">API만</span></td><td>화면 버튼 미연결</td></tr>
-        <tr><td>수술자 불러오기 · 결과 갱신</td><td><span class="tag t-api">API만</span></td><td>화면 버튼 미연결</td></tr>
+        <tr><td><b>조회 시 자동 적재</b></td><td><span class="tag t-auto">완료</span></td><td>[조회]가 마트 수술자를 자동 등록 — 별도 버튼 없음</td></tr>
+        <tr><td>결과 갱신(솔라피 재조회)</td><td><span class="tag t-api">API만</span></td><td>화면 버튼 미연결</td></tr>
         <tr><td>스케줄러(적재·발송·재조회)</td><td><span class="tag t-warn">미구현</span></td><td><code>@Scheduled</code> 없음</td></tr>
         <tr><td>템플릿 설정</td><td><span class="tag t-warn">미완료</span></td><td><code>.env</code> 값 비어 있음 — 설정 미완료 경고 노출</td></tr>
       </tbody>
@@ -235,7 +236,7 @@
       <tbody>
         <tr><td>조회 전</td><td>"기간을 선택한 뒤 조회 버튼을 눌러주세요."</td></tr>
         <tr><td>첫 조회 중</td><td>"불러오는 중입니다…" — <b>첫 조회에만</b> 표를 비운다</td></tr>
-        <tr><td>결과 없음</td><td>"대상이 없습니다. [수술자 불러오기]로 이 기간의 수술 완료자를 등록하세요."</td></tr>
+        <tr><td>결과 없음</td><td>"이 기간에 수술한 사람이 없습니다. 조회하면 마트의 수술 완료자가 자동으로 등록됩니다."</td></tr>
         <tr><td>조회 실패</td><td>"데이터를 불러오지 못했습니다."</td></tr>
       </tbody>
     </table>
@@ -429,18 +430,29 @@
     <table>
       <thead><tr><th>기능</th><th>API</th><th>화면</th><th>설명</th></tr></thead>
       <tbody>
-        <tr><td>대상 조회</td><td><code>GET /targets</code></td><td>조회 버튼</td><td>날짜 기준(수술일·예정일·실제발송일)·기간·차수로 조회</td></tr>
+        <tr><td>대상 조회</td><td><code>GET /targets</code></td><td>조회 버튼</td><td>날짜 기준·기간·차수로 조회. <b>수술일 기준이면 마트에서 먼저 적재</b>한 뒤 돌려준다</td></tr>
         <tr><td>차트번호 조회</td><td><code>GET /lookup</code></td><td>대상 추가 모달</td><td>등록 전 마트에서 수술 정보를 찾는다. 없으면 직접 입력으로 진행</td></tr>
         <tr><td>대상 등록</td><td><code>POST /targets</code></td><td>대상 추가</td><td>수동 등록. <code>source=MANUAL</code></td></tr>
         <tr><td>대상 수정</td><td><code>PUT /targets/{id}</code></td><td>연락처 클릭</td><td>연락처 등 수정. <b>손댄 행은 MANUAL 로 승격</b>돼 자동 적재가 덮지 않는다</td></tr>
         <tr><td>홀딩 / 해제</td><td><code>PUT /targets/{id}/status</code></td><td>상태 칸 클릭</td><td>단건 상태 변경</td></tr>
         <tr><td>홀딩 / 해제 (일괄)</td><td><code>PUT /targets/status</code></td><td>발송중지 · 홀딩 해제</td><td>선택한 여러 행을 한 번에</td></tr>
-        <tr><td><b>수술자 불러오기</b></td><td><code>POST /targets/import</code></td><td><span class="tag t-warn">미연결</span></td><td>기간의 마트 수술 완료자를 대상으로 적재. 결과는 생성/갱신/건너뜀 건수</td></tr>
+        <tr><td><b>수술자 적재</b></td><td><code>POST /targets/import</code></td><td><b>조회에 포함</b></td><td>기간의 마트 수술 완료자를 대상으로 적재. <code>GET /targets</code> 가 <b>수술일 기준일 때 먼저 호출</b>한다</td></tr>
         <tr><td><b>발송 결과 갱신</b></td><td><code>POST /sync</code></td><td><span class="tag t-warn">미연결</span></td><td>솔라피에 다시 물어 <b>도달시각·대체발송·최종 상태</b>를 채운다</td></tr>
         <tr><td>발송</td><td><code>POST /send</code></td><td><span class="tag t-warn">미연결</span></td><td>결과는 요청/성공/실패/건너뜀 건수 + 건별 상세</td></tr>
         <tr><td>템플릿 조회</td><td><code>GET /templates</code></td><td>차수 컬럼·문구 보기</td><td>차수별 라벨·설정 완료 여부·오프셋</td></tr>
       </tbody>
     </table>
+
+    <div class="note">
+      <div class="h">조회가 적재를 겸한다</div>
+      <p>사람이 버튼을 눌러야만 목록이 생기면, 누르는 걸 잊은 기간은 통째로 비어 보이고
+         그게 <b>"그 기간엔 수술이 없었다"와 구분되지 않는다</b>. 그래서 <code>GET /targets</code> 가
+         수술일 기준일 때 <code>/targets/import</code> 를 먼저 부른다.</p>
+      <p>적재는 <b>멱등</b>이다(<code>chart_no + surgery_date</code> UNIQUE). 여러 번 조회해도 늘지 않고,
+         AUTO 행만 CRM 최신값으로 갱신되며 홀딩·MANUAL 은 건드리지 않는다.
+         <b>예정일·발송일 기준에는 적재하지 않는다</b> — 그 날짜를 수술일로 읽으면 엉뚱한 사람을 담는다.</p>
+      <p>자동화(큐)가 적재를 맡으면 이 호출은 빼도 된다. <b>그때까지의 임시 경로다.</b></p>
+    </div>
 
     <div class="note warn">
       <div class="h">POST /sync 는 "마트 동기화"가 아니다</div>
