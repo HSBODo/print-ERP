@@ -107,8 +107,7 @@
 | `application-local.yml` | 로컬 개발 | `batch.mart.enabled: false` (CRM 접근 없이 프론트 개발) |
 | `application-dev.yml` | 개발 환경 | Docker Postgres 연결, 배치 옵션 |
 | `application-mssql.yml` | (레거시) MSSQL 직결 조회 | Cutover 완료 후 제거 예정 |
-| `application-postgres.yml` | Postgres 조회(JPA 기본 저장소) | |
-| `application-postgres-mart.yml` | **운영 조회 + 배치 실행** | `batch.mart.daily-cron: 0 0 3 * * *`, `batch.mart.monthly-reconcile-cron: 0 30 3 1 * *`, `batch.mart.min-year: 2026` (24·25 레거시 시드 보호) |
+| `application-postgres-mart.yml` | **운영 조회 + 배치 실행** | `batch.mart.daily-cron: 0 0 3 * * *`, `batch.mart.monthly-reconcile-cron: 0 30 3 1 * *`, `batch.mart.min-year: 2026` (24·25 레거시 시드 보호). `local`/`dev`/`prod` 프로파일 그룹이 자동 include. |
 | `application-prod.yml` | 운영 프로파일 그룹 | `postgres-mart` 활성화, 배치 enabled |
 
 ---

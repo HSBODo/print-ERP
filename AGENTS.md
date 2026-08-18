@@ -11,7 +11,7 @@
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
-- **DB**: H2 (개발, 기본) / PostgreSQL (`application-postgres.yml`) / MSSQL 통계 운영 연동 (`application-mssql.yml`)
+- **DB**: H2 (개발, 기본) / PostgreSQL 마트 (`application-postgres-mart.yml`) / MSSQL 통계 배치 연동 (`application-mssql.yml` 레거시)
 - **인증**: Spring Security + JWT (jjwt, HMAC-SHA256)
 - **언어**: 한국어 UI
 
@@ -44,8 +44,11 @@ project-root/
 │   │   ├── overall/                     # 종합 주간 지표
 │   │   └── etc/                         # B2B 매출 · 드림렌즈 장부(직접 입력 CRUD) 등 기타
 │   ├── src/main/resources/
-│   │   ├── application.yml                  # H2 인메모리 (개발 기본)
-│   │   └── application-postgres.yml         # PostgreSQL (운영)
+│   │   ├── application.yml                  # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
+│   │   ├── application-local.yml            # 로컬 개발 (H2, 배치 비활성)
+│   │   ├── application-dev.yml              # 개발 서버 (Postgres 마트 + MSSQL 배치)
+│   │   ├── application-prod.yml             # 운영 (Postgres 마트 + MSSQL 배치)
+│   │   └── application-postgres-mart.yml    # 마트 인프라 — 위 셋에 group include
 │   └── build.gradle
 │
 ├── frontend/
@@ -246,9 +249,6 @@ cd frontend && npx shadcn@latest add <component-name>
 # 개별 실행
 cd backend && gradlew.bat bootRun        # Backend (H2 인메모리 기본)
 cd frontend && npm run dev               # Frontend (Vite dev server)
-
-# PostgreSQL로 실행
-cd backend && gradlew.bat bootRun --args='--spring.profiles.active=postgres'
 
 # 빌드/테스트
 cd frontend && npm run build             # 프로덕션 빌드
