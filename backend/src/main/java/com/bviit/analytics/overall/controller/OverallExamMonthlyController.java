@@ -18,7 +18,7 @@ import java.util.Optional;
 
 /**
  * 검사자 종합표 월간 집계 API.
- * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  * postgres-mart 프로파일에서는 OverallExamMonthlyMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  *
  * 24·25 는 V14+V16 마트 시드가 SSOT — API 는 요청된 연도에 대해 마트에 있는 데이터를 그대로 반환한다.

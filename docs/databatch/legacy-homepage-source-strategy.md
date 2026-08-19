@@ -171,7 +171,7 @@
 - 그 auto-config 는 `@ConditionalOnMissingBean(DataSource.class)` — **DataSource 빈이 하나라도 생기면 통째로 물러난다.**
 - 홈페이지 DataSource 가 켜지자 SQLite 가 유일한 DataSource 가 되어 JPA 가 그걸 집어들고
   `Unable to determine Dialect for SQLite 3.47` 로 기동 실패했다.
-- 그래서 다른 두 프로파일(`mssql`/`postgres-mart`)과 동일하게 primary 를 명시했다.
+- 그래서 `postgres-mart` 프로파일과 동일하게 primary 를 명시했다.
 
 ### 2-7. 화면 — 레거시와 의도적으로 다르게 만든 부분
 

@@ -17,7 +17,7 @@ import java.util.Optional;
 
 /**
  * 주차 레포트 API — 월간 레포트와 같은 도표를 ISO 8601 연간 주차로 조회한다.
- * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입되고, 미연결 시 503 으로 응답한다.
+ * 실 데이터 리더는 postgres-mart 프로파일에서 주입되고, 미연결 시 503 으로 응답한다.
  */
 @RestController
 @RequestMapping("/api/report")

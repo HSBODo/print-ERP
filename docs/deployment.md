@@ -166,7 +166,7 @@ STATS_DB_PASSWORD=비밀번호
 
 1. 기존 포트(18080, 15173) 프로세스 종료
 2. `backend/.env` 환경변수 로드
-3. 백엔드 실행 (포트 18080, mssql 프로파일)
+3. 백엔드 실행 (포트 18080, prod 프로파일 · postgres-mart 그룹 포함)
 4. 프론트엔드 개발 서버 실행 (포트 15173)
 
 접속: http://localhost:15173 · 로그인 계정은 `APP_SEED_ADMIN_LOGIN_ID / APP_SEED_ADMIN_PASSWORD`.
@@ -207,7 +207,7 @@ cd <프로젝트 루트>\backend
 set STATS_DB_URL=jdbc:jtds:sqlserver://220.85.109.247:1433/SOFTCRM
 set STATS_DB_USERNAME=계정명
 set STATS_DB_PASSWORD=비밀번호
-gradlew.bat bootRun --args="--spring.profiles.active=mssql"
+gradlew.bat bootRun --args="--spring.profiles.active=prod"
 ```
 
 ## 2.6 포트
@@ -266,7 +266,7 @@ Get-Content .env | ForEach-Object {
   [Environment]::SetEnvironmentVariable($name, $value, 'Process')
 }
 
-$env:SPRING_PROFILES_ACTIVE = 'mssql'
+$env:SPRING_PROFILES_ACTIVE = 'prod'
 java -jar .\analytics-0.0.1-SNAPSHOT.jar
 ```
 

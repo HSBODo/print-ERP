@@ -11,7 +11,7 @@
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
-- **DB**: H2 (개발, 기본) / PostgreSQL 마트 (`application-postgres-mart.yml`) / MSSQL 통계 배치 연동 (`application-mssql.yml` 레거시)
+- **DB**: H2 (개발, 기본) / PostgreSQL 마트 (`application-postgres-mart.yml`, 배치 시점에 CRM MSSQL 을 읽어 적재)
 - **인증**: Spring Security + JWT (jjwt, HMAC-SHA256)
 - **언어**: 한국어 UI
 

@@ -18,14 +18,14 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  * 검사 중단 사유 서비스.
  *
  * EXAM.STOP_YN='Y' 건을 EXAM_MEMO 키워드로 분류한 월별 사유별 건수를 제공한다.
- * 전 기간 운영 DB 라이브 집계(mssql 프로파일에서만). H2(개발)에서는 0으로 채운다.
+ * 전 기간 운영 DB 라이브 집계(postgres-mart 프로파일에서만). H2(개발)에서는 0으로 채운다.
  * 사유 코드가 DB에 없어 키워드 추정이므로 직원 수동분류와 다를 수 있다(부정확성 감안).
  */
 @Service
 @RequiredArgsConstructor
 public class StopReasonStatsService implements StopReasonStatsReader {
 
-    /** mssql·postgres-mart 프로파일에서만 주입됨. 없으면(H2 개발) 사유별 0으로 반환. */
+    /** postgres-mart 프로파일에서만 주입됨. 없으면(H2 개발) 사유별 0으로 반환. */
     private final Optional<StopReasonStatsRepository> repository;
 
     @Override

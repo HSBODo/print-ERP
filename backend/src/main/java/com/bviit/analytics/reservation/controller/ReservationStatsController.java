@@ -23,7 +23,7 @@ import java.util.Optional;
  * 예약 통계 API.
  * - getStats(기간 요약): 마트에 없어 concrete ReservationStatsService(MSSQL 직결)만 사용.
  * - getMonthlyStats(월별): Reader 인터페이스 → postgres-mart 프로파일에선 마트 조회로 자동 스위치.
- * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  */
 @RestController
 @RequestMapping("/api/stats")

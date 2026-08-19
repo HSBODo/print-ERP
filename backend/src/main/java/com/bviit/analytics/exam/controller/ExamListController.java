@@ -20,7 +20,7 @@ import java.util.Optional;
 /**
  * GET /api/exam-list?from=YYYY-MM-DD&to=YYYY-MM-DD
  * 검사자 리스트(상담사별) 행 목록. 응답: ApiResponse&lt;List&lt;Map&gt;&gt; (camelCase 키).
- * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  * postgres-mart 프로파일에서는 ExamListMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  */
 @RestController

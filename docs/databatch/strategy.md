@@ -69,7 +69,7 @@
 | 1 | 재적재 범위 | **매일 어제(D-1) 하루치만 append** (최경량 방식) | ✅ 이행 완료 (`BatchOrchestrator.runDaily`) |
 | 2 | 리스트 실시간성 | **불필요** — 리스트도 T-1 마트로 통합 | ✅ 이행 완료 (`list_*` 4종) |
 | 3 | PII 처리 | **CRM 원본 그대로 복제** (익명화·마스킹 없음) | ✅ 이행 완료 |
-| 4 | Cutover 방식 | **페이지별 `@Profile` 전환** (안전, 롤백 쉬움) | ✅ 이행 완료 (프로파일: `mssql`, `postgres-mart`) |
+| 4 | Cutover 방식 | **페이지별 `@Profile` 전환** (안전, 롤백 쉬움) | ✅ 이행 완료 · `mssql` 프로파일은 2026-08-19 완전 제거 (현재 `postgres-mart` 단일) |
 | 5 | 스냅샷 스토어 | **마트로 흡수 후 삭제** (`SurgerySnapshotStore` 등) | ✅ 이행 완료 — 수술 2026-07-31, 예약통계 2종은 V19/V20 마트 + `period_lock`. §7 참조 |
 | 6 | 배치 러너 | **Spring `@Scheduled`** (Airflow는 이번 스코프 밖) | ✅ 이행 완료 |
 
@@ -89,15 +89,13 @@
 
 ### Spring Datasource 설계 (실제 구성)
 
-두 개의 `@Configuration` 클래스가 프로파일별로 활성화된다.
+단일 `@Configuration` 클래스가 활성화된다 (2026-08-19 `mssql` 프로파일 제거 후).
 
 - `common/config/MartDataSourceConfig.java` — `@Profile("postgres-mart")`
   - `@Primary`: JPA/JdbcTemplate 기본 대상 = Postgres 마트
-  - `@Bean("statsDataSource")` + `@Bean("statsJdbcTemplate")` = MSSQL(배치 전용)
-- `common/config/StatsDataSourceConfig.java` — `@Profile("mssql")`
-  - MSSQL 직결 시절의 조회 경로. Cutover 완결 후 제거 대상
+  - `@Bean("statsDataSource")` + `@Bean("statsJdbcTemplate")` = MSSQL(배치·브릿지·reconcile 전용)
 
-빈 명명: MSSQL 쪽 빈 이름은 문서 초안의 `mssqlDataSource`가 아니라 **`statsDataSource`**로 통일됨. 배치·직결 어느 경로든 동일한 `@Qualifier("statsDataSource")`로 MSSQL을 참조할 수 있음.
+빈 명명: MSSQL 쪽 빈 이름은 **`statsDataSource`**로 통일. `@Qualifier("statsDataSource")`로 참조.
 
 ### application-*.yml (실제 파일)
 
@@ -106,7 +104,6 @@
 | `application.yml` | 공통 기본 (H2) | 개발 편의용 기본값 |
 | `application-local.yml` | 로컬 개발 | `batch.mart.enabled: false` (CRM 접근 없이 프론트 개발) |
 | `application-dev.yml` | 개발 환경 | Docker Postgres 연결, 배치 옵션 |
-| `application-mssql.yml` | (레거시) MSSQL 직결 조회 | Cutover 완료 후 제거 예정 |
 | `application-postgres-mart.yml` | **운영 조회 + 배치 실행** | `batch.mart.daily-cron: 0 0 3 * * *`, `batch.mart.monthly-reconcile-cron: 0 30 3 1 * *`, `batch.mart.min-year: 2026` (24·25 레거시 시드 보호). `local`/`dev`/`prod` 프로파일 그룹이 자동 include. |
 | `application-prod.yml` | 운영 프로파일 그룹 | `postgres-mart` 활성화, 배치 enabled |
 
@@ -254,23 +251,23 @@ com.bviit.analytics.batch/
 
 ### 6.1 원칙 (이행 완료)
 
-- ✅ **레포지토리 레벨에서 스위치**: `SurgeryStatsRepository` 인터페이스에 `@Profile({"mssql","postgres-mart"})`, 각 구현체는 `@Profile("mssql")` / `@Profile("postgres-mart")`
+- ✅ **레포지토리 레벨에서 스위치**: 소스 서비스와 마트 QueryService 를 같은 프로파일(`postgres-mart`)에 두고 후자에 `@Primary` 로 우선순위 부여
 - ✅ **한 페이지씩 이행**: 마트 채워진 도메인부터 순차 스위치
-- ✅ **롤백 용이**: 프로파일 원복 시 즉시 MSSQL 직결로 복귀 (`application-mssql.yml` 유지 중)
+- ✅ **롤백 용이**: Cutover 기간에는 프로파일 스위치로 즉시 MSSQL 직결 복귀 가능했음 (2026-08-19 `mssql` 프로파일 완전 제거 · 필요 시 git 히스토리에서 복원)
 
 ### 6.2 도메인별 인터페이스 (실제 코드)
 
 ```
 public interface SurgeryStatsRepository { ... }                              // 공통 인터페이스
 
-@Service @Profile("mssql")
-class SurgeryStatsService implements SurgeryStatsRepository { ... }          // MSSQL 직결
+@Service @Profile("postgres-mart")
+class SurgeryStatsService implements SurgeryStatsRepository { ... }          // MSSQL 직결 (배치 소스·reconcile 용)
 
 @Repository @Profile("postgres-mart")
 class SurgeryStatsMartRepository implements SurgeryStatsRepository { ... }   // 마트
 
 @Service @Profile("postgres-mart") @Primary
-class SurgeryMartQueryService { ... }                                        // 마트 조회 조립
+class SurgeryMartQueryService { ... }                                        // 마트 조회 조립 · 화면은 이 구현이 주입됨
 ```
 
 동일 패턴이 **reservation, exam, consultation, outpatient, overall, etc** 7개 도메인 전부에 적용되어 있음.

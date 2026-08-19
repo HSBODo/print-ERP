@@ -24,7 +24,7 @@ import java.util.Map;
  *   visionExam, visionBooked, cataractOnly, cataractBooked,
  *   dreamlens, stopCount, oneDay, oneDayBooked
  *
- * MSSQL 직결 {@code OverallExamWeeklyRepository} 는 mssql 단독 프로파일 및 대사(reconcile) 용도로 유지.
+ * MSSQL 직결 {@code OverallExamWeeklyRepository} 는 대사(reconcile) 용도로 유지.
  */
 @Repository
 @Profile("postgres-mart")

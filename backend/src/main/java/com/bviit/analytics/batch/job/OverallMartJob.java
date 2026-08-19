@@ -30,8 +30,7 @@ import java.util.stream.Stream;
  * 차단한다(runManual 로 과거 범위를 지정해도 무시하여 시드값을 보호).
  * 2026-01~05 는 V27 골든 시드 구간 — is2026H1Seeded 로 덮기 금지.
  *
- * MSSQL 직결 {@link OverallExamWeeklyService}·{@link OverallExamMonthlyService} 는 mssql 단독
- * 프로파일 및 대사(reconcile) 용도로 유지.
+ * MSSQL 직결 {@link OverallExamWeeklyService}·{@link OverallExamMonthlyService} 는 대사(reconcile) 용도로 유지.
  */
 @Slf4j
 @Component

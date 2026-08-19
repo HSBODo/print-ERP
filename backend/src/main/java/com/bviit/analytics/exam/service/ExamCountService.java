@@ -15,7 +15,7 @@ import java.util.Map;
  *
  * postgres-mart 프로파일에서는 {@link ExamCountMartQueryService} 가 @Primary 라 화면 조회는 마트가 담당하고,
  * 이 구현은 {@code ReportMartJob} 의 적재 소스로만 쓰인다(운영 DB 부하·터널 의존을 배치 시간대로 몰기 위함).
- * mssql 단독 프로파일에서는 이 구현이 유일해 화면도 직접 사용한다.
+ * postgres-mart 프로파일에서는 마트 QueryService 가 @Primary — 이 구현은 배치 소스·대사(reconcile) 용도로 유지.
  */
 @Service
 @Profile("postgres-mart")

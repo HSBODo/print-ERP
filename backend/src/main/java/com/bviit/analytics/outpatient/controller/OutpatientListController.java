@@ -21,7 +21,7 @@ import java.util.Optional;
  * GET /api/outpatient-list?from=YYYY-MM-DD&to=YYYY-MM-DD
  *
  * 외래수 리스트(외래 예약 F + 내원/퇴원 I,H) 행 목록. 응답: ApiResponse&lt;List&lt;Map&gt;&gt; (camelCase 키).
- * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  */
 @RestController
 @RequestMapping("/api/outpatient-list")

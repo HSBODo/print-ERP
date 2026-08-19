@@ -23,7 +23,7 @@ import java.util.Optional;
 
 /**
  * 수술 통계 API.
- * 실 데이터 서비스는 mssql/postgres-mart 프로파일에서만 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 서비스는 postgres-mart 프로파일에서만 주입된다. 미연결 시 503으로 응답한다.
  */
 @RestController
 @RequestMapping("/api/stats")

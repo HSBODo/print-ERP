@@ -14,7 +14,7 @@ import java.util.Map;
  * RESERVATION 테이블 기반 예약 통계 쿼리.
  * MSSQL 2014 호환: STRING_AGG, TRIM 등 사용 금지.
  * READ-ONLY — SELECT만 실행.
- * mssql 프로파일에서만 활성화 — H2 기본 부팅 시 빈 생성 안 됨.
+ * postgres-mart 프로파일에서만 활성화 — H2 기본 부팅 시 빈 생성 안 됨.
  */
 @Repository
 @Profile("postgres-mart")

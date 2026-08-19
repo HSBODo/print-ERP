@@ -20,7 +20,7 @@ import java.util.Optional;
  * 예약 종합(콜, 온라인) 통계 API.
  *
  * Reader 인터페이스에만 의존 — postgres-mart 프로파일에서는 MartQueryService(마트 조회)가
- * @Primary 로 주입되고, mssql 프로파일에서는 ReservationOverallStatsService(MSSQL 직결)가 주입된다.
+ * @Primary 로 주입된다. 미연결 시 503 응답.
  * 두 프로파일 모두 아닌 경우(H2 dev) Reader 가 없어 503 으로 응답한다.
  */
 @RestController
