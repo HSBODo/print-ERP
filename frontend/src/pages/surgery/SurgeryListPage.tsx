@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, Repeat, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useSurgeryList } from '@/hooks/surgery/useSurgeryList'
@@ -13,6 +14,14 @@ import {
   dash,
   formatCount,
   CATEGORY_OPTIONS,
+  SURGERY_TYPE_FILTERS,
+  OPTION_FILTERS,
+  CATARACT_FILTERS,
+  REOP_FILTERS,
+  matchesSurgeryType,
+  matchesOption,
+  matchesCataract,
+  matchesReoperation,
   defaultFrom,
   defaultTo,
   PAGE_SIZE_OPTIONS,
@@ -46,6 +55,11 @@ export function SurgeryListPage() {
   const [pageSize, setPageSize] = useState(50)
   const [sortState, setSortState] = useState<SortState>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  // 수술 유형 필터 — 이미 조회된 rows 를 걸러내는 클라이언트 필터라 조회 버튼 없이 즉시 반영한다.
+  const [typeFilter, setTypeFilter] = useState('전체')
+  const [optionFilter, setOptionFilter] = useState('전체')
+  const [cataractFilter, setCataractFilter] = useState('전체')
+  const [reopFilter, setReopFilter] = useState('전체')
   const [reopOpen, setReopOpen] = useState(false)
   const [reopRange, setReopRange] = useState<{ from: string; to: string }>({ from: defaultFrom(), to: defaultTo() })
 
@@ -99,11 +113,62 @@ export function SurgeryListPage() {
       : isAllTab
         ? [...rows, ...reopRows].sort((a, b) => a.surgeryDate.localeCompare(b.surgeryDate))
         : rows.filter((r) => r.surgeryCategory === queryCategory)
-    if (!q) return base
-    return base.filter((r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q))
-  }, [rows, reopRows, isReopTab, isAllTab, queryCategory, queryKeyword])
+    // 화면에 안 보이는 필터는 적용하지 않는다 — 탭을 옮겼을 때 이전 선택이 몰래 걸러내는 걸 막는다.
+    const vision = isAllTab || queryCategory === '시력교정'
+    const cataract = isAllTab || queryCategory === '백내장'
+    const reop = isAllTab || isReopTab
+    const typed = base.filter((r) =>
+      matchesSurgeryType(r, vision ? typeFilter : '전체')
+      && matchesOption(r, vision ? optionFilter : '전체')
+      && matchesCataract(r, cataract ? cataractFilter : '전체')
+      && matchesReoperation(r, reop ? reopFilter : '전체'),
+    )
+    if (!q) return typed
+    return typed.filter((r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q))
+  }, [
+    rows, reopRows, isReopTab, isAllTab, queryCategory, queryKeyword,
+    typeFilter, optionFilter, cataractFilter, reopFilter,
+  ])
 
   const tableRows = filtered
+
+  // 선택한 구분에 해당하는 필터만 보여준다. '전체' 탭에서는 셋 다 노출.
+  const showVisionFilters = isAllTab || queryCategory === '시력교정'
+  const showCataractFilters = isAllTab || queryCategory === '백내장'
+  const showReopFilters = isAllTab || isReopTab
+
+  /**
+   * 검사자 리스트와 같은 토글 스타일. 다만 한 줄에 담으려고 그룹 라벨을 빼고
+   * 묶음 사이만 구분선으로 나눈다. 라벨이 없으니 aria-label 로 그룹을 알린다.
+   */
+  const filterGroup = (
+    label: string,
+    options: readonly string[],
+    value: string,
+    onChange: (v: string) => void,
+    title?: string,
+  ) => (
+    <div
+      role="group"
+      aria-label={label}
+      title={title ?? label}
+      className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white"
+    >
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          aria-pressed={value === opt}
+          onClick={() => { onChange(opt); setCurrentPage(1) }}
+          className={`border-l border-border/70 px-2.5 text-xs font-medium whitespace-nowrap transition-colors first:border-l-0 ${
+            value === opt ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  )
 
   // 백내장 안(眼) 수 — 리스트는 사람·수술일(행) 단위(62), 레포트는 눈 단위(65: 같은날 양안=2안).
   // 행의 우/좌 수술값이 채워진 개수를 세면 레포트 기준 안 수와 일치. (백엔드 호출 불필요)
@@ -158,6 +223,10 @@ export function SurgeryListPage() {
     setQueryTo(defaultTo())
     setQueryCategory('전체')
     setQueryKeyword('')
+    setTypeFilter('전체')
+    setOptionFilter('전체')
+    setCataractFilter('전체')
+    setReopFilter('전체')
     setPageSize(50)
     setCurrentPage(1)
     setHasSearched(false)
@@ -234,17 +303,14 @@ export function SurgeryListPage() {
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
           </div>
           {draftPeriodMode === 'monthly' ? (
-            <input
-              aria-label="수술 기준 월"
-              type="month"
+            <MonthPicker
+              ariaLabel="수술 기준 월"
               value={toMonthValue(draftFrom)}
-              onChange={(e) => {
-                if (!e.target.value) return
+              onChange={(v) => {
                 setActiveQuickRange(null)
-                setDraftFrom(toMonthStart(e.target.value))
-                setDraftTo(toMonthEnd(e.target.value))
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
               }}
-              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           ) : (
             <>
@@ -377,6 +443,20 @@ export function SurgeryListPage() {
             CSV
           </Button>
         </div>
+      </div>
+
+      {/* 수술 유형 필터 — 수술별 비중 표와 같은 구성. 툴바 아래 한 줄. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 rounded-md border border-border/60 bg-gray-50/70 px-2.5 py-2 text-xs shadow-sm">
+        {showVisionFilters && filterGroup(
+          '시력교정 유형', SURGERY_TYPE_FILTERS, typeFilter, setTypeFilter,
+          '시력교정 수술 유형. ICL·T-ICL·KPL·T-KPL·VIVA 는 그 렌즈를 받은 사람을 고른다 — 수술별 비중 표는 환자당 대표유형(우안 우선) 하나만 세므로 건수가 다를 수 있다.',
+        )}
+        {showVisionFilters && <div className="h-5 w-px bg-border" />}
+        {showVisionFilters && filterGroup('부가 옵션', OPTION_FILTERS, optionFilter, setOptionFilter, '부가 옵션 — 엑스트라(+X)·퍼스널(P.E)·콘트라(CONT)·웨이브비전(W.V)·모노비전(MONO)')}
+        {showCataractFilters && <div className="h-5 w-px bg-border" />}
+        {showCataractFilters && filterGroup('백내장 인공수정체', CATARACT_FILTERS, cataractFilter, setCataractFilter, '백내장 인공수정체 — 다초점·프리미엄(EDOF)·단초점')}
+        {showReopFilters && <div className="h-5 w-px bg-border" />}
+        {showReopFilters && filterGroup('재수술 구분', REOP_FILTERS, reopFilter, setReopFilter, '재수술 구분 — 레이저·렌즈')}
       </div>
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">

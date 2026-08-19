@@ -1,3 +1,6 @@
+            -- ⚠️ 여기서 src.isCat = 1 은 "백내장 예약 행" 전부(2026-07 = 102)를 뜻한다.
+            --    sql/fragments/exam-session-source.sql 의 isCat 은 뜻이 다르다(백내장 검사수 집계 대상 = 56).
+            --    레포트 백내장 검사수와 맞춰야 할 때는 isCat 이 아니라 catClass IN ('백내장','중단') 을 쓸 것.
             SELECT
               ISNULL(LTRIM(RTRIM(src.cn)), '')             AS chartNo,
               ISNULL(cu.CUST_NAME, '')                     AS name,
@@ -5,15 +8,14 @@
               CASE WHEN src.isCat = 1 THEN N'백내장'
                    WHEN vis.hasDreamlens = 1 AND vis.hasMedical = 0 THEN N'드림렌즈'
                    ELSE N'시력교정' END                     AS examGroup,
-              -- 원데이/일반 구분(시력교정 한정). 원데이 = 같은날 검사OP(M/5) 내원, 중단/취소 제외(레포트 정합).
-              CASE WHEN src.isCat = 1 THEN ''
-                   WHEN vis.hasDreamlens = 1 AND vis.hasMedical = 0 THEN ''
-                   WHEN src.isOneDay = 1 THEN N'원데이'
-                   ELSE N'일반' END                         AS examType,
-              -- 백내장분류: 백내장 리스트의 분류와 동일 기준(상담사 BS0808=BS미지정 → 중단, 그 외 → 백내장).
-              CASE WHEN src.isCat = 1 AND cu.MY_COUNSELOR = 'BS0808' THEN N'중단'
-                   WHEN src.isCat = 1 THEN N'백내장'
-                   ELSE '' END                              AS cataractClass,
+              -- 원데이/일반 이진값. 빈칸(해당없음)은 두지 않는다 — 2026-08-05 확정.
+              --   시력교정 : 같은날 검사OP(M/5) 내원, 중단/취소 제외(레포트 정합)
+              --   백내장   : 진료구분 C_원데이(7)·C_노안원데이(9)
+              --   드림렌즈 : 구조상 원데이가 불가능(M 예약이 있으면 시력교정으로 분류) → 항상 '일반'
+              CASE WHEN src.isOneDay = 1 THEN N'원데이' ELSE N'일반' END AS examType,
+              -- 백내장분류: 백내장 리스트의 분류(백내장/중단/노안·FU/기타)를 그대로 쓴다.
+              -- 월간 레포트 백내장 검사수 = '백내장' + '중단' 만. 나머지는 전체 검사수에만 들어간다.
+              ISNULL(src.catClass, '')                     AS cataractClass,
               CASE WHEN ISNULL(cu.FIRST_DAY, '') >= :from AND ISNULL(cu.FIRST_DAY, '') <= :to
                    THEN N'신환' ELSE N'구환' END            AS patientType,
               CASE WHEN mv.motiveL IN (N'소개고객', N'소개미확인') THEN N'고객소개'
@@ -67,7 +69,8 @@
                            AND EXISTS (SELECT 1 FROM RESERVATION r WITH(NOLOCK)
                                        WHERE r.CUST_NUM = e.CUST_NUM AND r.RESERVE_DATE = e.EXAM_DATE
                                          AND r.RESERVE_FLAG = 'M' AND r.RESERVE_JINRYO = '5' AND r.RESERVE_STATE IN ('I','H'))
-                          THEN 1 ELSE 0 END AS isOneDay
+                          THEN 1 ELSE 0 END AS isOneDay,
+                     CAST(N'' AS NVARCHAR(20)) AS catClass
               FROM EXAM e WITH(NOLOCK)
               JOIN CUSTOM cux WITH(NOLOCK) ON e.CUST_NUM = cux.CUST_NUM
               WHERE e.EXAM_DATE >= :from AND e.EXAM_DATE <= :to
@@ -80,14 +83,38 @@
                 )
               UNION ALL
               -- 백내장은 사람(고객) 단위: 레거시 BCRM "백내장_검사" 화면과 동일하게 RESERVATION 기준.
-              -- FLAG='H'(백내장) + JINRYO='1'(백내장검사 진료) + STATE 내원(I/H), 고객·검사일별 1행.
-              SELECT a.CUST_NUM AS cn, a.RESERVE_DATE AS d, 1 AS isCat, 0 AS isOneDay
-              FROM RESERVATION a WITH(NOLOCK)
-              WHERE a.RESERVE_DATE >= :from AND a.RESERVE_DATE <= :to
-                AND a.RESERVE_STATE IN ('I','H')
-                AND a.RESERVE_FLAG = 'H'
-                AND a.RESERVE_JINRYO = '1'
-              GROUP BY a.CUST_NUM, a.RESERVE_DATE
+              -- 2026-08-05: 종전 `JINRYO='1' + STATE IN ('I','H')` 는 백내장 리스트·검사 세션 조각과 어긋났다
+              --   (2026-07: 여기 59 vs 리스트 56 vs 조각 56). 이제 셋 다 같은 규칙이다 — 함께 고칠 것.
+              --   sql/exam/find-cataract-exam-list.sql · sql/fragments/exam-session-source.sql
+              SELECT B.CUST_NUM AS cn, D2.RESERVE_DATE AS d, 1 AS isCat,
+                     -- 백내장 원데이 = 진료구분 C_원데이(7)·C_노안원데이(9). 그날 예약 중 하나라도 있으면 원데이.
+                     -- 시력교정(위 갈래)은 같은날 M/5 예약 내원 기준 — 근거가 다르다.
+                     MAX(CASE WHEN ISNULL(D2.RESERVE_JINRYO, '') IN ('7', '9') THEN 1 ELSE 0 END) AS isOneDay,
+                     CAST(CASE WHEN opt.v = 1 AND B.MY_COUNSELOR = 'BS0808' THEN N'중단'
+                               WHEN opt.v = 1 AND cns.v = 1                 THEN N'백내장'
+                               WHEN B.MY_COUNSELOR = 'BS0808'               THEN N'노안/FU'
+                               ELSE N'기타' END AS NVARCHAR(20)) AS catClass
+              FROM CUSTOM B WITH(NOLOCK)
+              JOIN RESERVATION D2 WITH(NOLOCK) ON D2.CUST_NUM = B.CUST_NUM
+              CROSS APPLY (SELECT CASE WHEN EXISTS (SELECT 1 FROM EMPLOYEE E1 WITH(NOLOCK)
+                                                    WHERE E1.EMP_NUM = B.MY_OPTOMETRIST) THEN 1 ELSE 0 END AS v) opt
+              CROSS APPLY (SELECT CASE WHEN EXISTS (SELECT 1 FROM EMPLOYEE E2 WITH(NOLOCK)
+                                                    WHERE E2.EMP_NUM = B.MY_COUNSELOR)   THEN 1 ELSE 0 END AS v) cns
+              WHERE D2.RESERVE_DATE >= :from AND D2.RESERVE_DATE <= :to
+                AND D2.RESERVE_FLAG = 'H'
+                AND ISNULL(D2.RESERVE_JINRYO, '') <> '3'
+                AND ISNULL(D2.RESERVE_SEQ, 0) <> 3
+                AND D2.RESERVE_STATE NOT IN ('C', 'Y')
+                AND B.CUST_NUM <> '9999999999999'
+                AND NOT (
+                  ISNULL(B.CUST_NAME, '') LIKE N'%테스트%'
+                  OR LOWER(ISNULL(B.CUST_NAME, '')) LIKE '%test%'
+                )
+              GROUP BY B.CUST_NUM, D2.RESERVE_DATE,
+                       CASE WHEN opt.v = 1 AND B.MY_COUNSELOR = 'BS0808' THEN N'중단'
+                            WHEN opt.v = 1 AND cns.v = 1                 THEN N'백내장'
+                            WHEN B.MY_COUNSELOR = 'BS0808'               THEN N'노안/FU'
+                            ELSE N'기타' END
             ) src
             LEFT JOIN CUSTOM cu WITH(NOLOCK) ON cu.CUST_NUM = src.cn
             OUTER APPLY (
@@ -126,5 +153,19 @@
               AND NOT EXISTS (SELECT 1 FROM OPERATIONDATA od WITH(NOLOCK)
                               WHERE od.CUST_NUM = src.cn AND ISNULL(od.OPERATION_DATE, '') <> ''
                                 AND od.OPERATION_DATE >= src.d)
+            )
+            -- 백내장 갈래와 중복 제거(2026-08-05, find-exam-list.sql·exam-session-source.sql 과 동일 조건):
+            -- 백내장 예약(H)으로만 내원한 날의 EXAM 행은 아래 백내장 갈래가 이미 센다.
+            -- 위 '순수 외래' 필터가 수술 연계로 통과시켜 같은 사람이 같은 날짜로 2행이 됐다(2026-01~05 실측 4건).
+            AND NOT (
+              src.isCat = 0
+              AND vis.hasMedical = 0
+              AND vis.hasDreamlens = 0
+              AND EXISTS (SELECT 1 FROM RESERVATION rh WITH(NOLOCK)
+                          WHERE rh.CUST_NUM = src.cn AND rh.RESERVE_DATE = src.d
+                            AND rh.RESERVE_FLAG = 'H'
+                            AND ISNULL(rh.RESERVE_JINRYO, '') <> '3'
+                            AND ISNULL(rh.RESERVE_SEQ, 0) <> 3
+                            AND rh.RESERVE_STATE NOT IN ('C','Y'))
             )
             ORDER BY src.d, src.isCat, cu.CUST_NAME

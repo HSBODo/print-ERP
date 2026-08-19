@@ -1,5 +1,6 @@
 package com.bviit.analytics.report.service;
 
+import com.bviit.analytics.consultation.repository.ConsultationRateBridgeRepository;
 import com.bviit.analytics.overall.repository.OverallExamWeeklyRepository;
 import com.bviit.analytics.report.dto.WeeklyReportItem;
 import com.bviit.analytics.report.repository.WeeklyReportRepository;
@@ -31,6 +32,7 @@ class WeeklyReportServiceTest {
     private OverallExamWeeklyRepository overallRepository;
     private SurgeryStatsService surgeryStatsService;
     private HomepageOverallSource homepageRepository;
+    private ConsultationRateBridgeRepository bridgeRepository;
 
     @BeforeEach
     void setUp() {
@@ -38,6 +40,7 @@ class WeeklyReportServiceTest {
         overallRepository = mock(OverallExamWeeklyRepository.class);
         surgeryStatsService = mock(SurgeryStatsService.class);
         homepageRepository = mock(HomepageOverallSource.class);
+        bridgeRepository = mock(ConsultationRateBridgeRepository.class);
 
         when(repository.findReservationOverallDaily(anyString(), anyString())).thenReturn(List.of());
         when(repository.findReservationNaverDaily(anyString(), anyString())).thenReturn(List.of());
@@ -56,8 +59,12 @@ class WeeklyReportServiceTest {
     }
 
     private WeeklyReportService service() {
+        // exam/surgery Agg 리포지토리는 비움 — 마트 없는(mssql 단독) 경로를 검증한다.
+        // 마트 경로는 검사 지표를 v_all_exam_list, 수술 지표를 v_all_surgery_list 에서 뽑으며
+        // 통합 대조로 확인한다(주차합 = 일별 마트합 = 월별).
         return new WeeklyReportService(repository, overallRepository, surgeryStatsService,
-                Optional.of(homepageRepository));
+                Optional.of(homepageRepository), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty(), Optional.empty(), bridgeRepository);
     }
 
     @Test

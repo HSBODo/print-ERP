@@ -84,7 +84,6 @@ public class ReportMartWriter {
                 .addValue("cataractExam", w.getCataractExam())
                 .addValue("oneDay", w.getOneDay())
                 .addValue("visionBooked", w.getVisionBooked())
-                .addValue("cataractExamEyes", w.getCataractExamEyes())
                 .addValue("cataractBooked", w.getCataractBooked())
                 .addValue("oneDayBooked", w.getOneDayBooked())
                 .addValue("stopCount", w.getStopCount())
@@ -93,6 +92,9 @@ public class ReportMartWriter {
                 .addValue("visionSurgery", w.getVisionSurgery())
                 .addValue("cataractSurgery", w.getCataractSurgery())
                 .addValue("totalSurgery", w.getTotalSurgery())
+                .addValue("reoperation", w.getReoperation())
+                .addValue("reopLaser", w.getReopLaser())
+                .addValue("reopLens", w.getReopLens())
                 .addValue("outpatient", w.getOutpatient());
     }
 

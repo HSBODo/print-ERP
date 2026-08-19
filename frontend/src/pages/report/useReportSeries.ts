@@ -24,7 +24,7 @@ import { YEARS, isIncompleteMonth } from './monthlyReportUtils'
  */
 
 /**
- * 월간레포트 수술 3종 골든 override — 담당자 확정값(docs/databatch/월간레포트_2026_01_05월.csv).
+ * 월간레포트 수술 3종 골든 override — 담당자 확정값.
  *
  * 마트(`mart_surgery_monthly`) 는 세부 수술방법 컬럼(lasik/smile/cat_mono/…)으로 세분화돼 있어
  * CSV 의 aggregate(백내장 수술·시력교정 수술·총 수술수) 를 subcolumn 으로 분해할 수 없다.
@@ -49,7 +49,7 @@ export type ReportSeriesKey =
   | 'reservations' | 'call' | 'online'
   | 'cataractExam' | 'visionExam' | 'examCount' | 'oneDayExam'
   | 'cataractRate' | 'visionRate'
-  | 'cataractSurgery' | 'visionSurgery' | 'totalSurgery'
+  | 'cataractSurgery' | 'visionSurgery' | 'totalSurgery' | 'reoperation'
   | 'outpatient'
   | 'successAll' | 'successOneday' | 'successGeneral'
   | 'examGeneralCustomer' | 'examReferralCustomer' | 'examReferralStaff'
@@ -145,6 +145,8 @@ export function useReportSeries(): ReportSeriesResult {
       cataractSurgery: build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.cataract ?? surgery.dataMap[y]?.[i]?.cataractPatients),
       visionSurgery:   build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.vision   ?? surgery.dataMap[y]?.[i]?.visionPatients),
       totalSurgery:    build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.total    ?? surgery.dataMap[y]?.[i]?.total),
+      // 재수술 — 건 단위(레이저+렌즈). 주차 레포트도 같은 정의로 그린다.
+      reoperation: build((y, i) => surgery.dataMap[y]?.[i]?.reoperation),
       outpatient: build((y, i) => outpatient.dataMap[y]?.[i]?.outpatientCount),
       // 드림렌즈 신규/FU 는 주차 단위 확정값만 존재한다 — 월간 레포트에서는 항목 자체를 감춘다
       // (ReportItem.weeklyOnly). 여기서는 타입을 채우기 위한 빈 계열.
@@ -172,10 +174,20 @@ export function useReportSeries(): ReportSeriesResult {
       examWorker: buildFromOverall((s) => s.jobOffice),
       examStudent: buildFromOverall((s) => s.jobStudent),
       examEtc: buildFromOverall((s) => s.jobEtc),
-      examGeneral: buildFromOverall((s) => s.visionExam - s.oneDay),
-      ratioGeneral: buildFromOverall((s) =>
-        s.visionExam > 0 ? ((s.visionExam - s.oneDay) / s.visionExam) * 100 : null,
-      ),
+      // 일반 검사 = 검사수(전체) − 원데이. 둘 다 procedure(=검사자 리스트와 같은 모집단)에서 뽑아
+      // '원데이 + 일반 = 검사수' 가 성립하게 한다 (2026-07: 561 + 643 = 1,204).
+      // 종전에는 시력교정 기준(visionExam − overall.oneDay = 1,074 − 558 = 516)이라
+      // 리스트의 examType 집계와 어긋났다.
+      examGeneral: build((y, i) => {
+        const it = procedure.dataMap[y]?.[i]
+        return it ? it.examCount - it.oneDayExamCount : undefined
+      }),
+      ratioGeneral: build((y, i) => {
+        const it = procedure.dataMap[y]?.[i]
+        return it && it.examCount > 0
+          ? ((it.examCount - it.oneDayExamCount) / it.examCount) * 100
+          : null
+      }),
       rateVisionGeneral: build((y, i) => consult.dataMap[y]?.[i]?.visionGeneralBookRate),
       rateOneday: buildFromOverall((s) =>
         s.oneDay > 0 ? (s.oneDayBooked / s.oneDay) * 100 : null,

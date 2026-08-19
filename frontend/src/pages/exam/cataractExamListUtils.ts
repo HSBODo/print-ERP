@@ -88,3 +88,46 @@ export const compareSortValue = (a: string | number | null, b: string | number |
   if (typeof a === 'number' && typeof b === 'number') return a - b
   return String(a).localeCompare(String(b), 'ko-KR', { numeric: true, sensitivity: 'base' })
 }
+
+/** 요약 칩에 고정으로 노출할 분류와 순서. 백엔드 분류(find-cataract-exam-list.sql)를 늘리면 여기도 함께 늘릴 것. */
+export const CLASSIFICATION_ORDER: string[] = ['백내장', '중단', '노안/FU', '기타']
+
+/** 월간 레포트 백내장 검사수에 들어가는 분류. sql/fragments/exam-session-source.sql 의 isCat 과 같은 집합. */
+export const EXAM_COUNT_CLASSES: string[] = ['백내장', '중단']
+
+export type ClassificationBreakdown = {
+  breakdown: { name: string; count: number }[]
+  examCount: number
+  total: number
+}
+
+/**
+ * 분류별 건수 집계. 실제 값을 세서 그대로 돌려준다.
+ *
+ * '아니면 백내장'으로 몰면 새 분류가 백내장에 합쳐져 조용히 틀린다
+ * (노안/FU 를 추가했을 때 백내장이 45 대신 91 로 부풀었다).
+ * 모르는 분류는 삼키지 않고 뒤에 붙여 화면에 드러낸다.
+ *
+ * examCount = 백내장 + 중단 = 월간 레포트 백내장 검사수. total(총건수)과 다르다.
+ */
+export const summarizeClassifications = (
+  rows: Pick<CataractExamListItem, 'classification'>[],
+): ClassificationBreakdown => {
+  const counts = new Map<string, number>()
+  for (const row of rows) {
+    const key = row.classification || '(미지정)'
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  const known = CLASSIFICATION_ORDER.map((name) => ({ name, count: counts.get(name) ?? 0 }))
+  const unknown = [...counts.entries()]
+    .filter(([name]) => !CLASSIFICATION_ORDER.includes(name))
+    .map(([name, count]) => ({ name, count }))
+  const breakdown = [...known, ...unknown]
+  return {
+    breakdown,
+    examCount: breakdown
+      .filter(({ name }) => EXAM_COUNT_CLASSES.includes(name))
+      .reduce((sum, { count }) => sum + count, 0),
+    total: rows.length,
+  }
+}

@@ -58,6 +58,30 @@ public class MartSchemaInitializer implements org.springframework.beans.factory.
         applyScript("sql/mart/V29__weekly_report_dreamlens_columns.sql");
         applyScript("sql/mart/V30__weekly_report_dreamlens_golden.sql");
         applyScript("sql/mart/V31__weekly_report_dreamlens_2026_w31.sql");
+        applyScript("sql/mart/V32__list_cataract_exam_one_day.sql");
+        applyScript("sql/mart/V33__surgery_presbyond_piol.sql");
+        applyScript("sql/mart/V34__v_all_exam_list.sql");
+        applyScript("sql/mart/V35__surgery_monthly_2026_01_05_golden.sql");
+        applyScript("sql/mart/V36__list_reoperation.sql");
+        applyScript("sql/mart/V37__v_all_surgery_list.sql");
+        applyScript("sql/mart/V38__weekly_report_reoperation.sql");
+        applyScript("sql/mart/V39__list_reservation_motive_m.sql");
+        applyScript("sql/mart/V40__list_reservation_motive_source.sql");
+        applyScript("sql/mart/V41__list_reservation_funnel.sql");
+        applyScript("sql/mart/V42__list_reservation_motive_l.sql");
+        applyScript("sql/mart/V44__list_reservation_contact.sql");
+        applyScript("sql/mart/V43__v_reservation_channel.sql");
+        applyScript("sql/mart/V45__list_reservation_surgery_name.sql");
+        applyScript("sql/mart/V47__surgery_op_type_fn.sql");
+        applyScript("sql/mart/V49__list_reservation_surgery_payment.sql");
+        applyScript("sql/mart/V48__v_reservation_channel_optype.sql");
+        applyScript("sql/mart/V51__channel_profit_inputs.sql");
+        applyScript("sql/mart/V50__v_reservation_channel_payment.sql");
+        applyScript("sql/mart/V52__v_all_exam_list_stop_reason.sql");
+        applyScript("sql/mart/V53__list_reservation_all_mart.sql");
+        applyScript("sql/mart/V54__weekly_report_drop_cataract_exam_eyes.sql");
+        applyScript("sql/mart/V55__weekly_report_2025_seed.sql");
+        applyScript("sql/mart/V56__v_all_exam_list_surgery_columns.sql");
     }
 
     private void applyScript(String classpathLocation) {

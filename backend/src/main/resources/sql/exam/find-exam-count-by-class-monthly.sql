@@ -1,17 +1,12 @@
             -- 고객분류별 검사수(월간 레포트 도표 #7) — 한 해의 (월 × 내원동기(레포트)) 집계.
-            -- 세션 = EXAM 행(시력교정/드림렌즈) + Cataract_Exam 행(백내장).
-            --   find-total-exam-count-monthly.sql 과 같은 모집단이라 월별 합계가 '검사수' 도표(라이브 구간)와 맞는다.
+            -- 모집단은 sql/fragments/exam-session-source.sql 공유 — find-total-exam-count-monthly.sql 과 같아서
+            --   월별 합계가 '검사수' 도표와 정확히 맞고, 검사자 리스트(all-exam-list)와도 1:1 정합한다.
+            --   (2026-08-04 이전에는 `EXAM 전부 + Cataract_Exam 전부` 라 리스트와 어긋났다)
             -- 분류 규칙은 find-all-exam-list.sql · select-all-exam-list.sql 의 motiveReport 와 동일해야
             --   리스트·레포트가 어긋나지 않는다. (규칙을 고칠 일이 있으면 세 파일을 함께 고칠 것)
             -- EXAM_DATE 는 'YYYY-MM-DD' 문자열이라 SUBSTRING 으로 월을 자른다.
             WITH sess AS (
-                SELECT e.CUST_NUM AS cn, e.EXAM_DATE AS d
-                FROM EXAM e WITH(NOLOCK)
-                WHERE e.EXAM_DATE >= :from AND e.EXAM_DATE <= :to
-                UNION ALL
-                SELECT ce.CUST_NUM AS cn, ce.EXAM_DATE AS d
-                FROM Cataract_Exam ce WITH(NOLOCK)
-                WHERE ce.EXAM_DATE >= :from AND ce.EXAM_DATE <= :to
+__EXAM_SESSION_SOURCE__
             ),
             classified AS (
                 SELECT

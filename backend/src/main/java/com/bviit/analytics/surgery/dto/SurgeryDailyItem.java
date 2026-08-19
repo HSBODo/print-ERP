@@ -38,6 +38,16 @@ public class SurgeryDailyItem {
     private final int tKpl;
     private final int viva;
 
+    /** 노안 레이저(PRESBYOND) — 환자 수 DISTINCT. */
+    private final int presbyond;
+
+    /**
+     * PIOL DISTINCT 환자 수. icl+tIcl+kpl+tKpl+viva 단순 합산과 다르다 —
+     * 양안에 다른 렌즈를 넣은 환자가 유형별로 각각 잡히기 때문(2026-07: 합산 168 vs 실인원 148).
+     * 비중 표의 'PIOL 합계'는 반드시 이 값을 쓴다.
+     */
+    private final int piolPatients;
+
     // 백내장
     private final int catMulti;
     private final int catMono;

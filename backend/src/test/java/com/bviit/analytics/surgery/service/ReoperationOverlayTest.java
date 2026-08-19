@@ -80,6 +80,21 @@ class ReoperationOverlayTest {
     }
 
     @Test
+    void KPL_계열은_렌즈다() {
+        // 유형별 집계에서 KPL·T-KPL 은 PIOL(렌즈) 그룹이라 재수술에서도 렌즈여야 한다.
+        // 아래 시술명은 운영 RE_OPERATION 의 실제 값(2024-01~).
+        assertThat(ReoperationOverlay.isLensCategory("KPL", "")).isTrue();
+        assertThat(ReoperationOverlay.isLensCategory("", "Mono+KPL"))
+                .as("Mono(모노비전)+KPL — 렌즈가 섞이면 렌즈").isTrue();
+        assertThat(ReoperationOverlay.isLensCategory("", "Mono+KPL+(P)")).isTrue();
+        assertThat(ReoperationOverlay.isLensCategory("", "repo+T-KPL"))
+                .as("T-KPL 도 부분일치로 잡힌다").isTrue();
+        assertThat(ReoperationOverlay.isLensCategory("Re-en+KPL", "")).isTrue();
+        assertThat(ReoperationOverlay.isLensCategory("ENHANCE+KPL", ""))
+                .as("ENHANCE(레이저)+KPL — 렌즈 우선").isTrue();
+    }
+
+    @Test
     void 매칭_없으면_레이저로_분류한다() {
         assertThat(ReoperationOverlay.isLensCategory("Enhance", "")).isFalse();
         assertThat(ReoperationOverlay.isLensCategory("Re-LASIK", "")).isFalse();

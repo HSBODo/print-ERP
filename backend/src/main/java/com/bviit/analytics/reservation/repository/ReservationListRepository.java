@@ -31,11 +31,13 @@ import java.util.Map;
 public class ReservationListRepository {
 
     static final String RESERVATION_LIST_SQL = "sql/reservation-list/reservation-list.sql";
+    static final String RESERVATION_LIST_ALL_SQL = "sql/reservation-list/reservation-list-all.sql";
     static final String KAKAO_COUNT_SQL = "sql/reservation-list/kakao-count.sql";
     static final String KAKAO_DAILY_COUNTS_SQL = "sql/reservation-list/kakao-daily-counts.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String reservationListSql;
+    private final String reservationListAllSql;
     private final String kakaoCountSql;
     private final String kakaoDailyCountsSql;
 
@@ -44,12 +46,24 @@ public class ReservationListRepository {
     ) {
         this.jdbc = jdbc;
         this.reservationListSql = SqlLoader.load(RESERVATION_LIST_SQL);
+        this.reservationListAllSql = SqlLoader.load(RESERVATION_LIST_ALL_SQL);
         this.kakaoCountSql = SqlLoader.load(KAKAO_COUNT_SQL);
         this.kakaoDailyCountsSql = SqlLoader.load(KAKAO_DAILY_COUNTS_SQL);
     }
 
     public List<Map<String, Object>> findReservationList(String from, String to) {
         return jdbc.queryForList(reservationListSql, new MapSqlParameterSource()
+                .addValue("from", from)
+                .addValue("to", to));
+    }
+
+    /**
+     * 예약 전체 얇은 리스트 — mart_reservation_monthly(수술/외래/드림렌즈) 재집계용.
+     * 검사(M) 예약은 여기서 빠진다 — RESERVE_FLAG='O' OR RESERVE_FLAG='D' OR RESERVE_JINRYO='2'.
+     * 예약일(RESERVE_DATE) 기준. 취소(C) 제외.
+     */
+    public List<Map<String, Object>> findReservationListAll(String from, String to) {
+        return jdbc.queryForList(reservationListAllSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

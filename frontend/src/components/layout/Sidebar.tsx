@@ -40,6 +40,7 @@ const hideAdminForNonAdmin = (items: MenuItem[], isAdmin: boolean): MenuItem[] =
 
 // 구현 상태별 텍스트 색상 (활성 상태가 아닐 때만 적용)
 const statusTextClass = (status?: MenuStatus): string => {
+  if (status === 'frontend-only') return 'text-blue-600 hover:text-blue-700'
   if (status === 'pending') return 'text-red-500 hover:text-red-600'
   if (status === 'backend-only') return 'text-amber-600 hover:text-amber-700'
   return 'text-gray-500 hover:text-gray-900'

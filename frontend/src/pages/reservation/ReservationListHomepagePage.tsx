@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, Radio, RotateCcw, Search, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useReservationListHomepage } from '@/hooks/reservation/useReservationListHomepage'
@@ -188,17 +189,14 @@ export function ReservationListHomepagePage() {
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
           </div>
           {draftPeriodMode === 'monthly' ? (
-            <input
-              aria-label="등록 기준 월"
-              type="month"
+            <MonthPicker
+              ariaLabel="등록 기준 월"
               value={toMonthValue(draftFrom)}
               max={toMonthValue(defaultTo())}
-              onChange={(e) => {
-                if (!e.target.value) return
-                setDraftFrom(toMonthStart(e.target.value))
-                setDraftTo(toMonthEnd(e.target.value))
+              onChange={(v) => {
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
               }}
-              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           ) : (
             <>

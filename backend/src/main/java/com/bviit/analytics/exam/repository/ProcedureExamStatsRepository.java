@@ -1,5 +1,6 @@
 package com.bviit.analytics.exam.repository;
 
+import com.bviit.analytics.common.util.SqlFragments;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,9 +15,12 @@ import java.util.Map;
 /**
  * 시술별 검사 건수("검사수") 통계 쿼리.
  *
- * 검사수 = EXAM 검사자 행수 + Cataract_Exam 검사 세션수.
- * 레거시 "검사수" 차트와 동일하게 두 테이블의 raw COUNT(*)를 단순 합산한다
- * (테스트/취소/드림렌즈/눈 단위 필터 없음). 2026-01 = 1893 + 145 = 2038로 검증됨.
+ * 검사수 = 검사자 리스트(all-exam-list)와 동일 모집단 — sql/fragments/exam-session-source.sql 공유.
+ * 시력교정·드림렌즈는 EXAM 행(테스트고객·백내장스텁·순수외래 제외),
+ * 백내장은 백내장검사 예약(H)+검안사 배정 기준이다.
+ *
+ * 2026-08-04 이전에는 두 테이블의 raw COUNT(*)를 단순 합산해 리스트와 어긋났다
+ * (2026-07: 검사수 1,195 vs 리스트 1,158).
  *
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
  * MSSQL 2014 호환: STRING_AGG/TRIM 미사용.
@@ -37,7 +41,8 @@ public class ProcedureExamStatsRepository {
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
     ) {
         this.jdbc = jdbc;
-        this.findTotalExamCountMonthlySql = SqlLoader.load(FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL);
+        this.findTotalExamCountMonthlySql = SqlLoader.load(FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL)
+                .replace("__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource());
         this.findOneDayExamCountMonthlySql = SqlLoader.load(FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL);
     }
 

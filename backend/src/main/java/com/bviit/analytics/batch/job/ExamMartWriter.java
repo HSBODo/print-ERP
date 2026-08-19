@@ -156,7 +156,9 @@ public class ExamMartWriter {
             "optometrist",
             "cancelCode", "cancelMemo",
             "grade", "job", "lastVisit", "insurance", "nationality",
-            // oneDay: 시력교정 list_exam 전용(원데이 Y/N). 백내장 SQL은 참조하지 않아 무시된다.
+            // oneDay: 원데이 Y/N. 두 SQL 이 각자 계산한다 —
+            //   시력교정(find-exam-list.sql)  = 같은날 M/5(검사OP) 예약 내원
+            //   백내장(find-cataract-exam-list.sql) = 그날 백내장검사 예약 진료구분 C_원데이(7)·C_노안원데이(9)
             "oneDay"
     };
 

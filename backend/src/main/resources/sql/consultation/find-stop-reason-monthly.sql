@@ -24,6 +24,12 @@
 --    취소 판정(ISNULL(e.CANCEL_CD,'') = '')에 쓴다 — 한쪽 의미로만 알고 고치면 다른 쪽이 깨진다.
 --
 -- 매핑을 바꾸는 법·검증 쿼리·함정: docs/db/중단사유-분류-정의.md
+--
+-- ⚠️ 배치·화면과 정의가 다르다 — 배치·화면은 sql/mart/select-stop-reason-daily-agg.sql 이 담당하며
+--    list_exam 을 거쳐 find-exam-list.sql 의 필터(테스트 이름·pure cataract empty·순수 외래 유입·
+--    백내장 중복) 4개가 이미 적용된 population 을 본다. 이 raw EXAM 조회는 그 필터를 무시하므로
+--    reconcile 결과 mart 가 원본보다 월 최대 4건 정도 적을 수 있는데, 이는 리스트 정의 개선의
+--    부산물이지 버그가 아니다(2026-08-12 결정). 원본 SQL 은 대사(reconcile) 대비용으로만 유지한다.
             SELECT t.yr, t.mo,
                    SUM(CASE WHEN t.cat = 'recommendX'    THEN 1 ELSE 0 END) AS recommendX,
                    SUM(CASE WHEN t.cat = 'lensImpossible' THEN 1 ELSE 0 END) AS lensImpossible,

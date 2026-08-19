@@ -11,7 +11,7 @@
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
-- **DB**: H2 (개발, 기본) / PostgreSQL (운영, `application-postgres.yml`)
+- **DB**: H2 (개발, 기본) / PostgreSQL 마트 (운영, `application-postgres-mart.yml`)
 - **인증**: Spring Security + JWT (jjwt, HMAC-SHA256)
 - **언어**: 한국어 UI
 
@@ -34,9 +34,12 @@ project-root/
 │   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
 │   │   └── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) 등 기타
 │   ├── src/main/resources/
-│   │   ├── application.yml                     # H2 인메모리 (개발 기본)
-│   │   ├── application-postgres.yml            # PostgreSQL (운영)
-│   │   ├── application-mssql.yml               # MSSQL 통계 운영 연동
+│   │   ├── application.yml                     # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
+│   │   ├── application-local.yml               # 로컬 개발 (H2 인메모리, 배치 비활성)
+│   │   ├── application-dev.yml                 # 개발 서버 (Postgres 마트 + MSSQL 배치)
+│   │   ├── application-prod.yml                # 운영 (Postgres 마트 + MSSQL 배치 + Slack 알림)
+│   │   ├── application-postgres-mart.yml       # 마트 인프라 (batch DataSource·스케줄러) — 위 셋에 group include
+│   │   ├── application-mssql.yml               # (레거시) MSSQL 직결 모드 — Cutover 완료 후 제거 예정
 │   │   └── sql/                                # 도메인별 .sql 리소스 (SqlLoader 로딩)
 │   └── build.gradle
 │
@@ -129,36 +132,39 @@ project-root/
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 38개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 25개 / **미구현(pending)** 13개.
+`statsPages.ts`에 42개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **미구현(pending)** 13개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
 |----|------|------|------|------|
-| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 ISO 주차축으로 · `/api/report/weekly` 운영 DB 라이브) |
+| weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 ISO 주차축으로 · `mart_weekly_report` 조회, 2025 골든시드 · 2026+ 는 배치가 채널 마트에서 접기) |
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
 | intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
 | reservation-list | 예약자 리스트 | /stats/reservation-list | 예약 | 완료 (메뉴 순서: 예약 종합보다 앞) |
+| reservation-list-homepage | 예약자 리스트_홈페이지 | /stats/reservation-list-homepage | 예약 | 완료 (레거시 홈페이지 소스 · `HOMEPAGE_DATASOURCE_URL` 미설정 시 503) |
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
-| overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (2026-07-07 전체지표→검사 이동) |
-| overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (2026-07-07 전체지표→검사 이동) |
-| exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 |
-| cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 |
+| overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
+| overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
+| exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 (**관리자 전용**) |
+| cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 (**관리자 전용**) |
 | all-exam-list | 전체 검사자 리스트 | /stats/all-exam-list | 검사 | 완료 (시력교정+백내장 통합, 종합지표 정합) |
+| eoeis-checkup | 아이리더 검사통계 | /stats/eoeis-checkup | 검사 | 완료 (**관리자 전용** · 2026-08-05 신규 · 검사자×장비/기간 피벗 · `EOEIS_DATASOURCE_URL` 미설정 시 503) |
 | examination | 시술별 | /stats/examination | 검사 | 완료 |
 | procedure-exam | 검사건수 | /stats/procedure-exam | 검사 | 완료 |
-| consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 |
+| consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 (**관리자 전용**) |
 | cataract-reservation-rate | 예약률 | /stats/cataract-reservation-rate | 전환&성공률 | 완료 |
 | stop-rate | 중단률 | /stats/stop-rate | 전환&성공률 | 완료 (2026-07-07 신규, 중단수/시력교정 검사자) |
 | stop-reason | 중단 사유 | /stats/stop-reason | 전환&성공률 | 완료 |
 | surgery-list | 수술자 리스트 | /stats/surgery-list | 수술 | 완료 |
-| surgery | 수술 건수 | /stats/surgery | 수술 | 완료 |
+| surgery | 수술 건수 | /stats/surgery | 수술 | 완료 (**관리자 전용**) |
 | surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술 | 완료 |
 | surgery-composition | 수술별 비중 | /stats/surgery-composition | 수술 | 완료 (mart_surgery_daily 조회, 파일 스냅샷 폐지 · 주차=ISO 8601) |
 | outpatient-list | 외래수 리스트 | /stats/outpatient-list | 외래 | 완료 (RESERVATION F + I/H, 외래수와 정합) |
 | outpatient-count | 외래수 | /stats/outpatient-count | 외래 | 완료 |
+| channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (2026-08-07 신규 · 탭2: 유입채널 수익성/광고매체 효율 · 광고비·렌즈단가는 화면 입력) |
 | overseas | 해외 환자 관련 지표 | /stats/overseas | 마케팅 | 미구현 |
 | marketing | 마케팅 유입 및 효율 지표 | /stats/marketing | 마케팅 | 미구현 |
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
@@ -173,6 +179,7 @@ project-root/
 | designated-doctor | 지정의 수술 비율 | /stats/designated-doctor | 기타 | 미구현 |
 | visit-reason | 내원동기별 비중 | /stats/visit-reason | 기타 | 미구현 |
 | daily-reception | 일일 접수/응대 건수 | /stats/daily-reception | 기타 | 미구현 |
+| batch-management | 데이터 배치 관리 | /admin/batch | 관리자 | 완료 (관리자 전용 · 마트 재적재/실행 이력) |
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
@@ -332,9 +339,6 @@ cd frontend && npx shadcn@latest add <component-name>
 cd backend && gradlew.bat bootRun        # Backend (H2 인메모리 기본)
 cd frontend && npm run dev               # Frontend (Vite dev server)
 
-# PostgreSQL로 실행
-cd backend && gradlew.bat bootRun --args='--spring.profiles.active=postgres'
-
 # 빌드/테스트
 cd frontend && npm run build             # 프로덕션 빌드
 cd frontend && npm run lint              # ESLint
@@ -346,12 +350,11 @@ cd frontend && npm run test              # Vitest
 ### Git
 
 - 커밋: `feat: 예약 통계 페이지 구현`, `fix: 달성률 소수점 계산 오류`
-- 브랜치: `dev` (개발, 기본), `main` (운영)
-- **배포 플로우**: `dev` → PR → `main` (main에 직접 push 금지)
-  1. `dev`에서 작업 및 커밋
-  2. `git push origin dev`
-  3. `gh pr create --base main` 로 PR 생성
-  4. PR 머지 후 로컬 동기화 (`git pull origin main`)
+- **커밋·푸시는 작업 브랜치 `2026-07-29` 안에서만 한다** (`git push origin 2026-07-29`).
+- 🚫 **`main` 은 물론 `develop` 으로도 임의로 push·PR 하지 않는다.** 운영 반영은 **개발자와 협의해서** 진행한다.
+  협의 없이 `gh pr create --base main` 을 만들거나 다른 브랜치로 밀지 말 것 — 개발자 브랜치와 어긋나면
+  복구 비용이 크다(2026-08-05에 실제로 작업분이 갈라져 재적용이 필요했다).
+- 브랜치 정리·머지 시점도 개발자 결정 사항이다. 이쪽에서는 `2026-07-29` 만 최신으로 유지한다.
 
 ### 코드 품질
 

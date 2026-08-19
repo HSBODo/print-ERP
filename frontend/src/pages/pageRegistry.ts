@@ -31,6 +31,7 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
 
 /**
  * 운영(PROD)에서 pending(미완성) 페이지는 차단한다 — 전용 컴포넌트가 등록돼 있어도 placeholder로 렌더.
+ * frontend-only 페이지는 목업 UI 검토를 위해 운영에서도 전용 컴포넌트를 렌더한다.
  * backend-only 페이지는 프론트 화면 미완성이므로 모든 환경에서 placeholder로 렌더.
  * 개발(DEV)에서는 WIP 페이지를 미리보기로 허용한다.
  * 정책: "개발에는 페이지가 존재하지만 운영에서는 숨김/차단" (Sidebar 숨김 + 이 라우트 차단 이중 가드).

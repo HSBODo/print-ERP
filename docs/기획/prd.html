@@ -252,13 +252,13 @@
               <div class="card-head"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><h2>Overview</h2></div>
               <div class="field"><h3>Summary</h3><p class="summary">비앤빛 Analytics KPI 대시보드</p></div>
               <div class="field"><h3>Product Goals</h3><p>비앤빛 안과 병원 경영진이 핵심 성과 지표(KPI)를 한눈에 파악하고, 현장의 수기 및 엑셀 기반 비효율적인 데이터 집계 방식을 시스템화하여 데이터 기반의 의사결정을 강화하도록 지원합니다.</p></div>
-              <div class="field"><h3>Context</h3><p>현재 비앤빛 안과 내부에서 수기 및 엑셀로 관리되던 주요 운영 데이터를 시스템화하고 시각화하기 위해 개발 중인 플랫폼입니다. 5종의 통계 API는 연결이 완료되었으며, 나머지 기능은 설계 단계에 있습니다.</p></div>
+              <div class="field"><h3>Context</h3><p>비앤빛 안과 내부에서 수기 및 엑셀로 관리되던 주요 운영 데이터를 시스템화하고 시각화하는 플랫폼입니다. 2026-08 기준 통계 페이지 42종을 정의해 <b>29종이 운영 중</b>이고 13종이 미구현 상태이며, 월간·주차 레포트(28개 도표)가 함께 운영됩니다. 데이터 경로는 <b>CRM(MSSQL) 직결 조회에서 Postgres 마트 기반으로 전환</b>을 마쳤습니다 — 매일 03시 배치가 CRM을 읽어 마트에 적재하고, 화면은 마트만 조회합니다.</p></div>
             </section>
 
             <section class="card" id="problem-solution">
               <div class="card-head"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg></span><h2>Problem &amp; Solution</h2></div>
               <div class="field"><h3>User Problem</h3><p>병원 경영진은 중요한 핵심 성과 지표(KPI)를 수동으로 집계하고 분석해야 하는 비효율성을 겪고 있으며, 정확하고 신속한 의사결정을 위한 통합된 데이터 지표가 부족합니다.</p></div>
-              <div class="field"><h3>Solution</h3><p>비앤빛 Analytics 대시보드는 병원 운영의 핵심 KPI를 실시간으로 시각화하여 제공하고, 수기 및 엑셀 작업을 대체하여 데이터 집계의 정확성과 효율성을 높입니다. 이를 통해 경영진은 직관적인 데이터 인사이트를 얻을 수 있습니다.</p></div>
+              <div class="field"><h3>Solution</h3><p>비앤빛 Analytics 대시보드는 병원 운영의 핵심 KPI를 시각화하여 제공하고, 수기 및 엑셀 작업을 대체하여 데이터 집계의 정확성과 효율성을 높입니다. 지표는 매일 03시 배치가 갱신하는 <b>T-1(전일) 기준</b>이며, 지표 확인 용도에는 실시간성이 필요하지 않다는 판단에 따른 설계입니다.</p></div>
               <div class="field"><h3>Differentiator</h3><p>일반적인 BI 툴과 달리, 비앤빛 안과에 특화된 핵심 성과 지표와 운영 데이터를 맞춤형으로 제공하여 병원 현장의 특수성을 반영합니다. 기존의 분산된 수동 데이터 관리 방식에서 벗어나 통합적이고 자동화된 데이터 분석 환경을 구축하여 데이터 기반의 전략 수립을 지원합니다.</p></div>
             </section>
 
@@ -271,7 +271,7 @@
             <section class="card" id="success-risks">
               <div class="card-head"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span><h2>Success &amp; Risks</h2></div>
               <div class="field"><h3>Key Metrics</h3><p>대시보드 월간 활성 사용자(MAU) 수 및 접속 빈도 (사용자 채택률), 대시보드 리포트 생성 또는 데이터 조회 시간 단축 (효율성), 수기/엑셀 기반 리포트 생성 비율 감소 (자동화 대체율), 데이터 기반 의사결정으로 인한 병원 운영 효율성 증대 (간접 지표).</p></div>
-              <div class="field"><h3>Risks</h3><p>MSSQL 읽기 전용 정책으로 인한 데이터 동기화 및 실시간성 제약, 기존 레거시 시스템과의 데이터 연동 복잡성 및 정확성 문제, 사용자(경영진)의 새로운 시스템 적응 및 학습 저항, 데이터 보안 및 접근 권한 관리의 중요성.</p></div>
+              <div class="field"><h3>Risks</h3><p><b>레거시 정의 재현</b>이 가장 큰 리스크입니다 — 병원 수기·엑셀 집계와 숫자를 맞추는 과정에서 집계 단위(사람/눈/건)와 날짜 기준(검사일/예약일/등록일)이 지표마다 달라 반복적으로 재정의가 발생했습니다. <b>스냅샷 드리프트</b>도 구조적 문제입니다 — 원천 테이블이 고객당 1행을 덮어쓰는 방식이라 과거 월 수치가 사후 변동합니다(주간 승인 + 월 마감 스냅샷으로 대응 예정). 그 밖에 T-1 신선도 제약, 배치 실패 시 데이터 공백(실행 이력·Slack 알림으로 완화), 마트에 PII를 복제하는 데 따른 접근 통제, 사용자의 신규 시스템 적응이 있습니다. 종전 리스크였던 <s>MSSQL 읽기 전용에 따른 부하·실시간성 제약</s>은 마트 전환으로 해소됐습니다.</p></div>
             </section>
 
             <section class="card" id="project-basics">
@@ -305,7 +305,6 @@
           <span class="lg" style="color:var(--muted-2)">→ User navigation flow</span>
         </div>
         <div class="swim">
-          <!-- 인증 -->
           <div class="lane first">
             <div class="lane-label">인증</div><div class="lane-rail"></div>
             <div class="lane-body">
@@ -316,137 +315,84 @@
               </div>
             </div>
           </div>
-          <!-- KPI 종합 대시보드 -->
           <div class="lane">
-            <div class="lane-label">KPI 종합 대시보드</div><div class="lane-rail"></div>
+            <div class="lane-label">HOME</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
                 <div class="fn section">KPI 종합 대시보드</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn action">KPI 카드 확인</div></div>
-                  <div class="branch"><div class="fn action">월별 추이 보기</div></div>
-                  <div class="branch"><div class="fn action">수술·유입 비중 보기</div></div>
-                </div>
+                <div class="kids"><div class="branch"><div class="fn action">KPI 카드 확인</div></div><div class="branch"><div class="fn action">월별 추이 보기</div></div><div class="branch"><div class="fn action">수술·유입 비중 보기</div></div></div>
               </div>
             </div>
           </div>
-          <!-- 검사 & 예약 -->
           <div class="lane">
-            <div class="lane-label">검사 &amp; 예약</div><div class="lane-rail"></div>
+            <div class="lane-label">Report</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
-                <div class="fn section">검사 &amp; 예약</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">유입(검사예약)</div></div>
-                  <div class="branch">
-                    <div class="subtree">
-                      <div class="fn page">예약 건수</div><div class="hstub"></div>
-                      <div class="kids">
-                        <div class="branch"><div class="fn action">기간 선택</div></div>
-                        <div class="branch"><div class="fn action">채널별 필터</div></div>
-                        <div class="branch"><div class="fn action">조회 결과 차트/표</div></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="branch"><div class="fn page">검사 건수</div></div>
-                </div>
+                <div class="fn section">Report</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">월간 레포트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">연도 선택 (3개년 비교)</div></div><div class="branch"><div class="fn action">28개 도표 조회</div></div></div></div></div><div class="branch"><div class="subtree"><div class="fn page">주차 레포트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">전체 / 월별 주차 전환</div></div><div class="branch"><div class="fn action">ISO 주차축 조회</div></div></div></div></div></div>
               </div>
             </div>
           </div>
-          <!-- 상담 건수 -->
           <div class="lane">
-            <div class="lane-label">상담 건수</div><div class="lane-rail"></div>
+            <div class="lane-label">예약</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
-                <div class="fn section">상담 건수</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch">
-                    <div class="subtree">
-                      <div class="fn page">상담 전환율</div><div class="hstub"></div>
-                      <div class="kids">
-                        <div class="branch"><div class="fn action">기간 선택</div></div>
-                        <div class="branch"><div class="fn action">시술 종류 필터</div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <div class="fn section">예약</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">예약자 리스트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간 선택 (등록일)</div></div><div class="branch"><div class="fn action">채널·상담사 필터</div></div><div class="branch"><div class="fn action">CSV 내보내기</div></div></div></div></div><div class="branch"><div class="fn page">예약자 리스트_홈페이지</div></div><div class="branch"><div class="subtree"><div class="fn page">예약 종합</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">종합 / 온라인 / 콜 탭</div></div></div></div></div><div class="branch"><div class="fn page">예약통계_시력교정</div></div><div class="branch"><div class="fn page">예약통계_백내장</div></div></div>
               </div>
             </div>
           </div>
-          <!-- 수술 -->
+          <div class="lane">
+            <div class="lane-label">검사</div><div class="lane-rail"></div>
+            <div class="lane-body">
+              <div class="subtree">
+                <div class="fn section">검사</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="fn page">월별 검사자 종합지표</div></div><div class="branch"><div class="fn page">주간 검사자 종합지표</div></div><div class="branch"><div class="subtree"><div class="fn page">검사자 리스트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간 선택</div></div><div class="branch"><div class="fn action">CSV 내보내기</div></div></div></div></div><div class="branch"><div class="fn page">백내장 검사자 리스트</div></div><div class="branch"><div class="fn page">전체 검사자 리스트</div></div><div class="branch"><div class="fn page">아이리더 검사통계</div></div><div class="branch"><div class="subtree"><div class="fn page">시술별</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">시력교정 / 드림렌즈 / 백내장 탭</div></div></div></div></div><div class="branch"><div class="subtree"><div class="fn page">검사건수</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">검사수 / 원데이 검사 탭</div></div></div></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="lane">
+            <div class="lane-label">전환&성공률</div><div class="lane-rail"></div>
+            <div class="lane-body">
+              <div class="subtree">
+                <div class="fn section">전환&성공률</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">전환율</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">전체 / 원데이 / 일반 계열</div></div></div></div></div><div class="branch"><div class="fn page">예약률</div></div><div class="branch"><div class="fn page">중단률</div></div><div class="branch"><div class="subtree"><div class="fn page">중단 사유</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">사유 7버킷 분해</div></div></div></div></div></div>
+              </div>
+            </div>
+          </div>
           <div class="lane">
             <div class="lane-label">수술</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
                 <div class="fn section">수술</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch">
-                    <div class="subtree">
-                      <div class="fn page">수술 건수</div><div class="hstub"></div>
-                      <div class="kids">
-                        <div class="branch"><div class="fn action">기간 선택</div></div>
-                        <div class="branch"><div class="fn action">수술 종류 필터</div></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="branch"><div class="fn page">주요 수술별 비중</div></div>
-                </div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">수술자 리스트</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간 선택</div></div><div class="branch"><div class="fn action">CSV 내보내기</div></div></div></div></div><div class="branch"><div class="fn page">수술 건수</div></div><div class="branch"><div class="fn page">주요 수술별 비중</div></div><div class="branch"><div class="subtree"><div class="fn page">수술별 비중</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">주차 / 월별 전환</div></div></div></div></div></div>
               </div>
             </div>
           </div>
-          <!-- 마케팅 -->
           <div class="lane">
-            <div class="lane-label">마케팅</div><div class="lane-rail"></div>
+            <div class="lane-label">외래</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
-                <div class="fn section">마케팅</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">해외 환자 관련 지표</div></div>
-                  <div class="branch"><div class="fn page">마케팅 유입 및 효율</div></div>
-                </div>
+                <div class="fn section">외래</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="fn page">외래수 리스트</div></div><div class="branch"><div class="fn page">외래수</div></div></div>
               </div>
             </div>
           </div>
-          <!-- 취소 & 부도 -->
           <div class="lane">
-            <div class="lane-label">취소 &amp; 부도</div><div class="lane-rail"></div>
-            <div class="lane-body">
-              <div class="subtree">
-                <div class="fn section">취소 &amp; 부도</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">예약취소율</div></div>
-                  <div class="branch"><div class="fn page">부도율</div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- 객단가 -->
-          <div class="lane">
-            <div class="lane-label">객단가</div><div class="lane-rail"></div>
-            <div class="lane-body">
-              <div class="subtree">
-                <div class="fn section">객단가</div><div class="hstub"></div>
-                <div class="kids"><div class="branch"><div class="fn action">기간별 객단가 조회</div></div></div>
-              </div>
-            </div>
-          </div>
-          <!-- 기타 -->
-          <div class="lane last">
             <div class="lane-label">기타</div><div class="lane-rail"></div>
             <div class="lane-body">
               <div class="subtree">
                 <div class="fn section">기타</div><div class="hstub"></div>
-                <div class="kids">
-                  <div class="branch"><div class="fn page">드림렌즈 매출</div></div>
-                  <div class="branch"><div class="fn page">B2B 매출</div></div>
-                  <div class="branch"><div class="fn page">직원 포인트</div></div>
-                  <div class="branch"><div class="fn page">PRP 시술율</div></div>
-                  <div class="branch"><div class="fn page">재수술율</div></div>
-                  <div class="branch"><div class="fn page">당일OP 비율</div></div>
-                  <div class="branch"><div class="fn page">지정의 수술 비율</div></div>
-                  <div class="branch"><div class="fn page">내원동기별 비중</div></div>
-                  <div class="branch"><div class="fn page">일일 접수/응대</div></div>
-                </div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">드림렌즈 장부</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">행 추가·수정·삭제 (직접 입력)</div></div></div></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="lane">
+            <div class="lane-label">관리자</div><div class="lane-rail"></div>
+            <div class="lane-body">
+              <div class="subtree">
+                <div class="fn section">관리자</div><div class="hstub"></div>
+                <div class="kids"><div class="branch"><div class="subtree"><div class="fn page">데이터 배치 관리</div><div class="hstub"></div><div class="kids"><div class="branch"><div class="fn action">기간·도메인 재적재</div></div><div class="branch"><div class="fn action">실행 이력 확인</div></div></div></div></div></div>
               </div>
             </div>
           </div>
@@ -483,9 +429,8 @@
             <div class="wf-top"><div class="wf-dot" style="width:120px"></div><div style="flex:1"></div><div class="wf-dot" style="width:50px"></div><div class="wf-dot" style="width:50px"></div></div>
             <div class="wf-body">
               <div class="wf-side">
-                <div class="si on">HOME</div><div class="si">검사&amp;예약</div><div class="si">상담 건수</div>
-                <div class="si">수술</div><div class="si">마케팅</div><div class="si">취소&amp;부도</div>
-                <div class="si">객단가</div><div class="si">기타</div>
+                <div class="si on">HOME</div><div class="si">Report</div><div class="si">예약</div><div class="si">검사</div><div class="si">전환&amp;성공률</div>
+                <div class="si">수술</div><div class="si">외래</div><div class="si">기타</div><div class="si">관리자</div>
               </div>
               <div class="wf-content">
                 <div class="wf-kpis">
@@ -511,9 +456,8 @@
             <div class="wf-top"><div class="wf-dot" style="width:120px"></div><div style="flex:1"></div><div class="wf-dot" style="width:50px"></div><div class="wf-dot" style="width:50px"></div></div>
             <div class="wf-body">
               <div class="wf-side">
-                <div class="si">HOME</div><div class="si on">검사&amp;예약</div><div class="si">상담 건수</div>
-                <div class="si">수술</div><div class="si">마케팅</div><div class="si">취소&amp;부도</div>
-                <div class="si">객단가</div><div class="si">기타</div>
+                <div class="si">HOME</div><div class="si">Report</div><div class="si">예약</div><div class="si on">검사</div><div class="si">전환&amp;성공률</div>
+                <div class="si">수술</div><div class="si">외래</div><div class="si">기타</div><div class="si">관리자</div>
               </div>
               <div class="wf-content">
                 <div class="wf-h" id="wf-stats-title">예약 건수</div>
@@ -592,16 +536,16 @@
         { id:'F-KPI003', title:'구성 비중 차트', status:'done', prio:'med', desc:'수술 종류별 비율과 환자 유입 채널 비중을 도넛 차트로 표시합니다.', ac:['비중이 도넛 차트와 범례로 표시된다.'] },
         { id:'F-KPI004', title:'원장별 수술 실적', status:'done', prio:'low', desc:'원장별 집도 실적을 가로 막대 차트로 비교합니다.', ac:['원장별 실적이 정렬되어 표시된다.'] },
       ] },
-    { id:'R-INTK01', title:'검사·예약 통계', status:'prog', prio:'high',
-      desc:'유입·예약·검사 단계의 건수와 추이를 분석하는 "검사&예약" 섹션 통계입니다.',
-      ac:['채널별 검사예약 전환을 확인할 수 있어야 합니다.','예약 건수의 일자별 추이를 제공해야 합니다.','검사 종류(시력교정·백내장·드림렌즈·외래)별 실시 건수를 제공해야 합니다.'],
+    { id:'R-INTK01', title:'예약 · 검사 통계', status:'prog', prio:'high',
+      desc:'유입·예약·검사 단계의 건수와 추이를 분석하는 통계입니다. 사이드바에서는 예약 섹션과 검사 섹션으로 나뉘어 있습니다.',
+      ac:['채널별 검사예약 전환을 확인할 수 있어야 합니다.','예약 건수와 채널 구성(콜·온라인)을 제공해야 합니다.','검사 종류(시력교정·백내장·드림렌즈)별 실시 건수를 제공해야 합니다.'],
       features:[
         { id:'F-INT001', title:'유입(검사예약) 전환', status:'todo', prio:'high', desc:'인콜·아웃콜·카카오톡·네이버·홈페이지 채널별 검사예약 전환을 확인합니다.', ac:['채널별 전환율이 표시된다.'] },
-        { id:'F-INT002', title:'예약 건수', status:'done', prio:'high', desc:'예약 유입 규모와 일자별 변화 추이를 제공합니다. (통계 API 연결 완료)', ac:['기간별 예약 건수가 조회된다.','취소(RESERVE_STATE=C)는 제외된다.'] },
-        { id:'F-INT003', title:'검사 건수', status:'done', prio:'med', desc:'시력교정·백내장·드림렌즈·외래 등 실제 실시 검사 건수를 제공합니다. (통계 API 연결 완료)', ac:['4개 카테고리별 건수가 조회된다.'] },
+        { id:'F-INT002', title:'예약 건수 · 예약 종합', status:'done', prio:'high', desc:'예약 유입 규모와 추이를 제공합니다. 예약 종합은 콜(인콜·아웃콜)과 온라인(홈페이지·네이버·카카오) 3탭으로 나뉘며, 등록일 기준으로 집계합니다.', ac:['기간별 예약 건수가 조회된다.','콜과 온라인의 합이 종합과 일치한다.'] },
+        { id:'F-INT003', title:'검사 건수', status:'done', prio:'med', desc:'시력교정·드림렌즈·백내장 3종의 실제 실시 검사 건수를 제공합니다. 세 종류 모두 사람 단위로 집계 단위를 통일했습니다. 외래는 검사가 아니라 별도 지표로 분리했습니다.', ac:['3개 카테고리별 건수가 조회된다.','집계 단위가 사람으로 통일된다.'] },
       ] },
-    { id:'R-SURG01', title:'상담·수술 통계', status:'prog', prio:'high',
-      desc:'상담 전환과 수술 실적·비중을 분석하는 통계입니다. (통계 API 연결 완료)',
+    { id:'R-SURG01', title:'상담·수술 통계', status:'done', prio:'high',
+      desc:'상담 전환과 수술 실적·비중을 분석하는 통계입니다. 전환율·예약률·중단률·중단사유, 수술 건수·주요 수술별 비중·수술별 비중이 모두 운영 중입니다.',
       ac:['시력교정 상담/수술 전환율, 백내장 수술 전환율을 제공해야 합니다.','수술 건수의 기간별 비교를 제공해야 합니다.','주요 수술 종류별 비중을 제공해야 합니다.'],
       features:[
         { id:'F-SUR001', title:'상담 전환율', status:'done', prio:'high', desc:'시력교정 상담 전환율·수술 전환율과 백내장 수술 전환율을 함께 확인합니다.', ac:['상담→수술 전환율이 계산된다.'] },
@@ -613,16 +557,37 @@
       ac:['아이디·비밀번호 기반 JWT 로그인/로그아웃이 동작해야 합니다.','역할 기반으로 메뉴·데이터 노출이 제어되어야 합니다.','접근 이력과 감사 로그가 기록되어야 합니다.'],
       features:[
         { id:'F-AUT001', title:'JWT 로그인', status:'done', prio:'high', desc:'아이디·비밀번호로 로그인 시 JWT를 발급하고 이후 요청에 Bearer 토큰을 자동 주입합니다.', ac:['로그인 성공 시 토큰이 발급된다.','만료 토큰은 로그인 화면으로 리다이렉트된다.'] },
-        { id:'F-AUT002', title:'역할 기반 권한(RBAC)', status:'todo', prio:'high', desc:'경영진/관리자 역할에 따라 접근 가능한 메뉴와 데이터를 제어합니다.', ac:['역할별 메뉴 노출이 다르게 적용된다.'] },
+        { id:'F-AUT002', title:'역할 기반 권한(RBAC)', status:'prog', prio:'high', desc:'관리자 전용 경로(/api/admin/**)는 ADMIN 롤로 보호되고 있습니다. 경영진/관리자 역할별 메뉴 차등 노출은 미구현입니다.', ac:['관리자 API가 ADMIN 롤로 보호된다.','역할별 메뉴 노출 차등은 향후 과제.'] },
         { id:'F-AUT003', title:'접근 이력 / 감사 로그', status:'todo', prio:'med', desc:'사용자 접근·조회 이력을 기록하여 감사에 활용합니다.', ac:['주요 접근 이벤트가 로그로 남는다.'] },
       ] },
-    { id:'R-XUATSI', title:'MSSQL 데이터 연동 및 통계 API', status:'todo', prio:'high',
-      desc:'병원 운영 데이터를 저장하는 MSSQL 데이터베이스와 연동하여 핵심 지표 데이터를 조회하고, 이를 기반으로 다양한 통계 API를 제공합니다. 이때 MSSQL은 읽기 전용으로만 접근합니다.',
-      ac:['MSSQL 데이터베이스에서 KPI 관련 데이터를 읽기 전용으로 안전하게 가져올 수 있어야 합니다.','5종의 통계 API가 정상적으로 데이터를 반환해야 합니다.','추가 개발되는 통계 API들도 MSSQL 읽기 전용 정책을 준수해야 합니다.'],
+    { id:'R-DATA01', title:'데이터 파이프라인 (배치·마트)', status:'done', prio:'high',
+      desc:'CRM(MSSQL) 직결 조회 구조를 Postgres 마트 기반으로 전환했습니다. 매일 03시 배치가 CRM을 읽어 마트에 적재하고, 화면은 마트만 조회합니다. CRM 접근은 배치 시점으로 국한됩니다.',
+      ac:['모든 화면 조회가 Postgres 마트만 참조해야 합니다.','CRM 접근은 배치 시점에만 발생해야 합니다.','배치를 여러 번 실행해도 결과가 같아야 합니다(멱등).','확정된 과거 연도 값이 배치로 덮어써지지 않아야 합니다.'],
       features:[
-        { id:'F-FPUAHF', title:'MSSQL 데이터 연결 상태 모니터링', status:'todo', prio:'high', desc:'MSSQL 데이터베이스와의 연결 상태를 실시간으로 모니터링하여 데이터 연동 이상 징후를 조기에 감지하고 알림 기능을 제공합니다.', ac:['연결 끊김 시 알림이 발생한다.','연결 상태가 대시보드에 표시된다.'] },
-        { id:'F-ENCPKE', title:'읽기 전용 데이터 접근 권한 제어', status:'todo', prio:'high', desc:'모든 통계 쿼리를 readOnly 트랜잭션으로 강제하고 INSERT/UPDATE/DELETE를 원천 차단합니다.', ac:['통계 서비스에 @Transactional(readOnly=true)가 적용된다.','쓰기 시도가 차단된다.'] },
+        { id:'F-DAT001', title:'일일 배치 · 마트 적재', status:'done', prio:'high', desc:'매일 03시 전일(D-1) 분을 적재하고, 예약통계는 오전 10시에 한 번 더 재실행해 콜센터 늦반영을 흡수합니다. 집계 마트는 UPSERT, 리스트 마트는 DELETE+INSERT 로 멱등성을 확보합니다.', ac:['D-1 데이터가 매일 자동 적재된다.','재실행해도 중복 행이 생기지 않는다.'] },
+        { id:'F-DAT002', title:'확정값 보호 (시드 · 잠금)', status:'done', prio:'high', desc:'2024·2025 레거시 확정값과 2026 상반기 골든 시드를 배치가 덮어쓰지 못하도록 min-year 가드와 기간 잠금을 둡니다.', ac:['과거 확정 연도는 수동 실행으로도 덮어써지지 않는다.','잠긴 기간은 배치가 건너뛴다.'] },
+        { id:'F-DAT003', title:'관리자 재적재 · 실행 이력', status:'done', prio:'high', desc:'기간과 도메인을 지정해 수동 재적재할 수 있고, 실행 이력과 마지막 적재 시각을 조회할 수 있습니다. 관리자 화면(데이터 배치 관리)에서 확인합니다.', ac:['기간·도메인 지정 재적재가 가능하다.','실행 이력에서 성공/실패와 원인을 확인할 수 있다.'] },
+        { id:'F-DAT004', title:'배치 실패 알림', status:'done', prio:'high', desc:'배치 실패 시 실행 이력에 원인을 남기고 Slack 으로 자동 통보합니다.', ac:['실패 시 Slack 알림이 발송된다.','실패 원인이 이력에 기록된다.'] },
+        { id:'F-DAT005', title:'읽기 전용 원본 접근', status:'done', prio:'high', desc:'CRM 은 SELECT 전용으로만 접근하며, 통계 조회는 readOnly 트랜잭션으로 강제됩니다.', ac:['원본에 대한 쓰기 시도가 차단된다.'] },
+        { id:'F-DAT006', title:'마트 대 원본 값 대사 자동화', status:'todo', prio:'med', desc:'마트 값과 원본 직결 값을 자동으로 대조하는 검증이 아직 없습니다. 현재는 도메인별 대사 엔드포인트로 수동 확인합니다.', ac:['정기적으로 마트와 원본 값 차이를 자동 검출한다.'] },
         { id:'F-STAT03', title:'통계 API 상태 및 응답 모니터링', status:'todo', prio:'med', desc:'각 통계 API의 응답 시간과 성공률을 모니터링합니다.', ac:['API별 응답시간·성공률이 수집된다.'] },
+      ] },
+    { id:'R-RPT001', title:'월간 · 주차 레포트', status:'done', prio:'high',
+      desc:'병원 월간보고(수기 엑셀)를 대체하는 레포트 화면입니다. 28개 도표를 월간과 주차 두 축으로 제공하며, 당해연도는 운영 DB 라이브, 전년·전전년은 레거시 확정값을 씁니다.',
+      ac:['월간보고 28개 도표를 재현해야 합니다.','같은 도표를 주차 축으로도 볼 수 있어야 합니다.','3개년 비교가 가능해야 합니다.'],
+      features:[
+        { id:'F-RPT001', title:'월간 레포트', status:'done', prio:'high', desc:'예약·검사유입·검사수·비율·수술·외래 등 28개 도표를 월별로 제공합니다.', ac:['28개 도표가 월별로 렌더링된다.','당해·전년·전전년 3개년이 비교된다.'] },
+        { id:'F-RPT002', title:'주차 레포트', status:'done', prio:'high', desc:'월간과 같은 도표를 ISO 8601 연간 주차(월~일) 축으로 제공합니다. 전체 주차와 월별 주차를 선택할 수 있습니다.', ac:['ISO 주차 기준으로 집계된다.','일별 합계가 월별 값과 일치한다.'] },
+        { id:'F-RPT003', title:'고객분류별 검사수 도표', status:'todo', prio:'low', desc:'군인·기업 B2B 등 고객 분류별 검사수 도표는 레거시 표에도 없어 신규 정의가 필요합니다.', ac:['분류 기준이 확정되고 도표가 추가된다.'] },
+      ] },
+    { id:'R-LIST01', title:'명단 리스트', status:'done', prio:'high',
+      desc:'집계 숫자의 근거가 되는 개별 명단 화면입니다. 숫자가 맞지 않을 때 원인을 추적하는 경로이며, 리스트 행 수와 집계 지표가 일치하도록 모집단을 맞춰 두었습니다.',
+      ac:['예약·검사·수술·외래 명단을 기간으로 조회할 수 있어야 합니다.','리스트 건수가 대응 집계 지표와 일치해야 합니다.','CSV 로 내보낼 수 있어야 합니다.'],
+      features:[
+        { id:'F-LST001', title:'예약자 리스트', status:'done', prio:'high', desc:'등록일 기준 예약 명단(채널·상담사·의사·메모). 홈페이지 온라인 예약은 레거시 홈페이지 소스를 별도 화면으로 제공합니다.', ac:['등록일 기준으로 조회된다.','예약 종합 건수와 행 수가 일치한다.'] },
+        { id:'F-LST002', title:'검사자 리스트', status:'done', prio:'high', desc:'시력교정 검사자, 백내장 검사자, 그리고 둘을 통합한 전체 검사자 리스트를 제공합니다.', ac:['세 화면이 같은 모집단 정의를 공유한다.'] },
+        { id:'F-LST003', title:'수술자 · 외래 리스트', status:'done', prio:'med', desc:'시력교정·백내장 수술자 명단과 외래 내원 명단을 제공합니다.', ac:['수술 건수·외래수 지표와 정합한다.'] },
+        { id:'F-LST004', title:'CSV 내보내기', status:'done', prio:'med', desc:'리스트 화면 공통 툴바에서 CSV 로 내보냅니다. 개인정보가 원문으로 포함되므로 취급에 주의가 필요합니다.', ac:['조회 결과가 CSV 로 저장된다.'] },
       ] },
     { id:'R-OPS001', title:'운영·마케팅 통계 (확장)', status:'todo', prio:'med',
       desc:'마케팅·해외 환자·취소/부도·객단가 및 기타 운영 지표 화면입니다. (설계 예정)',
@@ -631,7 +596,8 @@
         { id:'F-OPS001', title:'마케팅 유입·효율 / 해외 환자', status:'todo', prio:'med', desc:'채널별 마케팅 유입과 효율, 해외 환자 유입·상담·수술 핵심 지표를 제공합니다.', ac:['채널별 유입·효율이 비교된다.'] },
         { id:'F-OPS002', title:'예약취소율 · 부도율', status:'todo', prio:'med', desc:'예약 취소 비율과 노쇼(부도) 발생 비율·패턴을 추적합니다.', ac:['취소율·부도율이 기간별로 표시된다.'] },
         { id:'F-OPS003', title:'객단가', status:'todo', prio:'low', desc:'환자당 평균 매출과 기간별 객단가 흐름을 정리합니다.', ac:['객단가가 기간별로 계산된다.'] },
-        { id:'F-OPS004', title:'기타 운영 통계 9종', status:'todo', prio:'low', desc:'드림렌즈·B2B 매출, 직원 포인트, PRP 시술율, 재수술율, 당일OP 비율, 지정의 수술 비율, 내원동기별 비중, 일일 접수/응대 건수.', ac:['항목별 지표 화면이 제공된다.'] },
+        { id:'F-OPS004', title:'매출 화면 (B2B · 드림렌즈 장부)', status:'done', prio:'med', desc:'B2B 매출은 마트 기반 통계로, 드림렌즈 장부는 원천이 없어 화면에서 직접 입력하는 CRUD 표로 제공합니다.', ac:['B2B 매출이 월별로 조회된다.','드림렌즈 장부를 화면에서 추가·수정·삭제할 수 있다.'] },
+        { id:'F-OPS005', title:'기타 운영 통계 7종', status:'todo', prio:'low', desc:'직원 포인트, PRP 시술율, 재수술율, 당일OP 비율, 지정의 수술 비율, 내원동기별 비중, 일일 접수/응대 건수.', ac:['항목별 지표 화면이 제공된다.'] },
       ] },
   ];
   const STATUS = { todo:['todo','To Do'], prog:['prog','In Progress'], done:['done','Done'] };
@@ -672,18 +638,47 @@
   const WF = [
     { key:'login', label:'로그인' },
     { key:'dash', label:'KPI 종합 대시보드' },
+    // ── Report
+    { key:'weekly-report', label:'주차 레포트', stats:true },
+    { key:'monthly-report', label:'월간 레포트', stats:true },
+    // ── 예약
     { key:'intake-conversion', label:'유입(검사예약)', stats:true },
     { key:'reservation', label:'예약 건수', stats:true },
-    { key:'examination', label:'검사 건수', stats:true },
-    { key:'consultation-rate', label:'상담 전환율', stats:true },
+    { key:'reservation-overall', label:'예약 종합', stats:true },
+    { key:'reservation-stats-system', label:'예약통계_시력교정', stats:true },
+    { key:'reservation-stats-cataract', label:'예약통계_백내장', stats:true },
+    { key:'reservation-list', label:'예약자 리스트', stats:true },
+    { key:'reservation-list-homepage', label:'예약자 리스트_홈페이지', stats:true },
+    // ── 검사
+    { key:'overall-exam', label:'월별 검사자 종합지표', stats:true },
+    { key:'overall-exam-weekly', label:'주간 검사자 종합지표', stats:true },
+    { key:'exam-list', label:'검사자 리스트', stats:true },
+    { key:'cataract-exam-list', label:'백내장 검사자 리스트', stats:true },
+    { key:'all-exam-list', label:'전체 검사자 리스트', stats:true },
+    { key:'eoeis-checkup', label:'아이리더 검사통계', stats:true },
+    { key:'examination', label:'시술별', stats:true },
+    { key:'procedure-exam', label:'검사건수', stats:true },
+    // ── 전환&성공률
+    { key:'consultation-rate', label:'전환율', stats:true },
+    { key:'cataract-reservation-rate', label:'예약률', stats:true },
+    { key:'stop-rate', label:'중단률', stats:true },
+    { key:'stop-reason', label:'중단 사유', stats:true },
+    // ── 수술
+    { key:'surgery-list', label:'수술자 리스트', stats:true },
     { key:'surgery', label:'수술 건수', stats:true },
     { key:'surgery-ratio', label:'주요 수술별 비중', stats:true },
+    { key:'surgery-composition', label:'수술별 비중', stats:true },
+    // ── 외래
+    { key:'outpatient-list', label:'외래수 리스트', stats:true },
+    { key:'outpatient-count', label:'외래수', stats:true },
+    // ── 마케팅 / 취소&부도 / 객단가
     { key:'overseas', label:'해외 환자 관련 지표', stats:true },
-    { key:'marketing', label:'마케팅 유입 및 효율', stats:true },
+    { key:'marketing', label:'마케팅 유입 및 효율 지표', stats:true },
     { key:'cancel-rate', label:'예약취소율', stats:true },
     { key:'no-show-rate', label:'부도율', stats:true },
     { key:'unit-price', label:'객단가', stats:true },
-    { key:'dreamlens-revenue', label:'드림렌즈 매출', stats:true },
+    // ── 기타
+    { key:'dreamlens-revenue', label:'드림렌즈 장부', stats:true },
     { key:'b2b-revenue', label:'B2B 매출', stats:true },
     { key:'staff-point', label:'직원 포인트', stats:true },
     { key:'prp-rate', label:'PRP 시술율', stats:true },
@@ -692,6 +687,8 @@
     { key:'designated-doctor', label:'지정의 수술 비율', stats:true },
     { key:'visit-reason', label:'내원동기별 비중', stats:true },
     { key:'daily-reception', label:'일일 접수/응대 건수', stats:true },
+    // ── 관리자
+    { key:'batch-management', label:'데이터 배치 관리', stats:true },
   ];
   // 페이지별 실제 조회 SQL — node_crm(softcrm_NODE)의 bcrm 메뉴 routes/*.js에서 추출.
   // JSON 데이터 블록(#wfSqlData)에서 로드. 파싱 실패해도 placeholder로 안전하게 동작.
@@ -702,6 +699,29 @@
   // 페이지별 화면 레이아웃 사양 (frontend/src/pages 실제 컴포넌트 분석 기준).
   // 8개 미구현 페이지(StatsPlaceholderPage)는 SQL 기반 추정 레이아웃.
   const SPEC = {
+    'monthly-report': { toggle:'', kpis:[], charts:[{type:'line',title:'예약 종합·콜·온라인'},{type:'line',title:'검사유입·세그먼트'},{type:'line',title:'검사수·원데이'},{type:'line',title:'비율(예약률·상담성공률·중단율)'},{type:'line',title:'수술(시력교정·백내장·재수술)'},{type:'line',title:'외래수'}], table:true },
+    'weekly-report': { toggle:'전체/월별', kpis:[], charts:[{type:'line',title:'ISO 주차축 — 월간과 같은 도표'},{type:'line',title:'주차별 추이'}], table:true },
+    'reservation-overall': { toggle:'월별/연도별', kpis:['종합','콜','온라인'], charts:[{type:'line',title:'예약 종합 추이'},{type:'line',title:'콜(인콜·아웃콜)'},{type:'line',title:'온라인(홈페이지·네이버·카카오)'}] },
+    'reservation-stats-system': { toggle:'', kpis:['총예약','내원','부도','취소'], charts:[], table:true },
+    'reservation-stats-cataract': { toggle:'', kpis:['총예약','내원','부도','취소'], charts:[], table:true },
+    'reservation-list': { toggle:'', kpis:['조회건수'], charts:[], table:true },
+    'reservation-list-homepage': { toggle:'', kpis:['조회건수'], charts:[], table:true },
+    'overall-exam': { toggle:'', kpis:[], charts:[], table:true },
+    'overall-exam-weekly': { toggle:'', kpis:[], charts:[], table:true },
+    'exam-list': { toggle:'', kpis:['조회건수'], charts:[], table:true },
+    'cataract-exam-list': { toggle:'', kpis:['총건수','백내장검사수','백내장','중단','노안/FU','기타'], charts:[], table:true },
+    'all-exam-list': { toggle:'', kpis:['조회건수','검사수'], charts:[], table:true },
+    'eoeis-checkup': { toggle:'', kpis:['총 검사건수','장비 수','가중합계'], charts:[], table:true },
+    'procedure-exam': { toggle:'월별/연도별', kpis:['검사수','원데이 검사'], charts:[{type:'bar',title:'검사수'},{type:'bar',title:'원데이 검사'}] },
+    'cataract-reservation-rate': { toggle:'월별/연도별', kpis:['백내장 예약률','시력교정 예약률'], charts:[{type:'line',title:'예약률 추이'}] },
+    'stop-rate': { toggle:'월별/연도별', kpis:['중단수','중단률'], charts:[{type:'line',title:'중단률 추이'}] },
+    'stop-reason': { toggle:'월별/연도별', kpis:[], charts:[{type:'stacked',title:'중단 사유 7버킷'},{type:'donut',title:'사유 비중'}] },
+    'surgery-list': { toggle:'', kpis:['조회건수'], charts:[], table:true },
+    'surgery-composition': { toggle:'주차/월별', kpis:['시력교정','백내장','재수술'], charts:[{type:'stacked',title:'수술별 비중'}], table:true },
+    'outpatient-list': { toggle:'', kpis:['조회건수'], charts:[], table:true },
+    'outpatient-count': { toggle:'월별/연도별', kpis:['외래수'], charts:[{type:'line',title:'외래수 월별 추이'}] },
+    'dreamlens-revenue': { toggle:'', kpis:['합계'], charts:[], table:true },
+    'batch-management': { toggle:'', kpis:['최근 실행','성공/실패'], charts:[], table:true },
     'reservation': { toggle:'월별/연도별', kpis:['전체 예약건수','수술 예약수','외래 예약수','드림렌즈 예약수'], charts:[{type:'bar',title:'유형별 비교'},{type:'stacked',title:'구성비'},{type:'donut',title:'비율'},{type:'bar',title:'건수 + 증감률'}] },
     'examination': { toggle:'월별/연도별', kpis:['전체 검사건수','시력교정','백내장','드림렌즈','외래'], charts:[{type:'bar',title:'검사 유형별 비교'},{type:'line',title:'월별 검사 추이'}] },
     'intake-conversion': { toggle:'월별/연도별', kpis:['전체 유입','인콜','아웃콜','카카오톡','네이버','홈페이지'], charts:[{type:'bar',title:'채널별 비교'},{type:'stacked',title:'구성비'},{type:'donut',title:'비율'},{type:'bar',title:'건수 + 증감률'}] },

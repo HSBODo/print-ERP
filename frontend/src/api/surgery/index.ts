@@ -8,6 +8,9 @@ const surgeryMonthlyItemSchema = z.object({
   year: z.number(), month: z.number(),
   lasek: z.number(), lasik: z.number(), smile: z.number(), smilePro: z.number(),
   icl: z.number(), tIcl: z.number(), kpl: z.number(), tKpl: z.number(), viva: z.number(),
+  // presbyond: 노안 레이저 / piolPatients: PIOL DISTINCT 환자 수(유형별 합산 아님).
+  // 마트 재적재 전 옛 응답과의 호환을 위해 optional.
+  presbyond: z.number().optional(), piolPatients: z.number().optional(),
   catMulti: z.number(), catMono: z.number(), catEdof: z.number(),
   xtra: z.number().optional(), waveVision: z.number().optional(), monoVision: z.number().optional(),
   contra: z.number().optional(), personal: z.number().optional(),
@@ -25,6 +28,9 @@ const surgeryDailyItemSchema = z.object({
   date: z.string(), // YYYY-MM-DD
   lasek: z.number(), lasik: z.number(), smile: z.number(), smilePro: z.number(),
   icl: z.number(), tIcl: z.number(), kpl: z.number(), tKpl: z.number(), viva: z.number(),
+  // presbyond: 노안 레이저 / piolPatients: PIOL DISTINCT 환자 수(유형별 합산 아님).
+  // 마트 재적재 전 옛 응답과의 호환을 위해 optional.
+  presbyond: z.number().optional(), piolPatients: z.number().optional(),
   catMulti: z.number(), catMono: z.number(), catEdof: z.number(),
   xtra: z.number().optional(), waveVision: z.number().optional(), monoVision: z.number().optional(),
   contra: z.number().optional(), personal: z.number().optional(),

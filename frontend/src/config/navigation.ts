@@ -9,7 +9,7 @@ import { getStatsPageById } from './statsPages'
 
 export { getStatsPageById, statsPages, type StatsPageDefinition } from './statsPages'
 
-export type MenuStatus = 'complete' | 'backend-only' | 'pending'
+export type MenuStatus = 'complete' | 'frontend-only' | 'backend-only' | 'pending'
 
 /**
  * 사이드바 트리의 단일 노드. 재귀적으로 children 을 가질 수 있어 다단(3단) 표현이 가능하다.
@@ -35,6 +35,7 @@ export type MenuLink = MenuItem
 /**
  * 메뉴별 구현 상태 맵.
  *   complete     — 백엔드 API + 프론트 페이지 모두 연결 완료 (회색 기본)
+ *   frontend-only — 프론트 UI만 구현, 목업 데이터로 운영 미리보기 가능 (파랑)
  *   backend-only — 백엔드 API만 완료, 프론트 페이지는 placeholder (주황)
  *   pending      — 백엔드·프론트 모두 미착수 (빨강)
  */
@@ -49,12 +50,17 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'reservation-stats-system': 'complete',
   'reservation-stats-cataract': 'complete',
   'reservation-list': 'complete',
+  'reservation-channel': 'complete',
+  'channel-profit': 'complete',
+  // 조회가 없는 정적 분석 문서다. 수치가 본문에 박혀 있어 API 없이도 완결이라 'complete'.
+  'channel-analysis': 'complete',
   // 소스(legacy.datasource.url) 미설정 환경에서는 503 — 다른 통계 페이지가 데이터소스 부재 시
   // 503 을 주는 것과 동일한 패턴이라 'complete' 가 맞다(상태는 구현 완료 여부를 뜻한다).
   'reservation-list-homepage': 'complete',
   'exam-list': 'complete',
   'cataract-exam-list': 'complete',
   'all-exam-list': 'complete',
+  'eoeis-checkup': 'complete',
   'examination': 'complete',
   'procedure-exam': 'complete',
   'consultation-rate': 'complete',
@@ -101,6 +107,8 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'consultation-rate',
   'exam-list',
   'cataract-exam-list',
+  'eoeis-checkup',
+  'surgery',
 ])
 export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
 
@@ -175,7 +183,7 @@ const rawMenuItems: MenuItem[] = [
         href: '#',
         icon: Microscope,
         kind: 'group',
-        children: kids('overall-exam', 'overall-exam-weekly', 'exam-list', 'cataract-exam-list', 'all-exam-list', 'examination', 'procedure-exam'),
+        children: kids('overall-exam', 'overall-exam-weekly', 'exam-list', 'cataract-exam-list', 'all-exam-list', 'eoeis-checkup', 'examination', 'procedure-exam'),
       },
       {
         id: 'consultation',
@@ -236,8 +244,10 @@ const rawMenuItems: MenuItem[] = [
     href: '#',
     icon: Megaphone,
     kind: 'section',
-    // 아직 페이지 없음. 섹션은 자식이 비어도 유지된다.
-    children: [],
+    // 예약 퍼널은 유입 채널 효율을 보는 화면이라 예약보다 마케팅에 가깝다(2026-08-06 이동).
+    // 채널별 수익성은 그 짝이다 — 퍼널이 '얼마나 오나'(전환 축), 이쪽이 '얼마 버나'(가치 축).
+    // 해외 환자·마케팅 효율(overseas·marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
+    children: kids('reservation-channel', 'channel-profit', 'channel-analysis'),
   },
   {
     id: 'admin-section',

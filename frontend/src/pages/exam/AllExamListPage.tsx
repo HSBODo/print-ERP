@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useAllExamList } from '@/hooks/exam/useAllExamList'
@@ -11,6 +12,8 @@ import {
   compareSortValue,
   buildPaginationItems,
   formatCount,
+  GROUP_FILTERS,
+  matchesExamGroup,
   PAGE_SIZE_OPTIONS,
   QUICK_RANGES,
   previousMonthValue,
@@ -34,7 +37,6 @@ const DEFAULT_TO = toMonthEnd(PREV_MONTH)
  * 레포트 검사유입·검사수 수치와 정합한다. (상세 컬럼은 기존 개별 리스트 유지)
  */
 
-const GROUP_FILTERS = ['전체', '시력교정', '드림렌즈', '백내장'] as const
 const ONEDAY_FILTERS = ['전체', '원데이', '일반'] as const
 const INTRO_FILTERS = ['전체', '일반', '고객소개', '직원소개'] as const
 const JOB_FILTERS = ['전체', '직장인', '학생', '기타'] as const
@@ -76,7 +78,7 @@ export function AllExamListPage() {
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase()
     return rows.filter((r) => {
-      if (examGroup !== '전체' && r.examGroup !== examGroup) return false
+      if (!matchesExamGroup(r, examGroup)) return false
       if (oneDayFilter !== '전체' && r.examType !== oneDayFilter) return false
       if (introType !== '전체' && r.introType !== introType) return false
       if (jobBucket !== '전체' && r.jobBucket !== jobBucket) return false
@@ -220,17 +222,14 @@ export function AllExamListPage() {
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
           </div>
           {draftPeriodMode === 'monthly' ? (
-            <input
-              aria-label="검사 기준 월"
-              type="month"
+            <MonthPicker
+              ariaLabel="검사 기준 월"
               value={toMonthValue(draftFrom)}
-              onChange={(e) => {
-                if (!e.target.value) return
+              onChange={(v) => {
                 setActiveQuickRange(null)
-                setDraftFrom(toMonthStart(e.target.value))
-                setDraftTo(toMonthEnd(e.target.value))
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
               }}
-              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           ) : (
             <>

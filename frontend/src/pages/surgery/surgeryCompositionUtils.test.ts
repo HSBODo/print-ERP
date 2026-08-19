@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { EMPTY, buildSurgeryRows, monthRange, queryRange, type Cell } from './surgeryCompositionUtils'
+import { COLS, EMPTY, buildSurgeryRows, monthRange, queryRange, type Cell } from './surgeryCompositionUtils'
 
 const cell = (overrides: Partial<Cell> = {}): Cell => ({ ...EMPTY, ...overrides })
 
@@ -60,6 +60,49 @@ describe('buildSurgeryRows', () => {
     expect(tiers[0]).toBe('month')
     expect(tiers.filter((t) => t === 'week').length).toBeGreaterThan(0)
     expect(tiers.filter((t) => t === 'day').length).toBe(lastDay)
+  })
+})
+
+describe('COLS — PIOL 합계와 프레스비욘드', () => {
+  // 헤더 leaf 순서와 1:1. PIOL 합계 = 5번째(0-based 4), 프레스비욘드 = VIVA 다음(0-based 10).
+  const PIOL_TOTAL = 4
+  const PRESBYOND = 10
+
+  it('PIOL 합계는 유형별 합산이 아니라 piolPatients 를 쓴다', () => {
+    // 유형별은 환자당 대표유형 1건만 세므로 정상적으로는 합계와 일치한다(41+68+16+22+1=148).
+    // 여기서는 화면이 자체 합산을 하지 않는다는 것 자체를 고정한다 — 일부러 어긋나게 준 값.
+    const d = cell({
+      icl: 44, tIcl: 76, kpl: 19, tKpl: 28, viva: 1,
+      piolPatients: 148,
+      visionPatients: 296,
+    })
+    const rendered = COLS[PIOL_TOTAL].render(d)
+    expect(rendered).toContain('148')
+    expect(rendered).not.toContain('168') // 44+76+19+28+1 로 더하면 안 된다
+  })
+
+  it('대표유형 기준에서는 유형별 합이 PIOL 합계와 일치한다 (2026-07 실측)', () => {
+    const d = cell({
+      icl: 41, tIcl: 68, kpl: 16, tKpl: 22, viva: 1,
+      piolPatients: 148,
+      visionPatients: 784,
+    })
+    expect(d.icl + d.tIcl + d.kpl + d.tKpl + d.viva).toBe(d.piolPatients)
+    expect(COLS[PIOL_TOTAL].render(d)).toContain('148')
+  })
+
+  it('PIOL 합계는 유형별 값이 0이어도 piolPatients 를 그대로 보여준다', () => {
+    const d = cell({ piolPatients: 12, visionPatients: 100 })
+    expect(COLS[PIOL_TOTAL].render(d)).toContain('12')
+  })
+
+  it('프레스비욘드는 PIOL 밖의 독립 컬럼으로 시력교정 대비 비중을 낸다', () => {
+    const d = cell({ presbyond: 5, visionPatients: 100 })
+    expect(COLS[PRESBYOND].render(d)).toBe('5 (5%)')
+  })
+
+  it('프레스비욘드가 없는 날은 - 로 표시한다', () => {
+    expect(COLS[PRESBYOND].render(cell({ visionPatients: 100 }))).toBe('-')
   })
 })
 

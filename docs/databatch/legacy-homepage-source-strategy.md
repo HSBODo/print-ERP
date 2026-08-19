@@ -1,19 +1,34 @@
 # 예약자 리스트_홈페이지 소스 접근 전략
 
-> 작성일: 2026-07-15
-> 상태: **1단계 완료** (SQLite/MariaDB 직결) · **2단계 미착수** (마트 배치 이관)
+> 작성일: 2026-07-15 · 최신화: 2026-08-05
+> 상태: **1단계 완료**(SQLite/MariaDB 직결) · **2단계도 완료**(마트 배치 이관 — §3)
 > 관련 커밋: `212ea93` (초기 SQLite 스냅샷 도입) · `b61ff05` (MariaDB 직결 추가, 2026-07-15)
-> 배경 문서: [`strategy.md`](./strategy.md) · [`mart-menu-mapping.md`](./mart-menu-mapping.md)
+> 배경 문서: [`strategy.md`](./strategy.md) (§11 마트↔메뉴 매핑 · §12 배치 실행 규칙 포함)
 
 ---
+
+> ## ✅ 2단계 이관 완료 — §3 은 계획이 아니라 이력이다
+>
+> 아래 §3 이 "미착수 계획"으로 쓰여 있으나 **실제로는 구현됐다**(2026-08-05 코드 확인).
+> - `sql/mart/V21__mart_list_reservation_homepage.sql` — 마트 테이블 존재
+> - `batch/job/ReservationListHomepageMartJob` + `…Writer` — 배치 잡 존재, **도메인에서 가장 먼저 실행**
+>   (예약 종합 계산이 이 마트를 읽기 때문)
+> - `sql/mart/{delete-list-reservation-homepage-range, insert-list-reservation-homepage, select-list-reservation-homepage*}.sql`
+>
+> **환경변수도 개명됐다**: `LEGACY_DATASOURCE_URL` → **`HOMEPAGE_DATASOURCE_URL`**.
+> 클래스도 `LegacyDataSourceConfig`/`LegacyDialect` → **`HomepageDataSourceConfig`/`HomepageSourceDialect`**.
+> 아래 본문의 `LEGACY_*` 표기는 옛 이름이니 그대로 쓰지 말 것.
+>
+> 현행 동작(실행 순서·소스 미설정 시 skip·delete+insert 범위)은
+> [`strategy.md`](./strategy.md) **§12-2-1 · §12-4-2** 가 정본이다.
 
 ## 0. TL;DR
 
 - 홈페이지 온라인 예약 데이터는 대시보드 DB(Postgres·MSSQL)와 **다른 시스템**(레거시 홈페이지 MariaDB `bseyecom_db.TBL_COUNSEL`).
-- 현재 구현: `LEGACY_DATASOURCE_URL` 하나로 SQLite 스냅샷 / MariaDB 직결을 URL 접두사로 자동 스위칭.
-- **앱이 조회 시점에 원본 DB를 직접 쿼리** — 아직 마트 배치 경유 아님.
-- 커밋 저자도 명시: "실증용. **운영 실시간이 필요하면 마트 ETL 쪽이 맞다**."
-- 다음 단계 계획: MariaDB → 배치 → `mart_list_reservation_homepage` → 앱은 마트만 조회 (표준 마트 패턴 정렬).
+- 소스 지정: `HOMEPAGE_DATASOURCE_URL` 하나로 SQLite 스냅샷 / MariaDB 직결을 URL 접두사로 자동 스위칭.
+- **현재는 배치가 MariaDB 를 읽어 `mart_list_reservation_homepage` 에 적재하고, 앱은 마트를 조회한다.**
+  조회 시점 원본 직결은 더 이상 표준 경로가 아니다.
+- 커밋 저자의 판단대로 됐다: "실증용. **운영 실시간이 필요하면 마트 ETL 쪽이 맞다**."
 
 ---
 
@@ -82,10 +97,14 @@
 
 ### 2-2. 핵심 파일
 
-| 역할 | 파일 |
+> ⚠️ 아래 파일·환경변수 이름은 **2026-07-15 당시**의 것이다. 현행 이름은 문서 상단 박스 참조
+> (`LegacyDialect` → `HomepageSourceDialect`, `LegacyDataSourceConfig` → `HomepageDataSourceConfig`,
+> `LEGACY_DATASOURCE_URL` → `HOMEPAGE_DATASOURCE_URL`).
+
+| 역할 | 파일 (현행 이름) |
 |---|---|
-| 판별 enum | `common/config/LegacyDialect.java` |
-| DS 설정 | `common/config/LegacyDataSourceConfig.java` |
+| 판별 enum | `common/config/HomepageSourceDialect.java` |
+| DS 설정 | `common/config/HomepageDataSourceConfig.java` |
 | Repository | `reservation/repository/ReservationListHomepageRepository.java` |
 | Service | `reservation/service/ReservationListHomepageService.java` |
 | Controller | `reservation/controller/ReservationListHomepageController.java` |
@@ -121,9 +140,22 @@
 
 ### 2-4. 회귀 검증
 
-- `2026-06-01 ~ 2026-06-30 → 206건`. 소스가 SQLite → MariaDB 로 바뀌어도 동일.
+**기준값: `from=2026-06-01` / `to=2026-06-30` → 206건.** 운영 화면 동일 조건과 같은 값이다.
+
+- 소스가 SQLite → MariaDB 로 바뀌어도 206 으로 동일했다(SQL 재작성이 정확하다는 증거).
 - `2026-07-11 ~ 2026-07-15 → 34건`. 스냅샷이면 0건인 구간 = 실시간 동작 증거 (스냅샷은 2026-07-10 16:15:55 고정).
 - 응답 계약: `{rows, lastRegDate, live}` · `live=true` · `lastRegDate=2026-07-15 15:22:57`.
+
+**숫자가 틀리면 아래를 의심할 것** — 증상별로 원인이 갈린다.
+
+| 증상 | 원인 |
+|---|---|
+| **753건** | `category='COUNSELONLINE'` 필터 누락 (다른 상담 채널이 섞임) |
+| **199건** | 종료일 반개구간 누락 → 종료일 당일이 통째로 빠짐 |
+| 7월 조회가 적음 | 스냅샷 범위 초과 (정상. 경고 배너 확인) |
+
+`ReservationListHomepageSqlResourceTest` 가 SQL 형태를, `ReservationListHomepagePage.test.tsx` 가
+화면 동작을 고정한다.
 
 ### 2-5. 알려진 한계 — 커밋 저자 명시
 
@@ -131,9 +163,44 @@
 > 터널 구성(사이드카)은 docker-compose.override.yml(gitignored)에 있다. 로컬 실증용이며 **운영에 이 구조를 쓰지 말 것** — 터널이 끊기면 이 메뉴만 503 이고 상시성 보장 주체가 없다. **운영 실시간이 필요하면 마트 ETL 쪽이 맞다.**
 > H2 콘솔이 켜져 있으면 레거시 DataSource 도 목록에 올라온다. 실시간 + H2 콘솔 ON 조합을 운영에 올리지 말 것.
 
+### 2-6. ⚠️ `DefaultDataSourceConfig` — 지우지 말 것
+
+`common/config/DefaultDataSourceConfig.java` 는 **버그 수정**이다. 없으면 H2 프로파일에서 기동이 깨진다.
+
+- 원래 H2(프로파일 미지정)에서는 Spring Boot 의 `DataSourceAutoConfiguration` 이 primary DataSource 를 만들어줬다.
+- 그 auto-config 는 `@ConditionalOnMissingBean(DataSource.class)` — **DataSource 빈이 하나라도 생기면 통째로 물러난다.**
+- 홈페이지 DataSource 가 켜지자 SQLite 가 유일한 DataSource 가 되어 JPA 가 그걸 집어들고
+  `Unable to determine Dialect for SQLite 3.47` 로 기동 실패했다.
+- 그래서 다른 두 프로파일(`mssql`/`postgres-mart`)과 동일하게 primary 를 명시했다.
+
+### 2-7. 화면 — 레거시와 의도적으로 다르게 만든 부분
+
+레거시 관리자 화면 `counsel/online_list.php` 를 **조회 전용**으로 이관하면서 바꾼 것:
+
+| 항목 | 결정 |
+|---|---|
+| 삭제·체크박스 | **제외** — 조회 전용. 쓰기 액션은 옮기지 않았다 |
+| CSV 내보내기 | **제공** — 다른 리스트 화면과 동일. 개인정보가 원문으로 나가는 점 유의 |
+| 검색 | 이름·**휴대폰번호** 통합 단일 입력. 레거시는 휴대폰 검색이 안 돼 운영 불편이 있었다 |
+| 개인정보 | **원문 그대로** 표시(레거시 화면과 동일). 마스킹 안 함 |
+| 스냅샷 경고 배너 | 신규 추가 — 레거시엔 없다. 실시간 소스면 초록 "실시간" 표시로 대체 |
+| 필터 UI | 레거시 4블록 라디오 폼 대신 대시보드 리스트 공통 툴바 |
+| 필터 적용 시점 | 구분·예약구분·검색은 **즉시 반영**(클라 필터). `조회` 는 등록일 재조회 전용 |
+
+**레거시 동작을 그대로 따른 부분** — 바꾸면 건수가 틀어진다:
+
+- `del_tf='N'` 하드코딩 — 삭제건(281건)은 조회 대상 아님
+- `ORDER BY legacy_no DESC` — 등록일이 아니라 PK 역순
+- `No` 는 **총건수에서 1씩 감소**하는 표시용 번호(저장값 아님, 식별자는 `legacyNo`)
+- `진료구분=1`(59건)은 레거시에도 라벨이 없어 **빈칸**
+
+> ⚠️ **스냅샷일 때 조용한 실패 주의** — 조회 기간이 스냅샷을 넘으면 에러 없이 **건수가 모자라게** 나온다.
+> 화면이 `lastRegDate` 비교로 경고 배너를 띄운다. **이 동작을 지우지 말 것.**
+> 실시간에서는 천장이 없어 같은 비교가 거짓 경고가 되므로 `live` 플래그로만 끈다 — 배너 자체를 지우면 안 된다.
+
 ---
 
-## 3. 2단계 계획 — 마트 배치 이관 (미착수)
+## 3. 2단계 — 마트 배치 이관 ✅ **완료** (아래는 당시 계획서 원문)
 
 ### 3-1. 목표 구조
 
@@ -157,11 +224,11 @@ API → 프론트
 - 표준 마트 패턴(예약통계·수술·검사 등)과 동일한 구조.
 - 앱은 **마트만** 조회. MariaDB 접속은 배치 노드에만 국한.
 - SSH 터널 상시성은 배치 시점(하루 1~2회 · 짧게)만 필요 → 상시 운영 부담 해소.
-- `docs/databatch/mart-menu-mapping.md` §6 "새 메뉴 추가 표준" 절차와 일치.
+- `strategy.md` §11-6 "새 메뉴 추가 표준" 절차와 일치.
 
 ### 3-3. 구현 스케치
 
-**신규 마트 테이블** (`sql/mart/V21__reservation_list_homepage_mart.sql`)
+**신규 마트 테이블** (실제 파일명: `sql/mart/V21__mart_list_reservation_homepage.sql`)
 ```sql
 CREATE TABLE mart_list_reservation_homepage (
     legacy_no        INTEGER PRIMARY KEY,
@@ -215,20 +282,82 @@ CREATE INDEX idx_mart_list_reservation_homepage_reg_date
 - [ ] H2 콘솔은 `false` 로 고정 (`APP_H2_CONSOLE_ENABLED=false`)
 - [ ] `docker-compose.override.yml` 은 로컬 전용 (gitignored) — 운영엔 다른 방식 사용
 
-### 4-2. 2단계 이관 시 (마트)
+### 4-2. 2단계 이관 — ✅ 완료분
 
-- [ ] `V21__reservation_list_homepage_mart.sql` 작성 · `MartSchemaInitializer` 등록
-- [ ] `ReservationListHomepageMartJob` · `Writer` 추가 · `BatchOrchestrator` 배선
-- [ ] MariaDB SELECT SQL 을 배치용으로 재작성 (기간 파라미터 반개구간)
-- [ ] `ReservationListHomepageRepository` 를 마트 조회로 전환
-- [ ] `ReservationOverallStatsService` 에서 `Optional<>` · `orElseThrow` 제거
-- [ ] `legacy.datasource.url` 관련 조건 · SQL 두 세트 등 직결 잔재 정리
-- [ ] 회귀 테스트: 2026-06 → 206건 유지 검증
+- [x] `V21__mart_list_reservation_homepage.sql` 작성 · `MartSchemaInitializer` 등록
+- [x] `ReservationListHomepageMartJob` · `Writer` 추가 · `BatchOrchestrator` 배선 (RESERVATION 도메인 **최선두**)
+- [x] MariaDB SELECT SQL 을 배치용으로 재작성
+- [x] `ReservationListHomepageRepository` 를 마트 조회로 전환
+- [x] 환경변수·클래스 개명 (`LEGACY_*` → `HOMEPAGE_*`)
+- [ ] **직결 잔재 정리 미결** — SQLite/MariaDB 두 SQL 세트를 로컬 개발용으로 남길지 미정 (§3-4 결정 1)
 - [ ] 홈페이지 몫 재계산 후 `mart_reservation_overall_monthly.online` 일치 확인
 
 ---
 
-## 5. FAQ
+## 5. 온라인 예약 공식 (2026-06~) — 이 소스를 쓰는 이유
+
+> 구 `2026-07-15-예약자리스트_홈페이지-추가.md` §9 에서 옮겨왔다.
+> 이 화면이 단순 조회용이 아니라 **월간 레포트·예약 종합의 입력**이라는 점이 핵심이다.
+
+대상: `report/monthly#c-reservation-online` 차트.
+
+```
+2024·2025    : 온라인 = RESERVE_PATH ONLINE/APP(홈페이지) + NAVER(네이버)   ← 카카오 미포함 · V12 시드
+2026-01 ~ 05 : V24 골든 시드 (담당자 확정값 — 배치 write 차단)
+2026-06 ~    : 온라인 = 네이버(RSS 기준) + 카카오톡(해피톡) + 홈페이지(리스트 화면과 동일한 raw)
+               종합   = 콜 + 새 온라인
+```
+
+**2024·2025 는 안 건드린다**(V12 시드 + `min-year` 가드). **2026-01~05 도 V24 골든 시드로 고정**이라
+이 5개월은 예약통계 셀 오버라이드가 예약 종합·월간 레포트에 반영되지 않는다.
+**2026-06 부터 정의가 바뀐다** — 연도 비교 시 주의.
+
+### 5-1. 구성요소 3개 (서로 다른 DB)
+
+| 구성요소 | 소스 | SQL | 기준 |
+|---|---|---|---|
+| 네이버 | MSSQL `RESERVATION` | `reservation-overall/monthly-naver.sql` | RSS 의 '네이버 예약수'(CH16)와 동일 — **취소 제외, 정크제외 미적용** |
+| 카카오톡 | MSSQL `HappyTalk_*` | `reservation-overall/monthly-kakao.sql` | RSS 의 CH18 — `수술전`+`★신환`, 밀리초 dedup |
+| 홈페이지 | **이 문서의 소스** | `reservation-list-homepage/monthly-list-raw.sql` | 리스트 화면과 동일 — `EXAM_TYPE` 필터 없음, `COUNT(*)` (전 진료) |
+
+**세 소스가 서로 다른 DB라 SQL 조인이 불가능하다** → 합산은 `ReservationOverallStatsService` 에서 한다.
+
+### 5-2. 알아둘 것
+
+- **네이버 값은 기존 종합의 NAVER 집계와 일부러 다르다.** RSS 는 취소를 빼고 정크필터를 안 쓴다.
+  두 화면(월간 레포트 / 예약통계_시력교정)이 같은 숫자를 말하게 하는 게 이 정의의 전제다. **맞추려 하지 말 것.**
+- **카카오는 원래 의도적으로 빠져 있었다.** 사유는 "레거시 RSS 가 월마다 포함/미포함이 들쭉날쭉"이었고,
+  이제 마트가 직접 계산하므로 포함한다. 영향은 월 9~16건(1~3%).
+- **백내장은 원래도 안 들어왔다.** 종합/네이버는 `RESERVE_FLAG='M'`(시력교정)으로 이미 걸러진다.
+  ※ 홈페이지 백내장은 **2025-02 이후 0건**이라 최근 구간에서 이 필터는 미상 코드 `1` 만 걸러낸다.
+- **온전히 담지 못한 달은 `null`** — 0 으로 더하면 '조용히 작은 온라인 예약'이 된다.
+  판정(`coverageMonth`)은 소스와 무관하게 같다: **말일까지 담긴 달만 인정**한다.
+  단 2026-07 부터 **진행 중인 달은 부분값이라도 노출**하도록 완화됐다(커밋 `ceca8a0`).
+- **차트 라벨** `온라인 예약 (네이버·카카오·홈페이지)` 는 2026-06 부터 사실이 된다.
+  24·25 구간엔 카카오가 없어 라벨이 여전히 부정확하다 — 정의 전환 시점 표기를 붙일지 검토 필요.
+
+### 5-3. 2026-07-24 이력
+
+1. 홈페이지 몫을 `exam_type='5'` + `COUNT(DISTINCT phone)` 에서 **리스트 화면과 동일한 raw**
+   (전 진료 · `COUNT(*)`) 로 통일 — 예약 종합·월간 레포트·예약자 리스트_홈페이지 **세 화면이 같은
+   홈페이지 건수**를 참조하도록 정합.
+2. 오전에 컷오버를 2026-06 → 2026-01 로 앞당겼다가, 오후에 다시 2026-06 으로 복원.
+   2026-01~05 는 V24 골든 시드로 못 박기로 결정.
+
+### 5-4. 반영 절차 · 검증 한계
+
+공식만 고쳐선 값이 안 바뀐다. **배치를 2026 구간에 재실행**해야 마트가 갱신된다
+(`BatchAdminController` / `ReservationReconcileService`). 읽기 SQL·DDL 은 변경 없음.
+
+> ⚠️ **네이버·카카오 실측 미완.** SQL 형태와 합산 규칙만 테스트로 고정돼 있다
+> (`ReservationOverallSqlResourceTest`, `ReservationOverallStatsServiceTest`).
+> 홈페이지 월별 값만 실측했다(2026-06 → 202건).
+> **MSSQL 접속은 가능하므로** `monthly-naver.sql`·`monthly-kakao.sql` 을 prod 에 직접 돌려
+> 예약통계_시력교정 화면 수치와 대조할 수 있다. **공식 변경의 핵심인데 이 부분만 미검증이다.**
+
+---
+
+## 6. FAQ
 
 **Q. MariaDB 직결이 이미 있는데 왜 마트로 또 가야 하나요?**
 A. 커밋 저자가 실증용으로 명시한 상태입니다. 앱이 매 요청마다 SSH 터널로 원격 DB에 붙는 구조는 (1) 터널 상시성 부담, (2) 원본 DB에 부하 전가, (3) 다른 도메인(mart_reservation_overall_monthly 등)과 계산 축이 어긋남 문제가 있습니다. 마트로 가면 이 셋 다 해소됩니다.
@@ -246,7 +375,9 @@ A. 원본 `TBL_COUNSEL` 컬럼명이 오타 상태로 굳어 있습니다. 대�
 
 ## 참조
 
-- 초기 SQLite 도입 문서: `2026-07-15-예약자리스트_홈페이지-추가.md`
-- MariaDB 직결 커밋: `b61ff05`
-- 배치 전략 원문: [`strategy.md`](./strategy.md)
-- 마트-메뉴 매핑: [`mart-menu-mapping.md`](./mart-menu-mapping.md)
+- **이 문서가 정본이다.** 구 `docs/2026-07-15-예약자리스트_홈페이지-추가.md`(초기 SQLite 도입 +
+  온라인 예약 공식 변경)는 2026-08-05 에 이 문서로 흡수하고 삭제했다.
+- 관련 커밋: `212ea93`(SQLite 스냅샷 도입) · `b61ff05`(MariaDB 직결) · `ceca8a0`(진행월 부분값 노출)
+- 배치 전략·실행 규칙·마트↔메뉴 매핑(정본): [`strategy.md`](./strategy.md) — 실행 규칙 §12-2-1·§12-4-2
+- 빌드 사전 조건(Nexus 계정)·환경변수: [`../deployment.md`](../deployment.md) §2
+- 두 화면의 홈페이지 예약수가 다른 이유: [`../점검/홈페이지-CRM-예약수-비교_2026-07.md`](../점검/홈페이지-CRM-예약수-비교_2026-07.md)

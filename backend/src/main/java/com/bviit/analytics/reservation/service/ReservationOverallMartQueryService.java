@@ -64,14 +64,37 @@ public class ReservationOverallMartQueryService implements ReservationOverallSta
     public List<ReservationOverallMonthlyItem> getMonthlyStats(List<Integer> years) {
         List<Integer> normalizedYears = years.stream().distinct().sorted().toList();
         if (normalizedYears.isEmpty()) return List.of();
+        YearMonth from = YearMonth.of(normalizedYears.get(0), 1);
+        YearMonth to   = YearMonth.of(normalizedYears.get(normalizedYears.size() - 1), 12);
+        return getMonthlyStatsInRange(from, to);
+    }
+
+    /**
+     * 월 범위 [fromMonth, toMonth] 만 계산해 반환한다 — 필요한 월만 훑어 daily 배치 낭비를 줄인다.
+     *
+     * <p>배치({@link com.bviit.analytics.batch.job.ReservationMartJob}) 는 D-1 하루만 다시 돌리는데
+     * 이 서비스가 연도 전체 12개월을 돌면 11/12 계산이 버려진다. 라이브 합산 SQL 도 to 를 tight 하게
+     * 잡아 스캔 범위가 줄어든다.
+     *
+     * <p>계약은 {@link #getMonthlyStats(List)} 와 동일 — 범위 안 월마다 1개 아이템, 미래/pre-cutover
+     * 규칙 그대로.
+     */
+    @Transactional(readOnly = true)
+    public List<ReservationOverallMonthlyItem> getMonthlyStatsInRange(YearMonth fromMonth, YearMonth toMonth) {
+        if (fromMonth == null || toMonth == null || fromMonth.isAfter(toMonth)) return List.of();
+
+        List<Integer> yearsInRange = new ArrayList<>();
+        for (int y = fromMonth.getYear(); y <= toMonth.getYear(); y++) yearsInRange.add(y);
 
         Map<String, ReservationOverallMonthlyItem> martByYm = new HashMap<>();
-        for (ReservationOverallMonthlyItem m : martRepository.findMonthly(normalizedYears)) {
+        for (ReservationOverallMonthlyItem m : martRepository.findMonthly(yearsInRange)) {
             martByYm.put(MonthlyBuckets.key(m.getYear(), m.getMonth()), m);
         }
 
-        boolean needsLiveSum = normalizedYears.stream()
-                .anyMatch(y -> !YearMonth.of(y, 12).isBefore(CUTOVER));
+        // 컷오버 이후 월이 하나라도 범위에 있어야 라이브 합산 쿼리를 돌린다.
+        YearMonth liveFrom = fromMonth.isBefore(CUTOVER) ? CUTOVER : fromMonth;
+        YearMonth liveTo   = toMonth;
+        boolean needsLiveSum = !liveFrom.isAfter(liveTo);
 
         Map<String, Integer> naver = Map.of();
         Map<String, Integer> kakao = Map.of();
@@ -84,10 +107,8 @@ public class ReservationOverallMartQueryService implements ReservationOverallSta
         YearMonth homepageMaxMonth = null;
 
         if (needsLiveSum) {
-            int minYear = normalizedYears.get(0);
-            int maxYear = normalizedYears.get(normalizedYears.size() - 1);
-            String from = minYear + "-01-01";
-            String to = maxYear + "-12-31";
+            String from = liveFrom.atDay(1).toString();
+            String to   = liveTo.atEndOfMonth().toString();
 
             List<Map<String, Object>> sums = systemMartRepository.findMonthlyChannelReservationSums(from, to);
             naver = countsByMonth(sums, "naver_cnt");
@@ -104,40 +125,39 @@ public class ReservationOverallMartQueryService implements ReservationOverallSta
 
         YearMonth currentMonth = YearMonth.now();
         List<ReservationOverallMonthlyItem> result = new ArrayList<>();
-        for (Integer year : normalizedYears) {
-            for (int month = 1; month <= 12; month++) {
-                YearMonth ym = YearMonth.of(year, month);
-                String key = MonthlyBuckets.key(year, month);
+        for (YearMonth ym = fromMonth; !ym.isAfter(toMonth); ym = ym.plusMonths(1)) {
+            int year = ym.getYear();
+            int month = ym.getMonthValue();
+            String key = MonthlyBuckets.key(year, month);
 
-                if (ym.isAfter(currentMonth)) {
-                    result.add(emptyItem(year, month));
-                    continue;
-                }
-
-                if (ym.isBefore(CUTOVER)) {
-                    ReservationOverallMonthlyItem mart = martByYm.get(key);
-                    result.add(mart != null ? mart : emptyItem(year, month));
-                    continue;
-                }
-
-                // 컷오버 이후: 온라인·콜 모두 라이브 합산
-                // 콜 = 시력교정(인콜+TM+TM재상담) + 백내장(★신환+아웃바운드 예약수)
-                int liveCall = callReservation.getOrDefault(key, 0)
-                        + tmReservation.getOrDefault(key, 0)
-                        + tmRecounselReservation.getOrDefault(key, 0)
-                        + cataractNewPatient.getOrDefault(key, 0)
-                        + cataractTmReservation.getOrDefault(key, 0);
-                Integer online = computeOnline(key, ym, naver, kakao, homepage, homepageMaxMonth);
-                Integer total = online == null ? null : online + liveCall;
-
-                result.add(ReservationOverallMonthlyItem.builder()
-                        .year(year).month(month)
-                        .reservations(total)
-                        .online(online)
-                        .call(liveCall)
-                        .total(total)
-                        .build());
+            if (ym.isAfter(currentMonth)) {
+                result.add(emptyItem(year, month));
+                continue;
             }
+
+            if (ym.isBefore(CUTOVER)) {
+                ReservationOverallMonthlyItem mart = martByYm.get(key);
+                result.add(mart != null ? mart : emptyItem(year, month));
+                continue;
+            }
+
+            // 컷오버 이후: 온라인·콜 모두 라이브 합산
+            // 콜 = 시력교정(인콜+TM+TM재상담) + 백내장(★신환+아웃바운드 예약수)
+            int liveCall = callReservation.getOrDefault(key, 0)
+                    + tmReservation.getOrDefault(key, 0)
+                    + tmRecounselReservation.getOrDefault(key, 0)
+                    + cataractNewPatient.getOrDefault(key, 0)
+                    + cataractTmReservation.getOrDefault(key, 0);
+            Integer online = computeOnline(key, ym, naver, kakao, homepage, homepageMaxMonth);
+            Integer total = online == null ? null : online + liveCall;
+
+            result.add(ReservationOverallMonthlyItem.builder()
+                    .year(year).month(month)
+                    .reservations(total)
+                    .online(online)
+                    .call(liveCall)
+                    .total(total)
+                    .build());
         }
         return result;
     }

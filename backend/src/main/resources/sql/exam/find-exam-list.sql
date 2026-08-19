@@ -296,4 +296,20 @@
               -- 그날 검사(M)·드림렌즈(D) 내원이 없고 수술 연계도 없으면 검사자가 아니다
               -- (외래·백내장 예약으로 와서 EXAM 행만 생긴 건). 재수술·수술확정 환자는 유지.
               AND NOT (visit.hasMedical = 0 AND visit.hasDreamlens = 0 AND visit.hasSurgeryLink = 0)
+              -- 백내장 갈래와 중복 제거(2026-08-05, sql/fragments/exam-session-source.sql 과 동일 조건 — 함께 고칠 것):
+              -- 백내장 예약(H)으로만 내원한 날의 EXAM 행은 백내장 리스트가 이미 센다.
+              -- 위 '순수 외래' 필터는 수술 연계가 있으면 통과시켜서 같은 사람이 두 번 세어졌다
+              -- (2026-01~05 실측 4건). 그날 시력교정(M)·드림렌즈(D) 내원이 있으면 별개 세션이라 유지.
+              -- EXISTS 조건은 find-cataract-exam-list.sql 의 모집단과 일치해야 한다.
+              AND NOT (
+                visit.hasMedical = 0 AND visit.hasDreamlens = 0
+                AND EXISTS (
+                  SELECT 1 FROM RESERVATION rh WITH(NOLOCK)
+                  WHERE rh.CUST_NUM = e.CUST_NUM AND rh.RESERVE_DATE = e.EXAM_DATE
+                    AND rh.RESERVE_FLAG = 'H'
+                    AND ISNULL(rh.RESERVE_JINRYO, '') <> '3'
+                    AND ISNULL(rh.RESERVE_SEQ, 0) <> 3
+                    AND rh.RESERVE_STATE NOT IN ('C','Y')
+                )
+              )
             ORDER BY e.EXAM_DATE, rsv.RESERVE_DATE, rsv.START_TIME, cu.CUST_NAME

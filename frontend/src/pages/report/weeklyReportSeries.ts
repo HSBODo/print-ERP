@@ -68,10 +68,13 @@ export function buildWeeklySeries(
     dreamlensNew: pick((it) => num(it.dreamlensNew)),
     dreamlensFu: pick((it) => num(it.dreamlensFu)),
     oneDayExam: pick((it) => num(it.oneDay)),
-    examGeneral: pick((it) => diff(it.visionExam, it.oneDay)),
+    // 일반 검사 = 검사수(전체) − 원데이. '원데이 + 일반 = 검사수' 가 성립해야 한다
+    // (월간과 같은 기준 — useReportSeries.ts 의 examGeneral 참조).
+    // 종전에는 시력교정 기준(visionExam − oneDay)이라 검사자 리스트의 examType 집계와 어긋났다.
+    examGeneral: pick((it) => diff(it.examTotal, it.oneDay)),
 
-    ratioGeneral: pick((it) => rate(diff(it.visionExam, it.oneDay), it.visionExam)),
-    cataractRate: pick((it) => rate(it.cataractBooked, it.cataractExamEyes)),
+    ratioGeneral: pick((it) => rate(diff(it.examTotal, it.oneDay), it.examTotal)),
+    cataractRate: pick((it) => rate(it.cataractBooked, it.cataractExam)),
     visionRate: pick((it) => rate(it.visionBooked, it.visionExam)),
     rateVisionGeneral: pick((it) => rate(it.bookedGeneral, it.examGeneralBase)),
     rateOneday: pick((it) => rate(it.oneDayBooked, it.oneDay)),
@@ -80,6 +83,7 @@ export function buildWeeklySeries(
     cataractSurgery: pick((it) => num(it.cataractSurgery)),
     visionSurgery: pick((it) => num(it.visionSurgery)),
     totalSurgery: pick((it) => num(it.totalSurgery)),
+    reoperation: pick((it) => num(it.reoperation)),
 
     outpatient: pick((it) => num(it.outpatient)),
   }

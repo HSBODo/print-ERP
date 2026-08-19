@@ -104,6 +104,7 @@ public class SurgeryStatsService implements SurgeryStatsReader {
                     .year(b.year).month(b.month)
                     .lasek(b.lasek).lasik(b.lasik).smile(b.smile).smilePro(b.smilePro)
                     .icl(b.icl).tIcl(b.tIcl).kpl(b.kpl).tKpl(b.tKpl).viva(b.viva)
+                    .presbyond(b.presbyond).piolPatients(b.piolPatients)
                     .catMulti(b.catMulti).catMono(b.catMono).catEdof(b.catEdof)
                     .xtra(b.xtra).waveVision(b.waveVision).monoVision(b.monoVision)
                     .contra(b.contra).personal(b.personal)
@@ -150,6 +151,7 @@ public class SurgeryStatsService implements SurgeryStatsReader {
                     .date(entry.getKey())
                     .lasek(b.lasek).lasik(b.lasik).smile(b.smile).smilePro(b.smilePro)
                     .icl(b.icl).tIcl(b.tIcl).kpl(b.kpl).tKpl(b.tKpl).viva(b.viva)
+                    .presbyond(b.presbyond).piolPatients(b.piolPatients)
                     .catMulti(b.catMulti).catMono(b.catMono).catEdof(b.catEdof)
                     .xtra(b.xtra).waveVision(b.waveVision).monoVision(b.monoVision)
                     .contra(b.contra).personal(b.personal)
@@ -179,6 +181,8 @@ public class SurgeryStatsService implements SurgeryStatsReader {
         b.kpl = toInt(row.get("kpl"));
         b.tKpl = toInt(row.get("tKpl"));
         b.viva = toInt(row.get("viva"));
+        b.presbyond = toInt(row.get("presbyond"));
+        b.piolPatients = toInt(row.get("piolPatients"));
         b.xtra = toInt(row.get("xtra"));
         b.waveVision = toInt(row.get("waveVision"));
         b.monoVision = toInt(row.get("monoVision"));
@@ -290,6 +294,9 @@ public class SurgeryStatsService implements SurgeryStatsReader {
         final int month;
         int lasek, lasik, smile, smilePro;
         int icl, tIcl, kpl, tKpl, viva;
+        int presbyond;
+        /** PIOL DISTINCT 환자 수 — 유형별 합산이 아니라 원천이 따로 세어 준 값이다. */
+        int piolPatients;
         int catMulti, catMono, catEdof;
         int xtra, waveVision, monoVision, contra, personal;
         int lasekEx, lasekRed;

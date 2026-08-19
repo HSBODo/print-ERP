@@ -14,9 +14,12 @@ const PATIENT_TYPE_STYLE: Record<string, string> = {
   신환: 'bg-emerald-50 text-emerald-700',
   구환: 'bg-gray-100 text-gray-700',
 }
+// 백내장·중단만 월간 레포트 백내장 검사수에 들어간다(진한 색). 노안/FU·기타는 전체 검사수에만 더해진다(옅은 색).
 const CLASSIFICATION_STYLE: Record<string, string> = {
   백내장: 'bg-amber-50 text-amber-700',
   중단: 'bg-rose-50 text-rose-700',
+  '노안/FU': 'bg-sky-50 text-sky-700',
+  기타: 'bg-gray-100 text-gray-600',
 }
 const GRADE_STYLE: Record<string, string> = {
   R: 'bg-emerald-50 text-emerald-700',

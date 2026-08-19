@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { RotateCcw, Search, ChevronDown, ChevronUp, ChevronsUpDown, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv, type CsvColumn } from '@/utils/csv'
 import { maskName } from '@/utils/mask'
@@ -13,8 +14,11 @@ import type { ReservationListItem } from '@/api/reservation/reservationList'
  */
 
 /* ── 표시 헬퍼 ── */
-const dash = (v: string) => (v && v.trim() ? v : '—')
+// 값이 optional 인 컬럼(내원동기 중 등)도 그대로 넘길 수 있게 undefined 를 받는다.
+const dash = (v: string | undefined) => (v && v.trim() ? v : '—')
 const formatCount = (n: number) => n.toLocaleString('ko-KR')
+/** 수술 수납액. 아직 수술 전이면 0 으로 오는데 '0원'으로 보이면 무료로 오해하므로 대시로 둔다. */
+const formatPayment = (v?: number) => (v ? v.toLocaleString('ko-KR') : <span className="text-gray-300">—</span>)
 
 const CHANNEL_STYLE: Record<string, string> = {
   인콜: 'bg-blue-50 text-blue-700',
@@ -65,19 +69,29 @@ const SUB_CHANNELS: Record<Exclude<Channel, '전체'>, string[]> = {
 }
 const PAGE_SIZE_OPTIONS = [50, 100, 200]
 
-/** 상세 테이블 칼럼 — key가 있으면 헤더 클릭 정렬 가능('No'는 행 번호라 정렬 제외). 순서는 tbody 셀 순서와 일치. */
+/**
+ * 상세 테이블 칼럼 — key가 있으면 헤더 클릭 정렬 가능('No'는 행 번호라 정렬 제외). 순서는 tbody 셀 순서와 일치.
+ *
+ * `tight` 는 값이 짧아 기본 여백(px-2.5)이 남아도는 칼럼 — 좌우를 좁혀 메모 칼럼에 폭을 넘긴다.
+ * 지정하면 tbody 의 같은 순서 셀에도 `TIGHT_CELL` 을 함께 줘야 헤더와 본문 폭이 맞는다.
+ */
 type SortKey = keyof ReservationListItem
-const COLUMNS: { label: string; key: SortKey | null }[] = [
+const COLUMNS: { label: string; key: SortKey | null; tight?: boolean }[] = [
   { label: 'No', key: null },
-  { label: '등록일', key: 'registeredAt' },
-  { label: '등록시간', key: 'registeredTime' },
-  { label: '채널', key: 'channel' },
-  { label: '차트번호', key: 'chartNo' },
-  { label: '고객명', key: 'name' },
-  { label: '예약일', key: 'reserveDate' },
+  { label: '예약등록일', key: 'registeredAt' },
+  { label: '예약등록시간', key: 'registeredTime' },
+  { label: '차트번호', key: 'chartNo', tight: true },
+  { label: '고객명', key: 'name', tight: true },
+  { label: '채널', key: 'channel', tight: true },
+  { label: '내원동기(대)', key: 'motiveL' },
+  { label: '내원동기(중)', key: 'motiveM' },
   { label: '상태', key: 'reserveState' },
-  { label: '담당의', key: 'doctor' },
-  { label: '상담사', key: 'counselor' },
+  { label: '검사등록일', key: 'examRegDate' },
+  { label: '검사중단', key: 'examStop' },
+  { label: '수술등록일', key: 'surgeryRegDate' },
+  { label: '수술명(우)', key: 'surgeryR' },
+  { label: '수술명(좌)', key: 'surgeryL' },
+  { label: '수술금액', key: 'surgeryPayment' },
   { label: '메모', key: 'comment' },
 ]
 
@@ -89,15 +103,21 @@ const COLUMNS: { label: string; key: SortKey | null }[] = [
  */
 const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'rowNo', label: 'No', csv: (_r, n) => n },
-  { key: 'registeredAt', label: '등록일' },
-  { key: 'registeredTime', label: '등록시간' },
-  { key: 'channel', label: '채널' },
+  { key: 'registeredAt', label: '예약등록일' },
+  { key: 'registeredTime', label: '예약등록시간' },
   { key: 'chartNo', label: '차트번호', text: true },
   { key: 'name', label: '고객명', csv: (r) => maskName(r.name) },
-  { key: 'reserveDate', label: '예약일' },
+  { key: 'channel', label: '채널' },
+  { key: 'motiveL', label: '내원동기(대)' },
+  { key: 'motiveM', label: '내원동기(중)' },
   { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
-  { key: 'doctor', label: '담당의' },
-  { key: 'counselor', label: '상담사' },
+  { key: 'examRegDate', label: '검사등록일' },
+  { key: 'examStop', label: '검사중단' },
+  { key: 'surgeryRegDate', label: '수술등록일' },
+  { key: 'surgeryR', label: '수술명(우)' },
+  { key: 'surgeryL', label: '수술명(좌)' },
+  // 금액은 숫자 그대로 내보낸다 — 엑셀에서 합계·평균을 바로 낼 수 있어야 한다.
+  { key: 'surgeryPayment', label: '수술금액', csv: (r) => (r.surgeryPayment ? String(r.surgeryPayment) : '') },
   { key: 'comment', label: '메모' },
 ]
 
@@ -187,14 +207,7 @@ export function ReservationListPage() {
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
       {/* 필터 바 */}
       <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
-        <input
-          aria-label="기준 월"
-          type="month"
-          value={draftMonth}
-          max={currentMonth()}
-          onChange={(e) => setDraftMonth(e.target.value)}
-          className="h-8 w-[9rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-        />
+        <MonthPicker ariaLabel="기준 월" value={draftMonth} onChange={setDraftMonth} defaultValue={currentMonth()} />
         <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
           {CHANNELS.map((c) => (
             <button
@@ -285,7 +298,10 @@ export function ReservationListPage() {
                     {COLUMNS.map((col) => {
                       const active = col.key !== null && sort?.key === col.key
                       return (
-                        <th key={col.label} className="sticky top-0 z-10 whitespace-nowrap border-b border-border/60 bg-gray-50 px-2.5 py-1.5 text-center font-semibold">
+                        <th
+                          key={col.label}
+                          className={`sticky top-0 z-10 whitespace-nowrap border-b border-border/60 bg-gray-50 py-1.5 text-center font-semibold ${col.tight ? 'px-1' : 'px-2.5'}`}
+                        >
                           {col.key ? (
                             <button
                               type="button"
@@ -310,7 +326,7 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={11} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr><td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
                   {!showLoading && visible.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
@@ -319,13 +335,51 @@ export function ReservationListPage() {
                         <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-500">{formatCount((safePage - 1) * pageSize + i + 1)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.registeredAt)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">{dash(r.registeredTime)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.chartNo)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.reserveDate)}</td>
+                        {/* 아래 3칸은 COLUMNS 의 tight 칼럼 — 헤더와 같은 px-1 을 써야 폭이 맞는다. */}
+                        <td className="whitespace-nowrap px-1 py-1 text-center">{dash(r.chartNo)}</td>
+                        <td className="whitespace-nowrap px-1 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
+                        <td className="whitespace-nowrap px-1 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
+                        {/* 내원동기 대/중 — 같은 출처의 짝이라 메모 추출분(amber)·TM 배정 DB 확인분(sky)은 둘 다 색으로 구분. */}
+                        <td
+                          className={`whitespace-nowrap px-2.5 py-1 text-center ${
+                            r.motiveMSource === 'MEMO' ? 'text-amber-700'
+                              : r.motiveMSource === 'TMDB' ? 'text-sky-700'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          {dash(r.motiveL)}
+                        </td>
+                        {/* CRM 등록값이 아닌 출처는 색 + 마커로 구분한다 — 섞어 세면 안 된다. */}
+                        <td
+                          className={`whitespace-nowrap px-2.5 py-1 text-center ${
+                            r.motiveMSource === 'MEMO' ? 'text-amber-700'
+                              : r.motiveMSource === 'TMDB' ? 'text-sky-700'
+                              : 'text-gray-700'
+                          }`}
+                          title={r.motiveMSource === 'MEMO'
+                            ? 'CRM 내원동기가 비어 있어 메모의 TM고객(대/중) 문구에서 가져온 값입니다.'
+                            : r.motiveMSource === 'TMDB'
+                              ? '텔레매니저 TM 배정 DB(모두닥 이벤트 리드)에서 확인된 유입입니다. CRM 내원동기보다 우선합니다.'
+                              : undefined}
+                        >
+                          {dash(r.motiveM)}
+                          {r.motiveMSource === 'MEMO' && <span className="ml-0.5 text-[10px]">*</span>}
+                          {r.motiveMSource === 'TMDB' && <span className="ml-0.5 text-[10px]">†</span>}
+                        </td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={st?.label ?? r.reserveState} className={st?.className} /></td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.doctor)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.counselor)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.examRegDate)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center">
+                          {r.examStop === 'Y'
+                            ? <span className="rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">Y</span>
+                            : r.examStop === 'N'
+                              ? <span className="text-gray-500">N</span>
+                              : <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.surgeryRegDate)}</td>
+                        {/* 수술명 우/좌 — 수술자 리스트와 같은 원천이라 표기가 그대로 일치한다. */}
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryR)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryL)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-800">{formatPayment(r.surgeryPayment)}</td>
                         <td className="w-full max-w-0 px-2.5 py-1 text-left">
                           <span className="block truncate text-gray-700" title={r.comment}>{dash(r.comment)}</span>
                         </td>
@@ -334,7 +388,7 @@ export function ReservationListPage() {
                   })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={11} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">
                         {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
                       </td>
                     </tr>

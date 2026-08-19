@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS mart_weekly_report (
     one_day             INT,
 
     -- 비율 계산용 원시값
+    -- cataract_exam_eyes 는 V54 에서 삭제됨 — 백내장 예약률을 사람 단위로 통일(cataract_exam 분모).
     vision_booked       INT,
-    cataract_exam_eyes  INT,
     cataract_booked     INT,
     one_day_booked      INT,
     stop_count          INT,

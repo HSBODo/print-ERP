@@ -1,7 +1,7 @@
 INSERT INTO mart_surgery_monthly (
     yr, mo,
     lasek, lasik, smile, smile_pro,
-    icl, t_icl, kpl, t_kpl, viva,
+    icl, t_icl, kpl, t_kpl, viva, presbyond, piol_patients,
     cat_multi, cat_mono, cat_edof,
     xtra, wave_vision, mono_vision, contra, personal,
     lasek_ex, lasek_red,
@@ -11,7 +11,7 @@ INSERT INTO mart_surgery_monthly (
 ) VALUES (
     :yr, :mo,
     :lasek, :lasik, :smile, :smilePro,
-    :icl, :tIcl, :kpl, :tKpl, :viva,
+    :icl, :tIcl, :kpl, :tKpl, :viva, :presbyond, :piolPatients,
     :catMulti, :catMono, :catEdof,
     :xtra, :waveVision, :monoVision, :contra, :personal,
     :lasekEx, :lasekRed,
@@ -29,6 +29,8 @@ ON CONFLICT (yr, mo) DO UPDATE SET
     kpl               = EXCLUDED.kpl,
     t_kpl             = EXCLUDED.t_kpl,
     viva              = EXCLUDED.viva,
+    presbyond         = EXCLUDED.presbyond,
+    piol_patients     = EXCLUDED.piol_patients,
     cat_multi         = EXCLUDED.cat_multi,
     cat_mono          = EXCLUDED.cat_mono,
     cat_edof          = EXCLUDED.cat_edof,

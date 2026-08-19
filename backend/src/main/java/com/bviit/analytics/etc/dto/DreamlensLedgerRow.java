@@ -52,8 +52,13 @@ public class DreamlensLedgerRow {
     private final int fittingRevenue;
     private final int supplyRevenue;
     private final int treatmentRevenue;
+    /** 렌즈 정가(참고) — 실수납(매출 버킷)과 비교용. totalRevenue 에 미포함. */
+    private final int lensListPrice;
     /** 매출 10종 합계(서버 계산) — 화면 합계 표시용. */
     private final int totalRevenue;
+
+    /** 'AUTO'(배치 초안) / 'MANUAL'(사람 입력·수정) — 화면 뱃지용. 구버전 행(null)은 MANUAL 로 내려간다. */
+    private final String source;
 
     private final String nextReservation;
     private final String recall1;
@@ -89,7 +94,9 @@ public class DreamlensLedgerRow {
                 .fittingRevenue(e.getFittingRevenue())
                 .supplyRevenue(e.getSupplyRevenue())
                 .treatmentRevenue(e.getTreatmentRevenue())
+                .lensListPrice(e.getLensListPrice())
                 .totalRevenue(e.totalRevenue())
+                .source(e.getSource() == null ? DreamlensLedgerEntry.SOURCE_MANUAL : e.getSource())
                 .nextReservation(e.getNextReservation())
                 .recall1(e.getRecall1()).recall1Reservation(e.getRecall1Reservation()).recall1Absent(e.getRecall1Absent())
                 .recall2(e.getRecall2()).recall2Reservation(e.getRecall2Reservation()).recall2Absent(e.getRecall2Absent())

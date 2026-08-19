@@ -14,4 +14,10 @@ public interface DreamlensLedgerRepository extends JpaRepository<DreamlensLedger
 
     /** 최신 날짜가 위로. 같은 날짜면 나중에 입력한 행(큰 id)이 위로 온다. */
     List<DreamlensLedgerEntry> findByEntryDateBetweenOrderByEntryDateDescIdDesc(LocalDate from, LocalDate to);
+
+    /**
+     * 배치 초안 upsert 의 중복 판정 키 — 같은 (고객, 내원일) 행이 이미 있으면 새 초안을 만들지 않는다.
+     * 사람이 같은 키로 2행을 입력할 수 있어 List 로 받는다.
+     */
+    List<DreamlensLedgerEntry> findByCustomerNoAndEntryDate(String customerNo, LocalDate entryDate);
 }

@@ -18,6 +18,7 @@ import {
 describe('통계 페이지 라우트 정책 불변식', () => {
   const ids = statsPages.map((p) => p.id)
   const completeIds = ids.filter((id) => getMenuStatus(id) === 'complete')
+  const frontendOnlyIds = ids.filter((id) => getMenuStatus(id) === 'frontend-only')
   const backendOnlyIds = ids.filter((id) => getMenuStatus(id) === 'backend-only')
   const pendingIds = ids.filter((id) => getMenuStatus(id) === 'pending')
 
@@ -31,6 +32,14 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     for (const id of backendOnlyIds) {
       expect(isRouteBlocked(id, true, 'ADMIN')).toBe(true)
       expect(isRouteBlocked(id, false, 'ADMIN')).toBe(true)
+    }
+  })
+
+  it('frontend-only 페이지가 있으면 컴포넌트가 있고 운영에서도 목업 UI를 표시한다', () => {
+    for (const id of frontendOnlyIds) {
+      expect(PAGE_COMPONENTS[id]).toBeDefined()
+      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(false)
+      expect(isRouteBlocked(id, false, 'ADMIN')).toBe(false)
     }
   })
 

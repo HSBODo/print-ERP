@@ -4,9 +4,9 @@ import com.bviit.analytics.batch.repository.WatermarkRepository;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
 import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
 import com.bviit.analytics.reservation.repository.ReservationListRepository;
+import com.bviit.analytics.reservation.repository.ReservationStatsMartRepository;
 import com.bviit.analytics.reservation.service.ReservationListService;
-import com.bviit.analytics.reservation.service.ReservationOverallStatsService;
-import com.bviit.analytics.reservation.service.ReservationStatsService;
+import com.bviit.analytics.reservation.service.ReservationOverallMartQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,21 +16,38 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * 예약 도메인 마트 적재 잡.
  *
- * 네 개의 마트를 채운다:
- *   - mart_reservation_monthly           — 범위에 걸친 각 (yr, mo) upsert (수술/외래/드림렌즈)
+ * 다섯 개의 마트를 채운다:
+ *   - list_reservation_all               — from..to 예약일 범위 delete+insert (얇은 리스트)
+ *   - mart_reservation_monthly           — (yr, mo) upsert. **위 리스트를 월로 접어** 만든다 (수술/외래/드림렌즈)
  *   - mart_reservation_overall_monthly   — (yr, mo) upsert (예약 종합/콜/온라인). min-year 가드로 24·25 write 차단.
- *   - list_reservation                   — from..to 범위 delete+insert (예약자 명단)
- *   - mart_reservation_kakao_daily       — from..to 범위 delete+insert (해피톡 일별 건수)
+ *   - list_reservation                   — from..to 등록일 범위 delete+insert (검사 예약자 명단)
+ *   - mart_reservation_kakao_daily       — from..to 범위 delete+insert (해피톡 일별 건수 · **MSSQL 직결 유지**)
  *
- * MSSQL 소스에서 읽기는 기존 서비스(ReservationStatsService, ReservationOverallStatsService,
- * ReservationListService)와 리포지토리(ReservationListRepository.findKakaoDailyCounts) 재사용.
+ * mart_reservation_monthly 는 종전에 MSSQL 쪽 별도 쿼리(ReservationStatsService.getMonthlyStats
+ * → sql/reservation/monthly-by-type.sql)로 계산해 저장했다. 같은 정의를 리스트에 담아
+ * 리스트→월별 재집계로 통일 — 외래수·중단사유와 같은 패턴.
+ *
+ * mart_reservation_overall_monthly 는 화면 서비스(ReservationOverallMartQueryService @Primary)와
+ * 완전히 같은 계산식으로 채운다 — 시력교정·백내장 채널 마트 + 홈페이지 마트 SUM.
+ * 종전엔 MSSQL 직결(ReservationOverallStatsService) 로 배치가 재계산했으나,
+ * 화면·배치가 서로 다른 소스를 쓰면 어긋날 위험이 있어 하나로 통일.
+ *
+ * mart_reservation_kakao_daily 는 화면 참고용 카운트 1개(예약자 리스트 표시)를 위한 얇은 마트라
+ * 별도 primary list 이관 없이 MSSQL 직결(findKakaoDailyCounts) 유지 — stats_system·cataract 와
+ * 같은 HappyTalk 원천 예외 카테고리.
+ *
+ * MSSQL 소스에서 읽기는 검사(M) 예약자 명단(ReservationListService)과
+ * 카카오 일별(ReservationListRepository.findKakaoDailyCounts)에 남아 있다.
+ *
+ * MSSQL 직결 서비스(ReservationStatsService·ReservationOverallStatsService)는 배치에서 더 이상 안 쓰지만
+ * ReservationReconcileService 의 대사(reconcile) 소스로 유지된다.
  *
  * reservation_overall 의 24·25 확정값은 V12 seed 가 mart 에 넣은 값을 유일 원천으로 유지하며,
  * runManual 로 24·25 범위를 실행해도 min-year 이상 연도만 write.
@@ -43,10 +60,10 @@ public class ReservationMartJob {
 
     static final String MART_NAME = "reservation";
 
-    private final ReservationStatsService statsService;
-    private final ReservationOverallStatsService overallStatsService;
+    private final ReservationOverallMartQueryService overallMartQueryService;
     private final ReservationListService listService;
     private final ReservationListRepository listRepository;
+    private final ReservationStatsMartRepository reservationMartRepository;
     private final ReservationMartWriter writer;
     private final WatermarkRepository watermarkRepository;
 
@@ -69,38 +86,71 @@ public class ReservationMartJob {
     public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("ReservationMartJob start: range={}..{}", from, to);
 
-        // 1) Monthly upsert — 범위에 걸친 연도들만 재계산
-        List<Integer> years = yearsInRange(from, to);
-        List<ReservationMonthlyItem> monthly = statsService.getMonthlyStats(years).stream()
-                .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
+        // ── 순서 주의 ──────────────────────────────────────────────
+        // list_reservation_all 을 **먼저** 적재한다. mart_reservation_monthly 가 그 리스트를
+        // 읽어 월로 접기 때문이다. 종전에는 월별이 MSSQL 을 각자 조회했다 — 같은 지표가
+        // 두 벌로 구현돼 정의가 바뀌면 어긋났다(검사 2026-08-05 원데이 3건과 같은 문제).
+        // ──────────────────────────────────────────────────────────
+
+        // 1) list_reservation_all delete+insert (예약일 기준)
+        List<Map<String, Object>> listAllRows =
+                listRepository.findReservationListAll(from.toString(), to.toString());
+        int listAllInserted = writer.replaceListReservationAll(from, to, listAllRows);
+
+        // 2) Monthly upsert — 방금 적재한 리스트를 월로 접는다(= 원본 정의와 동일 매핑).
+        //    mart_reservation_monthly 는 골든시드 없음 — min-year/is2026H1Seeded 필터 없음.
+        Map<YearMonth, ReservationAgg> byMonth = aggregateReservationByMonth(
+                reservationMartRepository.findReservationDailyAgg(from.toString(), to.toString()));
+        List<ReservationMonthlyItem> monthly = byMonth.entrySet().stream()
+                .filter(e -> isMonthInRange(e.getKey().getYear(), e.getKey().getMonthValue(), from, to))
+                .map(e -> {
+                    ReservationAgg a = e.getValue();
+                    return ReservationMonthlyItem.builder()
+                            .year(e.getKey().getYear())
+                            .month(e.getKey().getMonthValue())
+                            .surgery(a.surgery)
+                            .outpatient(a.outpatient)
+                            .dreamlens(a.dreamlens)
+                            .total(a.surgery + a.outpatient + a.dreamlens)
+                            .build();
+                })
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
 
-        // 2) Overall monthly upsert
+        // 3) Overall monthly upsert
+        //    화면(ReservationOverallMartQueryService @Primary)이 쓰는 계산식과 동일한 값을 마트에 저장한다.
+        //    → 시력교정·백내장 채널 마트 + 홈페이지 마트 SUM (컷오버 2026-06 이후) + 골든시드 통과.
+        //    종전에는 MSSQL 직결(ReservationOverallStatsService) 로 배치가 재계산했으나
+        //    화면·배치가 서로 다른 계산식을 두면 어긋날 위험이 있어 화면 서비스를 재사용한다.
         //    - min-year 미만 연도(24·25)는 V12 seed 값 보존 (write 차단)
         //    - 2026-01~05 는 V24 골든 시드 보존 (write 차단) — 담당자 확정값
+        //
+        //    범위 API 사용 이유 — daily 배치가 D-1 하루만 원해도 연도 전체(12개월)를 계산하면 11/12 가 버려진다.
+        //    getMonthlyStatsInRange 는 range 안 월만 계산하고 라이브 합산 SQL 도 tight 하게 스캔한다.
+        YearMonth fromMonth = YearMonth.from(from);
+        YearMonth toMonth   = YearMonth.from(to);
         List<ReservationOverallMonthlyItem> overallMonthly =
-                overallStatsService.getMonthlyStats(years).stream()
+                overallMartQueryService.getMonthlyStatsInRange(fromMonth, toMonth).stream()
                         .filter(m -> m.getYear() >= minYear)
                         .filter(m -> !isOverallSeededMonth(m.getYear(), m.getMonth()))
-                        .filter(m -> isMonthInRange(m.getYear(), m.getMonth(), from, to))
                         .toList();
         int overallRows = writer.upsertOverallMonthly(overallMonthly);
 
-        // 3) List delete+insert
+        // 4) 검사(M) 예약자 명단 리스트 delete+insert (예약자 리스트 화면용, 별도 리스트)
         List<Map<String, Object>> listRows =
                 listService.getReservationList(from.toString(), to.toString()).rows();
         int listRowsCount = writer.replaceList(from, to, listRows);
 
-        // 4) Kakao daily delete+insert
+        // 5) Kakao daily delete+insert (MSSQL 직결 · 참고용 지표 예외)
         List<Map<String, Object>> kakaoRows =
                 listRepository.findKakaoDailyCounts(from.toString(), to.toString());
         int kakaoRowsCount = writer.replaceKakaoDaily(from, to, kakaoRows);
 
-        // 5) Watermark 갱신 (성공 시에만)
+        // 6) Watermark 갱신 (성공 시에만)
         watermarkRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
+                "list_reservation_all", listAllInserted,
                 "mart_reservation_monthly", monthlyRows,
                 "mart_reservation_overall_monthly", overallRows,
                 "list_reservation", listRowsCount,
@@ -110,9 +160,27 @@ public class ReservationMartJob {
         return stats;
     }
 
-    /** from..to에 걸친 연도 목록 (오름차순, 중복 제거). */
-    private static List<Integer> yearsInRange(LocalDate from, LocalDate to) {
-        return Stream.iterate(from.getYear(), y -> y <= to.getYear(), y -> y + 1).toList();
+    /** 일별 집계를 월로 접는다. 주차 레포트는 같은 행을 ISO 주차로 접는다(정의는 리스트 하나). */
+    private static Map<YearMonth, ReservationAgg> aggregateReservationByMonth(List<Map<String, Object>> dailyRows) {
+        Map<YearMonth, ReservationAgg> byMonth = new LinkedHashMap<>();
+        for (Map<String, Object> row : dailyRows) {
+            LocalDate day = ((java.sql.Date) row.get("d")).toLocalDate();
+            ReservationAgg acc = byMonth.computeIfAbsent(YearMonth.from(day), k -> new ReservationAgg());
+            acc.surgery    += intOf(row, "surgery");
+            acc.outpatient += intOf(row, "outpatient");
+            acc.dreamlens  += intOf(row, "dreamlens");
+        }
+        return byMonth;
+    }
+
+    private static int intOf(Map<String, Object> row, String key) {
+        Object v = row.get(key);
+        return v instanceof Number n ? n.intValue() : 0;
+    }
+
+    /** 월 단위 누적기 — 필드는 select-reservation-daily-agg.sql 의 컬럼과 1:1. */
+    private static final class ReservationAgg {
+        private int surgery, outpatient, dreamlens;
     }
 
     /** (year, month)가 [from, to] 구간과 겹치는지 판정. */

@@ -26,11 +26,25 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SurgeryStatsMartRepository {
 
-    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/select-surgery-monthly.sql");
-    private static final String SELECT_DAILY_SQL   = SqlLoader.load("sql/mart/select-surgery-daily.sql");
-    private static final String SELECT_LIST_SQL    = SqlLoader.load("sql/mart/select-list-surgery.sql");
+    private static final String SELECT_MONTHLY_SQL   = SqlLoader.load("sql/mart/select-surgery-monthly.sql");
+    private static final String SELECT_DAILY_SQL     = SqlLoader.load("sql/mart/select-surgery-daily.sql");
+    private static final String SELECT_LIST_SQL      = SqlLoader.load("sql/mart/select-list-surgery.sql");
+    private static final String SELECT_DAILY_AGG_SQL = SqlLoader.load("sql/mart/select-surgery-daily-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
+
+    /**
+     * 수술 일별 집계 — v_all_surgery_list(= 수술자 리스트 + 재수술) 하나에서 뽑는다.
+     * 월별은 월로, 주차는 ISO 주차로 각자 접어 쓴다. 두 축이 같은 행에서 나오므로 어긋날 수 없다.
+     *
+     * ⚠️ 리스트가 적재된 뒤에 호출해야 한다. 배치에서는 list_surgery/list_reoperation 적재 이후 단계.
+     */
+    public List<Map<String, Object>> findSurgeryDailyAgg(String from, String to) {
+        return jdbc.queryForList(
+                SELECT_DAILY_AGG_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to)
+        );
+    }
 
     public List<SurgeryMonthlyItem> findMonthly(List<Integer> years) {
         return jdbc.query(
@@ -48,6 +62,8 @@ public class SurgeryStatsMartRepository {
                         .kpl(rs.getInt("kpl"))
                         .tKpl(rs.getInt("tKpl"))
                         .viva(rs.getInt("viva"))
+                        .presbyond(rs.getInt("presbyond"))
+                        .piolPatients(rs.getInt("piolPatients"))
                         .catMulti(rs.getInt("catMulti"))
                         .catMono(rs.getInt("catMono"))
                         .catEdof(rs.getInt("catEdof"))
@@ -83,6 +99,8 @@ public class SurgeryStatsMartRepository {
                         .kpl(rs.getInt("kpl"))
                         .tKpl(rs.getInt("tKpl"))
                         .viva(rs.getInt("viva"))
+                        .presbyond(rs.getInt("presbyond"))
+                        .piolPatients(rs.getInt("piolPatients"))
                         .catMulti(rs.getInt("catMulti"))
                         .catMono(rs.getInt("catMono"))
                         .catEdof(rs.getInt("catEdof"))

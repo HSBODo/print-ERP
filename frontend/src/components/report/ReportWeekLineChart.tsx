@@ -17,7 +17,8 @@ import type { ReportWeek } from './reportWeeks'
  *
  * - 주차 수가 많으면(전체 52/53주) 압축 모드: 눈금은 숫자만, 데이터 라벨 생략
  * - 월별 선택(4~6주)이면 상세 모드: "31주 / 7/27~8/2" 2줄 눈금 + 최신연도 데이터 라벨
- * - 하단 표는 27주씩 끊어 렌더(전체 보기에서 가로 폭 유지 · PDF 인쇄 대응)
+ * - 하단 표는 기본 27주씩 끊어 렌더(전체 보기에서 가로 폭 유지 · PDF 인쇄 대응)
+ * - `singleTable`이면 52/53주를 한 표에 압축해 렌더한다.
  */
 
 const CHUNK = 27
@@ -36,6 +37,8 @@ export interface ReportWeekLineChartProps {
   format?: 'number' | 'percent'
   percentFractionDigits?: number
   yDomain?: [number, number]
+  /** 전체 주차를 분할하지 않고 한 표에 표시한다. */
+  singleTable?: boolean
 }
 
 export function ReportWeekLineChart({
@@ -47,10 +50,12 @@ export function ReportWeekLineChart({
   format = 'number',
   percentFractionDigits,
   yDomain,
+  singleTable = false,
 }: ReportWeekLineChartProps) {
   const sorted = useMemo(() => [...years].sort((a, b) => a - b), [years])
   const latest = sorted[sorted.length - 1]
   const compact = weeks.length > COMPACT_FROM
+  const denseTable = singleTable && weeks.length > CHUNK
 
   const fmt = (v: number) => {
     if (format !== 'percent') return formatAxisNumber(v)
@@ -86,14 +91,15 @@ export function ReportWeekLineChart({
     [sorted, data, weeks],
   )
 
-  // 27주씩 끊은 표 청크 — 전체 보기(52/53주)에서도 칼럼 폭이 유지된다
+  // 기본은 27주씩 끊고, 단일 표 옵션은 선택한 전체 주차를 한 청크로 만든다.
   const chunks = useMemo(() => {
     const out: { w: ReportWeek; i: number }[][] = []
-    for (let i = 0; i < weeks.length; i += CHUNK) {
-      out.push(weeks.slice(i, i + CHUNK).map((w, k) => ({ w, i: i + k })))
+    const chunkSize = singleTable ? Math.max(weeks.length, 1) : CHUNK
+    for (let i = 0; i < weeks.length; i += chunkSize) {
+      out.push(weeks.slice(i, i + chunkSize).map((w, k) => ({ w, i: i + k })))
     }
     return out
-  }, [weeks])
+  }, [weeks, singleTable])
 
   // 주차는 값의 오르내림을 읽는 게 목적이라 tightAxis(여백 8%·8등분·0 스냅 최소화)를 쓴다.
   // niceAxis 는 여백 15% + 하한 0 스냅이라 주 단위 값에서는 데이터가 축 절반에만 몰린다.
@@ -256,13 +262,21 @@ export function ReportWeekLineChart({
                 {chunk[0].w.week}~{chunk[chunk.length - 1].w.week}주
               </p>
             )}
-            <table className="w-full min-w-[840px] table-fixed border-collapse text-center text-[11px]">
+            {/*
+             * denseTable(전체 52/53주) 은 화면에서 min-w-[1900px] + text-[13px] 로 넉넉히 벌려 가로 스크롤을 유도한다.
+             * 화면 가독성을 살리고, 인쇄는 index.css 의 @media print .report-week-table 압축(min-width 0 + 6.5px)이 담당.
+             */}
+            <table
+              className={denseTable
+                ? 'report-week-table w-full min-w-[1900px] table-fixed border-collapse text-center text-[13px]'
+                : 'report-week-table w-full min-w-[840px] table-fixed border-collapse text-center text-[11px]'}
+            >
               <colgroup>
-                <col className="w-16" />
+                <col className={denseTable ? 'w-16' : 'w-16'} />
                 {chunk.map((c) => (
                   <col key={c.i} />
                 ))}
-                <col className="w-16" />
+                <col className={denseTable ? 'w-20' : 'w-16'} />
               </colgroup>
               <thead>
                 <tr className="border-y border-border bg-muted/40">

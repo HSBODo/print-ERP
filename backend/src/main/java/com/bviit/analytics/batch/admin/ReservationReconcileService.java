@@ -25,9 +25,26 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 /**
  * 예약 마트값 vs MSSQL 직결값 대사(reconcile). local/dev 전용 스모크.
  *
- * 기대: ReservationMartJob이 ReservationStatsService/ReservationListService의 결과를 그대로
- *       마트에 upsert하므로 현재 방식에서는 diff가 0이어야 정상.
- *       diff가 나오면 배치/서비스/마트 셋 중 하나가 어긋난 것.
+ * 대사 대상별 기대값이 다르다 — 소스와 마트가 같은 정의를 쓰는지에 따라 갈린다.
+ *
+ * 1) reconcileMonthly (수술/외래/드림렌즈)
+ *      마트: list_reservation_all 을 월로 접음 (V53).
+ *      소스: monthly-by-type.sql (raw RESERVATION SUM).
+ *      필터 동일 (RESERVE_STATE<>'C' + FLAG='O'/'D'/JINRYO='2') → **diff 0 기대**.
+ *
+ * 2) reconcileOverallMonthly (예약 종합·콜·온라인)
+ *      마트: ReservationOverallMartQueryService (@Primary, 컷오버 이후 시력교정·백내장 채널 마트 + 홈페이지 마트 SUM).
+ *      소스: ReservationOverallStatsService (MSSQL 직결).
+ *      2026-06+ 계산식이 다르다 — mart 는 화면과 정합, 소스는 raw MSSQL. **소폭 diff 정상**.
+ *      2024·2025 는 V12 seed 고정이라 min-year 필터로 대사에서 제외.
+ *
+ * 3) reconcileList / reconcileKakao
+ *      마트가 소스 결과를 그대로 저장 → **diff 0 기대**.
+ *
+ * 버그 의심 신호:
+ *   · monthly / list / kakao 에서 diff 발생 (정의 동일이라 나오면 안 됨).
+ *   · overallMonthly 에서 diff 방향이 뒤집힘 (mart 가 소스보다 훨씬 큼).
+ *   · missing-in-mart / missing-in-source 가 새 월에서 튐.
  */
 @Service
 @Profile("postgres-mart")

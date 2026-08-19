@@ -49,7 +49,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/report/weekly',
     'report-group',
     'Report',
-    '🚧 개발예정 · 임시 프로토타입 — 지표 정의·집계 방식이 확정되기 전 참고용 화면입니다. 월간 레포트와 같은 도표를 주차(월~일) 단위로 본 리포트로, 전체 주차 또는 특정 월에 걸친 주차(월 경계 주차 포함)를 선택할 수 있습니다.',
+    '월간 레포트와 같은 도표를 주차(월~일) 단위로 본 리포트. 전체 주차 또는 특정 월에 걸친 주차(월 경계 주차 포함)를 선택할 수 있습니다.',
     '/api/report/weekly'
   ),
   statsPage(
@@ -134,6 +134,33 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/reservation-list'
   ),
   statsPage(
+    'reservation-channel',
+    '예약 퍼널',
+    '/stats/reservation-channel',
+    'marketing-section',
+    '마케팅',
+    '예약자 리스트를 유입 채널로 묶어 예약 → 취소제외 → 접수 → 검사 → 수술 단계로 좁혀 보는 퍼널입니다. 합계는 예약자 리스트와 같습니다.',
+    '/api/stats/reservation-channel'
+  ),
+  statsPage(
+    'channel-profit',
+    '채널별 수익성',
+    '/stats/channel-profit',
+    'marketing-section',
+    '마케팅',
+    '유입채널이 얼마를 남겼는지(수납액·객단가·공헌이익(렌즈만))와 광고매체가 얼마를 회수했는지(CPA·ROAS)를 나눠서 봅니다. 예약통계_채널별과 같은 뷰를 읽어 인원이 일치합니다.',
+    '/api/stats/channel-profit'
+  ),
+  statsPage(
+    'channel-analysis',
+    '채널별 분석',
+    '/stats/channel-analysis',
+    'marketing-section',
+    '마케팅',
+    '유입 채널별로 고객이 누구이고 객단가가 왜 그런지 정리한 분석 문서 모음입니다. 좌측에서 채널을 고르면 해당 문서가 열립니다. 실측 기준이며 화면은 조회를 하지 않습니다(수치는 본문에 고정).',
+    '(없음 — 정적 문서)'
+  ),
+  statsPage(
     'reservation-list-homepage',
     '예약자 리스트_홈페이지',
     '/stats/reservation-list-homepage',
@@ -168,6 +195,15 @@ export const statsPages: StatsPageDefinition[] = [
     '검사',
     '시력교정+백내장 검사자를 통합한 명단입니다. 검사구분·내원동기·직업 토글 조회건수가 월별 검사자 종합지표(검사유입·검사수)와 정합합니다.',
     '/api/all-exam-list'
+  ),
+  statsPage(
+    'eoeis-checkup',
+    '아이리더 검사통계',
+    '/stats/eoeis-checkup',
+    'exam-group',
+    '검사',
+    '아이리더 검사기록을 검사자×장비 또는 검사자×기간으로 피벗해 건수와 장비 가중 점수를 확인하는 화면입니다.',
+    '/api/eoeis-checkup'
   ),
   statsPage(
     'examination',

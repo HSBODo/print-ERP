@@ -52,8 +52,7 @@ public class WeeklyReportItem {
 
     /* ── 비율 계산용 원시값 (분자/분모) ── */
     private final Integer visionBooked;      // 시력교정 예약률 분자 (분모 = visionExam)
-    private final Integer cataractExamEyes;  // 백내장 예약률 분모 (추천 눈 수)
-    private final Integer cataractBooked;    // 백내장 예약률 분자
+    private final Integer cataractBooked;    // 백내장 예약률 분자 (분모 = cataractExam, 사람 단위 — 2026-08 통일)
     private final Integer oneDayBooked;      // 원데이 예약률 분자 (분모 = oneDay)
     private final Integer stopCount;         // 중단율 분자 (분모 = visionExam)
     private final Integer examGeneralBase;   // 시력교정 일반예약률 분모 (원데이 아닌 검사)
@@ -62,7 +61,11 @@ public class WeeklyReportItem {
     /* ── 수술 (수술일 기준) ── */
     private final Integer visionSurgery;
     private final Integer cataractSurgery;
-    private final Integer totalSurgery;   // 시력교정 + 백내장 + 재수술(레코드)
+    private final Integer totalSurgery;
+    /** 재수술 — 건 단위. 레이저 + 렌즈 = 합계. 수술 건수 화면·월간과 같은 정의. */
+    private final Integer reoperation;
+    private final Integer reopLaser;
+    private final Integer reopLens;   // 시력교정 + 백내장 + 재수술(레코드)
 
     /* ── 외래 ── */
     private final Integer outpatient;

@@ -34,8 +34,7 @@ const weeklyReportItemSchema = z.object({
 
   // 비율 계산용 원시값
   visionBooked: count,
-  cataractExamEyes: count,
-  cataractBooked: count,
+  cataractBooked: count,  // 백내장 예약률 분자 (분모 = cataractExam, 사람 단위 — 2026-08 통일)
   oneDayBooked: count,
   stopCount: count,
   examGeneralBase: count,
@@ -45,6 +44,9 @@ const weeklyReportItemSchema = z.object({
   visionSurgery: count,
   cataractSurgery: count,
   totalSurgery: count,
+  reoperation: count,
+  reopLaser: count,
+  reopLens: count,
 
   // 외래
   outpatient: count,

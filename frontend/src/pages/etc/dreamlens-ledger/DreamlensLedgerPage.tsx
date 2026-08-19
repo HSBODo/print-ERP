@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, Download, Loader2, Plus, RotateCcw, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { dreamlensLedgerApi, type DreamlensLedgerRow } from '@/api/etc'
@@ -47,10 +48,12 @@ import {
 const won = (value: number) => (value === 0 ? '' : value.toLocaleString('ko-KR'))
 
 /** 체크박스/합계 열 폭 — "합계"가 한 줄에 들어가야 세로로 쪼개지지 않는다. */
-const SELECT_COL_WIDTH = 52
+const SELECT_COL_WIDTH = 34
+/** 자동/수동 배지 칼럼 — 체크박스와 한 칸에 겹쳐 두면 읽기 나빠서 옆으로 뺐다. */
+const SOURCE_COL_WIDTH = 34
 
 /** 좌측 고정 컬럼(날짜~이름)의 left 오프셋. 체크박스 열 다음부터 누적된다. */
-const FROZEN_LEFT = frozenLeftOffsets(SELECT_COL_WIDTH)
+const FROZEN_LEFT = frozenLeftOffsets(SELECT_COL_WIDTH + SOURCE_COL_WIDTH)
 /** border-collapse 에서 고정 셀 테두리가 스크롤 중 사라져 경계는 그림자로 그린다. */
 const FROZEN_EDGE_SHADOW = { boxShadow: '1px 0 0 0 #cbd5e1' } as const
 
@@ -356,17 +359,14 @@ export function DreamlensLedgerPage() {
               </span>
             </>
           ) : draftPeriodMode === 'monthly' ? (
-            <input
-              aria-label="조회 월"
-              type="month"
+            <MonthPicker
+              ariaLabel="조회 월"
               value={toMonthValue(draftFrom)}
               max={toMonthValue(defaultTo())}
-              onChange={(e) => {
-                if (!e.target.value) return
-                setDraftFrom(toMonthStart(e.target.value))
-                setDraftTo(toMonthEnd(e.target.value))
+              onChange={(v) => {
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
               }}
-              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           ) : (
             <>
@@ -494,6 +494,14 @@ export function DreamlensLedgerPage() {
                         className="h-3.5 w-3.5 align-middle accent-rose-600"
                       />
                     </th>
+                    <th
+                      rowSpan={2}
+                      style={{ width: SOURCE_COL_WIDTH, minWidth: SOURCE_COL_WIDTH, left: SELECT_COL_WIDTH }}
+                      className="sticky top-0 z-30 whitespace-nowrap border border-border/60 bg-slate-100 px-1 py-1.5 text-[10px] font-semibold"
+                      title="행 출처 — 자동은 배치가 CRM 내원·수납으로 만든 초안입니다."
+                    >
+                      구분
+                    </th>
                     {LEDGER_GROUPS.map((group) => {
                       // 고정 그룹의 헤더는 그룹 첫 컬럼 위치에 붙인다(그룹 전체가 함께 고정된다).
                       const left = group.frozen ? FROZEN_LEFT.get(group.columns[0].key) : undefined
@@ -564,7 +572,7 @@ export function DreamlensLedgerPage() {
                 <tbody>
                   {busy && (
                     <tr>
-                      <td colSpan={LEDGER_COLUMNS.length + 1} className="border border-border/60 py-10 text-center text-sm text-muted-foreground">
+                      <td colSpan={LEDGER_COLUMNS.length + 2} className="border border-border/60 py-10 text-center text-sm text-muted-foreground">
                         <span className="inline-flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin" /> 장부를 불러오는 중...
                         </span>
@@ -573,21 +581,28 @@ export function DreamlensLedgerPage() {
                   )}
                   {!busy && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={LEDGER_COLUMNS.length + 1} className="border border-border/60 py-10 text-center text-sm text-muted-foreground">
+                      <td colSpan={LEDGER_COLUMNS.length + 2} className="border border-border/60 py-10 text-center text-sm text-muted-foreground">
                         조회된 장부가 없습니다. “추가”로 새 행을 만드세요.
                       </td>
                     </tr>
                   )}
                   {!busy && visibleRows.map((row) => {
                     const isSelected = selected.has(row.id)
+                    // 배치 초안(AUTO) 행 — CRM 내원·수납으로 자동 생성됨. 렌즈 정보 보완 필요.
+                    // 어느 셀이든 수정하면 서버가 MANUAL 로 승격해 뱃지가 사라진다.
+                    const isAuto = row.source === 'AUTO'
                     // 고정 셀은 뒤 내용이 비치므로 불투명 배경이 필요하다.
                     // 행 hover 는 group-hover 로 고정 셀에도 그대로 전달한다.
-                    const frozenBg = isSelected ? 'bg-rose-50' : 'bg-white group-hover:bg-blue-50'
+                    const frozenBg = isSelected
+                      ? 'bg-rose-50'
+                      : isAuto
+                        ? 'bg-amber-50 group-hover:bg-blue-50'
+                        : 'bg-white group-hover:bg-blue-50'
 
                     return (
                       <tr
                         key={row.id}
-                        className={`group ${isSelected ? 'bg-rose-50/50' : 'hover:bg-blue-50/40'}`}
+                        className={`group ${isSelected ? 'bg-rose-50/50' : isAuto ? 'bg-amber-50/40 hover:bg-blue-50/40' : 'hover:bg-blue-50/40'}`}
                       >
                         <td
                           style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
@@ -600,6 +615,21 @@ export function DreamlensLedgerPage() {
                             onChange={() => toggleOne(row.id)}
                             className="h-3.5 w-3.5 align-middle accent-rose-600"
                           />
+                        </td>
+                        <td
+                          style={{ width: SOURCE_COL_WIDTH, minWidth: SOURCE_COL_WIDTH, left: SELECT_COL_WIDTH }}
+                          className={`sticky z-10 border border-border/60 px-1 py-1 text-center ${frozenBg}`}
+                        >
+                          <span
+                            title={isAuto
+                              ? '배치가 CRM 내원·수납으로 만든 초안입니다. 셀을 고치면 수기로 바뀝니다.'
+                              : '사람이 입력하거나 수정한 행입니다. 배치가 덮어쓰지 않습니다.'}
+                            className={`inline-block rounded px-1 text-[9px] font-semibold leading-4 ${
+                              isAuto ? 'bg-amber-200/80 text-amber-900' : 'bg-slate-200/80 text-slate-700'
+                            }`}
+                          >
+                            {isAuto ? '자동' : '수기'}
+                          </span>
                         </td>
                         {LEDGER_COLUMNS.map((column) => (
                           <LedgerCell
@@ -627,6 +657,10 @@ export function DreamlensLedgerPage() {
                       >
                         합계
                       </td>
+                      <td
+                        style={{ width: SOURCE_COL_WIDTH, minWidth: SOURCE_COL_WIDTH, left: SELECT_COL_WIDTH }}
+                        className="sticky bottom-0 z-30 border border-border/60 bg-slate-100 px-1 py-1.5"
+                      />
                       {LEDGER_COLUMNS.map((column) => {
                         const left = FROZEN_LEFT.get(column.key)
                         return (

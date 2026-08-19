@@ -27,9 +27,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReservationStatsMartRepository {
 
-    private static final String SELECT_MONTHLY_SQL     = SqlLoader.load("sql/mart/select-reservation-monthly.sql");
-    private static final String SELECT_LIST_SQL        = SqlLoader.load("sql/mart/select-list-reservation.sql");
-    private static final String SELECT_KAKAO_COUNT_SQL = SqlLoader.load("sql/mart/select-reservation-kakao-count.sql");
+    private static final String SELECT_MONTHLY_SQL              = SqlLoader.load("sql/mart/select-reservation-monthly.sql");
+    private static final String SELECT_LIST_SQL                 = SqlLoader.load("sql/mart/select-list-reservation.sql");
+    private static final String SELECT_KAKAO_COUNT_SQL          = SqlLoader.load("sql/mart/select-reservation-kakao-count.sql");
+    private static final String SELECT_RESERVATION_DAILY_AGG_SQL = SqlLoader.load("sql/mart/select-reservation-daily-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -51,6 +52,19 @@ public class ReservationStatsMartRepository {
     public List<Map<String, Object>> findList(String from, String to) {
         return jdbc.queryForList(
                 SELECT_LIST_SQL,
+                new MapSqlParameterSource().addValue("from", from).addValue("to", to)
+        );
+    }
+
+    /**
+     * 예약 건수 일별 집계 — list_reservation_all 하나에서 뽑는다.
+     * 월별은 월로, 주차는 ISO 주차로 각자 접어 쓴다. 두 축이 같은 행에서 나오므로 어긋날 수 없다.
+     *
+     * ⚠️ list_reservation_all 이 적재된 뒤에 호출해야 한다.
+     */
+    public List<Map<String, Object>> findReservationDailyAgg(String from, String to) {
+        return jdbc.queryForList(
+                SELECT_RESERVATION_DAILY_AGG_SQL,
                 new MapSqlParameterSource().addValue("from", from).addValue("to", to)
         );
     }
