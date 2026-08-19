@@ -38,7 +38,7 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 | `mart_surgery_daily` | TABLE | V2 | 수술 > 수술별 비중 · 리포트 > 주차 레포트 | 일별 수술 건수 (subtype 분해). **수술별 비중** 페이지 · 주차 레포트 소스. |
 | `list_surgery` | TABLE | V2 | 수술 > 수술자 리스트 | 수술자 리스트 원본 행. **수술자 리스트 페이지** + `v_all_surgery_list` UNION base. |
 | `list_reoperation` | TABLE | V36 | 수술 > 수술자 리스트 (재수술 검토 모달) · 마케팅 > 예약 퍼널 (reop 단계 EXISTS) | 재수술 후보 (RE_OPERATION 원본 + 자동판정 + 제외사유 + is_lens). **재수술 검토 모달** + `v_all_surgery_list` UNION base + 예약 퍼널 재수술 코호트 판정. |
-| `v_all_surgery_list` | VIEW | V37 | 수술 > 수술자 리스트 · 리포트 > 월간/주차 레포트 | `list_surgery` + `list_reoperation` + `reoperation_decision` UNION. 눈 단위로 펼치고 op_type 분류 부여. **전체 수술 리스트·주차 레포트·수술 상세표** 소스. |
+| `v_all_surgery_list` | VIEW | V37 | — (배치 재집계 base · 화면 미경유) | `list_surgery` + `list_reoperation` + `reoperation_decision` UNION. 눈 단위로 펼치고 op_type 분류 부여. **`mart_surgery_daily` 배치 재집계의 유일 base**(`select-surgery-daily-agg.sql`). 수술자 리스트 화면은 `list_surgery` 를 직접 읽음(뷰 미경유). |
 
 ---
 
@@ -328,6 +328,7 @@ Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 
 예외:
 - 관리자 진단(`diagnostics/*`) 엔드포인트 — mart vs MSSQL 비교 목적
 - 아이리더 검사통계 페이지 — 별도 `eoeisJdbcTemplate` 소스
+- **유입(`/stats/intake-conversion`)** — pending 메뉴로 PROD 사이드바 숨김·라우트 차단이라 실질 노출 없음. 백엔드는 Mart QueryService 없이 `IntakeConversionStatsService` (MSSQL 직결) 만 존재해 DEV/local 에서 URL 직접 접근 시 MSSQL 조회.
 
 ---
 
