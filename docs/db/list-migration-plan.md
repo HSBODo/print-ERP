@@ -190,4 +190,4 @@
 - [x] `mart_overall_exam_monthly/weekly` 이관 완료 (2026-08-19) · V56 로 v_all_exam_list 에 surgery_reserve_date · cataract_eye_count 추가 · OverallExamListAggregator 신설
 - [x] 예약통계 시력교정/백내장 · B2B: 의도적 MSSQL 예외로 확정 (2026-08-19)
 - [x] `mart_reservation_kakao_daily` 폐지 완료 (2026-08-19) — 프론트 렌더링 없어 dead consumer 로 확정. 소비자(API·hook·zod schema·reconcile endpoint)·적재 배치·SQL 리소스 5종·V3 CREATE 문 제거. 배포된 DB 는 수동 DROP.
-- [ ] `mart-inventory.md` §집계 마트 조립 경로 갱신 (이관 완료 마트 A그룹으로 재분류)
+- [x] `mart-inventory.md` §집계 마트 조립 경로 갱신 (2026-08-19) — 4그룹 → 5그룹 재분류. A: 8개(exam_count_by_class · overall_exam_monthly/weekly 승격) · B: 하이브리드 3개 신설(consultation-rate·reservation-rate·weekly-report 예약률) · C: MSSQL 직결 3개(예약통계 2·b2b) · D: 간접 1 · E: 시드/입력.

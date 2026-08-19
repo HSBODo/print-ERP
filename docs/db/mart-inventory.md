@@ -223,9 +223,9 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 
 ## 집계 마트 조립 경로 (list 기반 vs MSSQL 직결)
 
-**"모든 지표가 primary list 기반"이라는 명제는 성립하지 않는다.** 배치 잡을 실측한 결과, 집계 마트는 아래 4가지 조립 경로 중 하나를 따른다.
+**"모든 지표가 primary list 기반"이라는 명제는 성립하지 않는다.** 배치 잡을 실측한 결과, 집계 마트는 아래 5가지 조립 경로 중 하나를 따른다. (2026-08-19 재분류: overall_exam·exam_count_by_class 는 list 이관 완료로 A 로 승격, 브릿지 3종은 하이브리드 B 로 분리.)
 
-### A. list 기반 순수 마트 (Postgres 내에서 재집계) — 7개
+### A. list 기반 순수 마트 (Postgres 내에서 재집계) — 8개
 
 배치 잡이 `martJdbcTemplate` 만 사용. MSSQL 은 접근하지 않는다. 정의가 바뀌면 list SQL 한 곳만 고치면 되므로 정합성 유지에 유리.
 
@@ -236,33 +236,40 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 | `mart_stop_reason_monthly` | `select-stop-reason-daily-agg.sql` | `v_all_exam_list` |
 | `mart_outpatient_count_monthly` | `select-outpatient-daily-agg.sql` | `list_outpatient` |
 | `mart_reservation_monthly` | `select-reservation-daily-agg.sql` | `list_reservation_all` |
-| `mart_consultation_rate_monthly` | `select-consultation-rate-*-candidates.sql` | `list_exam` · `v_all_exam_list` |
-| `mart_reservation_rate_monthly` | `select-reservation-rate-*-candidates.sql` | `list_exam` · `list_reservation` · `v_all_exam_list` |
+| `mart_exam_count_by_class` | `select-exam-count-by-class-monthly-agg.sql` | `v_all_exam_list` (motive_report GROUP BY) |
+| `mart_overall_exam_monthly` · `mart_overall_exam_weekly` | `select-overall-exam-daily-agg.sql` (일별 → 주/월 롤업) | `v_all_exam_list` (V56 확장: surgery_reserve_date · cataract_eye_count) |
 
-### B. MSSQL 직결 마트 (list 미경유) — 6개
+### B. 하이브리드 (list 후보 + MSSQL 브릿지) — 3개
 
-배치 잡이 `statsJdbcTemplate` 로 MSSQL 을 직접 읽어 계산 후 Postgres 마트에 upsert. list 스키마로 담기 어려운 소스(CTI·네이버·해피톡·과거 이력 등)를 조합하거나, list 재집계 전환이 미완료된 마트.
+**의도적 설계 · list 완전 이관 예외.** 검사일 이후의 "미래 예약/수술" 실시간 판정이 지표 정확도에 결정적. list 로 후보를 뽑고 `ConsultationRateBridgeRepository` 가 chart_no 청크 IN 조회로 MSSQL 실시간 상태를 병합. 배치 시점 이후 발생한 O 예약도 즉시 반영됨(2026-07 vision -125건 사례가 이 브릿지가 없으면 재현).
+
+| 마트 | list 후보 | MSSQL 브릿지 |
+|---|---|---|
+| `mart_consultation_rate_monthly` | `list_exam` · `v_all_exam_list` 후보 SQL | 미래 O 예약 존재 여부 실시간 조회 |
+| `mart_reservation_rate_monthly` | `list_exam` · `list_reservation` · `v_all_exam_list` 후보 SQL | 상동 |
+| `mart_weekly_report` (예약률 계열만) | `v_all_exam_list` 세션 리스트 | 상동 · 검사·수술·외래 지표는 A 처럼 list 기반 |
+
+### C. MSSQL 직결 마트 (list 미경유) — 3개
+
+배치 잡이 `statsJdbcTemplate` 로 MSSQL 을 직접 읽어 계산 후 Postgres 마트에 upsert. list 스키마로 담기 어려운 소스(CTI·네이버·해피톡)를 조합하거나 소급 변동·현재값 lookup 이 필요해 스냅샷으로 못 뽑는 마트.
 
 | 마트 | 원천 (MSSQL) | 이유 |
 |---|---|---|
-| `mart_reservation_stats_system_daily` | HappyTalk_* + RESERVATION · **RESERVATION_NAVER** · **RESERVE_HISTORY** · **DB_ReCounsel** · **CtiRptLst** · **CtiClg** · **stat_user_inbound_bseye** · DB_CUSTOM · CUSTOM | CTI·네이버·재상담 등 7종+ 부가 소스 조합 필요 |
+| `mart_reservation_stats_system_daily` | HappyTalk_* + RESERVATION · **RESERVATION_NAVER** · **RESERVE_HISTORY** · **DB_ReCounsel** · **CtiRptLst** · **CtiClg** · **stat_user_inbound_bseye** · DB_CUSTOM · CUSTOM | CTI·네이버·재상담 등 7종+ 부가 소스 조합 필요 · 예약 InsertedDateTime 소급 갱신 |
 | `mart_reservation_stats_cataract_daily` | 상동 (백내장 후보 포함) | 상동 |
-| `mart_overall_exam_monthly` · `mart_overall_exam_weekly` | EXAM · Cataract_Exam · RESERVATION · OPERATIONDATA · CUSTOM | 30+ 지표 계산식이 원천 스키마 전제 — 이관 미완료 |
-| `mart_weekly_report` | EXAM · RESERVATION · CUSTOM · EMPLOYEE · HappyTalk_* | 상동 |
-| `mart_exam_count_by_class` | MSSQL 직결 | 마이너 마트, 우선순위 낮음 |
-| `mart_b2b_revenue_monthly` | MSSQL B2B | 상동 |
+| `mart_b2b_revenue_monthly` | OPERATIONDATA · Cataract_Operationdata · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · PrcItmLst · **AssignList** · MOTIVE_NEW01/02 · MEDICAL_SUB_CFG | AssignList 스키마 미문서화 · 비용 소급 재계산에 CUSTOM 현재값 lookup 필요 (list 스냅샷으로 못 뽑음) |
 
-> ⚠️ B 그룹의 원천 테이블 중 **RESERVATION_NAVER · RESERVE_HISTORY · DB_ReCounsel · CtiRptLst · CtiClg · stat_user_inbound_bseye** 는 위 §외부 DB 원본 매핑의 primary list 19개에 미포함. 예약통계 마트가 별도로 읽는다.
+> ⚠️ C 그룹의 원천 테이블 중 **RESERVATION_NAVER · RESERVE_HISTORY · DB_ReCounsel · CtiRptLst · CtiClg · stat_user_inbound_bseye · AssignList** 는 위 §외부 DB 원본 매핑의 primary list 19개에 미포함. 예약통계·B2B 마트가 별도로 읽는다.
 
-### C. 간접 (마트 → 마트) — 1개
+### D. 간접 (마트 → 마트) — 1개
 
-Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 직접 읽지 않지만, 소스 마트가 B 그룹이면 **간접적으로 MSSQL 의존**.
+Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 직접 읽지 않지만, 소스 마트가 C 그룹이면 **간접적으로 MSSQL 의존**.
 
 | 마트 | 소스 |
 |---|---|
 | `mart_reservation_overall_monthly` | `mart_reservation_stats_system_daily` + `mart_reservation_stats_cataract_daily` + `mart_list_reservation_homepage` SUM (컷오버 2026-06 이후) + V12/V24 골든시드(24·25·26H1). 화면 서비스(`ReservationOverallMartQueryService @Primary`) 와 동일 계산식 재사용. |
 
-### D. 관리자 입력 · 시드 (외부 원천 없음)
+### E. 관리자 입력 · 시드 (외부 원천 없음)
 
 | 대상 | 성격 |
 |---|---|
@@ -274,17 +281,18 @@ Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 
 
 | 그룹 | 개수 | 특성 |
 |---|---|---|
-| A. list 기반 순수 | 7 | list 재집계로 정의 통일 완료 (수술·검사·외래·중단사유·전환율·예약률·예약 월별) |
-| B. MSSQL 직결 | 6+ | 예약통계·overall_exam·weekly_report·b2b — 배치 시점 MSSQL 필수 |
-| C. 마트→마트 (간접) | 1 | reservation_overall (B 그룹에 의존) |
-| D. 관리자 입력·시드 | — | 외부 원천 없음 |
+| A. list 기반 순수 | 8 | list 재집계로 정의 통일 완료 (수술·검사·외래·중단사유·예약 월별·검사수 by class·전체지표 주/월) |
+| B. 하이브리드 (list + 브릿지) | 3 | consultation-rate·reservation-rate·weekly-report 예약률 — 미래 예약 실시간 판정 필수 |
+| C. MSSQL 직결 | 3 | 예약통계 2종·b2b — 채널 판정 스키마 강결합/현재값 lookup 필요 |
+| D. 마트→마트 (간접) | 1 | reservation_overall (C 그룹에 의존) |
+| E. 관리자 입력·시드 | — | 외부 원천 없음 |
 
-> ℹ️ **정합성 시사점**: A 그룹은 list SQL 한 곳만 고치면 전 하위 마트에 반영. B/C 그룹은 마트별 배치 잡을 각각 고쳐야 함(2026-08-05 원데이 3건 케이스가 그 예).
+> ℹ️ **정합성 시사점**: A 그룹은 list SQL 한 곳만 고치면 전 하위 마트에 반영. B/C/D 그룹은 마트별 배치 잡을 각각 고쳐야 함(2026-08-05 원데이 3건 케이스가 그 예).
 >
 > ✅ **이관 결과 정리** (2026-08-19 종결): [`list-migration-plan.md`](list-migration-plan.md) 참조.
-> 완료: `mart_exam_count_by_class` · `mart_overall_exam_monthly/weekly`.
+> 완료: `mart_exam_count_by_class` · `mart_overall_exam_monthly/weekly` (A 로 승격).
 > 폐지: `mart_reservation_kakao_daily` (dead consumer 로 확인 · 소비자·적재·SQL·CREATE 문 정리, 배포 DB 는 수동 DROP).
-> 의도적 MSSQL 예외: 브릿지 3종(consultation-rate·reservation-rate·weekly-report 예약률) · 예약통계 2종(stats_system·stats_cataract) · B2B — 실시간 정확도가 결정적이거나 이관 이득 없음.
+> 의도적 예외: B(브릿지 3종) · C(예약통계 2종·B2B) — 실시간 정확도가 결정적이거나 이관 이득 없음.
 
 ---
 
