@@ -3,7 +3,6 @@ package com.bviit.analytics.batch.admin;
 import com.bviit.analytics.reservation.dto.ReservationListResult;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
 import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
-import com.bviit.analytics.reservation.repository.ReservationListRepository;
 import com.bviit.analytics.reservation.repository.ReservationOverallMartRepository;
 import com.bviit.analytics.reservation.repository.ReservationStatsMartRepository;
 import com.bviit.analytics.reservation.service.ReservationListService;
@@ -19,8 +18,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 /**
  * 예약 마트값 vs MSSQL 직결값 대사(reconcile). local/dev 전용 스모크.
@@ -38,11 +35,11 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  *      2026-06+ 계산식이 다르다 — mart 는 화면과 정합, 소스는 raw MSSQL. **소폭 diff 정상**.
  *      2024·2025 는 V12 seed 고정이라 min-year 필터로 대사에서 제외.
  *
- * 3) reconcileList / reconcileKakao
+ * 3) reconcileList
  *      마트가 소스 결과를 그대로 저장 → **diff 0 기대**.
  *
  * 버그 의심 신호:
- *   · monthly / list / kakao 에서 diff 발생 (정의 동일이라 나오면 안 됨).
+ *   · monthly / list 에서 diff 발생 (정의 동일이라 나오면 안 됨).
  *   · overallMonthly 에서 diff 방향이 뒤집힘 (mart 가 소스보다 훨씬 큼).
  *   · missing-in-mart / missing-in-source 가 새 월에서 튐.
  */
@@ -54,7 +51,6 @@ public class ReservationReconcileService {
     private final ReservationStatsService statsService;              // MSSQL 직결
     private final ReservationOverallStatsService overallStatsService; // MSSQL 직결 (예약 종합/콜/온라인)
     private final ReservationListService listService;                 // MSSQL 직결
-    private final ReservationListRepository listRepository;           // MSSQL 직결 (kakao daily)
     private final ReservationStatsMartRepository martRepo;            // Postgres 마트
     private final ReservationOverallMartRepository overallMartRepo;   // Postgres 마트 (예약 종합)
     private final ObjectMapper objectMapper;
@@ -125,24 +121,6 @@ public class ReservationReconcileService {
         out.put("sourceByChannelGroup", sourceByChannel);
         out.put("martByChannelGroup",   martByChannel);
         out.put("countMatches", source.size() == mart.size());
-        return out;
-    }
-
-    /**
-     * 카카오 일별 건수 대사 — MSSQL 원본(HappyTalk) vs 마트(mart_reservation_kakao_daily)의 SUM 비교.
-     */
-    public Map<String, Object> reconcileKakao(String from, String to) {
-        List<Map<String, Object>> sourceDaily = listRepository.findKakaoDailyCounts(from, to);
-        int sourceSum = sourceDaily.stream().mapToInt(r -> toInt(r.get("kakaoCount"))).sum();
-        int martSum = martRepo.findKakaoCount(from, to);
-
-        LinkedHashMap<String, Object> out = new LinkedHashMap<>();
-        out.put("kind", "kakao");
-        out.put("sourceDays", sourceDaily.size());
-        out.put("sourceSum", sourceSum);
-        out.put("martSum", martSum);
-        out.put("diff", sourceSum - martSum);
-        out.put("ok", sourceSum == martSum);
         return out;
     }
 

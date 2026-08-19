@@ -4,9 +4,9 @@ import { withQuery } from '@/api/_shared'
 
 /**
  * 예약자 리스트 — "예약 종합(콜·온라인)" 월간 건수를 구성하는 검사예약 행 목록.
- * 백엔드: GET /api/reservation-list?from&to → ApiResponse<{rows, kakaoCount}> (camelCase 키).
+ * 백엔드: GET /api/reservation-list?from&to → ApiResponse<{rows}> (camelCase 키).
  * 집계 기준 날짜 = 등록일(registeredAt). 행 1개 = RESERVE_NUM 1개.
- * 명단 행 합계 = 예약 종합 값(둘 다 카카오 미포함). kakaoCount(해피톡 카카오)는 참고용 별도 표시.
+ * 명단 행 합계 = 예약 종합 값(둘 다 카카오 미포함).
  * 전 컬럼 문자열. reserveState: Y(예약)/I(접수)/H(퇴원)/C(취소).
  */
 const reservationListItemSchema = z.object({
@@ -48,15 +48,12 @@ const reservationListResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({
     rows: z.array(reservationListItemSchema),
-    kakaoCount: z.number(),
   }),
   message: z.string().nullish(),
 })
 
 export interface ReservationListResult {
   rows: ReservationListItem[]
-  /** 카카오(해피톡) 건수 — 참고용. 예약 종합엔 미포함(명단 합계 = 예약 종합). */
-  kakaoCount: number
 }
 
 export const reservationListApi = {

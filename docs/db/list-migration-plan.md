@@ -15,7 +15,7 @@
 
 이 문서는 위 원칙 하에 각 마트별로 이관 가능성을 판정하고 실제 이관 작업의 결과를 기록한다.
 
-**사용 가능 자원**: `list_reservation`, `list_reservation_all`, `list_exam`, `list_cataract_exam`, `list_surgery`, `list_reoperation`, `list_outpatient`, `mart_list_reservation_homepage`, `list_kakao_counsel`(V57 신설), 파생 뷰 `v_all_exam_list` (V56 확장) · `v_all_surgery_list` · `v_reservation_channel`.
+**사용 가능 자원**: `list_reservation`, `list_reservation_all`, `list_exam`, `list_cataract_exam`, `list_surgery`, `list_reoperation`, `list_outpatient`, `mart_list_reservation_homepage`, 파생 뷰 `v_all_exam_list` (V56 확장) · `v_all_surgery_list` · `v_reservation_channel`.
 
 ---
 
@@ -113,11 +113,13 @@
 
 원천 데이터가 어느 기존 list 에도 이관되어 있지 않아, 신규 primary list 없이는 근본적으로 계산 불가.
 
-#### 4. `mart_reservation_kakao_daily`
+#### 4. `mart_reservation_kakao_daily` — **폐지 완료 (2026-08-19)**
 
-- **필요 원천**: `HappyTalk_Counsel_List` (카카오 상담 원본)
-- **기존 list 상태**: 어느 list 도 HappyTalk 데이터를 담지 않음. `list_reservation` 은 검사예약(M) 전용, `list_reservation_all` 은 O/D/외래(JINRYO=2) 전용.
-- **판정**: 원천 부재. 기존 list 로 이관 불가.
+- **원래 용도**: 예약자 리스트 화면의 `kakaoCount` 참고 표시.
+- **실제 상태 확인**: 프론트가 hook 반환값을 destructure 하지 않아 **UI 렌더링이 존재하지 않음** (dead consumer).
+- **다른 소비처 여부**: 없음 — 레포트·다른 집계 마트는 이 마트를 참조하지 않고 필요 시 HappyTalk 를 각자 직결.
+- **처리**: 소비자(API·hook·zod schema)·적재 배치·`replaceKakaoDaily`·`reconcileKakao` endpoint·SQL 리소스 5종·V3 의 CREATE 문까지 함께 제거. 배포된 DB 는 수동 DROP.
+- **결론**: 이관이 아니라 **폐지가 자연스러운 결정** — 소비자가 없어 이관 이득 자체가 없었음.
 
 #### 5. `mart_reservation_stats_system_daily` (CH01~CH24)
 
@@ -159,7 +161,7 @@
 | `mart_consultation_rate_monthly` | 브릿지 예외 | **이관 안 함** | 브릿지 = 의도적 설계 · 정확도 우위 유지 | — | 예외 |
 | `mart_reservation_rate_monthly` | 상동 | **이관 안 함** | 상동 | — | 예외 |
 | `mart_weekly_report` 예약률 4종 | 상동 | **이관 안 함** | 상동 | — | 예외 |
-| `mart_reservation_kakao_daily` | MSSQL 필수 예외 | **이관 안 함** | 예약자 리스트 화면 참고용 카운트 1개 · UI 실제 미사용(dead) · HappyTalk 원천 (stats_system 과 동일 카테고리) | — | 예외 |
+| `mart_reservation_kakao_daily` | 소비자 dead 확인 | **폐지 완료** | UI 렌더링 없음 · 다른 소비처도 없음 · 소비자·적재·SQL·CREATE 문·배포 DB 수동 DROP | — | 폐지 |
 | `mart_b2b_revenue_monthly` | MSSQL 필수 예외 | **이관 안 함** | 비용 소급 재계산 필요 · AssignList 스키마 미문서화 | — | 예외 |
 | `mart_reservation_stats_system_daily` | MSSQL 필수 예외 | **이관 안 함** | 채널 판정 로직이 CTI 코드체계에 강결합 · OPENQUERY(EICN_MySQL) · 예약 InsertedDateTime 소급 갱신 · 브릿지와 동일 논리 | — | 예외 |
 | `mart_reservation_stats_cataract_daily` | 상동 | **이관 안 함** | 상동 | — | 예외 |
@@ -172,10 +174,12 @@
 - `mart_exam_count_by_class`
 - `mart_overall_exam_monthly` · `mart_overall_exam_weekly`
 
+**폐지 완료 마트**:
+- `mart_reservation_kakao_daily` — 프론트 렌더링 없어 dead consumer 로 확인. 소비자·적재·SQL·CREATE 문 제거, 배포 DB 수동 DROP.
+
 **의도적 MSSQL 예외 (list 이관 부적합 · 유지)**:
 - 브릿지 3종 (consultation-rate · reservation-rate · weekly-report 예약률) — 미래 예약 실시간 판정 필수
 - `mart_reservation_stats_system_daily` / `_cataract_daily` — 채널 판정 로직이 CTI 코드체계에 강결합 · OPENQUERY(EICN_MySQL) · 예약 InsertedDateTime 소급 갱신
-- `mart_reservation_kakao_daily` — 화면 참고용 카운트 1개(UI 실제 미사용, dead 상태) · HappyTalk 원천 · 이관 이득 없음
 - `mart_b2b_revenue_monthly` — 비용 소급 재계산 필요 · AssignList 스키마 미문서화
 
 **아키텍처 원칙 확정**: primary list 로 이관 가능한 파생 마트는 완전 list 화 · 실시간성이 정확도에 결정적인 마트는 의도적 MSSQL 예외로 유지.
@@ -184,6 +188,6 @@
 
 - [x] `mart_exam_count_by_class` 이관 완료 (2026-08-19)
 - [x] `mart_overall_exam_monthly/weekly` 이관 완료 (2026-08-19) · V56 로 v_all_exam_list 에 surgery_reserve_date · cataract_eye_count 추가 · OverallExamListAggregator 신설
-- [x] 예약통계 시력교정/백내장 · B2B · kakao_daily: 의도적 MSSQL 예외로 확정 (2026-08-19)
-  · kakao_daily 는 2026-08-19 이관 시도(V57 `list_kakao_counsel`) 후 롤백 — 화면 참고용 카운트 1개(UI 실제 미사용)를 위한 primary list 는 오버엔지니어링
+- [x] 예약통계 시력교정/백내장 · B2B: 의도적 MSSQL 예외로 확정 (2026-08-19)
+- [x] `mart_reservation_kakao_daily` 폐지 완료 (2026-08-19) — 프론트 렌더링 없어 dead consumer 로 확정. 소비자(API·hook·zod schema·reconcile endpoint)·적재 배치·SQL 리소스 5종·V3 CREATE 문 제거. 배포된 DB 는 수동 DROP.
 - [ ] `mart-inventory.md` §집계 마트 조립 경로 갱신 (이관 완료 마트 A그룹으로 재분류)

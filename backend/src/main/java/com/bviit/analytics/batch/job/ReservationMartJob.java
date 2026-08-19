@@ -23,12 +23,11 @@ import java.util.Map;
 /**
  * 예약 도메인 마트 적재 잡.
  *
- * 다섯 개의 마트를 채운다:
+ * 네 개의 마트를 채운다:
  *   - list_reservation_all               — from..to 예약일 범위 delete+insert (얇은 리스트)
  *   - mart_reservation_monthly           — (yr, mo) upsert. **위 리스트를 월로 접어** 만든다 (수술/외래/드림렌즈)
  *   - mart_reservation_overall_monthly   — (yr, mo) upsert (예약 종합/콜/온라인). min-year 가드로 24·25 write 차단.
  *   - list_reservation                   — from..to 등록일 범위 delete+insert (검사 예약자 명단)
- *   - mart_reservation_kakao_daily       — from..to 범위 delete+insert (해피톡 일별 건수 · **MSSQL 직결 유지**)
  *
  * mart_reservation_monthly 는 종전에 MSSQL 쪽 별도 쿼리(ReservationStatsService.getMonthlyStats
  * → sql/reservation/monthly-by-type.sql)로 계산해 저장했다. 같은 정의를 리스트에 담아
@@ -39,12 +38,7 @@ import java.util.Map;
  * 종전엔 MSSQL 직결(ReservationOverallStatsService) 로 배치가 재계산했으나,
  * 화면·배치가 서로 다른 소스를 쓰면 어긋날 위험이 있어 하나로 통일.
  *
- * mart_reservation_kakao_daily 는 화면 참고용 카운트 1개(예약자 리스트 표시)를 위한 얇은 마트라
- * 별도 primary list 이관 없이 MSSQL 직결(findKakaoDailyCounts) 유지 — stats_system·cataract 와
- * 같은 HappyTalk 원천 예외 카테고리.
- *
- * MSSQL 소스에서 읽기는 검사(M) 예약자 명단(ReservationListService)과
- * 카카오 일별(ReservationListRepository.findKakaoDailyCounts)에 남아 있다.
+ * MSSQL 소스에서 읽기는 검사(M) 예약자 명단(ReservationListService)에만 남아 있다.
  *
  * MSSQL 직결 서비스(ReservationStatsService·ReservationOverallStatsService)는 배치에서 더 이상 안 쓰지만
  * ReservationReconcileService 의 대사(reconcile) 소스로 유지된다.
@@ -75,11 +69,10 @@ public class ReservationMartJob {
      *
      *   - Monthly: 범위에 걸친 (yr,mo)만 재계산 후 upsert
      *   - List:    범위 delete+insert (등록일 기준)
-     *   - Kakao:   범위 delete+insert (일별 dt 기준)
      *
      * 반환값은 upsert/insert된 총 행 수 (관측용).
      *
-     * 트랜잭션: 도메인 단위 all-or-nothing. monthly/list/kakao/watermark 중 하나라도 실패하면
+     * 트랜잭션: 도메인 단위 all-or-nothing. monthly/list/watermark 중 하나라도 실패하면
      * 모두 롤백되어 일관성을 보장한다. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
@@ -141,20 +134,14 @@ public class ReservationMartJob {
                 listService.getReservationList(from.toString(), to.toString()).rows();
         int listRowsCount = writer.replaceList(from, to, listRows);
 
-        // 5) Kakao daily delete+insert (MSSQL 직결 · 참고용 지표 예외)
-        List<Map<String, Object>> kakaoRows =
-                listRepository.findKakaoDailyCounts(from.toString(), to.toString());
-        int kakaoRowsCount = writer.replaceKakaoDaily(from, to, kakaoRows);
-
-        // 6) Watermark 갱신 (성공 시에만)
+        // 5) Watermark 갱신 (성공 시에만)
         watermarkRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "list_reservation_all", listAllInserted,
                 "mart_reservation_monthly", monthlyRows,
                 "mart_reservation_overall_monthly", overallRows,
-                "list_reservation", listRowsCount,
-                "mart_reservation_kakao_daily", kakaoRowsCount
+                "list_reservation", listRowsCount
         );
         log.info("ReservationMartJob done: {}", stats);
         return stats;

@@ -12,10 +12,10 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 
 | 종류 | 개수 |
 |---|---|
-| 마트 테이블 (`mart_*`, `list_*`, 기타 관리 테이블) | 33 |
+| 마트 테이블 (`mart_*`, `list_*`, 기타 관리 테이블) | 32 |
 | 마트 뷰 (`v_*`) | 3 |
 | JPA 테이블 | 3 |
-| **합계** | **39** |
+| **합계** | **38** |
 
 원천 외부 DB 는 별도 — 외부 DB 3종(MSSQL 운영·MariaDB 홈페이지·MSSQL 아이리더)에서 총 **25개** 테이블을 읽음. primary list 마트 조립에는 그중 MSSQL 운영 19개 + MariaDB 홈페이지 1개 = **20개** 사용 (아래 "외부 DB 원본 매핑" 절 참조).
 
@@ -48,7 +48,6 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 |---|---|---|---|---|
 | `mart_reservation_monthly` | TABLE | V3 | 예약 > 예약 건수 (메뉴 숨김·라우트 유지) | 월별 수술/외래/드림렌즈 예약 건수. `list_reservation_all` 을 월로 접어 만듦. **예약 건수 페이지**(메뉴 숨김, 라우트 유지). |
 | `mart_reservation_overall_monthly` | TABLE | V12 | 예약 > 예약 종합 · 리포트 > 월간/주차 레포트 | 월별 예약 종합·콜·온라인. **예약 종합 페이지** · 월간/주차 레포트. 2024·2025는 골든시드(V12), 2026-06+는 채널 마트 SUM. |
-| `mart_reservation_kakao_daily` | TABLE | V3 | 예약 > 예약자 리스트 (kakaoCount 참고) | 카카오(해피톡) 일별 건수 — 예약자 리스트 화면의 kakaoCount 참고 표시. |
 | `list_reservation` | TABLE | V3 (+V39–V50 ALTER) | 예약 > 예약자 리스트 · (전환&성공률 > 예약률 EXISTS 후보) | RESERVE_FLAG='M' 검사 예약 명단 (풍부한 컬럼: name, channel, doctor, memo 등). **예약자 리스트 페이지** · 시력교정 예약률 후보 EXISTS 조회. |
 | `list_reservation_all` | TABLE | V53 | — (배치·집계 전용, 화면 조회 없음) | 수술(O)/외래(JINRYO=2)/드림렌즈(D) 얇은 리스트. `mart_reservation_monthly` 재집계 원천. **배치·집계 전용** (화면 조회 없음). |
 | `mart_list_reservation_homepage` | TABLE | V21 | 예약 > 예약자 리스트_홈페이지 · 예약 > 예약 종합 | 레거시 홈페이지 예약 raw (홈페이지 DB → 마트 이관본). **예약자 리스트_홈페이지 페이지** + 예약 종합의 홈페이지 몫. |
@@ -186,7 +185,7 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 
 #### 1-B. 해피톡 집계 원천 (4개 · primary list 미포함)
 
-`mart_reservation_kakao_daily` 와 예약통계(시력교정/백내장) daily-counts 가 별도로 읽는다. 사용 SQL: `sql/reservation-stats/*-daily-counts.sql`, `sql/reservation-stats/*-drill-down.sql`, `sql/report/find-reservation-kakao-daily.sql`.
+예약통계(시력교정/백내장) daily-counts + 주차 레포트가 별도로 읽는다. 사용 SQL: `sql/reservation-stats/*-daily-counts.sql`, `sql/reservation-stats/*-drill-down.sql`, `sql/report/find-reservation-kakao-daily.sql`.
 
 | 테이블 | 역할 |
 |---|---|
@@ -246,7 +245,6 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 
 | 마트 | 원천 (MSSQL) | 이유 |
 |---|---|---|
-| `mart_reservation_kakao_daily` | HappyTalk_Counsel_List · Mapping · Category01/02 | 해피톡은 primary list 로 이관되지 않음 |
 | `mart_reservation_stats_system_daily` | HappyTalk_* + RESERVATION · **RESERVATION_NAVER** · **RESERVE_HISTORY** · **DB_ReCounsel** · **CtiRptLst** · **CtiClg** · **stat_user_inbound_bseye** · DB_CUSTOM · CUSTOM | CTI·네이버·재상담 등 7종+ 부가 소스 조합 필요 |
 | `mart_reservation_stats_cataract_daily` | 상동 (백내장 후보 포함) | 상동 |
 | `mart_overall_exam_monthly` · `mart_overall_exam_weekly` | EXAM · Cataract_Exam · RESERVATION · OPERATIONDATA · CUSTOM | 30+ 지표 계산식이 원천 스키마 전제 — 이관 미완료 |
@@ -285,7 +283,8 @@ Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 
 >
 > ✅ **이관 결과 정리** (2026-08-19 종결): [`list-migration-plan.md`](list-migration-plan.md) 참조.
 > 완료: `mart_exam_count_by_class` · `mart_overall_exam_monthly/weekly`.
-> 의도적 MSSQL 예외: 브릿지 3종(consultation-rate·reservation-rate·weekly-report 예약률) · 예약통계 2종(stats_system·stats_cataract) · `mart_reservation_kakao_daily` · B2B — 실시간 정확도가 결정적이거나 이관 이득 없음.
+> 폐지: `mart_reservation_kakao_daily` (dead consumer 로 확인 · 소비자·적재·SQL·CREATE 문 정리, 배포 DB 는 수동 DROP).
+> 의도적 MSSQL 예외: 브릿지 3종(consultation-rate·reservation-rate·weekly-report 예약률) · 예약통계 2종(stats_system·stats_cataract) · B2B — 실시간 정확도가 결정적이거나 이관 이득 없음.
 
 ---
 

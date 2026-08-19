@@ -127,7 +127,6 @@
 | `mart_surgery_monthly` | V2 | surgery | ✅ |
 | `mart_surgery_daily` | V2 | surgery | ✅ |
 | `mart_reservation_monthly` | V3 | reservation | ✅ |
-| `mart_reservation_kakao_daily` | V3 | reservation-overall (카카오 채널) | ✅ |
 | `mart_examination_monthly` | V4 | examination | ✅ |
 | `mart_procedure_exam_monthly` | V4 | procedure-exam | ✅ |
 | `mart_consultation_rate_monthly` | V5 | consultation-rate | ✅ |
@@ -702,7 +701,6 @@ INSERT INTO list_* (...) VALUES (...);
 | `mart_reservation_monthly` | ReservationMartJob | UPSERT (yr, mo) | MSSQL | ✅ 적용 | 24·25 는 V9/V12 시드 보호 |
 | `mart_reservation_overall_monthly` | ReservationMartJob | UPSERT (yr, mo) | MSSQL + 홈페이지 마트 | ✅ 적용 | 24·25 는 V12 시드 · 2026-01~05 는 V24 골든 시드(담당자 확정값, 배치 write 차단) · 2026-06~ 는 네이버+카카오+홈페이지(리스트 화면과 동일한 raw) 공식으로 라이브 SUM(오버라이드 즉시 반영) · 현재 진행 중인 달은 부분값 노출 |
 | `list_reservation` | ReservationMartJob | DELETE+INSERT (registered_at) | MSSQL | 없음 | 취소·수정건 자동 흡수 |
-| `mart_reservation_kakao_daily` | ReservationMartJob | DELETE+INSERT (dt) | MSSQL | 없음 | 해피톡 카카오 예약 참고용 |
 | `mart_reservation_stats_system_daily` | ReservationStatsDailyMartJob | UPSERT (stat_date) | MSSQL | ✅ 적용 | **2026-H1 (1~6월) V19 시드 + period_lock** — 배치가 이 6개월 안 덮음 |
 | `mart_reservation_stats_cataract_daily` | ReservationStatsDailyMartJob | UPSERT (stat_date) | MSSQL | ✅ 적용 | **2026-H1 V20 시드 + period_lock** |
 

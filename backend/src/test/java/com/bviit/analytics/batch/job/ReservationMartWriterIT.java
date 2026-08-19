@@ -29,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 회귀 방지 대상:
  *   - upsertMonthly:    (yr,mo) 충돌 시 값이 덮어써진다 (idempotent)
  *   - replaceList:      기간 delete+insert. 범위 밖 데이터는 남고, 범위 안은 새 데이터로 교체
- *   - replaceKakaoDaily:(dt) 범위 delete+insert. 범위 밖 dt는 유지, 빈 rows는 여전히 range 삭제
  *   - 라운드트립:        Writer가 쓴 값 == Repository가 읽는 값 (컬럼 매핑 오류 감지)
  *
  * Spring 컨텍스트 없이 실제 DDL + JdbcTemplate만 사용해 빠르게 돈다.
@@ -65,7 +64,7 @@ class ReservationMartWriterIT {
         // 매 테스트마다 clean state — DDL 재실행 + 데이터 초기화
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS list_reservation, mart_reservation_monthly, "
-                    + "mart_reservation_kakao_daily, batch_watermark, batch_run_log CASCADE");
+                    + "batch_watermark, batch_run_log CASCADE");
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V3__reservation_mart.sql"));
         }
@@ -158,39 +157,6 @@ class ReservationMartWriterIT {
         assertThat(martRepo.findList("2026-06-01", "2026-06-30")).isEmpty();
     }
 
-    @Test
-    void replaceKakaoDaily_writesAndIsIdempotent_rangeIsolated() {
-        // 6월과 7월에 각각 하루씩 적재
-        writer.replaceKakaoDaily(
-                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 31),
-                List.of(kakaoRow("2026-06-15", 3), kakaoRow("2026-07-10", 7))
-        );
-        assertThat(martRepo.findKakaoCount("2026-06-01", "2026-07-31")).isEqualTo(10);
-
-        // 6월 범위만 새 값으로 교체 — 7월은 유지되어야 함
-        writer.replaceKakaoDaily(
-                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30),
-                List.of(kakaoRow("2026-06-15", 5))
-        );
-        assertThat(martRepo.findKakaoCount("2026-06-01", "2026-06-30")).isEqualTo(5);
-        assertThat(martRepo.findKakaoCount("2026-07-01", "2026-07-31")).isEqualTo(7);
-    }
-
-    @Test
-    void replaceKakaoDaily_emptyRows_stillDeletesRange() {
-        writer.replaceKakaoDaily(
-                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30),
-                List.of(kakaoRow("2026-06-15", 3))
-        );
-        // 빈 rows로 replace → 범위 삭제
-        int inserted = writer.replaceKakaoDaily(
-                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30),
-                List.of()
-        );
-        assertThat(inserted).isZero();
-        assertThat(martRepo.findKakaoCount("2026-06-01", "2026-06-30")).isZero();
-    }
-
     // ─── helpers ─────────────────────────────────────────────
 
     private static ReservationMonthlyItem sampleMonthly(int yr, int mo, int surgery, int outpatient, int dreamlens) {
@@ -215,13 +181,6 @@ class ReservationMartWriterIT {
         row.put("doctor", "");
         row.put("counselor", "");
         row.put("comment", "");
-        return row;
-    }
-
-    private static Map<String, Object> kakaoRow(String dt, int count) {
-        Map<String, Object> row = new LinkedHashMap<>();
-        row.put("dt", dt);
-        row.put("kakaoCount", count);
         return row;
     }
 

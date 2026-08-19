@@ -3,10 +3,14 @@
 -- Profile: postgres-mart
 -- 참고: docs/databatch/strategy.md §5.1, §5.2
 --
--- 세 개 테이블:
+-- 두 개 테이블:
 --   mart_reservation_monthly    — 월별 수술/외래/드림렌즈 (ReservationMonthlyItem)
 --   list_reservation            — 예약자 명단 행 (reservation-list.sql 출력 shape)
---   mart_reservation_kakao_daily — 카카오(해피톡) 일별 건수 (참고용 카운트)
+--
+-- 이력: mart_reservation_kakao_daily 는 예약자 리스트 kakaoCount 참고용으로 만들었으나
+--       프론트 렌더링이 실제로 없어 dead consumer 로 확인됨(2026-08-19 폐지). 소비자·적재
+--       배치·SQL 리소스와 함께 CREATE 문도 제거 — 재기동 시 재생성 방지. 기존 배포된 DB 에서는
+--       수동 DROP 필요.
 -- =========================================================
 
 -- ─── 월별 집계 마트 ───────────────────────────────────────
@@ -56,14 +60,3 @@ CREATE INDEX IF NOT EXISTS idx_list_reservation_chart
 
 CREATE INDEX IF NOT EXISTS idx_list_reservation_registered_channel
     ON list_reservation (registered_at, channel_group);
-
-
--- ─── 카카오(해피톡) 일별 건수 마트 ─────────────────────────
--- 원본 SQL: sql/reservation-list/kakao-count.sql (범위 SUM → 일별 GROUP BY)
---   ReservationListResult.kakaoCount 계산용. 명단(list_reservation)에는 없고 해피톡에만 있는
---   카카오 예약을 참고용으로 별도 저장. 조회 시 요청 범위의 count SUM.
-CREATE TABLE IF NOT EXISTS mart_reservation_kakao_daily (
-    dt          DATE        PRIMARY KEY,
-    kakao_count INTEGER     NOT NULL DEFAULT 0,
-    loaded_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
-);

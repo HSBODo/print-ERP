@@ -18,7 +18,7 @@ import java.util.Optional;
 
 /**
  * GET /api/reservation-list?from=YYYY-MM-DD&to=YYYY-MM-DD
- * 예약자 명단 + 카카오 건수. 응답: ApiResponse&lt;{rows:List&lt;Map&gt;, kakaoCount:int}&gt; (camelCase 키).
+ * 예약자 명단. 응답: ApiResponse&lt;{rows:List&lt;Map&gt;}&gt; (camelCase 키).
  * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  * postgres-mart 프로파일에서는 ReservationListMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  */

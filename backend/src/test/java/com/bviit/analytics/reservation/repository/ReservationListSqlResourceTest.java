@@ -56,18 +56,4 @@ class ReservationListSqlResourceTest {
                 .contains("THEN memoMv.motiveM ELSE fallbackMv.motiveM END");
     }
 
-    @Test
-    void kakao_count_sql은_happytalk_기준과_named_parameter를_보존한다() {
-        String sql = SqlLoader.load(ReservationListRepository.KAKAO_COUNT_SQL);
-
-        assertThat(sql)
-                .contains(":from", ":to")
-                .contains("COUNT(DISTINCT CONVERT(VARCHAR(23), H.InsertedDateTime, 21))")
-                .contains("HappyTalk_Counsel_List")
-                .contains("HappyTalk_Category01")
-                .contains("HappyTalk_Category02")
-                .contains("C01.Name = '수술전'")
-                .contains("C02.NAME = '★신환'")
-                .doesNotContain("OPENQUERY", "__OQ_");
-    }
 }

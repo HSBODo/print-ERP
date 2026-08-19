@@ -144,11 +144,6 @@ public class BatchAdminController {
         return reservationReconcileService.reconcileList(from, to);
     }
 
-    @GetMapping("/reservation/reconcile-kakao")
-    public Map<String, Object> reconcileReservationKakao(@RequestParam String from, @RequestParam String to) {
-        return reservationReconcileService.reconcileKakao(from, to);
-    }
-
     // ─── 검사 도메인 ─────────────────────────────────────────
 
     @GetMapping("/exam/reconcile-examination")
