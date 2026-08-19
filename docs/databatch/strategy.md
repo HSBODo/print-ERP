@@ -323,7 +323,7 @@ override 는 조회 시점에 서비스가 얹는다 — 즉 **배치 write 경�
 
 | PR | 내용 | 상태 |
 |----|------|-----|
-| **PR-1** | Datasource 이중화, Postgres 스키마 초안, `batch_run_log`/`batch_watermark`, `BatchOrchestrator` 뼈대 | ✅ 완료 (`MartDataSourceConfig`, `StatsDataSourceConfig`, `V1__batch_meta.sql`) |
+| **PR-1** | Datasource 이중화, Postgres 스키마 초안, `batch_run_log`/`batch_watermark`, `BatchOrchestrator` 뼈대 | ✅ 완료 (`MartDataSourceConfig`, `V1__batch_meta.sql`) — 이전에 있던 `StatsDataSourceConfig` 는 2026-08-19 mssql 프로파일 제거와 함께 삭제, stats DataSource 는 `MartDataSourceConfig` 로 통합됨 |
 | **PR-2** | 수술 도메인 마트(monthly/daily/list) + `SurgeryMartJob`·`SurgeryMartWriter`·`SurgeryStatsMartRepository` | ✅ 완료 (`V2__surgery_mart.sql`) |
 | **PR-3** | Phase 1 Cutover (surgery 페이지 프로파일 스위치) | ✅ 완료 — surgery/surgery-list/surgery-ratio/surgery-composition 모두 마트. 2026-07-31 surgery-composition도 `mart_surgery_daily` 로 스위치, 스냅샷 파일 폐지 |
 | **PR-4** | 예약 마트 + Phase 2 Cutover | ⚠️ 부분 완료 (`V3__reservation_mart.sql`) — reservation-stats-system/cataract는 스냅샷 유지 |
