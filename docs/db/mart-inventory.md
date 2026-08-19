@@ -17,6 +17,8 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 | JPA 테이블 | 3 |
 | **합계** | **39** |
 
+원천 외부 DB 는 별도 — 외부 DB 3종(MSSQL 운영·MariaDB 홈페이지·MSSQL 아이리더)에서 총 **25개** 테이블을 읽음. primary list 마트 조립에는 그중 MSSQL 운영 19개 + MariaDB 홈페이지 1개 = **20개** 사용 (아래 "외부 DB 원본 매핑" 절 참조).
+
 ---
 
 ## 1. 공용 배치 인프라
@@ -145,6 +147,148 @@ v_reservation_channel ← list_reservation + reservation_channel_staff
 
 ---
 
+## 외부 DB 원본 매핑
+
+배치·집계가 외부 DB **3종**에서 데이터를 읽어와 마트를 조립한다. 화면 조회는 원칙적으로 마트만 사용하며, 외부 DB 는 배치 시점 또는 명시적 예외 페이지에서만 접근한다.
+
+| # | 외부 DB | JdbcTemplate | 접근 시점 | 용도 |
+|---|---|---|---|---|
+| 1 | **MSSQL 운영 DB** | `statsJdbcTemplate` | 배치 시점만 (SSH 터널) | primary list 마트 적재 + 해피톡 일별 집계 |
+| 2 | **MariaDB 홈페이지** | `homepageJdbcTemplate` | 배치 시점만 | `mart_list_reservation_homepage` 이관 |
+| 3 | **MSSQL 아이리더** | `eoeisJdbcTemplate` | 화면 조회 시 (예외) | 아이리더 검사통계 페이지 전용 |
+
+### 1. MSSQL 운영 DB — 총 23개 테이블
+
+primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list 마트들이 이후 모든 monthly/weekly/daily 집계 마트의 SSOT.
+
+#### 1-A. primary list 배치 원천 (19개)
+
+##### list 마트별 사용 원본
+
+| list 마트 | 채우는 SQL | 사용 MSSQL 테이블 (주 → 보조 순) |
+|---|---|---|
+| `list_reservation` | `sql/reservation-list/reservation-list.sql` | **RESERVATION** · EXAM · OPERATIONDATA · Cataract_Operationdata · EMPLOYEE · COSTPRICE · MOTIVE_NEW02 · DB_CUSTOM |
+| `list_reservation_all` | `sql/reservation-list/reservation-list-all.sql` | **RESERVATION** |
+| `list_exam` | `sql/exam/find-exam-list.sql` | **EXAM** · OPERATIONDATA · RESERVATION · Cataract_Exam · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
+| `list_cataract_exam` | `sql/exam/find-cataract-exam-list.sql` | **Cataract_Exam** · Cataract_Operationdata · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
+| `list_surgery` | `sql/surgery/find-surgery-list.sql` | **OPERATIONDATA** · **Cataract_Operationdata** · EXAM · Cataract_Exam · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · MOTIVE_NEW01 · MOTIVE_NEW02 · NationCustom_CFG · EtcCfg |
+| `list_reoperation` | `sql/surgery/find-reoperation-candidates.sql` | **RE_OPERATION** · CUSTOM · EMPLOYEE · COSTPRICE |
+| `list_outpatient` | `sql/outpatient/find-outpatient-list.sql` | **RESERVATION** · CUSTOM · EMPLOYEE · MOTIVE_NEW01 · MOTIVE_NEW02 · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
+
+##### 전수 목록 — 총 19개 (분류별)
+
+| 분류 | 개수 | 테이블 |
+|---|---|---|
+| 트랜잭션 원장 | 6 | `RESERVATION`, `EXAM`, `Cataract_Exam`, `OPERATIONDATA`, `Cataract_Operationdata`, `RE_OPERATION` |
+| 환자·직원 마스터 | 3 | `CUSTOM`, `EMPLOYEE`, `DB_CUSTOM` (텔레매니저 배정) |
+| 결제·시술 항목 | 4 | `COSTPRICE`, `CSTPRCSUB`, `PRCITMLST`, `PrcItmDtl` |
+| 코드 마스터 | 6 | `MOTIVE_NEW01`, `MOTIVE_NEW02`, `CANCEL_CFG`, `MEDICAL_SUB_CFG`, `NationCustom_CFG`, `EtcCfg` |
+
+#### 1-B. 해피톡 집계 원천 (4개 · primary list 미포함)
+
+`mart_reservation_kakao_daily` 와 예약통계(시력교정/백내장) daily-counts 가 별도로 읽는다. 사용 SQL: `sql/reservation-stats/*-daily-counts.sql`, `sql/reservation-stats/*-drill-down.sql`, `sql/report/find-reservation-kakao-daily.sql`.
+
+| 테이블 | 역할 |
+|---|---|
+| `HappyTalk_Counsel_List` | 상담 원장 (주) |
+| `HappyTalk_Mapping` | 상담 ↔ 고객 매핑 (LEFT JOIN) |
+| `HappyTalk_Category01` | 카테고리1 (INNER JOIN) |
+| `HappyTalk_Category02` | 카테고리2 (LEFT JOIN) |
+
+### 2. MariaDB 홈페이지 (`homepageJdbcTemplate`) — 1개
+
+| 테이블 | 소비 마트 | SQL |
+|---|---|---|
+| `TBL_COUNSEL` | `mart_list_reservation_homepage` | `sql/reservation-list-homepage/mariadb/*.sql` |
+
+> ℹ️ `sql/reservation-list-homepage/sqlite/` 하위 미러는 로컬 개발용. 운영 소스는 MariaDB.
+
+### 3. MSSQL 아이리더 (`eoeisJdbcTemplate`) — primary list 미사용
+
+- 아이리더 검사통계 페이지(`/stats/eoeis-checkup`) 전용. **primary list 마트/배치와 무관**.
+- 유일 조회 SQL: `sql/exam/find-eoeis-device-scores.sql`.
+- `EOEIS_DATASOURCE_URL` 미설정 시 페이지 503 (마트가 없으므로 대체 조회 불가).
+
+### 외부 테이블 총계
+
+| 소스 | primary list 배치 | 별도 집계 | 합계 |
+|---|---|---|---|
+| MSSQL 운영 | 19 | 4 (해피톡) | 23 |
+| MariaDB 홈페이지 | 1 | — | 1 |
+| MSSQL 아이리더 | 0 | 1 (화면 직결) | 1 |
+| **총 외부 테이블** | **20** | **5** | **25** |
+
+> ℹ️ MSSQL 컬럼·PK·FK 는 [`docs/db/tables/`](tables/) 카탈로그 참조.
+
+---
+
+## 집계 마트 조립 경로 (list 기반 vs MSSQL 직결)
+
+**"모든 지표가 primary list 기반"이라는 명제는 성립하지 않는다.** 배치 잡을 실측한 결과, 집계 마트는 아래 4가지 조립 경로 중 하나를 따른다.
+
+### A. list 기반 순수 마트 (Postgres 내에서 재집계) — 7개
+
+배치 잡이 `martJdbcTemplate` 만 사용. MSSQL 은 접근하지 않는다. 정의가 바뀌면 list SQL 한 곳만 고치면 되므로 정합성 유지에 유리.
+
+| 집계 마트 | 조립 SQL | 읽는 base |
+|---|---|---|
+| `mart_surgery_monthly` · `mart_surgery_daily` | `select-surgery-daily-agg.sql` | `v_all_surgery_list` (= list_surgery + list_reoperation + reoperation_decision) |
+| `mart_examination_monthly` · `mart_procedure_exam_monthly` | `select-exam-daily-agg.sql` | `v_all_exam_list` (= list_exam + list_cataract_exam) |
+| `mart_stop_reason_monthly` | `select-stop-reason-daily-agg.sql` | `v_all_exam_list` |
+| `mart_outpatient_count_monthly` | `select-outpatient-daily-agg.sql` | `list_outpatient` |
+| `mart_reservation_monthly` | `select-reservation-daily-agg.sql` | `list_reservation_all` |
+| `mart_consultation_rate_monthly` | `select-consultation-rate-*-candidates.sql` | `list_exam` · `v_all_exam_list` |
+| `mart_reservation_rate_monthly` | `select-reservation-rate-*-candidates.sql` | `list_exam` · `list_reservation` · `v_all_exam_list` |
+
+### B. MSSQL 직결 마트 (list 미경유) — 6개
+
+배치 잡이 `statsJdbcTemplate` 로 MSSQL 을 직접 읽어 계산 후 Postgres 마트에 upsert. list 스키마로 담기 어려운 소스(CTI·네이버·해피톡·과거 이력 등)를 조합하거나, list 재집계 전환이 미완료된 마트.
+
+| 마트 | 원천 (MSSQL) | 이유 |
+|---|---|---|
+| `mart_reservation_kakao_daily` | HappyTalk_Counsel_List · Mapping · Category01/02 | 해피톡은 primary list 로 이관되지 않음 |
+| `mart_reservation_stats_system_daily` | HappyTalk_* + RESERVATION · **RESERVATION_NAVER** · **RESERVE_HISTORY** · **DB_ReCounsel** · **CtiRptLst** · **CtiClg** · **stat_user_inbound_bseye** · DB_CUSTOM · CUSTOM | CTI·네이버·재상담 등 7종+ 부가 소스 조합 필요 |
+| `mart_reservation_stats_cataract_daily` | 상동 (백내장 후보 포함) | 상동 |
+| `mart_overall_exam_monthly` · `mart_overall_exam_weekly` | EXAM · Cataract_Exam · RESERVATION · OPERATIONDATA · CUSTOM | 30+ 지표 계산식이 원천 스키마 전제 — 이관 미완료 |
+| `mart_weekly_report` | EXAM · RESERVATION · CUSTOM · EMPLOYEE · HappyTalk_* | 상동 |
+| `mart_exam_count_by_class` | MSSQL 직결 | 마이너 마트, 우선순위 낮음 |
+| `mart_b2b_revenue_monthly` | MSSQL B2B | 상동 |
+
+> ⚠️ B 그룹의 원천 테이블 중 **RESERVATION_NAVER · RESERVE_HISTORY · DB_ReCounsel · CtiRptLst · CtiClg · stat_user_inbound_bseye** 는 위 §외부 DB 원본 매핑의 primary list 19개에 미포함. 예약통계 마트가 별도로 읽는다.
+
+### C. 간접 (마트 → 마트) — 1개
+
+Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 직접 읽지 않지만, 소스 마트가 B 그룹이면 **간접적으로 MSSQL 의존**.
+
+| 마트 | 소스 |
+|---|---|
+| `mart_reservation_overall_monthly` | `mart_reservation_stats_system_daily` + `mart_reservation_stats_cataract_daily` + `mart_list_reservation_homepage` SUM (컷오버 2026-06 이후) + V12/V24 골든시드(24·25·26H1). 화면 서비스(`ReservationOverallMartQueryService @Primary`) 와 동일 계산식 재사용. |
+
+### D. 관리자 입력 · 시드 (외부 원천 없음)
+
+| 대상 | 성격 |
+|---|---|
+| `ad_spend` · `lens_cost` | 화면(채널별 수익성)에서 직접 입력 |
+| `dreamlens_ledger` (JPA) | 화면(드림렌즈 장부) CRUD |
+| 24·25 골든 시드 (V12·V13·V14·V15·V18 등) | 담당자 확정값 · SQL 마이그레이션 직접 INSERT |
+
+### 분류 요약
+
+| 그룹 | 개수 | 특성 |
+|---|---|---|
+| A. list 기반 순수 | 7 | list 재집계로 정의 통일 완료 (수술·검사·외래·중단사유·전환율·예약률·예약 월별) |
+| B. MSSQL 직결 | 6+ | 예약통계·overall_exam·weekly_report·b2b — 배치 시점 MSSQL 필수 |
+| C. 마트→마트 (간접) | 1 | reservation_overall (B 그룹에 의존) |
+| D. 관리자 입력·시드 | — | 외부 원천 없음 |
+
+> ℹ️ **정합성 시사점**: A 그룹은 list SQL 한 곳만 고치면 전 하위 마트에 반영. B/C 그룹은 마트별 배치 잡을 각각 고쳐야 함(2026-08-05 원데이 3건 케이스가 그 예).
+>
+> ✅ **이관 결과 정리** (2026-08-19 종결): [`list-migration-plan.md`](list-migration-plan.md) 참조.
+> 완료: `mart_exam_count_by_class` · `mart_overall_exam_monthly/weekly`.
+> 의도적 MSSQL 예외: 브릿지 3종(consultation-rate·reservation-rate·weekly-report 예약률) · 예약통계 2종(stats_system·stats_cataract) · `mart_reservation_kakao_daily` · B2B — 실시간 정확도가 결정적이거나 이관 이득 없음.
+
+---
+
 ## 배치 · 시드 요약
 
 - **자동 배치**: `BatchOrchestrator.runDaily` (매일 03:00 D-1) + `runReservationStatsIntraday` (매일 10:00 D-1) + `runMonthlyReconcile` (매월 1일 03:30 전월).
@@ -187,3 +331,4 @@ v_reservation_channel ← list_reservation + reservation_channel_staff
 - `docs/db/tables/` — MSSQL 원본 테이블 카탈로그
 - `docs/db/지표정의.md` — 지표별 정의·계산 규칙
 - `docs/db/중단사유-분류-정의.md` — 중단사유 7버킷 매핑
+- [`docs/db/list-migration-plan.md`](list-migration-plan.md) — B그룹(MSSQL 직결) 마트의 list 기반 이관 로드맵

@@ -179,9 +179,12 @@ public class BatchOrchestrator {
         if (targets.contains(Domain.EXAM))          stats.putAll(examMartJob.run(from, to));
         if (targets.contains(Domain.CONSULTATION))  stats.putAll(consultationMartJob.run(from, to));
         if (targets.contains(Domain.OUTPATIENT))    stats.putAll(outpatientMartJob.run(from, to));
+        // OVERALL 은 EXAM 이 채운 list_exam/list_cataract_exam(v_all_exam_list 뷰) 을 읽어
+        // mart_overall_exam_weekly/monthly 를 재집계한다. 반드시 EXAM 이후에 실행되어야 함.
         if (targets.contains(Domain.OVERALL))       stats.putAll(overallMartJob.run(from, to));
-        // REPORT 는 EXAM·RESERVATION 등과 소스가 겹치지만 자체적으로 MSSQL 일별 집계를 다시 읽으므로
-        // 다른 도메인 마트에 의존하지 않는다. 순서 제약 없음.
+        // REPORT 는 EXAM 이 채운 list_exam/list_cataract_exam(v_all_exam_list 뷰) 을 읽어
+        // mart_exam_count_by_class 를 재집계한다. 반드시 EXAM 이후에 실행되어야 함.
+        // mart_weekly_report 는 자체 서비스 로직(list + MSSQL 브릿지 하이브리드).
         if (targets.contains(Domain.REPORT))        stats.putAll(reportMartJob.run(from, to));
         if (targets.contains(Domain.ETC))           stats.putAll(etcMartJob.run(from, to));
         // 모든 도메인 마트 완료. 후속은 스냅샷 파일→마트 이관(strategy.md §7).

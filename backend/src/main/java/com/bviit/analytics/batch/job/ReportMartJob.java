@@ -1,7 +1,7 @@
 package com.bviit.analytics.batch.job;
 
 import com.bviit.analytics.batch.repository.WatermarkRepository;
-import com.bviit.analytics.exam.service.ExamCountService;
+import com.bviit.analytics.exam.repository.ExamCountMartRepository;
 import com.bviit.analytics.report.dto.WeeklyReportItem;
 import com.bviit.analytics.report.service.WeeklyReportService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,8 @@ import java.util.stream.Stream;
  * 두 마트를 채운다:
  *   - mart_weekly_report       — 주차 레포트 (ISO 8601 연간 주차)
  *   - mart_exam_count_by_class — 고객분류별 검사수 (월 × 내원동기 9계열)
+ *     · EXAM 도메인이 먼저 채운 list_exam/list_cataract_exam 을 v_all_exam_list 뷰로 접어 계산.
+ *       배치 시점 이후 MSSQL 이 꺼져도 재실행 가능(BatchOrchestrator: EXAM → REPORT 순).
  *
  * 종전에는 두 화면이 MSSQL 에 직접 붙어 SSH 터널·VPN 이 끊기면 503 이 났다. 이 잡이 배치 시간대에
  * 한 번 적재하고 화면은 마트를 읽는다(@Primary 마트 QueryService) — 다른 도메인과 같은 구조.
@@ -43,7 +45,7 @@ public class ReportMartJob {
     static final String MART_NAME = "report";
 
     private final WeeklyReportService weeklyReportService;
-    private final ExamCountService examCountService;
+    private final ExamCountMartRepository examCountMartRepository;
     private final ReportMartWriter writer;
     private final WatermarkRepository watermarkRepository;
 
@@ -70,9 +72,9 @@ public class ReportMartJob {
 
         int byClassRows = 0;
         for (int year : years) {
-            List<Map<String, Object>> rows = examCountService.getExamCountByClassMonthly(
-                    LocalDate.of(year, 1, 1).toString(),
-                    LocalDate.of(year, 12, 31).toString());
+            // v_all_exam_list.motive_report 를 GROUP BY 로 접는다 — MSSQL 접근 없음.
+            // EXAM 도메인이 먼저 list_exam/list_cataract_exam 을 채워두므로 그 위에서 계산.
+            List<Map<String, Object>> rows = examCountMartRepository.aggregateFromList(year);
             byClassRows += writer.upsertExamCountByClass(year, rows);
         }
 
