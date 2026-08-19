@@ -17,7 +17,7 @@ import java.util.Map;
  * mssql 프로파일에서만 활성화 — H2 기본 부팅 시 빈 생성 안 됨.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ReservationStatsRepository {
 
     static final String SUMMARY_SQL = "sql/reservation/summary.sql";

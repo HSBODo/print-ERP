@@ -26,7 +26,7 @@ import java.util.Map;
  * READ-ONLY · MSSQL 2014 호환(LTRIM/RTRIM). 날짜는 char(10) 'YYYY-MM-DD'.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class CataractExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;

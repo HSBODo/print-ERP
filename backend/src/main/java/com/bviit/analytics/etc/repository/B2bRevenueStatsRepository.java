@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * READ-ONLY — SELECT만 실행.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class B2bRevenueStatsRepository {
 
     private static final String MONTHLY_REVENUE_SQL = "sql/etc/b2b-monthly-revenue.sql";

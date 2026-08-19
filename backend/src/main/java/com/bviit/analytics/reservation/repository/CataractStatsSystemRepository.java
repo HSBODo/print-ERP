@@ -35,7 +35,7 @@ import java.util.List;
  * READ-ONLY · MSSQL 2014 호환(WITH(NOLOCK), 네임드 파라미터 :from/:to).
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class CataractStatsSystemRepository {
 
     private static final String SQL_LOCATION = "sql/reservation-stats/cataract-daily-counts.sql";

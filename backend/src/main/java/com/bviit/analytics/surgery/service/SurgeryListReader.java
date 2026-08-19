@@ -7,7 +7,7 @@ import java.util.Map;
  * 수술자 리스트 조회 계약.
  *
  * 구현체:
- *   - SurgeryListService          : @Profile("mssql")     — MSSQL 직결 (레거시)
+ *   - SurgeryListService          : @Profile("postgres-mart")— 배치 소스·대사(reconcile) 전용
  *   - SurgeryListMartQueryService : @Profile("postgres-mart") @Primary — Postgres 마트
  */
 public interface SurgeryListReader {

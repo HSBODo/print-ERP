@@ -27,7 +27,7 @@ import java.util.Set;
  * MSSQL IN 절 파라미터 한계(SQL Server 2100)를 피하려 chart_no 셋은 청크 단위로 조회한다.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ConsultationRateBridgeRepository {
 
     private static final int CHUNK_SIZE = 1000;

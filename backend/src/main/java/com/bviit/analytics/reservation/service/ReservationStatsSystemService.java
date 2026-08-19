@@ -16,7 +16,7 @@ import java.util.List;
  * 사용자 조회 경로는 QueryService → Mart Repository. 이 서비스는 배치 read 전용.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ReservationStatsSystemService {
 

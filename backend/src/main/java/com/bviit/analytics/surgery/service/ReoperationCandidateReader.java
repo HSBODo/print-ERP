@@ -8,7 +8,7 @@ import java.util.Map;
  *
  * 구현체:
  *   - {@link ReoperationCandidateMartQueryService} : @Profile("postgres-mart") @Primary — list_reoperation 마트 조회
- *   - {@link ReoperationCandidateService}          : @Profile({"mssql","postgres-mart"}) — MSSQL 직결 (레거시·reconcile)
+ *   - {@link ReoperationCandidateService}          : @Profile("postgres-mart") — MSSQL 직결 (레거시·reconcile)
  *
  * 컨트롤러는 이 인터페이스만 의존해 프로파일별 자동 스위치.
  */

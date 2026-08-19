@@ -49,7 +49,7 @@ import static com.bviit.analytics.reservation.service.OverallOnlineFormula.cover
  * ⚠️ 등록일(InsertedDateTime) 기준 집계. 미래월은 자연히 행이 없어 null.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ReservationOverallStatsService implements ReservationOverallStatsReader {
 

@@ -17,7 +17,7 @@ import java.util.Map;
  * 우선 선택되고 이 구현은 대사(reconcile)·mssql 단독 프로파일에서만 쓰인다.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ReoperationCandidateService implements ReoperationCandidateReader {
 

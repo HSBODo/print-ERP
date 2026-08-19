@@ -30,7 +30,7 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  * EXAM/Cataract_Exam 스냅샷 특성상 과거 주 수치는 사후 미세 변동할 수 있어 캐시하지 않는다.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class OverallExamWeeklyService implements OverallExamWeeklyReader {
 

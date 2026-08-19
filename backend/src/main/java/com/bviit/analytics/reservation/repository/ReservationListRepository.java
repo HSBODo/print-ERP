@@ -26,7 +26,7 @@ import java.util.Map;
  * READ-ONLY · MSSQL 2014 호환(TRIM 금지). 날짜 범위는 등록일(InsertedDateTime) 기준.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ReservationListRepository {
 
     static final String RESERVATION_LIST_SQL = "sql/reservation-list/reservation-list.sql";

@@ -31,7 +31,7 @@ import java.util.Map;
  * READ-ONLY · MSSQL 2014 호환. EMPLOYEE 조인은 EMP_NUM 중복 시 행 증식 방지로 OUTER APPLY TOP 1.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class AllExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;

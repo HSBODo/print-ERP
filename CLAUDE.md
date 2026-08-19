@@ -39,7 +39,6 @@ project-root/
 │   │   ├── application-dev.yml                 # 개발 서버 (Postgres 마트 + MSSQL 배치)
 │   │   ├── application-prod.yml                # 운영 (Postgres 마트 + MSSQL 배치 + Slack 알림)
 │   │   ├── application-postgres-mart.yml       # 마트 인프라 (batch DataSource·스케줄러) — 위 셋에 group include
-│   │   ├── application-mssql.yml               # (레거시) MSSQL 직결 모드 — Cutover 완료 후 제거 예정
 │   │   └── sql/                                # 도메인별 .sql 리소스 (SqlLoader 로딩)
 │   └── build.gradle
 │

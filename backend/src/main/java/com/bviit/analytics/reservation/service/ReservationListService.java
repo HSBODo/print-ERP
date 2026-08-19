@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 주차 그룹·승인/체크 등 워크플로우는 프론트에서 클라이언트 사이드로 처리한다.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ReservationListService implements ReservationListReader {
 

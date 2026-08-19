@@ -21,7 +21,7 @@ import java.util.Map;
  * READ-ONLY — SELECT 만 실행. MSSQL 2014 / jTDS 호환.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class DreamlensLedgerDraftRepository {
 
     private static final String DRAFT_SQL = "sql/etc/find-dreamlens-ledger-draft.sql";

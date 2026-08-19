@@ -19,7 +19,7 @@ import static com.bviit.analytics.common.util.NumberUtils.roundToOneDecimal;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ReservationStatsService implements ReservationStatsReader {
 

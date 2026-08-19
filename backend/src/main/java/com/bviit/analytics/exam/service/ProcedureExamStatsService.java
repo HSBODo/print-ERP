@@ -26,7 +26,7 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
  * MSSQL 소스 리더로만 사용(2026+ 값). 24·25는 ExamMartJob에서 min-year 가드로 write 차단.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ProcedureExamStatsService implements ProcedureExamStatsReader {
 

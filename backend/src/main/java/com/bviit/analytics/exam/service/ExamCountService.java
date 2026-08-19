@@ -18,7 +18,7 @@ import java.util.Map;
  * mssql 단독 프로파일에서는 이 구현이 유일해 화면도 직접 사용한다.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ExamCountService implements ExamCountReader {
 

@@ -14,7 +14,7 @@ import java.util.List;
  * 사용자 조회 경로는 QueryService → Mart Repository.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class CataractStatsSystemService {
 

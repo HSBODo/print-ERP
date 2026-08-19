@@ -27,7 +27,7 @@ import java.util.Map;
  *   중단: CUSTOM.MY_optometrist 있음 AND CUSTOM.MY_COUNSELOR='BS0808'
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ConsultationRateRepository {
 
     private final NamedParameterJdbcTemplate jdbc;

@@ -37,7 +37,7 @@ import java.util.Set;
  */
 @Slf4j
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class DreamlensLedgerImportService {
 

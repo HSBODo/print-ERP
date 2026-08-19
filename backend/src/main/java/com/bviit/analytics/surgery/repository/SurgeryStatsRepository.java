@@ -24,7 +24,7 @@ import java.util.Map;
  * READ-ONLY — SELECT만 실행.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class SurgeryStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;

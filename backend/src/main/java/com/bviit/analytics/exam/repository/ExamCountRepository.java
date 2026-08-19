@@ -18,7 +18,7 @@ import java.util.Map;
  * 분류 규칙은 find-all-exam-list.sql 의 motiveReport 와 동일.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ExamCountRepository {
 
     private static final String FIND_EXAM_COUNT_BY_CLASS_MONTHLY_SQL = "sql/exam/find-exam-count-by-class-monthly.sql";

@@ -21,7 +21,7 @@ import java.util.Map;
  * MSSQL 2014 호환: STRING_AGG, TRIM 사용 금지.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ReoperationCandidateRepository {
 
     private final NamedParameterJdbcTemplate jdbc;

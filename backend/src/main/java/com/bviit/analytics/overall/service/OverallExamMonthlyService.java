@@ -22,7 +22,7 @@ import java.util.Map;
  * partial 은 오늘 기준 진행 중인 월에 대해서만 true. 지난 월은 false(완결).
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class OverallExamMonthlyService implements OverallExamMonthlyReader {
 
