@@ -39,7 +39,7 @@ function toDataMap(items: SurgeryDailyItem[]): Record<string, SurgeryDailyData> 
 
 /**
  * 일자별 수술 유형별 건수 (수술일 기준). from/to는 'YYYY-MM-DD'.
- * postgres-mart 는 mart_surgery_daily 조회(D-1 배치 적재), mssql-only 는 소스 라이브 집계.
+ * mart_surgery_daily 조회(D-1 배치 적재). 마트 미적재 구간은 소스 라이브 폴백.
  * 비는 날은 호출부에서 EMPTY로 보완한다. meta는 출처(MART/LIVE) 표시.
  */
 export function useSurgeryDaily(from: string, to: string, enabled: boolean) {

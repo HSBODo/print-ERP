@@ -62,7 +62,7 @@ public class SurgeryStatsController {
 
     /**
      * 일자별 수술 유형별 건수 (수술별 비중 페이지 일별 모드용).
-     * postgres-mart 에서는 {@code mart_surgery_daily} 조회, mssql 전용에서는 소스 라이브 집계.
+     * postgres-mart 에서는 {@code mart_surgery_daily} 조회. 마트 미적재 구간은 소스 라이브 폴백.
      * GET /api/stats/surgery/daily?from=2026-06-01&to=2026-06-30
      */
     @GetMapping("/surgery/daily")

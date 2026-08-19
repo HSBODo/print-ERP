@@ -310,9 +310,9 @@ override 는 조회 시점에 서비스가 얹는다 — 즉 **배치 write 경�
 
 ### 7.2 수술 이행 결과 (2026-07-31)
 
-- `SurgeryCompositionReader` 인터페이스 신설 — 두 프로파일 대칭 규약.
+- `SurgeryCompositionReader` 인터페이스 신설 — 마트 QueryService 를 위한 규약.
 - `SurgeryCompositionMartQueryService` (@Primary, postgres-mart) — `mart_surgery_daily` 조회.
-- `SurgeryCompositionQueryService` (mssql 전용) — 소스 라이브 집계로 단순화, read-through fill 폐지.
+- (2026-08-19 `SurgeryCompositionQueryService` 삭제 — mssql 프로파일 제거와 함께 dead code 정리)
 - `SurgeryStatsService`의 `fillSnapshot`/`saveSnapshot` 삭제. `SurgerySnapshot` DTO·`SurgerySnapshotStore` 삭제. 컨트롤러의 `/fill`·`/snapshot`·`/snapshots` 엔드포인트 삭제.
 - 프론트 `SurgeryDailyMeta`에서 `confirmedAt`/`confirmedBy` 필드 제거, `SNAPSHOT` source 삭제 · `MART` 배지 추가.
 - 조회 시점에 MSSQL 을 두드리는 경로가 완전히 사라짐 — 배치가 유일한 write 창.

@@ -65,7 +65,7 @@ export const surgeryApi = {
   getSurgeryComposition: async (years: number[]) =>
     surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/composition', { years }))).data,
 
-  /** 수술별 비중 일별 — mart_surgery_daily 조회(postgres-mart) 또는 소스 라이브(mssql). data+meta 반환. */
+  /** 수술별 비중 일별 — mart_surgery_daily 조회. data+meta 반환(마트 미적재 시 라이브 폴백). */
   getSurgeryDaily: async (from: string, to: string) => {
     const res = surgeryDailyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/daily', { from, to })))
     return { data: res.data, meta: res.meta }

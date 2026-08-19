@@ -166,7 +166,7 @@ export function WeeklyReportPage() {
         <div className="space-y-2">
           {weekly.isError ? (
             <div className="rounded-md border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-900">
-              주차 집계를 불러오지 못했습니다. 운영 DB 연결(mssql/postgres-mart 프로파일)을 확인하세요.
+              주차 집계를 불러오지 못했습니다. 마트 연결 상태를 확인하세요.
             </div>
           ) : (
             <div className="rounded-md border border-border/70 bg-muted/40 px-4 py-2.5 text-[13px] text-muted-foreground">

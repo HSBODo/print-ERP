@@ -84,8 +84,8 @@ project-root/
 │   ├── vite.config.ts                   # 프록시: /api → localhost:8080
 │   └── package.json
 │
-├── 서버시작.bat                          # Backend(8080) + Frontend(5173) 동시 실행
-├── 서버종료.bat                          # 포트 8080/5173 프로세스 종료
+├── docker-compose.yml                    # 앱(백엔드+프론트 정적 파일) 컨테이너 · 실행: docker compose up -d
+├── Dockerfile                            # 백엔드 + 프론트 빌드 산출물 이미지
 └── AGENTS.md
 ```
 
@@ -242,12 +242,12 @@ cd frontend && npx shadcn@latest add <component-name>
 ## 실행 명령어
 
 ```bash
-# 동시 실행
-서버시작.bat                              # Backend(8080) + Frontend(5173)
-서버종료.bat                              # 전체 종료
+# 도커 컴포즈 (권장 · backend + frontend 정적 파일 한 컨테이너)
+docker compose up -d --build             # 기본 프로파일: prod (docker-compose.yml env)
+docker compose down                       # 종료
 
-# 개별 실행
-cd backend && gradlew.bat bootRun        # Backend (H2 인메모리 기본)
+# 로컬 개별 실행 (개발용)
+cd backend && ./gradlew bootRun          # Backend (H2 인메모리 기본, 프로파일 SPRING_PROFILES_ACTIVE 로 조정)
 cd frontend && npm run dev               # Frontend (Vite dev server)
 
 # 빌드/테스트

@@ -201,7 +201,7 @@ export function SurgeryCompositionPage() {
             마트{latestDate ? ` · 최종 ${latestDate}` : ''}
           </span>
         ) : meta?.source === 'LIVE' ? (
-          <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700" title="소스 라이브 조회(mssql 단독 프로파일)">
+          <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700" title="소스 라이브 조회(마트 미적재 폴백)">
             라이브
           </span>
         ) : null}

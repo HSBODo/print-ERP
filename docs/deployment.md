@@ -115,8 +115,8 @@ DOCKER_BUILDKIT=1 docker build \
 ├── frontend\
 │   ├── .env                 ← 프론트 설정 (git 미포함)
 │   └── ...
-├── 서버시작.bat              ← 더블클릭으로 실행
-└── 서버종료.bat              ← 더블클릭으로 종료
+├── docker-compose.yml       ← 실행: docker compose up -d
+└── Dockerfile
 ```
 
 ## 2.3 환경변수
@@ -158,25 +158,21 @@ STATS_DB_PASSWORD=비밀번호
 ### frontend/.env
 
 별도 설정 없이 동작한다(Vite 프록시 `/api` → 백엔드). 브라우저 목업(MSW)은 제거되어 프론트는
-항상 실제 백엔드 API 를 쓴다. 백엔드 포트만 바꾸려면 `VITE_BACKEND_URL` 을 조정한다(서버시작.bat 가 자동 설정).
+항상 실제 백엔드 API 를 쓴다. 백엔드 포트만 바꾸려면 `VITE_BACKEND_URL` 을 조정한다.
 
 ## 2.4 실행
 
-`서버시작.bat` 더블클릭 시 자동으로 수행되는 작업:
+도커 컴포즈로 실행한다 — 백엔드 + 프론트 정적 파일이 한 컨테이너.
 
-1. 기존 포트(18080, 15173) 프로세스 종료
-2. `backend/.env` 환경변수 로드
-3. 백엔드 실행 (포트 18080, prod 프로파일 · postgres-mart 그룹 포함)
-4. 프론트엔드 개발 서버 실행 (포트 15173)
+```bash
+docker compose up -d --build   # 최초 실행 · 이미지 재빌드 후 기동
+docker compose logs -f          # 로그 확인
+docker compose down             # 종료
+```
 
-접속: http://localhost:15173 · 로그인 계정은 `APP_SEED_ADMIN_LOGIN_ID / APP_SEED_ADMIN_PASSWORD`.
-종료는 `서버종료.bat` 또는 Ctrl+C.
-
-> 이 방식은 운영 배포용이 아니라 개발/검증용 실행 흐름이다.
-
-### PC 부팅 시 자동 실행 (선택)
-
-`Win + R` → `shell:startup` → 열린 폴더에 `서버시작.bat` 바로가기 생성.
+- 접속: `http://localhost:${APP_PORT:-18080}`
+- 로그인 계정은 `APP_SEED_ADMIN_LOGIN_ID / APP_SEED_ADMIN_PASSWORD`.
+- 프로파일은 `SPRING_PROFILES_ACTIVE` 환경변수로 조정 (기본 `prod`).
 
 ## 2.5 문제 해결
 
@@ -187,12 +183,12 @@ STATS_DB_PASSWORD=비밀번호
 
 **포트 충돌**
 
-```
-netstat -aon | findstr :18080
-netstat -aon | findstr :15173
+```bash
+docker compose ps               # 실행 중 컨테이너 확인
+lsof -i :18080                  # 호스트 점유 프로세스 확인 (macOS/Linux)
 ```
 
-사용 중인 포트가 있으면 `서버종료.bat` 으로 정리 후 재시작.
+`docker compose down` 으로 정리 후 재시작.
 
 **로그인 안 됨**
 

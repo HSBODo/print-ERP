@@ -18,7 +18,7 @@ import {
  * 예약통계_백내장 — 일자별 원시 카운트.
  * 백엔드: GET /api/stats/reservation-stats-cataract?from&to → ApiResponse<DailyCounts[]>.
  * 비율·합계·총예약건 등 파생값은 프론트(reservationStatsCataractData)가 동일 공식으로 계산한다.
- * 확정 스냅샷 우선, 없으면 mssql 라이브 조회. 미연결 시 503 → 호출부가 미연결 안내 표시.
+ * 확정 스냅샷 우선, 없으면 배치 마트 조회. 미연결 시 503 → 호출부가 미연결 안내 표시.
  */
 /** 셀 손보정 이력 1건 — '이 셀은 수기 보정됨' 마커 + 추적(누가/언제). */
 const cellEditSchema = z.object({
