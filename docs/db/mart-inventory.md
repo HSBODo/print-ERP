@@ -26,7 +26,7 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 | 이름 | 종류 | V | 사이드메뉴 | 용도 |
 |---|---|---|---|---|
 | `batch_run_log` | TABLE | V1 | 관리자 > 데이터 배치 관리 · (전 페이지 헤더의 배치 성공 시각) | 배치 실행 이력 (run_type · status · table_stats). `/admin/batch` 페이지 및 화면의 `useBatchLastSuccess` 훅 소스. |
-| `batch_watermark` | TABLE | V1 | — (배치 내부용) | 각 도메인 잡의 최종 성공 시점 저장. 재실행 시점 관리. |
+| `batch_watermark` | TABLE | V1 | — (배치 내부용) | 각 도메인 잡의 최종 성공 시점 저장 — 감사 로그 (`BatchSuccessLogRepository.upsert` 만 호출, 매일 D-1 고정 처리라 다음 배치 시작점 결정에는 미사용). |
 
 ---
 

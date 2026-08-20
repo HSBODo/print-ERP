@@ -247,14 +247,14 @@ export function BatchManagementPage() {
               </section>
 
               <section>
-                <h4 className="font-medium text-foreground">4) 동시 실행 · Watermark</h4>
+                <h4 className="font-medium text-foreground">4) 동시 실행 · 성공 로그</h4>
                 <ul className="mt-1 list-disc space-y-1 pl-5">
                   <li>
                     앱 레벨 락은 없다. 아래 실행 이력에서{' '}
                     <span className="rounded bg-blue-100 px-1 text-xs text-blue-700">RUNNING</span> 상태가 있으면 겹치지 않게 대기.
                   </li>
                   <li>
-                    자동 스케줄은 <code className="rounded bg-muted px-1 text-xs">batch_watermark</code>(마트별 마지막 적재일)를 기준으로 이미 적재된 범위는 건너뛴다. 수동 재실행은 watermark와 무관하게 지정 기간을 그대로 재적재한다.
+                    자동 스케줄은 매일 D-1 하루만 처리한다(고정 범위). <code className="rounded bg-muted px-1 text-xs">batch_watermark</code>(마트별 마지막 성공 적재일)는 감사 로그로만 남고 다음 배치 시작점 결정에는 쓰지 않는다. 수동 재실행은 지정 기간을 그대로 재적재한다.
                   </li>
                 </ul>
               </section>
