@@ -32,7 +32,8 @@ project-root/
 │   │   ├── outpatient/                  # 외래수
 │   │   ├── overall/                     # 주간 종합지표
 │   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
-│   │   └── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) 등 기타
+│   │   ├── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) — init/ 하위에 초기 시더 배치
+│   │   └── batch/                       # 배치 인프라 — job(*MartJob·*MartWriter) · admin(reconcile·admin/controller) · controller(BatchStatusController) · repository · dto
 │   ├── src/main/resources/
 │   │   ├── application.yml                     # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
 │   │   ├── application-local.yml               # 로컬 개발 (H2 인메모리, 배치 비활성)
@@ -209,7 +210,7 @@ DELETE /api/dreamlens-ledger/{id}                     # 행 삭제
 > ✍️ **예외 — 사용자가 직접 입력하는 원천 데이터**는 마트가 아니라 JPA 엔티티로 다룬다.
 > 현재 `드림렌즈 장부`(`dreamlens_ledger`)가 유일하다. MSSQL 원천이 없고 화면에서 CRUD 하므로
 > 배치·마트 대신 `etc/entity` + `JpaRepository` + `/api/dreamlens-ledger` 로 구성한다.
-> 스키마는 `ddl-auto: update` 가 생성하고, 초기 10행은 `DreamlensLedgerSeeder` 가 표가 비었을 때만 넣는다.
+> 스키마는 `ddl-auto: update` 가 생성하고, 초기 10행은 `etc/init/DreamlensLedgerSeeder` 가 표가 비었을 때만 넣는다.
 
 > 🔌 **화면은 마트를 읽는다.** 통계 API 는 배치가 적재한 Postgres 마트를 조회하고, MSSQL 직결은
 > 배치(적재) 시간대에만 쓴다. 그래서 SSH 터널·VPN 이 끊겨도 화면은 마지막 적재분으로 동작한다.
