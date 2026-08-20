@@ -80,15 +80,6 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/overall-exam/weekly'
   ),
   statsPage(
-    'intake-conversion',
-    '유입(검사예약)',
-    '/stats/intake-conversion',
-    'reservation-group',
-    '예약',
-    '인콜·아웃콜·카카오톡·네이버·홈페이지 채널별 검사예약 전환을 확인하는 화면입니다.',
-    '/api/stats/intake-conversion'
-  ),
-  statsPage(
     'reservation',
     '예약 건수',
     '/stats/reservation',

@@ -483,7 +483,7 @@ Postgres 마트 테이블 (계산된 최종 숫자만 저장)
 
 `overseas` · `marketing` · `cancel-rate` · `no-show-rate` · `unit-price` · `staff-point` ·
 `prp-rate` · `reoperation-rate` · `same-day-op` · `designated-doctor` · `visit-reason` ·
-`daily-reception` · (`intake-conversion` 숨김)
+`daily-reception`
 
 > ✍️ **`dreamlens-revenue`(드림렌즈 장부)는 이 목록에서 빠졌다** — 마트가 없는 게 아니라
 > **마트 대상이 아니다.** MSSQL 원천이 없고 사용자가 화면에서 직접 입력하는 데이터라

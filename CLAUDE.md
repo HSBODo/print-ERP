@@ -81,7 +81,7 @@ project-root/
 │   │   ├── pages/                       # 도메인별 폴더 (Login·Dashboard·StatsPlaceholder·pageRegistry만 root)
 │   │   │   ├── pageRegistry.ts          # 도메인 routes.ts 통합 + PROD pending 라우트 차단 정책
 │   │   │   ├── pageRegistry.test.ts     # 라우트 정책 불변식 테스트
-│   │   │   ├── reservation/            # IntakeConversion·Reservation·ReservationOverall·ReservationList
+│   │   │   ├── reservation/            # Reservation·ReservationOverall·ReservationList
 │   │   │   ├── exam/                   # ExamList·CataractExamList·Examination(±Vision/Dreamlens)·ProcedureExam
 │   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
 │   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
@@ -127,18 +127,17 @@ project-root/
 
 ### 미구현 (플레이스홀더)
 
-통계 페이지 13종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
+통계 페이지 12종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 42개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **미구현(pending)** 13개.
+`statsPages.ts`에 41개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **미구현(pending)** 12개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
 |----|------|------|------|------|
 | weekly-report | 주차 레포트 | /report/weekly | Report | 완료 (월간과 동일 도표를 ISO 주차축으로 · `mart_weekly_report` 조회, 2025 골든시드 · 2026+ 는 배치가 채널 마트에서 접기) |
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
-| intake-conversion | 유입(검사예약) | /stats/intake-conversion | 예약 | 미구현 (메뉴 숨김) |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
 | reservation-list | 예약자 리스트 | /stats/reservation-list | 예약 | 완료 (메뉴 순서: 예약 종합보다 앞) |
 | reservation-list-homepage | 예약자 리스트_홈페이지 | /stats/reservation-list-homepage | 예약 | 완료 (레거시 홈페이지 소스 · `HOMEPAGE_DATASOURCE_URL` 미설정 시 503) |
@@ -182,7 +181,7 @@ project-root/
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
-> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `intake-conversion`·`reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
+> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
 
 ## 백엔드 컨벤션
 

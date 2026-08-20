@@ -328,7 +328,8 @@ Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 
 예외:
 - 관리자 진단(`diagnostics/*`) 엔드포인트 — mart vs MSSQL 비교 목적
 - 아이리더 검사통계 페이지 — 별도 `eoeisJdbcTemplate` 소스
-- **유입(`/stats/intake-conversion`)** — pending 메뉴로 PROD 사이드바 숨김·라우트 차단이라 실질 노출 없음. 백엔드는 Mart QueryService 없이 `IntakeConversionStatsService` (MSSQL 직결) 만 존재해 DEV/local 에서 URL 직접 접근 시 MSSQL 조회.
+
+> 🔎 **화면-마트 결합의 스프링 구조** — 컨트롤러는 `XxxReader` 인터페이스에 의존하고, `postgres-mart` 프로파일 하에서는 `XxxMartQueryService(@Primary)` 가 자동 선택돼 Postgres 마트를 조회한다. legacy `XxxStatsService`(= `@Qualifier("statsJdbcTemplate")` 리포지토리를 감싸는 MSSQL 직결 구현)는 컨텍스트에 남지만 **화면 응답에 관여하지 않는다** — 그 존재 이유는 (a) 배치 잡이 마트 적재용 소스로 주입, (b) 관리자 대사(reconcile)/진단, (c) 비-마트 프로파일(H2 local) 폴백 세 가지. 즉 `statsJdbcTemplate` 리포지토리가 24개 있어도 화면 트래픽은 마트로만 간다.
 
 ---
 

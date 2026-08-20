@@ -22,11 +22,10 @@ describe('navigation menu', () => {
     ).toEqual([])
   })
 
-  it('숨김 메뉴는 사이드바에 노출되지 않는다(유입·예약건수·마케팅~기타)', () => {
+  it('숨김 메뉴는 사이드바에 노출되지 않는다(예약건수·마케팅~기타)', () => {
     const paths = menuPaths()
 
-    // 예약: 유입·예약 건수 숨김
-    expect(paths).not.toContain('/stats/intake-conversion')
+    // 예약: 예약 건수 숨김
     expect(paths).not.toContain('/stats/reservation')
     // 외래 아래: 마케팅·취소&부도·객단가·기타 그룹 전체 숨김(샘플 경로)
     expect(paths).not.toContain('/stats/marketing')

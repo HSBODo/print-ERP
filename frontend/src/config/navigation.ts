@@ -44,7 +44,6 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'monthly-report': 'complete',
   'overall-exam': 'complete',
   'overall-exam-weekly': 'complete',
-  'intake-conversion': 'pending',
   'reservation': 'complete',
   'reservation-overall': 'complete',
   'reservation-stats-system': 'complete',
@@ -121,7 +120,7 @@ export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(
  *   - 기타: 드림렌즈 매출만 노출, 나머지는 숨김
  */
 const HIDDEN_MENU_IDS = new Set<string>([
-  'intake-conversion', 'reservation',
+  'reservation',
   'overseas', 'marketing',
   'cancel-rate', 'no-show-rate',
   'unit-price',
@@ -171,7 +170,7 @@ const rawMenuItems: MenuItem[] = [
         href: '#',
         icon: CalendarCheck,
         kind: 'group',
-        // 유입(intake-conversion)·예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 순.
+        // 예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 순.
         children: kids(
           'reservation-list', 'reservation-list-homepage', 'reservation-overall',
           'reservation-stats-system', 'reservation-stats-cataract',
