@@ -1,4 +1,4 @@
-package com.bviit.analytics.batch;
+package com.bviit.analytics.batch.controller;
 
 import com.bviit.analytics.batch.dto.BatchLastSuccessResponse;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;

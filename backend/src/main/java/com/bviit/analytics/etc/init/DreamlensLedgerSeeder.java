@@ -1,4 +1,4 @@
-package com.bviit.analytics.etc.config;
+package com.bviit.analytics.etc.init;
 
 import com.bviit.analytics.etc.entity.DreamlensLedgerEntry;
 import com.bviit.analytics.etc.repository.DreamlensLedgerRepository;
