@@ -32,6 +32,9 @@ public class ConsultationRateBridgeRepository {
 
     private static final int CHUNK_SIZE = 1000;
 
+    private static final String O_RESERVATION_SUMMARY_SQL = "sql/consultation/find-o-reservation-summary-by-charts.sql";
+    private static final String OP_SUMMARY_SQL            = "sql/consultation/find-op-summary-by-charts.sql";
+
     private final NamedParameterJdbcTemplate jdbc;
     private final String oReservationSummarySql;
     private final String opSummarySql;
@@ -40,8 +43,8 @@ public class ConsultationRateBridgeRepository {
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
     ) {
         this.jdbc = jdbc;
-        this.oReservationSummarySql = SqlLoader.load("sql/consultation/find-o-reservation-summary-by-charts.sql");
-        this.opSummarySql            = SqlLoader.load("sql/consultation/find-op-summary-by-charts.sql");
+        this.oReservationSummarySql = SqlLoader.load(O_RESERVATION_SUMMARY_SQL);
+        this.opSummarySql            = SqlLoader.load(OP_SUMMARY_SQL);
     }
 
     /** chart_no 별 O 예약 요약. 결과에 없는 chart_no 는 "O 예약 없음"으로 간주. */
