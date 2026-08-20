@@ -15,6 +15,7 @@ import java.util.List;
  *
  * (product_type, stat_date, field_name, created_at DESC) 로 조회 시 최신 값이 결정된다.
  * 배치와 무관하게 원본 카운트 위에 오버레이만 하므로, 배치 재실행이 override 를 지우지 않는다.
+ * Legacy 짝 없음 — 마트 전용 audit 테이블이라 MSSQL 소스가 없다(Mart-Legacy 페어링 감사 시 참고).
  */
 @Repository
 @Profile("postgres-mart")

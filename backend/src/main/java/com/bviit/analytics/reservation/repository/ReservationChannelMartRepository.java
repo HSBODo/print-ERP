@@ -16,6 +16,7 @@ import java.util.List;
  * 예약 채널별 퍼널 조회 — v_reservation_channel(= 예약자 리스트 위의 파생 뷰)만 읽는다.
  *
  * MSSQL 을 타지 않으므로 터널이 끊겨도 동작한다.
+ * Legacy 짝 없음 — 신규 마트로 설계된 파생 뷰 전용 리포지토리다(Mart-Legacy 페어링 감사 시 참고).
  */
 @Repository
 @Profile("postgres-mart")
