@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.reservation.dto.CataractStatsDailyRow;
 import com.bviit.analytics.reservation.dto.ReservationStatsDailyRow;
 import com.bviit.analytics.reservation.service.CataractStatsSystemService;
@@ -44,13 +44,13 @@ public class ReservationStatsDailyMartJob {
     private final ReservationStatsSystemService systemService;
     private final CataractStatsSystemService cataractService;
     private final ReservationStatsDailyMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     /**
      * from..to 범위의 각 일자를 MSSQL 원본에서 조회해 Postgres 마트에 upsert.
      * 잠긴 월(period)의 일자는 스킵. 정책상 daily 호출은 from=to=D-1.
      *
-     * 트랜잭션: 도메인 단위 all-or-nothing. system/cataract/watermark 중 하나라도 실패하면
+     * 트랜잭션: 도메인 단위 all-or-nothing. system/cataract/성공 로그 중 하나라도 실패하면
      * 모두 롤백. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
@@ -85,8 +85,8 @@ public class ReservationStatsDailyMartJob {
         int systemUpserted = writer.upsertSystemDaily(filteredSystem);
         int cataractUpserted = writer.upsertCataractDaily(filteredCataract);
 
-        // 4) Watermark 갱신 (성공 시에만)
-        watermarkRepository.upsert(MART_NAME, to);
+        // 4) 성공 로그 갱신 (성공 시에만)
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "mart_reservation_stats_system_daily", systemUpserted,

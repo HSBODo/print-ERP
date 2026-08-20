@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.etc.dto.B2bRevenueMonthlyItem;
 import com.bviit.analytics.etc.service.B2bRevenueStatsService;
 import com.bviit.analytics.etc.service.DreamlensLedgerImportService;
@@ -32,10 +32,10 @@ public class EtcMartJob {
     private final B2bRevenueStatsService b2bRevenueStatsService;
     private final DreamlensLedgerImportService dreamlensLedgerImportService;
     private final EtcMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     /**
-     * 트랜잭션: 도메인 단위 all-or-nothing. b2b-revenue upsert + watermark 갱신을 하나로 묶어
+     * 트랜잭션: 도메인 단위 all-or-nothing. b2b-revenue upsert + 성공 로그 갱신을 하나로 묶어
      * 부분 커밋을 방지. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      *
      * 예외 — 드림렌즈 장부 초안은 링크드서버(.240 IPLUS) 의존이라 REQUIRES_NEW 로 분리 실행하고,
@@ -65,7 +65,7 @@ public class EtcMartJob {
             stats.put("dreamlens_ledger_failed", 1);
         }
 
-        watermarkRepository.upsert(MART_NAME, to);
+        successLogRepository.upsert(MART_NAME, to);
 
         log.info("EtcMartJob done: {}", stats);
         return stats;

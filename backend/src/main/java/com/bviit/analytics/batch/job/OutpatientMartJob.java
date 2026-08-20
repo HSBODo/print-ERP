@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.outpatient.dto.OutpatientCountMonthlyItem;
 import com.bviit.analytics.outpatient.repository.OutpatientCountStatsMartRepository;
 import com.bviit.analytics.outpatient.service.OutpatientListService;
@@ -48,13 +48,13 @@ public class OutpatientMartJob {
     private final OutpatientListService outpatientListService;
     private final OutpatientCountStatsMartRepository outpatientMartRepository;
     private final OutpatientMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     @Value("${batch.mart.min-year:2026}")
     private int minYear;
 
     /**
-     * 트랜잭션: 도메인 단위 all-or-nothing. list delete/insert + monthly upsert + watermark 갱신을 하나로
+     * 트랜잭션: 도메인 단위 all-or-nothing. list delete/insert + monthly upsert + 성공 로그 갱신을 하나로
      * 묶어 부분 커밋을 방지. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
@@ -90,8 +90,8 @@ public class OutpatientMartJob {
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
 
-        // 3) Watermark 갱신 (성공 시에만)
-        watermarkRepository.upsert(MART_NAME, to);
+        // 3) 성공 로그 갱신 (성공 시에만)
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = new LinkedHashMap<>();
         stats.put("mart_outpatient_count_monthly", monthlyRows);

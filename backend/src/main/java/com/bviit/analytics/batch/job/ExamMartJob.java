@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.exam.dto.ExaminationMonthlyItem;
 import com.bviit.analytics.exam.dto.ProcedureExamMonthlyItem;
 import com.bviit.analytics.exam.repository.ExamStatsMartRepository;
@@ -47,7 +47,7 @@ public class ExamMartJob {
     private final ExamListService examListService;
     private final CataractExamListService cataractExamListService;
     private final ExamMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     @Value("${batch.mart.min-year:2026}")
     private int minYear;
@@ -55,7 +55,7 @@ public class ExamMartJob {
     /**
      * from..to 범위를 적재한다. 반환값은 upsert/insert된 총 행 수 (관측용).
      *
-     * 트랜잭션: 도메인 단위 all-or-nothing. examination/procedure/exam-list/cataract-exam-list/watermark
+     * 트랜잭션: 도메인 단위 all-or-nothing. examination/procedure/exam-list/cataract-exam-list/성공 로그
      * 중 하나라도 실패하면 모두 롤백. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
@@ -113,8 +113,8 @@ public class ExamMartJob {
                 .toList();
         int procedureRows = writer.upsertProcedureExamMonthly(procedureMonthly);
 
-        // 5) Watermark 갱신 (성공 시에만)
-        watermarkRepository.upsert(MART_NAME, to);
+        // 5) 성공 로그 갱신 (성공 시에만)
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "mart_examination_monthly", examinationRows,

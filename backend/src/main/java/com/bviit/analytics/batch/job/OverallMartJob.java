@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.overall.dto.OverallExamMonthlyItem;
 import com.bviit.analytics.overall.dto.OverallExamWeeklyItem;
 import com.bviit.analytics.overall.service.OverallExamListAggregator;
@@ -42,13 +42,13 @@ public class OverallMartJob {
 
     private final OverallExamListAggregator overallExamListAggregator;
     private final OverallMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     @Value("${batch.mart.min-year:2026}")
     private int minYear;
 
     /**
-     * 트랜잭션: 도메인 단위 all-or-nothing. weekly·monthly upsert + watermark 갱신을 하나로 묶어
+     * 트랜잭션: 도메인 단위 all-or-nothing. weekly·monthly upsert + 성공 로그 갱신을 하나로 묶어
      * 부분 커밋을 방지. v_all_exam_list 재집계라 martJdbcTemplate 하나만 사용.
      */
     @Transactional
@@ -66,7 +66,7 @@ public class OverallMartJob {
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
 
-        watermarkRepository.upsert(MART_NAME, to);
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "mart_overall_exam_weekly", weeklyRows,

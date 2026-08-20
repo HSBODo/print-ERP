@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.consultation.dto.CataractReservationRateItem;
 import com.bviit.analytics.consultation.dto.ConsultationRateItem;
 import com.bviit.analytics.consultation.dto.StopReasonMonthlyItem;
@@ -60,7 +60,7 @@ public class ConsultationMartJob {
     private final ConsultationStatsMartRepository martRepository;
     private final ConsultationRateBridgeRepository bridgeRepository;
     private final ConsultationMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     /**
      * 24·25 seed 보호용 min-year 가드.
@@ -112,8 +112,8 @@ public class ConsultationMartJob {
         List<StopReasonMonthlyItem> stopReasonMonthly = computeStopReason(from, to);
         int stopReasonRows = writer.upsertStopReasonMonthly(stopReasonMonthly);
 
-        // ─── 6) Watermark ────────────────────────────────────────
-        watermarkRepository.upsert(MART_NAME, to);
+        // ─── 6) 성공 로그 ────────────────────────────────────────
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "mart_consultation_rate_monthly",         consultationRows,

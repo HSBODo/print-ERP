@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.exam.repository.ExamCountMartRepository;
 import com.bviit.analytics.report.dto.WeeklyReportItem;
 import com.bviit.analytics.report.service.WeeklyReportService;
@@ -47,7 +47,7 @@ public class ReportMartJob {
     private final WeeklyReportService weeklyReportService;
     private final ExamCountMartRepository examCountMartRepository;
     private final ReportMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     /**
      * mart_weekly_report 골든 시드(V55: 2025) 보호용 min-year 가드.
@@ -57,7 +57,7 @@ public class ReportMartJob {
     private int minYear;
 
     /**
-     * 트랜잭션: 도메인 단위 all-or-nothing. weekly·by-class upsert + watermark 갱신을 하나로 묶는다.
+     * 트랜잭션: 도메인 단위 all-or-nothing. weekly·by-class upsert + 성공 로그 갱신을 하나로 묶는다.
      * MSSQL 읽기는 별도 datasource라 이 트랜잭션과 무관.
      */
     @Transactional
@@ -78,7 +78,7 @@ public class ReportMartJob {
             byClassRows += writer.upsertExamCountByClass(year, rows);
         }
 
-        watermarkRepository.upsert(MART_NAME, to);
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "mart_weekly_report", weeklyRows,

@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.reservation.repository.ReservationListHomepageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class ReservationListHomepageMartJob {
     /** 레거시 소스(MariaDB) 리더. 소스 미설정이면 비어 있어 skip 한다. */
     private final Optional<ReservationListHomepageRepository> sourceRepository;
     private final ReservationListHomepageMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     /**
      * from..to 등록일 범위를 적재한다. 반환값은 insert 된 행 수(관측용, table_stats 에 실린다).
@@ -66,8 +66,8 @@ public class ReservationListHomepageMartJob {
         // 2) 마트 delete + insert
         int inserted = writer.replaceList(from, to, rows);
 
-        // 3) Watermark 갱신 (성공 시에만)
-        watermarkRepository.upsert(MART_NAME, to);
+        // 3) 성공 로그 갱신 (성공 시에만)
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of("mart_list_reservation_homepage", inserted);
         log.info("ReservationListHomepageMartJob done: {}", stats);

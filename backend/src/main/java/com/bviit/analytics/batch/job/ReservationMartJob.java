@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
 import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
 import com.bviit.analytics.reservation.repository.ReservationListRepository;
@@ -59,7 +59,7 @@ public class ReservationMartJob {
     private final ReservationListRepository listRepository;
     private final ReservationStatsMartRepository reservationMartRepository;
     private final ReservationMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     @Value("${batch.mart.min-year:2026}")
     private int minYear;
@@ -72,7 +72,7 @@ public class ReservationMartJob {
      *
      * 반환값은 upsert/insert된 총 행 수 (관측용).
      *
-     * 트랜잭션: 도메인 단위 all-or-nothing. monthly/list/watermark 중 하나라도 실패하면
+     * 트랜잭션: 도메인 단위 all-or-nothing. monthly/list/성공 로그 중 하나라도 실패하면
      * 모두 롤백되어 일관성을 보장한다. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
@@ -134,8 +134,8 @@ public class ReservationMartJob {
                 listService.getReservationList(from.toString(), to.toString()).rows();
         int listRowsCount = writer.replaceList(from, to, listRows);
 
-        // 5) Watermark 갱신 (성공 시에만)
-        watermarkRepository.upsert(MART_NAME, to);
+        // 5) 성공 로그 갱신 (성공 시에만)
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "list_reservation_all", listAllInserted,

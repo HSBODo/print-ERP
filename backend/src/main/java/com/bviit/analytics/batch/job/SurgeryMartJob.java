@@ -1,6 +1,6 @@
 package com.bviit.analytics.batch.job;
 
-import com.bviit.analytics.batch.repository.WatermarkRepository;
+import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.surgery.dto.SurgeryDailyItem;
 import com.bviit.analytics.surgery.dto.SurgeryMonthlyItem;
 import com.bviit.analytics.surgery.service.ReoperationCandidateService;
@@ -68,7 +68,7 @@ public class SurgeryMartJob {
     private final ReoperationCandidateService reopCandidateService;
     private final SurgeryStatsMartRepository martRepository;
     private final SurgeryMartWriter writer;
-    private final WatermarkRepository watermarkRepository;
+    private final BatchSuccessLogRepository successLogRepository;
 
     @Value("${batch.mart.min-year:2026}")
     private int minYear;
@@ -82,7 +82,7 @@ public class SurgeryMartJob {
      *
      * 반환값은 upsert/insert된 총 행 수 (관측용).
      *
-     * 트랜잭션: 도메인 단위 all-or-nothing. daily/monthly/list/watermark 중 하나라도 실패하면
+     * 트랜잭션: 도메인 단위 all-or-nothing. daily/monthly/list/성공 로그 중 하나라도 실패하면
      * 모두 롤백되어 일관성을 보장한다. MSSQL 읽기는 별도 datasource이므로 이 트랜잭션과 무관.
      */
     @Transactional
@@ -145,8 +145,8 @@ public class SurgeryMartJob {
                 .toList();
         int monthlyRows = writer.upsertMonthly(monthly);
 
-        // 4) Watermark 갱신 (성공 시에만)
-        watermarkRepository.upsert(MART_NAME, to);
+        // 4) 성공 로그 갱신 (성공 시에만)
+        successLogRepository.upsert(MART_NAME, to);
 
         Map<String, Integer> stats = Map.of(
                 "mart_surgery_daily", dailyRows,
@@ -168,7 +168,7 @@ public class SurgeryMartJob {
      *
      * 이 메서드는 원본 행만 채운다:
      *   - list_reoperation  범위 delete+insert  ← 유일한 write
-     *   - mart_surgery_daily / mart_surgery_monthly / list_surgery / watermark  → 손대지 않음
+     *   - mart_surgery_daily / mart_surgery_monthly / list_surgery / 성공 로그  → 손대지 않음
      * 따라서 골든 집계는 그대로 유지된다("골든값은 사용한다" 원칙).
      *
      * ⚠️ v_all_surgery_list 는 list_reoperation 을 UNION 하므로, 백필하면 그 구간 뷰에

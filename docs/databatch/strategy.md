@@ -168,7 +168,7 @@
 | 테이블 | 목적 | 실제 컬럼 |
 |-------|------|---------|
 | `batch_run_log` | 배치 실행 이력 | job_name, run_type(DAILY/MONTHLY_RECONCILE/MANUAL), target_from/to, status(RUNNING/SUCCESS/FAILED), rows_upserted, started_at, finished_at, duration_ms, error_message |
-| `batch_watermark` | 마트별 마지막 성공 적재 시각 | mart_name(PK), last_loaded_at, updated_at |
+| `batch_watermark` | 마트별 마지막 성공 적재 시각 (감사 로그 · 다음 배치 시작점 결정에는 미사용, 매일 D-1 고정 처리) | mart_name(PK), last_loaded_at, updated_at |
 
 ### 4.4 레거시 시드 (V9)
 
@@ -189,7 +189,7 @@ com.bviit.analytics.batch/
 │   └── BatchRunLog                 // 실행 이력 값 객체
 ├── repository/
 │   ├── BatchRunLogRepository       // batch_run_log CRUD
-│   └── WatermarkRepository         // batch_watermark 조회·갱신
+│   └── BatchSuccessLogRepository   // batch_watermark upsert (감사 로그 용도)
 ├── BatchSlackNotifier               // 실패 시 Slack 알림
 ├── job/  (Job + Writer 페어 10쌍 = 20 파일)
 │   ├── SurgeryMartJob               + SurgeryMartWriter
@@ -223,7 +223,7 @@ com.bviit.analytics.batch/
 2. Postgres 트랜잭션 시작 (`@Transactional`, Writer 계층)
 3. 리스트: `delete-list-*-range.sql` → `insert-list-*.sql`
 4. 집계: `upsert-*.sql` (`INSERT ... ON CONFLICT DO UPDATE`)
-5. `WatermarkRepository.upsert()`로 `batch_watermark` 갱신
+5. `BatchSuccessLogRepository.upsert()`로 `batch_watermark` 에 성공 시각 기록 (감사 로그)
 6. `BatchRunLogRepository`에 성공 기록
 7. 커밋
 
@@ -493,7 +493,7 @@ Postgres 마트 테이블 (계산된 최종 숫자만 저장)
 #### 2-6. 인프라 테이블 (메뉴 아님, 배치 지원용)
 
 - `batch_run_log` — 배치 실행 이력 · 실패 원인 추적
-- `batch_watermark` — 도메인별 마지막 배치 위치
+- `batch_watermark` — 도메인별 마지막 성공 적재일 (감사 로그, `BatchSuccessLogRepository`)
 - `reservation_stats_period_lock` — 월 확정 잠금 (배치 덮어쓰기 방어)
 - `reservation_stats_override` — 예약통계 셀 수기 보정 (INSERT-only audit)
 
@@ -660,7 +660,7 @@ A. 기본은 잠금 상태(V12 seed + min-year 가드). 정말 바꿔야 하면 
 #### 1-4. 관측
 
 - **`batch_run_log`** — 매 실행마다 새 행 (`RUNNING → SUCCESS/FAILED`, `table_stats` JSON 에 각 마트별 upsert 행 수).
-- **`batch_watermark`** — 도메인별 마지막 성공 적재일 (다음 daily 배치의 시작점).
+- **`batch_watermark`** — 도메인별 마지막 성공 적재일 (감사 로그. 매일 D-1 고정 처리이므로 다음 배치의 시작점을 결정하는 데는 미사용, `upsert` 만 호출됨).
 - **Slack 알림** — 실패 시 스택 요약 자동 전송 (`LOGGING_SLACK_*` 프로파일별 활성).
 
 #### 1-5. 재실행 안전 (idempotent)
