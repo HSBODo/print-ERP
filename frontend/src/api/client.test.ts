@@ -150,7 +150,7 @@ describe('api client', () => {
       }),
     )
 
-    await expect(api.get('/stats/reservation')).rejects.toThrow('세션이 만료되었습니다. 다시 로그인해주세요.')
+    await expect(api.get('/stats/reservation/monthly')).rejects.toThrow('세션이 만료되었습니다. 다시 로그인해주세요.')
     expect(localStorage.length).toBe(0)
   })
 })

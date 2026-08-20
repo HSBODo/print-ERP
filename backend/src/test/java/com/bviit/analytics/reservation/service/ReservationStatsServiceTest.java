@@ -1,7 +1,6 @@
 package com.bviit.analytics.reservation.service;
 
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
-import com.bviit.analytics.reservation.dto.ReservationStatsResponse;
 import com.bviit.analytics.reservation.repository.ReservationStatsRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,7 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,40 +23,6 @@ class ReservationStatsServiceTest {
 
     @InjectMocks
     private ReservationStatsService service;
-
-    @Test
-    void getStatsCalculatesSummaryRatesAndLabels() {
-        when(repository.findSummary("2026-04-01", "2026-04-03")).thenReturn(row(
-                "totalReservations", 20,
-                "completedExaminations", 10,
-                "cancellations", 4,
-                "walkInReservations", 5
-        ));
-        when(repository.findPrevSummary("2026-03-29", "2026-03-31")).thenReturn(row(
-                "totalReservations", 10
-        ));
-        when(repository.findDailyTrend("2026-04-01", "2026-04-03")).thenReturn(List.of(
-                row("date", "2026-04-01", "reservations", 7, "examinations", 3, "cancellations", 1)
-        ));
-        when(repository.findSourceBreakdown("2026-04-01", "2026-04-03")).thenReturn(List.of(
-                row("source", "naver", "count", 6)
-        ));
-        when(repository.findHourlyDistribution("2026-04-01", "2026-04-03")).thenReturn(List.of(
-                row("slot", "09:00", "count", 2)
-        ));
-
-        ReservationStatsResponse response = service.getStats(LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 3));
-
-        assertThat(response.getMeta().getFrom()).isEqualTo("2026-04-01");
-        assertThat(response.getMeta().getTo()).isEqualTo("2026-04-03");
-        assertThat(response.getData().getSummary().getReservationChangeRate()).isEqualTo(100.0);
-        assertThat(response.getData().getSummary().getExaminationConversionRate()).isEqualTo(50.0);
-        assertThat(response.getData().getSummary().getCancellationRate()).isEqualTo(20.0);
-        assertThat(response.getData().getSummary().getWalkInShareRate()).isEqualTo(25.0);
-        assertThat(response.getData().getSourceBreakdown())
-                .extracting(ReservationStatsResponse.SourceBreakdown::getLabel)
-                .containsExactly("네이버");
-    }
 
     @Test
     void getMonthlyStatsFillsMissingMonthsWithinRequestedYears() {

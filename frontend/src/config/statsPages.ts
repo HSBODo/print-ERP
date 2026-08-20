@@ -86,7 +86,7 @@ export const statsPages: StatsPageDefinition[] = [
     'reservation-group',
     '예약',
     '예약 유입 규모와 일자별 변화 추이를 확인하는 화면입니다.',
-    '/api/stats/reservation'
+    '/api/stats/reservation/monthly'
   ),
   statsPage(
     'reservation-overall',

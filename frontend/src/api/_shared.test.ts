@@ -11,7 +11,7 @@ describe('api query helpers', () => {
   })
 
   it('쿼리가 없으면 path만 반환한다', () => {
-    expect(withQuery('/stats/reservation', { from: null, to: undefined })).toBe('/stats/reservation')
+    expect(withQuery('/stats/reservation-stats-system', { from: null, to: undefined })).toBe('/stats/reservation-stats-system')
   })
 
   it('문자열 값은 URLSearchParams 규칙으로 인코딩한다', () => {

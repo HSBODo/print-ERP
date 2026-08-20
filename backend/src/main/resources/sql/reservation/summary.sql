@@ -1,7 +1,0 @@
-SELECT
-    COUNT(*) AS totalReservations,
-    SUM(CASE WHEN RESERVE_FLAG = 'F' THEN 1 ELSE 0 END) AS completedExaminations,
-    SUM(CASE WHEN RESERVE_STATE = 'C' THEN 1 ELSE 0 END) AS cancellations,
-    SUM(CASE WHEN TODAY_FLAG = 'Y' THEN 1 ELSE 0 END) AS walkInReservations
-FROM RESERVATION WITH(NOLOCK)
-WHERE RESERVE_DATE >= :from AND RESERVE_DATE <= :to
