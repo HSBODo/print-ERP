@@ -33,7 +33,7 @@ import java.util.Map;
 @ConditionalOnExpression(HomepageDataSourceConfig.ENABLED_EXPRESSION)
 public class ReservationListHomepageRepository implements HomepageOverallSource {
 
-    private static final String SQL_BASE = "sql/reservation-list-homepage/";
+    private static final String SQL_BASE = "sql/reservation/list-homepage/";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final HomepageSourceDialect dialect;

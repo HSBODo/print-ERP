@@ -5,7 +5,7 @@
 --    들쭉날쭉해 일관성을 위해 뺀 것이었다. 2026-01 부터는 마트가 직접 계산하므로 포함한다.
 --
 -- 카카오는 RESERVATION 에 거의 안 잡힌다(RESERVE_PATH 없음) — 해피톡이 원천이다.
--- 기준은 sql/reservation-list/kakao-count.sql / RSS 의 CH18(카카오톡_예약) 과 동일:
+-- 기준은 RSS 의 CH18(카카오톡_예약) 과 동일 (참고: sql/reservation-list/kakao-count.sql 는 커밋 789694e 에서 mart_reservation_kakao_daily 폐지와 함께 제거됨):
 --   - C01.Name='수술전' AND C02.NAME='★신환'  → 신규 예약건
 --   - 밀리초 타임스탬프로 dedup (동일 상담이 다건으로 적재되는 원본 특성)
 SELECT YEAR(H.InsertedDateTime)  AS yr,

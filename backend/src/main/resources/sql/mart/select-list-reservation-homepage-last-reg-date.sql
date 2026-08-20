@@ -4,6 +4,6 @@
 -- 의미('천장')를 갖는다. 화면은 조회 종료일이 이 값보다 크면 경고 배너를 띄운다
 -- (ReservationListHomepageResult.live=false 로 내려간다).
 --
--- 소스판(sql/reservation-list-homepage/{sqlite,mariadb}/last-reg-date.sql) 과 결과 계약(문자열 1개) 동일.
+-- 소스판(sql/reservation/list-homepage/{sqlite,mariadb}/last-reg-date.sql) 과 결과 계약(문자열 1개) 동일.
 SELECT COALESCE(TO_CHAR(MAX(reg_date), 'YYYY-MM-DD HH24:MI:SS'), '') AS "lastRegDate"
   FROM mart_list_reservation_homepage
