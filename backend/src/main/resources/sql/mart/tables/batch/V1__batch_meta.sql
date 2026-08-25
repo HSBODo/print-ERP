@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS batch_run_log (
     started_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     finished_at     TIMESTAMP,
     duration_ms     BIGINT,
-    error_message   TEXT
+    error_message   TEXT,
+    -- 잡별 (테이블→행수) 상세. 어떤 파일이 얼마나 썼는지 관리자 화면에서 펼쳐 볼 때 사용.
+    table_stats     JSONB
 );
 
 CREATE INDEX IF NOT EXISTS idx_batch_run_log_job_started

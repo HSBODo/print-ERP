@@ -43,8 +43,12 @@ CREATE TABLE IF NOT EXISTS mart_weekly_report (
     cataract_exam       INT,
     one_day             INT,
 
+    -- 드림렌즈 신환·재진 (V29 통합)
+    dreamlens_new       INT,
+    dreamlens_fu        INT,
+
     -- 비율 계산용 원시값
-    -- cataract_exam_eyes 는 V54 에서 삭제됨 — 백내장 예약률을 사람 단위로 통일(cataract_exam 분모).
+    -- cataract_exam_eyes 는 초기 정의에서 제외됨 — 백내장 예약률을 사람 단위로 통일(cataract_exam 분모).
     vision_booked       INT,
     cataract_booked     INT,
     one_day_booked      INT,
@@ -56,6 +60,11 @@ CREATE TABLE IF NOT EXISTS mart_weekly_report (
     vision_surgery      INT,
     cataract_surgery    INT,
     total_surgery       INT,
+
+    -- 재수술 (V38 통합)
+    reoperation         INT,
+    reop_laser          INT,
+    reop_lens           INT,
 
     -- 외래
     outpatient          INT,

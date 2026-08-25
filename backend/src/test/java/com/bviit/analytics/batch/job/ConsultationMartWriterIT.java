@@ -64,8 +64,8 @@ class ConsultationMartWriterIT {
             execSilently(conn, "DROP TABLE IF EXISTS mart_reservation_rate_monthly, "
                     + "mart_stop_reason_monthly, mart_consultation_rate_monthly, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V5__consultation_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1__batch_meta.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/consultation/V5__consultation_mart.sql"));
         }
     }
 

@@ -101,6 +101,8 @@ CREATE TABLE IF NOT EXISTS list_exam (
     last_visit              VARCHAR(20)   NOT NULL DEFAULT '',
     insurance               VARCHAR(100)  NOT NULL DEFAULT '',
     nationality             VARCHAR(100)  NOT NULL DEFAULT '',
+    -- 원데이 판정 (V26 통합) — 같은날 M/5 예약 내원. exam_type 파생에 사용 (v_all_exam_list).
+    one_day                 VARCHAR(4)    NOT NULL DEFAULT 'N',
     loaded_at               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -165,6 +167,10 @@ CREATE TABLE IF NOT EXISTS list_cataract_exam (
     last_visit              VARCHAR(20)   NOT NULL DEFAULT '',
     insurance               VARCHAR(100)  NOT NULL DEFAULT '',
     nationality             VARCHAR(100)  NOT NULL DEFAULT '',
+    -- 백내장 리스트 분류 (V23 통합) — 백내장/중단/노안·FU/기타. v_all_exam_list.cataract_class 파생.
+    classification          VARCHAR(20)   NOT NULL DEFAULT '',
+    -- 원데이 판정 (V32 통합) — 진료구분 C_원데이·C_노안원데이. exam_type 파생에 사용.
+    one_day                 VARCHAR(4)    NOT NULL DEFAULT 'N',
     loaded_at               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

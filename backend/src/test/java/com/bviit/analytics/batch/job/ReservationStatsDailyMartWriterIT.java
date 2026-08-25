@@ -64,8 +64,8 @@ class ReservationStatsDailyMartWriterIT {
                     + "reservation_stats_period_lock, "
                     + "reservation_stats_override, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V11__reservation_stats_daily_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1__batch_meta.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/reservation/V11__reservation_stats_daily_mart.sql"));
         }
     }
 

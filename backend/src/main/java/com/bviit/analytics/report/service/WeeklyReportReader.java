@@ -7,11 +7,14 @@ import java.util.List;
 /**
  * 주차 레포트 조회 계약.
  *
- * 구현체:
- *   - {@link WeeklyReportService} : @Profile("postgres-mart") — 운영 DB 일별 집계를 ISO 주차로 묶는다.
+ * 구현체 (postgres-mart 프로파일 · 컨트롤러가 이 인터페이스로 주입받으면 @Primary 인 마트 구현이 이긴다):
+ *   - {@link WeeklyReportMartQueryService} : @Primary — Postgres 마트({@code mart_weekly_report}) 조회.
+ *                                            화면 진입점. MSSQL 미접근.
+ *   - {@link WeeklyReportService}          : @Service — MSSQL 직결(브릿지 포함). 배치 잡
+ *                                            {@code ReportMartJob} 이 {@code mart_weekly_report} 를
+ *                                            적재하기 위해 직접 클래스 이름으로 주입해 호출.
  *
- * 주차 값은 전 구간 라이브다(레거시 확정값은 월 단위라 주로 쪼갤 수 없음). 마트 전용 구현은 없다 —
- * 주차 마트가 생기면 여기 @Primary 구현을 추가하면 된다.
+ * 즉 배치 시점에만 MSSQL 이 조회되고, 사용자 화면 조회는 마트만 읽는다.
  */
 public interface WeeklyReportReader {
     List<WeeklyReportItem> getWeeklyStats(List<Integer> years);

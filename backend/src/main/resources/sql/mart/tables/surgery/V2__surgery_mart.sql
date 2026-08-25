@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS mart_surgery_monthly (
     reoperation         INTEGER     NOT NULL DEFAULT 0,
     reop_laser          INTEGER     NOT NULL DEFAULT 0,
     reop_lens           INTEGER     NOT NULL DEFAULT 0,
+    -- 노안 전용 (presbyond) · 백내장 PIOL 환자수 (V33 통합)
+    presbyond           INTEGER     NOT NULL DEFAULT 0,
+    piol_patients       INTEGER     NOT NULL DEFAULT 0,
     -- 그룹별 환자 수 및 합계
     vision_patients     INTEGER     NOT NULL DEFAULT 0,
     cataract_patients   INTEGER     NOT NULL DEFAULT 0,
@@ -76,6 +79,9 @@ CREATE TABLE IF NOT EXISTS mart_surgery_daily (
     reoperation         INTEGER     NOT NULL DEFAULT 0,
     reop_laser          INTEGER     NOT NULL DEFAULT 0,
     reop_lens           INTEGER     NOT NULL DEFAULT 0,
+    -- 노안 전용 (presbyond) · 백내장 PIOL 환자수 (V33 통합)
+    presbyond           INTEGER     NOT NULL DEFAULT 0,
+    piol_patients       INTEGER     NOT NULL DEFAULT 0,
     vision_patients     INTEGER     NOT NULL DEFAULT 0,
     cataract_patients   INTEGER     NOT NULL DEFAULT 0,
     total               INTEGER     NOT NULL DEFAULT 0,

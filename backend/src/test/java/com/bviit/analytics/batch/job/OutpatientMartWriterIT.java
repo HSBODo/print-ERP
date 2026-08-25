@@ -58,8 +58,8 @@ class OutpatientMartWriterIT {
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS mart_outpatient_count_monthly, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V6__outpatient_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1__batch_meta.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/outpatient/V6__outpatient_mart.sql"));
         }
     }
 

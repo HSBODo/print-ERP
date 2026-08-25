@@ -65,8 +65,8 @@ class ReservationMartWriterIT {
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS list_reservation, mart_reservation_monthly, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V3__reservation_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1__batch_meta.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/reservation/V3__reservation_mart.sql"));
         }
     }
 

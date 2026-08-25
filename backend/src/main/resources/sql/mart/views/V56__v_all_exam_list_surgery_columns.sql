@@ -1,24 +1,44 @@
 -- =========================================================
--- v_all_exam_list 확장 (V56) — 수술예약·백내장 눈수 파생 컬럼 추가
+-- v_all_exam_list — list_exam + list_cataract_exam 위의 통합 파생 뷰 (V56 최종 정의)
 -- Profile: postgres-mart
 --
--- 왜.
---   mart_overall_exam_monthly · mart_overall_exam_weekly 가 종전에 MSSQL 6종 SQL
---   (sql/overall/find-{vision,cataract,dreamlens,stop-count,one-day,demographics}-daily.sql)
---   을 배치 시점에 직접 조회했다. 원천 컬럼(surgery_reserve_date · recommended_r/l) 이
---   이미 list_exam · list_cataract_exam 에 담겨 있으므로 뷰에 노출해
---   배치가 v_all_exam_list 한 곳만 읽고 재집계하도록 통일.
+-- 왜 뷰인가 (V34 배경).
+--   검사구분·원데이·유입·직업·백내장분류 같은 파생값이 종전에는 리스트 화면·MSSQL 레포트에
+--   각자 구현되어 있어 정의가 바뀌면 여러 곳을 찾아 고쳐야 했고 하나 빠뜨리면 조용히 어긋났다
+--   (2026-08-05 원데이 3건 사례). 뷰로 승격해 리스트·월별·주차·배치가 **같은 정의 하나**를 본다.
 --
--- 추가 컬럼 (뒤에 붙인다).
---   surgery_reserve_date   O 예약 존재 시 예약일 문자열 ('' 이면 예약 없음). booked 판정에 사용.
---   surgery_date           수술 실시일 문자열 ('' 이면 미실시).
---   cataract_eye_count     백내장 추천 눈 수 (0/1/2). recommended_r <> '' 와 recommended_l <> '' 의 합.
---                          list_exam 행(시력교정/드림렌즈)은 항상 0.
---
--- 배치 정합성: mart_overall_exam_* 이관 이후 이 뷰 하나가 검사 도메인 파생 규칙의 SSOT.
+-- 원본 저장 없음 — 파생 규칙만 담는다.
+--   원본 행은 이미 list_exam / list_cataract_exam 에 있고 이 뷰는 그 위의 파생일 뿐이다.
 --   list_exam 재적재 시점에 담긴 값이 그대로 반영되며, MSSQL 재조회 없음.
 --
--- ⚠️ 재기동 idempotency — DROP + CREATE 패턴 (V34·V52 와 동일).
+-- 커버리지 — 2026-01 이후 행만 있다 (그 전은 마트에 리스트가 없다).
+--   2024·2025 와 2026-01~05 레포트 값은 골든 시드가 우선이며 이 뷰와 무관하다.
+--
+-- 계승 이력 (V56 이 세 세대 정의를 완전 재작성해 담고 있음):
+--   V34 → 기본 파생 컬럼 (검사구분·유입·직업 등)
+--   V52 → + stop_yn · stop_reason_bucket 파생 (아래 stop_reason 규칙 참조)
+--   V56 → + surgery_reserve_date · surgery_date · cataract_eye_count
+--   ⚠️ V56 이 완전 재정의라 V34·V52 는 MartSchemaInitializer 에서 제외됨.
+--
+-- 배치 정합성: mart_overall_exam_* 이관 이후 이 뷰 하나가 검사 도메인 파생 규칙의 SSOT.
+--   mart_overall_exam_monthly · mart_overall_exam_weekly 가 종전에 MSSQL 6종 SQL
+--   (sql/overall/find-{vision,cataract,dreamlens,stop-count,one-day,demographics}-daily.sql)
+--   을 배치 시점에 직접 조회하던 걸 이 뷰 하나로 통일.
+--
+-- 추가 컬럼 (V56).
+--   surgery_reserve_date   O 예약 존재 시 예약일 문자열 ('' 이면 예약 없음). booked 판정에 사용.
+--   surgery_date           수술 실시일 문자열 ('' 이면 미실시).
+--   cataract_eye_count     백내장 추천 눈 수 (0/1/2). recommended_r <> '' + recommended_l <> ''.
+--                          list_exam 행(시력교정/드림렌즈)은 항상 0.
+--
+-- stop_reason 규칙 (V52 계승 · 아래 SELECT 절 CASE 참조):
+--   ⚠️ 시력교정(EXAM) 중단자만 대상 — 원본 sql/consultation/find-stop-reason-monthly.sql 과 동일.
+--      백내장은 Cancel_CD 체계가 달라 같은 매핑을 그대로 쓸 수 없어 여기서는 계산하지 않는다(빈 문자열).
+--   7버킷: recommendX · lensImpossible · keratoconus · avellino · glaucoma · visionChange · other
+--   '117 · 127' 등 '불가_' 접두 코드는 라벨상 '수술 불가' 이지만 원본 매핑(2026-07-15 결정)에서
+--   '기타(잠정 중단)' 로 귀속. ELSE 는 미지 코드 전용 — 새 CANCEL_CD 가 들어오면 other 로 흘러감.
+--
+-- ⚠️ 재기동 idempotency — DROP + CREATE 패턴. CREATE OR REPLACE 는 컬럼 축소를 못 해서 이 패턴 도입.
 -- ⚠️ 컬럼 순서·이름을 바꾸면 mart_overall_exam_monthly 계산 SQL 도 함께 손대야 함.
 -- =========================================================
 

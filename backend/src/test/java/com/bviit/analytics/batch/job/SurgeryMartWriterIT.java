@@ -67,8 +67,8 @@ class SurgeryMartWriterIT {
         // 매 테스트마다 clean state — DDL 재실행 + 데이터 초기화
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS list_surgery, mart_surgery_daily, mart_surgery_monthly, batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V2__surgery_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1__batch_meta.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/surgery/V2__surgery_mart.sql"));
         }
     }
 
