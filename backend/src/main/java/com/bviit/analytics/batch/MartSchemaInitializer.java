@@ -137,7 +137,7 @@ public class MartSchemaInitializer implements InitializingBean {
     }
 
     /**
-     * SEED 15개 파일 — 시드·골든값·백필. 순서 규약은 클래스 docstring 참조.
+     * SEED 16개 파일 — 시드·골든값·백필. 순서 규약은 클래스 docstring 참조.
      */
     private void applySeedScripts() {
         applyScript("sql/mart/exam/seeds/V9__legacy_seed.sql");
