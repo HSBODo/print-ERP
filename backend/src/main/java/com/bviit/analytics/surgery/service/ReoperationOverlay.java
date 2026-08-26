@@ -13,9 +13,9 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 /**
  * 재수술 판정 오버레이 + 렌즈/레이저 분류.
  *
- * find-reoperation-candidates.sql 의 raw 후보에 저장 판정을 얹어 최종 재수술 여부를 결정하고,
+ * select-reoperation-candidates.sql 의 raw 후보에 저장 판정을 얹어 최종 재수술 여부를 결정하고,
  * 시술명(AGAIN_R, AGAIN_L) 패턴으로 렌즈/레이저를 나눈다. 시술명 패턴은 예전에 3개 SQL
- * (find-reoperation-monthly.sql · find-reoperation-daily.sql · find-reoperation-candidates.sql)
+ * (find-reoperation-monthly.sql · find-reoperation-daily.sql · select-reoperation-candidates.sql)
  * 에 흩어져 있던 걸 여기로 모았다.
  */
 public final class ReoperationOverlay {

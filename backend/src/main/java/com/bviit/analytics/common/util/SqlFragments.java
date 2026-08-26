@@ -8,9 +8,9 @@ public final class SqlFragments {
 
     private static final Pattern SAFE_ALIAS = Pattern.compile("[A-Za-z][A-Za-z0-9_]*");
     private static final String EXAM_MEASUREMENTS_BLANK =
-            SqlLoader.load("sql/fragments/exam-measurements-blank.sql");
+            SqlLoader.load("sql/softcrm/fragments/fragment-exam-measurements-blank.sql");
     private static final String EXAM_SESSION_SOURCE =
-            SqlLoader.load("sql/fragments/exam-session-source.sql");
+            SqlLoader.load("sql/softcrm/fragments/fragment-exam-session-source.sql");
 
     private SqlFragments() {
     }

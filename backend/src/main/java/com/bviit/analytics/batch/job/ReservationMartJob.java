@@ -30,7 +30,7 @@ import java.util.Map;
  *   - list_reservation                   — from..to 등록일 범위 delete+insert (검사 예약자 명단)
  *
  * mart_reservation_monthly 는 종전에 MSSQL 쪽 별도 쿼리(ReservationStatsService.getMonthlyStats
- * → sql/reservation/monthly-by-type.sql)로 계산해 저장했다. 같은 정의를 리스트에 담아
+ * → sql/softcrm/reservation/select-monthly-by-type.sql)로 계산해 저장했다. 같은 정의를 리스트에 담아
  * 리스트→월별 재집계로 통일 — 외래수·중단사유와 같은 패턴.
  *
  * mart_reservation_overall_monthly 는 화면 서비스(ReservationOverallMartQueryService @Primary)와

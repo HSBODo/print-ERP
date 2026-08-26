@@ -3,11 +3,11 @@
 -- Profile: postgres-mart
 --
 -- 예약통계_채널별 화면이 쓴다. 예약자 리스트와 같은 행을 보므로 합계가 항상 맞는다.
--- 원천 채널 판정 규칙·매핑 테이블 정의는 V43 이 담당 (reservation_channel_staff 테이블 + 시드).
+-- 매핑 테이블 정의는 V43a 가 담당 (reservation_channel_staff 테이블 + 시드).
 --
 -- ★ 채널 판정 우선순위 (아래 SELECT 절 COALESCE 참조):
 --   ① 내원동기(중)  — 모두닥·카페·크리에이트립 등 **매체 이름이 직접 적힌** 값
---   ② 직원 설정표   — 자사 해외팀처럼 사람 이름으로 등록되는 유입 (reservation_channel_staff · V43 정의)
+--   ② 직원 설정표   — 자사 해외팀처럼 사람 이름으로 등록되는 유입 (reservation_channel_staff · V43a 정의)
 --   ③ RESERVE_PATH  — 홈페이지·앱·네이버·인콜·아웃콜
 --
 --   내원동기가 먼저인 이유 — 모두닥 보고 전화로 예약하면 RESERVE_PATH 는 '인콜' 이다.
@@ -21,11 +21,10 @@
 --    제외한다(해피톡 소스라 RESERVATION 에 안 들어옴). 칸을 두면 항상 0 이라 오해를 부른다.
 --
 -- 계승 이력 (V50 이 세 세대 정의를 완전 재작성해 담고 있음):
---   V43 → 기본 정의 (채널 판정 3계층) + reservation_channel_staff 테이블·시드 (테이블은 V43 만 정의)
---   V48 → + op_type_r · op_type_l (실제 수술 유형 · surgery_op_type() 함수 사용)
---   V50 → + surgery_reg_date · surgery_date · surgery_payment (V49 컬럼 활용)
---   ⚠️ V50 이 완전 재정의라 V48 은 MartSchemaInitializer 에서 제외됨.
---   ⚠️ V43 은 reservation_channel_staff 테이블 CREATE 가 유일하게 있어 **initializer 실행 필수**.
+--   V43 → 기본 정의 (채널 판정 3계층). 2026-08-26 리팩터에서 V43a(테이블·시드)만 남기고 뷰 부분 삭제.
+--   V48 → + op_type_r · op_type_l (실제 수술 유형 · surgery_op_type() 함수 사용). 2026-08-25 삭제.
+--   V50 → + surgery_reg_date · surgery_date · surgery_payment (V49 컬럼 활용). **최종 정의**.
+--   ⚠️ V43a (reservation_channel_staff 테이블+시드) 는 이 뷰가 LEFT JOIN 하므로 initializer 실행 필수.
 --
 -- 실제 수술 유형 배경 (V48 계승):
 --   예약자 리스트에 수술명(surgery_r/surgery_l)이 생겼다(2feeb70).

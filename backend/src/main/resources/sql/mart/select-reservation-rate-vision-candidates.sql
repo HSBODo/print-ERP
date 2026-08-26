@@ -1,6 +1,6 @@
 -- 시력교정 예약률 검사자 후보 — Postgres primary 리스트에서 검사자 세션만 뽑는다.
 --
--- 원본(sql/exam/find-vision-reservation-rate-monthly.sql) 대비, 미래 예약 판정은 여기서 하지 않는다.
+-- 원본(sql/softcrm/exam/select-vision-reservation-rate-monthly.sql) 대비, 미래 예약 판정은 여기서 하지 않는다.
 --   · '순수 외래 제외' 필터의 3개 EXISTS 중 M(검사) 예약만 리스트로 판정 가능.
 --     - hasMReservation = list_reservation 에 exam_date 당일 I/H 예약이 있으면 1
 --   · O 예약(FLAG='O', STATE<>'C', RESERVE_DATE>=exam_date) 존재 여부와

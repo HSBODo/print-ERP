@@ -8,7 +8,7 @@
 --   · COUNT(*)           — 리스트가 그대로 보여주는 raw 건수
 -- 회귀 기준: from=2026-06-01 / to=2026-06-30 → 206건 (리스트 화면과 동일).
 --
--- 소스판(../{sqlite,mariadb}/monthly-list-raw.sql) 과 결과 계약(yr·mo·cnt) 동일해야 함.
+-- 소스판(../{sqlite,mariadb}/select-monthly-list-raw.sql) 과 결과 계약(yr·mo·cnt) 동일해야 함.
 -- 배치가 이미 CATEGORY='COUNSELONLINE' · DEL_TF='N' 을 걸어 넣었기 때문에 여기서는 재적용하지 않는다.
 --
 -- ⚠️ 네이버·카카오는 시력교정만 집계 — 이 홈페이지 판만 전 진료 포함이라 진료 범위 비대칭(의도적).

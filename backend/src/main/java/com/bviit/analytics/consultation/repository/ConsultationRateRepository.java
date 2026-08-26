@@ -32,8 +32,8 @@ public class ConsultationRateRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_MONTHLY_VISION_RATES_SQL = "sql/consultation/find-monthly-vision-rates.sql";
-    private static final String FIND_MONTHLY_CATARACT_RATES_SQL = "sql/consultation/find-monthly-cataract-rates.sql";
+    private static final String FIND_MONTHLY_VISION_RATES_SQL = "sql/softcrm/consultation/select-monthly-vision-rates.sql";
+    private static final String FIND_MONTHLY_CATARACT_RATES_SQL = "sql/softcrm/consultation/select-monthly-cataract-rates.sql";
 
     private final String findMonthlyVisionRatesSql;
     private final String findMonthlyCataractRatesSql;

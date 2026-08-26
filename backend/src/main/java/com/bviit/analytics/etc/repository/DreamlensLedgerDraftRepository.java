@@ -24,7 +24,7 @@ import java.util.Map;
 @Profile("postgres-mart")
 public class DreamlensLedgerDraftRepository {
 
-    private static final String DRAFT_SQL = "sql/etc/find-dreamlens-ledger-draft.sql";
+    private static final String DRAFT_SQL = "sql/softcrm/etc/select-dreamlens-ledger-draft.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String draftSql;

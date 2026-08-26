@@ -108,8 +108,8 @@
 | Repository | `reservation/repository/ReservationListHomepageRepository.java` |
 | Service | `reservation/service/ReservationListHomepageService.java` |
 | Controller | `reservation/controller/ReservationListHomepageController.java` |
-| SQLite SQL | `sql/reservation-list-homepage/sqlite/*.sql` (3개) |
-| MariaDB SQL | `sql/reservation-list-homepage/mariadb/*.sql` (3개) |
+| SQLite SQL | `sql/homepage/sqlite/*.sql` (3개) |
+| MariaDB SQL | `sql/homepage/mariadb/*.sql` (3개) |
 
 ### 2-3. 설계 결정
 
@@ -318,7 +318,7 @@ CREATE INDEX idx_mart_list_reservation_homepage_reg_date
 |---|---|---|---|
 | 네이버 | MSSQL `RESERVATION` | `reservation-overall/monthly-naver.sql` | RSS 의 '네이버 예약수'(CH16)와 동일 — **취소 제외, 정크제외 미적용** |
 | 카카오톡 | MSSQL `HappyTalk_*` | `reservation-overall/monthly-kakao.sql` | RSS 의 CH18 — `수술전`+`★신환`, 밀리초 dedup |
-| 홈페이지 | **이 문서의 소스** | `reservation-list-homepage/monthly-list-raw.sql` | 리스트 화면과 동일 — `EXAM_TYPE` 필터 없음, `COUNT(*)` (전 진료) |
+| 홈페이지 | **이 문서의 소스** | `reservation-list-homepage/select-monthly-list-raw.sql` | 리스트 화면과 동일 — `EXAM_TYPE` 필터 없음, `COUNT(*)` (전 진료) |
 
 **세 소스가 서로 다른 DB라 SQL 조인이 불가능하다** → 합산은 `ReservationOverallStatsService` 에서 한다.
 

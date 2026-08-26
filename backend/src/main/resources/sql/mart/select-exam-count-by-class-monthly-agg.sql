@@ -1,6 +1,6 @@
 -- 고객분류별 검사수 월별 집계 — v_all_exam_list.motive_report 하나에서 뽑는다.
 --
--- 종전에는 MSSQL 직결(find-exam-count-by-class-monthly.sql)로 EXAM+Cataract_Exam 세션에
+-- 종전에는 MSSQL 직결(select-exam-count-by-class-monthly.sql)로 EXAM+Cataract_Exam 세션에
 -- MOTIVE_NEW02 OUTER APPLY(Idx='1', pkey DESC TOP 1) 로 motiveL 을 얹어 계산했다.
 -- list_exam/list_cataract_exam 이 이미 동일 규칙(Idx='1' TOP 1)으로 motive_l 을 담고
 -- v_all_exam_list 가 동일한 9계열 CASE (V34/V52) 를 파생하므로 그 뷰만 읽으면 된다.

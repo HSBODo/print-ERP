@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * 대상 테이블:
  *   - mart_reservation_monthly        : 월별 수술/외래/드림렌즈 (ReservationMonthlyItem)
- *   - list_reservation                : 예약자 명단 행 (reservation-list.sql 출력 shape)
+ *   - list_reservation                : 예약자 명단 행 (select-reservation-list.sql 출력 shape)
  *
  * 반환 shape은 기존 MSSQL 직결 결과와 동일. 컷오버 후 컨트롤러/UI 영향 없음.
  */

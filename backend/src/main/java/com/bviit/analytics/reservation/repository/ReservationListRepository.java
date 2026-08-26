@@ -29,8 +29,8 @@ import java.util.Map;
 @Profile("postgres-mart")
 public class ReservationListRepository {
 
-    static final String RESERVATION_LIST_SQL = "sql/reservation/list/reservation-list.sql";
-    static final String RESERVATION_LIST_ALL_SQL = "sql/reservation/list/reservation-list-all.sql";
+    static final String RESERVATION_LIST_SQL = "sql/softcrm/reservation/list/select-reservation-list.sql";
+    static final String RESERVATION_LIST_ALL_SQL = "sql/softcrm/reservation/list/select-reservation-list-all.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String reservationListSql;

@@ -68,9 +68,12 @@ class ExamMartWriterIT {
             execSilently(conn, "DROP TABLE IF EXISTS list_cataract_exam, list_exam, "
                     + "mart_procedure_exam_monthly, mart_examination_monthly, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1__batch_meta.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4__exam_mart.sql"));
-            // V26 (list_exam.one_day 컬럼 ALTER) 는 V4 CREATE 로 통합되어 별도 실행 불필요.
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1a__batch_run_log.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1b__batch_watermark.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4a__mart_examination_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4b__mart_procedure_exam_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4c__list_exam.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4d__list_cataract_exam.sql"));
         }
     }
 

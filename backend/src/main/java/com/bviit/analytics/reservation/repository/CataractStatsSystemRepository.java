@@ -38,8 +38,8 @@ import java.util.List;
 @Profile("postgres-mart")
 public class CataractStatsSystemRepository {
 
-    private static final String SQL_LOCATION = "sql/reservation/stats/cataract-daily-counts.sql";
-    private static final String DRILL_DOWN_SQL_LOCATION = "sql/reservation/stats/cataract-drill-down.sql";
+    private static final String SQL_LOCATION = "sql/softcrm/reservation/stats/select-cataract-daily-counts.sql";
+    private static final String DRILL_DOWN_SQL_LOCATION = "sql/softcrm/reservation/stats/select-cataract-drill-down.sql";
     private static final String ISO_DATE = "\\d{4}-\\d{2}-\\d{2}";
 
     private final NamedParameterJdbcTemplate jdbc;

@@ -31,7 +31,7 @@ public class CataractExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_CATARACT_EXAM_LIST_SQL = "sql/exam/find-cataract-exam-list.sql";
+    private static final String FIND_CATARACT_EXAM_LIST_SQL = "sql/softcrm/exam/select-cataract-exam-list.sql";
 
     private final String findCataractExamListSql;
 

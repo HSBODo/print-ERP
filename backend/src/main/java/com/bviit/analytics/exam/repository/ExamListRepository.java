@@ -30,7 +30,7 @@ public class ExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_EXAM_LIST_SQL = "sql/exam/find-exam-list.sql";
+    private static final String FIND_EXAM_LIST_SQL = "sql/softcrm/exam/select-exam-list.sql";
 
     private final String findExamListSql;
 

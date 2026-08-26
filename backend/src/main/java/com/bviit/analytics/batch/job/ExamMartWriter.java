@@ -125,7 +125,7 @@ public class ExamMartWriter {
     }
 
     /**
-     * find-exam-list.sql / find-cataract-exam-list.sql의 List&lt;Map&gt; 결과(camelCase alias)를 파라미터로 매핑.
+     * select-exam-list.sql / select-cataract-exam-list.sql의 List&lt;Map&gt; 결과(camelCase alias)를 파라미터로 매핑.
      * 두 SQL이 동일 49필드 계약을 공유하므로 하나의 매핑으로 처리.
      */
     private static SqlParameterSource toListParams(Map<String, Object> row) {
@@ -157,8 +157,8 @@ public class ExamMartWriter {
             "cancelCode", "cancelMemo",
             "grade", "job", "lastVisit", "insurance", "nationality",
             // oneDay: 원데이 Y/N. 두 SQL 이 각자 계산한다 —
-            //   시력교정(find-exam-list.sql)  = 같은날 M/5(검사OP) 예약 내원
-            //   백내장(find-cataract-exam-list.sql) = 그날 백내장검사 예약 진료구분 C_원데이(7)·C_노안원데이(9)
+            //   시력교정(select-exam-list.sql)  = 같은날 M/5(검사OP) 예약 내원
+            //   백내장(select-cataract-exam-list.sql) = 그날 백내장검사 예약 진료구분 C_원데이(7)·C_노안원데이(9)
             "oneDay"
     };
 

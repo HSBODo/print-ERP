@@ -8,8 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SqlLoaderTest {
 
-    private static final String SYSTEM_SQL = "sql/reservation/stats/system-daily-counts.sql";
-    private static final String CATARACT_SQL = "sql/reservation/stats/cataract-daily-counts.sql";
+    private static final String SYSTEM_SQL = "sql/softcrm/reservation/stats/select-system-daily-counts.sql";
+    private static final String CATARACT_SQL = "sql/softcrm/reservation/stats/select-cataract-daily-counts.sql";
 
     @Test
     void 존재하는_sql_리소스를_utf8로_읽는다() {

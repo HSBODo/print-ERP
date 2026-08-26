@@ -143,7 +143,7 @@ public class ReservationMartWriter {
 
     /**
      * ReservationListRepository의 List&lt;Map&gt; 결과(원본 SQL alias camelCase)를 파라미터로 매핑.
-     * reservation-list.sql의 SELECT alias와 1:1.
+     * select-reservation-list.sql의 SELECT alias와 1:1.
      */
     private static SqlParameterSource toListParams(Map<String, Object> row) {
         MapSqlParameterSource p = new MapSqlParameterSource();
@@ -156,7 +156,7 @@ public class ReservationMartWriter {
     }
 
     /**
-     * reservation-list-all.sql 의 alias 6개를 파라미터로 매핑. 얇은 리스트라 LIST_KEYS 배열 불필요.
+     * select-reservation-list-all.sql 의 alias 6개를 파라미터로 매핑. 얇은 리스트라 LIST_KEYS 배열 불필요.
      * 날짜는 문자열 그대로 넘겨(insert SQL 에서 CAST), 나머지는 trim 만 한다.
      * chart_no·reserve_num 은 Phase 2 예약률·상담성공률에서 list_exam·list_surgery 와 JOIN 키로 쓴다.
      */

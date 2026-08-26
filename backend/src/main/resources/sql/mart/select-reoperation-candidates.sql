@@ -1,5 +1,5 @@
 -- 재수술 후보 조회 — list_reoperation 마트에서 그대로 뽑는다.
--- 원본(sql/surgery/find-reoperation-candidates.sql) 은 대사(reconcile) 대비용으로만 유지.
+-- 원본(sql/softcrm/surgery/select-reoperation-candidates.sql) 은 대사(reconcile) 대비용으로만 유지.
 --
 -- 배치가 SurgeryMartJob 에서 list_reoperation 을 매일 delete+insert 하며
 -- MSSQL RE_OPERATION + CUSTOM + EMPLOYEE + COSTPRICE 조합으로 이미 계산한 값을 저장한다

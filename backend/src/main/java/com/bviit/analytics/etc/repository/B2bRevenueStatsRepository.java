@@ -29,14 +29,14 @@ import java.util.stream.Collectors;
 @Profile("postgres-mart")
 public class B2bRevenueStatsRepository {
 
-    private static final String MONTHLY_REVENUE_SQL = "sql/etc/b2b-monthly-revenue.sql";
-    private static final String VISION_SURGERY_ROWS_SQL = "sql/etc/b2b-vision-surgery-rows.sql";
-    private static final String CATARACT_SURGERY_ROWS_SQL = "sql/etc/b2b-cataract-surgery-rows.sql";
-    private static final String CATARACT_EXAM_ROWS_SQL = "sql/etc/b2b-cataract-exam-rows.sql";
-    private static final String MOTIVE_SUBQUERY_SQL = "sql/etc/b2b-motive-subquery.sql";
-    private static final String LATEST_COST_SUBQUERY_SQL = "sql/etc/b2b-latest-cost-subquery.sql";
-    private static final String ACCUMULATED_COST_SUBQUERY_SQL = "sql/etc/b2b-accumulated-cost-subquery.sql";
-    private static final String LATEST_COST_DATE_CONDITION_SQL = "sql/etc/b2b-latest-cost-date-condition.sql";
+    private static final String MONTHLY_REVENUE_SQL = "sql/softcrm/etc/select-b2b-monthly-revenue.sql";
+    private static final String VISION_SURGERY_ROWS_SQL = "sql/softcrm/etc/select-b2b-vision-surgery-rows.sql";
+    private static final String CATARACT_SURGERY_ROWS_SQL = "sql/softcrm/etc/select-b2b-cataract-surgery-rows.sql";
+    private static final String CATARACT_EXAM_ROWS_SQL = "sql/softcrm/etc/select-b2b-cataract-exam-rows.sql";
+    private static final String MOTIVE_SUBQUERY_SQL = "sql/softcrm/etc/select-b2b-motive-subquery.sql";
+    private static final String LATEST_COST_SUBQUERY_SQL = "sql/softcrm/etc/select-b2b-latest-cost-subquery.sql";
+    private static final String ACCUMULATED_COST_SUBQUERY_SQL = "sql/softcrm/etc/select-b2b-accumulated-cost-subquery.sql";
+    private static final String LATEST_COST_DATE_CONDITION_SQL = "sql/softcrm/etc/select-b2b-latest-cost-date-condition.sql";
     private static final String TOTAL_REVENUE_EXPRESSION =
             "(x.op_cost + x.exam_cost + x.dna_cost + x.prp_cost + x.etc_cost"
                     + " + x.presbyopia_cost + x.hospital_supply_cost)";

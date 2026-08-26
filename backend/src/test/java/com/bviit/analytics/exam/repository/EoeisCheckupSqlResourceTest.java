@@ -9,7 +9,7 @@ class EoeisCheckupSqlResourceTest {
 
     @Test
     void 아이리더_집계_sql은_날짜를_바인딩하고_개인정보를_조회하지_않는다() {
-        String sql = SqlLoader.load("sql/exam/find-eoeis-checkup-stats.sql");
+        String sql = SqlLoader.load("sql/eoeis/find-checkup-stats.sql");
 
         assertThat(sql)
                 .contains("record_begin_dt >= :from", "record_begin_dt < :toExclusive")
@@ -22,8 +22,8 @@ class EoeisCheckupSqlResourceTest {
 
     @Test
     void 두_sql은_장비명을_같은_규칙으로_묶어_점수_조회가_빗나가지_않는다() {
-        String stats = SqlLoader.load("sql/exam/find-eoeis-checkup-stats.sql");
-        String scores = SqlLoader.load("sql/exam/find-eoeis-device-scores.sql");
+        String stats = SqlLoader.load("sql/eoeis/find-checkup-stats.sql");
+        String scores = SqlLoader.load("sql/eoeis/find-device-scores.sql");
 
         // 정본 이름 = 점수표 이름. 두 SQL 이 같은 키(소문자·trim)로 묶어야 화면의 scores[device] 가 맞는다.
         String canonKey = "GROUP BY LOWER(LTRIM(RTRIM(checkup_kind_nm)))";

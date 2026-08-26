@@ -25,7 +25,7 @@ public class SurgeryListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_SURGERY_LIST_SQL = "sql/surgery/find-surgery-list.sql";
+    private static final String FIND_SURGERY_LIST_SQL = "sql/softcrm/surgery/select-surgery-list.sql";
 
     private final String findSurgeryListSql;
 

@@ -4,7 +4,7 @@
 --
 -- 하나의 테이블:
 --   list_reservation_all — RESERVATION 전체 예약(수술/외래/드림렌즈) 행.
---   원본 SQL: sql/reservation-list/reservation-list-all.sql
+--   원본 SQL: sql/softcrm/reservation/list/select-reservation-list-all.sql
 --   예약일(RESERVE_DATE) 기준. 행 1개 = RESERVATION 1건. delete+insert 패턴.
 --   리스트 합계 = 월별 예약 건수(mart_reservation_monthly)와 정합.
 --

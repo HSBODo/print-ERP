@@ -62,7 +62,7 @@ WITH all_channels AS (
             AND v.exam_stop <> 'Y' AND v.surgery_reg_date <> ''
             AND v.surgery_date <> ''
             -- 재수술 판정. 자동포함 행만 센다 — 세척·재위치·백내장은 재수술이 아니다
-            -- (find-reoperation-candidates.sql 과 같은 기준, auto_included 로 이미 판정돼 있다).
+            -- (select-reoperation-candidates.sql 과 같은 기준, auto_included 로 이미 판정돼 있다).
             -- 차트번호로 잇는다. 더미 차트번호는 서로 다른 사람이 한 명으로 뭉개지므로 제외한다.
             -- reop_date >= surgery_date : 이번 수술 **이후**의 재수술만. 예전 수술의 재수술은
             -- 이번 유입의 결과가 아니라서 세면 안 된다.

@@ -32,8 +32,8 @@ public class ConsultationRateBridgeRepository {
 
     private static final int CHUNK_SIZE = 1000;
 
-    private static final String O_RESERVATION_SUMMARY_SQL = "sql/consultation/find-o-reservation-summary-by-charts.sql";
-    private static final String OP_SUMMARY_SQL            = "sql/consultation/find-op-summary-by-charts.sql";
+    private static final String O_RESERVATION_SUMMARY_SQL = "sql/softcrm/consultation/select-o-reservation-summary-by-charts.sql";
+    private static final String OP_SUMMARY_SQL            = "sql/softcrm/consultation/select-op-summary-by-charts.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String oReservationSummarySql;

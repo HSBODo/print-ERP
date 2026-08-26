@@ -17,7 +17,7 @@ import java.util.Map;
  * 대상 테이블:
  *   - list_outpatient — 외래(F) + I/H 행 명단 (39필드 계약)
  *
- * 반환 shape은 기존 MSSQL 직결 결과(find-outpatient-list.sql)와 동일. 컷오버 후 컨트롤러/UI 영향 없음.
+ * 반환 shape은 기존 MSSQL 직결 결과(select-outpatient-list.sql)와 동일. 컷오버 후 컨트롤러/UI 영향 없음.
  */
 @Repository
 @Profile("postgres-mart")

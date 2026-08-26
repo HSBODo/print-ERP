@@ -82,7 +82,7 @@ public class OutpatientMartWriter {
     }
 
     /**
-     * find-outpatient-list.sql의 List&lt;Map&gt; 결과(camelCase alias)를 파라미터로 매핑.
+     * select-outpatient-list.sql의 List&lt;Map&gt; 결과(camelCase alias)를 파라미터로 매핑.
      * CRM 원본에 whitespace-only 값이 섞여 있어 trim 필수(exam/surgery/reservation과 동일).
      */
     private static SqlParameterSource toListParams(Map<String, Object> row) {

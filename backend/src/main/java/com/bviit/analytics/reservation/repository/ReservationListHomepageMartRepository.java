@@ -33,9 +33,9 @@ import java.util.Map;
 public class ReservationListHomepageMartRepository implements HomepageOverallSource {
 
     private static final String LIST_SQL             = SqlLoader.load("sql/mart/select-list-reservation-homepage.sql");
-    private static final String LAST_REG_DATE_SQL    = SqlLoader.load("sql/mart/select-list-reservation-homepage-last-reg-date.sql");
-    private static final String MONTHLY_LIST_RAW_SQL = SqlLoader.load("sql/mart/select-list-reservation-homepage-monthly-list-raw.sql");
-    private static final String DAILY_LIST_RAW_SQL   = SqlLoader.load("sql/mart/select-list-reservation-homepage-daily-list-raw.sql");
+    private static final String LAST_REG_DATE_SQL    = SqlLoader.load("sql/mart/select-list-reservation-homepage-select-last-reg-date.sql");
+    private static final String MONTHLY_LIST_RAW_SQL = SqlLoader.load("sql/mart/select-list-reservation-homepage-select-monthly-list-raw.sql");
+    private static final String DAILY_LIST_RAW_SQL   = SqlLoader.load("sql/mart/select-list-reservation-homepage-select-daily-list-raw.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

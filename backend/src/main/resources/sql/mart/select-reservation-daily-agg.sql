@@ -10,7 +10,7 @@
 -- ⚠️ 리스트가 있는 구간만 값이 나온다. 24·25 는 원본 정의 그대로 계산돼 마트에 저장된다
 --    (mart_reservation_monthly 는 골든시드 없음 — min-year 필터 대상 아님).
 --
--- 컬럼 뜻 (버킷 정의는 sql/reservation/monthly-by-type.sql 과 동일):
+-- 컬럼 뜻 (버킷 정의는 sql/softcrm/reservation/select-monthly-by-type.sql 과 동일):
 --   surgery    수술 예약    RESERVE_FLAG = 'O'
 --   outpatient 외래 예약    RESERVE_JINRYO = '2'
 --   dreamlens  드림렌즈     RESERVE_FLAG = 'D'

@@ -53,7 +53,7 @@ class ReservationListHomepageSqlResourceTest {
     @ParameterizedTest
     @EnumSource(HomepageSourceDialect.class)
     void 목록_sql은_어느_소스든_프론트_zod_계약인_camelCase_별칭_14개를_보존한다(HomepageSourceDialect dialect) {
-        String sql = sqlBody(dialect, "reservation-list-homepage.sql");
+        String sql = sqlBody(dialect, "select-reservation-list-homepage.sql");
 
         for (String alias : ALIASES) {
             assertThat(sql)
@@ -65,7 +65,7 @@ class ReservationListHomepageSqlResourceTest {
     @ParameterizedTest
     @EnumSource(HomepageSourceDialect.class)
     void 목록_sql은_어느_소스든_레거시_동일건수_조건을_보존한다(HomepageSourceDialect dialect) {
-        String sql = sqlBody(dialect, "reservation-list-homepage.sql");
+        String sql = sqlBody(dialect, "select-reservation-list-homepage.sql");
 
         assertThat(sql).contains(":from", ":to");
         // 채널 고정 — 빼면 전화상담 등이 섞여 206 → 753
@@ -77,7 +77,7 @@ class ReservationListHomepageSqlResourceTest {
     @ParameterizedTest
     @EnumSource(HomepageSourceDialect.class)
     void 목록_sql은_어느_소스든_테스트_이름_행을_배치_소스에서_걸러낸다(HomepageSourceDialect dialect) {
-        String sql = sqlBody(dialect, "reservation-list-homepage.sql");
+        String sql = sqlBody(dialect, "select-reservation-list-homepage.sql");
 
         // 이름에 '테스트'/'TEST' 포함건 제외 — 리스트 화면 정합용 배치 필터.
         // 빠지면 마트에 테스트 데이터가 흘러들어 리스트·집계가 부풀어 오른다.
@@ -87,7 +87,7 @@ class ReservationListHomepageSqlResourceTest {
 
     @Test
     void 스냅샷_세트는_SQLite_스키마와_방언을_쓴다() {
-        String sql = sqlBody(HomepageSourceDialect.SQLITE, "reservation-list-homepage.sql");
+        String sql = sqlBody(HomepageSourceDialect.SQLITE, "select-reservation-list-homepage.sql");
 
         assertThat(sql)
                 .contains("FROM consultations")
@@ -101,7 +101,7 @@ class ReservationListHomepageSqlResourceTest {
 
     @Test
     void 운영_세트는_TBL_COUNSEL_원본_스키마와_MariaDB_방언을_쓴다() {
-        String sql = sqlBody(HomepageSourceDialect.MARIADB, "reservation-list-homepage.sql");
+        String sql = sqlBody(HomepageSourceDialect.MARIADB, "select-reservation-list-homepage.sql");
 
         assertThat(sql)
                 // 캐시가 개명한 이름(consultations/legacy_no/name)은 운영 DB 에 없다.
@@ -118,7 +118,7 @@ class ReservationListHomepageSqlResourceTest {
     @ParameterizedTest
     @EnumSource(HomepageSourceDialect.class)
     void 월별_list_raw_sql은_어느_소스든_리스트_화면과_동일_집계를_보존한다(HomepageSourceDialect dialect) {
-        String sql = sqlBody(dialect, "monthly-list-raw.sql");
+        String sql = sqlBody(dialect, "select-monthly-list-raw.sql");
 
         assertThat(sql).contains(":from", ":to");
         assertThat(sql).containsIgnoringCase("CATEGORY = 'COUNSELONLINE'");
@@ -135,7 +135,7 @@ class ReservationListHomepageSqlResourceTest {
     @ParameterizedTest
     @EnumSource(HomepageSourceDialect.class)
     void 마지막_등록일시_sql은_신선도판단용이라_삭제건을_거르지_않는다(HomepageSourceDialect dialect) {
-        String sql = sqlBody(dialect, "last-reg-date.sql");
+        String sql = sqlBody(dialect, "select-last-reg-date.sql");
 
         assertThat(sql).containsPattern("(?i)MAX\\(REG_DATE\\)");
         assertThat(sql).containsPattern("AS [\"`]lastRegDate[\"`]");

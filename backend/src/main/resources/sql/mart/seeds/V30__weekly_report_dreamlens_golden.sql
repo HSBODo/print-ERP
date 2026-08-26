@@ -8,7 +8,7 @@
 --   (같은 PDF 의 '주차별 외래수'는 이미 outpatient 컬럼이 있어 넣지 않는다)
 --
 -- 왜 시드인가: 사내 시스템에 신규/FU 를 나누는 소스가 없다.
---   find-dreamlens-daily.sql · mart_overall_exam_weekly.dreamlens 모두 구분 없는 단일 집계이고,
+--   select-dreamlens-daily.sql · mart_overall_exam_weekly.dreamlens 모두 구분 없는 단일 집계이고,
 --   드림렌즈 장부로 산출해 대조하면 30주 중 신규 8주 / FU 5주만 일치했다(판정 기준·주 경계가 다름).
 --   그래서 주간보고 수치를 SSOT 로 삼는다.
 --

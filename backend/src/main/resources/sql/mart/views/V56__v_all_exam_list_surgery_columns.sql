@@ -22,7 +22,7 @@
 --
 -- 배치 정합성: mart_overall_exam_* 이관 이후 이 뷰 하나가 검사 도메인 파생 규칙의 SSOT.
 --   mart_overall_exam_monthly · mart_overall_exam_weekly 가 종전에 MSSQL 6종 SQL
---   (sql/overall/find-{vision,cataract,dreamlens,stop-count,one-day,demographics}-daily.sql)
+--   (sql/softcrm/overall/select-{vision,cataract,dreamlens,stop-count,one-day,demographics}-daily.sql)
 --   을 배치 시점에 직접 조회하던 걸 이 뷰 하나로 통일.
 --
 -- 추가 컬럼 (V56).
@@ -32,7 +32,7 @@
 --                          list_exam 행(시력교정/드림렌즈)은 항상 0.
 --
 -- stop_reason 규칙 (V52 계승 · 아래 SELECT 절 CASE 참조):
---   ⚠️ 시력교정(EXAM) 중단자만 대상 — 원본 sql/consultation/find-stop-reason-monthly.sql 과 동일.
+--   ⚠️ 시력교정(EXAM) 중단자만 대상 — 원본 sql/softcrm/consultation/select-stop-reason-monthly.sql 과 동일.
 --      백내장은 Cancel_CD 체계가 달라 같은 매핑을 그대로 쓸 수 없어 여기서는 계산하지 않는다(빈 문자열).
 --   7버킷: recommendX · lensImpossible · keratoconus · avellino · glaucoma · visionChange · other
 --   '117 · 127' 등 '불가_' 접두 코드는 라벨상 '수술 불가' 이지만 원본 매핑(2026-07-15 결정)에서

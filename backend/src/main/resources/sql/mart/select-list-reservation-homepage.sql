@@ -1,6 +1,6 @@
 -- 예약자 리스트_홈페이지 — 마트에서 조회. [postgres-mart]
 --
--- 결과 별칭 14개는 소스판(sql/reservation/list-homepage/{sqlite,mariadb}/reservation-list-homepage.sql)과
+-- 결과 별칭 14개는 소스판(sql/homepage/{sqlite,mariadb}/select-reservation-list-homepage.sql)과
 -- 동일해야 한다 — 프론트 zod 계약. 한쪽만 고치지 말 것.
 --
 -- 원본 화면 동작(strategy §2 결정 3):

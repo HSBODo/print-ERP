@@ -26,7 +26,7 @@ public class ReoperationCandidateRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_REOPERATION_CANDIDATES_SQL = "sql/surgery/find-reoperation-candidates.sql";
+    private static final String FIND_REOPERATION_CANDIDATES_SQL = "sql/softcrm/surgery/select-reoperation-candidates.sql";
 
     private final String findReoperationCandidatesSql;
 

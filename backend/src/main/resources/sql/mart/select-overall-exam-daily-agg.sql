@@ -1,6 +1,6 @@
 -- 검사자 종합지표 일별 집계 — v_all_exam_list(V56 확장) 한 뷰에서 뽑는다.
 --
--- 종전에는 MSSQL 6종 SQL (sql/overall/find-{demographics,vision,cataract,dreamlens,stop-count,one-day}-daily.sql)
+-- 종전에는 MSSQL 6종 SQL (sql/softcrm/overall/select-{demographics,vision,cataract,dreamlens,stop-count,one-day}-daily.sql)
 -- 을 배치가 각각 조회했다. v_all_exam_list 가 이미 검사구분·원데이·유입·직업·백내장분류·
 -- 수술예약(V56) 파생 컬럼을 다 담고 있어 한 번 스캔으로 모두 계산할 수 있다.
 --

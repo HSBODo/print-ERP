@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * 고객분류별 검사수 mart read — mart_exam_count_by_class 조회 + list 재집계.
- * 응답 shape 은 MSSQL 직결(find-exam-count-by-class-monthly.sql)과 동일하다.
+ * 응답 shape 은 MSSQL 직결(select-exam-count-by-class-monthly.sql)과 동일하다.
  */
 @Repository
 @Profile("postgres-mart")

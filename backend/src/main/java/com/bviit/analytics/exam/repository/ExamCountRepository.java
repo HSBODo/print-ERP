@@ -14,14 +14,14 @@ import java.util.Map;
 
 /**
  * 고객분류별 검사수(월간 레포트 도표 #7) — (월 × 내원동기(레포트)) 집계.
- * 모집단은 sql/fragments/exam-session-source.sql 공유라 검사수 도표·검사자 리스트와 정합한다.
- * 분류 규칙은 find-all-exam-list.sql 의 motiveReport 와 동일.
+ * 모집단은 sql/softcrm/fragments/fragment-exam-session-source.sql 공유라 검사수 도표·검사자 리스트와 정합한다.
+ * 분류 규칙은 select-all-exam-list.sql 의 motiveReport 와 동일.
  */
 @Repository
 @Profile("postgres-mart")
 public class ExamCountRepository {
 
-    private static final String FIND_EXAM_COUNT_BY_CLASS_MONTHLY_SQL = "sql/exam/find-exam-count-by-class-monthly.sql";
+    private static final String FIND_EXAM_COUNT_BY_CLASS_MONTHLY_SQL = "sql/softcrm/exam/select-exam-count-by-class-monthly.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String findExamCountByClassMonthlySql;

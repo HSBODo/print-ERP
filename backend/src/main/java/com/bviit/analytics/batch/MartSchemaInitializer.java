@@ -2,6 +2,7 @@ package com.bviit.analytics.batch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
@@ -15,10 +16,10 @@ import java.sql.SQLException;
  * 마트 스키마·시드를 애플리케이션 기동 시 실행한다.
  * Flyway/Liquibase 도입 전까지의 임시 수단.
  *
- * <h3>파일 구조 (2026-08-25 폴더 재편)</h3>
+ * <h3>파일 구조 (2026-08-26 테이블 단위 분리)</h3>
  * <pre>
  * sql/mart/
- *   ├─ tables/       도메인별 CREATE TABLE (batch·surgery·reservation·exam·consultation·outpatient·overall·report·etc)
+ *   ├─ tables/       테이블 1개 = 파일 1개 (batch·surgery·reservation·exam·consultation·outpatient·overall·report·etc)
  *   ├─ views/        CREATE VIEW (v_all_surgery_list · v_reservation_channel · v_all_exam_list)
  *   ├─ functions/    CREATE FUNCTION (surgery_op_type · surgery_name_excluded)
  *   └─ seeds/        시드·골든값·백필 INSERT/UPDATE
@@ -26,29 +27,41 @@ import java.sql.SQLException;
  *
  * <h3>두 단계 구성</h3>
  * <ul>
- *   <li><b>DDL</b> — 테이블·뷰·함수 정의. {@code CREATE TABLE IF NOT EXISTS} · {@code DROP VIEW + CREATE VIEW}
- *                    · {@code CREATE OR REPLACE FUNCTION} 패턴으로 매 부팅 재실행 안전.</li>
+ *   <li><b>DDL</b> — 테이블·뷰·함수 정의. {@code CREATE TABLE IF NOT EXISTS} ·
+ *                    {@code CREATE OR REPLACE VIEW}(V37) 또는 {@code DROP VIEW + CREATE VIEW}(V50·V56, 컬럼 이름/순서 변경 대비) ·
+ *                    {@code CREATE OR REPLACE FUNCTION} 패턴으로 매 부팅 재실행 안전.</li>
  *   <li><b>SEED</b> — 시드값·골든값·백필. {@code INSERT ... ON CONFLICT DO NOTHING/UPDATE} 로 idempotent.
  *                     배치가 커버하지 못하는 시기의 데이터를 마트에 심는다.</li>
  * </ul>
  *
  * <h3>순서 규약</h3>
  * <ul>
- *   <li>DDL 내부는 V-번호 오름차순 = 의존성 순서 (테이블·컬럼·함수 → 뷰)</li>
+ *   <li>DDL 실행 순서: <b>kind 우선</b>(tables → functions → views · 의존성 방향), kind 내부는 V-번호 오름차순.
+ *       엄밀한 V-번호 오름차순은 아님 — 예: V53(table) → V47(function) → V37(view) 로 되돌아감</li>
+ *   <li>동일 V-번호 그룹(V1a/V1b …)은 알파벳 접미사 순서 — 그룹 내 테이블 간 의존성 없음</li>
  *   <li>SEED 는 모든 DDL 이후 실행</li>
  *   <li>SEED 내부는 V-번호 오름차순 (V14→V16 백필 의존성 보존)</li>
  * </ul>
  *
- * <h3>2026-08-25 이력</h3>
+ * <h3>이력</h3>
  * <ul>
- *   <li>V34·V48·V52 (뷰 재정의 중복) 삭제 → V56·V50 이 최종 정의 담고 있음</li>
- *   <li>V17·V23·V26·V29·V32·V33·V38·V39-V45·V49·V54 (ALTER TABLE) 삭제 → 원본 CREATE 파일에 컬럼 통합</li>
- *   <li>파일 배치를 도메인 폴더 구조로 재편 (V-번호·파일 내용 유지, 위치만 이동)</li>
+ *   <li>2026-08-26 — V43 분리: tables/V43a (reservation_channel_staff 테이블+시드) 만 남기고
+ *                    원본 V43 의 v_reservation_channel 뷰 부분은 삭제 (V50 이 완전 재정의로 덮어써 dead code 였음 · V48 삭제와 동일 사유).</li>
+ *   <li>2026-08-26 — 여러 테이블이 섞여 있던 V1·V2·V3·V4·V5·V11·V28·V51 을 테이블 단위로 분리 (V1a/V1b · V2a/V2b/V2c …).
+ *                    V-번호 그룹 유지, 접미사로 파일 식별. tables/ 18 파일 → 32 파일</li>
+ *   <li>2026-08-25 — V34·V48·V52 (뷰 재정의 중복) 삭제 → 현재 최종 뷰 정의는 V37·V50·V56 이 담고 있음</li>
+ *   <li>2026-08-25 — V17·V23·V26·V29·V32·V33·V38·V39-V45·V49·V54 (ALTER TABLE) 삭제 → 원본 CREATE 파일에 컬럼 통합</li>
+ *   <li>2026-08-25 — 파일 배치를 도메인 폴더 구조로 재편</li>
+ * </ul>
+ *
+ * <h3>시드가 함께 있는 DDL 파일</h3>
+ * <ul>
+ *   <li>V43a (reservation_channel_staff) — 자사 해외팀 채널 매핑 2건. V50 뷰가 LEFT JOIN</li>
+ *   <li>V51b (lens_cost) — op_type 5종 초기 행(단가 0). 화면 입력 UI 가 이 행들을 목록으로 사용</li>
  * </ul>
  *
  * <h3>주의</h3>
  * <ul>
- *   <li>⚠️ V43 은 reservation_channel_staff 테이블 CREATE + 시드가 유일하게 있어 실행 필수 (V50 뷰가 LEFT JOIN)</li>
  *   <li>⚠️ 신규 V-스크립트 추가 시 적절한 폴더에 배치 후 아래 두 메서드 중 성격에 맞는 곳에 applyScript 추가</li>
  * </ul>
  */
@@ -56,7 +69,7 @@ import java.sql.SQLException;
 @Component
 @Profile("postgres-mart")
 @RequiredArgsConstructor
-public class MartSchemaInitializer implements org.springframework.beans.factory.InitializingBean {
+public class MartSchemaInitializer implements InitializingBean {
 
     private final DataSource dataSource;
 
@@ -67,28 +80,44 @@ public class MartSchemaInitializer implements org.springframework.beans.factory.
     }
 
     /**
-     * DDL 22개 파일 — 테이블·뷰·함수 정의.
-     * V-번호 오름차순 = 의존성 순서. 폴더는 도메인·역할별로 그룹핑.
+     * DDL 36개 파일 — 테이블 32 + 함수 1 + 뷰 3.
+     * 실행 순서: kind 우선(tables → functions → views · 의존성 방향), kind 내부는 V-번호 오름차순.
+     * tables/ 는 도메인별 하위 폴더로 정리 (batch·surgery·reservation·exam 등).
+     * 테이블 1개 = 파일 1개 원칙. 동일 V-번호 그룹은 접미사(a/b/c/d)로 구분.
      */
     private void applyDdlScripts() {
-        // tables/ — 도메인별 CREATE TABLE (일부 파일은 하나에 여러 테이블 · 도메인 응집도 유지)
-        applyScript("sql/mart/tables/batch/V1__batch_meta.sql");
-        applyScript("sql/mart/tables/surgery/V2__surgery_mart.sql");
-        applyScript("sql/mart/tables/reservation/V3__reservation_mart.sql");
-        applyScript("sql/mart/tables/exam/V4__exam_mart.sql");
-        applyScript("sql/mart/tables/consultation/V5__consultation_mart.sql");
+        // tables/ — 테이블 1개 = 파일 1개
+        applyScript("sql/mart/tables/batch/V1a__batch_run_log.sql");
+        applyScript("sql/mart/tables/batch/V1b__batch_watermark.sql");
+        applyScript("sql/mart/tables/surgery/V2a__mart_surgery_monthly.sql");
+        applyScript("sql/mart/tables/surgery/V2b__mart_surgery_daily.sql");
+        applyScript("sql/mart/tables/surgery/V2c__list_surgery.sql");
+        applyScript("sql/mart/tables/reservation/V3a__mart_reservation_monthly.sql");
+        applyScript("sql/mart/tables/reservation/V3b__list_reservation.sql");
+        applyScript("sql/mart/tables/exam/V4a__mart_examination_monthly.sql");
+        applyScript("sql/mart/tables/exam/V4b__mart_procedure_exam_monthly.sql");
+        applyScript("sql/mart/tables/exam/V4c__list_exam.sql");
+        applyScript("sql/mart/tables/exam/V4d__list_cataract_exam.sql");
+        applyScript("sql/mart/tables/consultation/V5a__mart_consultation_rate_monthly.sql");
+        applyScript("sql/mart/tables/consultation/V5b__mart_stop_reason_monthly.sql");
+        applyScript("sql/mart/tables/consultation/V5c__mart_reservation_rate_monthly.sql");
         applyScript("sql/mart/tables/outpatient/V6__outpatient_mart.sql");
         applyScript("sql/mart/tables/overall/V7__overall_mart.sql");
         applyScript("sql/mart/tables/etc/V8__etc_mart.sql");
         applyScript("sql/mart/tables/exam/V10__overall_exam_monthly.sql");
-        applyScript("sql/mart/tables/reservation/V11__reservation_stats_daily_mart.sql");
+        applyScript("sql/mart/tables/reservation/V11a__mart_reservation_stats_system_daily.sql");
+        applyScript("sql/mart/tables/reservation/V11b__mart_reservation_stats_cataract_daily.sql");
+        applyScript("sql/mart/tables/reservation/V11c__reservation_stats_period_lock.sql");
+        applyScript("sql/mart/tables/reservation/V11d__reservation_stats_override.sql");
         applyScript("sql/mart/tables/reservation/V12__reservation_overall_monthly_mart.sql");
         applyScript("sql/mart/tables/reservation/V21__mart_list_reservation_homepage.sql");
         applyScript("sql/mart/tables/outpatient/V25__outpatient_list_mart.sql");
-        applyScript("sql/mart/tables/report/V28__report_mart.sql");
+        applyScript("sql/mart/tables/report/V28a__mart_weekly_report.sql");
+        applyScript("sql/mart/tables/report/V28b__mart_exam_count_by_class.sql");
         applyScript("sql/mart/tables/surgery/V36__list_reoperation.sql");
-        applyScript("sql/mart/tables/reservation/V43__v_reservation_channel.sql");
-        applyScript("sql/mart/tables/etc/V51__channel_profit_inputs.sql");
+        applyScript("sql/mart/tables/reservation/V43a__reservation_channel_staff.sql");
+        applyScript("sql/mart/tables/etc/V51a__ad_spend.sql");
+        applyScript("sql/mart/tables/etc/V51b__lens_cost.sql");
         applyScript("sql/mart/tables/reservation/V53__list_reservation_all_mart.sql");
 
         // functions/ — 뷰에서 참조하므로 뷰 앞에 실행
@@ -101,8 +130,7 @@ public class MartSchemaInitializer implements org.springframework.beans.factory.
     }
 
     /**
-     * SEED 15개 파일 — 시드·골든값·백필.
-     * 모든 DDL 이후 실행. V-번호 오름차순 (V14→V16 백필 의존성 보존).
+     * SEED 15개 파일 — 시드·골든값·백필. 순서 규약은 클래스 docstring 참조.
      */
     private void applySeedScripts() {
         applyScript("sql/mart/seeds/V9__legacy_seed.sql");

@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * 예약자 리스트_홈페이지 마트 write — delete 범위 + insert.
  *
- * <p>소스 SELECT(mariadb/reservation-list-homepage.sql) 의 camelCase 별칭을 그대로 파라미터로
+ * <p>소스 SELECT(mariadb/select-reservation-list-homepage.sql) 의 camelCase 별칭을 그대로 파라미터로
  * 넣는다 — Job 이 원본 Map 을 그대로 넘긴다. reservation 도메인의 replaceList 패턴과 동일.
  */
 @Slf4j

@@ -1,6 +1,6 @@
 -- 시력교정 상담성공률 검사자 후보 — Postgres primary 리스트(list_exam)에서 세션 단위.
 --
--- 원본(sql/consultation/find-monthly-vision-rates.sql) 대비, MSSQL 미래 데이터가 필요한 부분은 여기서 안 함:
+-- 원본(sql/softcrm/consultation/select-monthly-vision-rates.sql) 대비, MSSQL 미래 데이터가 필요한 부분은 여기서 안 함:
 --   · counsel  = STOP_YN<>'Y' AND OP 추천(recommended_r/l) 있음  → 리스트에서 판정 가능 (여기서 판정)
 --   · od       = list_exam.one_day = 'Y'                          → 리스트로 판정 가능 (여기서)
 --   · booked   = 그 사람이 O 예약 있음(전 기간, state<>'C')         → MSSQL 브릿지 (Java 에서)

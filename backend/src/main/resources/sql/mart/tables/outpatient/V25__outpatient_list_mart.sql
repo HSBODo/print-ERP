@@ -4,8 +4,8 @@
 -- 참고: docs/databatch/strategy.md §5.1, §5.2
 --
 -- 하나의 테이블:
---   list_outpatient — 외래 예약(F) + 내원/퇴원(I/H) 행 (find-outpatient-list.sql 출력 shape)
---   원본 SQL: sql/outpatient/find-outpatient-list.sql
+--   list_outpatient — 외래 예약(F) + 내원/퇴원(I/H) 행 (select-outpatient-list.sql 출력 shape)
+--   원본 SQL: sql/softcrm/outpatient/select-outpatient-list.sql
 --   예약일(RESERVE_DATE) 기준. 행 1개 = RESERVATION 1건. delete+insert 패턴.
 --   리스트 합계 = 월별 외래수 지표(mart_outpatient_count_monthly)와 정합.
 -- =========================================================

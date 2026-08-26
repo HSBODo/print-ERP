@@ -323,12 +323,12 @@ override 는 조회 시점에 서비스가 얹는다 — 즉 **배치 write 경�
 
 | PR | 내용 | 상태 |
 |----|------|-----|
-| **PR-1** | Datasource 이중화, Postgres 스키마 초안, `batch_run_log`/`batch_watermark`, `BatchOrchestrator` 뼈대 | ✅ 완료 (`MartDataSourceConfig`, `V1__batch_meta.sql`) — 이전에 있던 `StatsDataSourceConfig` 는 2026-08-19 mssql 프로파일 제거와 함께 삭제, stats DataSource 는 `MartDataSourceConfig` 로 통합됨 |
-| **PR-2** | 수술 도메인 마트(monthly/daily/list) + `SurgeryMartJob`·`SurgeryMartWriter`·`SurgeryStatsMartRepository` | ✅ 완료 (`V2__surgery_mart.sql`) |
+| **PR-1** | Datasource 이중화, Postgres 스키마 초안, `batch_run_log`/`batch_watermark`, `BatchOrchestrator` 뼈대 | ✅ 완료 (`MartDataSourceConfig`, `V1a__batch_run_log.sql`·`V1b__batch_watermark.sql`) — 이전에 있던 `StatsDataSourceConfig` 는 2026-08-19 mssql 프로파일 제거와 함께 삭제, stats DataSource 는 `MartDataSourceConfig` 로 통합됨. 2026-08-26 V1 파일을 테이블 단위로 분리 |
+| **PR-2** | 수술 도메인 마트(monthly/daily/list) + `SurgeryMartJob`·`SurgeryMartWriter`·`SurgeryStatsMartRepository` | ✅ 완료 (`V2a__mart_surgery_monthly.sql`·`V2b__mart_surgery_daily.sql`·`V2c__list_surgery.sql`) — 2026-08-26 V2 파일을 테이블 단위로 분리 |
 | **PR-3** | Phase 1 Cutover (surgery 페이지 프로파일 스위치) | ✅ 완료 — surgery/surgery-list/surgery-ratio/surgery-composition 모두 마트. 2026-07-31 surgery-composition도 `mart_surgery_daily` 로 스위치, 스냅샷 파일 폐지 |
-| **PR-4** | 예약 마트 + Phase 2 Cutover | ⚠️ 부분 완료 (`V3__reservation_mart.sql`) — reservation-stats-system/cataract는 스냅샷 유지 |
-| **PR-5** | 검사 마트 + Phase 3 Cutover | ✅ 완료 (`V4__exam_mart.sql`) |
-| **PR-6** | 전환·성공률 마트 + Phase 4 Cutover | ✅ 완료 (`V5__consultation_mart.sql`) |
+| **PR-4** | 예약 마트 + Phase 2 Cutover | ⚠️ 부분 완료 (`V3a__mart_reservation_monthly.sql`·`V3b__list_reservation.sql`) — reservation-stats-system/cataract는 스냅샷 유지. 2026-08-26 V3 파일을 테이블 단위로 분리 |
+| **PR-5** | 검사 마트 + Phase 3 Cutover | ✅ 완료 (`V4a__mart_examination_monthly.sql`·`V4b__mart_procedure_exam_monthly.sql`·`V4c__list_exam.sql`·`V4d__list_cataract_exam.sql`) — 2026-08-26 V4 파일을 테이블 단위로 분리 |
+| **PR-6** | 전환·성공률 마트 + Phase 4 Cutover | ✅ 완료 (`V5a__mart_consultation_rate_monthly.sql`·`V5b__mart_stop_reason_monthly.sql`·`V5c__mart_reservation_rate_monthly.sql`) — 2026-08-26 V5 파일을 테이블 단위로 분리 |
 | **PR-7** | 나머지 마트(외래·전체·기타) + Phase 5 Cutover | ✅ 완료 (`V6..V8`, `V10__overall_exam_monthly.sql`) |
 | **PR-8** | Monthly reconcile 잡, Admin rerun API, 파일캐시·스냅샷 스토어 코드 제거 | ✅ 완료 (§7) |
 | **PR-9** *(신규)* | 미구현 마트 착수 여부 결정 (surgery-ratio/composition, reservation-trend/composition) | ✅ 결정 완료 — 신설 안 함(§4.1) |

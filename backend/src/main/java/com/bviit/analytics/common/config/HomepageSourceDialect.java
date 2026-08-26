@@ -9,7 +9,7 @@ package com.bviit.analytics.common.config;
  *
  * <p>두 소스는 <b>같은 데이터를 다른 스키마로</b> 담고 있다 — 캐시가 원본을 snake_case 로 개명해
  * 적재했기 때문이다(C_NO→legacy_no, M_NM→name 등). 그래서 SQL 을 방언별로 나눠 둔다:
- * {@code sql/reservation-list-homepage/{sqlite|mariadb}/*.sql}. 결과 별칭 계약은 양쪽이 동일하다.
+ * {@code sql/homepage/{sqlite|mariadb}/*.sql}. 결과 별칭 계약은 양쪽이 동일하다.
  */
 public enum HomepageSourceDialect {
 
@@ -27,7 +27,7 @@ public enum HomepageSourceDialect {
         this.driverClassName = driverClassName;
     }
 
-    /** SQL 리소스 하위 디렉터리명 — sql/reservation-list-homepage/{sqlDir}/*.sql */
+    /** SQL 리소스 하위 디렉터리명 — sql/homepage/{sqlDir}/*.sql */
     public String sqlDir() {
         return sqlDir;
     }

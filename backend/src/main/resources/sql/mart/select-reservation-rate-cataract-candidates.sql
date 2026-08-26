@@ -1,6 +1,6 @@
 -- 백내장 예약률 검사자 후보 — Postgres primary 리스트에서 (고객×월) 단위로 뽑는다.
 --
--- 원본(sql/exam/find-cataract-reservation-rate-monthly.sql) 대비, 미래 예약 판정은 여기서 하지 않는다.
+-- 원본(sql/softcrm/exam/select-cataract-reservation-rate-monthly.sql) 대비, 미래 예약 판정은 여기서 하지 않는다.
 --   · 검사자 모집단(v_all_exam_list, exam_group='백내장' AND cataract_class IN ('백내장','중단')) 만 담당.
 --   · 백내장 O 예약(FLAG='O', JINRYO='4', STATE<>'C', RESERVE_DATE>=first_exam_date) 은
 --     MSSQL 브릿지가 chart_no 별 max_o_cataract_date 를 넘겨주면 Java 에서 비교.

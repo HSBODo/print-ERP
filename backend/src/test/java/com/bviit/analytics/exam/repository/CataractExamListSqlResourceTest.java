@@ -13,9 +13,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CataractExamListSqlResourceTest {
 
-    private static final String CATARACT_LIST = "sql/exam/find-cataract-exam-list.sql";
-    private static final String ALL_LIST      = "sql/exam/find-all-exam-list.sql";
-    private static final String SESSION_SRC   = "sql/fragments/exam-session-source.sql";
+    private static final String CATARACT_LIST = "sql/softcrm/exam/select-cataract-exam-list.sql";
+    private static final String ALL_LIST      = "sql/softcrm/exam/select-all-exam-list.sql";
+    private static final String SESSION_SRC   = "sql/softcrm/fragments/fragment-exam-session-source.sql";
 
     /** 레거시 BCRM 분류 4종. 세 SQL 이 글자 하나까지 같은 CASE 를 써야 화면·레포트가 어긋나지 않는다. */
     private static final String CLASSIFICATION_CASE = normalize("""
@@ -86,7 +86,7 @@ class CataractExamListSqlResourceTest {
                 """);
         assertThat(normalize(SqlLoader.load(SESSION_SRC))).contains(guard);
         assertThat(normalize(SqlLoader.load(ALL_LIST))).contains(guard);
-        assertThat(normalize(SqlLoader.load("sql/exam/find-exam-list.sql"))).contains(guard);
+        assertThat(normalize(SqlLoader.load("sql/softcrm/exam/select-exam-list.sql"))).contains(guard);
     }
 
     @Test

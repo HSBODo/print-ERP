@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 /**
  * 재수술 확정 판정 — 재수술 검토 모달에서 담당자가 저장한 최종 결정.
  *
- * 자동판정(find-reoperation-candidates.sql)은 후보 제안일 뿐이고,
+ * 자동판정(select-reoperation-candidates.sql)은 후보 제안일 뿐이고,
  * 이 테이블에 저장된 값이 재수술 여부의 정답이다.
  *
  * 유니크 키가 (chartNo, opDate, againR, againL) 인 이유:

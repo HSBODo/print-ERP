@@ -93,7 +93,7 @@ public class SurgeryMartWriter {
     /**
      * 재수술 리스트도 delete+insert. list_surgery 와 같은 이유(취소·수정 자연 반영).
      *
-     * rows 는 find-reoperation-candidates.sql 결과 그대로이고, isLens 만 호출측이
+     * rows 는 select-reoperation-candidates.sql 결과 그대로이고, isLens 만 호출측이
      * 자바 ReoperationOverlay 로 계산해 넣어 준다 — 시술명 패턴을 SQL 로 복제하지 않기 위해서다.
      * 저장 판정(reoperation_decision)은 여기서 반영하지 않는다. 화면에서 판정을 고쳐도
      * 배치 없이 즉시 반영돼야 하므로 뷰가 조회 시점에 조인한다.
@@ -212,7 +212,7 @@ public class SurgeryMartWriter {
 
     /**
      * SurgeryListRepository의 List&lt;Map&gt; 결과(원본 SQL alias 그대로)를 파라미터로 매핑.
-     * find-surgery-list.sql의 SELECT 컬럼 alias(카멜)와 1:1.
+     * select-surgery-list.sql의 SELECT 컬럼 alias(카멜)와 1:1.
      */
     private static SqlParameterSource toListParams(Map<String, Object> row) {
         MapSqlParameterSource p = new MapSqlParameterSource();

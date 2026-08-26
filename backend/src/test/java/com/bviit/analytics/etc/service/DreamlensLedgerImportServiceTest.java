@@ -167,7 +167,7 @@ class DreamlensLedgerImportServiceTest {
 
     @Test
     void 초안_SQL_리소스는_필수_별칭과_소스를_담고_있다() {
-        String sql = SqlLoader.load("sql/etc/find-dreamlens-ledger-draft.sql");
+        String sql = SqlLoader.load("sql/softcrm/etc/select-dreamlens-ledger-draft.sql");
         // ImportService 가 읽는 결과 별칭 — 하나라도 빠지면 초안 값이 조용히 0/null 이 된다.
         assertThat(sql)
                 .contains("AS entryDate").contains("AS customerNo").contains("AS customerName")

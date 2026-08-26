@@ -1,6 +1,6 @@
 -- 백내장 상담성공률 검사자 후보 — v_all_exam_list 에서 (고객×월) 단위.
 --
--- 원본(sql/consultation/find-monthly-cataract-rates.sql) 대비 여기서 안 하는 것:
+-- 원본(sql/softcrm/consultation/select-monthly-cataract-rates.sql) 대비 여기서 안 하는 것:
 --   · booked = 백내장 O(JINRYO=4) 예약 유무 → MSSQL 브릿지 (Java 에서 max_o_cataract_date 존재로 판정)
 -- 여기서 하는 것:
 --   · stopped = cataract_class='중단' → 리스트로 판정 (한 달 안에 여러 검사일이면 MAX 로 임의 1)
@@ -15,7 +15,7 @@
 --    (원본 정의: v_all_exam_list WHERE exam_group='백내장' - 4개 분류 전부)
 --
 -- ⚠️ 원본 대사(reconcile) 와의 정합 — 리스트는 실제 내원자만 (list_cataract_exam WHERE STATE NOT IN ('C','Y')).
---    원본 SQL(sql/consultation/find-monthly-cataract-rates.sql) 은 예약 접수 기준으로 미내원(Y) 포함.
+--    원본 SQL(sql/softcrm/consultation/select-monthly-cataract-rates.sql) 은 예약 접수 기준으로 미내원(Y) 포함.
 --    이 차이만큼 mart 가 원본보다 월 20~30명 적음. 리스트 정의가 상담성공률의 취지("실제 검사받은
 --    사람의 상담 성공률")에 더 부합해 그대로 두기로 결정(2026-08-12).
 SELECT

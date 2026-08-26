@@ -166,13 +166,13 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 
 | list 마트 | 채우는 SQL | 사용 MSSQL 테이블 (주 → 보조 순) |
 |---|---|---|
-| `list_reservation` | `sql/reservation-list/reservation-list.sql` | **RESERVATION** · EXAM · OPERATIONDATA · Cataract_Operationdata · EMPLOYEE · COSTPRICE · MOTIVE_NEW02 · DB_CUSTOM |
-| `list_reservation_all` | `sql/reservation-list/reservation-list-all.sql` | **RESERVATION** |
-| `list_exam` | `sql/exam/find-exam-list.sql` | **EXAM** · OPERATIONDATA · RESERVATION · Cataract_Exam · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
-| `list_cataract_exam` | `sql/exam/find-cataract-exam-list.sql` | **Cataract_Exam** · Cataract_Operationdata · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
-| `list_surgery` | `sql/surgery/find-surgery-list.sql` | **OPERATIONDATA** · **Cataract_Operationdata** · EXAM · Cataract_Exam · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · MOTIVE_NEW01 · MOTIVE_NEW02 · NationCustom_CFG · EtcCfg |
-| `list_reoperation` | `sql/surgery/find-reoperation-candidates.sql` | **RE_OPERATION** · CUSTOM · EMPLOYEE · COSTPRICE |
-| `list_outpatient` | `sql/outpatient/find-outpatient-list.sql` | **RESERVATION** · CUSTOM · EMPLOYEE · MOTIVE_NEW01 · MOTIVE_NEW02 · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
+| `list_reservation` | `sql/softcrm/reservation/list/select-reservation-list.sql` | **RESERVATION** · EXAM · OPERATIONDATA · Cataract_Operationdata · EMPLOYEE · COSTPRICE · MOTIVE_NEW02 · DB_CUSTOM |
+| `list_reservation_all` | `sql/softcrm/reservation/list/select-reservation-list-all.sql` | **RESERVATION** |
+| `list_exam` | `sql/softcrm/exam/select-exam-list.sql` | **EXAM** · OPERATIONDATA · RESERVATION · Cataract_Exam · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
+| `list_cataract_exam` | `sql/softcrm/exam/select-cataract-exam-list.sql` | **Cataract_Exam** · Cataract_Operationdata · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
+| `list_surgery` | `sql/softcrm/surgery/select-surgery-list.sql` | **OPERATIONDATA** · **Cataract_Operationdata** · EXAM · Cataract_Exam · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · MOTIVE_NEW01 · MOTIVE_NEW02 · NationCustom_CFG · EtcCfg |
+| `list_reoperation` | `sql/softcrm/surgery/select-reoperation-candidates.sql` | **RE_OPERATION** · CUSTOM · EMPLOYEE · COSTPRICE |
+| `list_outpatient` | `sql/softcrm/outpatient/select-outpatient-list.sql` | **RESERVATION** · CUSTOM · EMPLOYEE · MOTIVE_NEW01 · MOTIVE_NEW02 · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
 
 ##### 전수 목록 — 총 19개 (분류별)
 
@@ -185,7 +185,7 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 
 #### 1-B. 해피톡 집계 원천 (4개 · primary list 미포함)
 
-예약통계(시력교정/백내장) daily-counts + 주차 레포트가 별도로 읽는다. 사용 SQL: `sql/reservation-stats/*-daily-counts.sql`, `sql/reservation-stats/*-drill-down.sql`, `sql/report/find-reservation-kakao-daily.sql`.
+예약통계(시력교정/백내장) daily-counts + 주차 레포트가 별도로 읽는다. 사용 SQL: `sql/softcrm/reservation/stats/select-*-daily-counts.sql`, `sql/softcrm/reservation/stats/select-*-drill-down.sql`.
 
 | 테이블 | 역할 |
 |---|---|
@@ -198,14 +198,14 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 
 | 테이블 | 소비 마트 | SQL |
 |---|---|---|
-| `TBL_COUNSEL` | `mart_list_reservation_homepage` | `sql/reservation-list-homepage/mariadb/*.sql` |
+| `TBL_COUNSEL` | `mart_list_reservation_homepage` | `sql/homepage/mariadb/*.sql` |
 
-> ℹ️ `sql/reservation-list-homepage/sqlite/` 하위 미러는 로컬 개발용. 운영 소스는 MariaDB.
+> ℹ️ `sql/homepage/sqlite/` 하위 미러는 로컬 개발용. 운영 소스는 MariaDB.
 
 ### 3. MSSQL 아이리더 (`eoeisJdbcTemplate`) — primary list 미사용
 
 - 아이리더 검사통계 페이지(`/stats/eoeis-checkup`) 전용. **primary list 마트/배치와 무관**.
-- 유일 조회 SQL: `sql/exam/find-eoeis-device-scores.sql`.
+- 조회 SQL: `sql/eoeis/find-checkup-stats.sql` · `sql/eoeis/find-device-scores.sql` (2026-08-26 exam/ 에서 분리).
 - `EOEIS_DATASOURCE_URL` 미설정 시 페이지 503 (마트가 없으므로 대체 조회 불가).
 
 ### 외부 테이블 총계

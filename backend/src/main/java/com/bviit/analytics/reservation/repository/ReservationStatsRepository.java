@@ -20,7 +20,7 @@ import java.util.Map;
 @Profile("postgres-mart")
 public class ReservationStatsRepository {
 
-    static final String MONTHLY_BY_TYPE_SQL = "sql/reservation/monthly-by-type.sql";
+    static final String MONTHLY_BY_TYPE_SQL = "sql/softcrm/reservation/select-monthly-by-type.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String monthlyByTypeSql;

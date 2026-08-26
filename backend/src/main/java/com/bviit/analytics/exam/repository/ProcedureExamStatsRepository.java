@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * 시술별 검사 건수("검사수") 통계 쿼리.
  *
- * 검사수 = 검사자 리스트(all-exam-list)와 동일 모집단 — sql/fragments/exam-session-source.sql 공유.
+ * 검사수 = 검사자 리스트(all-exam-list)와 동일 모집단 — sql/softcrm/fragments/fragment-exam-session-source.sql 공유.
  * 시력교정·드림렌즈는 EXAM 행(테스트고객·백내장스텁·순수외래 제외),
  * 백내장은 백내장검사 예약(H)+검안사 배정 기준이다.
  *
@@ -31,8 +31,8 @@ public class ProcedureExamStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL = "sql/exam/find-total-exam-count-monthly.sql";
-    private static final String FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL = "sql/exam/find-one-day-exam-count-monthly.sql";
+    private static final String FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL = "sql/softcrm/exam/select-total-exam-count-monthly.sql";
+    private static final String FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL = "sql/softcrm/exam/select-one-day-exam-count-monthly.sql";
 
     private final String findTotalExamCountMonthlySql;
     private final String findOneDayExamCountMonthlySql;

@@ -21,7 +21,7 @@ import java.util.Map;
  * 전환·성공률 마트값 vs MSSQL 직결값 대사(reconcile). local/dev 전용 스모크.
  *
  * ⚠️ diff 0 아님 — 정의가 갈렸다(2026-08-12 하이브리드 이관 이후).
- *   배치는 이제 list_exam / v_all_exam_list(= find-exam-list.sql 4개 필터 적용된 population)을
+ *   배치는 이제 list_exam / v_all_exam_list(= select-exam-list.sql 4개 필터 적용된 population)을
  *   기반으로 계산하고, 소스인 이 raw MSSQL 서비스는 EXAM/RESERVATION 직결이라 그 필터가 없다.
  *
  *   예상되는 정상 diff:

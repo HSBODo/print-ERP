@@ -29,10 +29,10 @@ public class SurgeryStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_VISION_MONTHLY_BY_TYPE_SQL = "sql/surgery/find-vision-monthly-by-type.sql";
-    private static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL = "sql/surgery/find-cataract-monthly-by-type.sql";
-    private static final String FIND_VISION_DAILY_BY_TYPE_SQL = "sql/surgery/find-vision-daily-by-type.sql";
-    private static final String FIND_CATARACT_DAILY_BY_TYPE_SQL = "sql/surgery/find-cataract-daily-by-type.sql";
+    private static final String FIND_VISION_MONTHLY_BY_TYPE_SQL = "sql/softcrm/surgery/select-vision-monthly-by-type.sql";
+    private static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL = "sql/softcrm/surgery/select-cataract-monthly-by-type.sql";
+    private static final String FIND_VISION_DAILY_BY_TYPE_SQL = "sql/softcrm/surgery/select-vision-daily-by-type.sql";
+    private static final String FIND_CATARACT_DAILY_BY_TYPE_SQL = "sql/softcrm/surgery/select-cataract-daily-by-type.sql";
 
     private final String findVisionMonthlyByTypeSql;
     private final String findCataractMonthlyByTypeSql;

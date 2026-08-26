@@ -34,7 +34,7 @@ import java.util.Map;
  * ⚠️ CANCEL_CD 는 이름과 달리 '취소 플래그'가 아니라 '중단 사유 코드'다. 다른 쿼리들은 같은 컬럼을
  *   취소 판정(ISNULL(e.CANCEL_CD,'') = '')에 쓴다 — 같은 컬럼, 두 용도.
  *
- * 분류 규칙 본체는 sql/consultation/find-stop-reason-monthly.sql 의 CASE 문 한 곳.
+ * 분류 규칙 본체는 sql/softcrm/consultation/select-stop-reason-monthly.sql 의 CASE 문 한 곳.
  * 매핑 변경 절차·검증 쿼리·함정은 docs/db/중단사유-분류-정의.md 참조.
  *
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
@@ -45,7 +45,7 @@ public class StopReasonStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_STOP_REASON_MONTHLY_SQL = "sql/consultation/find-stop-reason-monthly.sql";
+    private static final String FIND_STOP_REASON_MONTHLY_SQL = "sql/softcrm/consultation/select-stop-reason-monthly.sql";
 
     private final String findStopReasonMonthlySql;
 

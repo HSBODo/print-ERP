@@ -33,7 +33,7 @@ import java.util.Map;
 @ConditionalOnExpression(HomepageDataSourceConfig.ENABLED_EXPRESSION)
 public class ReservationListHomepageRepository implements HomepageOverallSource {
 
-    private static final String SQL_BASE = "sql/reservation/list-homepage/";
+    private static final String SQL_BASE = "sql/homepage/";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final HomepageSourceDialect dialect;
@@ -48,13 +48,13 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     ) {
         this.jdbc = jdbc;
         this.dialect = dialect;
-        this.listSql = SqlLoader.load(sqlPath(dialect, "reservation-list-homepage.sql"));
-        this.lastRegDateSql = SqlLoader.load(sqlPath(dialect, "last-reg-date.sql"));
-        this.monthlyListRawSql = SqlLoader.load(sqlPath(dialect, "monthly-list-raw.sql"));
-        this.dailyListRawSql = SqlLoader.load(sqlPath(dialect, "daily-list-raw.sql"));
+        this.listSql = SqlLoader.load(sqlPath(dialect, "select-reservation-list-homepage.sql"));
+        this.lastRegDateSql = SqlLoader.load(sqlPath(dialect, "select-last-reg-date.sql"));
+        this.monthlyListRawSql = SqlLoader.load(sqlPath(dialect, "select-monthly-list-raw.sql"));
+        this.dailyListRawSql = SqlLoader.load(sqlPath(dialect, "select-daily-list-raw.sql"));
     }
 
-    /** sql/reservation-list-homepage/{sqlite|mariadb}/{fileName} */
+    /** sql/homepage/{sqlite|mariadb}/{fileName} */
     static String sqlPath(HomepageSourceDialect dialect, String fileName) {
         return SQL_BASE + dialect.sqlDir() + "/" + fileName;
     }

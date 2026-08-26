@@ -47,7 +47,7 @@ public class ReportMartWriter {
 
     /**
      * 고객분류별 검사수 적재. rows 는 {month, motiveReport, cnt} shape
-     * (find-exam-count-by-class-monthly.sql 출력) 이고 연도는 호출자가 넘긴다.
+     * (select-exam-count-by-class-monthly.sql 출력) 이고 연도는 호출자가 넘긴다.
      */
     @Transactional
     public int upsertExamCountByClass(int year, List<Map<String, Object>> rows) {

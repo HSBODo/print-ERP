@@ -28,9 +28,9 @@ import java.util.Map;
 @Profile("postgres-mart")
 public class ReservationOverallStatsRepository {
 
-    static final String MONTHLY_SQL = "sql/reservation/overall/monthly.sql";
-    static final String MONTHLY_NAVER_SQL = "sql/reservation/overall/monthly-naver.sql";
-    static final String MONTHLY_KAKAO_SQL = "sql/reservation/overall/monthly-kakao.sql";
+    static final String MONTHLY_SQL = "sql/softcrm/reservation/overall/select-monthly.sql";
+    static final String MONTHLY_NAVER_SQL = "sql/softcrm/reservation/overall/select-monthly-naver.sql";
+    static final String MONTHLY_KAKAO_SQL = "sql/softcrm/reservation/overall/select-monthly-kakao.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String monthlySql;

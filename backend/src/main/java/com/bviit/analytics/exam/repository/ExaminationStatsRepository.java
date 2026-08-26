@@ -31,11 +31,11 @@ public class ExaminationStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_VISION_CORRECTION_MONTHLY_SQL = "sql/exam/find-vision-correction-monthly.sql";
-    private static final String FIND_DREAMLENS_MONTHLY_SQL = "sql/exam/find-dreamlens-monthly.sql";
-    private static final String FIND_CATARACT_MONTHLY_SQL = "sql/exam/find-cataract-monthly.sql";
-    private static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL = "sql/exam/find-cataract-reservation-rate-monthly.sql";
-    private static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL = "sql/exam/find-vision-reservation-rate-monthly.sql";
+    private static final String FIND_VISION_CORRECTION_MONTHLY_SQL = "sql/softcrm/exam/select-vision-correction-monthly.sql";
+    private static final String FIND_DREAMLENS_MONTHLY_SQL = "sql/softcrm/exam/select-dreamlens-monthly.sql";
+    private static final String FIND_CATARACT_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-monthly.sql";
+    private static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-reservation-rate-monthly.sql";
+    private static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-vision-reservation-rate-monthly.sql";
 
     private final String findVisionCorrectionMonthlySql;
     private final String findDreamlensMonthlySql;

@@ -16,7 +16,7 @@
 --   cataract_exam 백내장 '검사수' — 분류 백내장+중단만 (= 56). cataract_all 과 다르다.
 --   one_day/general  원데이+일반 = total 이 성립한다
 --   stop_count    시력교정 중단수 — v_all_exam_list.stop_yn='Y' + exam_group='시력교정'.
---                 원본 raw EXAM(sql/overall/find-stop-count-daily.sql) 은 list_exam 4개 필터
+--                 원본 raw EXAM(sql/softcrm/overall/select-stop-count-daily.sql) 은 list_exam 4개 필터
 --                 (테스트·pure cataract empty·순수 외래 유입·백내장 중복) 를 무시해 이보다 크게 나온다.
 --                 mart 는 리스트 정의를 써 리스트·월별·주차가 정합. reconcile diff 는 정상(월 최대 4건).
 SELECT

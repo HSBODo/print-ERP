@@ -25,7 +25,7 @@ public class OutpatientCountStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL = "sql/outpatient/find-outpatient-count-monthly.sql";
+    private static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL = "sql/softcrm/outpatient/select-outpatient-count-monthly.sql";
 
     private final String findOutpatientCountMonthlySql;
 

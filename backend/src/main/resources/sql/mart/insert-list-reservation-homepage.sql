@@ -1,4 +1,4 @@
--- 파라미터는 소스 SELECT(mariadb/reservation-list-homepage.sql) 의 camelCase 별칭과 1:1 매칭.
+-- 파라미터는 소스 SELECT(mariadb/select-reservation-list-homepage.sql) 의 camelCase 별칭과 1:1 매칭.
 -- Writer 가 원본 Map<String,Object> 에서 그대로 꺼내 넣는다.
 INSERT INTO mart_list_reservation_homepage (
     legacy_no, device_type,
