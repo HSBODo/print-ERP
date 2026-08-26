@@ -21,8 +21,8 @@ import java.util.Map;
 @ConditionalOnExpression(EoeisDataSourceConfig.ENABLED_EXPRESSION)
 public class EoeisCheckupRepository {
 
-    private static final String STATS_SQL = SqlLoader.load("sql/eoeis/find-checkup-stats.sql");
-    private static final String SCORES_SQL = SqlLoader.load("sql/eoeis/find-device-scores.sql");
+    private static final String STATS_SQL = SqlLoader.load("sql/eoeis/select-checkup-stats.sql");
+    private static final String SCORES_SQL = SqlLoader.load("sql/eoeis/select-device-scores.sql");
 
     private final NamedParameterJdbcTemplate jdbc;
 

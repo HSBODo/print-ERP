@@ -205,7 +205,7 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 ### 3. MSSQL 아이리더 (`eoeisJdbcTemplate`) — primary list 미사용
 
 - 아이리더 검사통계 페이지(`/stats/eoeis-checkup`) 전용. **primary list 마트/배치와 무관**.
-- 조회 SQL: `sql/eoeis/find-checkup-stats.sql` · `sql/eoeis/find-device-scores.sql` (2026-08-26 exam/ 에서 분리).
+- 조회 SQL: `sql/eoeis/select-checkup-stats.sql` · `sql/eoeis/select-device-scores.sql` (2026-08-26 exam/ 에서 분리).
 - `EOEIS_DATASOURCE_URL` 미설정 시 페이지 503 (마트가 없으므로 대체 조회 불가).
 
 ### 외부 테이블 총계
