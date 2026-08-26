@@ -27,9 +27,9 @@ import java.util.Map;
 public class CataractStatsSystemMartRepository {
 
     private static final String SELECT_SQL =
-            SqlLoader.load("sql/mart/select-reservation-stats-cataract-daily.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-stats-cataract-daily.sql");
     private static final String SELECT_MONTHLY_CALL_SUMS_SQL =
-            SqlLoader.load("sql/mart/select-reservation-stats-cataract-monthly-call-sums.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-stats-cataract-monthly-call-sums.sql");
 
     /** 마트 컬럼(snake_case) → API 필드(camelCase). 백내장은 인입콜/응대콜만 보정 대상. */
     private static final Map<String, String> FIELD_BY_COLUMN = Map.of(

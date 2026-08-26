@@ -32,12 +32,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ExamMartWriter {
 
-    private static final String UPSERT_EXAMINATION_MONTHLY_SQL     = SqlLoader.load("sql/mart/upsert-examination-monthly.sql");
-    private static final String UPSERT_PROCEDURE_EXAM_MONTHLY_SQL  = SqlLoader.load("sql/mart/upsert-procedure-exam-monthly.sql");
-    private static final String DELETE_LIST_EXAM_RANGE_SQL         = SqlLoader.load("sql/mart/delete-list-exam-range.sql");
-    private static final String INSERT_LIST_EXAM_SQL               = SqlLoader.load("sql/mart/insert-list-exam.sql");
-    private static final String DELETE_LIST_CATARACT_EXAM_RANGE_SQL = SqlLoader.load("sql/mart/delete-list-cataract-exam-range.sql");
-    private static final String INSERT_LIST_CATARACT_EXAM_SQL      = SqlLoader.load("sql/mart/insert-list-cataract-exam.sql");
+    private static final String UPSERT_EXAMINATION_MONTHLY_SQL     = SqlLoader.load("sql/mart/exam/upsert-examination-monthly.sql");
+    private static final String UPSERT_PROCEDURE_EXAM_MONTHLY_SQL  = SqlLoader.load("sql/mart/exam/upsert-procedure-exam-monthly.sql");
+    private static final String DELETE_LIST_EXAM_RANGE_SQL         = SqlLoader.load("sql/mart/exam/delete-list-exam-range.sql");
+    private static final String INSERT_LIST_EXAM_SQL               = SqlLoader.load("sql/mart/exam/insert-list-exam.sql");
+    private static final String DELETE_LIST_CATARACT_EXAM_RANGE_SQL = SqlLoader.load("sql/mart/exam/delete-list-cataract-exam-range.sql");
+    private static final String INSERT_LIST_CATARACT_EXAM_SQL      = SqlLoader.load("sql/mart/exam/insert-list-cataract-exam.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

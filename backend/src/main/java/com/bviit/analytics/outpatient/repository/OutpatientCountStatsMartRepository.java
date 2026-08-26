@@ -25,8 +25,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OutpatientCountStatsMartRepository {
 
-    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/select-outpatient-count-monthly.sql");
-    private static final String SELECT_OUTPATIENT_DAILY_AGG_SQL = SqlLoader.load("sql/mart/select-outpatient-daily-agg.sql");
+    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/outpatient/select-outpatient-count-monthly.sql");
+    private static final String SELECT_OUTPATIENT_DAILY_AGG_SQL = SqlLoader.load("sql/mart/outpatient/select-outpatient-daily-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

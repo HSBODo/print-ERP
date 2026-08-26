@@ -24,7 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OutpatientListMartRepository {
 
-    private static final String SELECT_LIST_OUTPATIENT_SQL = SqlLoader.load("sql/mart/select-list-outpatient.sql");
+    private static final String SELECT_LIST_OUTPATIENT_SQL = SqlLoader.load("sql/mart/outpatient/select-list-outpatient.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class B2bRevenueStatsMartRepository {
 
-    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/select-b2b-revenue-monthly.sql");
+    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/etc/select-b2b-revenue-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

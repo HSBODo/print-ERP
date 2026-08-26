@@ -29,15 +29,15 @@ import java.util.List;
 public class ChannelProfitMartRepository {
 
     private static final String SELECT_CHANNEL_LENS_COST_SQL =
-            SqlLoader.load("sql/mart/select-channel-lens-cost.sql");
+            SqlLoader.load("sql/mart/etc/select-channel-lens-cost.sql");
     private static final String SELECT_AD_SPEND_SQL =
-            SqlLoader.load("sql/mart/select-ad-spend.sql");
+            SqlLoader.load("sql/mart/etc/select-ad-spend.sql");
     private static final String UPSERT_AD_SPEND_SQL =
-            SqlLoader.load("sql/mart/upsert-ad-spend.sql");
+            SqlLoader.load("sql/mart/etc/upsert-ad-spend.sql");
     private static final String SELECT_LENS_PRICE_SQL =
-            SqlLoader.load("sql/mart/select-lens-price.sql");
+            SqlLoader.load("sql/mart/etc/select-lens-price.sql");
     private static final String UPDATE_LENS_PRICE_SQL =
-            SqlLoader.load("sql/mart/update-lens-price.sql");
+            SqlLoader.load("sql/mart/etc/update-lens-price.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

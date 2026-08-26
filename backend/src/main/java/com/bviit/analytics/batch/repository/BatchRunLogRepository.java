@@ -41,11 +41,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BatchRunLogRepository {
 
-    private static final String INSERT_SQL  = SqlLoader.load("sql/mart/insert-batch-run-log.sql");
-    private static final String SUCCESS_SQL = SqlLoader.load("sql/mart/update-batch-run-log-success.sql");
-    private static final String FAIL_SQL    = SqlLoader.load("sql/mart/update-batch-run-log-fail.sql");
-    private static final String SELECT_RECENT_SQL = SqlLoader.load("sql/mart/select-batch-run-logs.sql");
-    private static final String SELECT_LAST_DAILY_SUCCESS_SQL = SqlLoader.load("sql/mart/select-batch-last-success-daily.sql");
+    private static final String INSERT_SQL  = SqlLoader.load("sql/mart/batch/insert-batch-run-log.sql");
+    private static final String SUCCESS_SQL = SqlLoader.load("sql/mart/batch/update-batch-run-log-success.sql");
+    private static final String FAIL_SQL    = SqlLoader.load("sql/mart/batch/update-batch-run-log-fail.sql");
+    private static final String SELECT_RECENT_SQL = SqlLoader.load("sql/mart/batch/select-batch-run-logs.sql");
+    private static final String SELECT_LAST_DAILY_SUCCESS_SQL = SqlLoader.load("sql/mart/batch/select-batch-last-success-daily.sql");
     private static final TypeReference<Map<String, Integer>> TABLE_STATS_TYPE = new TypeReference<>() {};
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;

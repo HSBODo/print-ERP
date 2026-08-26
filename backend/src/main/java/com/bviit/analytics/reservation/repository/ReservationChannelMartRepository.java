@@ -24,9 +24,9 @@ import java.util.List;
 public class ReservationChannelMartRepository {
 
     private static final String SELECT_FUNNEL_SQL =
-            SqlLoader.load("sql/mart/select-reservation-channel-funnel.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-channel-funnel.sql");
     private static final String SELECT_OPTYPE_SQL =
-            SqlLoader.load("sql/mart/select-reservation-channel-optype.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-channel-optype.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

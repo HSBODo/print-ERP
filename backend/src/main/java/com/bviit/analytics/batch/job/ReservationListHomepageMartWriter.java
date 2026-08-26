@@ -28,8 +28,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReservationListHomepageMartWriter {
 
-    private static final String DELETE_RANGE_SQL = SqlLoader.load("sql/mart/delete-list-reservation-homepage-range.sql");
-    private static final String INSERT_SQL       = SqlLoader.load("sql/mart/insert-list-reservation-homepage.sql");
+    private static final String DELETE_RANGE_SQL = SqlLoader.load("sql/mart/reservation/delete-list-reservation-homepage-range.sql");
+    private static final String INSERT_SQL       = SqlLoader.load("sql/mart/reservation/insert-list-reservation-homepage.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

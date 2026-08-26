@@ -31,7 +31,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OverallExamListDailyRepository {
 
-    private static final String SELECT_SQL = SqlLoader.load("sql/mart/select-overall-exam-daily-agg.sql");
+    private static final String SELECT_SQL = SqlLoader.load("sql/mart/overall/select-overall-exam-daily-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

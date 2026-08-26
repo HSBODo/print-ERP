@@ -25,7 +25,7 @@ import java.util.List;
 public class ReservationOverallMartRepository {
 
     private static final String SELECT_MONTHLY_SQL =
-            SqlLoader.load("sql/mart/select-reservation-overall-monthly.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-overall-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

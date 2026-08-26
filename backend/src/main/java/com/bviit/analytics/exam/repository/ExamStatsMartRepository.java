@@ -29,13 +29,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ExamStatsMartRepository {
 
-    private static final String SELECT_EXAMINATION_MONTHLY_SQL    = SqlLoader.load("sql/mart/select-examination-monthly.sql");
-    private static final String SELECT_PROCEDURE_EXAM_MONTHLY_SQL = SqlLoader.load("sql/mart/select-procedure-exam-monthly.sql");
-    private static final String SELECT_LIST_EXAM_SQL              = SqlLoader.load("sql/mart/select-list-exam.sql");
-    private static final String SELECT_LIST_CATARACT_EXAM_SQL     = SqlLoader.load("sql/mart/select-list-cataract-exam.sql");
-    private static final String SELECT_EXAM_DAILY_AGG_SQL         = SqlLoader.load("sql/mart/select-exam-daily-agg.sql");
-    private static final String SELECT_VISION_SESSIONS_SQL        = SqlLoader.load("sql/mart/select-vision-sessions.sql");
-    private static final String SELECT_CATARACT_SESSIONS_SQL      = SqlLoader.load("sql/mart/select-cataract-sessions.sql");
+    private static final String SELECT_EXAMINATION_MONTHLY_SQL    = SqlLoader.load("sql/mart/exam/select-examination-monthly.sql");
+    private static final String SELECT_PROCEDURE_EXAM_MONTHLY_SQL = SqlLoader.load("sql/mart/exam/select-procedure-exam-monthly.sql");
+    private static final String SELECT_LIST_EXAM_SQL              = SqlLoader.load("sql/mart/exam/select-list-exam.sql");
+    private static final String SELECT_LIST_CATARACT_EXAM_SQL     = SqlLoader.load("sql/mart/exam/select-list-cataract-exam.sql");
+    private static final String SELECT_EXAM_DAILY_AGG_SQL         = SqlLoader.load("sql/mart/exam/select-exam-daily-agg.sql");
+    private static final String SELECT_VISION_SESSIONS_SQL        = SqlLoader.load("sql/mart/exam/select-vision-sessions.sql");
+    private static final String SELECT_CATARACT_SESSIONS_SQL      = SqlLoader.load("sql/mart/exam/select-cataract-sessions.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

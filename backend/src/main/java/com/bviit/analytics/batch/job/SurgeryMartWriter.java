@@ -32,12 +32,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SurgeryMartWriter {
 
-    private static final String UPSERT_MONTHLY_SQL     = SqlLoader.load("sql/mart/upsert-surgery-monthly.sql");
-    private static final String UPSERT_DAILY_SQL       = SqlLoader.load("sql/mart/upsert-surgery-daily.sql");
-    private static final String DELETE_LIST_RANGE_SQL  = SqlLoader.load("sql/mart/delete-list-surgery-range.sql");
-    private static final String INSERT_LIST_SQL        = SqlLoader.load("sql/mart/insert-list-surgery.sql");
-    private static final String DELETE_REOP_RANGE_SQL  = SqlLoader.load("sql/mart/delete-list-reoperation-range.sql");
-    private static final String INSERT_REOP_SQL        = SqlLoader.load("sql/mart/insert-list-reoperation.sql");
+    private static final String UPSERT_MONTHLY_SQL     = SqlLoader.load("sql/mart/surgery/upsert-surgery-monthly.sql");
+    private static final String UPSERT_DAILY_SQL       = SqlLoader.load("sql/mart/surgery/upsert-surgery-daily.sql");
+    private static final String DELETE_LIST_RANGE_SQL  = SqlLoader.load("sql/mart/surgery/delete-list-surgery-range.sql");
+    private static final String INSERT_LIST_SQL        = SqlLoader.load("sql/mart/surgery/insert-list-surgery.sql");
+    private static final String DELETE_REOP_RANGE_SQL  = SqlLoader.load("sql/mart/surgery/delete-list-reoperation-range.sql");
+    private static final String INSERT_REOP_SQL        = SqlLoader.load("sql/mart/surgery/insert-list-reoperation.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

@@ -23,8 +23,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OverallExamMartRepository {
 
-    private static final String SELECT_WEEKLY_SQL = SqlLoader.load("sql/mart/select-overall-exam-weekly.sql");
-    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/select-overall-exam-monthly.sql");
+    private static final String SELECT_WEEKLY_SQL = SqlLoader.load("sql/mart/overall/select-overall-exam-weekly.sql");
+    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/overall/select-overall-exam-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

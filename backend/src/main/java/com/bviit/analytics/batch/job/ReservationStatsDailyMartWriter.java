@@ -31,11 +31,11 @@ import java.util.Set;
 public class ReservationStatsDailyMartWriter {
 
     private static final String UPSERT_SYSTEM_SQL =
-            SqlLoader.load("sql/mart/upsert-reservation-stats-system-daily.sql");
+            SqlLoader.load("sql/mart/reservation/upsert-reservation-stats-system-daily.sql");
     private static final String UPSERT_CATARACT_SQL =
-            SqlLoader.load("sql/mart/upsert-reservation-stats-cataract-daily.sql");
+            SqlLoader.load("sql/mart/reservation/upsert-reservation-stats-cataract-daily.sql");
     private static final String SELECT_LOCKED_PERIODS_SQL =
-            SqlLoader.load("sql/mart/select-reservation-stats-locked-periods.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-stats-locked-periods.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

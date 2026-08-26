@@ -25,7 +25,7 @@ class SurgeryDailyAggMappingTest {
 
     private static String sql() throws IOException {
         try (InputStream in = SurgeryDailyAggMappingTest.class.getClassLoader()
-                .getResourceAsStream("sql/mart/select-surgery-daily-agg.sql")) {
+                .getResourceAsStream("sql/mart/surgery/select-surgery-daily-agg.sql")) {
             assertThat(in).as("select-surgery-daily-agg.sql 이 클래스패스에 있어야 한다").isNotNull();
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }

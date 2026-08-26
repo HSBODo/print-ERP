@@ -23,9 +23,9 @@ import java.util.List;
 public class ReservationStatsOverrideRepository {
 
     private static final String INSERT_SQL =
-            SqlLoader.load("sql/mart/insert-reservation-stats-override.sql");
+            SqlLoader.load("sql/mart/reservation/insert-reservation-stats-override.sql");
     private static final String SELECT_HISTORY_SQL =
-            SqlLoader.load("sql/mart/select-reservation-stats-overrides.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-stats-overrides.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

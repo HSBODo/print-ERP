@@ -27,14 +27,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ConsultationStatsMartRepository {
 
-    private static final String SELECT_CONSULTATION_RATE_SQL  = SqlLoader.load("sql/mart/select-consultation-rate-monthly.sql");
-    private static final String SELECT_STOP_REASON_SQL        = SqlLoader.load("sql/mart/select-stop-reason-monthly.sql");
-    private static final String SELECT_RESERVATION_RATE_SQL   = SqlLoader.load("sql/mart/select-reservation-rate-monthly.sql");
-    private static final String SELECT_STOP_REASON_DAILY_AGG_SQL = SqlLoader.load("sql/mart/select-stop-reason-daily-agg.sql");
-    private static final String SELECT_RESERVATION_RATE_VISION_CANDIDATES_SQL   = SqlLoader.load("sql/mart/select-reservation-rate-vision-candidates.sql");
-    private static final String SELECT_RESERVATION_RATE_CATARACT_CANDIDATES_SQL = SqlLoader.load("sql/mart/select-reservation-rate-cataract-candidates.sql");
-    private static final String SELECT_CONSULTATION_RATE_VISION_CANDIDATES_SQL  = SqlLoader.load("sql/mart/select-consultation-rate-vision-candidates.sql");
-    private static final String SELECT_CONSULTATION_RATE_CATARACT_CANDIDATES_SQL = SqlLoader.load("sql/mart/select-consultation-rate-cataract-candidates.sql");
+    private static final String SELECT_CONSULTATION_RATE_SQL  = SqlLoader.load("sql/mart/consultation/select-consultation-rate-monthly.sql");
+    private static final String SELECT_STOP_REASON_SQL        = SqlLoader.load("sql/mart/consultation/select-stop-reason-monthly.sql");
+    private static final String SELECT_RESERVATION_RATE_SQL   = SqlLoader.load("sql/mart/consultation/select-reservation-rate-monthly.sql");
+    private static final String SELECT_STOP_REASON_DAILY_AGG_SQL = SqlLoader.load("sql/mart/consultation/select-stop-reason-daily-agg.sql");
+    private static final String SELECT_RESERVATION_RATE_VISION_CANDIDATES_SQL   = SqlLoader.load("sql/mart/consultation/select-reservation-rate-vision-candidates.sql");
+    private static final String SELECT_RESERVATION_RATE_CATARACT_CANDIDATES_SQL = SqlLoader.load("sql/mart/consultation/select-reservation-rate-cataract-candidates.sql");
+    private static final String SELECT_CONSULTATION_RATE_VISION_CANDIDATES_SQL  = SqlLoader.load("sql/mart/consultation/select-consultation-rate-vision-candidates.sql");
+    private static final String SELECT_CONSULTATION_RATE_CATARACT_CANDIDATES_SQL = SqlLoader.load("sql/mart/consultation/select-consultation-rate-cataract-candidates.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

@@ -9,7 +9,7 @@
 --   · name 에 '테스트'/'TEST' 포함건 제외 — 리스트 화면과 동일하게 스캔에서 걸러야 정합이 유지된다.
 --
 -- ⚠️ 네이버·카카오는 시력교정만 집계 — 이 홈페이지 판만 전 진료 포함이라 진료 범위 비대칭(의도적).
--- ../mariadb/select-monthly-list-raw.sql · sql/mart/select-list-reservation-homepage-monthly-list-raw.sql 과
+-- ../mariadb/select-monthly-list-raw.sql · sql/mart/reservation/select-list-reservation-homepage-monthly-list-raw.sql 과
 -- 결과 계약(yr·mo·cnt) 동일해야 한다 — 한쪽만 고치지 말 것.
 --
 -- ⚠️ 스냅샷 소스면 마지막 등록일 이후 구간이 조용히 비어 나온다 — 호출부에서 반드시 확인할 것

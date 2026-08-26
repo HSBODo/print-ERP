@@ -31,9 +31,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OutpatientMartWriter {
 
-    private static final String UPSERT_SQL = SqlLoader.load("sql/mart/upsert-outpatient-count-monthly.sql");
-    private static final String DELETE_LIST_OUTPATIENT_RANGE_SQL = SqlLoader.load("sql/mart/delete-list-outpatient-range.sql");
-    private static final String INSERT_LIST_OUTPATIENT_SQL = SqlLoader.load("sql/mart/insert-list-outpatient.sql");
+    private static final String UPSERT_SQL = SqlLoader.load("sql/mart/outpatient/upsert-outpatient-count-monthly.sql");
+    private static final String DELETE_LIST_OUTPATIENT_RANGE_SQL = SqlLoader.load("sql/mart/outpatient/delete-list-outpatient-range.sql");
+    private static final String INSERT_LIST_OUTPATIENT_SQL = SqlLoader.load("sql/mart/outpatient/insert-list-outpatient.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

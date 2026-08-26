@@ -28,8 +28,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OverallMartWriter {
 
-    private static final String UPSERT_WEEKLY_SQL = SqlLoader.load("sql/mart/upsert-overall-exam-weekly.sql");
-    private static final String UPSERT_MONTHLY_SQL = SqlLoader.load("sql/mart/upsert-overall-exam-monthly.sql");
+    private static final String UPSERT_WEEKLY_SQL = SqlLoader.load("sql/mart/overall/upsert-overall-exam-weekly.sql");
+    private static final String UPSERT_MONTHLY_SQL = SqlLoader.load("sql/mart/overall/upsert-overall-exam-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

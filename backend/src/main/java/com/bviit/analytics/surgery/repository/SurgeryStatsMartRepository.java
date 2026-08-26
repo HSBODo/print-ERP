@@ -26,10 +26,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SurgeryStatsMartRepository {
 
-    private static final String SELECT_MONTHLY_SQL   = SqlLoader.load("sql/mart/select-surgery-monthly.sql");
-    private static final String SELECT_DAILY_SQL     = SqlLoader.load("sql/mart/select-surgery-daily.sql");
-    private static final String SELECT_LIST_SQL      = SqlLoader.load("sql/mart/select-list-surgery.sql");
-    private static final String SELECT_DAILY_AGG_SQL = SqlLoader.load("sql/mart/select-surgery-daily-agg.sql");
+    private static final String SELECT_MONTHLY_SQL   = SqlLoader.load("sql/mart/surgery/select-surgery-monthly.sql");
+    private static final String SELECT_DAILY_SQL     = SqlLoader.load("sql/mart/surgery/select-surgery-daily.sql");
+    private static final String SELECT_LIST_SQL      = SqlLoader.load("sql/mart/surgery/select-list-surgery.sql");
+    private static final String SELECT_DAILY_AGG_SQL = SqlLoader.load("sql/mart/surgery/select-surgery-daily-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

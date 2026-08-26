@@ -28,9 +28,9 @@ import java.util.Map;
 public class ReservationStatsSystemMartRepository {
 
     private static final String SELECT_SQL =
-            SqlLoader.load("sql/mart/select-reservation-stats-system-daily.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-stats-system-daily.sql");
     private static final String SELECT_MONTHLY_CHANNEL_SUMS_SQL =
-            SqlLoader.load("sql/mart/select-reservation-stats-system-monthly-channel-sums.sql");
+            SqlLoader.load("sql/mart/reservation/select-reservation-stats-system-monthly-channel-sums.sql");
 
     /** 마트 컬럼(snake_case) → API 필드(camelCase). OverrideCellEditService.COLUMN_BY_FIELD 의 역매핑. */
     private static final Map<String, String> FIELD_BY_COLUMN = Map.of(

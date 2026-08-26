@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AllExamListMartRepository {
 
-    private static final String SELECT_SQL = SqlLoader.load("sql/mart/select-all-exam-list.sql");
+    private static final String SELECT_SQL = SqlLoader.load("sql/mart/exam/select-all-exam-list.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

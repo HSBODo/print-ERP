@@ -20,9 +20,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ExamCountMartRepository {
 
-    private static final String SELECT_SQL = SqlLoader.load("sql/mart/select-exam-count-by-class.sql");
+    private static final String SELECT_SQL = SqlLoader.load("sql/mart/exam/select-exam-count-by-class.sql");
     private static final String AGGREGATE_FROM_LIST_SQL =
-            SqlLoader.load("sql/mart/select-exam-count-by-class-monthly-agg.sql");
+            SqlLoader.load("sql/mart/exam/select-exam-count-by-class-monthly-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

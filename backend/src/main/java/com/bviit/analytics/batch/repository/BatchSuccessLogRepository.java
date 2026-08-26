@@ -27,7 +27,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class BatchSuccessLogRepository {
 
-    private static final String UPSERT_SQL = SqlLoader.load("sql/mart/upsert-batch-success-log.sql");
+    private static final String UPSERT_SQL = SqlLoader.load("sql/mart/batch/upsert-batch-success-log.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

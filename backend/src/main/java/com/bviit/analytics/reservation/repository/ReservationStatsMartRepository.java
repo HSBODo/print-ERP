@@ -26,9 +26,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReservationStatsMartRepository {
 
-    private static final String SELECT_MONTHLY_SQL              = SqlLoader.load("sql/mart/select-reservation-monthly.sql");
-    private static final String SELECT_LIST_SQL                 = SqlLoader.load("sql/mart/select-list-reservation.sql");
-    private static final String SELECT_RESERVATION_DAILY_AGG_SQL = SqlLoader.load("sql/mart/select-reservation-daily-agg.sql");
+    private static final String SELECT_MONTHLY_SQL              = SqlLoader.load("sql/mart/reservation/select-reservation-monthly.sql");
+    private static final String SELECT_LIST_SQL                 = SqlLoader.load("sql/mart/reservation/select-list-reservation.sql");
+    private static final String SELECT_RESERVATION_DAILY_AGG_SQL = SqlLoader.load("sql/mart/reservation/select-reservation-daily-agg.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

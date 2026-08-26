@@ -32,12 +32,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReservationMartWriter {
 
-    private static final String UPSERT_MONTHLY_SQL          = SqlLoader.load("sql/mart/upsert-reservation-monthly.sql");
-    private static final String UPSERT_OVERALL_MONTHLY_SQL  = SqlLoader.load("sql/mart/upsert-reservation-overall-monthly.sql");
-    private static final String DELETE_LIST_RANGE_SQL       = SqlLoader.load("sql/mart/delete-list-reservation-range.sql");
-    private static final String INSERT_LIST_SQL             = SqlLoader.load("sql/mart/insert-list-reservation.sql");
-    private static final String DELETE_LIST_ALL_RANGE_SQL   = SqlLoader.load("sql/mart/delete-list-reservation-all-range.sql");
-    private static final String INSERT_LIST_ALL_SQL         = SqlLoader.load("sql/mart/insert-list-reservation-all.sql");
+    private static final String UPSERT_MONTHLY_SQL          = SqlLoader.load("sql/mart/reservation/upsert-reservation-monthly.sql");
+    private static final String UPSERT_OVERALL_MONTHLY_SQL  = SqlLoader.load("sql/mart/reservation/upsert-reservation-overall-monthly.sql");
+    private static final String DELETE_LIST_RANGE_SQL       = SqlLoader.load("sql/mart/reservation/delete-list-reservation-range.sql");
+    private static final String INSERT_LIST_SQL             = SqlLoader.load("sql/mart/reservation/insert-list-reservation.sql");
+    private static final String DELETE_LIST_ALL_RANGE_SQL   = SqlLoader.load("sql/mart/reservation/delete-list-reservation-all-range.sql");
+    private static final String INSERT_LIST_ALL_SQL         = SqlLoader.load("sql/mart/reservation/insert-list-reservation-all.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

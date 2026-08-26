@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WeeklyReportMartRepository {
 
-    private static final String SELECT_SQL = SqlLoader.load("sql/mart/select-weekly-report.sql");
+    private static final String SELECT_SQL = SqlLoader.load("sql/mart/report/select-weekly-report.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

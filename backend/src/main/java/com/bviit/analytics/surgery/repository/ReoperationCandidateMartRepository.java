@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReoperationCandidateMartRepository {
 
-    private static final String SELECT_SQL = SqlLoader.load("sql/mart/select-reoperation-candidates.sql");
+    private static final String SELECT_SQL = SqlLoader.load("sql/mart/surgery/select-reoperation-candidates.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

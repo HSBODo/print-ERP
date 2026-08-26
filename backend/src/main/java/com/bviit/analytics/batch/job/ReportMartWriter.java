@@ -29,8 +29,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReportMartWriter {
 
-    private static final String UPSERT_WEEKLY_SQL = SqlLoader.load("sql/mart/upsert-weekly-report.sql");
-    private static final String UPSERT_BY_CLASS_SQL = SqlLoader.load("sql/mart/upsert-exam-count-by-class.sql");
+    private static final String UPSERT_WEEKLY_SQL = SqlLoader.load("sql/mart/report/upsert-weekly-report.sql");
+    private static final String UPSERT_BY_CLASS_SQL = SqlLoader.load("sql/mart/exam/upsert-exam-count-by-class.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
