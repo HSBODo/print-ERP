@@ -3,7 +3,6 @@ package com.bviit.analytics.reservation.service;
 import com.bviit.analytics.common.exception.DataSourceUnavailableException;
 import com.bviit.analytics.common.stats.StatsResponseMeta;
 import com.bviit.analytics.reservation.dto.CataractStatsDailyRow;
-import com.bviit.analytics.reservation.dto.CataractStatsSnapshot;
 import com.bviit.analytics.reservation.dto.ReservationStatsDiagnosticsHealthResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsDiffResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsDrillDownResponse;
@@ -30,6 +29,8 @@ public class CataractStatsSystemQueryService {
 
     private static final String STATS_TYPE = "cataract";
     private static final String FORMULA_VERSION = "reservation-stats-cataract-v1";
+    /** 응답 메타의 schema 버전 — 종전 CataractStatsSnapshot.CURRENT_SCHEMA_VERSION 대체. */
+    private static final int SCHEMA_VERSION = 1;
 
     private final CataractStatsSystemMartRepository martRepository;
     private final CataractStatsOverrideCellEditService martCellEditService;
@@ -76,7 +77,7 @@ public class CataractStatsSystemQueryService {
                 diagnosticService.isPresent(),
                 false,
                 false,
-                CataractStatsSnapshot.CURRENT_SCHEMA_VERSION,
+                SCHEMA_VERSION,
                 0,
                 null,
                 null,
@@ -92,7 +93,7 @@ public class CataractStatsSystemQueryService {
                 StatsResponseMeta.unavailable(
                         period,
                         FORMULA_VERSION,
-                        CataractStatsSnapshot.CURRENT_SCHEMA_VERSION
+                        SCHEMA_VERSION
                 )
         ));
     }
@@ -101,7 +102,7 @@ public class CataractStatsSystemQueryService {
         return StatsResponseMeta.mart(
                 period,
                 FORMULA_VERSION,
-                CataractStatsSnapshot.CURRENT_SCHEMA_VERSION
+                SCHEMA_VERSION
         );
     }
 }

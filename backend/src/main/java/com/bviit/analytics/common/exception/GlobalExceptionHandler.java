@@ -54,12 +54,6 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(409, ex.getMessage()));
     }
 
-    @ExceptionHandler(SnapshotInvariantViolationException.class)
-    public ResponseEntity<ErrorResponse> handleSnapshotInvariantViolation(SnapshotInvariantViolationException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ErrorResponse.of(409, ex.getMessage()));
-    }
-
     @ExceptionHandler(DataSourceUnavailableException.class)
     public ResponseEntity<ErrorResponse> handleDataSourceUnavailable(DataSourceUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)

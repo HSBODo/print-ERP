@@ -8,7 +8,6 @@ import com.bviit.analytics.reservation.dto.ReservationStatsDiffResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsDrillDownResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsParityResponse;
 import com.bviit.analytics.reservation.dto.ReservationStatsResult;
-import com.bviit.analytics.reservation.dto.ReservationStatsSnapshot;
 import com.bviit.analytics.reservation.repository.ReservationStatsSystemMartRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -30,6 +29,8 @@ public class ReservationStatsSystemQueryService {
 
     private static final String STATS_TYPE = "system";
     private static final String FORMULA_VERSION = "reservation-stats-system-v1";
+    /** 응답 메타의 schema 버전 — 종전 ReservationStatsSnapshot.CURRENT_SCHEMA_VERSION 대체. */
+    private static final int SCHEMA_VERSION = 1;
 
     private final ReservationStatsSystemMartRepository martRepository;
     private final ReservationStatsOverrideCellEditService martCellEditService;
@@ -76,7 +77,7 @@ public class ReservationStatsSystemQueryService {
                 diagnosticService.isPresent(),
                 false,                                    // snapshotExists — 스냅샷 파일 폐기
                 false,                                    // snapshotLocked
-                ReservationStatsSnapshot.CURRENT_SCHEMA_VERSION,
+                SCHEMA_VERSION,
                 0,                                        // dayCount — 마트 조회는 range 기반이라 미표기
                 null,                                     // latestDate
                 null,                                     // confirmedAt
@@ -92,7 +93,7 @@ public class ReservationStatsSystemQueryService {
                 StatsResponseMeta.unavailable(
                         period,
                         FORMULA_VERSION,
-                        ReservationStatsSnapshot.CURRENT_SCHEMA_VERSION
+                        SCHEMA_VERSION
                 )
         ));
     }
@@ -101,7 +102,7 @@ public class ReservationStatsSystemQueryService {
         return StatsResponseMeta.mart(
                 period,
                 FORMULA_VERSION,
-                ReservationStatsSnapshot.CURRENT_SCHEMA_VERSION
+                SCHEMA_VERSION
         );
     }
 }
