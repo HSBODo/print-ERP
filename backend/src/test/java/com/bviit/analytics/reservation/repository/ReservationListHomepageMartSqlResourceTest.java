@@ -76,7 +76,7 @@ class ReservationListHomepageMartSqlResourceTest {
 
     @Test
     void 마트_월별_list_raw_sql은_리스트_화면과_동일_집계를_보존한다() {
-        String sql = sqlBody("select-list-reservation-homepage-select-monthly-list-raw.sql");
+        String sql = sqlBody("select-list-reservation-homepage-monthly-list-raw.sql");
 
         assertThat(sql).contains(":from", ":to");
         // 리스트 화면과 정합 위해 exam_type 필터·DISTINCT 없다 — 소스판과 동일한 raw 집계.
@@ -93,7 +93,7 @@ class ReservationListHomepageMartSqlResourceTest {
 
     @Test
     void 마트_마지막_등록일시_sql은_결과_계약이_소스판과_동일하다() {
-        String sql = sqlBody("select-list-reservation-homepage-select-last-reg-date.sql");
+        String sql = sqlBody("select-list-reservation-homepage-last-reg-date.sql");
 
         assertThat(sql).containsIgnoringCase("MAX(reg_date)");
         // 소스판과 동일하게 문자열 1개(lastRegDate) — 배치 이후에는 '천장' 의미를 갖는다.

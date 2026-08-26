@@ -10,7 +10,7 @@
 -- 회귀 기준: from=2026-06-01 / to=2026-06-30 → 206건 (리스트 화면과 동일, 테스트 이름 필터 도입 전 값).
 --
 -- ⚠️ 네이버·카카오는 시력교정만 집계 — 이 홈페이지 판만 전 진료 포함이라 진료 범위 비대칭(의도적).
--- ../sqlite/select-monthly-list-raw.sql · sql/mart/select-list-reservation-homepage-select-monthly-list-raw.sql 과
+-- ../sqlite/select-monthly-list-raw.sql · sql/mart/select-list-reservation-homepage-monthly-list-raw.sql 과
 -- 결과 계약(yr·mo·cnt) 동일해야 한다 — 한쪽만 고치지 말 것.
 SELECT YEAR(REG_DATE)  AS `yr`,
        MONTH(REG_DATE) AS `mo`,
