@@ -155,6 +155,7 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/report/seeds/V31__weekly_report_dreamlens_2026_w31.sql");
         applyScript("sql/mart/surgery/seeds/V35__surgery_monthly_2026_01_05_golden.sql");
         applyScript("sql/mart/report/seeds/V55__weekly_report_2025_seed.sql");
+        applyScript("sql/mart/report/seeds/V57__weekly_report_2026_h1_daily_distribution.sql");
     }
 
     private void applyScript(String classpathLocation) {
