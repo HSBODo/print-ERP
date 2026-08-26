@@ -68,12 +68,12 @@ class ExamMartWriterIT {
             execSilently(conn, "DROP TABLE IF EXISTS list_cataract_exam, list_exam, "
                     + "mart_procedure_exam_monthly, mart_examination_monthly, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1a__batch_run_log.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1b__batch_watermark.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4a__mart_examination_monthly.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4b__mart_procedure_exam_monthly.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4c__list_exam.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V4d__list_cataract_exam.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1a__batch_run_log.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1b__batch_watermark.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/exam/tables/V4a__mart_examination_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/exam/tables/V4b__mart_procedure_exam_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/exam/tables/V4c__list_exam.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/exam/tables/V4d__list_cataract_exam.sql"));
         }
     }
 

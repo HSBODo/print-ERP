@@ -64,11 +64,11 @@ class ConsultationMartWriterIT {
             execSilently(conn, "DROP TABLE IF EXISTS mart_reservation_rate_monthly, "
                     + "mart_stop_reason_monthly, mart_consultation_rate_monthly, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1a__batch_run_log.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1b__batch_watermark.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/consultation/V5a__mart_consultation_rate_monthly.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/consultation/V5b__mart_stop_reason_monthly.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/consultation/V5c__mart_reservation_rate_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1a__batch_run_log.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1b__batch_watermark.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/consultation/tables/V5a__mart_consultation_rate_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/consultation/tables/V5b__mart_stop_reason_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/consultation/tables/V5c__mart_reservation_rate_monthly.sql"));
         }
     }
 

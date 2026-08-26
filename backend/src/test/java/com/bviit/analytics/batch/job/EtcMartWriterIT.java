@@ -58,9 +58,9 @@ class EtcMartWriterIT {
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS mart_b2b_revenue_monthly, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1a__batch_run_log.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1b__batch_watermark.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/etc/V8__etc_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1a__batch_run_log.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1b__batch_watermark.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/etc/tables/V8__etc_mart.sql"));
         }
     }
 

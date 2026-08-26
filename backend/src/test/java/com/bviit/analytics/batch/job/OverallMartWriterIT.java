@@ -61,10 +61,10 @@ class OverallMartWriterIT {
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS mart_overall_exam_weekly, "
                     + "mart_overall_exam_monthly, batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1a__batch_run_log.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1b__batch_watermark.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/overall/V7__overall_mart.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/exam/V10__overall_exam_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1a__batch_run_log.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1b__batch_watermark.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/overall/tables/V7__overall_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/exam/tables/V10__overall_exam_monthly.sql"));
         }
     }
 

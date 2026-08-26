@@ -64,12 +64,12 @@ class ReservationStatsDailyMartWriterIT {
                     + "reservation_stats_period_lock, "
                     + "reservation_stats_override, "
                     + "batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1a__batch_run_log.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/batch/V1b__batch_watermark.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/reservation/V11a__mart_reservation_stats_system_daily.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/reservation/V11b__mart_reservation_stats_cataract_daily.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/reservation/V11c__reservation_stats_period_lock.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/reservation/V11d__reservation_stats_override.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1a__batch_run_log.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1b__batch_watermark.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/reservation/tables/V11a__mart_reservation_stats_system_daily.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/reservation/tables/V11b__mart_reservation_stats_cataract_daily.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/reservation/tables/V11c__reservation_stats_period_lock.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/reservation/tables/V11d__reservation_stats_override.sql"));
         }
     }
 

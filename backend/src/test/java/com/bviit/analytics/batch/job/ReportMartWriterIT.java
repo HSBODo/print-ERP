@@ -62,8 +62,8 @@ class ReportMartWriterIT {
 
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS mart_weekly_report, mart_exam_count_by_class CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/report/V28a__mart_weekly_report.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/tables/report/V28b__mart_exam_count_by_class.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/report/tables/V28a__mart_weekly_report.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/report/tables/V28b__mart_exam_count_by_class.sql"));
         }
     }
 
