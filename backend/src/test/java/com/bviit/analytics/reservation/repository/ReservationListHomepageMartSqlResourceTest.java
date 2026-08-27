@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 예약자 리스트_홈페이지 <b>마트</b> SQL 리소스 불변식.
  *
  * <p>{@link ReservationListHomepageSqlResourceTest} 가 소스판(SQLite/MariaDB) 을 지키는 것과
- * 짝이다 — 여기는 마트판({@code sql/mart/select-list-reservation-homepage*.sql}) 을 지킨다.
+ * 짝이다 — 여기는 마트판({@code sql/mart/reservation/select-list-reservation-homepage*.sql}) 을 지킨다.
  * 배치가 소스에서 옮겨 담은 데이터를 <b>같은 계약</b>으로 앱에 내려보내는 것이 목적이라,
  * 마트 SQL 이 소스판과 어긋나면 프론트 zod 스키마 하나가 두 소스에 대해 참·거짓이 갈린다.
  *
@@ -27,7 +27,7 @@ class ReservationListHomepageMartSqlResourceTest {
      * 소스판 테스트와 동일한 정규화 규칙.
      */
     private static String sqlBody(String fileName) {
-        return SqlLoader.load("sql/mart/" + fileName)
+        return SqlLoader.load("sql/mart/reservation/" + fileName)
                 .replaceAll("--[^\\n]*", "")
                 .replaceAll("\\s+", " ")
                 .trim();
