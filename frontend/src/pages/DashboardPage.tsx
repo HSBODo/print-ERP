@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import {
-  Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis,
 } from 'recharts'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
@@ -13,17 +13,16 @@ import { CURRENT_YEAR } from '@/constants/chart'
 import { formatAxisNumber } from '@/utils/stats'
 import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
 import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'
-import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
+import { useProcedureExamTrend } from '@/hooks/exam/useProcedureExamTrend'
 import { useOutpatientCountTrend } from '@/hooks/outpatient/useOutpatientCountTrend'
 import { useAccumulatedEyesTotal } from '@/hooks/marketing/useAccumulatedEyesTotal'
 import { useReservationStatsSystem } from '@/hooks/reservation/useReservationStatsSystem'
-import { useConsultationRateKpi } from '@/hooks/consultation/useConsultationRateKpi'
 
 /**
  * 홈(대시보드) — 시스템 각 도메인 마트에서 이번달 요약을 조회.
  *
- * 관리자 전용 데이터(검사자 종합·전환율)는 일반 사용자에게는 403 → isError → "권한 없음" 표시로
- * graceful degradation. 다른 카드는 그대로 뜬다.
+ * 관리자 전용(개발 미완성) 지표는 담지 않는다. 일반 사용자에게 그대로 노출 가능한
+ * 완성된 지표만 사용한다.
  */
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => `${i + 1}월`)
@@ -32,6 +31,9 @@ const M_IDX = CURRENT_MONTH - 1
 const PREV_IDX = M_IDX > 0 ? M_IDX - 1 : 0
 
 const CHART_YEARS = [CURRENT_YEAR]
+
+/** 지난달 (1월이면 전년 12월). 홈은 이번년 데이터만 다루므로 라벨용으로만 씀. */
+const PREV_MONTH_LABEL = CURRENT_MONTH === 1 ? 12 : CURRENT_MONTH - 1
 
 /** 전월 대비 변화율(%). 전월이 0 이거나 값이 null 이면 null. */
 const changeRate = (curr: number | null | undefined, prev: number | null | undefined): number | null => {
@@ -59,8 +61,8 @@ const reservationTrendConfig = {
   online: { label: '온라인', color: 'var(--chart-3)' },
 } satisfies ChartConfig
 
-const consultationRateConfig = {
-  rate: { label: '전환율(%)', color: 'var(--chart-2)' },
+const outpatientTrendConfig = {
+  outpatient: { label: '외래수', color: 'var(--chart-2)' },
 } satisfies ChartConfig
 
 /* ── 페이지 ────────────────────────────────────────────────── */
@@ -74,12 +76,11 @@ export function DashboardPage() {
   const surgery = useSurgeryTrend(CHART_YEARS)
   const sgMonthly = useMemo(() => surgery.dataMap[CURRENT_YEAR] ?? [], [surgery.dataMap])
 
-  // 이번달 검사자 (관리자 전용)
-  const overallExam = useOverallExamMonthly(CHART_YEARS)
-  const overallExamThis = overallExam.items.find((it) => it.year === CURRENT_YEAR && it.month === CURRENT_MONTH)
-  const overallExamPrev = overallExam.items.find((it) => it.year === CURRENT_YEAR && it.month === CURRENT_MONTH - 1)
+  // 이번달 검사수 (procedure-exam · 관리자 아님)
+  const procedureExam = useProcedureExamTrend(CHART_YEARS)
+  const peMonthly = useMemo(() => procedureExam.dataMap[CURRENT_YEAR] ?? [], [procedureExam.dataMap])
 
-  // 이번달 외래수
+  // 이번달 외래수 · 월별 추이
   const outpatient = useOutpatientCountTrend(CHART_YEARS)
   const opMonthly = useMemo(() => outpatient.dataMap[CURRENT_YEAR] ?? [], [outpatient.dataMap])
 
@@ -91,15 +92,15 @@ export function DashboardPage() {
   const today = new Date().toISOString().slice(0, 10)
   const resStats = useReservationStatsSystem(monthFrom, today)
 
-  // 최근 3개월 상담 전환율 (관리자 전용)
-  const consultation = useConsultationRateKpi(CHART_YEARS)
-
   /* ── KPI 카드 값 계산 ─────────────────────────────────────── */
 
   const kpiCards = useMemo(() => {
     // 예약
     const resCurr = resMonthly[M_IDX]?.reservations
     const resPrev = resMonthly[PREV_IDX]?.reservations
+    // 검사수 (procedure-exam · 관리자 아님)
+    const peCurr = peMonthly[M_IDX]?.examCount
+    const pePrev = peMonthly[PREV_IDX]?.examCount
     // 수술
     const sgCurr = sgMonthly[M_IDX]?.total
     const sgPrev = sgMonthly[PREV_IDX]?.total
@@ -109,7 +110,7 @@ export function DashboardPage() {
 
     return [
       {
-        label: '이번달 예약',
+        label: `${CURRENT_MONTH}월 예약`,
         value: resCurr,
         change: changeRate(resCurr, resPrev),
         loading: reservation.isLoading,
@@ -117,16 +118,15 @@ export function DashboardPage() {
         unit: '건',
       },
       {
-        label: '이번달 검사자',
-        value: overallExamThis?.totalExam ?? null,
-        change: changeRate(overallExamThis?.totalExam, overallExamPrev?.totalExam),
-        loading: overallExam.isLoading,
-        error: overallExam.isError,
-        adminOnly: true,
-        unit: '명',
+        label: `${CURRENT_MONTH}월 검사수`,
+        value: peCurr,
+        change: changeRate(peCurr, pePrev),
+        loading: procedureExam.isLoading,
+        error: procedureExam.isError,
+        unit: '건',
       },
       {
-        label: '이번달 수술',
+        label: `${CURRENT_MONTH}월 수술`,
         value: sgCurr,
         change: changeRate(sgCurr, sgPrev),
         loading: surgery.isLoading,
@@ -134,7 +134,7 @@ export function DashboardPage() {
         unit: '건',
       },
       {
-        label: '이번달 외래수',
+        label: `${CURRENT_MONTH}월 외래수`,
         value: opCurr,
         change: changeRate(opCurr, opPrev),
         loading: outpatient.isLoading,
@@ -151,9 +151,11 @@ export function DashboardPage() {
         hint: '병원 전체 누적',
       },
     ]
-  }, [resMonthly, sgMonthly, opMonthly, overallExamThis, overallExamPrev, eyeTotal.total,
-      reservation.isLoading, reservation.isError, surgery.isLoading, surgery.isError,
-      overallExam.isLoading, overallExam.isError, outpatient.isLoading, outpatient.isError,
+  }, [resMonthly, peMonthly, sgMonthly, opMonthly, eyeTotal.total,
+      reservation.isLoading, reservation.isError,
+      procedureExam.isLoading, procedureExam.isError,
+      surgery.isLoading, surgery.isError,
+      outpatient.isLoading, outpatient.isError,
       eyeTotal.isLoading, eyeTotal.isError])
 
   /* ── 차트 데이터 ─────────────────────────────────────── */
@@ -209,23 +211,23 @@ export function DashboardPage() {
   }, [resStats.dailies])
   const channelTotal = channelData.reduce((s, d) => s + d.value, 0)
 
-  // 최근 3개월 전환율 (관리자 전용) — consultationRateKpi 응답 구조 유연 처리
-  const consultationRows = useMemo(() => {
-    const raw = consultation.data as unknown
-    if (!Array.isArray(raw)) return []
-    // 항목은 { label, rate } 또는 { year, month, rate } 등 다양할 수 있어 형태 안 맞으면 빈배열.
-    // 여기서는 이름 기반 요약을 기대 — 실제 구조는 백엔드 스펙에 따름.
-    return (raw as Array<{ label?: string; name?: string; rate?: number; value?: number }>)
-      .slice(0, 5)
-      .map((r) => ({
-        label: r.label ?? r.name ?? '—',
-        rate: r.rate ?? r.value ?? 0,
-      }))
-      .filter((r) => r.label !== '—')
-  }, [consultation.data])
+  // 월별 외래수 추이 (라인/영역)
+  const outpatientTrendData = MONTHS.map((month, i) => ({
+    month,
+    outpatient: opMonthly[i]?.outpatientCount ?? 0,
+  }))
 
   return (
     <div className="space-y-6">
+      {/* ── 상단 기준 라벨 ── */}
+      <div className="flex items-baseline gap-2 text-sm text-muted-foreground">
+        <span className="text-lg font-semibold text-gray-900">
+          {CURRENT_YEAR}년 {CURRENT_MONTH}월
+        </span>
+        <span>기준</span>
+        <span className="ml-2 text-xs">· 지난달({PREV_MONTH_LABEL}월) 대비 변화율 함께 표시</span>
+      </div>
+
       {/* ── KPI 5개 ── */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {kpiCards.map((card) => {
@@ -234,14 +236,7 @@ export function DashboardPage() {
           return (
             <Card key={card.label} className="border-border/70 shadow-sm">
               <CardHeader className="gap-2">
-                <CardDescription className="flex items-center gap-1.5">
-                  {card.label}
-                  {card.adminOnly && (
-                    <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-700">
-                      관리자
-                    </span>
-                  )}
-                </CardDescription>
+                <CardDescription>{card.label}</CardDescription>
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-2xl font-semibold tracking-tight text-gray-900">
                     {card.loading ? '…' : card.error ? '—' :
@@ -265,7 +260,7 @@ export function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  {card.hint ?? (card.error ? '데이터 조회 실패' : '전월 대비')}
+                  {card.hint ?? (card.error ? '데이터 조회 실패' : `지난달(${PREV_MONTH_LABEL}월) 대비`)}
                 </p>
               </CardContent>
             </Card>
@@ -405,42 +400,38 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* 상담 전환율 (관리자 전용) */}
+        {/* 월별 외래수 추이 */}
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle>상담 전환율</CardTitle>
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                관리자
-              </span>
-            </div>
-            <CardDescription>{CURRENT_YEAR}년 · 최근 기준</CardDescription>
+            <CardTitle>월별 외래수 추이</CardTitle>
+            <CardDescription>{CURRENT_YEAR}년</CardDescription>
           </CardHeader>
           <CardContent>
-            {consultation.isError ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">
-                권한이 없거나 조회 실패
-              </div>
-            ) : consultation.isLoading ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">
-                불러오는 중…
-              </div>
-            ) : consultationRows.length === 0 ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">
-                표시할 데이터 없음
-              </div>
+            {outpatient.isLoading ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">불러오는 중…</div>
+            ) : outpatient.isError ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">조회 실패</div>
             ) : (
-              <ChartContainer config={consultationRateConfig} className="h-56 w-full">
-                <BarChart data={consultationRows} layout="vertical" margin={{ left: 8, right: 8 }}>
-                  <CartesianGrid horizontal={false} />
-                  <XAxis type="number" hide domain={[0, 100]} />
-                  <YAxis dataKey="label" type="category" tickLine={false} axisLine={false} width={80} />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent formatter={(v) => `${Number(v).toFixed(1)}%`} />}
+              <ChartContainer config={outpatientTrendConfig} className="h-56 w-full">
+                <AreaChart data={outpatientTrendData} margin={{ left: 8, right: 8 }}>
+                  <defs>
+                    <linearGradient id="fill-outpatient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-outpatient)" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="var(--color-outpatient)" stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={6} />
+                  <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                  <Area
+                    dataKey="outpatient"
+                    type="monotone"
+                    fill="url(#fill-outpatient)"
+                    stroke="var(--color-outpatient)"
+                    strokeWidth={2}
                   />
-                  <Bar dataKey="rate" fill="var(--color-rate)" radius={6} barSize={16} />
-                </BarChart>
+                </AreaChart>
               </ChartContainer>
             )}
           </CardContent>
