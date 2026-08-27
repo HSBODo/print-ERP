@@ -1,186 +1,299 @@
+import { useMemo } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  XAxis,
-  YAxis,
+  Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis,
 } from 'recharts'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card'
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
+  ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
 } from '@/components/ui/chart'
+import { CURRENT_YEAR } from '@/constants/chart'
 import { formatAxisNumber } from '@/utils/stats'
+import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
+import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'
+import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
+import { useOutpatientCountTrend } from '@/hooks/outpatient/useOutpatientCountTrend'
+import { useAccumulatedEyesTotal } from '@/hooks/marketing/useAccumulatedEyesTotal'
+import { useReservationStatsSystem } from '@/hooks/reservation/useReservationStatsSystem'
+import { useConsultationRateKpi } from '@/hooks/consultation/useConsultationRateKpi'
 
-const monthlySurgery = [
-  { month: '1월', lasik: 45, lasek: 38, smile: 28, icl: 15 },
-  { month: '2월', lasik: 52, lasek: 42, smile: 32, icl: 18 },
-  { month: '3월', lasik: 48, lasek: 35, smile: 30, icl: 16 },
-  { month: '4월', lasik: 61, lasek: 48, smile: 38, icl: 22 },
-  { month: '5월', lasik: 55, lasek: 44, smile: 36, icl: 20 },
-  { month: '6월', lasik: 67, lasek: 52, smile: 42, icl: 25 },
-  { month: '7월', lasik: 72, lasek: 58, smile: 48, icl: 28 },
-  { month: '8월', lasik: 68, lasek: 55, smile: 45, icl: 26 },
-  { month: '9월', lasik: 74, lasek: 60, smile: 50, icl: 30 },
-  { month: '10월', lasik: 80, lasek: 65, smile: 55, icl: 34 },
-  { month: '11월', lasik: 76, lasek: 62, smile: 52, icl: 32 },
-  { month: '12월', lasik: 82, lasek: 68, smile: 58, icl: 36 },
-]
+/**
+ * 홈(대시보드) — 시스템 각 도메인 마트에서 이번달 요약을 조회.
+ *
+ * 관리자 전용 데이터(검사자 종합·전환율)는 일반 사용자에게는 403 → isError → "권한 없음" 표시로
+ * graceful degradation. 다른 카드는 그대로 뜬다.
+ */
 
-const monthlyRevenue = [
-  { month: '1월', revenue: 5.2 },
-  { month: '2월', revenue: 5.8 },
-  { month: '3월', revenue: 5.5 },
-  { month: '4월', revenue: 6.4 },
-  { month: '5월', revenue: 6.1 },
-  { month: '6월', revenue: 7.2 },
-  { month: '7월', revenue: 7.8 },
-  { month: '8월', revenue: 7.5 },
-  { month: '9월', revenue: 8.0 },
-  { month: '10월', revenue: 8.5 },
-  { month: '11월', revenue: 8.2 },
-  { month: '12월', revenue: 8.2 },
-]
+const MONTHS = Array.from({ length: 12 }, (_, i) => `${i + 1}월`)
+const CURRENT_MONTH = new Date().getMonth() + 1  // 1~12
+const M_IDX = CURRENT_MONTH - 1
+const PREV_IDX = M_IDX > 0 ? M_IDX - 1 : 0
 
-const surgeryType = [
-  { segment: 'lasik', name: '라식', value: 30, fill: 'var(--color-lasik)' },
-  { segment: 'lasek', name: '라섹', value: 25, fill: 'var(--color-lasek)' },
-  { segment: 'smile', name: '스마일', value: 20, fill: 'var(--color-smile)' },
-  { segment: 'icl', name: 'ICL', value: 15, fill: 'var(--color-icl)' },
-  { segment: 'lens', name: '렌즈삽입', value: 6, fill: 'var(--color-lens)' },
-  { segment: 'other', name: '기타', value: 4, fill: 'var(--color-other)' },
-]
+const CHART_YEARS = [CURRENT_YEAR]
 
-const doctorStats = [
-  { name: '김원장', count: 85 },
-  { name: '이원장', count: 72 },
-  { name: '박원장', count: 68 },
-  { name: '최원장', count: 55 },
-  { name: '정원장', count: 44 },
-]
+/** 전월 대비 변화율(%). 전월이 0 이거나 값이 null 이면 null. */
+const changeRate = (curr: number | null | undefined, prev: number | null | undefined): number | null => {
+  if (curr == null || prev == null || prev === 0) return null
+  return ((curr - prev) / prev) * 100
+}
 
-const channelData = [
-  { channel: 'naver', name: '네이버', value: 35, fill: 'var(--color-naver)' },
-  { channel: 'instagram', name: '인스타그램', value: 22, fill: 'var(--color-instagram)' },
-  { channel: 'referral', name: '지인소개', value: 18, fill: 'var(--color-referral)' },
-  { channel: 'youtube', name: '유튜브', value: 12, fill: 'var(--color-youtube)' },
-  { channel: 'kakao', name: '카카오', value: 8, fill: 'var(--color-kakao)' },
-  { channel: 'other', name: '기타', value: 5, fill: 'var(--color-other)' },
-]
+const formatNumber = (n: number | null | undefined) =>
+  n == null ? '—' : n.toLocaleString()
 
-const stats = [
-  { label: '이번달 수술', value: '324', change: '+12%', positive: true },
-  { label: '이번달 매출', value: '8.2억', change: '+8%', positive: true },
-  { label: '이번달 예약', value: '1,247', change: '-3%', positive: false },
-  { label: '신규 환자', value: '186', change: '+15%', positive: true },
-]
+/* ── 데이터 마스터 config ─────────────────────────────────────── */
 
 const surgeryTrendConfig = {
-  lasik: { label: '라식', color: 'var(--chart-1)' },
-  lasek: { label: '라섹', color: 'var(--chart-2)' },
+  lasek: { label: '라섹', color: 'var(--chart-1)' },
+  lasik: { label: '라식', color: 'var(--chart-2)' },
   smile: { label: '스마일', color: 'var(--chart-3)' },
-  icl: { label: 'ICL', color: 'var(--chart-4)' },
-} satisfies ChartConfig
-
-const revenueConfig = {
-  revenue: { label: '매출(억원)', color: 'var(--chart-5)' },
-} satisfies ChartConfig
-
-const surgeryTypeConfig = {
-  lasik: { label: '라식', color: 'var(--chart-1)' },
-  lasek: { label: '라섹', color: 'var(--chart-2)' },
-  smile: { label: '스마일', color: 'var(--chart-3)' },
-  icl: { label: 'ICL', color: 'var(--chart-4)' },
-  lens: { label: '렌즈삽입', color: '#f59e0b' },
+  smilePro: { label: '스마일프로', color: 'var(--chart-4)' },
+  icl: { label: 'ICL', color: 'var(--chart-5)' },
+  cataract: { label: '백내장', color: '#8b5cf6' },
   other: { label: '기타', color: '#94a3b8' },
 } satisfies ChartConfig
 
-const doctorConfig = {
-  count: { label: '수술건수', color: 'var(--chart-1)' },
+const reservationTrendConfig = {
+  call: { label: '콜', color: 'var(--chart-1)' },
+  online: { label: '온라인', color: 'var(--chart-3)' },
 } satisfies ChartConfig
 
-const channelConfig = {
-  naver: { label: '네이버', color: 'var(--chart-5)' },
-  instagram: { label: '인스타그램', color: 'var(--chart-2)' },
-  referral: { label: '지인소개', color: 'var(--chart-1)' },
-  youtube: { label: '유튜브', color: '#f97316' },
-  kakao: { label: '카카오', color: '#eab308' },
-  other: { label: '기타', color: '#94a3b8' },
+const consultationRateConfig = {
+  rate: { label: '전환율(%)', color: 'var(--chart-2)' },
 } satisfies ChartConfig
+
+/* ── 페이지 ────────────────────────────────────────────────── */
 
 export function DashboardPage() {
+  // 이번달 예약 · 월별 예약 추이
+  const reservation = useReservationOverallTrend(CHART_YEARS)
+  const resMonthly = useMemo(() => reservation.dataMap[CURRENT_YEAR] ?? [], [reservation.dataMap])
+
+  // 이번달 수술 · 월별 수술 추이 · 시술별 비중
+  const surgery = useSurgeryTrend(CHART_YEARS)
+  const sgMonthly = useMemo(() => surgery.dataMap[CURRENT_YEAR] ?? [], [surgery.dataMap])
+
+  // 이번달 검사자 (관리자 전용)
+  const overallExam = useOverallExamMonthly(CHART_YEARS)
+  const overallExamThis = overallExam.items.find((it) => it.year === CURRENT_YEAR && it.month === CURRENT_MONTH)
+  const overallExamPrev = overallExam.items.find((it) => it.year === CURRENT_YEAR && it.month === CURRENT_MONTH - 1)
+
+  // 이번달 외래수
+  const outpatient = useOutpatientCountTrend(CHART_YEARS)
+  const opMonthly = useMemo(() => outpatient.dataMap[CURRENT_YEAR] ?? [], [outpatient.dataMap])
+
+  // 총 누적 안수
+  const eyeTotal = useAccumulatedEyesTotal()
+
+  // 예약 채널 비중 — 이번달 예약통계_시력교정 (당월 1일 ~ 오늘)
+  const monthFrom = `${CURRENT_YEAR}-${String(CURRENT_MONTH).padStart(2, '0')}-01`
+  const today = new Date().toISOString().slice(0, 10)
+  const resStats = useReservationStatsSystem(monthFrom, today)
+
+  // 최근 3개월 상담 전환율 (관리자 전용)
+  const consultation = useConsultationRateKpi(CHART_YEARS)
+
+  /* ── KPI 카드 값 계산 ─────────────────────────────────────── */
+
+  const kpiCards = useMemo(() => {
+    // 예약
+    const resCurr = resMonthly[M_IDX]?.reservations
+    const resPrev = resMonthly[PREV_IDX]?.reservations
+    // 수술
+    const sgCurr = sgMonthly[M_IDX]?.total
+    const sgPrev = sgMonthly[PREV_IDX]?.total
+    // 외래
+    const opCurr = opMonthly[M_IDX]?.outpatientCount
+    const opPrev = opMonthly[PREV_IDX]?.outpatientCount
+
+    return [
+      {
+        label: '이번달 예약',
+        value: resCurr,
+        change: changeRate(resCurr, resPrev),
+        loading: reservation.isLoading,
+        error: reservation.isError,
+        unit: '건',
+      },
+      {
+        label: '이번달 검사자',
+        value: overallExamThis?.totalExam ?? null,
+        change: changeRate(overallExamThis?.totalExam, overallExamPrev?.totalExam),
+        loading: overallExam.isLoading,
+        error: overallExam.isError,
+        adminOnly: true,
+        unit: '명',
+      },
+      {
+        label: '이번달 수술',
+        value: sgCurr,
+        change: changeRate(sgCurr, sgPrev),
+        loading: surgery.isLoading,
+        error: surgery.isError,
+        unit: '건',
+      },
+      {
+        label: '이번달 외래수',
+        value: opCurr,
+        change: changeRate(opCurr, opPrev),
+        loading: outpatient.isLoading,
+        error: outpatient.isError,
+        unit: '건',
+      },
+      {
+        label: '총 누적 안수',
+        value: eyeTotal.total,
+        change: null,  // 누적 값이라 전월 대비 개념 없음
+        loading: eyeTotal.isLoading,
+        error: eyeTotal.isError,
+        unit: '안',
+        hint: '병원 전체 누적',
+      },
+    ]
+  }, [resMonthly, sgMonthly, opMonthly, overallExamThis, overallExamPrev, eyeTotal.total,
+      reservation.isLoading, reservation.isError, surgery.isLoading, surgery.isError,
+      overallExam.isLoading, overallExam.isError, outpatient.isLoading, outpatient.isError,
+      eyeTotal.isLoading, eyeTotal.isError])
+
+  /* ── 차트 데이터 ─────────────────────────────────────── */
+
+  // 월별 수술 추이 — 시술별 스택 막대
+  const surgeryTrendData = MONTHS.map((month, i) => {
+    const d = sgMonthly[i]
+    if (!d) return { month, lasek: 0, lasik: 0, smile: 0, smilePro: 0, icl: 0, cataract: 0, other: 0 }
+    return {
+      month,
+      lasek: d.lasek, lasik: d.lasik, smile: d.smile, smilePro: d.smilePro,
+      icl: d.icl + d.tIcl + d.kpl + d.tKpl + d.viva,   // 렌즈삽입 통합
+      cataract: d.catMulti + d.catMono + d.catEdof,
+      other: Math.max(0, d.total - (d.lasek + d.lasik + d.smile + d.smilePro
+        + d.icl + d.tIcl + d.kpl + d.tKpl + d.viva
+        + d.catMulti + d.catMono + d.catEdof)),
+    }
+  })
+
+  // 월별 예약 추이 — 콜/온라인 스택
+  const reservationTrendData = MONTHS.map((month, i) => ({
+    month,
+    call: resMonthly[i]?.call ?? 0,
+    online: resMonthly[i]?.online ?? 0,
+  }))
+
+  // 이번달 시술별 비중 — Pie
+  const surgeryTypeThis = sgMonthly[M_IDX]
+  const surgeryTypeData = surgeryTypeThis ? [
+    { key: 'lasek', name: '라섹', value: surgeryTypeThis.lasek, fill: 'var(--chart-1)' },
+    { key: 'lasik', name: '라식', value: surgeryTypeThis.lasik, fill: 'var(--chart-2)' },
+    { key: 'smile', name: '스마일', value: surgeryTypeThis.smile + surgeryTypeThis.smilePro, fill: 'var(--chart-3)' },
+    { key: 'icl', name: 'ICL/렌즈', value: surgeryTypeThis.icl + surgeryTypeThis.tIcl + surgeryTypeThis.kpl + surgeryTypeThis.tKpl + surgeryTypeThis.viva, fill: 'var(--chart-4)' },
+    { key: 'cataract', name: '백내장', value: surgeryTypeThis.catMulti + surgeryTypeThis.catMono + surgeryTypeThis.catEdof, fill: '#8b5cf6' },
+  ].filter((d) => d.value > 0) : []
+  const surgeryTypeTotal = surgeryTypeData.reduce((s, d) => s + d.value, 0)
+
+  // 예약 채널 비중 — Pie (이번달 예약통계_시력교정 합계)
+  const channelData = useMemo(() => {
+    const dailies = resStats.dailies ?? []
+    const sum = dailies.reduce((acc, d) => ({
+      inCall: acc.inCall + (d.callReservation ?? 0),
+      tm: acc.tm + (d.tmReservation ?? 0) + (d.tmRecounselReservation ?? 0),
+      naver: acc.naver + (d.naverReservation ?? 0),
+      kakao: acc.kakao + (d.kakaoReservation ?? 0),
+    }), { inCall: 0, tm: 0, naver: 0, kakao: 0 })
+    return [
+      { key: 'inCall', name: '인콜', value: sum.inCall, fill: 'var(--chart-1)' },
+      { key: 'tm', name: 'TM/재상담', value: sum.tm, fill: 'var(--chart-2)' },
+      { key: 'naver', name: '네이버', value: sum.naver, fill: 'var(--chart-5)' },
+      { key: 'kakao', name: '카카오', value: sum.kakao, fill: '#eab308' },
+    ].filter((d) => d.value > 0)
+  }, [resStats.dailies])
+  const channelTotal = channelData.reduce((s, d) => s + d.value, 0)
+
+  // 최근 3개월 전환율 (관리자 전용) — consultationRateKpi 응답 구조 유연 처리
+  const consultationRows = useMemo(() => {
+    const raw = consultation.data as unknown
+    if (!Array.isArray(raw)) return []
+    // 항목은 { label, rate } 또는 { year, month, rate } 등 다양할 수 있어 형태 안 맞으면 빈배열.
+    // 여기서는 이름 기반 요약을 기대 — 실제 구조는 백엔드 스펙에 따름.
+    return (raw as Array<{ label?: string; name?: string; rate?: number; value?: number }>)
+      .slice(0, 5)
+      .map((r) => ({
+        label: r.label ?? r.name ?? '—',
+        rate: r.rate ?? r.value ?? 0,
+      }))
+      .filter((r) => r.label !== '—')
+  }, [consultation.data])
+
   return (
     <div className="space-y-6">
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const TrendIcon = stat.positive ? TrendingUp : TrendingDown
-
+      {/* ── KPI 5개 ── */}
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        {kpiCards.map((card) => {
+          const TrendIcon = card.change != null && card.change >= 0 ? TrendingUp : TrendingDown
+          const positive = card.change != null && card.change >= 0
           return (
-            <Card key={stat.label} className="border-border/70 shadow-sm">
+            <Card key={card.label} className="border-border/70 shadow-sm">
               <CardHeader className="gap-2">
-                <CardDescription>{stat.label}</CardDescription>
+                <CardDescription className="flex items-center gap-1.5">
+                  {card.label}
+                  {card.adminOnly && (
+                    <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-700">
+                      관리자
+                    </span>
+                  )}
+                </CardDescription>
                 <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="text-3xl font-semibold tracking-tight text-gray-900">
-                    {stat.value}
+                  <CardTitle className="text-2xl font-semibold tracking-tight text-gray-900">
+                    {card.loading ? '…' : card.error ? '—' :
+                      <>
+                        {formatNumber(card.value)}
+                        <span className="ml-1 text-sm font-normal text-gray-400">{card.unit}</span>
+                      </>}
                   </CardTitle>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                      stat.positive
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-rose-50 text-rose-700'
-                    }`}
-                  >
-                    <TrendIcon className="h-3.5 w-3.5" />
-                    {stat.change}
-                  </span>
+                  {card.change != null && (
+                    <span
+                      className={
+                        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ' +
+                        (positive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')
+                      }
+                    >
+                      <TrendIcon className="h-3 w-3" />
+                      {positive ? '+' : ''}{card.change.toFixed(1)}%
+                    </span>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">전월 대비 변화량</p>
+                <p className="text-xs text-muted-foreground">
+                  {card.hint ?? (card.error ? '데이터 조회 실패' : '전월 대비')}
+                </p>
               </CardContent>
             </Card>
           )
         })}
       </section>
 
+      {/* ── 큰 차트 2개 ── */}
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>월별 수술 추이</CardTitle>
-            <CardDescription>수술 종류별 월간 실적 비교</CardDescription>
+            <CardDescription>{CURRENT_YEAR}년 · 시술별 스택</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={surgeryTrendConfig} className="h-80 w-full">
-              <BarChart data={monthlySurgery}>
+              <BarChart data={surgeryTrendData}>
                 <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dashed" />}
-                />
-                <Bar dataKey="lasik" stackId="surgery" fill="var(--color-lasik)" radius={[0, 0, 6, 6]} />
-                <Bar dataKey="lasek" stackId="surgery" fill="var(--color-lasek)" />
-                <Bar dataKey="smile" stackId="surgery" fill="var(--color-smile)" />
-                <Bar dataKey="icl" stackId="surgery" fill="var(--color-icl)" radius={[6, 6, 0, 0]} />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
+                <Bar dataKey="lasek" stackId="sg" fill="var(--color-lasek)" radius={[0, 0, 6, 6]} />
+                <Bar dataKey="lasik" stackId="sg" fill="var(--color-lasik)" />
+                <Bar dataKey="smile" stackId="sg" fill="var(--color-smile)" />
+                <Bar dataKey="smilePro" stackId="sg" fill="var(--color-smilePro)" />
+                <Bar dataKey="icl" stackId="sg" fill="var(--color-icl)" />
+                <Bar dataKey="cataract" stackId="sg" fill="var(--color-cataract)" />
+                <Bar dataKey="other" stackId="sg" fill="var(--color-other)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -188,172 +301,148 @@ export function DashboardPage() {
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>월별 매출 추이</CardTitle>
-            <CardDescription>누적 성장 흐름을 월 단위로 확인합니다</CardDescription>
+            <CardTitle>월별 예약 추이</CardTitle>
+            <CardDescription>{CURRENT_YEAR}년 · 콜/온라인</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={revenueConfig} className="h-80 w-full">
-              <AreaChart data={monthlyRevenue} margin={{ left: 12, right: 12 }}>
-                <defs>
-                  <linearGradient id="fill-revenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
+            <ChartContainer config={reservationTrendConfig} className="h-80 w-full">
+              <BarChart data={reservationTrendData}>
                 <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tickFormatter={formatAxisNumber}
-                  width={60}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => `${Number(value).toFixed(1)}억`}
-                    />
-                  }
-                />
-                <Area
-                  dataKey="revenue"
-                  type="monotone"
-                  fill="url(#fill-revenue)"
-                  stroke="var(--color-revenue)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
+                <Bar dataKey="call" stackId="res" fill="var(--color-call)" radius={[0, 0, 6, 6]} />
+                <Bar dataKey="online" stackId="res" fill="var(--color-online)" radius={[6, 6, 0, 0]} />
+              </BarChart>
             </ChartContainer>
           </CardContent>
         </Card>
       </section>
 
+      {/* ── 작은 차트 3개 ── */}
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* 이번달 시술별 비중 */}
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>수술 종류별 비율</CardTitle>
-            <CardDescription>대표 수술 포트폴리오 분포</CardDescription>
+            <CardTitle>이번달 시술별 비중</CardTitle>
+            <CardDescription>{CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 기준</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ChartContainer config={surgeryTypeConfig} className="mx-auto h-72 w-full max-w-[320px]">
-              <PieChart>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Pie
-                  data={surgeryType}
-                  dataKey="value"
-                  nameKey="segment"
-                  innerRadius={68}
-                  outerRadius={96}
-                  paddingAngle={3}
-                  strokeWidth={3}
-                >
-                  {surgeryType.map((entry) => (
-                    <Cell key={entry.segment} fill={entry.fill} />
+            {surgeryTypeData.length === 0 ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                {surgery.isLoading ? '불러오는 중…' : '이번달 수술 없음'}
+              </div>
+            ) : (
+              <>
+                <ChartContainer config={surgeryTrendConfig} className="mx-auto h-56 w-full max-w-[260px]">
+                  <PieChart>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <Pie data={surgeryTypeData} dataKey="value" nameKey="key"
+                         innerRadius={56} outerRadius={84} paddingAngle={3} strokeWidth={3}>
+                      {surgeryTypeData.map((d) => <Cell key={d.key} fill={d.fill} />)}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                  {surgeryTypeData.map((d) => (
+                    <div key={d.key} className="flex items-center gap-1.5 text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.fill }} />
+                      <span>{d.name}</span>
+                      <span className="ml-auto font-medium text-foreground">
+                        {surgeryTypeTotal ? Math.round((d.value / surgeryTypeTotal) * 100) : 0}%
+                      </span>
+                    </div>
                   ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {surgeryType.map((entry) => (
-                <div key={entry.segment} className="flex items-center gap-2 text-muted-foreground">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: entry.fill }}
-                  />
-                  <span>{entry.name}</span>
-                  <span className="ml-auto font-medium text-foreground">{entry.value}%</span>
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
+        {/* 예약 채널 비중 */}
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>원장별 수술 실적</CardTitle>
-            <CardDescription>이번 달 기준 상위 집도 실적</CardDescription>
+            <CardTitle>예약 채널 비중</CardTitle>
+            <CardDescription>{CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 시력교정 예약</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {channelData.length === 0 ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                {resStats.isLoading ? '불러오는 중…' : resStats.isError ? '조회 실패' : '이번달 예약 없음'}
+              </div>
+            ) : (
+              <>
+                <ChartContainer
+                  config={{
+                    inCall: { label: '인콜', color: 'var(--chart-1)' },
+                    tm: { label: 'TM/재상담', color: 'var(--chart-2)' },
+                    naver: { label: '네이버', color: 'var(--chart-5)' },
+                    kakao: { label: '카카오', color: '#eab308' },
+                  } satisfies ChartConfig}
+                  className="mx-auto h-56 w-full max-w-[260px]"
+                >
+                  <PieChart>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <Pie data={channelData} dataKey="value" nameKey="key"
+                         innerRadius={56} outerRadius={84} paddingAngle={3} strokeWidth={3}>
+                      {channelData.map((d) => <Cell key={d.key} fill={d.fill} />)}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                  {channelData.map((d) => (
+                    <div key={d.key} className="flex items-center gap-1.5 text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.fill }} />
+                      <span>{d.name}</span>
+                      <span className="ml-auto font-medium text-foreground">
+                        {channelTotal ? Math.round((d.value / channelTotal) * 100) : 0}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 상담 전환율 (관리자 전용) */}
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CardTitle>상담 전환율</CardTitle>
+              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                관리자
+              </span>
+            </div>
+            <CardDescription>{CURRENT_YEAR}년 · 최근 기준</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={doctorConfig} className="h-72 w-full">
-              <BarChart
-                accessibilityLayer
-                data={doctorStats}
-                layout="vertical"
-                margin={{ left: 8, right: 8 }}
-              >
-                <CartesianGrid horizontal={false} />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  tickLine={false}
-                  axisLine={false}
-                  width={54}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="line" />}
-                />
-                <Bar
-                  dataKey="count"
-                  fill="var(--color-count)"
-                  radius={8}
-                  barSize={18}
-                />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>환자 유입 채널</CardTitle>
-            <CardDescription>이번 달 신규 환자 유입 비중</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ChartContainer config={channelConfig} className="mx-auto h-72 w-full max-w-[320px]">
-              <PieChart>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Pie
-                  data={channelData}
-                  dataKey="value"
-                  nameKey="channel"
-                  innerRadius={64}
-                  outerRadius={96}
-                  paddingAngle={3}
-                  strokeWidth={3}
-                >
-                  {channelData.map((entry) => (
-                    <Cell key={entry.channel} fill={entry.fill} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-            <div className="space-y-2 text-sm">
-              {channelData.map((entry) => (
-                <div key={entry.channel} className="flex items-center gap-2 text-muted-foreground">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: entry.fill }}
+            {consultation.isError ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                권한이 없거나 조회 실패
+              </div>
+            ) : consultation.isLoading ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                불러오는 중…
+              </div>
+            ) : consultationRows.length === 0 ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                표시할 데이터 없음
+              </div>
+            ) : (
+              <ChartContainer config={consultationRateConfig} className="h-56 w-full">
+                <BarChart data={consultationRows} layout="vertical" margin={{ left: 8, right: 8 }}>
+                  <CartesianGrid horizontal={false} />
+                  <XAxis type="number" hide domain={[0, 100]} />
+                  <YAxis dataKey="label" type="category" tickLine={false} axisLine={false} width={80} />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent formatter={(v) => `${Number(v).toFixed(1)}%`} />}
                   />
-                  <span>{entry.name}</span>
-                  <span className="ml-auto font-medium text-foreground">{entry.value}%</span>
-                </div>
-              ))}
-            </div>
+                  <Bar dataKey="rate" fill="var(--color-rate)" radius={6} barSize={16} />
+                </BarChart>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
       </section>

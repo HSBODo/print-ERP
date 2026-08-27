@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -55,6 +56,18 @@ public class AccumulatedEyeController {
         return StatsPanelSupport.require(
                 reader,
                 svc -> svc.getAccumulatedEyes(from.toString(), to.toString(), query, safeField)
+        );
+    }
+
+    /**
+     * GET /api/accumulated-eyes/total — 총 누적 안수 (마트 max).
+     * 홈 대시보드 KPI 용. 마트 미연결(비-mart 프로파일) 시 503.
+     */
+    @GetMapping("/total")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getTotal() {
+        return StatsPanelSupport.require(
+                reader,
+                svc -> Map.of("total", svc.getTotal())
         );
     }
 }

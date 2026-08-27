@@ -29,4 +29,10 @@ public class AccumulatedEyeMartQueryService implements AccumulatedEyeReader {
     public List<AccumulatedEyeRow> getAccumulatedEyes(String from, String to, String query, String field) {
         return martRepository.findList(from, to, query, field);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getTotal() {
+        return martRepository.findTotal();
+    }
 }

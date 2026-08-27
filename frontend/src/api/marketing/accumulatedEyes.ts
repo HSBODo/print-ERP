@@ -33,6 +33,12 @@ const accumulatedEyeResponseSchema = z.object({
 /** 검색 대상 필드 — 백엔드 SQL 의 :field 파라미터와 값이 일치해야 한다. */
 export type AccumulatedEyesField = 'all' | 'name' | 'chart' | 'phone' | 'eyes'
 
+const accumulatedEyeTotalSchema = z.object({
+  success: z.boolean(),
+  data: z.object({ total: z.number() }),
+  message: z.string().nullish(),
+})
+
 export const accumulatedEyesApi = {
   getAccumulatedEyes: async (
     from: string,
@@ -44,5 +50,10 @@ export const accumulatedEyesApi = {
       withQuery('/accumulated-eyes', { from, to, query, field }),
     )
     return accumulatedEyeResponseSchema.parse(res).data
+  },
+  /** 총 누적 안수 (마트 max). 홈 대시보드 KPI. */
+  getTotal: async (): Promise<number> => {
+    const res = await api.get<unknown>('/accumulated-eyes/total')
+    return accumulatedEyeTotalSchema.parse(res).data.total
   },
 }

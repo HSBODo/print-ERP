@@ -16,4 +16,7 @@ public interface AccumulatedEyeReader {
      *              허용값: 'all' | 'name' | 'chart' | 'phone' | 'eyes'.
      */
     List<AccumulatedEyeRow> getAccumulatedEyes(String from, String to, String query, String field);
+
+    /** 총 누적 안수 (마트 max). 홈 대시보드 KPI 용. */
+    long getTotal();
 }

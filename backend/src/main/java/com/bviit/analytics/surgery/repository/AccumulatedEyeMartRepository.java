@@ -26,6 +26,18 @@ public class AccumulatedEyeMartRepository {
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
+    /**
+     * 총 누적 안수 — 마트 max(accumulated_eye_count). 비활성 행은 제외.
+     * 홈 대시보드 KPI 카드에서 씀. 원본 배치가 단조 증가로 관리하므로 max 값이 곧 전체 총계.
+     */
+    public long findTotal() {
+        Long total = jdbc.getJdbcOperations().queryForObject(
+                "SELECT COALESCE(MAX(accumulated_eye_count), 0) FROM list_accumulated_eyes WHERE is_active = TRUE",
+                Long.class
+        );
+        return total == null ? 0L : total;
+    }
+
     public List<AccumulatedEyeRow> findList(String from, String to, String query, String field) {
         return jdbc.query(
                 SELECT_SQL,
