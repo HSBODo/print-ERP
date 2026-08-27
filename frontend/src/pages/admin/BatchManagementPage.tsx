@@ -23,6 +23,11 @@ const JOB_OPTIONS: BatchJobOption[] = [
     description: 'mart_surgery_* 관련 잡만 재실행합니다.',
   },
   {
+    value: 'ACCUMULATED_EYES',
+    label: '누적 안수만',
+    description: 'list_accumulated_eyes(OPERATION_ACCUMULATED_EYE_COUNT 원천) 만 재적재합니다.',
+  },
+  {
     value: 'RESERVATION',
     label: '예약 도메인만',
     description: 'mart_reservation_* 관련 잡만 재실행합니다.',

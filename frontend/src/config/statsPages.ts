@@ -296,6 +296,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/surgery-ratio'
   ),
   statsPage(
+    'accumulated-eyes',
+    '누적 안수',
+    '/stats/accumulated-eyes',
+    'marketing-section',
+    '마케팅',
+    'MSSQL OPERATION_ACCUMULATED_EYE_COUNT 원천을 마트에 적재해 눈(眼) 단위로 조회하는 화면입니다. 기간 리스트와 이름·차트·전화·안수 검색을 제공합니다.',
+    '/api/accumulated-eyes'
+  ),
+  statsPage(
     'outpatient-list',
     '외래수 리스트',
     '/stats/outpatient-list',

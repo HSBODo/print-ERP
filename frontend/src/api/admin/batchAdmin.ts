@@ -32,6 +32,7 @@ const rerunResponseSchema = z.object({
 export type BatchDomain =
   | 'ALL'
   | 'SURGERY'
+  | 'ACCUMULATED_EYES'
   | 'RESERVATION'
   | 'EXAM'
   | 'CONSULTATION'

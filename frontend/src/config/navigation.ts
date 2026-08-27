@@ -72,6 +72,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'surgery': 'complete',
   'surgery-ratio': 'complete',
   'surgery-composition': 'complete',
+  'accumulated-eyes': 'complete',
   'outpatient-list': 'complete',
   'outpatient-count': 'complete',
   'overseas': 'pending',
@@ -249,7 +250,7 @@ const rawMenuItems: MenuItem[] = [
     // 예약 퍼널은 유입 채널 효율을 보는 화면이라 예약보다 마케팅에 가깝다(2026-08-06 이동).
     // 채널별 수익성은 그 짝이다 — 퍼널이 '얼마나 오나'(전환 축), 이쪽이 '얼마 버나'(가치 축).
     // 해외 환자·마케팅 효율(overseas·marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
-    children: kids('reservation-channel', 'channel-profit', 'channel-analysis', 'sms'),
+    children: kids('reservation-channel', 'channel-profit', 'channel-analysis', 'sms', 'accumulated-eyes'),
   },
   {
     id: 'admin-section',

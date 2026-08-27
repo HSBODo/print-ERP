@@ -1,6 +1,7 @@
 package com.bviit.analytics.batch;
 
 import com.bviit.analytics.batch.dto.BatchRunLog;
+import com.bviit.analytics.batch.job.AccumulatedEyeMartJob;
 import com.bviit.analytics.batch.job.ConsultationMartJob;
 import com.bviit.analytics.batch.job.EtcMartJob;
 import com.bviit.analytics.batch.job.ExamMartJob;
@@ -44,11 +45,12 @@ public class BatchOrchestrator {
     private static final Set<Domain> ALL_DOMAINS = EnumSet.allOf(Domain.class);
 
     /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
-    public enum Domain { SURGERY, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC }
+    public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC }
 
     private final BatchRunLogRepository runLogRepository;
     private final BatchSlackNotifier slackNotifier;
     private final SurgeryMartJob surgeryMartJob;
+    private final AccumulatedEyeMartJob accumulatedEyeMartJob;
     private final ReservationMartJob reservationMartJob;
     private final ReservationStatsDailyMartJob reservationStatsDailyMartJob;
     private final ReservationListHomepageMartJob reservationListHomepageMartJob;
@@ -166,7 +168,11 @@ public class BatchOrchestrator {
      */
     private Map<String, Integer> runDomains(LocalDate from, LocalDate to, Set<Domain> targets) {
         Map<String, Integer> stats = new LinkedHashMap<>();
-        if (targets.contains(Domain.SURGERY))       stats.putAll(surgeryMartJob.run(from, to));
+        if (targets.contains(Domain.SURGERY))          stats.putAll(surgeryMartJob.run(from, to));
+        // 누적 안수는 원천(OPERATION_ACCUMULATED_EYE_COUNT) 도, 소급 특성도 다른 별개 잡.
+        // 관리자 수동 배치에서 이것만 골라 재적재할 수 있도록 별도 도메인으로 분리했다.
+        // daily/monthly 스케줄러는 ALL_DOMAINS 를 넘겨 두 도메인 모두 실행한다.
+        if (targets.contains(Domain.ACCUMULATED_EYES)) stats.putAll(accumulatedEyeMartJob.run(from, to));
         if (targets.contains(Domain.RESERVATION)) {
             // 홈페이지 리스트 마트를 먼저 채운다 — ReservationMartJob 안의 overallStatsService
             // 가 홈페이지 몫을 mart_list_reservation_homepage 에서 읽기 때문. 순서를 바꾸면

@@ -126,6 +126,7 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/etc/tables/V51a__ad_spend.sql");
         applyScript("sql/mart/etc/tables/V51b__lens_cost.sql");
         applyScript("sql/mart/reservation/tables/V53__list_reservation_all_mart.sql");
+        applyScript("sql/mart/surgery/tables/V58__list_accumulated_eyes.sql");
 
         // functions/ — 뷰에서 참조하므로 뷰 앞에 실행
         applyScript("sql/mart/surgery/functions/V47__surgery_op_type_fn.sql");
