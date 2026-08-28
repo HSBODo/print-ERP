@@ -17,6 +17,60 @@ const FIELD_OPTIONS: { value: AccumulatedEyesField; label: string; placeholder: 
   { value: 'eyes',  label: '안수',   placeholder: '예: 627122' },
 ]
 
+// 구분(operationCategory) 배지 색 규칙 — SmsPage 의 시술군 팔레트와 통일.
+// 값은 MSSQL OPERATION_CATEGORY 원본 그대로라 신규 카테고리는 fallback(gray) 로 뜬다.
+const CATEGORY_STYLE: Record<string, string> = {
+  '시력교정술': 'bg-blue-50 text-blue-700 border-blue-100',
+  '렌즈삽입':  'bg-amber-50 text-amber-700 border-amber-100',
+  '백내장':    'bg-violet-50 text-violet-700 border-violet-100',
+  '드림렌즈':  'bg-cyan-50 text-cyan-700 border-cyan-100',
+  '재수술':    'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100',
+  '노안':      'bg-emerald-50 text-emerald-700 border-emerald-100',
+}
+const CATEGORY_FALLBACK = 'bg-gray-100 text-gray-600 border-gray-200'
+const categoryClass = (v: string) => CATEGORY_STYLE[v.trim()] ?? CATEGORY_FALLBACK
+
+// ── 가중치 규칙 ─────────────────────────────────────────────
+// AccumulatedEyeRulesCard 의 계산식과 1:1. 판단은 대문자 부분 문자열 매칭.
+// 수술일 2024-01-01 부터 현재 규칙(최대 +3), 그 이전은 legacy(+W.V, +CONT 도 +1).
+const LEGACY_CUTOFF = '2024-01-01'
+
+type WeightRule = { label: string; style: string; title: string }
+
+const RULE_STYLE = {
+  base:   'bg-gray-100 text-gray-700 border-gray-200',
+  x:      'bg-sky-50 text-sky-700 border-sky-100',
+  remo:   'bg-indigo-50 text-indigo-700 border-indigo-100',
+  legacy: 'bg-amber-50 text-amber-700 border-amber-100',
+} as const
+
+const computeWeightRules = (opCode: string, opDate: string): WeightRule[] => {
+  const code = (opCode ?? '').toUpperCase()
+  const rules: WeightRule[] = [{ label: '기본', style: RULE_STYLE.base, title: '수술 그 자체 (+1)' }]
+
+  // +X(P) 가 있으면 그것으로, 아니면 +X. 둘 다 있어도 하나만.
+  if (code.includes('+X(P)')) {
+    rules.push({ label: '+X(P)', style: RULE_STYLE.x, title: '옵션 +X(P) 매칭 (+1)' })
+  } else if (code.includes('+X')) {
+    rules.push({ label: '+X', style: RULE_STYLE.x, title: '옵션 +X 매칭 (+1)' })
+  }
+
+  if (code.includes('REMO') && code.includes('CTR')) {
+    rules.push({ label: 'REMO+CTR', style: RULE_STYLE.remo, title: 'REMO 와 CTR 동시 (+1)' })
+  }
+
+  // Legacy — 2024-01-01 이전 수술일에만 적용.
+  if (opDate && opDate < LEGACY_CUTOFF) {
+    if (code.includes('+W.V')) {
+      rules.push({ label: '+W.V', style: RULE_STYLE.legacy, title: 'legacy: +W.V (+1) · 2024↓' })
+    }
+    if (code.includes('+CONT')) {
+      rules.push({ label: '+CONT', style: RULE_STYLE.legacy, title: 'legacy: +CONT (+1) · 2024↓' })
+    }
+  }
+  return rules
+}
+
 /**
  * 누적 안수 리스트 — 원천 {@code OPERATION_ACCUMULATED_EYE_COUNT} 마트 조회.
  *
@@ -38,14 +92,19 @@ const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
 type SortKey = keyof AccumulatedEyeItem
 type SortDir = 'asc' | 'desc'
 
+/** 가상 컬럼 키 — 실제 데이터 필드가 아니라 화면에서 파생해 만드는 컬럼(가중치 등). 정렬 불가. */
+type VirtualKey = 'no' | 'weightCodes' | 'weight'
+
 type Column = {
-  key: SortKey | 'no'
+  key: SortKey | VirtualKey
   label: string
   align?: 'left' | 'center' | 'right'
   width?: string
   render?: (row: AccumulatedEyeItem, i: number) => React.ReactNode
-  /** false 이거나 key === 'no' 이면 헤더 클릭 정렬 비활성. */
+  /** false 이거나 가상 컬럼(no·weight*)이면 헤더 클릭 정렬 비활성. */
   sortable?: boolean
+  /** CSV 출력값. 가상 컬럼(가중치 등)은 필수 — 없으면 row[key] 원값으로 폴백. */
+  csv?: (row: AccumulatedEyeItem) => string | number
 }
 
 const COLUMNS: Column[] = [
@@ -54,8 +113,56 @@ const COLUMNS: Column[] = [
   { key: 'custNum', label: '차트번호', align: 'left', width: '6rem', sortable: true },
   { key: 'customName', label: '이름', align: 'left', width: '5rem', sortable: true },
   { key: 'customPhone', label: '연락처', align: 'left', width: '8rem', sortable: true },
-  { key: 'operationCategory', label: '구분', align: 'left', width: '6rem', sortable: true },
+  {
+    key: 'operationCategory', label: '구분', align: 'left', width: '6rem', sortable: true,
+    render: (row) => {
+      const v = row.operationCategory ?? ''
+      if (!v) return ''
+      return (
+        <span
+          className={
+            'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ' +
+            categoryClass(v)
+          }
+        >
+          {v}
+        </span>
+      )
+    },
+  },
   { key: 'operationCode', label: '수술 코드', align: 'left', width: '12rem', sortable: true },
+  {
+    key: 'weightCodes', label: '가중치 코드', align: 'left', width: '14rem', sortable: false,
+    render: (row) => {
+      const rules = computeWeightRules(row.operationCode, row.operationDate)
+      return (
+        <div className="flex flex-wrap gap-1">
+          {rules.map((r) => (
+            <span
+              key={r.label}
+              title={r.title}
+              className={
+                'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium ' +
+                r.style
+              }
+            >
+              {r.label}
+            </span>
+          ))}
+        </div>
+      )
+    },
+    csv: (row) =>
+      computeWeightRules(row.operationCode, row.operationDate).map((r) => r.label).join(' | '),
+  },
+  {
+    key: 'weight', label: '가중치', align: 'right', width: '4rem', sortable: false,
+    render: (row) => {
+      const n = computeWeightRules(row.operationCode, row.operationDate).length
+      return <span className="font-mono font-semibold text-gray-900">+{n}</span>
+    },
+    csv: (row) => computeWeightRules(row.operationCode, row.operationDate).length,
+  },
   { key: 'eyePosition', label: '안(R/L)', align: 'center', width: '3.5rem', sortable: true },
   { key: 'accumulatedEyeCount', label: '누적 안수', align: 'right', width: '6rem', sortable: true },
   { key: 'lastModifiedDate', label: '수정 시각', align: 'left', width: '10rem', sortable: true },
@@ -312,9 +419,11 @@ export function AccumulatedEyesPage() {
   const exportCsv = () => {
     if (!sortedRows.length) return
     const csv = columnsToCsv(
+      // 가상 컬럼(가중치 등)은 csv() 로 파생값을 내보내고, 나머지는 row[key] 원값.
       COLUMNS.filter((c) => c.key !== 'no').map((c) => ({
-        key: c.key as keyof AccumulatedEyeItem,
+        key: c.key,
         label: c.label,
+        csv: c.csv,
       })),
       // 화면과 동일한 정렬 순서로 내보낸다.
       sortedRows,
