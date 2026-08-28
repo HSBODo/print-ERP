@@ -372,12 +372,13 @@ export function AccumulatedEyesPage() {
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(50)
-  // 정렬 상태 — null 이면 서버 기본 정렬(operation_date DESC, accumulated_eye_count ASC) 그대로.
-  //   토글 순서: 없음 → asc → desc → 없음.
-  const [sortKey, setSortKey] = useState<SortKey | null>(null)
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  // 정렬 상태 — 기본은 누적 안수 내림차순 (최고 누적치 위로).
+  //   헤더 다시 클릭 시 토글: desc → asc → 없음(서버 기본: operation_date DESC).
+  const [sortKey, setSortKey] = useState<SortKey | null>('accumulatedEyeCount')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const toggleSort = (key: SortKey) => {
+    // 다른 컬럼을 처음 누르면 asc 부터 시작. 누적 안수만 첫 진입 상태가 desc 라 반대 순서.
     if (sortKey !== key) { setSortKey(key); setSortDir('asc'); return }
     if (sortDir === 'asc') { setSortDir('desc'); return }
     setSortKey(null); setSortDir('asc')
