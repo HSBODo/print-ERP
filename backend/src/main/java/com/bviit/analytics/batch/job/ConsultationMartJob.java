@@ -76,10 +76,20 @@ public class ConsultationMartJob {
         log.info("ConsultationMartJob start: range={}..{}", from, to);
 
         // ─── 1) Postgres 후보군 ───────────────────────────────────
-        List<Map<String, Object>> visionResRateRows      = martRepository.findReservationRateVisionCandidates(from.toString(), to.toString());
-        List<Map<String, Object>> cataractResRateRows    = martRepository.findReservationRateCataractCandidates(from.toString(), to.toString());
-        List<Map<String, Object>> visionConsultRateRows  = martRepository.findConsultationRateVisionCandidates(from.toString(), to.toString());
-        List<Map<String, Object>> cataractConsultRateRows = martRepository.findConsultationRateCataractCandidates(from.toString(), to.toString());
+        //   ⚠️ from..to 를 그대로 넘기면 안 된다. 이 잡은 하루짜리 범위로도 불린다(매일 03시 D-1 배치).
+        //      그때 candidate = D-1 세션만 → 그 달 (yr,mo) 집계에 D-1 하루만 반영되고, upsert 가 EXCLUDED
+        //      값으로 통으로 덮어써 그 달 rate 가 하루치로 리셋된다. 게다가 rate 는 분모/분자 모두 D-1 표본이라
+        //      비율 자체가 무의미해진다. 수술 도메인이 2026-08-06 유사 사고를 겪었다(SurgeryMartJob 참조).
+        //      월별은 언제나 "그 달 전체의 합" 이어야 하므로 candidate 조회를 달 경계로 넓힌다.
+        //      list_exam·list_cataract_exam(→ v_all_exam_list) 은 EXAM 배치가 D-1 범위 delete+insert 로
+        //      누적해와서 그 달 전체 행이 살아있다. 결과는 filterRate/filterConsult 의 isMonthInRange 로
+        //      원래 from..to 안 월만 upsert 된다(D-1 배치면 그 달 1개, monthly reconcile 이면 전월 1개).
+        LocalDate monthFrom = from.withDayOfMonth(1);
+        LocalDate monthTo = to.withDayOfMonth(to.lengthOfMonth());
+        List<Map<String, Object>> visionResRateRows      = martRepository.findReservationRateVisionCandidates(monthFrom.toString(), monthTo.toString());
+        List<Map<String, Object>> cataractResRateRows    = martRepository.findReservationRateCataractCandidates(monthFrom.toString(), monthTo.toString());
+        List<Map<String, Object>> visionConsultRateRows  = martRepository.findConsultationRateVisionCandidates(monthFrom.toString(), monthTo.toString());
+        List<Map<String, Object>> cataractConsultRateRows = martRepository.findConsultationRateCataractCandidates(monthFrom.toString(), monthTo.toString());
 
         // ─── 2) chart_no 합집합 → MSSQL 브릿지 ───────────────────
         Set<String> chartNos = new HashSet<>();
@@ -281,8 +291,13 @@ public class ConsultationMartJob {
 
     // ─── 중단 사유 (리스트 재집계) ────────────────────────────
     private List<StopReasonMonthlyItem> computeStopReason(LocalDate from, LocalDate to) {
+        // ⚠️ from..to 를 그대로 접으면 안 된다 — rate 마트들과 동일 이유. 데일리 D-1 배치면 그 달 중단수가
+        //    하루치로 리셋된다. 범위를 달 경계로 넓혀 v_all_exam_list 를 다시 읽고, 아래 isMonthInRange
+        //    필터가 원래 from..to 안 월만 upsert 하도록 한다(D-1 배치면 그 달 1개).
+        LocalDate monthFrom = from.withDayOfMonth(1);
+        LocalDate monthTo = to.withDayOfMonth(to.lengthOfMonth());
         Map<YearMonth, StopReasonAgg> byMonth = new LinkedHashMap<>();
-        for (Map<String, Object> row : martRepository.findStopReasonDailyAgg(from.toString(), to.toString())) {
+        for (Map<String, Object> row : martRepository.findStopReasonDailyAgg(monthFrom.toString(), monthTo.toString())) {
             LocalDate day = ((java.sql.Date) row.get("d")).toLocalDate();
             StopReasonAgg acc = byMonth.computeIfAbsent(YearMonth.from(day), k -> new StopReasonAgg());
             acc.recommendX     += intOf(row, "recommendX");

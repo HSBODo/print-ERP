@@ -74,8 +74,17 @@ public class OutpatientMartJob {
 
         // 2) 월별 집계 — 방금 적재한 리스트를 월로 접는다(= 화면 리스트와 같은 정의).
         //    min-year 미만 연도는 V9 seed 보존, 2026-01~05 는 V27 골든 시드 구간 — 둘 다 스킵.
+        //
+        //    ⚠️ from..to 를 그대로 접으면 안 된다. 이 잡은 하루짜리 범위로도 불린다(매일 03시 D-1 배치).
+        //       그때 리스트 조회는 D-1 하루만 돌려주는데, 월별 upsert 는 EXCLUDED 값으로 통으로 덮어써
+        //       그 달 monthly 가 하루치로 리셋된다. 수술 도메인이 2026-08-06 실제로 그렇게 만들었다가
+        //       7월 수술수가 861→34 로 무너졌다(SurgeryMartJob 참조).
+        //       월별은 언제나 "그 달 전체의 합" 이어야 하므로 범위를 달 경계로 넓혀 다시 읽는다.
+        //       list_outpatient 는 데일리마다 D-1 범위 delete+insert 라 그 달 전체 행이 살아있다.
+        LocalDate monthFrom = from.withDayOfMonth(1);
+        LocalDate monthTo = to.withDayOfMonth(to.lengthOfMonth());
         Map<YearMonth, Integer> byMonth = aggregateByMonth(
-                outpatientMartRepository.findOutpatientDailyAgg(from.toString(), to.toString()));
+                outpatientMartRepository.findOutpatientDailyAgg(monthFrom.toString(), monthTo.toString()));
 
         List<OutpatientCountMonthlyItem> monthly = byMonth.entrySet().stream()
                 .filter(e -> e.getKey().getYear() >= minYear)
