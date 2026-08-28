@@ -46,7 +46,12 @@ const statusTextClass = (status?: MenuStatus): string => {
   return 'text-gray-500 hover:text-gray-900'
 }
 
-/** ADMIN 롤 전용 항목 표시 배지 — 관리자에게만 노출되지만 어떤 항목이 제한 접근인지 눈에 띄게. */
+/**
+ * ADMIN 롤 전용 항목 표시 배지.
+ * - "관리자" (amber): admin-section — 진짜 관리자 도구 (예: 배치 관리)
+ * - "개발중" (blue) : 그 외 adminOnly 페이지 — 개발/검증 미완성으로 관리자에게만 노출 중.
+ *                     완성되면 ADMIN_ONLY_PAGE_IDS 에서 빼면 자동으로 배지 사라짐.
+ */
 function AdminBadge() {
   return (
     <span
@@ -57,6 +62,28 @@ function AdminBadge() {
       관리자
     </span>
   )
+}
+function WipBadge() {
+  return (
+    <span
+      title="개발 중 — 관리자만 확인 가능"
+      aria-label="개발 중"
+      className="ml-auto shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-blue-700"
+    >
+      개발중
+    </span>
+  )
+}
+/**
+ * 배지 종류 결정:
+ *  - kind='section' (섹션 자체) 또는 adminReal(관리자 섹션 트리 안 항목) → "관리자"
+ *  - 그 외 adminOnly 항목 → "개발중"
+ *  - adminOnly 아니면 배지 없음
+ */
+function ItemBadge({ item }: { item: MenuItem }) {
+  if (!item.adminOnly) return null
+  const isReal = item.kind === 'section' || item.adminReal
+  return isReal ? <AdminBadge /> : <WipBadge />
 }
 
 /** 깊이 depth 에서 활성 경로가 서브트리에 존재하는지 검사(활성 그룹 하이라이트용). */
@@ -229,7 +256,7 @@ function SidebarNode({
           {(!collapsed || depth > 0) && (
             <>
               <span className="flex-1 text-left truncate">{item.label}</span>
-              {item.adminOnly && <AdminBadge />}
+              <ItemBadge item={item} />
               {isEmptySection ? (
                 <span className="text-xs text-gray-400">비어있음</span>
               ) : (
@@ -279,7 +306,7 @@ function SidebarNode({
                       }`}
                     >
                       <span className="truncate">{leaf.label}</span>
-                      {leaf.adminOnly && <AdminBadge />}
+                      <ItemBadge item={leaf} />
                     </Link>
                   </li>
                 ))}
@@ -306,7 +333,7 @@ function SidebarNode({
       >
         {depth === 0 && Icon && <Icon className="h-[18px] w-[18px] flex-shrink-0" />}
         {(!collapsed || depth > 0) && <span className="flex-1 truncate">{item.label}</span>}
-        {(!collapsed || depth > 0) && item.adminOnly && <AdminBadge />}
+        {(!collapsed || depth > 0) && <ItemBadge item={item} />}
       </Link>
     </li>
   )

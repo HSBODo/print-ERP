@@ -153,11 +153,11 @@ export const statsPages: StatsPageDefinition[] = [
   ),
   statsPage(
     'sms',
-    '문자 발송 관리',
+    '문자 발송 리스트',
     '/stats/sms',
     'marketing-section',
     '마케팅',
-    '수술 후 안내 문자(알림톡·SMS) 1~3차 발송과 결과 점검. 관리자 전용. 자동화 미구현 상태에서는 대상 관리(추가·연락처 수정·홀딩) 역할.',
+    '수술 후 안내 문자(알림톡·SMS) 1~3차 발송 대상 리스트와 결과 점검. 관리자 전용. 자동화 미구현 상태에서는 대상 관리(추가·연락처 수정·홀딩) 역할.',
     '/api/sms-management/targets'
   ),
   statsPage(

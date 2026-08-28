@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Home, CalendarCheck, Microscope, Stethoscope, Syringe,
   Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
-  Building2,
+  Building2, MessageSquare,
 } from 'lucide-react'
 
 import { getStatsPageById } from './statsPages'
@@ -26,6 +26,12 @@ export interface MenuItem {
   status?: MenuStatus
   /** true 이면 ADMIN 롤 사용자에게만 노출 (Sidebar 필터). */
   adminOnly?: boolean
+  /**
+   * true 이면 "관리자" 배지 대상(개발 완료된 관리자 전용 도구, amber).
+   * 미지정이면 "개발중" 배지(WIP, blue) — 완성 전이라 관리자만 검토용 노출 중.
+   * admin-section 트리 안 항목은 rawMenuItems 정의 이후 자동 마킹된다.
+   */
+  adminReal?: boolean
   kind?: 'section' | 'group'
 }
 
@@ -250,7 +256,18 @@ const rawMenuItems: MenuItem[] = [
     // 예약 퍼널은 유입 채널 효율을 보는 화면이라 예약보다 마케팅에 가깝다(2026-08-06 이동).
     // 채널별 수익성은 그 짝이다 — 퍼널이 '얼마나 오나'(전환 축), 이쪽이 '얼마 버나'(가치 축).
     // 해외 환자·마케팅 효율(overseas·marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
-    children: kids('reservation-channel', 'channel-profit', 'channel-analysis', 'sms', 'accumulated-eyes'),
+    // 문자 발송 관리는 향후 하위 페이지(이력·템플릿 등) 확장을 대비해 그룹으로 감쌈.
+    children: [
+      ...kids('reservation-channel', 'channel-profit', 'channel-analysis', 'accumulated-eyes'),
+      {
+        id: 'sms-management',
+        label: '문자 발송 관리',
+        href: '#',
+        icon: MessageSquare,
+        kind: 'group',
+        children: kids('sms'),
+      },
+    ],
   },
   {
     id: 'admin-section',
@@ -278,4 +295,26 @@ const pruneItems = (items: MenuItem[]): MenuItem[] =>
         item.children.length > 0,
     )
 
-export const menuItems: MenuItem[] = pruneItems(rawMenuItems)
+/**
+ * admin-section 트리 안 항목에 adminReal=true 자동 부여.
+ * 관리자 섹션은 "개발 완료된 관리자 전용 도구" 이므로 하위 잎도 "관리자" 배지 대상이다.
+ * 여기서 자동 처리하면 admin-section 하위에 페이지를 추가해도 배지 마킹을 잊지 않는다.
+ */
+const markAdminSectionSubtree = (items: MenuItem[]): MenuItem[] => {
+  const markReal = (nodes: MenuItem[]): MenuItem[] =>
+    nodes.map((n) => ({
+      ...n,
+      adminReal: true,
+      children: n.children ? markReal(n.children) : undefined,
+    }))
+  return items.map((item) => {
+    if (item.id === 'admin-section' && item.children) {
+      return { ...item, adminReal: true, children: markReal(item.children) }
+    }
+    return item.children
+      ? { ...item, children: markAdminSectionSubtree(item.children) }
+      : item
+  })
+}
+
+export const menuItems: MenuItem[] = markAdminSectionSubtree(pruneItems(rawMenuItems))
