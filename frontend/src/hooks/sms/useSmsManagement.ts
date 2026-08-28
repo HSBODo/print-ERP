@@ -1,0 +1,82 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { smsApi, type SmsQueryBasis, type SmsTargetRequest } from '@/api/sms'
+
+const TARGETS_KEY = 'sms-management-targets'
+
+/**
+ * 발송 대상 목록 — 수술일 기간 기준.
+ * enabled=false 면 조회하지 않는다(화면에 들어오자마자 자동 조회하지 않기 위해).
+ */
+export function useSmsTargets(
+  from: string, to: string, enabled = true,
+  basis: SmsQueryBasis = 'SURGERY', templateCode?: string,
+) {
+  return useQuery({
+    queryKey: [TARGETS_KEY, from, to, basis, templateCode ?? ''],
+    queryFn: () => smsApi.getTargets(from, to, basis, templateCode),
+    enabled,
+    staleTime: 60 * 1000,
+    // 창을 다시 클릭할 때마다 다시 부르지 않는다 — 조회는 [조회] 버튼이 정한다.
+    // 켜 두면 alt-tab 만 해도 목록이 갱신돼 선택이 흔들린다.
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useSmsTemplates() {
+  return useQuery({
+    queryKey: ['sms-management-templates'],
+    queryFn: () => smsApi.getTemplates(),
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+/** 목록을 바꾸는 모든 액션 — 성공 시 대상 목록 캐시를 무효화해 화면을 갱신한다. */
+export function useSmsMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: [TARGETS_KEY] })
+
+  const create = useMutation({
+    mutationFn: (request: SmsTargetRequest) => smsApi.createTarget(request),
+    onSuccess: invalidate,
+  })
+  const update = useMutation({
+    mutationFn: ({ id, request }: { id: number; request: SmsTargetRequest }) => smsApi.updateTarget(id, request),
+    onSuccess: invalidate,
+  })
+  const changeStatus = useMutation({
+    mutationFn: ({ id, value }: { id: number; value: 'SENDABLE' | 'HOLD' }) => smsApi.changeStatus(id, value),
+    onSuccess: invalidate,
+  })
+  const changeStatusBulk = useMutation({
+    mutationFn: ({ targetIds, value }: { targetIds: number[]; value: 'SENDABLE' | 'HOLD' }) =>
+      smsApi.changeStatusBulk(targetIds, value),
+    onSuccess: invalidate,
+  })
+  /** 수신거부 등록 — 홀딩과 달리 사람 단위라 다음 수술에도 계속 막힌다. */
+  const registerOptOut = useMutation({
+    mutationFn: (targetIds: number[]) => smsApi.registerOptOut(targetIds),
+    onSuccess: invalidate,
+  })
+  /** 기간은 발송 시각 기준 — 비우면 최근 7일을 본다. */
+  const syncResults = useMutation({
+    mutationFn: (range?: { sentFrom: string; sentTo: string }) =>
+      smsApi.syncResults(range?.sentFrom, range?.sentTo),
+    onSuccess: invalidate,
+  })
+  const importTargets = useMutation({
+    mutationFn: ({ from, to }: { from: string; to: string }) => smsApi.importTargets(from, to),
+    onSuccess: invalidate,
+  })
+  /** 차트번호 조회 — 팝업에서 [조회] 버튼으로 실행(자동 조회가 아니라 명시적 액션). */
+  const lookup = useMutation({
+    mutationFn: (chartNo: string) => smsApi.lookup(chartNo),
+  })
+  const send = useMutation({
+    mutationFn: ({ targetIds, templateCode, channel }: {
+      targetIds: number[]; templateCode: string; channel: 'ALIMTALK' | 'SMS'
+    }) => smsApi.send(targetIds, templateCode, channel),
+    onSuccess: invalidate,
+  })
+
+  return { create, update, changeStatus, changeStatusBulk, registerOptOut, syncResults, importTargets, send, lookup }
+}

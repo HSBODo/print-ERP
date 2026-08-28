@@ -59,8 +59,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'channel-profit': 'complete',
   // 조회가 없는 정적 분석 문서다. 수치가 본문에 박혀 있어 API 없이도 완결이라 'complete'.
   'channel-analysis': 'complete',
-  // sms 기획서(docs/기획/sms.html) 기반 임시 화면 — mock 데이터 · API 미연결.
-  'sms': 'frontend-only',
+  'sms': 'complete',
   // 소스(legacy.datasource.url) 미설정 환경에서는 503 — 다른 통계 페이지가 데이터소스 부재 시
   // 503 을 주는 것과 동일한 패턴이라 'complete' 가 맞다(상태는 구현 완료 여부를 뜻한다).
   'reservation-list-homepage': 'complete',

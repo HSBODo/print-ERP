@@ -8,6 +8,7 @@ import { consultationPageRoutes } from './consultation/routes'
 import { surgeryPageRoutes } from './surgery/routes'
 import { outpatientPageRoutes } from './outpatient/routes'
 import { marketingPageRoutes } from './marketing/routes'
+import { smsPageRoutes } from './sms/routes'
 import { cancelNoshowPageRoutes } from './cancel-noshow/routes'
 import { unitPricePageRoutes } from './unit-price/routes'
 import { etcPageRoutes } from './etc/routes'
@@ -23,6 +24,9 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
   ...surgeryPageRoutes,
   ...outpatientPageRoutes,
   ...marketingPageRoutes,
+  // smsPageRoutes 를 marketing 뒤에 두어 'sms' 키를 실제 SmsManagementPage 로 오버라이드
+  // (marketing 의 mock SmsPage 는 삭제됨).
+  ...smsPageRoutes,
   ...cancelNoshowPageRoutes,
   ...unitPricePageRoutes,
   ...etcPageRoutes,

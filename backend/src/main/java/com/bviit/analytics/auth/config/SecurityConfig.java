@@ -76,6 +76,9 @@ public class SecurityConfig {
                 }
                 // 관리자 전용 API (배치 트리거·로그) — ADMIN 롤 필수
                 auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
+                // 문자 발송 관리 — 연락처가 응답에 실리므로 백엔드에서도 ADMIN 강제
+                // (프론트 ADMIN_ONLY_PAGE_IDS 와 이중 가드)
+                auth.requestMatchers("/api/sms-management/**").hasRole("ADMIN");
                 auth.anyRequest().authenticated();
             })
             .exceptionHandling(ex -> ex

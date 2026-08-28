@@ -87,7 +87,7 @@ public class MartSchemaInitializer implements InitializingBean {
     }
 
     /**
-     * DDL 36개 파일 — 테이블 32 + 함수 1 + 뷰 3.
+     * DDL 38개 파일 — 테이블 34 + 함수 1 + 뷰 3.
      * 실행 순서: kind 우선(tables → functions → views · 의존성 방향), kind 내부는 V-번호 오름차순.
      * 파일 위치는 {domain}/{tables|functions|views}/ 로 도메인 하위에 분산됨.
      * 테이블 1개 = 파일 1개 원칙. 동일 V-번호 그룹은 접미사(a/b/c/d)로 구분.
@@ -127,6 +127,8 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/etc/tables/V51b__lens_cost.sql");
         applyScript("sql/mart/reservation/tables/V53__list_reservation_all_mart.sql");
         applyScript("sql/mart/surgery/tables/V58__list_accumulated_eyes.sql");
+        applyScript("sql/mart/sms/tables/V59__sms_management.sql");
+        applyScript("sql/mart/sms/tables/V60__sms_opt_out.sql");
 
         // functions/ — 뷰에서 참조하므로 뷰 앞에 실행
         applyScript("sql/mart/surgery/functions/V47__surgery_op_type_fn.sql");

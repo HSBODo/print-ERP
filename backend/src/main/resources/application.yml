@@ -71,3 +71,97 @@ logging:
     webhook-url: ${LOGGING_SLACK_WEBHOOK_URL:}
     level: ${LOGGING_SLACK_LEVEL:ERROR}
     enabled: ${LOGGING_SLACK_ENABLED:false}
+
+solapi:
+  api-key: ${SOLAPI_API_KEY:}
+  api-secret: ${SOLAPI_API_SECRET:}
+  from: ${SOLAPI_FROM:}
+  pf-id: ${SOLAPI_PFID:}
+  templates:
+    # 차수 라벨 — 화면 컬럼명. 오프셋은 수술 그룹마다 달라 SurgeryGroup 이 갖는다.
+    t1:
+      label: ${SOLAPI_TPL1_LABEL:수술 후 안내 1차}
+    t2:
+      label: ${SOLAPI_TPL2_LABEL:수술 후 안내 2차}
+    t3:
+      label: ${SOLAPI_TPL3_LABEL:수술 후 안내 3차}
+    # ── 그룹 × 차수 = 15 슬롯 ──
+    # 2·3차에는 sms-text-delayed 가 하나 더 붙는다 — 기준일이 재조정된 대상에게 나가는,
+    # 경과 선언("수술 후 일주일이 지났습니다")을 뺀 문자 본문이다(1차는 그 문장이 없어 불필요).
+    # 수술마다 회복 속도가 달라 1차 시점과 문구가 다르다(고객케어 TF 확정안 v5).
+    # 알림톡 ID 나 문자 본문 중 하나 이상을 채워야 그 슬롯이 발송된다.
+    # 스마일수술 — 스마일프로·스마일라식 공용 (D+1·7·14)
+    smile:
+      t1:
+        template-id: ${SOLAPI_TPL_SMILE_1_ID:}
+        sms-text: ${SOLAPI_TPL_SMILE_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_SMILE_2_ID:}
+        sms-text: ${SOLAPI_TPL_SMILE_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_SMILE_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_SMILE_3_ID:}
+        sms-text: ${SOLAPI_TPL_SMILE_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_SMILE_3_SMS_DELAYED:}
+    # 라식 (D+1·7·14)
+    lasik:
+      t1:
+        template-id: ${SOLAPI_TPL_LASIK_1_ID:}
+        sms-text: ${SOLAPI_TPL_LASIK_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_LASIK_2_ID:}
+        sms-text: ${SOLAPI_TPL_LASIK_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASIK_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_LASIK_3_ID:}
+        sms-text: ${SOLAPI_TPL_LASIK_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASIK_3_SMS_DELAYED:}
+    # 라섹 — 렌즈 제거 후라 1차가 가장 늦다 (D+5·7·14)
+    lasek:
+      t1:
+        template-id: ${SOLAPI_TPL_LASEK_1_ID:}
+        sms-text: ${SOLAPI_TPL_LASEK_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_LASEK_2_ID:}
+        sms-text: ${SOLAPI_TPL_LASEK_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASEK_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_LASEK_3_ID:}
+        sms-text: ${SOLAPI_TPL_LASEK_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASEK_3_SMS_DELAYED:}
+    # 렌즈삽입 — ICL·KPL·VIVA (D+3·7·14)
+    icl:
+      t1:
+        template-id: ${SOLAPI_TPL_ICL_1_ID:}
+        sms-text: ${SOLAPI_TPL_ICL_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_ICL_2_ID:}
+        sms-text: ${SOLAPI_TPL_ICL_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ICL_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_ICL_3_ID:}
+        sms-text: ${SOLAPI_TPL_ICL_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ICL_3_SMS_DELAYED:}
+    # 기타 — 백내장·재수술·분류 실패분. 비워 두면 발송되지 않는다 (D+1·7·14)
+    etc:
+      t1:
+        template-id: ${SOLAPI_TPL_ETC_1_ID:}
+        sms-text: ${SOLAPI_TPL_ETC_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_ETC_2_ID:}
+        sms-text: ${SOLAPI_TPL_ETC_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ETC_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_ETC_3_ID:}
+        sms-text: ${SOLAPI_TPL_ETC_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ETC_3_SMS_DELAYED:}
