@@ -80,3 +80,34 @@ export function useSmsMutations() {
 
   return { create, update, changeStatus, changeStatusBulk, registerOptOut, syncResults, importTargets, send, lookup }
 }
+
+const OPT_OUTS_KEY = ['sms', 'opt-outs'] as const
+
+/**
+ * 수신거부 목록 조회 — 관리 모달에서 씀. 번호는 마스킹된 채로 온다.
+ * enabled=false 로 모달 열릴 때만 조회하도록 제어.
+ */
+export function useSmsOptOuts(enabled = true) {
+  return useQuery({
+    queryKey: OPT_OUTS_KEY,
+    queryFn: () => smsApi.getOptOuts(),
+    enabled,
+    staleTime: 30 * 1000,
+  })
+}
+
+/**
+ * 수신거부 해제 (id 기반). 성공 시 opt-outs 캐시 + targets 캐시 무효화 —
+ * 방금 해제한 사람의 대상 상태가 화면에 반영되도록.
+ * ⚠️ 홀딩은 자동으로 풀지 않는다 — 서비스 계층 정책.
+ */
+export function useReleaseSmsOptOut() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => smsApi.releaseOptOut(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: OPT_OUTS_KEY })
+      qc.invalidateQueries({ queryKey: [TARGETS_KEY] })
+    },
+  })
+}

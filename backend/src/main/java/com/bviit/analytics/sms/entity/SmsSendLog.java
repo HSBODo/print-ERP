@@ -27,8 +27,8 @@ import java.time.LocalDateTime;
 @Table(
         name = "sms_send_log",
         indexes = {
-                @Index(name = "idx_sms_send_log_target", columnList = "targetId"),
-                @Index(name = "idx_sms_send_log_sent_at", columnList = "sentAt")
+                @Index(name = "idx_sms_send_log_target", columnList = "target_id"),
+                @Index(name = "idx_sms_send_log_sent_at", columnList = "sent_at")
         }
         // 멱등키(target_id, template_code, cycle_base WHERE status<>'FAILED')는 부분 인덱스라
         // JPA 로 표현할 수 없다 — V52__sms_management.sql 이 만든다.
@@ -54,42 +54,43 @@ public class SmsSendLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false) private Long targetId;
+    // ⚠️ 모든 컬럼에 @Column(name=...) 명시 — Hibernate naming strategy 어긋남 방지(SmsOffsetConfig 와 같은 이유).
+    @Column(name = "target_id", nullable = false) private Long targetId;
     /** 대상이 지워져도 이력만으로 읽히도록 스냅샷을 함께 둔다. */
-    @Column(length = 50) private String chartNo;
-    @Column(length = 100) private String name;
+    @Column(name = "chart_no", length = 50) private String chartNo;
+    @Column(name = "name", length = 100) private String name;
 
-    @Column(length = 20, nullable = false) private String templateCode;
-    @Column(length = 100) private String templateLabel;
+    @Column(name = "template_code", length = 20, nullable = false) private String templateCode;
+    @Column(name = "template_label", length = 100) private String templateLabel;
     /** 요청 채널 — ALIMTALK / SMS. 알림톡 실패 시 문자 대체발송되면 실제 타입과 다를 수 있다. */
-    @Column(length = 20, nullable = false) private String requestedChannel;
+    @Column(name = "requested_channel", length = 20, nullable = false) private String requestedChannel;
 
     /* ── 솔라피 조회 대응 컬럼 (getMessageList 검색 키) ── */
-    @Column(length = 20) private String fromNumber;
-    @Column(length = 20) private String toNumber;
+    @Column(name = "from_number", length = 20) private String fromNumber;
+    @Column(name = "to_number", length = 20) private String toNumber;
     /** 솔라피 실제 메시지 타입 — SMS/LMS/MMS/ATA(알림톡)/CTA 등. */
-    @Column(length = 20) private String messageType;
-    @Column(length = 40) private String solapiGroupId;
-    @Column(length = 40) private String solapiMessageId;
-    @Column(length = 20) private String statusCode;
+    @Column(name = "message_type", length = 20) private String messageType;
+    @Column(name = "solapi_group_id", length = 40) private String solapiGroupId;
+    @Column(name = "solapi_message_id", length = 40) private String solapiMessageId;
+    @Column(name = "status_code", length = 20) private String statusCode;
 
-    @Column(length = 20, nullable = false) private String status;
-    @Column(length = 500) private String failReason;
+    @Column(name = "status", length = 20, nullable = false) private String status;
+    @Column(name = "fail_reason", length = 500) private String failReason;
 
     /**
      * 이 발송이 속한 사이클 = 발송 시점의 대상 기준일(SmsTarget.scheduleBase).
      * (targetId, templateCode, cycleBase) 가 멱등키다 — 같은 사이클의 같은 차수는 한 번만 나간다.
      * 홀딩 해제·연락처 수정으로 기준일이 다시 깔리면 새 사이클이라 재발송이 허용된다.
      */
-    private LocalDate cycleBase;
+    @Column(name = "cycle_base") private LocalDate cycleBase;
 
     /** 단말 도달 시각(솔라피 dateReceived). 비어 있으면 아직 도달 확인 전이다. */
-    private LocalDateTime deliveredAt;
+    @Column(name = "delivered_at") private LocalDateTime deliveredAt;
     /** 대체발송 — 알림톡으로 요청했는데 문자로 나갔는지(솔라피 replacement). */
-    @Column(nullable = false) @Builder.Default private boolean replacement = false;
+    @Column(name = "replacement", nullable = false) @Builder.Default private boolean replacement = false;
 
-    @Column(nullable = false) private LocalDateTime sentAt;
-    @Column(length = 50) private String sentBy;
+    @Column(name = "sent_at", nullable = false) private LocalDateTime sentAt;
+    @Column(name = "sent_by", length = 50) private String sentBy;
 
     /**
      * 접수 결과를 기록한다 — 발송 의도(PENDING)를 먼저 저장한 뒤, 실제 발송이 끝나고 부른다.

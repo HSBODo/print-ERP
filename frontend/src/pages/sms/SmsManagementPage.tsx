@@ -5,8 +5,10 @@ import { useSmsMutations, useSmsTargets, useSmsTemplates } from '@/hooks/sms/use
 import { TargetFormModal } from './TargetFormModal'
 import { SmsStatusFilterBar } from './SmsStatusFilterBar'
 import { SmsToolbar, type PeriodMode } from './SmsToolbar'
+import { SmsOffsetGrid } from './SmsOffsetGrid'
 import { SmsOpTypeHelp } from './SmsOpTypeHelp'
 import { SmsTemplateGuideModal } from './SmsTemplateGuideModal'
+import { SmsOptOutModal } from './SmsOptOutModal'
 import { SmsMessagePreview } from './SmsMessagePreview'
 import { SmsPagination } from './SmsPagination'
 import {
@@ -40,7 +42,7 @@ const EMPTY_FORM: SmsTargetRequest = {
  * 컬럼이 화면 밖으로 밀린다. 넘치는 값은 말줄임 + 툴팁으로 처리한다.
  */
 const W = {
-  check: '2rem', no: '2.4rem', date: '4.6rem', chart: '4.6rem', name: '3.5rem',
+  check: '2rem', no: '2.4rem', date: '5.8rem', chart: '4.6rem', name: '3.5rem',
   phone: '6.6rem', type: '4.6rem', group: '5.4rem', eye: '7rem', state: '5.6rem',
   tier: '7.2rem',
 } as const
@@ -92,6 +94,7 @@ export function SmsManagementPage() {
   // 분류 도움말 위치 — 표가 overflow-auto 라 안쪽에 붙이면 잘린다. 화면 좌표로 띄운다.
   const [groupHelp, setGroupHelp] = useState<{ top: number; left: number } | null>(null)
   const [templateGuideOpen, setTemplateGuideOpen] = useState(false)
+  const [optOutModalOpen, setOptOutModalOpen] = useState(false)
   /** 오른쪽 미리보기가 보여줄 대상·차수 — 표의 이름이나 차수 날짜를 누르면 정해진다. */
   const [preview, setPreview] = useState<{ targetId: number; tierCode: string | null } | null>(null)
 
@@ -306,6 +309,7 @@ export function SmsManagementPage() {
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
+      <SmsOffsetGrid />
       <SmsToolbar
         basis={basis}
         onBasisChange={setBasis}
@@ -327,6 +331,7 @@ export function SmsManagementPage() {
         onOptOut={handleOptOut}
         onAdd={() => setModal({ mode: 'create' })}
         onOpenTemplates={() => setTemplateGuideOpen(true)}
+        onOpenOptOuts={() => setOptOutModalOpen(true)}
       />
       <SmsStatusFilterBar
         targets={targets}
@@ -443,9 +448,9 @@ export function SmsManagementPage() {
                           />
                         </td>
                         <td className={`${TD} truncate tabular-nums text-gray-500`}>{(safePage - 1) * pageSize + i + 1}</td>
-                        <td className={`${TD} truncate tabular-nums`}
+                        <td className={`${TD} whitespace-nowrap tabular-nums`}
                           title={t.rebased ? `수술일 ${t.surgeryDate} · 예정일은 ${t.scheduleBase} 기준으로 다시 깔림(연락처 수정·홀딩 해제)` : t.surgeryDate}>
-                          {t.surgeryDate.slice(2)}
+                          {t.surgeryDate}
                           {t.rebased && <span className="ml-0.5 align-super text-[9px] font-semibold text-blue-600">↻</span>}
                         </td>
                         <td className={`${TD} truncate tabular-nums`}>{t.chartNo}</td>
@@ -583,6 +588,9 @@ export function SmsManagementPage() {
       {templateGuideOpen && (
         <SmsTemplateGuideModal templates={templates} onClose={() => setTemplateGuideOpen(false)} />
       )}
+
+      {/* 수신거부 관리 — 조회·해제. 홀딩은 자동으로 풀지 않음. */}
+      <SmsOptOutModal open={optOutModalOpen} onClose={() => setOptOutModalOpen(false)} />
 
       {modal && (
         <TargetFormModal

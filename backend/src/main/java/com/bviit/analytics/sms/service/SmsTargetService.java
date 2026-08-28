@@ -58,32 +58,19 @@ public class SmsTargetService {
      * 예정일은 수술일에서 계산되는 값이라 별도 컬럼 없이 날짜를 밀어 조회하면 된다.
      */
     /**
-     * 조회 — 수술일 기준이면 **마트에서 먼저 채운 뒤** 돌려준다.
+     * 조회 = 조회만 — 자동 적재는 하지 않는다.
      *
-     * 왜 조회가 적재를 겸하나 — 사람이 [수술자 불러오기]를 눌러야만 목록이 생기면
-     * 누르는 걸 잊은 기간은 통째로 비어 보이고, 그게 "그 기간엔 수술이 없었다"와
-     * 구분되지 않는다. 조회 = 그 기간의 수술자를 본다는 뜻이어야 한다.
+     * <p>Phase 1B (2026-08-28) 이전에는 SURGERY 기준일 때 매 조회마다
+     * {@code importFromSurgeryList} 를 즉석 호출해 upsert 했다(임시 경로).
+     * 이제는 {@code SmsImportJob} 이 매일 배치(03:30)로 담당한다 — 조회는 SELECT-only.
      *
-     * 적재는 멱등이다(chart_no + surgery_date UNIQUE). 여러 번 눌러도 늘지 않고,
-     * AUTO 행만 CRM 최신값으로 갱신되며 홀딩·MANUAL 은 건드리지 않는다.
+     * <p>배치가 놓친 구간을 즉시 채워야 하면 관리자 API {@code POST /targets/import} 로
+     * 명시적 재실행(백업 경로 유지). 관리자 배치 재실행 API 로도 부분 재적재 가능.
      *
-     * SCHEDULED·SENT 기준에는 적재하지 않는다 — 그 날짜는 수술일이 아니라
-     * 예정일·발송일이라 같은 구간을 수술일로 읽으면 엉뚱한 사람을 담는다.
-     *
-     * 마트가 없는 프로파일(mssql 단독 등)에서는 조용히 건너뛰고 이미 있는 행만 보여준다 —
-     * 조회가 통째로 503 이 되면 홀딩 관리조차 못 한다.
-     *
-     * ⚠️ 나중에 자동화(큐)가 적재를 맡으면 이 호출은 빼도 된다. 그때까지의 임시 경로다.
+     * <p>메서드명은 하위 호환을 위해 유지 — 프론트와 컨트롤러가 이 이름을 부른다.
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<SmsTargetRow> findRowsAutoImport(LocalDate from, LocalDate to, String basis, String templateCode) {
-        if (basis == null || basis.isBlank() || "SURGERY".equalsIgnoreCase(basis)) {
-            try {
-                importFromSurgeryList(from, to);
-            } catch (DataSourceUnavailableException e) {
-                log.debug("마트 미연결 — 자동 적재를 건너뛴다: {}", e.getMessage());
-            }
-        }
         return findRows(from, to, basis, templateCode);
     }
 

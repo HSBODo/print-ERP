@@ -2,9 +2,11 @@ package com.bviit.analytics.sms.config;
 
 import com.bviit.analytics.sms.dto.SmsTemplateGroupInfo;
 import com.bviit.analytics.sms.dto.SmsTemplateInfo;
+import com.bviit.analytics.sms.service.SmsOffsetConfigService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +43,11 @@ import java.util.Optional;
 public class SolapiProperties {
 
     private final Environment env;
+    /**
+     * 오프셋 소스 — DB 우선, 없으면 SurgeryGroup 코드 상수 fallback.
+     * ObjectProvider 로 감싸 순환 참조를 피한다(서비스도 SolapiProperties 를 참조할 여지가 있어).
+     */
+    private final ObjectProvider<SmsOffsetConfigService> offsetConfigProvider;
 
     @Value("${solapi.api-key:}") private String apiKey;
     @Value("${solapi.api-secret:}") private String apiSecret;
@@ -48,6 +55,15 @@ public class SolapiProperties {
     @Value("${solapi.from:}") private String from;
     /** 카카오 비즈니스 채널 pfId — 알림톡 발송에 필수. */
     @Value("${solapi.pf-id:}") private String pfId;
+
+    /**
+     * Dry-run 안전장치 — 기본 <b>true</b> (개발단계 실수로 실제 문자가 나가는 걸 막는다).
+     * 운영 발송하려면 {@code SOLAPI_DRY_RUN=false} 로 명시적 해제 필요.
+     *
+     * <p>true 이면 SolapiSendService 는 솔라피 API 를 호출하지 않고 SUCCESS 를 반환한다.
+     * 발송 이력(sms_send_log) 은 그대로 남지만 messageType=DRY_RUN 으로 표시된다.
+     */
+    @Value("${solapi.dry-run:true}") private boolean dryRun;
 
     @Value("${solapi.templates.t1.label:수술 후 안내 1차}") private String t1Label;
     @Value("${solapi.templates.t2.label:수술 후 안내 2차}") private String t2Label;
@@ -80,8 +96,19 @@ public class SolapiProperties {
         boolean smsReady = isConfigured() && !smsText.isBlank();
         boolean delayedReady = isConfigured() && !smsTextDelayed.isBlank();
         return new SmsTemplateGroupInfo(
-                group.code(), group.label(), group.opTypes(), group.offsetOf(tier),
+                group.code(), group.label(), group.opTypes(), resolveOffset(group, tier),
                 templateId, smsText, smsTextDelayed, alimtalkReady, smsReady, delayedReady);
+    }
+
+    /**
+     * 오프셋 결정 — {@link SmsOffsetConfigService} 가 있으면 DB 값 (UI 로 편집 가능),
+     * 없으면 {@link SurgeryGroup#offsetOf} 코드 상수 fallback.
+     * 서비스 미주입 프로파일(예: sms 도메인 미로딩)에서도 안전하게 동작.
+     */
+    private int resolveOffset(SurgeryGroup group, int tier) {
+        SmsOffsetConfigService service = offsetConfigProvider.getIfAvailable();
+        if (service == null) return group.offsetOf(tier);
+        return service.offsetOf(group.code(), tier);
     }
 
     public Optional<SmsTemplateInfo> findTemplate(String code) {

@@ -98,6 +98,43 @@ const sendResultSchema = z.object({
 
 const importResultSchema = z.object({ created: z.number(), updated: z.number(), skipped: z.number() })
 
+/**
+ * 오프셋 그리드 한 줄 — 그룹 하나의 1·2·3차 오프셋(일).
+ * 응답에는 4행(SMILE·LASIK·LASEK·ICL) 만 온다 — ETC 는 발송 대상이 아니라 편집 불가.
+ */
+/** 알림톡(NOTIFICATION): 시간 제한 없음. 광고톡(AD): 정보통신망법상 hour 8..20 강제. */
+const messageKindSchema = z.enum(['NOTIFICATION', 'AD'])
+
+/** 수신거부 목록 한 줄 — 번호는 마스킹된 형태로만 프론트에 옴(개인정보 보호). */
+const optOutRowSchema = z.object({
+  id: z.number(),
+  /** "010****1234" 형식. 관리 화면 표시용. 해제는 phone 대신 id 로 한다. */
+  phoneMasked: z.string(),
+  chartNo: z.string(),
+  name: z.string(),
+  /** MANUAL(화면 등록) / SOLAPI_080(카카오 080 수신거부 서비스) … */
+  source: z.string(),
+  createdAt: z.string(),
+  createdBy: z.string(),
+})
+
+const offsetRowSchema = z.object({
+  groupCode: z.string(),
+  label: z.string(),
+  tier1Offset: z.number(),
+  tier2Offset: z.number(),
+  tier3Offset: z.number(),
+  /** 발송 시각 (HH:mm 문자열) — tier-level 이라 4행 모두 같은 값. 편집 UI 는 첫 행 값만 노출. */
+  tier1Time: z.string(),
+  tier2Time: z.string(),
+  tier3Time: z.string(),
+  tier1Kind: messageKindSchema,
+  tier2Kind: messageKindSchema,
+  tier3Kind: messageKindSchema,
+  updatedBy: z.string().nullish(),
+  updatedAt: z.string().nullish(),
+})
+
 /** 차트번호 조회 결과 — found=false 면 마트에 수술 기록이 없다(직접 입력으로 진행 가능). */
 const lookupSchema = z.object({
   found: z.boolean(),
@@ -120,6 +157,26 @@ export type SmsTemplateGroup = z.infer<typeof templateGroupSchema>
 export type SmsSendResult = z.infer<typeof sendResultSchema>
 export type SmsImportResult = z.infer<typeof importResultSchema>
 export type SmsLookup = z.infer<typeof lookupSchema>
+export type SmsOffsetRow = z.infer<typeof offsetRowSchema>
+export type SmsMessageKind = z.infer<typeof messageKindSchema>
+export type SmsOptOutRow = z.infer<typeof optOutRowSchema>
+
+export interface SmsOffsetUpdatePayload {
+  rows: Array<{
+    groupCode: string
+    tier1Offset: number
+    tier2Offset: number
+    tier3Offset: number
+  }>
+  /** tier-level 발송 시각 (HH:mm) — 4행 모두 같은 값으로 원자적 갱신. */
+  tier1Time: string
+  tier2Time: string
+  tier3Time: string
+  /** tier-level 메시지 종류 — 광고톡이면 hour 8..20 강제, 알림톡은 제한 없음. */
+  tier1Kind: SmsMessageKind
+  tier2Kind: SmsMessageKind
+  tier3Kind: SmsMessageKind
+}
 
 export interface SmsTargetRequest {
   /** 필수 */
@@ -202,5 +259,34 @@ export const smsApi = {
   async send(targetIds: number[], templateCode: string, channel: 'ALIMTALK' | 'SMS'): Promise<SmsSendResult> {
     const res = await api.post('/sms-management/send', { targetIds, templateCode, channel })
     return apiResponseOf(sendResultSchema).parse(res).data
+  },
+
+  /** 수신거부 목록 조회 — 관리 모달에서 씀. */
+  async getOptOuts(): Promise<SmsOptOutRow[]> {
+    const res = await api.get('/sms-management/opt-outs')
+    return apiResponseOf(z.array(optOutRowSchema)).parse(res).data
+  },
+
+  /**
+   * 수신거부 해제 (id 기반) — sms_opt_out 에서 물리 삭제.
+   * ⚠️ 홀딩(sms_target.status='HOLD')은 자동으로 풀지 않는다 — 지난 차수가 한꺼번에 나가는 사고 방지.
+   *    필요하면 관리자가 각 대상을 SENDABLE 로 명시적으로 되돌려야 한다.
+   * true 반환: 실제 삭제됨 · false: 이미 없었음.
+   */
+  async releaseOptOut(id: number): Promise<boolean> {
+    const res = await api.delete(`/sms-management/opt-outs/${id}`)
+    return apiResponseOf(z.boolean()).parse(res).data
+  },
+
+  /** 오프셋 그리드 조회 — 4행(SMILE·LASIK·LASEK·ICL). */
+  async getOffsets(): Promise<SmsOffsetRow[]> {
+    const res = await api.get('/sms-management/offsets')
+    return apiResponseOf(z.array(offsetRowSchema)).parse(res).data
+  },
+
+  /** 오프셋 원자적 갱신 — 4행 전부를 함께 보낸다(부분 갱신 미지원). */
+  async updateOffsets(payload: SmsOffsetUpdatePayload): Promise<SmsOffsetRow[]> {
+    const res = await api.put('/sms-management/offsets', payload)
+    return apiResponseOf(z.array(offsetRowSchema)).parse(res).data
   },
 }

@@ -58,11 +58,13 @@ public class SmsTarget {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 50, nullable = false) private String chartNo;
-    @Column(length = 100, nullable = false) private String name;
+    // ⚠️ 모든 컬럼에 @Column(name=...) 명시 — Hibernate naming strategy 차이로
+    //    surgeryR → surgery__r 같은 잔재가 생기는 걸 막는다(SmsOffsetConfig 와 같은 이유).
+    @Column(name = "chart_no", length = 50, nullable = false) private String chartNo;
+    @Column(name = "name", length = 100, nullable = false) private String name;
     /** 하이픈·공백 없는 01012345678 형식으로 저장한다 — 솔라피 발송 형식 요건. */
-    @Column(length = 20) private String phone;
-    @Column(nullable = false) private LocalDate surgeryDate;
+    @Column(name = "phone", length = 20) private String phone;
+    @Column(name = "surgery_date", nullable = false) private LocalDate surgeryDate;
     /**
      * 발송 예정일의 기준일 — 보통은 수술일과 같다.
      *
@@ -72,23 +74,23 @@ public class SmsTarget {
      * 나머지 차수는 원래 간격을 그대로 유지한다.
      * null 은 이 컬럼 도입 이전 행이라 수술일과 같게 본다(scheduleBase()).
      */
-    private LocalDate scheduleBase;
+    @Column(name = "schedule_base") private LocalDate scheduleBase;
     /** 수술 구분 — list_surgery.surgery_category (시력교정/백내장 등). */
-    @Column(length = 50) private String surgeryType;
+    @Column(name = "surgery_type", length = 50) private String surgeryType;
     /**
      * 수술 종류 코드 — smilePro·icl·catMulti·reopLens 등. 마트의 surgery_op_type() 이 분류한 값이라
      * 수술 통계·채널 분석과 같은 기준이다. 화면 라벨(스마일프로 …)은 프론트가 붙인다.
      */
-    @Column(length = 20) private String opType;
+    @Column(name = "op_type", length = 20) private String opType;
     /** 실제 수술명 우/좌 — list_surgery.surgery_r · surgery_l. 어떤 수술을 받았는지 보고 발송을 판단한다. */
-    @Column(length = 100) private String surgeryR;
-    @Column(length = 100) private String surgeryL;
+    @Column(name = "surgery_r", length = 100) private String surgeryR;
+    @Column(name = "surgery_l", length = 100) private String surgeryL;
 
-    @Column(length = 20, nullable = false) private String status;
-    @Column(length = 10, nullable = false) private String source;
+    @Column(name = "status", length = 20, nullable = false) private String status;
+    @Column(name = "source", length = 10, nullable = false) private String source;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @Column(name = "created_at") private LocalDateTime createdAt;
+    @Column(name = "updated_at") private LocalDateTime updatedAt;
 
     public boolean isSendable() {
         return STATUS_SENDABLE.equals(status);

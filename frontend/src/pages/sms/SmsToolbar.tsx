@@ -1,4 +1,4 @@
-import { Ban, BellOff, ChevronDown, FileText, Plus, RefreshCw, RotateCcw, Search, Undo2 } from 'lucide-react'
+import { Ban, BellOff, ChevronDown, FileText, ListX, Plus, RefreshCw, RotateCcw, Search, Undo2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MonthPicker } from '@/components/filters/MonthPicker'
 import { toMonthEnd, toMonthStart, toMonthValue } from './smsTableModel'
@@ -41,7 +41,7 @@ export function SmsToolbar({
   basis, onBasisChange, tierFilter, onTierFilterChange, templates,
   periodMode, onPeriodModeChange, draft, onDraftChange,
   keyword, onKeywordChange, resultCount, isRefreshing, holdPending,
-  onSearch, onReset, onHold, onOptOut, onAdd, onOpenTemplates,
+  onSearch, onReset, onHold, onOptOut, onAdd, onOpenTemplates, onOpenOptOuts,
 }: {
   basis: SmsQueryBasis
   onBasisChange: (v: SmsQueryBasis) => void
@@ -64,6 +64,8 @@ export function SmsToolbar({
   onOptOut: () => void
   onAdd: () => void
   onOpenTemplates: () => void
+  /** 수신거부 목록 관리 모달 열기 — 조회·해제. */
+  onOpenOptOuts: () => void
 }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
@@ -195,6 +197,17 @@ export function SmsToolbar({
         >
           <FileText className="h-3.5 w-3.5" />
           템플릿
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={onOpenOptOuts}
+          title="수신거부 목록 조회·해제 (사람 단위 발송 차단)"
+        >
+          <ListX className="h-3.5 w-3.5" />
+          수신거부 관리
         </Button>
       </div>
     </div>

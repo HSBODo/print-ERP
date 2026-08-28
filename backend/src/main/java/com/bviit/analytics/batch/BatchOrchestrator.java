@@ -11,6 +11,7 @@ import com.bviit.analytics.batch.job.ReservationListHomepageMartJob;
 import com.bviit.analytics.batch.job.ReportMartJob;
 import com.bviit.analytics.batch.job.ReservationMartJob;
 import com.bviit.analytics.batch.job.ReservationStatsDailyMartJob;
+import com.bviit.analytics.batch.job.SmsImportJob;
 import com.bviit.analytics.batch.job.SurgeryMartJob;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class BatchOrchestrator {
     private static final Set<Domain> ALL_DOMAINS = EnumSet.allOf(Domain.class);
 
     /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
-    public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC }
+    public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC, SMS }
 
     private final BatchRunLogRepository runLogRepository;
     private final BatchSlackNotifier slackNotifier;
@@ -60,6 +61,7 @@ public class BatchOrchestrator {
     private final OverallMartJob overallMartJob;
     private final ReportMartJob reportMartJob;
     private final EtcMartJob etcMartJob;
+    private final SmsImportJob smsImportJob;
 
     @Value("${batch.mart.enabled:true}")
     private boolean enabled;
@@ -193,6 +195,9 @@ public class BatchOrchestrator {
         // mart_weekly_report 는 자체 서비스 로직(list + MSSQL 브릿지 하이브리드).
         if (targets.contains(Domain.REPORT))        stats.putAll(reportMartJob.run(from, to));
         if (targets.contains(Domain.ETC))           stats.putAll(etcMartJob.run(from, to));
+        // SMS 는 list_surgery 를 소스로 읽어 sms_target 에 적재하므로 SURGERY 뒤에 실행.
+        // Phase 1B — 지금까지 화면 조회가 즉석 upsert 하던 임시 경로를 배치로 승격했다.
+        if (targets.contains(Domain.SMS))           stats.putAll(smsImportJob.run(from, to));
         // 모든 도메인 마트 완료. 후속은 스냅샷 파일→마트 이관(strategy.md §7).
         return stats;
     }

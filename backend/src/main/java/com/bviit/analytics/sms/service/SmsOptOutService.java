@@ -77,6 +77,21 @@ public class SmsOptOutService {
                 .orElse(false);
     }
 
+    /**
+     * id 로 해제 — 화면 관리 모달에서 사용. 목록 응답의 phone 은 마스킹돼 있어서 phone 대신 id 로 지운다.
+     * 정책은 {@link #release(String)} 과 동일 (홀딩 유지, 물리 삭제).
+     */
+    @Transactional
+    public boolean releaseById(Long id) {
+        return optOutRepository.findById(id)
+                .map(entry -> {
+                    optOutRepository.delete(entry);
+                    log.info("수신거부 해제(by id): id={}, phone={}", id, mask(entry.getPhone()));
+                    return true;
+                })
+                .orElse(false);
+    }
+
     private void holdSamePhone(String phone, LocalDateTime now) {
         targetRepository.findByPhone(phone).stream()
                 .filter(SmsTarget::isSendable)

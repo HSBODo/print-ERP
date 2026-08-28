@@ -4,6 +4,8 @@ import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.sms.config.SolapiProperties;
 import com.bviit.analytics.sms.dto.SmsImportResult;
 import com.bviit.analytics.sms.dto.SmsLookupRow;
+import com.bviit.analytics.sms.dto.SmsOffsetRow;
+import com.bviit.analytics.sms.dto.SmsOffsetUpdateRequest;
 import com.bviit.analytics.sms.dto.SmsOptOutRow;
 import com.bviit.analytics.sms.dto.SmsSendRequest;
 import com.bviit.analytics.sms.dto.SmsSendResult;
@@ -11,6 +13,8 @@ import com.bviit.analytics.sms.dto.SmsTargetRequest;
 import com.bviit.analytics.sms.dto.SmsStatusRequest;
 import com.bviit.analytics.sms.dto.SmsTargetRow;
 import com.bviit.analytics.sms.dto.SmsTemplateInfo;
+import com.bviit.analytics.sms.entity.SmsOffsetConfig;
+import com.bviit.analytics.sms.service.SmsOffsetConfigService;
 import com.bviit.analytics.sms.service.SmsOptOutService;
 import com.bviit.analytics.sms.service.SmsSendService;
 import com.bviit.analytics.sms.service.SmsTargetService;
@@ -63,6 +67,7 @@ public class SmsManagementController {
     private final SmsSendService sendService;
     private final SolapiSyncService syncService;
     private final SolapiProperties solapiProperties;
+    private final SmsOffsetConfigService offsetConfigService;
 
     /** 차트번호 조회 — 대상 추가 팝업이 이름·수술일·연락처를 채운다. */
     @GetMapping("/lookup")
@@ -142,6 +147,14 @@ public class SmsManagementController {
     }
 
     /**
+     * id 로 수신거부 해제 — 관리 모달용. 목록 응답의 phone 은 마스킹돼 있어 phone 파라미터가 아닌 id 로 지운다.
+     */
+    @DeleteMapping("/opt-outs/{id}")
+    public ResponseEntity<ApiResponse<Boolean>> releaseOptOutById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(optOutService.releaseById(id)));
+    }
+
+    /**
      * 발송 결과 갱신 — 솔라피에 다시 물어 도달시각·대체발송·최종 상태를 채운다.
      *
      * ⚠️ 기간은 **발송 시각(sentAt)** 기준이다. 수술일 조회 범위를 그대로 넘기면
@@ -177,5 +190,38 @@ public class SmsManagementController {
     @GetMapping("/templates")
     public ResponseEntity<ApiResponse<List<SmsTemplateInfo>>> templates() {
         return ResponseEntity.ok(ApiResponse.ok(solapiProperties.templates()));
+    }
+
+    /**
+     * 1·2·3차 오프셋 그리드 조회 — SMILE·LASIK·LASEK·ICL 4행.
+     * ETC 는 발송 대상이 아니라 응답에 포함되지 않는다.
+     */
+    @GetMapping("/offsets")
+    public ResponseEntity<ApiResponse<List<SmsOffsetRow>>> offsets() {
+        List<SmsOffsetRow> rows = offsetConfigService.getAll().values().stream()
+                .map(SmsOffsetRow::from).toList();
+        return ResponseEntity.ok(ApiResponse.ok(rows));
+    }
+
+    /**
+     * 오프셋 원자적 편집 — 4행 전체를 함께 보낸다(그리드 UI 계약).
+     * 저장 즉시 캐시가 무효화되어 다음 조회부터 새 오프셋이 반영된다.
+     * actor 는 SecurityContext 의 principal name (JWT sub).
+     */
+    @PutMapping("/offsets")
+    public ResponseEntity<ApiResponse<List<SmsOffsetRow>>> updateOffsets(
+            @Valid @RequestBody SmsOffsetUpdateRequest request,
+            Authentication authentication) {
+        String actor = authentication == null ? "unknown" : authentication.getName();
+        List<SmsOffsetConfigService.OffsetUpdate> updates = request.rows().stream()
+                .map(r -> new SmsOffsetConfigService.OffsetUpdate(
+                        r.groupCode(), r.tier1Offset(), r.tier2Offset(), r.tier3Offset()))
+                .toList();
+        SmsOffsetConfigService.TierUpdate tiers = new SmsOffsetConfigService.TierUpdate(
+                request.tier1Time(), request.tier2Time(), request.tier3Time(),
+                request.tier1Kind(), request.tier2Kind(), request.tier3Kind());
+        List<SmsOffsetRow> rows = offsetConfigService.updateAll(updates, tiers, actor).values().stream()
+                .map(SmsOffsetRow::from).toList();
+        return ResponseEntity.ok(ApiResponse.ok(rows));
     }
 }

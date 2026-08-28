@@ -55,6 +55,20 @@ public class SolapiSendService {
      */
     public SendOutcome send(String to, SmsTemplateGroupInfo slot, String channel,
                             Map<String, String> variables, boolean delayed) {
+        // Dry-run 안전장치가 우선 — 실제 API 키가 채워져 있어도 발송 안 함.
+        // 이력(sms_send_log)은 남지만 messageType=DRY_RUN, messageId=null 로 실제 발송과 구분된다.
+        if (props.isDryRun()) {
+            String preview = substitute(slot.textFor(delayed), variables);
+            log.info("[DRY-RUN] SMS 미발송 (실제 API 호출 안 함) — to={}, channel={}, group={}, tier={}, delayed={}, preview={}",
+                    mask(to), channel, slot.groupCode(), slot.offsetDays(), delayed,
+                    preview.length() > 100 ? preview.substring(0, 100) + "…" : preview);
+            return SendOutcome.builder()
+                    .success(true)
+                    .messageType("DRY_RUN")
+                    .statusCode("DRY_RUN")
+                    .build();
+        }
+
         requireConfigured(slot, channel, delayed);
 
         Message message = new Message();

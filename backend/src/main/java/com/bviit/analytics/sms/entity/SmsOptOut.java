@@ -43,26 +43,29 @@ public class SmsOptOut {
     /** 솔라피 080 수신거부 서비스에서 당겨온 값 — 연동하면 이 값으로 들어온다. */
     public static final String SOURCE_SOLAPI_080 = "SOLAPI_080";
 
+    // ⚠️ 모든 컬럼에 @Column(name=...) 명시 — Hibernate naming strategy 어긋남 방지.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     /** 하이픈 없는 01012345678 — 대상(phone)과 같은 규칙으로 정규화해 저장한다. */
-    @Column(length = 20, nullable = false)
+    @Column(name = "phone", length = 20, nullable = false)
     private String phone;
 
-    @Column(length = 50)
+    @Column(name = "chart_no", length = 50)
     private String chartNo;
 
-    @Column(length = 100)
+    @Column(name = "name", length = 100)
     private String name;
 
-    @Column(length = 20, nullable = false)
+    @Column(name = "source", length = 20, nullable = false)
     private String source;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(length = 50)
+    @Column(name = "created_by", length = 50)
     private String createdBy;
 
     public static SmsOptOut of(String phone, String chartNo, String name, String source,

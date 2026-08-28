@@ -73,6 +73,9 @@ logging:
     enabled: ${LOGGING_SLACK_ENABLED:false}
 
 solapi:
+  # ⚠️ Dry-run 안전장치 — 기본 true(개발단계). 실제 알림톡·문자를 나가게 하려면 SOLAPI_DRY_RUN=false 로 명시 해제.
+  # true 일 때: SolapiSendService 가 실제 API 호출 없이 SUCCESS 반환. sms_send_log 에 messageType=DRY_RUN 로 남는다.
+  dry-run: ${SOLAPI_DRY_RUN:true}
   api-key: ${SOLAPI_API_KEY:}
   api-secret: ${SOLAPI_API_SECRET:}
   from: ${SOLAPI_FROM:}
