@@ -101,14 +101,16 @@ public class SmsSendService {
             }
 
             /*
-             * 기준일이 밀린 대상(홀딩 해제·연락처 수정)은 **경과 문장을 뺀 문구를 문자로** 보낸다.
+             * 기준일이 밀린 대상(홀딩 해제·연락처 수정)은 2·3차만 **경과 문장을 뺀 문구를 문자로** 보낸다.
              *   왜 문구를 바꾸나 — "수술 후 일주일이 지났습니다"가 거짓이 된다(수술 25일 뒤에 2차가 나갈 수 있다).
              *   왜 문자인가   — 알림톡은 승인된 템플릿이 곧 본문이라, 변형 문구를 쓰려면 카카오 심사를 또 받아야 한다.
+             * 1차는 경과 선언이 없어 기본 알림톡/문자를 그대로 써도 사실과 어긋나지 않는다.
              * 지연 본문이 없으면 보내지 않는다 — 조용히 기본 문구가 나가면 그게 바로 잘못된 안내다.
              */
             boolean delayed = target.isRebased();
-            String channel = delayed ? SolapiSendService.CHANNEL_SMS : request.channel();
-            if (delayed && !slot.delayedReady()) {
+            boolean delayedTextRequired = delayed && !"T1".equals(template.code());
+            String channel = delayedTextRequired ? SolapiSendService.CHANNEL_SMS : request.channel();
+            if (delayedTextRequired && !slot.delayedReady()) {
                 items.add(item(targetId, target.getName(), "SKIPPED",
                         "예정일이 재조정된 대상인데 " + template.label() + " 지연 문구가 설정되지 않았습니다."));
                 skipped++;
@@ -124,12 +126,15 @@ public class SmsSendService {
             }
 
             // ② 실제 발송 — 트랜잭션 밖이라 DB 실패가 전송을 되돌리지 않는다.
+            // ⚠️ 키는 카카오 승인 템플릿이 실제 사용하는 자리표시자와 일치해야 한다.
+            //    현재 승인본은 전부 #{name} 을 쓰고 #{surgeryDate} 는 미사용이지만,
+            //    향후 날짜 변수를 승인받을 때 키가 통일돼 있어야 안 깨진다(2026-08-31).
             Map<String, String> variables = Map.of(
-                    "#{이름}", target.getName(),
-                    "#{수술일}", KOREAN_DATE.format(target.getSurgeryDate())
+                    "#{name}", target.getName(),
+                    "#{surgeryDate}", KOREAN_DATE.format(target.getSurgeryDate())
             );
             SolapiSendService.SendOutcome outcome =
-                    solapiSendService.send(to, slot, channel, variables, delayed);
+                    solapiSendService.send(to, slot, channel, variables, delayedTextRequired);
 
             // ③ 결과를 그 행에 기록한다.
             executor.complete(reserved.get(), outcome);

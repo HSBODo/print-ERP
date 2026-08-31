@@ -60,10 +60,21 @@ public class SolapiProperties {
      * Dry-run 안전장치 — 기본 <b>true</b> (개발단계 실수로 실제 문자가 나가는 걸 막는다).
      * 운영 발송하려면 {@code SOLAPI_DRY_RUN=false} 로 명시적 해제 필요.
      *
-     * <p>true 이면 SolapiSendService 는 솔라피 API 를 호출하지 않고 SUCCESS 를 반환한다.
-     * 발송 이력(sms_send_log) 은 그대로 남지만 messageType=DRY_RUN 으로 표시된다.
+     * <p>true + {@link #overrideTo} 비어 있음: 솔라피 API 미호출, 로그만.
+     * true + {@link #overrideTo} 지정: 실제 API 호출하되 수신자만 override 번호로 (실 흐름 검증용).
+     * false: 원 수신자로 실 발송.
+     * <p>어느 경우든 이력(sms_send_log) 은 남고, dry-run 로그 케이스는 messageType=DRY_RUN 으로 구분된다.
      */
     @Value("${solapi.dry-run:true}") private boolean dryRun;
+
+    /**
+     * 로컬·dev 관찰용 수신자 대체 — dry-run 안에서만 유효. 값이 있으면 실 솔라피 API 를
+     * 호출하되 수신자만 이 번호로 강제한다("내 폰으로만 나가게" 패턴).
+     *
+     * <p>dry-run=false 이면 무시 — 운영에서 실수로 남아 있어도 원 수신자로 정상 발송된다.
+     * 형식은 하이픈 없는 010… (예: 01012345678).
+     */
+    @Value("${solapi.override-to:}") private String overrideTo;
 
     @Value("${solapi.templates.t1.label:수술 후 안내 1차}") private String t1Label;
     @Value("${solapi.templates.t2.label:수술 후 안내 2차}") private String t2Label;

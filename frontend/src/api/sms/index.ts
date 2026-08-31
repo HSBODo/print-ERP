@@ -178,6 +178,46 @@ const queueStatusResponseSchema = z.object({
   done_today: z.number(),
 })
 
+/**
+ * 솔라피에서 조회한 알림톡 템플릿 — 우리 15슬롯 중 templateId 가 채워진 슬롯만 온다.
+ *  - status: 검수 상태 (APPROVED · INSPECTING · PENDING · REJECTED)
+ *  - found=false: 우리 env 엔 ID 가 있는데 솔라피 계정에서 찾지 못한 경우. errorMessage 확인.
+ *  - content: 카카오 승인 본문(원문 그대로). 발송 시 #{name}·#{surgeryDate} 치환됨.
+ *  - messageType: BASIC · EXTRA_INFO · CHANNEL_ADD · MIXED
+ */
+const solapiTemplateSchema = z.object({
+  groupCode: z.string(),
+  groupLabel: z.string(),
+  tier: z.number(),
+  templateLabel: z.string(),
+  templateId: z.string(),
+  found: z.boolean(),
+  status: z.string().nullish(),
+  name: z.string().nullish(),
+  content: z.string().nullish(),
+  messageType: z.string().nullish(),
+  categoryCode: z.string().nullish(),
+  errorMessage: z.string().nullish(),
+})
+
+/**
+ * 솔라피 계정 잔액 — 자동 발송 큐 카드에 노출.
+ *  - balance:     부가세 제외 실사용 가능액(원)
+ *  - point:       포인트(원) — 발송에 우선 소진됨
+ *  - deposit:     예치금(원, 부가세 포함) — 솔라피 콘솔의 "잔액"과 일치. 화면은 이 값을 표시한다.
+ *  - balanceOnly: 순수 충전 잔고(원)
+ *  - configured=false: API 키 미설정 → 화면은 "미설정" 표시
+ *  - errorMessage: 조회 실패 사유(configured=true 인데 값이 null 일 때)
+ */
+const solapiBalanceSchema = z.object({
+  balance: z.number().nullish(),
+  point: z.number().nullish(),
+  deposit: z.number().nullish(),
+  balanceOnly: z.number().nullish(),
+  configured: z.boolean(),
+  errorMessage: z.string().nullish(),
+})
+
 export type SmsSendLog = z.infer<typeof sendLogSchema>
 export type SmsTarget = z.infer<typeof targetSchema>
 export type SmsTemplate = z.infer<typeof templateSchema>
@@ -191,6 +231,8 @@ export type SmsOptOutRow = z.infer<typeof optOutRowSchema>
 export type SmsQueueStatus = z.infer<typeof queueStatusSchema>
 export type SmsQueueRow = z.infer<typeof queueRowSchema>
 export type SmsQueueStatusResponse = z.infer<typeof queueStatusResponseSchema>
+export type SmsSolapiTemplate = z.infer<typeof solapiTemplateSchema>
+export type SmsSolapiBalance = z.infer<typeof solapiBalanceSchema>
 
 export interface SmsOffsetUpdatePayload {
   rows: Array<{
@@ -241,6 +283,24 @@ export const smsApi = {
   async getTemplates(): Promise<SmsTemplate[]> {
     const res = await api.get('/sms-management/templates')
     return apiResponseOf(z.array(templateSchema)).parse(res).data
+  },
+
+  /**
+   * 솔라피 알림톡 템플릿 조회 — 우리 env 에 templateId 가 채워진 슬롯만 카카오 승인
+   * 상태·본문과 함께 돌려준다. API 키 미설정 시 빈 배열. 관리자 "템플릿" 모달용.
+   */
+  async getSolapiTemplates(): Promise<SmsSolapiTemplate[]> {
+    const res = await api.get('/sms-management/solapi-templates')
+    return apiResponseOf(z.array(solapiTemplateSchema)).parse(res).data
+  },
+
+  /**
+   * 솔라피 계정 잔액 조회 — 자동 발송 큐 카드에 노출.
+   * API 키 미설정이면 configured=false 로 반환(500 안 던짐).
+   */
+  async getSolapiBalance(): Promise<SmsSolapiBalance> {
+    const res = await api.get('/sms-management/solapi-balance')
+    return apiResponseOf(solapiBalanceSchema).parse(res).data
   },
 
   async createTarget(request: SmsTargetRequest): Promise<SmsTarget> {

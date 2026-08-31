@@ -145,14 +145,14 @@ export function SmsToolbar({
           <Search className="h-3.5 w-3.5" />
           조회
         </Button>
-        {/* 지우지 않고 홀딩한다 — 왜 안 보냈는지가 남고, 언제든 되돌릴 수 있다. */}
+        {/* 지우지 않고 발송만 막는다 — 왜 안 보냈는지가 남고, 언제든 되돌릴 수 있다. */}
         <Button
           type="button"
           size="sm"
           disabled={holdPending}
           className="bg-amber-500 text-xs text-white hover:bg-amber-600"
           onClick={() => onHold('HOLD')}
-          title="선택한 대상을 발송에서 제외합니다(삭제가 아니라 홀딩)"
+          title="선택한 대상을 발송에서 제외합니다(삭제가 아니라 발송 중지)"
         >
           <Ban className="h-3.5 w-3.5" />
           발송중지
@@ -164,12 +164,16 @@ export function SmsToolbar({
           disabled={holdPending}
           className="text-xs"
           onClick={() => onHold('SENDABLE')}
-          title="선택한 대상의 홀딩을 풀어 다시 발송 대기로 되돌립니다"
+          title="선택한 대상의 발송 중지를 풀어 다시 발송 대기로 되돌립니다"
         >
           <Undo2 className="h-3.5 w-3.5" />
-          홀딩 해제
+          발송중지 해제
         </Button>
-        {/* 홀딩과 다르다 — 홀딩은 이 수술 건 하나만 막고, 수신거부는 그 사람을 계속 막는다.
+        <Button type="button" size="sm" className="bg-emerald-600 text-xs text-white hover:bg-emerald-700" onClick={onAdd}>
+          <Plus className="h-3.5 w-3.5" />
+          대상 추가
+        </Button>
+        {/* 발송 중지와 다르다 — 발송 중지는 이 수술 건 하나만 막고, 수신거부는 그 사람을 계속 막는다.
             되돌리기 어려운 조작이라 확인을 한 번 받는다. */}
         <Button
           type="button"
@@ -183,21 +187,6 @@ export function SmsToolbar({
           <BellOff className="h-3.5 w-3.5" />
           수신거부
         </Button>
-        <Button type="button" size="sm" className="bg-emerald-600 text-xs text-white hover:bg-emerald-700" onClick={onAdd}>
-          <Plus className="h-3.5 w-3.5" />
-          대상 추가
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="text-xs"
-          onClick={onOpenTemplates}
-          title="수술 분류별 1~3차 발송 문구를 봅니다(읽기 전용)"
-        >
-          <FileText className="h-3.5 w-3.5" />
-          템플릿
-        </Button>
         <Button
           type="button"
           variant="outline"
@@ -208,6 +197,17 @@ export function SmsToolbar({
         >
           <ListX className="h-3.5 w-3.5" />
           수신거부 관리
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={onOpenTemplates}
+          title="솔라피에서 알림톡 템플릿 검수 상태·본문을 조회합니다(설정된 슬롯만)"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          템플릿
         </Button>
       </div>
     </div>

@@ -2,6 +2,7 @@ package com.bviit.analytics.sms.repository;
 
 import com.bviit.analytics.sms.entity.SmsDispatchQueue;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -20,8 +21,25 @@ public interface SmsDispatchQueueRepository extends JpaRepository<SmsDispatchQue
     /** 특정 상태의 대상별 큐 — 홀딩 시 PENDING 만 취소하는 등 세부 조건. */
     List<SmsDispatchQueue> findByTargetIdAndStatusIn(Long targetId, Collection<String> statuses);
 
+    /** 발송 이력 동기화 후 같은 대상+차수의 최신 큐 상태를 맞출 때 쓴다. */
+    List<SmsDispatchQueue> findByTargetIdAndTemplateCodeAndStatusInOrderByScheduledAtDesc(
+            Long targetId, String templateCode, Collection<String> statuses);
+
     /** 상태별 카운트 — 관리자 화면 상단 KPI. */
     long countByStatus(String status);
+
+    /**
+     * 상단 KPI 는 큐 이력 누적이 아니라 현재 사이클 상태를 보여준다.
+     * 같은 대상+차수의 과거 CANCELED 행은 제외하고 scheduled_at 이 가장 최신인 행만 센다.
+     */
+    @Query(value = "SELECT q.status, COUNT(*) FROM sms_dispatch_queue q "
+            + "JOIN (SELECT target_id, template_code, MAX(scheduled_at) AS scheduled_at "
+            + "FROM sms_dispatch_queue GROUP BY target_id, template_code) latest "
+            + "ON latest.target_id = q.target_id "
+            + "AND latest.template_code = q.template_code "
+            + "AND latest.scheduled_at = q.scheduled_at "
+            + "GROUP BY q.status", nativeQuery = true)
+    List<Object[]> countLatestByStatus();
 
     /** 오늘 처리 완료(DONE) 카운트 — sms.dispatch.daily-limit 판정. */
     long countByStatusAndProcessedAtGreaterThanEqualAndProcessedAtLessThan(

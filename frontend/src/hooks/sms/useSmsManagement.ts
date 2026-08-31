@@ -30,6 +30,20 @@ export function useSmsTemplates() {
   })
 }
 
+/**
+ * 솔라피 알림톡 템플릿 검증 조회 — 우리 env 에 설정된 슬롯만 카카오 승인 상태·본문과 함께.
+ * enabled 로 모달 열릴 때만 호출. 카카오 승인 문구는 자주 바뀌지 않아 캐시 5분.
+ */
+export function useSolapiTemplates(enabled: boolean) {
+  return useQuery({
+    queryKey: ['sms-management-solapi-templates'],
+    queryFn: () => smsApi.getSolapiTemplates(),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+}
+
 /** 목록을 바꾸는 모든 액션 — 성공 시 대상 목록 캐시를 무효화해 화면을 갱신한다. */
 export function useSmsMutations() {
   const queryClient = useQueryClient()

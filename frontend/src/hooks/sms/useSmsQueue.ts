@@ -14,6 +14,20 @@ export function useSmsQueueStatus() {
   })
 }
 
+/**
+ * 솔라피 계정 잔액 — 큐 카드에 함께 노출. 잔액은 자주 바뀌지 않아 큐보다 여유 있게 갱신.
+ * 큐 카드가 접혀 있어도 상단 뱃지가 정보를 보여줘야 해서 enabled 는 항상 true.
+ */
+export function useSolapiBalance() {
+  return useQuery({
+    queryKey: ['sms', 'solapi', 'balance'] as const,
+    queryFn: () => smsApi.getSolapiBalance(),
+    refetchInterval: 5 * 60_000,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  })
+}
+
 /** 상태별 큐 행 목록 — 실패 재실행 모달에서 씀. */
 export function useSmsQueueRows(status: SmsQueueStatus, limit = 100, enabled = true) {
   return useQuery({

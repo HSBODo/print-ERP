@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { useRunQueueNow, useSmsQueueStatus } from '@/hooks/sms/useSmsQueue'
+import { useRunQueueNow, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
+import type { SmsSolapiBalance } from '@/api/sms'
 
 /**
  * 자동 발송 큐 상태 요약 카드 — 문자 발송 리스트 상단 접힘 카드.
@@ -22,6 +23,7 @@ export function SmsQueueStatusCard() {
   const [collapsed, setCollapsed] = useState(false)
   const [failedOpen, setFailedOpen] = useState(false)
   const { data, isLoading, isError, refetch, isFetching } = useSmsQueueStatus()
+  const balanceQuery = useSolapiBalance()
   const runNow = useRunQueueNow()
 
   const counts = (data?.counts ?? {}) as Partial<Record<'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED' | 'CANCELED', number>>
@@ -80,6 +82,7 @@ export function SmsQueueStatusCard() {
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-gray-500">오늘 처리 {doneToday}</span>
+                <SolapiBalancePanel balance={balanceQuery.data} isLoading={balanceQuery.isLoading} isError={balanceQuery.isError} />
                 <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
                   <RefreshCw className={`mr-1 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
                   새로고침
@@ -122,4 +125,64 @@ function StatusChip({ label, value, color }: { label: string; value: number; col
       <div className="text-sm font-semibold tabular-nums">{value}</div>
     </div>
   )
+}
+
+/**
+ * 솔라피 잔액 뱃지 — 큐 카드 오른쪽 액션 옆.
+ * 값이 null 이거나 configured=false 면 뱃지를 비우지 않고 상태를 그대로 노출한다 —
+ * "왜 안 보이지?" 로 헷갈리지 않도록.
+ */
+function SolapiBalancePanel({
+  balance, isLoading, isError,
+}: {
+  balance: SmsSolapiBalance | undefined
+  isLoading: boolean
+  isError: boolean
+}) {
+  const state = balanceStateOf(balance, isLoading, isError)
+  return (
+    <div
+      className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] tabular-nums ${state.className}`}
+      title={state.title}
+    >
+      <Wallet className="h-3 w-3 opacity-70" />
+      <span className="font-medium">솔라피</span>
+      <span>{state.text}</span>
+    </div>
+  )
+}
+
+const KRW = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 })
+
+/** 상태 분기 — 로딩·에러·미설정·조회실패·정상 5가지를 하나로 정리. */
+function balanceStateOf(
+  balance: SmsSolapiBalance | undefined,
+  isLoading: boolean,
+  isError: boolean,
+): { text: string; className: string; title: string } {
+  if (isLoading) {
+    return { text: '조회 중…', className: 'border-gray-200 bg-white text-gray-500', title: '솔라피 잔액 조회 중' }
+  }
+  if (isError || !balance) {
+    return { text: '조회 실패', className: 'border-red-200 bg-red-50 text-red-700', title: '솔라피 잔액을 불러오지 못했습니다.' }
+  }
+  if (!balance.configured) {
+    return { text: '미설정', className: 'border-gray-200 bg-gray-50 text-gray-500', title: 'SOLAPI_API_KEY·SECRET 미설정' }
+  }
+  if (balance.errorMessage) {
+    return {
+      text: '조회 실패',
+      className: 'border-red-200 bg-red-50 text-red-700',
+      title: `솔라피 API 오류: ${balance.errorMessage}`,
+    }
+  }
+  const point = balance.point ?? 0
+  // 솔라피 콘솔의 "잔액" 은 API 의 deposit(예치금, 부가세 포함) 이다.
+  // balance 필드는 부가세 제외한 실사용 가능액이라 콘솔 표시와 달라 관리자가 혼동한다.
+  const deposit = balance.deposit ?? balance.balance ?? 0
+  return {
+    text: `잔액 ${KRW.format(deposit)}원 · 포인트 ${KRW.format(point)}원`,
+    className: 'border-blue-100 bg-blue-50 text-blue-700',
+    title: '솔라피 콘솔의 잔액과 동일(예치금 기준). 포인트는 발송에 우선 소진됨.',
+  }
 }

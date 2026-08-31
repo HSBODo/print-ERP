@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { MessageSquareText } from 'lucide-react'
 import { OP_TYPE_META, groupOf, groupSlotOf, offsetOf, tierCellOf } from './smsTableModel'
-import { fillTemplate, templateTextOf } from './smsTemplateTexts'
-import type { SmsTarget, SmsTemplate } from '@/api/sms'
+import { delayedTextOf, fillTemplate } from './smsTemplateTexts'
+import { useSolapiTemplates } from '@/hooks/sms/useSmsManagement'
+import type { SmsSolapiTemplate, SmsTarget, SmsTemplate } from '@/api/sms'
 
 /**
  * 오른쪽 문구 미리보기 — 고른 사람에게 **1·2·3차로 무엇이 나가는지**를 한 화면에 세워 보여준다.
@@ -9,8 +11,11 @@ import type { SmsTarget, SmsTemplate } from '@/api/sms'
  * 셋을 모두 펼쳐 둔다(접지 않는다). 차수별 문구는 서로 이어지는 안내라
  * 하나씩 열어 보면 흐름이 끊기고, 무엇이 빠졌는지도 눈에 안 들어온다.
  *
- * 문구의 #{이름}·#{수술일} 은 **실제 값으로 치환해** 보여준다 — 미리보기는 나갈 문장 그대로여야
+ * 문구의 #{name}·#{surgeryDate} 은 **실제 값으로 치환해** 보여준다 — 미리보기는 나갈 문장 그대로여야
  * 검수가 된다. 발송 시에는 서버(문자)나 솔라피(알림톡)가 같은 자리를 채운다.
+ *
+ * <p>기본 본문은 <b>솔라피 API 조회</b>로 가져온다(useSolapiTemplates). 지연 본문은
+ * 우리가 파생한 변형이라 로컬(smsTemplateTexts.DELAYED_TEXTS) 을 계속 쓴다.
  */
 export function SmsMessagePreview({ target, templates, selectedTier, today }: {
   target: SmsTarget | null
@@ -23,6 +28,11 @@ export function SmsMessagePreview({ target, templates, selectedTier, today }: {
     ? templates
     : ([] as SmsTemplate[])   // 템플릿을 못 받으면 차수를 지어내지 않는다 — 잘못된 예정일을 보여주느니 비운다
   const group = target ? groupOf(templates, target.opType) : null
+
+  // 승인 알림톡 본문 — 솔라피 API 캐시(5분). 15콜/캐시라 부담 없음.
+  // 조회 실패(found=false) 나 상태 !== APPROVED 인 슬롯은 본문이 없을 수 있어 fallback 처리.
+  const solapi = useSolapiTemplates(true)
+  const solapiByKey = useMemo(() => indexByGroupTier(solapi.data ?? []), [solapi.data])
 
   return (
     // 표와 같은 높이를 처음부터 차지한다 — 내용 길이에 따라 패널이 짧아졌다 길어지면
@@ -79,8 +89,13 @@ export function SmsMessagePreview({ target, templates, selectedTier, today }: {
               const active = selectedTier === tier.code
               // 문구는 op_type 이 아니라 **그룹**이 갖는다 — 스마일프로·스마일라식이 같은 문구를 쓴다.
               const slot = groupSlotOf(tier, target.opType)
+              const groupCode = slot?.groupCode ?? ''
               // 기준일이 밀린 대상에게는 경과 문장을 뺀 문구가 나간다 — 미리보기도 그걸 보여야 검수가 된다.
-              const text = fillTemplate(templateTextOf(slot?.groupCode ?? '', index, target.rebased), target)
+              // 1차는 지연 파생본이 없어(경과 선언이 없음) 지연도 API 승인본을 그대로 쓴다.
+              const rawText = target.rebased && index > 0
+                ? delayedTextOf(groupCode, index + 1)
+                : (solapiByKey.get(keyOf(groupCode, index + 1))?.content ?? '')
+              const text = fillTemplate(rawText, target)
               return (
                 <section
                   key={tier.code}
@@ -109,4 +124,13 @@ export function SmsMessagePreview({ target, templates, selectedTier, today }: {
       )}
     </aside>
   )
+}
+
+/** `${groupCode}-${tier}` 로 인덱싱 — Preview 렌더 시 O(1) 조회. */
+const keyOf = (groupCode: string, tier: number) => `${groupCode}-${tier}`
+
+const indexByGroupTier = (rows: SmsSolapiTemplate[]): Map<string, SmsSolapiTemplate> => {
+  const map = new Map<string, SmsSolapiTemplate>()
+  for (const row of rows) map.set(keyOf(row.groupCode, row.tier), row)
+  return map
 }

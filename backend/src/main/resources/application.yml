@@ -93,6 +93,9 @@ solapi:
   # ⚠️ Dry-run 안전장치 — 기본 true(개발단계). 실제 알림톡·문자를 나가게 하려면 SOLAPI_DRY_RUN=false 로 명시 해제.
   # true 일 때: SolapiSendService 가 실제 API 호출 없이 SUCCESS 반환. sms_send_log 에 messageType=DRY_RUN 로 남는다.
   dry-run: ${SOLAPI_DRY_RUN:true}
+  # 수신자 강제 대체 — dry-run=true 안에서만 유효. 값이 있으면 실 솔라피 API 호출하되 수신자를 이 번호로만 보낸다
+  # ("내 폰으로만 나가게" 패턴). 로컬·dev 에서 실 흐름 검증할 때 사용. dry-run=false 이면 무시.
+  override-to: ${SOLAPI_OVERRIDE_TO:}
   api-key: ${SOLAPI_API_KEY:}
   api-secret: ${SOLAPI_API_SECRET:}
   from: ${SOLAPI_FROM:}

@@ -9,6 +9,8 @@ import com.bviit.analytics.sms.dto.SmsOffsetUpdateRequest;
 import com.bviit.analytics.sms.dto.SmsOptOutRow;
 import com.bviit.analytics.sms.dto.SmsSendRequest;
 import com.bviit.analytics.sms.dto.SmsSendResult;
+import com.bviit.analytics.sms.dto.SmsSolapiBalanceInfo;
+import com.bviit.analytics.sms.dto.SmsSolapiTemplateInfo;
 import com.bviit.analytics.sms.dto.SmsTargetRequest;
 import com.bviit.analytics.sms.dto.SmsStatusRequest;
 import com.bviit.analytics.sms.dto.SmsTargetRow;
@@ -18,7 +20,9 @@ import com.bviit.analytics.sms.service.SmsOffsetConfigService;
 import com.bviit.analytics.sms.service.SmsOptOutService;
 import com.bviit.analytics.sms.service.SmsSendService;
 import com.bviit.analytics.sms.service.SmsTargetService;
+import com.bviit.analytics.sms.service.SolapiBalanceService;
 import com.bviit.analytics.sms.service.SolapiSyncService;
+import com.bviit.analytics.sms.service.SolapiTemplateLookupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -68,6 +72,8 @@ public class SmsManagementController {
     private final SolapiSyncService syncService;
     private final SolapiProperties solapiProperties;
     private final SmsOffsetConfigService offsetConfigService;
+    private final SolapiTemplateLookupService solapiTemplateLookupService;
+    private final SolapiBalanceService solapiBalanceService;
 
     /** 차트번호 조회 — 대상 추가 팝업이 이름·수술일·연락처를 채운다. */
     @GetMapping("/lookup")
@@ -190,6 +196,27 @@ public class SmsManagementController {
     @GetMapping("/templates")
     public ResponseEntity<ApiResponse<List<SmsTemplateInfo>>> templates() {
         return ResponseEntity.ok(ApiResponse.ok(solapiProperties.templates()));
+    }
+
+    /**
+     * 솔라피 알림톡 템플릿 검증 조회 — 설정된(templateId 채워진) 슬롯만
+     * 솔라피 API 로 조회해 검수 상태·본문·이름·messageType 을 함께 돌려준다.
+     *
+     * <p>API 키 미설정 시 빈 목록. 조회 실패한 슬롯은 응답에 포함되되 {@code found=false}
+     * 와 {@code errorMessage} 로 표기된다(개별 슬롯 실패가 전체 조회를 막지 않는다).
+     */
+    @GetMapping("/solapi-templates")
+    public ResponseEntity<ApiResponse<List<SmsSolapiTemplateInfo>>> solapiTemplates() {
+        return ResponseEntity.ok(ApiResponse.ok(solapiTemplateLookupService.listConfigured()));
+    }
+
+    /**
+     * 솔라피 계정 잔액 조회 — 자동 발송 큐 카드에 노출한다.
+     * API 키 미설정이면 configured=false, 조회 실패는 errorMessage 로 표기 (500 안 던짐).
+     */
+    @GetMapping("/solapi-balance")
+    public ResponseEntity<ApiResponse<SmsSolapiBalanceInfo>> solapiBalance() {
+        return ResponseEntity.ok(ApiResponse.ok(solapiBalanceService.getBalance()));
     }
 
     /**

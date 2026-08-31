@@ -7,7 +7,7 @@ import { SmsStatusFilterBar } from './SmsStatusFilterBar'
 import { SmsToolbar, type PeriodMode } from './SmsToolbar'
 import { SmsOffsetGrid } from './SmsOffsetGrid'
 import { SmsOpTypeHelp } from './SmsOpTypeHelp'
-import { SmsTemplateGuideModal } from './SmsTemplateGuideModal'
+import { SmsSolapiTemplateModal } from './SmsSolapiTemplateModal'
 import { SmsOptOutModal } from './SmsOptOutModal'
 import { SmsQueueStatusCard } from './SmsQueueStatusCard'
 import { SmsMessagePreview } from './SmsMessagePreview'
@@ -586,10 +586,8 @@ export function SmsManagementPage() {
 
       {groupHelp && <SmsOpTypeHelp at={groupHelp} groups={groupHelpOf(templates)} onClose={() => setGroupHelp(null)} />}
 
-      {/* 발송 템플릿 안내 — 읽기 전용. 실제 문구는 솔라피 설정이 정본이다. */}
-      {templateGuideOpen && (
-        <SmsTemplateGuideModal templates={templates} onClose={() => setTemplateGuideOpen(false)} />
-      )}
+      {/* 알림톡 템플릿 — 솔라피 API 실시간 조회. 검수 상태·이름·본문 노출. */}
+      <SmsSolapiTemplateModal open={templateGuideOpen} onClose={() => setTemplateGuideOpen(false)} />
 
       {/* 수신거부 관리 — 조회·해제. 홀딩은 자동으로 풀지 않음. */}
       <SmsOptOutModal open={optOutModalOpen} onClose={() => setOptOutModalOpen(false)} />

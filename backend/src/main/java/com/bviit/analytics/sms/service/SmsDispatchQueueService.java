@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,15 +82,25 @@ public class SmsDispatchQueueService {
 
     private int enqueueForTarget(SmsTarget target, LocalDateTime now) {
         // 이미 이 대상에 있는 (template, scheduled_at) 조합을 미리 뽑아서 중복 INSERT 를 피한다.
-        Set<String> existing = queueRepository.findByTargetIdInOrderByScheduledAtAsc(List.of(target.getId())).stream()
-                .map(q -> q.getTemplateCode() + "@" + q.getScheduledAt())
-                .collect(Collectors.toSet());
+        Map<String, SmsDispatchQueue> existing = new HashMap<>();
+        for (SmsDispatchQueue row : queueRepository.findByTargetIdInOrderByScheduledAtAsc(List.of(target.getId()))) {
+            existing.put(row.getTemplateCode() + "@" + row.getScheduledAt(), row);
+        }
         int inserted = 0;
         for (int tier = 1; tier <= 3; tier++) {
             LocalDateTime scheduled = scheduledAtOf(target, tier);
             String key = "T" + tier + "@" + scheduled;
-            if (existing.contains(key)) continue;
             String kind = offsetConfigService.kindOf(tier);
+            SmsDispatchQueue existingRow = existing.get(key);
+            if (existingRow != null) {
+                if (SmsDispatchQueue.STATUS_CANCELED.equals(existingRow.getStatus())) {
+                    existingRow.reset(now);
+                    existingRow.reschedule(scheduled, kind, now);
+                    queueRepository.saveAndFlush(existingRow);
+                    inserted++;
+                }
+                continue;
+            }
             SmsDispatchQueue row = SmsDispatchQueue.builder()
                     .targetId(target.getId())
                     .templateCode("T" + tier)
@@ -220,13 +231,17 @@ public class SmsDispatchQueueService {
 
     @Transactional(readOnly = true)
     public Map<String, Long> statusCounts() {
-        return Map.of(
-                SmsDispatchQueue.STATUS_PENDING, queueRepository.countByStatus(SmsDispatchQueue.STATUS_PENDING),
-                SmsDispatchQueue.STATUS_PROCESSING, queueRepository.countByStatus(SmsDispatchQueue.STATUS_PROCESSING),
-                SmsDispatchQueue.STATUS_DONE, queueRepository.countByStatus(SmsDispatchQueue.STATUS_DONE),
-                SmsDispatchQueue.STATUS_FAILED, queueRepository.countByStatus(SmsDispatchQueue.STATUS_FAILED),
-                SmsDispatchQueue.STATUS_CANCELED, queueRepository.countByStatus(SmsDispatchQueue.STATUS_CANCELED)
-        );
+        Map<String, Long> counts = new HashMap<>();
+        counts.put(SmsDispatchQueue.STATUS_PENDING, 0L);
+        counts.put(SmsDispatchQueue.STATUS_PROCESSING, 0L);
+        counts.put(SmsDispatchQueue.STATUS_DONE, 0L);
+        counts.put(SmsDispatchQueue.STATUS_FAILED, 0L);
+        counts.put(SmsDispatchQueue.STATUS_CANCELED, 0L);
+        for (Object[] row : queueRepository.countLatestByStatus()) {
+            if (row.length < 2 || row[0] == null || row[1] == null) continue;
+            counts.put(row[0].toString(), ((Number) row[1]).longValue());
+        }
+        return counts;
     }
 
     @Transactional(readOnly = true)
