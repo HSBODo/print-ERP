@@ -23,6 +23,10 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/*
+ * Phase 2 참조 — 상태 변경 시 큐 훅. ObjectProvider 로 감싸 순환 참조 회피.
+ */
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -49,6 +53,12 @@ public class SmsTargetService {
     /** mssql 프로파일에서만 존재. 마트에 번호가 없을 때만 쓰는 보조 조회(없으면 그냥 건너뛴다). */
     private final ObjectProvider<SmsCrmContactRepository> crmContactRepositoryProvider;
     private final SolapiProperties solapiProperties;
+    /**
+     * Phase 2 — 홀딩 시 PENDING 큐 취소, 해제 시 재등록. ObjectProvider 로 감싸 순환 참조 회피.
+     * (SmsDispatchQueueService → SmsOffsetConfigService → 이 서비스 를 다시 참조하지는 않지만,
+     *  향후 큐 서비스가 target 조회를 요구할 여지가 있어 안전하게 lazy.)
+     */
+    private final ObjectProvider<SmsDispatchQueueService> queueServiceProvider;
 
     /**
      * 조회 기준 — 같은 기간이라도 무엇을 묻는지가 다르다.
@@ -263,6 +273,7 @@ public class SmsTargetService {
         SmsTarget target = getTarget(id);
         target.changeStatus(status, now);
         rebaseIfOverdue(target, now);   // 홀딩을 푼 시점부터 다시 시작
+        syncQueueOnStatusChange(target);
         return SmsTargetRow.from(target, List.of());
     }
 
@@ -276,9 +287,24 @@ public class SmsTargetService {
             if (target == null) continue;
             target.changeStatus(status, now);
             rebaseIfOverdue(target, now);
+            syncQueueOnStatusChange(target);
             changed++;
         }
         return changed;
+    }
+
+    /**
+     * Phase 2 — 상태 변경 후 큐 반영. HOLD → PENDING 취소, SENDABLE → 재등록(멱등).
+     * 큐 서비스가 미주입(sms 미로딩·마트 미연결) 이면 조용히 skip.
+     */
+    private void syncQueueOnStatusChange(SmsTarget target) {
+        SmsDispatchQueueService queueService = queueServiceProvider.getIfAvailable();
+        if (queueService == null) return;
+        if (target.isSendable()) {
+            queueService.reinstateForTarget(target);
+        } else {
+            queueService.cancelPendingForTarget(target.getId(), "홀딩");
+        }
     }
 
     /**

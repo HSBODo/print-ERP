@@ -150,6 +150,34 @@ const lookupSchema = z.object({
   surgeryL: z.string(),
 })
 
+/**
+ * 자동 발송 큐 상태 (sms_dispatch_queue).
+ *   PENDING     발송 대기 (scheduled_at 도래 후 폴러가 잡음)
+ *   PROCESSING  폴러가 잡은 상태 (실제 발송 시도 중)
+ *   DONE        성공 or 이미 발송된 차수(idempotent)
+ *   FAILED      max-attempts 도달까지 실패 (관리자 재실행 API 로만 되살아남)
+ *   CANCELED    홀딩·수신거부·번호무효 등 재개 불가 사유
+ */
+const queueStatusSchema = z.enum(['PENDING', 'PROCESSING', 'DONE', 'FAILED', 'CANCELED'])
+
+const queueRowSchema = z.object({
+  id: z.number(),
+  targetId: z.number(),
+  templateCode: z.string(),
+  scheduledAt: z.string(),
+  kind: messageKindSchema,
+  status: queueStatusSchema,
+  attemptCount: z.number(),
+  lastError: z.string().nullish(),
+  pickedAt: z.string().nullish(),
+  processedAt: z.string().nullish(),
+})
+
+const queueStatusResponseSchema = z.object({
+  counts: z.record(queueStatusSchema, z.number()),
+  done_today: z.number(),
+})
+
 export type SmsSendLog = z.infer<typeof sendLogSchema>
 export type SmsTarget = z.infer<typeof targetSchema>
 export type SmsTemplate = z.infer<typeof templateSchema>
@@ -160,6 +188,9 @@ export type SmsLookup = z.infer<typeof lookupSchema>
 export type SmsOffsetRow = z.infer<typeof offsetRowSchema>
 export type SmsMessageKind = z.infer<typeof messageKindSchema>
 export type SmsOptOutRow = z.infer<typeof optOutRowSchema>
+export type SmsQueueStatus = z.infer<typeof queueStatusSchema>
+export type SmsQueueRow = z.infer<typeof queueRowSchema>
+export type SmsQueueStatusResponse = z.infer<typeof queueStatusResponseSchema>
 
 export interface SmsOffsetUpdatePayload {
   rows: Array<{
@@ -288,5 +319,35 @@ export const smsApi = {
   async updateOffsets(payload: SmsOffsetUpdatePayload): Promise<SmsOffsetRow[]> {
     const res = await api.put('/sms-management/offsets', payload)
     return apiResponseOf(z.array(offsetRowSchema)).parse(res).data
+  },
+
+  /* ── 자동 발송 큐 (Phase 2) ────────────────────────────────
+   * /api/admin/batch/sms/queue/** — hasRole('ADMIN'). postgres-mart 프로파일 전용.
+   * 로컬(H2) 개발 환경에서도 배치 인프라가 로드되면 접근 가능.
+   */
+
+  /** 큐 상태 요약 — 상태별 카운트 + 오늘 처리량. */
+  async getQueueStatus(): Promise<SmsQueueStatusResponse> {
+    const res = await api.get('/admin/batch/sms/queue/status')
+    return apiResponseOf(queueStatusResponseSchema).parse(res).data
+  },
+
+  /** 특정 상태 행 목록 — 기본 FAILED 100건. limit 1..500. */
+  async getQueueRows(status: SmsQueueStatus = 'FAILED', limit = 100): Promise<SmsQueueRow[]> {
+    const res = await api.get(withQuery('/admin/batch/sms/queue/rows', { status, limit }))
+    return apiResponseOf(z.array(queueRowSchema)).parse(res).data
+  },
+
+  /** 실패·취소 재실행 — attempt_count 리셋 후 PENDING 으로. 리셋된 건수 반환. */
+  async retryQueueRows(ids: number[]): Promise<number> {
+    if (ids.length === 0) return 0
+    const res = await api.post(withQuery('/admin/batch/sms/queue/retry', { ids: ids.join(',') }), {})
+    return apiResponseOf(z.number()).parse(res).data
+  },
+
+  /** 5분 폴러 즉시 실행 — 개발·긴급용. 처리 통계 반환. */
+  async runQueueNow(): Promise<Record<string, number>> {
+    const res = await api.post('/admin/batch/sms/queue/run', {})
+    return apiResponseOf(z.record(z.string(), z.number())).parse(res).data
   },
 }

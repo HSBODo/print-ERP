@@ -72,6 +72,23 @@ logging:
     level: ${LOGGING_SLACK_LEVEL:ERROR}
     enabled: ${LOGGING_SLACK_ENABLED:false}
 
+sms:
+  dispatch:
+    # 자동 발송 배치 스위치. 기본 false — 관리자가 화면에서 [발송] 버튼 누르는 Phase 1 흐름 유지.
+    # 운영 활성화 순서: (1) SMS_DISPATCH_ENABLED=true → 스케줄러 활성 (2) SOLAPI_DRY_RUN=false → 실 API 호출.
+    enabled: ${SMS_DISPATCH_ENABLED:false}
+    # 폴링 주기 — 매 5분. 기본이면 하루 288회 폴링.
+    cron: ${SMS_DISPATCH_CRON:0 */5 * * * *}
+    # 한 사이클에 잡는 큐 최대 개수 (FOR UPDATE SKIP LOCKED LIMIT).
+    batch-size: ${SMS_DISPATCH_BATCH_SIZE:50}
+    # 하루 최대 DONE 카운트. 초과 시 사이클 skip + Slack 임계치 알림.
+    daily-limit: ${SMS_DISPATCH_DAILY_LIMIT:500}
+    # 큐 행당 재시도 상한. 도달 시 status=FAILED 로 굳고 관리자 재실행 API 로만 되살아남.
+    max-attempts: ${SMS_DISPATCH_MAX_ATTEMPTS:3}
+    # 광고톡 발송 허용 시(hour) — 정보통신망법상 광고성 21~08 금지. 알림톡은 시간 제한 없음.
+    ad-window-start-hour: ${SMS_DISPATCH_AD_START_HOUR:8}
+    ad-window-end-hour: ${SMS_DISPATCH_AD_END_HOUR:20}
+
 solapi:
   # ⚠️ Dry-run 안전장치 — 기본 true(개발단계). 실제 알림톡·문자를 나가게 하려면 SOLAPI_DRY_RUN=false 로 명시 해제.
   # true 일 때: SolapiSendService 가 실제 API 호출 없이 SUCCESS 반환. sms_send_log 에 messageType=DRY_RUN 로 남는다.

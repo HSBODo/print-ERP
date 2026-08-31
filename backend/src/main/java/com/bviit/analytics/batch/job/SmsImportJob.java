@@ -3,6 +3,9 @@ package com.bviit.analytics.batch.job;
 import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.common.exception.DataSourceUnavailableException;
 import com.bviit.analytics.sms.dto.SmsImportResult;
+import com.bviit.analytics.sms.entity.SmsTarget;
+import com.bviit.analytics.sms.repository.SmsTargetRepository;
+import com.bviit.analytics.sms.service.SmsDispatchQueueService;
 import com.bviit.analytics.sms.service.SmsTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,13 +44,18 @@ public class SmsImportJob {
     static final String MART_NAME = "sms";
 
     private final SmsTargetService targetService;
+    private final SmsTargetRepository targetRepository;
+    private final SmsDispatchQueueService queueService;
     private final BatchSuccessLogRepository successLogRepository;
 
     /**
-     * from..to 수술자를 sms_target 에 idempotent 적재.
+     * from..to 수술자를 sms_target 에 idempotent 적재 + T1/T2/T3 큐 심기.
      *
-     * <p>트랜잭션은 서비스 계층이 소유(@Transactional on importFromSurgeryList). 배치 잡 자체는
-     * 트랜잭션 밖에서 얇게 감싸기만 한다.
+     * <p>트랜잭션은 서비스 계층이 소유(@Transactional on importFromSurgeryList / enqueueForTargets).
+     * 배치 잡 자체는 트랜잭션 밖에서 얇게 감싸기만 한다.
+     *
+     * <p>Phase 2 — target upsert 후 그 범위의 SENDABLE 대상에 대해 T1/T2/T3 큐 3행을
+     * enqueueForTargets 로 심는다. 이미 있는 (target, tier, scheduled_at) 조합은 조용히 skip.
      */
     public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("SmsImportJob start: range={}..{}", from, to);
@@ -56,6 +65,11 @@ public class SmsImportJob {
             stats.put("sms_target_created", result.created());
             stats.put("sms_target_updated", result.updated());
             stats.put("sms_target_skipped", result.skipped());
+            // 대상 범위의 SENDABLE 만 큐 등록. 홀딩·수신거부 대상은 여기서 배제된다(안전장치).
+            List<SmsTarget> inRange = targetRepository
+                    .findBySurgeryDateBetweenOrderBySurgeryDateAscIdAsc(from, to);
+            int enqueued = queueService.enqueueForTargets(inRange);
+            stats.put("sms_queue_enqueued", enqueued);
             successLogRepository.upsert(MART_NAME, to);
             log.info("SmsImportJob done: {}", stats);
         } catch (DataSourceUnavailableException e) {
@@ -64,6 +78,7 @@ public class SmsImportJob {
             stats.put("sms_target_created", 0);
             stats.put("sms_target_updated", 0);
             stats.put("sms_target_skipped", 0);
+            stats.put("sms_queue_enqueued", 0);
         }
         return stats;
     }

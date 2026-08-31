@@ -5,6 +5,7 @@ import com.bviit.analytics.sms.entity.SmsOffsetConfig;
 import com.bviit.analytics.sms.repository.SmsOffsetConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +66,12 @@ public class SmsOffsetConfigService {
     private static final String DEFAULT_KIND = SmsOffsetConfig.KIND_NOTIFICATION;
 
     private final SmsOffsetConfigRepository repository;
+    /**
+     * Phase 2 — 오프셋 편집 후 미발송 큐(sms_dispatch_queue) 의 scheduled_at·kind 를
+     * 새 값으로 되민다. ObjectProvider 로 감싸 순환 참조 회피 (SmsDispatchQueueService 가
+     * 이 서비스의 offsetOf/timeOf/kindOf 를 부른다).
+     */
+    private final ObjectProvider<SmsDispatchQueueService> queueServiceProvider;
 
     /** groupCode → SmsOffsetConfig 캐시. 편집 시 refresh() 가 통째 교체한다. */
     private final ConcurrentMap<String, SmsOffsetConfig> cache = new ConcurrentHashMap<>();
@@ -160,10 +167,15 @@ public class SmsOffsetConfigService {
             }
         }
         refresh();
-        log.info("SMS 설정 갱신: actor={}, groups={}, times=({},{},{}), kinds=({},{},{})",
+        // Phase 2 — 미발송 큐를 새 오프셋·시각으로 재계산. 같은 트랜잭션이라
+        // 편집 실패 시 큐 재계산도 롤백된다(원자적). 큐 서비스가 미주입(sms 미로딩)이면 조용히 skip.
+        SmsDispatchQueueService queueService = queueServiceProvider.getIfAvailable();
+        int rescheduled = queueService == null ? 0 : queueService.recalculateScheduledForPending();
+        log.info("SMS 설정 갱신: actor={}, groups={}, times=({},{},{}), kinds=({},{},{}), queue_rescheduled={}",
                 safeActor, byCode.keySet(),
                 tiers.tier1Time(), tiers.tier2Time(), tiers.tier3Time(),
-                tiers.tier1Kind(), tiers.tier2Kind(), tiers.tier3Kind());
+                tiers.tier1Kind(), tiers.tier2Kind(), tiers.tier3Kind(),
+                rescheduled);
         return getAll();
     }
 

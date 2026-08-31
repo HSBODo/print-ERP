@@ -9,6 +9,7 @@ import { SmsOffsetGrid } from './SmsOffsetGrid'
 import { SmsOpTypeHelp } from './SmsOpTypeHelp'
 import { SmsTemplateGuideModal } from './SmsTemplateGuideModal'
 import { SmsOptOutModal } from './SmsOptOutModal'
+import { SmsQueueStatusCard } from './SmsQueueStatusCard'
 import { SmsMessagePreview } from './SmsMessagePreview'
 import { SmsPagination } from './SmsPagination'
 import {
@@ -309,6 +310,7 @@ export function SmsManagementPage() {
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
+      <SmsQueueStatusCard />
       <SmsOffsetGrid />
       <SmsToolbar
         basis={basis}
