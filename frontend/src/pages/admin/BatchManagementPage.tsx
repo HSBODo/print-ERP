@@ -57,6 +57,12 @@ const JOB_OPTIONS: BatchJobOption[] = [
     label: '기타 도메인만',
     description: 'mart_b2b_revenue_* 등 기타 잡만 재실행합니다.',
   },
+  {
+    value: 'SMS',
+    label: '문자 발송 대상만',
+    description:
+      'list_surgery 를 소스로 sms_target 을 재적재합니다(같은 chart_no+수술일은 CRM 최신값으로 upsert, 수동 MANUAL 행은 보존). SURGERY 배치가 선행되어야 하며, 스마일·라식·라섹·렌즈삽입만 대상입니다.',
+  },
 ]
 
 const daysAgo = (n: number) => {

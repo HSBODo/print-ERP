@@ -39,6 +39,7 @@ export type BatchDomain =
   | 'OUTPATIENT'
   | 'OVERALL'
   | 'ETC'
+  | 'SMS'
 
 export const batchAdminApi = {
   listRunLogs: async (limit = 50): Promise<BatchRunLog[]> =>
