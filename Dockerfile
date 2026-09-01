@@ -93,4 +93,4 @@ ENV SERVER_PORT=18080 \
 
 EXPOSE 18080
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "-c", "infisical run --projectId=$INFISICAL_PROJECT_ID --env=$INFISICAL_ENV -- /app/entrypoint.sh"]
