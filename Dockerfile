@@ -71,7 +71,10 @@ RUN sed -i 's/TLSv1, TLSv1.1,//g' $JAVA_HOME/conf/security/java.security
 # 컨테이너 안에서 sshpass 로 터널을 연다. 사이드카 컨테이너·서버측 systemd 없이 자립 동작.
 # openssh-client / sshpass / netcat-openbsd 세 패키지 합쳐 약 ~2MB.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends openssh-client sshpass netcat-openbsd && \
+    apt-get install -y --no-install-recommends openssh-client sshpass netcat-openbsd \
+    curl ca-certificates gnupg && \
+    curl -1sLf 'https://artifacts-cli.infisical.com/setup.deb.sh' | bash && \
+    apt-get update && apt-get install -y infisical && \
     rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system app && useradd --system --gid app --home /app app \
