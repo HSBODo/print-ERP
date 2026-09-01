@@ -4,6 +4,7 @@ import com.bviit.analytics.common.exception.DataSourceUnavailableException;
 import com.bviit.analytics.sms.config.SolapiProperties;
 import com.bviit.analytics.sms.dto.SmsTemplateGroupInfo;
 import com.solapi.sdk.SolapiClient;
+import com.solapi.sdk.message.dto.request.SendRequestConfig;
 import com.solapi.sdk.message.dto.response.MultipleDetailMessageSentResponse;
 import com.solapi.sdk.message.dto.response.kakao.KakaoAlimtalkTemplateResponse;
 import com.solapi.sdk.message.exception.SolapiMessageNotReceivedException;
@@ -114,7 +115,12 @@ public class SolapiSendService {
                 message.setText(substitute(slot.textFor(delayed), variables));
             }
 
-            MultipleDetailMessageSentResponse response = service.send(message);
+            // showMessageList=true 를 명시하지 않으면 응답의 messageList 가 비어 오고
+            // messageId 가 null 로 저장되어 웹훅 매칭(findBySolapiMessageId) 이 영영 실패한다.
+            // Solapi SDK 1.0.3 의 SendRequestConfig 기본값이 false 라 반드시 지정해야 한다.
+            SendRequestConfig config = new SendRequestConfig();
+            config.setShowMessageList(true);
+            MultipleDetailMessageSentResponse response = service.send(message, config);
             String groupId = response.getGroupInfo() != null ? response.getGroupInfo().getGroupId() : null;
             String messageId = null;
             String statusCode = null;
