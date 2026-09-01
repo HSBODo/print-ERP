@@ -11,6 +11,7 @@ import com.solapi.sdk.message.model.Message;
 import com.solapi.sdk.message.service.DefaultMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,32 @@ public class SolapiSyncService {
 
     private final SmsSendLogRepository logRepository;
     private final SolapiProperties props;
+
+    /**
+     * fallback 스케줄러 — 웹훅 유실·비활성 대비. 하루 1회 최근 2일 재확인한다.
+     *
+     * <p>정상 흐름은 {@link com.bviit.analytics.sms.controller.SmsWebhookController} 가 SINGLE-REPORT
+     * 이벤트를 받아 즉시 반영한다. 웹훅이 8회 실패 후 자동 INACTIVE 되거나 개별 이벤트가 유실되면
+     * 로그가 영영 PENDING 으로 남는데, 이 배치가 걷어낸다. 웹훅이 정상이면 갱신 0건이 정상이다.
+     *
+     * <p>{@code SOLAPI_SYNC_CRON="-"} 로 스케줄을 아예 끌 수 있다. 솔라피 미설정이면 조용히 skip
+     * — 스케줄러가 계속 붙어 있어도 API 호출은 안 하고 로그만 남는다.
+     */
+    @Scheduled(cron = "${solapi.sync-cron:0 30 3 * * *}", zone = "Asia/Seoul")
+    public void runScheduledFallback() {
+        if (!props.isConfigured()) {
+            log.debug("SolapiSyncService fallback skip — 솔라피 미설정");
+            return;
+        }
+        LocalDate to = LocalDate.now();
+        LocalDate from = to.minusDays(2);
+        try {
+            int updated = sync(from, to);
+            log.info("[fallback] 솔라피 동기화 완료: 갱신 {}건 (범위 {}..{})", updated, from, to);
+        } catch (Exception e) {
+            log.warn("[fallback] 솔라피 동기화 실패 (범위 {}..{})", from, to, e);
+        }
+    }
 
     /**
      * 갱신한 이력 수. 아직 도달 확인이 안 된 건은 그대로 둔다.

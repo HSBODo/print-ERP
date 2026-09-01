@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ⚠️ 여기에는 SQL 텍스트 블록을 두지 않는다(RepositorySqlResourceCoverageTest 가 막는다).
@@ -14,6 +15,12 @@ import java.util.List;
 public interface SmsSendLogRepository extends JpaRepository<SmsSendLog, Long> {
 
     List<SmsSendLog> findByTargetIdInOrderBySentAtDesc(Collection<Long> targetIds);
+
+    /**
+     * 솔라피 메시지 ID 로 이력 1건 조회 — 웹훅(SINGLE-REPORT) 이 재조회 대신 쓰는 경로.
+     * 접수 시 채워지는 solapiMessageId 는 계정 내 유일하므로 결과는 0 또는 1건.
+     */
+    Optional<SmsSendLog> findBySolapiMessageId(String solapiMessageId);
 
     /**
      * 이 사람에게 이 차수가 <b>이미 나갔는지</b> — 사이클(cycle_base)과 무관하게 본다.

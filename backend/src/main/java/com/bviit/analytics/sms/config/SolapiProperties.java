@@ -76,12 +76,28 @@ public class SolapiProperties {
      */
     @Value("${solapi.override-to:}") private String overrideTo;
 
+    /**
+     * 웹훅 서명 검증용 시크릿 — 콘솔에서 웹훅 등록 시 {@code secret} 필드에 넣은 문자열과 같아야 한다.
+     *
+     * <p>솔라피는 매 요청의 {@code X-Solapi-Secret} 헤더에 <b>secret 원문의 SHA1 해시</b>를 담아 보낸다
+     * (body 서명이 아니라 정적 토큰에 가깝다). 서버는 여기 저장된 secret 을 sha1 해 헤더 값과 대조한다.
+     *
+     * <p>비어 있으면 서명 검증을 건너뛴다 — 로컬·초기 부트스트랩용. 운영은 반드시 채운다
+     * (설정 안 된 상태로 외부 노출되면 누구나 발송 상태를 조작할 수 있다).
+     */
+    @Value("${solapi.webhook-secret:}") private String webhookSecret;
+
     @Value("${solapi.templates.t1.label:수술 후 안내 1차}") private String t1Label;
     @Value("${solapi.templates.t2.label:수술 후 안내 2차}") private String t2Label;
     @Value("${solapi.templates.t3.label:수술 후 안내 3차}") private String t3Label;
 
     public boolean isConfigured() {
         return !apiKey.isBlank() && !apiSecret.isBlank() && !from.isBlank();
+    }
+
+    /** 웹훅 서명 검증을 실제로 수행할지 — 시크릿이 채워져 있어야 한다. */
+    public boolean isWebhookSecretConfigured() {
+        return webhookSecret != null && !webhookSecret.isBlank();
     }
 
     /** 차수 3개. 각 차수가 그룹별 슬롯을 품는다. */

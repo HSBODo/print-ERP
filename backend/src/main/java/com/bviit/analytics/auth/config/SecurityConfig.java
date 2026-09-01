@@ -74,6 +74,10 @@ public class SecurityConfig {
                 if (h2ConsoleEnabled) {
                     auth.requestMatchers("/h2-console/**").permitAll();
                 }
+                // 솔라피 웹훅 — 외부(솔라피 서버)가 JWT 없이 POST 로 결과를 던져 준다.
+                // 인증 대체는 X-Solapi-Secret 헤더 서명 검증(SmsWebhookController).
+                // 반드시 sms-management 매처보다 앞에 둔다 — 뒤에 두면 규칙이 뒤덮인다.
+                auth.requestMatchers("/api/sms/webhook/**").permitAll();
                 // 관리자 전용 API (배치 트리거·로그) — ADMIN 롤 필수
                 auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
                 // 문자 발송 관리 — 연락처가 응답에 실리므로 백엔드에서도 ADMIN 강제

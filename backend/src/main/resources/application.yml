@@ -100,6 +100,12 @@ solapi:
   api-secret: ${SOLAPI_API_SECRET:}
   from: ${SOLAPI_FROM:}
   pf-id: ${SOLAPI_PFID:}
+  # 웹훅(SINGLE-REPORT) 서명 검증용 — 콘솔 웹훅 등록 시 넣은 secret 과 동일해야 한다.
+  # 비어 있으면 서명 검증 skip (로컬 부트스트랩용). 운영은 반드시 채울 것.
+  webhook-secret: ${SOLAPI_WEBHOOK_SECRET:}
+  # fallback 동기화 스케줄 — 웹훅 유실·비활성 대비. 하루 1회 최근 2일 재확인.
+  # 웹훅이 정상이면 갱신 0건이 정상이다. cron="-" 이면 스케줄 비활성.
+  sync-cron: ${SOLAPI_SYNC_CRON:0 30 3 * * *}
   templates:
     # 차수 라벨 — 화면 컬럼명. 오프셋은 수술 그룹마다 달라 SurgeryGroup 이 갖는다.
     t1:
