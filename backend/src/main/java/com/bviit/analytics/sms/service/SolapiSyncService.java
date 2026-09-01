@@ -48,6 +48,7 @@ public class SolapiSyncService {
 
     private final SmsSendLogRepository logRepository;
     private final SolapiProperties props;
+    private final SmsDispatchQueueService queueService;
 
     /**
      * fallback 스케줄러 — 웹훅 유실·비활성 대비. 하루 1회 최근 2일 재확인한다.
@@ -170,6 +171,7 @@ public class SolapiSyncService {
         // 도달 시각이 찍혔으면 그걸로 확정한다 — 가장 확실한 근거다.
         if (deliveredAt != null) {
             entry.applyDeliveryResult(type, statusCode, SmsSendLog.STATUS_SUCCESS, deliveredAt, replacement, null);
+            propagateToQueue(entry, true, null);
             return true;
         }
         // 코드가 없거나 진행 중이면 아직 판단하지 않는다.
@@ -181,11 +183,25 @@ public class SolapiSyncService {
         // 코드가 성공이면 성공으로 확정하고, 도달 시각만 비워 둔다(화면은 발송일로 표시한다).
         if (SUCCESS_CODE.equals(statusCode)) {
             entry.applyDeliveryResult(type, statusCode, SmsSendLog.STATUS_SUCCESS, null, replacement, null);
+            propagateToQueue(entry, true, null);
             return true;
         }
-        entry.applyDeliveryResult(type, statusCode, SmsSendLog.STATUS_FAILED, null, replacement,
-                "도달 실패 (상태코드 " + statusCode + ")");
+        String reason = "도달 실패 (상태코드 " + statusCode + ")";
+        entry.applyDeliveryResult(type, statusCode, SmsSendLog.STATUS_FAILED, null, replacement, reason);
+        propagateToQueue(entry, false, reason);
         return true;
+    }
+
+    /**
+     * send_log 확정 결과를 대응하는 큐 행에 전파한다 — 웹훅 경로와 동일 규칙.
+     * 두 경로가 갈리면 같은 발송을 두고 큐 상태가 어긋난다.
+     */
+    private void propagateToQueue(SmsSendLog entry, boolean success, String failReason) {
+        queueService.findLatestReceivedId(entry.getTargetId(), entry.getTemplateCode())
+                .ifPresent(queueId -> {
+                    if (success) queueService.markDelivered(queueId);
+                    else queueService.markDeliveryFailed(queueId, failReason);
+                });
     }
 
     /** 솔라피 시각은 ISO-8601(오프셋 포함)로 온다. 형식이 달라도 죽지 않게 단계별로 시도한다. */

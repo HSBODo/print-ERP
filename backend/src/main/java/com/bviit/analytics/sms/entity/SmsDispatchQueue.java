@@ -21,8 +21,9 @@ import java.time.LocalDateTime;
  * <p>왜 별도 표인가 — {@code sms_send_log} 는 사후 이력이라 "언제 나갈 예정인지" 를
  * 표현하지 못한다. 큐를 두면 재시도·홀딩 취소·오프셋 변경 재계산이 SQL 로 자연스럽다.
  *
- * <p>상태 라이프사이클 — {@link #STATUS_PENDING} → PROCESSING → DONE / FAILED / CANCELED.
- * 자세한 전이 규칙은 V62 DDL 상단 주석 참조.
+ * <p>상태 라이프사이클 — {@link #STATUS_PENDING} → PROCESSING → RECEIVED → DONE / FAILED / CANCELED.
+ * RECEIVED 는 솔라피가 접수한 뒤 도달 확인을 기다리는 중간 상태다. 웹훅/sync 가 결과를
+ * 실어 오면 DONE(도달) 또는 FAILED(도달 실패) 로 굳는다. 자세한 전이 규칙은 V62 DDL 참조.
  */
 @Entity
 @Table(name = "sms_dispatch_queue")
@@ -36,7 +37,12 @@ public class SmsDispatchQueue {
     public static final String STATUS_PENDING = "PENDING";
     /** 폴러가 FOR UPDATE SKIP LOCKED 로 잡은 상태. 실제 발송 시도 중. */
     public static final String STATUS_PROCESSING = "PROCESSING";
-    /** 발송 성공(SUCCESS) 또는 이미 발송된 차수(idempotent SKIP). */
+    /**
+     * 솔라피 접수 성공. 도달 확인(웹훅·sync) 을 기다리는 중간 상태.
+     * 이미 발송된 차수(idempotent SKIP) 도 여기로 취급 — 도달 여부는 send_log 가 말해준다.
+     */
+    public static final String STATUS_RECEIVED = "RECEIVED";
+    /** 단말 도달 확인됨(웹훅 또는 sync 가 send_log SUCCESS 로 굳힌 뒤 이곳도 굳음). terminal. */
     public static final String STATUS_DONE = "DONE";
     /** max_attempts 도달까지 실패. 관리자 재실행 API 로만 되살아남. */
     public static final String STATUS_FAILED = "FAILED";
@@ -94,9 +100,34 @@ public class SmsDispatchQueue {
         this.updatedAt = now;
     }
 
-    /** 발송 성공 확정. 재시도 대상 아님. */
-    public void markDone(LocalDateTime now) {
+    /**
+     * 솔라피 접수 성공 — PROCESSING → RECEIVED. 도달 확인은 웹훅/sync 가 채운다.
+     * processed_at 은 접수 시각으로 찍는다(daily-limit 은 발송 시도 기준으로 센다).
+     */
+    public void markReceived(LocalDateTime now) {
+        this.status = STATUS_RECEIVED;
+        this.processedAt = now;
+        this.updatedAt = now;
+    }
+
+    /**
+     * 단말 도달 확인됨 — RECEIVED → DONE. 웹훅 SINGLE-REPORT 나 sync 가 send_log 를 SUCCESS 로
+     * 마킹한 뒤 부른다. 이미 DONE 이면 no-op (중복 이벤트 방어).
+     */
+    public void markDelivered(LocalDateTime now) {
+        if (STATUS_DONE.equals(this.status)) return;
         this.status = STATUS_DONE;
+        this.processedAt = now;
+        this.updatedAt = now;
+    }
+
+    /**
+     * 도달 실패 확정 — RECEIVED → FAILED. 웹훅/sync 가 도달 실패 코드를 실어 왔을 때.
+     * max_attempts 재시도와 무관하게 즉시 굳힌다 (통신사 최종 실패 코드).
+     */
+    public void markDeliveryFailed(String reason, LocalDateTime now) {
+        this.status = STATUS_FAILED;
+        this.lastError = truncate(reason);
         this.processedAt = now;
         this.updatedAt = now;
     }

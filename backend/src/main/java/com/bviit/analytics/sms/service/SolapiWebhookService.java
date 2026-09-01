@@ -52,6 +52,7 @@ public class SolapiWebhookService {
     private static final String TYPE_ALIMTALK = "ATA";
 
     private final SmsSendLogRepository logRepository;
+    private final SmsDispatchQueueService queueService;
 
     /** 갱신한 이력 수. 매칭 실패·판단 보류 건은 세지 않는다. */
     @Transactional
@@ -82,6 +83,7 @@ public class SolapiWebhookService {
         if (deliveredAt != null) {
             log.applyDeliveryResult(type, statusCode, SmsSendLog.STATUS_SUCCESS,
                     deliveredAt, replacement, null);
+            propagateToQueue(log, true, null);
             return true;
         }
         if (statusCode == null || statusCode.isBlank() || IN_PROGRESS_CODES.contains(statusCode)) {
@@ -90,6 +92,7 @@ public class SolapiWebhookService {
         if (SUCCESS_CODE.equals(statusCode)) {
             log.applyDeliveryResult(type, statusCode, SmsSendLog.STATUS_SUCCESS,
                     null, replacement, null);
+            propagateToQueue(log, true, null);
             return true;
         }
         String reason = "도달 실패 (상태코드 " + statusCode
@@ -98,7 +101,20 @@ public class SolapiWebhookService {
                 + ")";
         log.applyDeliveryResult(type, statusCode, SmsSendLog.STATUS_FAILED,
                 null, replacement, reason);
+        propagateToQueue(log, false, reason);
         return true;
+    }
+
+    /**
+     * send_log 확정 결과를 대응하는 큐 행에 전파한다 — RECEIVED → DONE / FAILED.
+     * 매칭 실패(옛 DONE 이거나 이미 다른 이벤트가 반영)는 조용히 skip.
+     */
+    private void propagateToQueue(SmsSendLog log, boolean success, String failReason) {
+        queueService.findLatestReceivedId(log.getTargetId(), log.getTemplateCode())
+                .ifPresent(queueId -> {
+                    if (success) queueService.markDelivered(queueId);
+                    else queueService.markDeliveryFailed(queueId, failReason);
+                });
     }
 
     /** 솔라피 시각은 ISO-8601(오프셋 포함). 형식이 달라도 죽지 않게 단계별로 시도. */

@@ -154,11 +154,12 @@ const lookupSchema = z.object({
  * 자동 발송 큐 상태 (sms_dispatch_queue).
  *   PENDING     발송 대기 (scheduled_at 도래 후 폴러가 잡음)
  *   PROCESSING  폴러가 잡은 상태 (실제 발송 시도 중)
- *   DONE        성공 or 이미 발송된 차수(idempotent)
- *   FAILED      max-attempts 도달까지 실패 (관리자 재실행 API 로만 되살아남)
+ *   RECEIVED    솔라피 접수 성공 · 웹훅으로 도달 확인 대기 중
+ *   DONE        단말 도달 확인됨 (웹훅 SINGLE-REPORT 또는 sync 가 확정)
+ *   FAILED      재시도 소진 · 또는 도달 실패 (관리자 재실행 API 로만 되살아남)
  *   CANCELED    홀딩·수신거부·번호무효 등 재개 불가 사유
  */
-const queueStatusSchema = z.enum(['PENDING', 'PROCESSING', 'DONE', 'FAILED', 'CANCELED'])
+const queueStatusSchema = z.enum(['PENDING', 'PROCESSING', 'RECEIVED', 'DONE', 'FAILED', 'CANCELED'])
 
 const queueRowSchema = z.object({
   id: z.number(),
@@ -392,9 +393,18 @@ export const smsApi = {
     return apiResponseOf(queueStatusResponseSchema).parse(res).data
   },
 
-  /** 특정 상태 행 목록 — 기본 FAILED 100건. limit 1..500. */
-  async getQueueRows(status: SmsQueueStatus = 'FAILED', limit = 100): Promise<SmsQueueRow[]> {
-    const res = await api.get(withQuery('/admin/batch/sms/queue/rows', { status, limit }))
+  /**
+   * 특정 상태 행 목록 — 기본 FAILED 100건. limit 1..500.
+   * from/to 는 scheduled_at 기준 YYYY-MM-DD (to 는 exclusive). 생략하면 전체.
+   */
+  async getQueueRows(
+    status: SmsQueueStatus = 'FAILED',
+    limit = 100,
+    range: { from?: string; to?: string } = {},
+  ): Promise<SmsQueueRow[]> {
+    const res = await api.get(withQuery('/admin/batch/sms/queue/rows', {
+      status, limit, from: range.from, to: range.to,
+    }))
     return apiResponseOf(z.array(queueRowSchema)).parse(res).data
   },
 

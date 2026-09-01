@@ -48,6 +48,13 @@ public interface SmsDispatchQueueRepository extends JpaRepository<SmsDispatchQue
     /** 전 그룹의 PENDING 큐 — 오프셋 편집 후 재계산 대상. */
     List<SmsDispatchQueue> findByStatus(String status);
 
+    /**
+     * 상태 + scheduled_at 범위 조회 — 관리자 화면의 큐 이력 열람용.
+     * scheduled_at 은 항상 채워져 있어 어느 상태에도 안전한 필터 축이 된다.
+     */
+    List<SmsDispatchQueue> findByStatusAndScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+            String status, LocalDateTime from, LocalDateTime to);
+
     /** 관리자 재실행 대상 — 여러 id 일괄 조회. */
     List<SmsDispatchQueue> findByIdIn(Collection<Long> ids);
 }

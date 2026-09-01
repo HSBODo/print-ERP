@@ -10,14 +10,19 @@ import type { SmsSolapiBalance } from '@/api/sms'
  * 자동 발송 큐 상태 요약 카드 — 문자 발송 리스트 상단 접힘 카드.
  *
  * <b>표시</b>
- *   · 상태별 카운트 (PENDING · PROCESSING · DONE · FAILED · CANCELED)
- *   · 오늘 처리량 (done_today) — daily-limit 대비
+ *   · 상태별 카운트 (PENDING · PROCESSING · RECEIVED · DONE · FAILED · CANCELED)
+ *   · 오늘 처리량 (done_today = RECEIVED + DONE) — daily-limit 대비
  *   · [실패 재실행] 버튼 → FAILED 재실행 모달
  *   · [지금 실행] 버튼 → 5분 폴러 즉시 트리거
  *
  * <b>동작</b>
  *   30초마다 자동 갱신. Phase 2 배치가 비활성(SMS_DISPATCH_ENABLED=false) 이어도
  *   카드는 표시 — 큐 상태(과거 임의 실행분·수동 실행분) 를 보여준다.
+ *
+ * <b>RECEIVED 관측</b>
+ *   RECEIVED 는 솔라피가 접수했지만 아직 도달 확인이 안 된 중간 상태다. 정상 흐름에서는
+ *   웹훅이 수 분 안에 DONE 으로 굳혀 카운트가 낮게 유지된다. RECEIVED 가 계속 쌓이면
+ *   웹훅 수신 경로가 막혔다는 신호(방화벽·URL 오등록·시크릿 불일치 등).
  */
 export function SmsQueueStatusCard() {
   const [collapsed, setCollapsed] = useState(false)
@@ -26,9 +31,10 @@ export function SmsQueueStatusCard() {
   const balanceQuery = useSolapiBalance()
   const runNow = useRunQueueNow()
 
-  const counts = (data?.counts ?? {}) as Partial<Record<'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED' | 'CANCELED', number>>
+  const counts = (data?.counts ?? {}) as Partial<Record<'PENDING' | 'PROCESSING' | 'RECEIVED' | 'DONE' | 'FAILED' | 'CANCELED', number>>
   const pending = counts.PENDING ?? 0
   const processing = counts.PROCESSING ?? 0
+  const received = counts.RECEIVED ?? 0
   const done = counts.DONE ?? 0
   const failed = counts.FAILED ?? 0
   const canceled = counts.CANCELED ?? 0
@@ -61,7 +67,7 @@ export function SmsQueueStatusCard() {
             </span>
           )}
           <span className="text-[11px] font-normal text-gray-500">
-            대기 {pending} · 처리중 {processing} · 오늘 {doneToday}
+            대기 {pending} · 처리중 {processing} · 접수 {received} · 오늘 {doneToday}
           </span>
         </span>
         {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -73,9 +79,15 @@ export function SmsQueueStatusCard() {
           {isError && <p className="py-4 text-center text-xs text-red-600">큐 상태를 불러오지 못했습니다.</p>}
           {!isLoading && !isError && (
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="grid grid-cols-5 gap-2 text-center">
+              <div className="grid grid-cols-6 gap-2 text-center">
                 <StatusChip label="대기" value={pending} color="text-blue-700 bg-blue-50" />
                 <StatusChip label="처리중" value={processing} color="text-amber-700 bg-amber-50" />
+                <StatusChip
+                  label="접수"
+                  value={received}
+                  color="text-amber-700 bg-amber-50"
+                  title="솔라피 접수 성공 · 웹훅으로 도달 확인 대기 중. 정상 흐름에서는 몇 분 안에 완료로 굳는다."
+                />
                 <StatusChip label="완료" value={done} color="text-emerald-700 bg-emerald-50" />
                 <StatusChip label="실패" value={failed} color="text-red-700 bg-red-50" />
                 <StatusChip label="취소" value={canceled} color="text-gray-600 bg-gray-100" />
@@ -118,9 +130,9 @@ export function SmsQueueStatusCard() {
   )
 }
 
-function StatusChip({ label, value, color }: { label: string; value: number; color: string }) {
+function StatusChip({ label, value, color, title }: { label: string; value: number; color: string; title?: string }) {
   return (
-    <div className={`min-w-[64px] rounded-md px-2 py-1 ${color}`}>
+    <div className={`min-w-[64px] rounded-md px-2 py-1 ${color}`} title={title}>
       <div className="text-[10px] font-medium">{label}</div>
       <div className="text-sm font-semibold tabular-nums">{value}</div>
     </div>

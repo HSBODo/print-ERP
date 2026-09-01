@@ -7,6 +7,7 @@ import com.bviit.analytics.sms.entity.SmsDispatchQueue;
 import com.bviit.analytics.sms.service.SmsDispatchQueueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +24,8 @@ import java.util.Map;
  * 자동 발송 큐(sms_dispatch_queue) 관리자 API — /api/admin/** 매처가 hasRole('ADMIN').
  *
  * <ul>
- *   <li>GET  /status?limit=  — 상태별 카운트 + 오늘 처리량 KPI</li>
- *   <li>GET  /rows?status=&limit=  — 특정 상태 행 목록 (실패 재실행 모달용)</li>
+ *   <li>GET  /status  — 상태별 카운트 + 오늘 처리량 KPI</li>
+ *   <li>GET  /rows?status=&limit=&from=&to=  — 상태 행 목록. from/to 는 scheduled_at 기준 YYYY-MM-DD.</li>
  *   <li>POST /retry?ids=1,2,3 — FAILED/CANCELED 를 PENDING 으로 리셋(attempt_count 도 0)</li>
  *   <li>POST /run — 5분 폴러를 즉시 한 번 실행 (테스트·긴급용)</li>
  * </ul>
@@ -52,15 +55,23 @@ public class SmsQueueAdminController {
 
     /**
      * 상태별 큐 행 조회 — 기본 FAILED 100건.
-     * limit 은 1..500 로 캡, 지정 없으면 100.
+     *
+     * <p>limit 은 1..500 로 캡, 지정 없으면 100.
+     * from/to 는 scheduled_at 기준(YYYY-MM-DD, to 는 exclusive). null 이면 전체.
+     * 예: {@code ?status=RECEIVED&from=2026-09-01&to=2026-09-08} — 9/1..9/7 예정된 RECEIVED 만.
      */
     @GetMapping("/rows")
     public ResponseEntity<ApiResponse<List<SmsQueueRow>>> rows(
             @RequestParam(required = false, defaultValue = "FAILED") String status,
-            @RequestParam(required = false, defaultValue = "100") int limit
+            @RequestParam(required = false, defaultValue = "100") int limit,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         int cappedLimit = Math.min(Math.max(limit, 1), 500);
-        List<SmsQueueRow> rows = queueService.findByStatus(status.toUpperCase(), cappedLimit).stream()
+        LocalDateTime fromDt = from == null ? null : from.atStartOfDay();
+        LocalDateTime toDt = to == null ? null : to.atStartOfDay();
+        List<SmsQueueRow> rows = queueService
+                .findByStatus(status.toUpperCase(), cappedLimit, fromDt, toDt).stream()
                 .map(SmsQueueRow::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.ok(rows));
@@ -92,6 +103,7 @@ public class SmsQueueAdminController {
         return ResponseEntity.ok(ApiResponse.ok(List.of(
                 SmsDispatchQueue.STATUS_PENDING,
                 SmsDispatchQueue.STATUS_PROCESSING,
+                SmsDispatchQueue.STATUS_RECEIVED,
                 SmsDispatchQueue.STATUS_DONE,
                 SmsDispatchQueue.STATUS_FAILED,
                 SmsDispatchQueue.STATUS_CANCELED

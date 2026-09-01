@@ -168,7 +168,7 @@ public class SmsDispatchJob {
             String r = item.getResult();
             String detail = item.getDetail() == null ? "" : item.getDetail();
             if ("SUCCESS".equals(r)) {
-                queueService.markDone(row.getId());
+                queueService.markReceived(row.getId());
                 return DispatchOutcome.SUCCESS;
             }
             if ("FAILED".equals(r)) {
@@ -180,9 +180,10 @@ public class SmsDispatchJob {
                 queueService.markCanceled(row.getId(), detail);
                 return DispatchOutcome.CANCELED;
             }
-            // 이미 발송된 차수는 DONE 으로 취급(idempotent 성공).
+            // 이미 발송된 차수는 곧바로 DONE — 이 큐 행은 중복 재등록분이라 웹훅 대기(RECEIVED)에
+            // 태우면 다른 큐의 도달 결과가 잘못 씹힐 수 있다. markDelivered 로 바로 굳힌다.
             if (detail.contains("이미 발송")) {
-                queueService.markDone(row.getId());
+                queueService.markDelivered(row.getId());
                 return DispatchOutcome.SUCCESS;
             }
             // 홀딩·예정일 전 등 — window 밖과 같은 취급: 카운트 소진 안 함, 다음 사이클 재검토.

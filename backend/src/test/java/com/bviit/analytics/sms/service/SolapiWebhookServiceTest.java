@@ -11,9 +11,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * 웹훅 처리 판정 로직 — {@link SolapiSyncService} 와 규칙이 어긋나면 같은 발송을 두고 상태가 갈린다.
@@ -27,7 +30,7 @@ class SolapiWebhookServiceTest {
         SmsSendLog log = pendingLog("MSG-DELIVERED", "ALIMTALK");
         when(repository.findBySolapiMessageId("MSG-DELIVERED")).thenReturn(Optional.of(log));
 
-        SolapiWebhookService service = new SolapiWebhookService(repository);
+        SolapiWebhookService service = new SolapiWebhookService(repository, mock(SmsDispatchQueueService.class));
         int updated = service.applyMessageReports(List.of(new SolapiMessageReportEvent(
                 "MSG-DELIVERED", "GRP", "ATA", "01011112222", "01033334444",
                 "4000", "OK", null, null, "2026-09-01T10:00:00+09:00", null)));
@@ -45,7 +48,7 @@ class SolapiWebhookServiceTest {
         SmsSendLog log = pendingLog("MSG-4000-NO-TIME", "ALIMTALK");
         when(repository.findBySolapiMessageId("MSG-4000-NO-TIME")).thenReturn(Optional.of(log));
 
-        SolapiWebhookService service = new SolapiWebhookService(repository);
+        SolapiWebhookService service = new SolapiWebhookService(repository, mock(SmsDispatchQueueService.class));
         int updated = service.applyMessageReports(List.of(new SolapiMessageReportEvent(
                 "MSG-4000-NO-TIME", null, "ATA", null, null,
                 "4000", null, null, null, null, null)));
@@ -61,7 +64,7 @@ class SolapiWebhookServiceTest {
         SmsSendLog log = pendingLog("MSG-IN-PROGRESS", "ALIMTALK");
         when(repository.findBySolapiMessageId("MSG-IN-PROGRESS")).thenReturn(Optional.of(log));
 
-        SolapiWebhookService service = new SolapiWebhookService(repository);
+        SolapiWebhookService service = new SolapiWebhookService(repository, mock(SmsDispatchQueueService.class));
         int updated = service.applyMessageReports(List.of(new SolapiMessageReportEvent(
                 "MSG-IN-PROGRESS", null, "ATA", null, null,
                 "2000", "waiting", null, null, null, null)));
@@ -76,7 +79,7 @@ class SolapiWebhookServiceTest {
         SmsSendLog log = pendingLog("MSG-FAIL", "ALIMTALK");
         when(repository.findBySolapiMessageId("MSG-FAIL")).thenReturn(Optional.of(log));
 
-        SolapiWebhookService service = new SolapiWebhookService(repository);
+        SolapiWebhookService service = new SolapiWebhookService(repository, mock(SmsDispatchQueueService.class));
         service.applyMessageReports(List.of(new SolapiMessageReportEvent(
                 "MSG-FAIL", null, "ATA", null, null,
                 "4020", "카톡 미승인", null, null, null, null)));
@@ -92,7 +95,7 @@ class SolapiWebhookServiceTest {
         SmsSendLog log = pendingLog("MSG-REPLACED", "ALIMTALK");
         when(repository.findBySolapiMessageId("MSG-REPLACED")).thenReturn(Optional.of(log));
 
-        SolapiWebhookService service = new SolapiWebhookService(repository);
+        SolapiWebhookService service = new SolapiWebhookService(repository, mock(SmsDispatchQueueService.class));
         service.applyMessageReports(List.of(new SolapiMessageReportEvent(
                 "MSG-REPLACED", null, "LMS", null, null,
                 "4000", null, null, null, "2026-09-01T10:00:00+09:00", null)));
@@ -107,7 +110,7 @@ class SolapiWebhookServiceTest {
         SmsSendLogRepository repository = mock(SmsSendLogRepository.class);
         when(repository.findBySolapiMessageId("MSG-UNKNOWN")).thenReturn(Optional.empty());
 
-        SolapiWebhookService service = new SolapiWebhookService(repository);
+        SolapiWebhookService service = new SolapiWebhookService(repository, mock(SmsDispatchQueueService.class));
         int updated = service.applyMessageReports(List.of(new SolapiMessageReportEvent(
                 "MSG-UNKNOWN", null, "ATA", null, null,
                 "4000", null, null, null, "2026-09-01T10:00:00+09:00", null)));
@@ -120,11 +123,60 @@ class SolapiWebhookServiceTest {
     @Test
     void 이벤트가_비어_있으면_리포지토리를_건드리지_않는다() {
         SmsSendLogRepository repository = mock(SmsSendLogRepository.class);
-        SolapiWebhookService service = new SolapiWebhookService(repository);
+        SolapiWebhookService service = new SolapiWebhookService(repository, mock(SmsDispatchQueueService.class));
 
         assertThat(service.applyMessageReports(List.of())).isZero();
         assertThat(service.applyMessageReports(null)).isZero();
         verifyNoMoreInteractions(repository);
+    }
+
+    @Test
+    void SUCCESS_확정_시_대응_큐를_찾아_markDelivered_한다() {
+        SmsSendLogRepository repository = mock(SmsSendLogRepository.class);
+        SmsDispatchQueueService queueService = mock(SmsDispatchQueueService.class);
+        SmsSendLog log = pendingLog("MSG-Q-OK", "ALIMTALK");
+        // targetId·templateCode 는 pendingLog helper 가 채워 두는 값(1L, "T1")
+        when(repository.findBySolapiMessageId("MSG-Q-OK")).thenReturn(Optional.of(log));
+        when(queueService.findLatestReceivedId(1L, "T1")).thenReturn(Optional.of(42L));
+
+        SolapiWebhookService service = new SolapiWebhookService(repository, queueService);
+        service.applyMessageReports(List.of(new SolapiMessageReportEvent(
+                "MSG-Q-OK", null, "ATA", null, null,
+                "4000", null, null, null, "2026-09-01T10:00:00+09:00", null)));
+
+        verify(queueService).markDelivered(42L);
+    }
+
+    @Test
+    void FAILED_확정_시_대응_큐를_찾아_markDeliveryFailed_한다() {
+        SmsSendLogRepository repository = mock(SmsSendLogRepository.class);
+        SmsDispatchQueueService queueService = mock(SmsDispatchQueueService.class);
+        SmsSendLog log = pendingLog("MSG-Q-FAIL", "ALIMTALK");
+        when(repository.findBySolapiMessageId("MSG-Q-FAIL")).thenReturn(Optional.of(log));
+        when(queueService.findLatestReceivedId(1L, "T1")).thenReturn(Optional.of(43L));
+
+        SolapiWebhookService service = new SolapiWebhookService(repository, queueService);
+        service.applyMessageReports(List.of(new SolapiMessageReportEvent(
+                "MSG-Q-FAIL", null, "ATA", null, null,
+                "4020", "카톡 미승인", null, null, null, null)));
+
+        verify(queueService).markDeliveryFailed(eq(43L), anyString());
+    }
+
+    @Test
+    void 판단_보류_이벤트는_큐를_건드리지_않는다() {
+        SmsSendLogRepository repository = mock(SmsSendLogRepository.class);
+        SmsDispatchQueueService queueService = mock(SmsDispatchQueueService.class);
+        SmsSendLog log = pendingLog("MSG-Q-DEFER", "ALIMTALK");
+        when(repository.findBySolapiMessageId("MSG-Q-DEFER")).thenReturn(Optional.of(log));
+
+        SolapiWebhookService service = new SolapiWebhookService(repository, queueService);
+        service.applyMessageReports(List.of(new SolapiMessageReportEvent(
+                "MSG-Q-DEFER", null, "ATA", null, null,
+                "2000", "waiting", null, null, null, null)));
+
+        verify(queueService, never()).markDelivered(org.mockito.ArgumentMatchers.anyLong());
+        verify(queueService, never()).markDeliveryFailed(org.mockito.ArgumentMatchers.anyLong(), anyString());
     }
 
     private static SmsSendLog pendingLog(String messageId, String requestedChannel) {

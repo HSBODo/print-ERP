@@ -193,9 +193,31 @@ public class SmsDispatchQueueService {
 
     /* ── 결과 반영 (SmsDispatchJob 이 발송 결과로 부른다) ─────── */
 
+    /**
+     * 솔라피 접수 성공 — PROCESSING → RECEIVED. SmsDispatchJob 이 발송 결과 SUCCESS 로 부른다.
+     * 도달 확인은 웹훅/sync 가 별도로 채운다({@link #markDelivered}).
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markDone(Long queueId) {
-        queueRepository.findById(queueId).ifPresent(row -> row.markDone(LocalDateTime.now()));
+    public void markReceived(Long queueId) {
+        queueRepository.findById(queueId).ifPresent(row -> row.markReceived(LocalDateTime.now()));
+    }
+
+    /**
+     * 단말 도달 확인 — RECEIVED → DONE. 웹훅/sync 가 send_log 를 SUCCESS 로 굳힌 뒤 부른다.
+     * 큐 행을 못 찾으면(옛 DONE 이거나 이미 상태 굳음) 조용히 no-op.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markDelivered(Long queueId) {
+        queueRepository.findById(queueId).ifPresent(row -> row.markDelivered(LocalDateTime.now()));
+    }
+
+    /**
+     * 도달 실패 확정 — RECEIVED → FAILED. 웹훅/sync 가 통신사 실패 코드를 실어 왔을 때.
+     * max_attempts 카운트와 무관하게 즉시 굳힌다.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markDeliveryFailed(Long queueId, String reason) {
+        queueRepository.findById(queueId).ifPresent(row -> row.markDeliveryFailed(reason, LocalDateTime.now()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -207,6 +229,19 @@ public class SmsDispatchQueueService {
     public void markFailed(Long queueId, String errorMessage, int maxAttempts) {
         queueRepository.findById(queueId).ifPresent(
                 row -> row.markFailedAttempt(errorMessage, maxAttempts, LocalDateTime.now()));
+    }
+
+    /**
+     * 웹훅/sync 가 send_log 를 확정한 뒤, 대응하는 RECEIVED 큐 행을 찾는다.
+     * 매칭 키 = (target_id, template_code). 사이클이 여럿 있으면 가장 최근 scheduled_at.
+     * 못 찾으면 empty — 옛 DONE 마이그레이션 전 행이거나 이미 상태 전이됐다는 뜻.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<Long> findLatestReceivedId(Long targetId, String templateCode) {
+        return queueRepository.findByTargetIdAndTemplateCodeAndStatusInOrderByScheduledAtDesc(
+                targetId, templateCode, List.of(SmsDispatchQueue.STATUS_RECEIVED)).stream()
+                .findFirst()
+                .map(SmsDispatchQueue::getId);
     }
 
     /* ── 관리자 API ───────────────────────────────────────── */
@@ -234,6 +269,7 @@ public class SmsDispatchQueueService {
         Map<String, Long> counts = new HashMap<>();
         counts.put(SmsDispatchQueue.STATUS_PENDING, 0L);
         counts.put(SmsDispatchQueue.STATUS_PROCESSING, 0L);
+        counts.put(SmsDispatchQueue.STATUS_RECEIVED, 0L);
         counts.put(SmsDispatchQueue.STATUS_DONE, 0L);
         counts.put(SmsDispatchQueue.STATUS_FAILED, 0L);
         counts.put(SmsDispatchQueue.STATUS_CANCELED, 0L);
@@ -244,18 +280,41 @@ public class SmsDispatchQueueService {
         return counts;
     }
 
+    /**
+     * 오늘 처리량 — RECEIVED + DONE 을 합산한다. daily-limit 은 "오늘 솔라피에 넘긴 건수" 이므로
+     * 도달 확인(DONE) 만 세면 웹훅 지연 상황에서 한도 판정이 어긋난다.
+     */
     @Transactional(readOnly = true)
     public long countDoneToday() {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = start.plusDays(1);
-        return queueRepository.countByStatusAndProcessedAtGreaterThanEqualAndProcessedAtLessThan(
+        long received = queueRepository.countByStatusAndProcessedAtGreaterThanEqualAndProcessedAtLessThan(
+                SmsDispatchQueue.STATUS_RECEIVED, start, end);
+        long done = queueRepository.countByStatusAndProcessedAtGreaterThanEqualAndProcessedAtLessThan(
                 SmsDispatchQueue.STATUS_DONE, start, end);
+        return received + done;
     }
 
+    /**
+     * 범위 조회 — 상태 + scheduled_at 기간 필터. 관리자 화면의 큐 이력 열람용.
+     * from/to 가 null 이면 전체(상태만 필터). scheduled_at 기준이라 예정·이력 어느 관점이든 통일된다.
+     */
+    @Transactional(readOnly = true)
+    public List<SmsDispatchQueue> findByStatus(String status, int limit,
+                                               LocalDateTime from, LocalDateTime to) {
+        List<SmsDispatchQueue> all = (from == null && to == null)
+                ? queueRepository.findByStatus(status)
+                : queueRepository.findByStatusAndScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+                        status,
+                        from == null ? LocalDate.of(1970, 1, 1).atStartOfDay() : from,
+                        to == null ? LocalDate.of(2999, 12, 31).atStartOfDay() : to);
+        return all.size() > limit ? new ArrayList<>(all.subList(0, limit)) : all;
+    }
+
+    /** 기존 시그니처 호환 — 범위 없는 호출은 그대로 유지. */
     @Transactional(readOnly = true)
     public List<SmsDispatchQueue> findByStatus(String status, int limit) {
-        List<SmsDispatchQueue> all = queueRepository.findByStatus(status);
-        return all.size() > limit ? new ArrayList<>(all.subList(0, limit)) : all;
+        return findByStatus(status, limit, null, null);
     }
 
     /* ── 산식 helper ─────────────────────────────────────── */
