@@ -1,7 +1,7 @@
 # 문자 발송 관리(SMS) 자동화 전략
 
-> 작성일: 2026-08-28 · 최신화: 2026-08-31
-> 상태: **Phase 2 완료** — 자동 발송 배치(SmsDispatchJob) + 큐 테이블 도입. 기본 disabled 로 배포 안전.
+> 작성일: 2026-08-28 · 최신화: 2026-09-01
+> 상태: **Phase 2 완료 + 웹훅·큐 상태 세분화 완료** — 웹훅 SINGLE-REPORT 실경로 검증 완료(서명 통과·상태 갱신 확인). 큐가 접수/도달을 구분(RECEIVED → DONE).
 > 목적: "화면 조회 = 자동 적재" 임시 경로를 정리하고, 오프셋·발송·결과 동기화를 **배치 + UI 편집 + DB 큐**로 옮기기 위한 설계·마이그레이션 계획
 
 > 📌 관련 문서
@@ -68,7 +68,7 @@
 ### 남은 임시 구조 (Phase 3 로 해소)
 
 1. ~~**자동 발송 없음**~~ — Phase 2 완료. `SMS_DISPATCH_ENABLED=true` 로 활성화 시 자동 발송
-2. **발송 결과 자동 동기화 없음** — `POST /sync` 수동 호출 (Phase 3 예정)
+2. ~~**발송 결과 자동 동기화 없음**~~ — 2026-09-01 후속으로 해결. 웹훅 SINGLE-REPORT 실시간 반영 + `SolapiSyncService` 야간 03:30 fallback + 관리자 수동 sync API 3중 경로 확보
 3. ~~**재시도 이력 불투명**~~ — Phase 2 큐 표에 attempt_count·last_error·status 로 표현됨
 
 ---
@@ -119,6 +119,113 @@
 2. **오프셋 편집 시 큐 재계산** — 편집 API 안 **동기** 재계산 (같은 트랜잭션)
 3. **문구·템플릿 준비** — 이관 시점에 준비 완료(2026-08-31 확인)
 4. **큐 자동 정리** — 초기엔 (b) 그대로 유지 (감사 근거)
+
+---
+
+## 0-2. 후속 개선 (2026-09-01) — 웹훅 실경로 검증 + 큐 상태 세분화
+
+Phase 2 완료 뒤 실제 발송·웹훅 흐름을 태워 보며 발견된 3건을 후속으로 해결. Phase 3 의 "결과 동기화" 스코프도 큐 상태에 자연스럽게 얹혀 완결.
+
+### 실제 이행된 데이터 흐름
+
+```
+   03:00 SmsImportJob         매 5분 SmsDispatchJob          솔라피 SINGLE-REPORT 웹훅
+        │                            │                              │
+        ▼                            ▼ FOR UPDATE SKIP LOCKED       ▼ (실시간)
+   list_surgery                sms_dispatch_queue              SmsWebhookController
+        │                            │                              │
+        ▼ upsert + 큐 3행 enqueue   ▼ 상태 전이                    ▼ 서명 검증(직접 비교)
+   sms_target ──────────────► sms_dispatch_queue             SolapiWebhookService
+        │                            │                              │
+        │                            │ SmsSendService               │ messageId → send_log 매칭
+        │                            ▼ (기존 안전장치 그대로)       │
+        │                       [dry-run or 솔라피 API]              │
+        │                            │ ▲                            │
+        │                            │ │ showMessageList=true        │
+        │                            ▼ │                            ▼
+        ▼                       sms_send_log ◄─── delivery 결과 반영
+   화면 조회·홀딩·연락처 수정        │                              │
+                                     │ (target_id, template_code)   │
+                                     ▼ 최신 RECEIVED 큐 찾음        │
+                                sms_dispatch_queue ◄────── RECEIVED → DONE / FAILED
+
+           (야간 03:30) SolapiSyncService fallback ─── 유실 웹훅 회수 (동일 규칙)
+```
+
+### 큐 상태 라이프사이클 (변경)
+
+기존 `PENDING → PROCESSING → DONE / FAILED / CANCELED` 5단계에서 **접수** 를 별도 상태로 분리:
+
+```
+PENDING → PROCESSING → RECEIVED → DONE          (정상 · 웹훅 도달 확인)
+                                → FAILED         (통신사 도달 실패)
+                     → FAILED    (max_attempts 도달)
+                     → CANCELED  (수신거부·문구 미설정 등 재개 불가)
+```
+
+- **RECEIVED** — 솔라피 접수 성공, 도달 확인(웹훅/sync) 대기 중. `SmsDispatchJob` 이 SUCCESS 응답 시 진입
+- **DONE** — 단말 도달 확인됨. 웹훅 SINGLE-REPORT 또는 sync fallback 이 굳힘
+- daily-limit 카운트는 `RECEIVED + DONE` 합산 (오늘 솔라피에 넘긴 건수 기준)
+
+**관측 이점** — RECEIVED 가 계속 쌓이면 웹훅 수신 경로 이상 신호(방화벽·URL 오등록·시크릿 불일치). 서명 통과 확인 후엔 정상에서 낮게 유지됨.
+
+### 웹훅 실경로 검증에서 발견·해결한 이슈 3건
+
+**① SDK `showMessageList` 기본값 = false**
+- 증상: `sms_send_log.solapi_message_id` 가 null 로 저장. 웹훅이 도착해도 `findBySolapiMessageId` 매칭 실패
+- 원인: Solapi SDK 1.0.3 의 `SendRequestConfig.showMessageList` 기본이 false. `service.send(message)` 응답의 `messageList` 가 빈 배열
+- 해결: `SolapiSendService.send` 에서 `SendRequestConfig` 를 명시적으로 만들어 `showMessageList=true` 로 넘김. 테스트에도 config 캡처 후 플래그 검증 추가
+
+**② 웹훅 서명 규칙이 공식 Node 예시와 다름**
+- 증상: 서명 불일치로 401 반복. 8회 실패 시 웹훅 INACTIVE 위험
+- 진단: `receivedPrefix` / `expectedPrefix` 를 로그로 남겨 실측 → 솔라피가 payload 헤더에 **원본 시크릿을 그대로** 실어 보냄 (Node 예시의 `sha1(secret)` 이 아님)
+- 해결: `SmsWebhookController.verifySignature` 에서 `sha1Hex(...)` 제거. `SOLAPI_WEBHOOK_SECRET` 을 헤더값과 시간 상수로 **직접 비교**. vault 값은 콘솔에 보이는 값을 그대로 저장
+- 진단 로그는 유지 — 시크릿 재발급·vault 갱신 누락 등 향후 사고 진단용
+
+**③ 방화벽 · 초기 도달 실패**
+- 증상: `ECONNRESET on read` 로 웹훅 자체가 도달 못 하던 초기 상황
+- 해결: 인프라 단에서 솔라피 발신 IP 허용 (외부 조치). 관측은 그대로 큐 카드 "접수" 카운트 증가로 대체
+
+### 웹훅 → send_log → 큐 매칭 흐름 (정본)
+
+```
+POST /api/sms/webhook/solapi (SINGLE-REPORT)
+  → SolapiWebhookController.verifySignature (원본 값 직접 비교)
+    → SolapiWebhookService.applyMessageReports
+      ① sms_send_log 조회: WHERE solapi_message_id = event.messageId
+         갱신: status, delivered_at, status_code, message_type, replacement, fail_reason
+      ② sms_dispatch_queue 조회: WHERE target_id = ? AND template_code = ? AND status = 'RECEIVED'
+                                 ORDER BY scheduled_at DESC LIMIT 1
+         갱신: RECEIVED → DONE (SUCCESS) 또는 RECEIVED → FAILED (도달 실패)
+```
+
+**판정 규칙 (`SolapiWebhookService.apply`)**
+- `dateReceived` 있음 → SUCCESS
+- `statusCode = 2000/3000` 또는 비어 있음 → 판단 보류 (다음 이벤트 재시도)
+- `statusCode = 4000` → SUCCESS (도달시각 없어도)
+- 그 외 → FAILED + 사유 "도달 실패 (상태코드 XXXX · statusMessage)"
+
+**핵심 — 두 경로가 규칙을 공유**: `SolapiSyncService.applyTo` 도 동일한 규칙을 씀. 웹훅과 sync 어느 쪽으로 반영되든 상태가 수렴.
+
+### Fallback 의 자리 (Phase 3 스코프 상당수 이곳으로 흡수)
+
+`SolapiSyncService.runScheduledFallback` — 매일 03:30 KST · 최근 2일 PENDING send_log 를 솔라피 `getMessageList` API 로 재조회 → 웹훅과 같은 규칙으로 send_log·큐 상태 갱신. 웹훅 유실(방화벽·8회 실패 INACTIVE·서명 실패 등) 대비 안전망.
+
+`recoverStuck` — 접수 응답 자체를 못 받은 채(`solapi_message_id IS NULL`) 10분 이상 남은 PENDING 을 FAILED 로 정리. 멱등키가 풀려 다음 사이클 재발송 가능.
+
+`SolapiSyncService.sync(from, to)` 는 관리자 API `POST /api/sms-management/sync?sentFrom=...&sentTo=...` 로 새벽까지 안 기다리고 즉시 동기화 가능.
+
+### 관리자 API 확장
+
+- `GET /api/admin/batch/sms/queue/rows` 에 **`from` · `to`** 파라미터 추가 (scheduled_at 기준 YYYY-MM-DD 범위, to exclusive)
+- `GET /api/admin/batch/sms/queue/statuses` 에 `RECEIVED` 노출
+- 프론트 큐 카드(`SmsQueueStatusCard`) 6칸 그리드로 확장, **접수** 배지 추가(툴팁: 웹훅 대기 상태)
+
+### 로컬 개발용 Docker 분리
+
+- `Dockerfile.local` · `docker-compose.local.yml` 신설
+- Jenkins 파이프라인용 원본 `Dockerfile` 은 infisical CLI 필수 (인증 부팅용 3인방 `INFISICAL_PROJECT_ID/ENV/TOKEN`) — 로컬은 `backend/.env` 로 값 조달하므로 infisical 없이 entrypoint 직접 호출
+- 실행: `DOCKER_BUILDKIT=1 docker compose -f docker-compose.local.yml up -d --build`
 
 ---
 
@@ -313,23 +420,37 @@ sms:
 
 ---
 
-## 5. Phase 3 — 결과 동기화 배치 (SmsResultSyncJob)
+## 5. Phase 3 — 결과 동기화 ✅ 대부분 완료 (2026-09-01)
 
-### 스코프
+원래 계획했던 별도 `SmsResultSyncJob` 대신, **웹훅 + 야간 fallback + 수동 sync** 3중 경로로 성격이 재편됨.
 
-1. `SmsResultSyncJob`
-   - 매일 15:00 실행 (발송 6시간 후, 대부분 도달 완료)
-   - `sms_send_log` 에서 `delivered_at IS NULL AND status='PENDING'` 인 최근 24시간 로그 조회
-   - 솔라피 API 로 `solapi_message_id` 별 상태 조회 → `sms_send_log` + `sms_dispatch_queue` 갱신
-2. 지금의 `SolapiSyncService.sync(from, to)` 재사용
-3. `batch_run_log` 에 결과 통계
-4. 큐 연동: 도달 실패로 확인된 건은 `sms_dispatch_queue.status=FAILED` 로 되돌리고 재시도 대상에 넣음
+### 실제 이행된 3중 경로
 
-### 안전장치
+**① 웹훅 (실시간 · 주력)**
+- `SolapiWebhookController` `/api/sms/webhook/solapi` — 솔라피가 상태 변화 시점에 push
+- 서명 검증(원본 값 직접 비교) 통과 후 `SolapiWebhookService.applyMessageReports` 가 send_log + 큐 갱신
+- 지연: 수초~수십분 (통신사 회신 후 확정)
 
-- 솔라피 API 실패 → 로그만 남기고 배치 성공 처리 (다음 날 재시도)
-- rate limit 대응: chunking (100건씩)
-- dry-run 발송(`messageType=DRY_RUN`) 은 sync 대상에서 제외
+**② Fallback 스케줄러 (야간 · 안전망)**
+- `SolapiSyncService.runScheduledFallback` — 매일 03:30 KST (`solapi.sync-cron` env 로 조정)
+- 최근 2일 PENDING send_log 를 솔라피 `getMessageList` 로 재조회 → 웹훅과 동일 규칙 적용
+- `recoverStuck` — 접수 응답 자체를 못 받은(messageId null) 10분 초과 PENDING 을 FAILED 로 정리 (멱등키 재개방)
+- Chunk 크기 50 (`SolapiSyncService.CHUNK`), 솔라피 API 실패 시 warn 로그만 남기고 다음 날 재시도
+
+**③ 관리자 수동 sync**
+- `POST /api/sms-management/sync?sentFrom=YYYY-MM-DD&sentTo=YYYY-MM-DD` — 새벽까지 안 기다리고 즉시 동기화
+- 새 시크릿 배포 후 밀린 이벤트 회수용
+
+### 큐 연동 (신규 · 2026-09-01)
+
+- 세 경로 모두 `SolapiWebhookService.propagateToQueue` / `SolapiSyncService.propagateToQueue` 로 큐 상태를 함께 갱신
+- 매칭: send_log 확정 후 `(target_id, template_code)` 최신 RECEIVED 큐 → `markDelivered` 또는 `markDeliveryFailed`
+- 두 서비스가 **같은 helper 를 호출**하도록 짠 이유 — 규칙 이원화 방지 (같은 발송의 상태가 웹훅·sync 사이에서 어긋나면 안 됨)
+
+### 남은 스코프 (선택)
+
+- **별도 `SmsResultSyncJob` 승격** — 현재 fallback 은 `@Scheduled` 만이라 `batch_run_log`·Slack 통합이 없음. `BatchOrchestrator.Domain` 에 추가하고 stats(`synced`·`still_pending`·`requeued`) 남기려면 별도 잡으로 승격 필요 (2026-08-31 원안). 규모 커지면 검토.
+- **자동 재시도 결정 로직** — 도달 실패로 굳은 큐 행을 자동으로 재시도할지, 관리자가 판단할지. 현재는 수동만.
 
 ---
 
@@ -392,7 +513,14 @@ sms:
 |---------|-----------------|
 | `orchestrator[SMS]` | `{sms_target_created: 27, sms_target_updated: 3, sms_target_skipped: 5, sms_queue_enqueued: 81}` |
 | `sms-dispatch[2026-08-28-10:00]` | `{picked: 20, sent: 18, skipped: 1, opt_out: 0, out_of_window: 0, failed: 1}` |
-| `sms-result-sync[2026-08-28]` | `{synced: 18, still_pending: 0, failed: 0, requeued: 1}` |
+| `sms-result-sync[2026-08-28]` | `{synced: 18, still_pending: 0, failed: 0, requeued: 1}` (별도 잡 승격 시) |
+
+### 웹훅 로그 (2026-09-01 이후 관측 패턴)
+
+- 정상: `솔라피 웹훅 처리: 총 N건 · 갱신 X건 · 미매칭 Y건 · 보류 Z건`
+- 미매칭 증가 → messageId 없이 발송된 옛 이력이 남아 있거나 다른 계정 이벤트 (계정 공유 시)
+- 서명 실패: `솔라피 웹훅 서명 불일치 — event=..., requestSize=..., receivedPrefix=..., expectedPrefix=...` (앞 6자로 진단)
+- 시크릿 미설정: `솔라피 웹훅 시크릿 미설정 — 서명 검증 skip.` (운영에서 뜨면 사고)
 
 ### Slack
 
@@ -490,5 +618,10 @@ sms:
 | 2026-08-28 | Docs | `e2574cc` | 자동화 전략 문서 초안 (v1: 큐 없이 basis=SCHEDULED) |
 | 2026-08-28 | Phase 1 | `a7f0d1f` | Phase 1A + 1B + 수신거부 UI + dry-run + 엔티티 정리 통합 |
 | 2026-08-28 | Docs | `a7f0d1f` | Phase 1 완료 반영 + Phase 2 큐 테이블 방식 재설계 |
-| 2026-08-31 | Phase 2 | (이 커밋) | V62 큐 · SmsDispatchQueueService · SmsDispatchJob · SmsImportJob/OffsetService/TargetService 훅 · Admin API · SmsQueueStatusCard/SmsFailedQueueModal |
-| _다음_ | Phase 3 | | 결과 동기화 배치 + 큐 상태 갱신 |
+| 2026-08-31 | Phase 2 | `418326f` | V62 큐 · SmsDispatchQueueService · SmsDispatchJob · SmsImportJob/OffsetService/TargetService 훅 · Admin API · SmsQueueStatusCard/SmsFailedQueueModal |
+| 2026-08-31 | Phase 2 | `c0fd2ee` `a11cdc4` | 솔라피 잔액·템플릿 조회 · 웹훅 수신부(SolapiWebhookController) 신설 |
+| 2026-09-01 | 후속 | `23c9a85` | 큐 상태 세분화 — RECEIVED 신설 · countDoneToday=RECEIVED+DONE · 범위 조회 API · 웹훅/sync 큐 전파 |
+| 2026-09-01 | 후속 | `044cd4f` | 로컬 개발용 Dockerfile.local · docker-compose.local.yml (infisical 없이 부팅) |
+| 2026-09-01 | 후속 | `1f42d6d` `30f40c5` | 웹훅 서명 진단 로그 · 서명 검증을 원본 값 직접 비교로 (Node 예시와 실제 payload 상이 확인) |
+| 2026-09-01 | 후속 | `e974a8e` | SolapiSendService 에 SendRequestConfig.showMessageList=true 명시 — messageId 저장 정상화 |
+| _다음_ | 검토 | | `SmsResultSyncJob` 별도 승격 (batch_run_log·Slack 통합), 자동 재시도 정책 |
