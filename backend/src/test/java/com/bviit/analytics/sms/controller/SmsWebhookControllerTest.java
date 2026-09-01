@@ -7,9 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HexFormat;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,8 +23,9 @@ import static org.mockito.Mockito.doThrow;
  */
 class SmsWebhookControllerTest {
 
-    private static final String SECRET = "super-secret-token";
-    private static final String CORRECT_SIGNATURE = sha1Hex(SECRET);
+    // 솔라피가 payload 에 원본을 그대로 실어 보내므로 헤더값 = vault 값.
+    private static final String SECRET = "05fe836063a6f595f3be7f368e7694ead81c21ec";
+    private static final String CORRECT_SIGNATURE = SECRET;
     private static final List<SolapiMessageReportEvent> ANY_EVENTS = List.of(
             new SolapiMessageReportEvent("MSG-1", null, "ATA", null, null,
                     "4000", null, null, null, "2026-09-01T10:00:00+09:00", null));
@@ -110,14 +108,5 @@ class SmsWebhookControllerTest {
         when(props.isWebhookSecretConfigured()).thenReturn(true);
         when(props.getWebhookSecret()).thenReturn(SECRET);
         return props;
-    }
-
-    private static String sha1Hex(String value) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            return HexFormat.of().formatHex(md.digest(value.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
     }
 }

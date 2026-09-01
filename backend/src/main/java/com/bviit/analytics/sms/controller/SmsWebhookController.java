@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.List;
 
 /**
@@ -32,10 +30,10 @@ import java.util.List;
  * 않도록 미리 이벤트-와일드카드 구조로 잡아 뒀다.
  *
  * <h3>서명 검증</h3>
- * {@code X-Solapi-Secret} 헤더 = {@code sha1(secret)}. 솔라피 공식 예시(Node crypto sha1.digest('hex'))
- * 와 같은 규칙 — 서버가 자기 {@code SOLAPI_WEBHOOK_SECRET} 을 sha1 로 걸어 헤더값과 비교한다.
- * ⚠️ vault 에는 콘솔에서 보이는 값을 <b>원본 그대로</b> 저장한다. hex 처럼 보여도 그 자체가 원본 —
- * 솔라피가 랜덤 hex 문자열을 시크릿으로 생성해서 그런 것이지 이미 해시된 값이 아니다.
+ * {@code X-Solapi-Secret} 헤더값을 {@code SOLAPI_WEBHOOK_SECRET} 와 <b>있는 그대로 비교</b>한다.
+ * ⚠️ 솔라피 공식 Node 예시(sha1(secret)) 와는 다르다 — 실제 웹훅 payload 는 콘솔에 표시된
+ * 시크릿을 그대로 헤더에 실어 보낸다 (2026-09 실측 근거: receivedPrefix 로그로 확인). 문서가
+ * 앞서 있는지 서버쪽 사양이 바뀐 건지는 불명이지만 관측이 진실.
  * secret 이 설정돼 있지 않으면 검증 skip (로컬 부트스트랩용). 운영은 반드시 채워야 한다 —
  * 그렇지 않으면 아무나 발송 결과를 조작할 수 있다.
  *
@@ -65,15 +63,13 @@ public class SmsWebhookController {
             @RequestBody List<SolapiMessageReportEvent> events
     ) {
         if (!verifySignature(signature)) {
-            // 판정 근거를 위해 앞 6자만 남긴다 — 전체 값은 시크릿 노출 위험.
-            //   received == expected 앞 6자 같으면: 뒷부분 유실·인코딩 문제 (거의 없음)
-            //   received == 콘솔 시크릿 앞 6자: 콘솔이 원본을 그대로 보내는 흐름 → 서버가 sha1 걸지 말고 직접 비교해야 함
-            //   received == 서버가 계산한 sha1 앞 6자: vault 값이 맞음, 뒷자리 불일치 → 이론상 없음
+            // 판정용 앞 6자만 노출 — 전체 값은 시크릿 노출 위험.
+            // vault 값과 헤더값이 같은지 대조하기 위함(콘솔에서 시크릿 재발급 후 vault 갱신 누락이 흔한 사유).
             String receivedPrefix = signature == null || signature.isBlank()
                     ? "null"
                     : signature.substring(0, Math.min(6, signature.length()));
             String expectedPrefix = props.isWebhookSecretConfigured()
-                    ? sha1Hex(props.getWebhookSecret()).substring(0, 6)
+                    ? props.getWebhookSecret().substring(0, Math.min(6, props.getWebhookSecret().length()))
                     : "not-configured";
             log.warn("솔라피 웹훅 서명 불일치 — event={}, requestSize={}, receivedPrefix={}, expectedPrefix={}",
                     eventName, events == null ? 0 : events.size(), receivedPrefix, expectedPrefix);
@@ -95,8 +91,9 @@ public class SmsWebhookController {
     }
 
     /**
-     * secret 이 설정돼 있으면 {@code sha1(secret)} 을 헤더 값과 시간 상수 비교한다 — 솔라피 공식 예시와 동일.
-     * 설정이 비어 있으면 검증 skip 하고 WARN 로그 — 운영 사고를 화면·로그에서 잡기 위함.
+     * secret 이 설정돼 있으면 헤더값을 vault 값과 시간 상수로 <b>직접</b> 비교한다.
+     * 솔라피가 payload 에 원본을 그대로 실어 보내므로(2026-09 실측), 서버가 sha1 을 걸면
+     * {@code sha1(원본) != 원본} 이 되어 항상 불일치. 설정이 비어 있으면 검증 skip 하고 WARN 로그.
      */
     private boolean verifySignature(String signature) {
         if (!props.isWebhookSecretConfigured()) {
@@ -104,21 +101,9 @@ public class SmsWebhookController {
             return true;
         }
         if (signature == null || signature.isBlank()) return false;
-        String expected = sha1Hex(props.getWebhookSecret());
         // MessageDigest.isEqual 는 length 다를 때 false — 그대로 사용 (타이밍 공격 방지).
         return MessageDigest.isEqual(
-                expected.getBytes(StandardCharsets.UTF_8),
+                props.getWebhookSecret().getBytes(StandardCharsets.UTF_8),
                 signature.getBytes(StandardCharsets.UTF_8));
-    }
-
-    /** 소문자 hex(SHA-1) — 솔라피 문서 예시(Node crypto sha1.digest('hex')) 와 동일 규칙. */
-    private static String sha1Hex(String value) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] digest = md.digest(value.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-1 지원되지 않음", e);
-        }
     }
 }
