@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { useSmsMutations, useSmsTargets, useSmsTemplates } from '@/hooks/sms/useSmsManagement'
+import { useSmsOffsets } from '@/hooks/sms/useSmsOffsets'
 import { TargetFormModal } from './TargetFormModal'
 import { SmsStatusFilterBar } from './SmsStatusFilterBar'
 import { SmsToolbar, type PeriodMode } from './SmsToolbar'
@@ -109,6 +110,19 @@ export function SmsManagementPage() {
     range.from, range.to, hasSearched, queryBasis.basis, queryBasis.tier || undefined,
   )
   const { data: templates = [] } = useSmsTemplates()
+  // 차수별 발송 예정 시각 (HH:mm) 을 차수 셀에 붙이려고 로딩. tier-level 이라 모든 그룹 동일 값 —
+  // 첫 행에서 tier1Time/tier2Time/tier3Time 을 뽑아 T1/T2/T3 매핑을 만든다. 데이터 없으면 빈 문자열.
+  // 서버 TIME 컬럼은 "10:00:00" 로 직렬화돼 초까지 오므로 앞 5자(HH:mm)만 잘라 셀에 붙인다.
+  const { data: offsets = [] } = useSmsOffsets()
+  const tierTimeMap = useMemo(() => {
+    const base = offsets[0]
+    const hhmm = (t: string | undefined) => (t ?? '').slice(0, 5)
+    return {
+      T1: hhmm(base?.tier1Time),
+      T2: hhmm(base?.tier2Time),
+      T3: hhmm(base?.tier3Time),
+    } as Record<string, string>
+  }, [offsets])
   // changeStatus (개별 홀딩 토글) 은 상태 셀 클릭 잠금(실수 방지)으로 화면에서 안 씀 —
   // 훅 자체는 useSmsMutations 안에 유지 (관리자 UI 재도입 시 재사용).
   const { create, update, changeStatusBulk, registerOptOut, lookup } = useSmsMutations()
@@ -361,10 +375,11 @@ export function SmsManagementPage() {
             <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">데이터를 불러오지 못했습니다.</div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
-              {/* w-full + table-fixed 는 남는 폭을 모든 컬럼에 비례 배분한다 —
-                  화면이 넓을수록 컬럼이 통째로 늘어난다. 맨 끝 빈 컬럼이 그 여백을 혼자 먹게 해
-                  정한 폭이 그대로 유지되도록 한다. */}
-              <table className="w-full min-w-[1270px] table-fixed border-collapse text-[12px]">
+              {/* colgroup 폭은 '최소 폭 힌트' 로만 남긴다 — table-fixed 를 뺐기 때문에 셀 콘텐츠가
+                  길면 그 컬럼만 넉넉하게 늘어나고 부족한 폭은 오른쪽으로 밀린다.
+                  컨테이너의 overflow-auto 가 가로 스크롤을 제공하므로 로우 텍스트를 말줄임(...)
+                  으로 자르지 않는다 (2026-09-02 결정 — 담당자가 요청). */}
+              <table className="w-full min-w-[1270px] border-collapse text-[12px]">
                 <colgroup>
                   <col style={{ width: W.check }} />
                   <col style={{ width: W.no }} />
@@ -457,18 +472,18 @@ export function SmsManagementPage() {
                             onChange={() => toggleOne(t.id)}
                           />
                         </td>
-                        <td className={`${TD} truncate tabular-nums text-gray-500`}>{(safePage - 1) * pageSize + i + 1}</td>
+                        <td className={`${TD} whitespace-nowrap tabular-nums text-gray-500`}>{(safePage - 1) * pageSize + i + 1}</td>
                         <td className={`${TD} whitespace-nowrap tabular-nums`}
                           title={t.rebased ? `수술일 ${t.surgeryDate} · 예정일은 ${t.scheduleBase} 기준으로 다시 깔림(연락처 수정·홀딩 해제)` : t.surgeryDate}>
                           {t.surgeryDate}
                           {t.rebased && <span className="ml-0.5 align-super text-[9px] font-semibold text-blue-600">↻</span>}
                         </td>
-                        <td className={`${TD} truncate tabular-nums`}>{t.chartNo}</td>
-                        <td className={`${TD} truncate`}>
+                        <td className={`${TD} whitespace-nowrap tabular-nums`}>{t.chartNo}</td>
+                        <td className={`${TD} whitespace-nowrap`}>
                           <button
                             type="button"
                             title={`${t.name} — 클릭하면 발송 문구를 봅니다`}
-                            className={`w-full truncate text-left font-medium transition-colors hover:text-blue-600 ${
+                            className={`w-full whitespace-nowrap text-left font-medium transition-colors hover:text-blue-600 ${
                               preview?.targetId === t.id ? 'text-blue-700' : 'text-gray-900'
                             }`}
                             onClick={() => setPreview({ targetId: t.id, tierCode: null })}
@@ -477,40 +492,40 @@ export function SmsManagementPage() {
                           </button>
                         </td>
                         {/* 연락처 클릭 = 수정 팝업(연락처만). 관리 컬럼을 없앤 자리를 대신한다. */}
-                        <td className={`${TD} truncate tabular-nums`}>
+                        <td className={`${TD} whitespace-nowrap tabular-nums`}>
                           <button
                             type="button"
                             title={t.phoneValid
                               ? `${t.phone} — 클릭하면 연락처를 수정합니다`
                               : '유효한 휴대폰 번호가 아닙니다. 클릭해 직접 고치거나, CRM 에서 고친 뒤 다시 [조회]하세요.'}
                             onClick={() => setModal({ mode: 'edit', target: t })}
-                            className={`w-full truncate text-left underline decoration-dotted underline-offset-2 transition-colors hover:text-blue-600 ${
+                            className={`w-full whitespace-nowrap text-left underline decoration-dotted underline-offset-2 transition-colors hover:text-blue-600 ${
                               t.phoneValid ? 'text-gray-800 decoration-gray-300' : 'text-red-500 decoration-red-300'
                             }`}
                           >
                             {t.phone || '번호 없음'}
                           </button>
                         </td>
-                        <td className={`${TD} truncate`} title={t.surgeryType}>
+                        <td className={`${TD} whitespace-nowrap`} title={t.surgeryType}>
                           {t.surgeryType === '재수술'
                             ? <span className="rounded bg-violet-50 px-1 py-0.5 text-[11px] font-semibold text-violet-700">재수술</span>
                             : (t.surgeryType || '—')}
                         </td>
                         {/* 분류 = 이 사람이 받을 문구·시점. 정확한 시술명은 툴팁에 남긴다. */}
-                        <td className={`${TD} truncate`}
+                        <td className={`${TD} whitespace-nowrap`}
                           title={t.opType ? (OP_TYPE_META[t.opType]?.full ?? t.opType) : '수술 종류 미분류'}>
                           {(() => {
                             const group = groupOf(templates, t.opType)
                             if (!group) return <span className="text-gray-300">—</span>
                             return (
-                              <span className={`inline-block max-w-full truncate rounded px-1.5 py-0.5 text-[11px] font-semibold ${group.className}`}>
+                              <span className={`inline-block whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] font-semibold ${group.className}`}>
                                 {group.label}
                               </span>
                             )
                           })()}
                         </td>
-                        <td className={`${TD} truncate`} title={t.surgeryR}>{t.surgeryR || '—'}</td>
-                        <td className={`${TD} truncate`} title={t.surgeryL}>{t.surgeryL || '—'}</td>
+                        <td className={`${TD} whitespace-nowrap`} title={t.surgeryR}>{t.surgeryR || '—'}</td>
+                        <td className={`${TD} whitespace-nowrap`} title={t.surgeryL}>{t.surgeryL || '—'}</td>
                         <td className={TD}>
                           {/*
                            * 상태 셀은 표시 전용 — 개별 클릭 토글은 실수가 잦아 잠갔다.
@@ -518,29 +533,30 @@ export function SmsManagementPage() {
                            * 셀 클릭 대상이 사라져 span 하나로 통일 (locked 여부는 안내 문구로만 구분).
                            */}
                           <span
-                            className={`block w-full truncate rounded-full px-1 py-0.5 text-center text-[11px] font-semibold ${state.className}`}
+                            className={`block w-full whitespace-nowrap rounded-full px-1 py-0.5 text-center text-[11px] font-semibold ${state.className}`}
                             title={`${state.title}${state.locked ? '' : '\n(개별 토글 잠금 — 홀딩·해제는 툴바에서 선택 후 일괄 처리)'}`}
                           >
                             {state.label}
                           </span>
                         </td>
                         {templates.map((tpl) => {
-                          const cell = tierCellOf(t, offsetOf(tpl, t.opType), tpl.code, today, graceFrom)
+                          const offsetDays = offsetOf(tpl, t.opType)
+                          const cell = tierCellOf(t, offsetDays, tpl.code, today, graceFrom, tierTimeMap[tpl.code])
+                          // 오프셋(+1·+3·+5) 배지는 오해 소지가 있어 셀에서 뺐다 — 툴팁에 남긴다.
+                          // 이제 셀 텍스트가 "MM-dd HH:mm" 이라 시각이 곧 예정일 신호를 대신한다.
+                          const tooltip = `${cell.title}${cell.title ? ' · ' : ''}${GROUP_META[groupOf(templates, t.opType)?.code ?? '']?.label ?? ''} +${offsetDays}일`
                           return (
-                            <td key={tpl.code} className={`${TD} truncate text-center tabular-nums`} title={cell.title}>
+                            <td key={tpl.code} className={`${TD} whitespace-nowrap text-center tabular-nums`} title={tooltip}>
                               {/* 누르면 오른쪽에 그 차수 문구가 뜬다 — 어떤 문장이 나가는지 여기서 확인한다. */}
                               <button
                                 type="button"
-                                className={`w-full truncate rounded px-0.5 transition-colors hover:bg-blue-50 ${
+                                className={`w-full whitespace-nowrap rounded px-0.5 transition-colors hover:bg-blue-50 ${
                                   isPreviewing(t.id, tpl.code) ? 'bg-blue-100' : ''
                                 }`}
                                 onClick={() => setPreview({ targetId: t.id, tierCode: tpl.code })}
                               >
                                 <span className={cell.className}>
                                   {cell.text}
-                                  {/* 오프셋은 행마다 다르다(스마일 +1 · ICL +3 · 라섹 +5) —
-                                      머리글에 못 적으니 여기 찍는다. */}
-                                  <span className="ml-0.5 text-[10px] font-normal text-gray-400">+{cell.offsetDays}</span>
                                   {cell.label && <span className="ml-1 text-[11px] font-normal opacity-70">{cell.label}</span>}
                                 </span>
                                 {cell.replaced && (
