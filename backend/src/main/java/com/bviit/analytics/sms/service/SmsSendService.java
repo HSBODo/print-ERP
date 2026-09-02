@@ -140,10 +140,10 @@ public class SmsSendService {
             executor.complete(reserved.get(), outcome);
 
             if (outcome.isSuccess()) {
-                items.add(item(targetId, target.getName(), "SUCCESS", ""));
+                items.add(item(targetId, target.getName(), "SUCCESS", "", outcome.isDryRun()));
                 success++;
             } else {
-                items.add(item(targetId, target.getName(), "FAILED", outcome.getFailReason()));
+                items.add(item(targetId, target.getName(), "FAILED", outcome.getFailReason(), false));
                 failed++;
             }
         }
@@ -158,8 +158,12 @@ public class SmsSendService {
     }
 
     private static SmsSendResult.Item item(Long targetId, String name, String result, String detail) {
+        return item(targetId, name, result, detail, false);
+    }
+
+    private static SmsSendResult.Item item(Long targetId, String name, String result, String detail, boolean dryRun) {
         return SmsSendResult.Item.builder()
-                .targetId(targetId).name(name).result(result).detail(detail == null ? "" : detail)
+                .targetId(targetId).name(name).result(result).detail(detail == null ? "" : detail).dryRun(dryRun)
                 .build();
     }
 }

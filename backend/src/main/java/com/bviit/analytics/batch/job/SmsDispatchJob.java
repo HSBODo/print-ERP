@@ -168,7 +168,14 @@ public class SmsDispatchJob {
             String r = item.getResult();
             String detail = item.getDetail() == null ? "" : item.getDetail();
             if ("SUCCESS".equals(r)) {
-                queueService.markReceived(row.getId());
+                // dry-run 자동발송(dev·local) 은 실 API 호출이 없어 웹훅이 오지 않는다 —
+                // RECEIVED 에 두면 큐가 영원히 완결되지 않으니 여기서 곧바로 DONE 으로 굳힌다.
+                // override-to 로 실 API 호출된 케이스는 dryRun=false 라 정상적으로 RECEIVED 로 간다.
+                if (item.isDryRun()) {
+                    queueService.markDelivered(row.getId());
+                } else {
+                    queueService.markReceived(row.getId());
+                }
                 return DispatchOutcome.SUCCESS;
             }
             if ("FAILED".equals(r)) {

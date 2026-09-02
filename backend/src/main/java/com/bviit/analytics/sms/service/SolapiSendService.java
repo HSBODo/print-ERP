@@ -48,6 +48,13 @@ public class SolapiSendService {
         private final String solapiMessageId;  // M4V…
         private final String statusCode;
         private final String failReason;
+        /**
+         * dry-run 로그만 남긴 케이스인지 — 실제 솔라피 API 호출이 없었다는 뜻.
+         * 상위(SmsDispatchJob)가 이걸 보고 큐 상태를 RECEIVED 가 아니라 DONE 으로 곧바로 굳힌다.
+         * 웹훅이 절대 오지 않는 흐름이라 RECEIVED 에 두면 영원히 완결되지 않는다.
+         * override-to 로 실 API 호출된 케이스는 웹훅이 정상적으로 오므로 여기서 false.
+         */
+        private final boolean dryRun;
     }
 
     /** 대상 1명에게 템플릿 1종을 발송한다. 실패해도 예외를 던지지 않고 outcome 으로 돌려준다. */
@@ -73,6 +80,7 @@ public class SolapiSendService {
                     .success(true)
                     .messageType("DRY_RUN")
                     .statusCode("DRY_RUN")
+                    .dryRun(true)
                     .build();
         }
 
