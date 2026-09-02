@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useSmsOffsets, useUpdateSmsOffsets } from '@/hooks/sms/useSmsOffsets'
+import { useAuthStore } from '@/stores/authStore'
 import type { SmsMessageKind, SmsOffsetRow } from '@/api/sms'
 
 /**
@@ -69,6 +70,10 @@ const KIND_LABEL: Record<SmsMessageKind, string> = { NOTIFICATION: '알림톡', 
 
 export function SmsOffsetGrid() {
   const [open, setOpen] = useState(false)
+  // 관리자 전용 카드 — 오프셋·발송 시각은 발송 정책의 근간이라 일반 사용자가 실수로 바꾸면 안 된다.
+  // 뱃지만 붙이면 편집 필드는 그대로 보여 오해 소지가 있으니 카드 자체를 감춘다.
+  const role = useAuthStore((s) => s.user?.role)
+  const isAdmin = role === 'ADMIN'
   const { data, isLoading, isError } = useSmsOffsets()
   const updateMutation = useUpdateSmsOffsets()
 
@@ -161,6 +166,9 @@ export function SmsOffsetGrid() {
     )
   }
 
+  // 훅은 위에서 전부 부른 뒤 여기서 조기 반환한다 — react-hooks/rules-of-hooks 준수.
+  if (!isAdmin) return null
+
   return (
     <Card className="border-border/70 shadow-sm">
       <button
@@ -171,6 +179,13 @@ export function SmsOffsetGrid() {
       >
         <Info className="h-4 w-4 text-blue-600" />
         <span className="font-medium text-gray-900">1·2·3차 오프셋 · 발송 시각 설정</span>
+        <span
+          title="관리자 권한 필요"
+          aria-label="관리자 전용"
+          className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+        >
+          관리자
+        </span>
         <span className="text-xs text-gray-500">
           수술 그룹별 발송 예정일 + 차수별 시각/종류. 저장 즉시 반영.
         </span>
