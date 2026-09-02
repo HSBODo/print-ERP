@@ -8,10 +8,15 @@ import { useAuthStore } from '@/stores/authStore'
 import type { SmsMessageKind, SmsOffsetRow } from '@/api/sms'
 
 /**
- * 문자 발송 1·2·3차 설정 편집 카드 — 상단: tier-level(시각·종류), 하단: 4×3 오프셋 그리드.
+ * 문자 발송 1·2·3차 설정 카드 — 상단: tier-level(시각·종류), 하단: 4×3 오프셋 그리드.
  *
  * <b>편집 대상은 발송 그룹 4종(SMILE·LASIK·LASEK·ICL)만.</b> ETC(백내장·재수술) 는 발송 대상이
  * 아니라 서버 응답에도 안 오고 여기 표시되지 않는다.
+ *
+ * <h3>권한</h3>
+ * 카드 자체는 모두에게 노출되어 지금 언제·어떤 채널로 나가는지 조회할 수 있다.
+ * 편집(입력·저장·초기화) 은 관리자 롤만 가능 — 발송 정책의 근간이라 실수 방지.
+ * 백엔드 {@code PUT /api/sms-management/offsets} 도 hasRole('ADMIN') 로 이중 가드.
  *
  * 값 저장 즉시 서버 캐시가 무효화돼 targets 재조회가 걸린다 — 예정일이 새 오프셋 기준으로
  * 다시 계산된 상태로 화면이 갱신된다.
@@ -70,8 +75,9 @@ const KIND_LABEL: Record<SmsMessageKind, string> = { NOTIFICATION: '알림톡', 
 
 export function SmsOffsetGrid() {
   const [open, setOpen] = useState(false)
-  // 관리자 전용 카드 — 오프셋·발송 시각은 발송 정책의 근간이라 일반 사용자가 실수로 바꾸면 안 된다.
-  // 뱃지만 붙이면 편집 필드는 그대로 보여 오해 소지가 있으니 카드 자체를 감춘다.
+  // 모두에게 카드를 노출해 시간·오프셋을 조회할 수 있게 하되, 수정은 관리자만.
+  // 발송 정책의 근간이라 일반 사용자가 실수로 바꾸면 안 되지만, "지금 몇 시에 나가는지"
+  // 를 관리자만 보면 협업이 어렵다 — 조회는 열고 편집만 잠근다.
   const role = useAuthStore((s) => s.user?.role)
   const isAdmin = role === 'ADMIN'
   const { data, isLoading, isError } = useSmsOffsets()
@@ -166,9 +172,6 @@ export function SmsOffsetGrid() {
     )
   }
 
-  // 훅은 위에서 전부 부른 뒤 여기서 조기 반환한다 — react-hooks/rules-of-hooks 준수.
-  if (!isAdmin) return null
-
   return (
     <Card className="border-border/70 shadow-sm">
       <button
@@ -215,15 +218,19 @@ export function SmsOffsetGrid() {
                         type="time"
                         value={tiers[time]}
                         onChange={(e) => updateTime(time, e.target.value)}
+                        disabled={!isAdmin}
+                        title={isAdmin ? undefined : '수정은 관리자만 가능합니다'}
                         className={
-                          'rounded-md border px-2 py-1 text-sm ' +
+                          'rounded-md border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ' +
                           (err ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white')
                         }
                       />
                       <select
                         value={tiers[kind]}
                         onChange={(e) => updateKind(kind, e.target.value as SmsMessageKind)}
-                        className="rounded-md border border-gray-200 bg-white px-1.5 py-1 text-sm"
+                        disabled={!isAdmin}
+                        title={isAdmin ? undefined : '수정은 관리자만 가능합니다'}
+                        className="rounded-md border border-gray-200 bg-white px-1.5 py-1 text-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
                       >
                         <option value="NOTIFICATION">{KIND_LABEL.NOTIFICATION}</option>
                         <option value="AD">{KIND_LABEL.AD}</option>
@@ -263,8 +270,10 @@ export function SmsOffsetGrid() {
                             max={OFFSET_MAX}
                             value={d[k]}
                             onChange={(e) => updateOffsetCell(i, k, e.target.value)}
+                            disabled={!isAdmin}
+                            title={isAdmin ? undefined : '수정은 관리자만 가능합니다'}
                             className={
-                              'w-16 rounded-md border px-2 py-1 text-center text-sm ' +
+                              'w-16 rounded-md border px-2 py-1 text-center text-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ' +
                               (offsetErrors[i] ? 'border-red-300 bg-red-50' : 'border-gray-200')
                             }
                           />
@@ -283,18 +292,26 @@ export function SmsOffsetGrid() {
               </table>
 
               <div className="mt-3 flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={reset} disabled={!dirty}>
-                  <RotateCcw className="mr-1 h-3.5 w-3.5" />초기화
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={save}
-                  disabled={!dirty || hasError || updateMutation.isPending}
-                >
-                  <Save className="mr-1 h-3.5 w-3.5" />
-                  {updateMutation.isPending ? '저장 중…' : '저장'}
-                </Button>
+                {isAdmin ? (
+                  <>
+                    <Button variant="outline" size="sm" onClick={reset} disabled={!dirty}>
+                      <RotateCcw className="mr-1 h-3.5 w-3.5" />초기화
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={save}
+                      disabled={!dirty || hasError || updateMutation.isPending}
+                    >
+                      <Save className="mr-1 h-3.5 w-3.5" />
+                      {updateMutation.isPending ? '저장 중…' : '저장'}
+                    </Button>
+                  </>
+                ) : (
+                  <span className="text-[11px] text-gray-500">
+                    수정은 관리자만 가능합니다.
+                  </span>
+                )}
                 {data?.[0]?.updatedAt && (
                   <span className="ml-auto text-[11px] text-gray-400">
                     마지막 수정: {String(data[0].updatedAt).replace('T', ' ').slice(0, 16)}
