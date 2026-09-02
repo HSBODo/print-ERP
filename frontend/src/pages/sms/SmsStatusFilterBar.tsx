@@ -1,5 +1,5 @@
 import { STATUS_FILTERS, groupOptionsOf, type StatusFilter } from './smsTableModel'
-import type { SmsTarget, SmsTemplate } from '@/api/sms'
+import type { SmsTemplate } from '@/api/sms'
 
 /**
  * 필터 바 — 발송과 대상 적재는 자동화(큐)가 맡으므로, 이 줄에는 점검용 필터만 둔다.
@@ -10,9 +10,8 @@ import type { SmsTarget, SmsTemplate } from '@/api/sms'
  * 뺀다. 지금 보이는 건수는 툴바의 결과 수가 말해준다.
  */
 export function SmsStatusFilterBar({
-  targets, templates, statusFilter, onChange, selectedCount, groupFilter, onGroupChange,
+  templates, statusFilter, onChange, selectedCount, groupFilter, onGroupChange,
 }: {
-  targets: SmsTarget[]
   templates: SmsTemplate[]
   statusFilter: StatusFilter
   onChange: (value: StatusFilter) => void
@@ -21,7 +20,7 @@ export function SmsStatusFilterBar({
   groupFilter: string
   onGroupChange: (value: string) => void
 }) {
-  const groupOptions = groupOptionsOf(templates, targets)
+  const groupOptions = groupOptionsOf(templates)
   const chip = (active: boolean) =>
     `whitespace-nowrap border-l border-border/70 px-2.5 text-xs font-medium transition-colors first:border-l-0 ${
       active ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
@@ -53,28 +52,25 @@ export function SmsStatusFilterBar({
         })}
       </div>
 
-      {/* 수술 분류 — 상태 탭과 같은 모양의 세그먼트. 조회 결과에 실제로 있는 분류만 낸다.
-          다섯 개를 늘 늘어놓으면 이 기간에 없는 분류까지 고르게 되어 빈 목록만 나온다.
-          분류가 하나뿐이면 고를 게 없으니 아예 감춘다. */}
-      {groupOptions.length > 1 && (
-        <div
-          role="group"
-          aria-label="수술 분류 필터"
-          className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white"
-        >
-          {[{ code: '', label: '전체' }, ...groupOptions].map((opt) => (
-            <button
-              key={opt.code || 'all'}
-              type="button"
-              aria-pressed={groupFilter === opt.code}
-              onClick={() => onGroupChange(opt.code)}
-              className={chip(groupFilter === opt.code)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 수술 분류 — 상태 탭과 같은 모양의 세그먼트. 시력교정 4대 분류(스마일·라식·라섹·렌즈삽입)를
+          이번달 데이터 존재 여부와 무관하게 늘 노출한다. 이유는 groupOptionsOf 주석 참고. */}
+      <div
+        role="group"
+        aria-label="수술 분류 필터"
+        className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white"
+      >
+        {[{ code: '', label: '전체' }, ...groupOptions].map((opt) => (
+          <button
+            key={opt.code || 'all'}
+            type="button"
+            aria-pressed={groupFilter === opt.code}
+            onClick={() => onGroupChange(opt.code)}
+            className={chip(groupFilter === opt.code)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
 
       {/* 선택 건수 — 홀딩/해제 대상이 몇 명인지. 고른 게 없으면 자리도 차지하지 않는다. */}
       {selectedCount > 0 && (

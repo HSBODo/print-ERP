@@ -14,9 +14,15 @@ import { SmsMessagePreview } from './SmsMessagePreview'
 import { SmsPagination } from './SmsPagination'
 import {
   DELIVERY_GRACE_MINUTES, GROUP_META, OP_TYPE_META, isHeld,
-  compareSortValue, getSortValue, groupHelpOf, groupOf, matchesStatusFilter, stampMinutesAgo, offsetOf, targetStateOf, tierCellOf, todayIso, toMonthEnd, toMonthStart, toMonthValue, yesterdayIso,
+  compareSortValue, getSortValue, groupHelpOf, groupOf, matchesStatusFilter, stampMinutesAgo, offsetOf, targetStateOf, tierCellOf, todayIso, toMonthEnd, toMonthStart, toMonthValue,
   type SortState, type StatusFilter,
 } from './smsTableModel'
+
+/** 이번달 1일~말일 — 화면 로딩·리셋 시 리스트 조회 디폴트. */
+function currentMonthRange(): { from: string; to: string } {
+  const month = toMonthValue(todayIso())
+  return { from: toMonthStart(month), to: toMonthEnd(month) }
+}
 import type { SmsQueryBasis, SmsTarget, SmsTargetRequest } from '@/api/sms'
 
 /**
@@ -78,11 +84,11 @@ export function SmsManagementPage() {
   const [tierFilter, setTierFilter] = useState('')
   // 조회에 실제로 쓰인 기준 — 셀렉트를 바꿔도 [조회] 전까지는 목록이 흔들리지 않게 분리한다.
   const [queryBasis, setQueryBasis] = useState<{ basis: SmsQueryBasis; tier: string }>({ basis: 'SURGERY', tier: '' })
-  const [periodMode, setPeriodMode] = useState<PeriodMode>('daily')
-  const [draft, setDraft] = useState({ from: yesterdayIso(), to: yesterdayIso() })
-  const [range, setRange] = useState({ from: yesterdayIso(), to: yesterdayIso() })
-  // 화면에 들어오자마자 조회하지 않는다 — [조회]를 눌러야 데이터를 가져온다.
-  const [hasSearched, setHasSearched] = useState(false)
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('monthly')
+  const [draft, setDraft] = useState(currentMonthRange)
+  const [range, setRange] = useState(currentMonthRange)
+  // 화면에 들어오자마자 이번달 리스트를 자동 조회한다 — 관리자가 매번 [조회] 안 눌러도 되게.
+  const [hasSearched, setHasSearched] = useState(true)
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
   const [sortState, setSortState] = useState<SortState>(null)
@@ -208,14 +214,15 @@ export function SmsManagementPage() {
   }
 
   const handleReset = () => {
-    const initial = { from: yesterdayIso(), to: yesterdayIso() }
-    setPeriodMode('daily')
+    const initial = currentMonthRange()
+    setPeriodMode('monthly')
     setBasis('SURGERY')
     setTierFilter('')
     setQueryBasis({ basis: 'SURGERY', tier: '' })
     setDraft(initial)
     setRange(initial)
-    setHasSearched(false)
+    // 리셋해도 이번달 자동 조회 상태로 되돌린다 — 초기 로딩과 같은 상태.
+    setHasSearched(true)
     setKeyword('')
     setStatusFilter('전체')
     setGroupFilter('')
@@ -336,7 +343,6 @@ export function SmsManagementPage() {
         onOpenOptOuts={() => setOptOutModalOpen(true)}
       />
       <SmsStatusFilterBar
-        targets={targets}
         templates={templates}
         statusFilter={statusFilter}
         onChange={(v) => { setStatusFilter(v); setCurrentPage(1); setSelected(new Set()) }}

@@ -100,12 +100,24 @@ export const groupOf = (templates: SmsTemplate[], opType: string) => {
   return { code, ...(GROUP_META[code] ?? UNKNOWN_GROUP) }
 }
 
-/** 조회 결과에 실제로 있는 분류만, 서버가 준 순서(스마일→라식→라섹→렌즈삽입→기타)로. */
-export const groupOptionsOf = (templates: SmsTemplate[], targets: SmsTarget[]) => {
-  const present = new Set(targets.map((t) => groupOf(templates, t.opType)?.code))
-  return (templates[0]?.groups ?? [])
-    .filter((g) => present.has(g.groupCode))
-    .map((g) => ({ code: g.groupCode, ...(GROUP_META[g.groupCode] ?? { label: g.groupLabel, className: UNKNOWN_GROUP.className }) }))
+/**
+ * 필터에 노출하는 발송 분류 — 데이터 존재 여부와 무관하게 4개를 **고정 순서**로 낸다.
+ *
+ * 예전에는 조회 결과에 실제로 있는 분류만 냈지만, 그러면 이번달에 라식 대상이 없다는 이유로
+ * 라식 버튼이 사라져 관리자가 "라식 필터가 왜 없지?" 를 물어야 한다. 매번 필터가 나타났다
+ * 사라졌다 하면 화면 사용법이 흔들린다. 항상 4개를 놓아 "그 달엔 없다"를 클릭으로 확인할 수 있게 한다.
+ *
+ * ETC(백내장·재수술)는 필터에 두지 않는다 — 이 화면 목적은 시력교정 4대 분류 점검이라,
+ * 백내장까지 필터를 두면 목록이 길어진다. label 은 GROUP_META 를 정본으로 쓴다.
+ */
+export const groupOptionsOf = (templates: SmsTemplate[]) => {
+  const orderedCodes = ['SMILE', 'LASIK', 'LASEK', 'ICL'] as const
+  const groupMap = new Map((templates[0]?.groups ?? []).map((g) => [g.groupCode, g]))
+  return orderedCodes.map((code) => {
+    const g = groupMap.get(code)
+    const meta = GROUP_META[code] ?? { label: g?.groupLabel ?? code, className: UNKNOWN_GROUP.className }
+    return { code, ...meta }
+  })
 }
 
 /** 분류 도움말 — 어떤 시술이 어느 분류로 들어가는지. 배지를 고치면 설명이 함께 따라온다. */

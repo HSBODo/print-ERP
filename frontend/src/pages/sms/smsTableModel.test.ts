@@ -67,9 +67,15 @@ describe('수술 분류', () => {
     expect(groupOf([], 'smilePro')).toBeNull()
   })
 
-  it('필터 목록은 조회 결과에 실제로 있는 분류만, 서버 순서대로 낸다', () => {
-    const rows = [target({ opType: 'icl' }), target({ opType: 'smile' }), target({ opType: 'catMono' })]
-    expect(groupOptionsOf(tiers, rows).map((o) => o.label)).toEqual(['스마일', '렌즈삽입', '기타'])
+  it('필터 목록은 데이터 존재 여부와 무관하게 4대 분류(스마일·라식·라섹·렌즈삽입)를 고정 노출한다', () => {
+    // 이번달에 라식이 없다는 이유로 라식 버튼이 사라지면 관리자가 "라식 필터가 왜 없지" 를
+    // 묻는다. 매번 필터가 나타났다 사라지는 화면은 사용법이 흔들린다. ETC(백내장·재수술)는 뺀다.
+    expect(groupOptionsOf(tiers).map((o) => o.label)).toEqual(['스마일', '라식', '라섹', '렌즈삽입'])
+  })
+
+  it('템플릿을 못 받았어도 4대 분류는 고정으로 낸다', () => {
+    // 로딩 중이거나 서버가 값을 못 준 순간에도 필터 개수·라벨은 흔들리지 않아야 한다.
+    expect(groupOptionsOf([]).map((o) => o.label)).toEqual(['스마일', '라식', '라섹', '렌즈삽입'])
   })
 })
 
