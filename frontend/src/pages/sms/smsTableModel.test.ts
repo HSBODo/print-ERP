@@ -191,9 +191,9 @@ describe('차수까지 반영한 상태 문구', () => {
 describe('차수 칸 판정', () => {
   const today = '2026-08-20'
 
-  it('도달했으면 도달일을 진한 검정으로 보여준다', () => {
+  it('도달했으면 도달 시각을 진한 검정으로 보여준다', () => {
     const cell = tierCellOf(target({ logs: [log()] }), 7, 'T1', today)
-    expect(cell.text).toBe('08-13')
+    expect(cell.text).toBe('08-13 09:01')
     expect(cell.label).toBe('도달')
     expect(cell.className).toContain('text-gray-900')
   })
