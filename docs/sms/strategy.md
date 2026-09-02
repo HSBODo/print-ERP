@@ -492,6 +492,59 @@ sms:
 
 ---
 
+## 5-2. 관리자 권한 정책 (2026-09-02 정리)
+
+### 개발 단계 (지금)
+
+**페이지 통째로 관리자 전용.** 사이드바 그룹 `sms-management` 에 `adminOnly: true` + `adminReal: true` — 일반 사용자에게 그룹 자체가 숨겨진다.
+
+**이유** — 백엔드가 이미 두 매처 모두 `hasRole('ADMIN')` 로 잠근 상태:
+- `/api/sms-management/**` (조회·홀딩·수신거부·수동 발송·오프셋·템플릿 조회·잔액 조회 등 15종)
+- `/api/admin/batch/sms/queue/**` (지금 실행·실패 재실행·큐 상태 조회 4종)
+
+일반 사용자가 페이지를 열어도 모든 API 가 403 이 되어 "고장난 화면" 이 된다. 사이드바에서 감추는 게 UX 상 정합.
+
+### 개발 완료 후 완화 계획
+
+**관리자만 유지**
+- 오프셋·발송시각 편집 (`SmsOffsetGrid`) — 발송 정책의 근간, 실수 위험 큼
+- 큐 카드 `[지금 실행]` — SMS_DISPATCH_ENABLED 우회 트리거, 실 발송 사고 위험
+- 큐 카드 `[실패 재실행]` — 대량 재발송 트리거
+
+**일반 사용자에게 개방**
+- 대상 조회 (`GET /targets` 등)
+- 홀딩·해제 (`PUT /targets/{id}/status`, `PUT /targets/status`)
+- 수신거부 등록·조회 (`POST /opt-outs`, `GET /opt-outs`, `DELETE /opt-outs/{id}`)
+- 연락처 수정·수동 대상 추가 (`PUT /targets/{id}`, `POST /targets`)
+- 오프셋·잔액·템플릿 **조회** (`GET /offsets`, `GET /solapi-balance`, `GET /solapi-templates`)
+
+### 완화 시 손댈 위치
+
+**프론트**
+- `navigation.ts` — `sms-management` 그룹에서 `adminOnly` · `adminReal` 제거
+- 지금까지 개별 조작에 적용한 `role !== 'ADMIN'` 판정 유지 (오프셋 read-only · `[지금 실행]` · `[실패 재실행]` 은 계속 관리자 전용)
+
+**백엔드** (`SecurityConfig.java`)
+- `/api/sms-management/**` 를 `authenticated()` 로 완화
+- 관리자 전용 조작 URL 만 앞에 별도 매처로 명시 (매처 순서 중요):
+  ```java
+  auth.requestMatchers(HttpMethod.PUT, "/api/sms-management/offsets").hasRole("ADMIN");
+  auth.requestMatchers("/api/sms-management/**").authenticated();
+  ```
+- `/api/admin/batch/sms/queue/**` 는 그대로 `hasRole('ADMIN')` 유지
+
+### 이미 잠근 것 (2026-09-02 커밋)
+
+| 조작 | 프론트 판정 | 백엔드 | 관련 커밋 |
+|---|---|---|---|
+| 오프셋·발송시각 편집 | ✅ read-only 개방 (편집만 관리자) | ADMIN | `caa61c6` `c123cc1` |
+| 큐 카드 `[지금 실행]` | ✅ 숨김 + 뱃지 | ADMIN | `677b0a4` `aeff179` |
+| 큐 카드 `[실패 재실행]` | ✅ 숨김 + 뱃지 | ADMIN | `b59d881` |
+| 상태 셀 클릭 (개별 홀딩 토글) | ⛔ **누구도 불가** (실수 방지) | ADMIN | `66945e3` |
+| SMS 관리 그룹 자체 | ✅ 사이드바 숨김 (개발 단계) | ADMIN | `50b8a4e` |
+
+---
+
 ## 6. 마이그레이션 계획
 
 ### V-번호 배정
@@ -666,5 +719,9 @@ sms:
 | 2026-09-02 | 후속 | `677b0a4` `aeff179` | 큐 카드 [지금 실행] 관리자 전용 · "관리자" 뱃지 |
 | 2026-09-02 | 후속 | `affd495` | dry-run 자동발송 큐를 RECEIVED 대신 곧바로 DONE 으로 굳힘 (웹훅 안 오는 흐름 완결) |
 | 2026-09-02 | 후속 | `e7f2132` | FAILED 큐 임계치 Slack 경고 (상승 엣지, 기본 10건) |
-| 2026-09-02 | Phase 3 | | `SmsResultSyncJob` 별도 승격 — SolapiSyncService.@Scheduled 제거, batch_run_log·Slack 통합 |
-| _다음_ | 검토 | | 자동 재시도 정책 · 큐 자동 정리 잡 (규모 커지면) |
+| 2026-09-02 | Phase 3 | `45f518f` | `SmsResultSyncJob` 별도 승격 — SolapiSyncService.@Scheduled 제거, batch_run_log·Slack 통합 |
+| 2026-09-02 | 관측 | `c06f4a2` `079b2cc` | 실패 재실행 모달 사유별 배지 필터(9카테고리) · 큐 카드 헤더에 Top 3 미니 배지 |
+| 2026-09-02 | 권한 | `b59d881` `c123cc1` | [실패 재실행] 관리자 전용 · 오프셋 카드 read-only 개방 (편집만 관리자) |
+| 2026-09-02 | 안전 | `66945e3` | 상태 셀 클릭 홀딩 토글 잠금 — 홀딩·해제는 툴바 일괄 처리로만 |
+| 2026-09-02 | 권한 | `50b8a4e` | 문자 발송 관리 그룹을 개발 단계 관리자 전용으로 지정 (§ 5-2 참고) |
+| _다음_ | 검토 | | 자동 재시도 정책 · 큐 자동 정리 잡 (규모 커지면) · 개발 완료 후 SMS 페이지 개방 (§ 5-2) |
