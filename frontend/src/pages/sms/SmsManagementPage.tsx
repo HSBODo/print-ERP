@@ -109,7 +109,9 @@ export function SmsManagementPage() {
     range.from, range.to, hasSearched, queryBasis.basis, queryBasis.tier || undefined,
   )
   const { data: templates = [] } = useSmsTemplates()
-  const { create, update, changeStatus, changeStatusBulk, registerOptOut, lookup } = useSmsMutations()
+  // changeStatus (개별 홀딩 토글) 은 상태 셀 클릭 잠금(실수 방지)으로 화면에서 안 씀 —
+  // 훅 자체는 useSmsMutations 안에 유지 (관리자 UI 재도입 시 재사용).
+  const { create, update, changeStatusBulk, registerOptOut, lookup } = useSmsMutations()
 
   const today = todayIso()
   // 한 번 계산해 상태 칸과 차수 칸이 같은 경계를 쓰게 한다 — 따로 계산하면 분이 바뀌는
@@ -510,27 +512,17 @@ export function SmsManagementPage() {
                         <td className={`${TD} truncate`} title={t.surgeryR}>{t.surgeryR || '—'}</td>
                         <td className={`${TD} truncate`} title={t.surgeryL}>{t.surgeryL || '—'}</td>
                         <td className={TD}>
-                          {/* 발송 불가는 데이터 문제라 토글 대상이 아니다 — 버튼이 아니라 표시로 둔다. */}
-                          {state.locked ? (
-                            <span
-                              className={`block w-full truncate rounded-full px-1 py-0.5 text-center text-[11px] font-semibold ${state.className}`}
-                              title={state.title}
-                            >
-                              {state.label}
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              title={`${state.title}\n${held ? '클릭하면 홀딩을 풀어 발송 대기로 되돌립니다' : '클릭하면 발송 홀딩합니다'}`}
-                              className={`w-full truncate rounded-full px-1 py-0.5 text-[11px] font-semibold transition-colors ${state.className}`}
-                              onClick={() => changeStatus.mutate(
-                                { id: t.id, value: held ? 'SENDABLE' : 'HOLD' },
-                                { onError: (e) => toast.error('상태 변경 실패', { description: e.message }) },
-                              )}
-                            >
-                              {state.label}
-                            </button>
-                          )}
+                          {/*
+                           * 상태 셀은 표시 전용 — 개별 클릭 토글은 실수가 잦아 잠갔다.
+                           * 홀딩·해제는 툴바 [발송 홀딩]·[홀딩 해제] 로 선택 대상만 일괄 처리한다.
+                           * 셀 클릭 대상이 사라져 span 하나로 통일 (locked 여부는 안내 문구로만 구분).
+                           */}
+                          <span
+                            className={`block w-full truncate rounded-full px-1 py-0.5 text-center text-[11px] font-semibold ${state.className}`}
+                            title={`${state.title}${state.locked ? '' : '\n(개별 토글 잠금 — 홀딩·해제는 툴바에서 선택 후 일괄 처리)'}`}
+                          >
+                            {state.label}
+                          </span>
                         </td>
                         {templates.map((tpl) => {
                           const cell = tierCellOf(t, offsetOf(tpl, t.opType), tpl.code, today, graceFrom)
