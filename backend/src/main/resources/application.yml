@@ -88,6 +88,8 @@ sms:
     # 광고톡 발송 허용 시(hour) — 정보통신망법상 광고성 21~08 금지. 알림톡은 시간 제한 없음.
     ad-window-start-hour: ${SMS_DISPATCH_AD_START_HOUR:8}
     ad-window-end-hour: ${SMS_DISPATCH_AD_END_HOUR:20}
+    # FAILED 큐 누적 카운트가 이 값 이상이면 Slack 경고 (상승 엣지에서만). 0 이하면 비활성.
+    failed-alert-threshold: ${SMS_DISPATCH_FAILED_ALERT_THRESHOLD:10}
 
 solapi:
   # ⚠️ Dry-run 안전장치 — 기본 true(개발단계). 실제 알림톡·문자를 나가게 하려면 SOLAPI_DRY_RUN=false 로 명시 해제.

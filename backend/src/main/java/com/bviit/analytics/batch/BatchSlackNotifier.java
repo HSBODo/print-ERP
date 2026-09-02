@@ -59,6 +59,15 @@ public class BatchSlackNotifier {
         send(text, "danger");
     }
 
+    /**
+     * 배치 자체 성공/실패가 아닌 관측 임계치 초과 등 경고 — 노란색.
+     * 예: SMS 자동발송 FAILED 큐 누적이 임계치 초과 (관리자 개입 필요).
+     */
+    public void notifyWarning(String title, String body) {
+        String text = String.format("⚠️ *%s*%n%s", title, body);
+        send(text, "warning");
+    }
+
     private void send(String text, String color) {
         if (webhookUrl == null || webhookUrl.isBlank()) return;
         try {

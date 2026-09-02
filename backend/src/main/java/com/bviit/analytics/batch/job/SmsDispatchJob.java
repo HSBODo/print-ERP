@@ -64,6 +64,13 @@ public class SmsDispatchJob {
     private final BatchSlackNotifier slackNotifier;
 
     /**
+     * FAILED 큐 임계치 상승 엣지 판정용 — 이미 임계치 초과 상태이면 true. 매 사이클마다 시끄럽지 않게
+     * 진입 시 한 번만 알리고, 관리자가 [실패 재실행] 으로 밑으로 내리면 리셋된다. 서버 재시작 시
+     * false 로 초기화되어 재알림 — 놓치는 것보단 한 번 더 우는 게 안전.
+     */
+    private volatile boolean failedOverThreshold = false;
+
+    /**
      * 매 5분(기본) 실행. cron="-" 이면 스케줄러 미등록.
      * enabled=false 면 조용히 skip — 스케줄러는 붙어 있지만 아무 일도 안 함.
      */
@@ -97,7 +104,35 @@ public class SmsDispatchJob {
             slackNotifier.notifyFailure(jobName, BatchRunLog.RunType.MANUAL, today, today, e.toString(),
                     Duration.between(startedAt, Instant.now()));
         }
+        checkFailedThreshold();
         return stats;
+    }
+
+    /**
+     * FAILED 큐 누적 카운트가 임계치 이상이면 Slack 경고 — 상승 엣지에서만 한 번.
+     * 카운트가 밑으로 내려가면 상태 리셋(다시 오를 때 재알림). 임계치 0 이하면 비활성.
+     * 배치 성공/실패와 무관하게 매 사이클 종료 시 체크 — dispatch() 자체가 통과해도 큐에는 실패가 쌓일 수 있다.
+     */
+    private void checkFailedThreshold() {
+        int threshold = props.getFailedAlertThreshold();
+        if (threshold <= 0) return;
+        try {
+            long failedCount = queueService.countByStatus(SmsDispatchQueue.STATUS_FAILED);
+            if (failedCount >= threshold && !failedOverThreshold) {
+                slackNotifier.notifyWarning(
+                        "SMS 자동발송 FAILED 큐 임계치 초과",
+                        String.format("• 현재: `%d건`  •  임계치: `%d건`%n관리자 확인 필요 — /sms-management 상단 카드 → [실패 재실행]",
+                                failedCount, threshold));
+                failedOverThreshold = true;
+                log.warn("SMS FAILED 큐 임계치 초과 알림: failed={}, threshold={}", failedCount, threshold);
+            } else if (failedCount < threshold && failedOverThreshold) {
+                failedOverThreshold = false;
+                log.info("SMS FAILED 큐 임계치 하회 — 알림 리셋: failed={}, threshold={}", failedCount, threshold);
+            }
+        } catch (Exception e) {
+            // 임계치 체크 실패는 배치 흐름을 막지 않는다.
+            log.warn("SMS FAILED 큐 임계치 체크 실패: {}", e.toString());
+        }
     }
 
     private Map<String, Integer> dispatch() {

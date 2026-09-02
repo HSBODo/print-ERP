@@ -264,6 +264,15 @@ public class SmsDispatchQueueService {
         return reset;
     }
 
+    /**
+     * 특정 상태의 큐 전체 누적 카운트 — SmsDispatchJob 이 FAILED 임계치 감시에 씀.
+     * statusCounts() 는 "최신 사이클" 기준이라 임계치용으로 안 맞다.
+     */
+    @Transactional(readOnly = true)
+    public long countByStatus(String status) {
+        return queueRepository.countByStatus(status);
+    }
+
     @Transactional(readOnly = true)
     public Map<String, Long> statusCounts() {
         Map<String, Long> counts = zeroInitCounts();

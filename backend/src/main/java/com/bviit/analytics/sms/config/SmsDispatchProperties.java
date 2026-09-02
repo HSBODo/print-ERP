@@ -44,4 +44,12 @@ public class SmsDispatchProperties {
     /** 광고톡 발송 허용 시(hour) 종료. */
     @Value("${sms.dispatch.ad-window-end-hour:20}")
     private int adWindowEndHour;
+
+    /**
+     * FAILED 큐 누적 카운트 임계치 — 초과 시 Slack 경고. 0 이하면 알림 비활성.
+     * "상승 엣지" 판정이라 임계치 진입 시 한 번만 울리고, 관리자가 [실패 재실행] 으로 밑까지
+     * 내리면 리셋된다. 실패는 [실패 재실행] 없이 자동 회복 안 되니 누적 카운트가 관리자용 신호로 자연스럽다.
+     */
+    @Value("${sms.dispatch.failed-alert-threshold:10}")
+    private int failedAlertThreshold;
 }
