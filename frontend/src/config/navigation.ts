@@ -259,11 +259,23 @@ const rawMenuItems: MenuItem[] = [
     children: [
       ...kids('reservation-channel', 'channel-profit', 'channel-analysis', 'accumulated-eyes'),
       {
+        // 개발 단계에서는 그룹 통째로 관리자 전용 — 백엔드 /api/sms-management/** 와
+        // /api/admin/batch/sms/queue/** 가 전부 hasRole('ADMIN') 로 잠겨 있어 일반
+        // 사용자가 진입해도 조회 자체가 403 이 되어 "고장난 화면" 이 된다.
+        //
+        // 개발 완료 후 완화 계획 (2026-09-02 결정):
+        //   · adminOnly 를 해제해 일반 사용자에게 노출
+        //   · 관리자만: 오프셋·발송시각 편집(SmsOffsetGrid) · [지금 실행] · [실패 재실행]
+        //   · 일반 사용자도: 대상 조회·홀딩·수신거부·연락처 수정 등
+        //   · 그때 백엔드 SecurityConfig 도 /api/sms-management/** 를 인증만 요구하도록
+        //     완화하고, 관리자 전용 조작만 별도 매처로 분리.
         id: 'sms-management',
         label: '문자 발송 관리',
         href: '#',
         icon: MessageSquare,
         kind: 'group',
+        adminOnly: true,
+        adminReal: true,
         children: kids('sms'),
       },
     ],
