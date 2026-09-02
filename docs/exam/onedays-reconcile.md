@@ -1,6 +1,6 @@
 # 원데이 검사 소급 보정 (매월 보정 배치)
 
-> 작성일: 2026-09-02 · 상태: **스펙 초안 (착수 대기)**
+> 작성일: 2026-09-02 · 상태: **코드 착수 완료 (관리자 재실행 API 포함)**
 > 목적: "원데이 검사로 찍혔다가 사후에 재검사 예약이 등록된 건"을 원데이에서 제외하는 소급 보정 로직을 매월 보정 배치에 추가하기 위한 조사·결정 정리.
 >
 > 📌 관련 문서
@@ -155,5 +155,9 @@ WHERE  m.검사일 BETWEEN @from AND @to
 
 | 날짜 | 단계 | 커밋 | 내용 |
 |------|------|------|------|
-| 2026-09-02 | 조사 | | 5개 결정 지점 확정 · Q1~Q3 남김 · 스펙 초안 문서화 |
-| _다음_ | 착수 | | Q1~Q3 답 정한 뒤 파일 3개 신설 + `ExamMartJob` 훅 추가 |
+| 2026-09-02 | 조사 | `05d406a` | 5개 결정 지점 확정 · Q1~Q3 남김 · 스펙 초안 문서화 |
+| 2026-09-02 | 착수 | | Q1=B(전전월~전월) · Q2=(a) ExamMartJob 후처리 · Q3=한 트랜잭션 확정. 파일 5개 신설·변경 (SQL 2 · Repository 1 · ExamMartJob + BatchOrchestrator). 매월 1일 03:30 자동 스케줄러에서 ALL_DOMAINS 후 원데이 보정 자동 실행. |
+| 2026-09-02 | 관리자 API | | `POST /api/admin/batch/exam/reconcile-oneday-flag?from=&to=` 신설 — 스케줄러 실패·backfill·개발 검증용. min-year 가드 없음. batch_run_log MANUAL 이력 + Slack 알림 자동. |
+| 2026-09-02 | 관측 보강 | | `ExamMartJob.reconcileOnedayFlag` 에 후보 (chart_no\|exam_date) 목록 INFO 로그 추가. UPDATE 후에는 list_exam 상 표식이 없어 사후 재구성 불가 — 로그가 유일 원천. grep 키워드: `reconcileOnedayFlag candidates`. |
+| 2026-09-02 | 관측 보강 2 | | UPDATE 절에 `RETURNING chart_no, exam_date` 추가 → repository 가 실제 뒤집힌 쌍 리스트 반환 → `updated pairs (N): [...]` INFO 로그. `candidates` 는 MSSQL 후보 전체(=511), `updated pairs` 는 실제 뒤집힌 것(=78) — 두 줄 다 남는다. grep 키워드: `reconcileOnedayFlag updated pairs`. |
+| _다음_ | 검증 | | dev/prod 배포 후 실제 실행 확인 · 초기 실행 결과로 임계치·후보 분포 재점검 |

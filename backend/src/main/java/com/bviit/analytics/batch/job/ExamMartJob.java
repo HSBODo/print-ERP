@@ -3,6 +3,8 @@ package com.bviit.analytics.batch.job;
 import com.bviit.analytics.batch.repository.BatchSuccessLogRepository;
 import com.bviit.analytics.exam.dto.ExaminationMonthlyItem;
 import com.bviit.analytics.exam.dto.ProcedureExamMonthlyItem;
+import com.bviit.analytics.exam.repository.ExamOnedayReconcileRepository;
+import com.bviit.analytics.exam.repository.ExamOnedayReconcileRepository.ChartDate;
 import com.bviit.analytics.exam.repository.ExamStatsMartRepository;
 import com.bviit.analytics.exam.service.CataractExamListService;
 import com.bviit.analytics.exam.service.ExamListService;
@@ -18,6 +20,8 @@ import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -48,6 +52,7 @@ public class ExamMartJob {
     private final CataractExamListService cataractExamListService;
     private final ExamMartWriter writer;
     private final BatchSuccessLogRepository successLogRepository;
+    private final ExamOnedayReconcileRepository onedayReconcileRepository;
 
     @Value("${batch.mart.min-year:2026}")
     private int minYear;
@@ -133,6 +138,99 @@ public class ExamMartJob {
         );
         log.info("ExamMartJob done: {}", stats);
         return stats;
+    }
+
+    /**
+     * 원데이 검사 소급 보정 — 매월 보정 배치 후처리로 부른다.
+     *
+     * <p><b>왜 별도 메서드인가</b> — run() 은 매일 D-1 하루짜리 범위로도 불린다.
+     * 원데이 보정은 재검사 예약이 시간차로 등록되는 성격이라 매일 돌릴 필요 없고,
+     * 매월 보정(전전월~전월) 시점에만 소급 반영하면 충분하다.
+     * BatchOrchestrator.runMonthlyReconcile 이 ALL_DOMAINS 재생성 후 명시적으로 호출한다.
+     *
+     * <p><b>흐름</b>
+     * <ol>
+     *   <li>MSSQL 원본에서 "검사일 이후 재검사(RESERVE_FLAG='M'·RESERVE_JINRYO='2') 예약이
+     *       등록된" (chart_no, exam_date) 쌍 조회.</li>
+     *   <li>Postgres list_exam 에서 그 쌍 중 현재 one_day='Y' 인 행만 'N' 으로 UPDATE.</li>
+     *   <li>그 범위의 mart_procedure_exam_monthly 재집계 (one_day_exam_count 갱신).
+     *       list_exam 이 원천이라 UPDATE 뒤 monthly 를 다시 접지 않으면 두 마트가 어긋난다.</li>
+     * </ol>
+     *
+     * <p><b>트랜잭션</b> — 이 메서드 안 세 단계가 하나의 트랜잭션.
+     * 실패 시 UPDATE 도 monthly 재집계도 통째로 롤백된다.
+     *
+     * <p><b>필터</b> — min-year · 2026-H1 시드 구간 · from..to 는 그대로 run() 규칙 재사용.
+     */
+    @Transactional
+    public Map<String, Integer> reconcileOnedayFlag(LocalDate from, LocalDate to) {
+        log.info("ExamMartJob reconcileOnedayFlag start: range={}..{}", from, to);
+
+        // 1) MSSQL 후보 조회
+        List<ChartDate> candidates = onedayReconcileRepository.findLaterReexamCandidates(from, to);
+        if (candidates.isEmpty()) {
+            log.info("ExamMartJob reconcileOnedayFlag: no candidates in {}..{}", from, to);
+            // 후보 0건이면 UPDATE·재집계 skip. stats 도 0/0 으로 다른 배치와 rowsUpserted 개념 통일.
+            return Map.of("oneday_reconciled", 0, "mart_procedure_exam_monthly_reconciled", 0);
+        }
+
+        // 후보 (chart_no|exam_date) 목록을 한 줄로 남긴다.
+        // Why: batch_run_log.rows_upserted 는 합계만 담아서, 나중에 "그 78건이 뭐였냐" 를 되짚을 방법이 없다.
+        //      UPDATE 후에는 list_exam 상 표식이 없어 사후 재구성도 불가능 — 그 시점의 원본 상태를 로그로 봉인해둔다.
+        String candidateSummary = candidates.stream()
+                .map(c -> c.chartNo() + "|" + c.examDate())
+                .collect(Collectors.joining(", "));
+        log.info("ExamMartJob reconcileOnedayFlag candidates ({}): [{}]", candidates.size(), candidateSummary);
+
+        // 2) Postgres list_exam UPDATE — RETURNING 으로 실제 뒤집힌 쌍만 회수.
+        //    Why: candidates 로그(=MSSQL 후보 전체) 는 뒤집힌 것 + 이미 'N' 이던 것 다 포함.
+        //         "실제로 무엇이 바뀌었나" 를 잡아 두어야 사후 감사·정합 확인이 된다.
+        List<ChartDate> updatedPairs = onedayReconcileRepository.markOnedayAsNormal(candidates);
+        int updated = updatedPairs.size();
+        if (updated > 0) {
+            String updatedSummary = updatedPairs.stream()
+                    .map(c -> c.chartNo() + "|" + c.examDate())
+                    .collect(Collectors.joining(", "));
+            log.info("ExamMartJob reconcileOnedayFlag updated pairs ({}): [{}]", updated, updatedSummary);
+        }
+
+        // 3) monthly 재집계 — 후보에 실제 존재하는 월만 갱신 (from..to 전체가 아님).
+        //    후보 검사일에서 YearMonth 를 뽑아 affectedMonths 로 좁힌다. 예: 후보가 7월만 있으면
+        //    8월 monthly 는 재계산 대상이 아니다 (원데이 카운트가 바뀔 리 없다).
+        //    upsertProcedureExamMonthly 는 idempotent 라 안 좁혀도 사고는 안 나지만, 관측·CPU 관점에서
+        //    "무엇이 왜 재집계됐는지" 신호가 명확해진다.
+        Set<YearMonth> affectedMonths = candidates.stream()
+                .map(c -> YearMonth.parse(c.examDate().substring(0, 7)))
+                .collect(Collectors.toSet());
+
+        LocalDate monthFrom = affectedMonths.stream().min(YearMonth::compareTo).orElseThrow().atDay(1);
+        LocalDate monthTo = affectedMonths.stream().max(YearMonth::compareTo).orElseThrow().atEndOfMonth();
+        Map<YearMonth, ExamDailyAgg> byMonth = aggregateByMonth(
+                examStatsMartRepository.findExamDailyAgg(monthFrom.toString(), monthTo.toString()));
+
+        List<ProcedureExamMonthlyItem> procedureMonthly = byMonth.entrySet().stream()
+                .filter(e -> affectedMonths.contains(e.getKey()))
+                .filter(e -> e.getKey().getYear() >= minYear)
+                .filter(e -> !is2026H1Seeded(e.getKey().getYear(), e.getKey().getMonthValue()))
+                .map(e -> ProcedureExamMonthlyItem.builder()
+                        .year(e.getKey().getYear())
+                        .month(e.getKey().getMonthValue())
+                        .examCount(e.getValue().total)
+                        .oneDayExamCount(e.getValue().oneDay)
+                        .total(e.getValue().total)
+                        .build())
+                .toList();
+        int procedureRows = writer.upsertProcedureExamMonthly(procedureMonthly);
+
+        // stats 에는 실제 반영 행 수만 남긴다 — batch_run_log.rows_upserted 는 tableStats 합계라
+        // 후보 수(조회만 · upsert 아님) 를 포함하면 다른 배치와 의미가 어긋난다.
+        // 후보 카운트는 진단용으로 로그에만 남긴다.
+        log.info("ExamMartJob reconcileOnedayFlag done: candidates={}, list_updated={}, monthly_upserted={}",
+                candidates.size(), updated, procedureRows);
+        return Map.of(
+                "oneday_reconciled", updated,
+                "mart_procedure_exam_monthly_reconciled", procedureRows
+        );
     }
 
     /** 일별 집계를 월로 접는다. 주차 레포트는 같은 행을 ISO 주차로 접는다(정의는 뷰 하나). */

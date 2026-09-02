@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, Loader2, Play, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useBatchRerun, useBatchRunLogs } from '@/hooks/admin/useBatchAdmin'
+import { useBatchReconcileOnedayFlag, useBatchRerun, useBatchRunLogs } from '@/hooks/admin/useBatchAdmin'
 import type { BatchDomain, BatchRunLog } from '@/api/admin/batchAdmin'
 
 type BatchJobOption = {
@@ -71,6 +71,23 @@ const daysAgo = (n: number) => {
   return d.toISOString().slice(0, 10)
 }
 
+/**
+ * 원데이 소급 보정 기본 범위 — 자동 배치와 동일한 "전전월 1일 ~ 전월 말일".
+ * 관리자가 매월 자동 배치 실패로 재실행할 때 date input 을 안 건드리고 [실행] 만 눌러도
+ * 자동 배치와 같은 범위가 되도록 정렬한다. toISOString 은 UTC 라 KST 새벽에 하루 어긋나므로
+ * getFullYear/getMonth/getDate 로 로컬 기준으로 만든다.
+ */
+const defaultOnedayRange = (): { from: string; to: string } => {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const isoDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  // 전전월 1일: 이번달 - 2, day=1 (Date 는 음수 month 를 자동으로 이전 연도로 처리)
+  const prevPrevStart = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+  // 전월 말일: 이번달 0일 = 전월 마지막 날
+  const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+  return { from: isoDate(prevPrevStart), to: isoDate(prevEnd) }
+}
+
 const STATUS_STYLE: Record<BatchRunLog['status'], string> = {
   RUNNING: 'bg-blue-100 text-blue-700',
   SUCCESS: 'bg-emerald-100 text-emerald-700',
@@ -97,6 +114,10 @@ export function BatchManagementPage() {
   const [to, setTo] = useState<string>(daysAgo(1))
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true)
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
+  // 원데이 소급 보정 전용 범위 — 재실행 UI 의 from/to 와 분리한다. 성격이 다르고
+  // 정기 자동 실행 범위(전전월 1일 ~ 전월 말일) 를 기본값으로 미리 잡아 둔다.
+  const [onedayFrom, setOnedayFrom] = useState<string>(() => defaultOnedayRange().from)
+  const [onedayTo, setOnedayTo] = useState<string>(() => defaultOnedayRange().to)
 
   const toggleExpanded = (id: number) => {
     setExpandedIds((prev) => {
@@ -108,7 +129,8 @@ export function BatchManagementPage() {
   }
 
   const rerun = useBatchRerun()
-  const isRunning = rerun.isPending
+  const reconcileOneday = useBatchReconcileOnedayFlag()
+  const isRunning = rerun.isPending || reconcileOneday.isPending
   const logsQuery = useBatchRunLogs(50, autoRefresh || isRunning)
 
   const selectedJob = useMemo(
@@ -287,6 +309,66 @@ export function BatchManagementPage() {
               </section>
             </div>
           </details>
+        </CardContent>
+      </Card>
+
+      {/* 검사 도메인 특수 보정 — 원데이 검사 소급 보정.
+          매월 자동 실행되므로 이 카드는 실패·backfill·개발 검증용 재실행 진입점이다. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">원데이 검사 소급 보정 (검사 도메인)</CardTitle>
+          <CardDescription>
+            검사일 이후 재검사 예약이 등록된 검사자를 원데이 → 일반으로 되돌린다. 매월 1일 03:30 KST 자동 실행되며(전전월~전월 범위), 이 카드는 스케줄러 실패·backfill·개발 검증용 재실행. min-year 가드 없음.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground" htmlFor="oneday-from">검사일 시작</label>
+              <input
+                id="oneday-from"
+                type="date"
+                value={onedayFrom}
+                onChange={(e) => setOnedayFrom(e.target.value)}
+                className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground" htmlFor="oneday-to">검사일 끝</label>
+              <input
+                id="oneday-to"
+                type="date"
+                value={onedayTo}
+                onChange={(e) => setOnedayTo(e.target.value)}
+                className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+              />
+            </div>
+            <Button
+              onClick={() => reconcileOneday.mutate({ from: onedayFrom, to: onedayTo })}
+              disabled={reconcileOneday.isPending || !onedayFrom || !onedayTo || onedayFrom > onedayTo}
+              className="gap-1"
+            >
+              {reconcileOneday.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />실행 중…
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />원데이 보정 실행
+                </>
+              )}
+            </Button>
+          </div>
+          {reconcileOneday.isSuccess && (
+            <p className="text-xs text-emerald-700">
+              실행 완료 — {reconcileOneday.data?.from} ~ {reconcileOneday.data?.to}. 상세 통계는 아래 실행 이력에서 확인.
+            </p>
+          )}
+          {reconcileOneday.isError && (
+            <p className="text-xs text-red-700">
+              실행 실패: {(reconcileOneday.error as Error)?.message ?? '알 수 없는 오류'}
+            </p>
+          )}
         </CardContent>
       </Card>
 

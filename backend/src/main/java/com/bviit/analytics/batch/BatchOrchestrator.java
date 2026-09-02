@@ -144,6 +144,21 @@ public class BatchOrchestrator {
         LocalDate to = prev.atEndOfMonth();
         runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to, ALL_DOMAINS,
                 () -> runAllDomains(from, to));
+
+        // 원데이 검사 소급 보정 (전전월~전월, 2개월) — 재검사 예약이 시간차로 등록되는 성격이라
+        // 매월 보정 범위(전월)를 넘어 그전 달까지 다시 훑는다. 원본 사용자 SQL 취지 유지.
+        // list_exam UPDATE + 그 월 mart_procedure_exam_monthly 재집계는 ExamMartJob 안에서 원자적.
+        // 별도 runWithLog 라 batch_run_log 이력·Slack 알림이 ALL_DOMAINS 와 분리 (관측 명확).
+        LocalDate onedayFrom = from.minusMonths(1);
+        LocalDate onedayTo = to;
+        if (onedayFrom.getYear() >= minYear) {
+            runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, onedayFrom, onedayTo,
+                    "reconcile-oneday-flag",
+                    () -> examMartJob.reconcileOnedayFlag(onedayFrom, onedayTo));
+        } else {
+            log.info("Batch skip oneday reconcile — target year {} < min-year {}",
+                    onedayFrom.getYear(), minYear);
+        }
     }
 
     /**
@@ -152,6 +167,21 @@ public class BatchOrchestrator {
      */
     public void runManual(LocalDate from, LocalDate to) {
         runManual(from, to, EnumSet.allOf(Domain.class));
+    }
+
+    /**
+     * 원데이 검사 소급 보정만 수동 재실행 (Admin API에서 호출).
+     *
+     * <p>정기 흐름은 {@link #runMonthlyReconcile} 이 매월 1일 03:30 자동 트리거하지만,
+     * 재실행이 필요한 상황(스케줄러 실패·특정 범위 backfill·개발 검증) 을 위해 별도 진입점을 둔다.
+     * min-year 가드 없음 — {@link #runManual} 과 같은 정신.
+     *
+     * <p>batch_run_log 는 MANUAL 로 기록. Slack 알림도 자동. 관측은 정기 배치와 통일.
+     */
+    public void runManualOnedayReconcile(LocalDate from, LocalDate to) {
+        runWithLog(BatchRunLog.RunType.MANUAL, from, to,
+                "reconcile-oneday-flag",
+                () -> examMartJob.reconcileOnedayFlag(from, to));
     }
 
     /**

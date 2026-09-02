@@ -132,6 +132,28 @@ public class BatchAdminController {
         );
     }
 
+    // ─── 검사 도메인 ─────────────────────────────────────────
+
+    /**
+     * 원데이 검사 소급 보정만 수동 재실행.
+     *
+     * <p>정기: 매월 1일 03:30 KST 자동. 이 엔드포인트는 실패·backfill·개발 검증용.
+     * 범위(from..to)는 자유 — min-year 가드 없음. list_exam UPDATE + 그 월
+     * mart_procedure_exam_monthly 재집계를 한 트랜잭션 안에서 원자적으로 실행한다.
+     *
+     * <p>예: POST /api/admin/batch/exam/reconcile-oneday-flag?from=2026-07-01&amp;to=2026-08-31
+     */
+    @PostMapping("/exam/reconcile-oneday-flag")
+    public Map<String, Object> reconcileOnedayFlag(@RequestParam String from, @RequestParam String to) {
+        orchestrator.runManualOnedayReconcile(LocalDate.parse(from), LocalDate.parse(to));
+        return Map.of(
+                "ok", true,
+                "from", from,
+                "to", to,
+                "note", "batch_run_log 이력 · Slack 알림 자동. 상세 통계는 로그 참조."
+        );
+    }
+
     // ─── 예약 도메인 ─────────────────────────────────────────
     // orchestrator.runManual은 전체 도메인 잡을 순차 실행하므로 별도 예약 전용 rerun 엔드포인트는
     // 두지 않는다(다른 도메인까지 함께 실행됨). 필요 시 각 잡을 직접 주입해 분리 가능.
