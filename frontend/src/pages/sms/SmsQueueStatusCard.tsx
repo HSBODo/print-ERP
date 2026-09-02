@@ -3,6 +3,7 @@ import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw, Wallet } from 'lu
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useRunQueueNow, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
+import { useAuthStore } from '@/stores/authStore'
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
 import type { SmsSolapiBalance } from '@/api/sms'
 
@@ -62,6 +63,9 @@ export function SmsQueueStatusCard() {
   const { data, isLoading, isError, refetch, isFetching } = useSmsQueueStatus(range)
   const balanceQuery = useSolapiBalance()
   const runNow = useRunQueueNow()
+  // [지금 실행] 은 SMS_DISPATCH_ENABLED 우회 트리거라 관리자 전용 — dry-run+override 조합에서
+  // 실 발송이 나갈 수 있어 일반 사용자에게는 아예 보이지 않게 한다.
+  const isAdmin = useAuthStore((s) => s.user?.role) === 'ADMIN'
 
   const counts = (data?.counts ?? {}) as Partial<Record<'PENDING' | 'PROCESSING' | 'RECEIVED' | 'DONE' | 'FAILED' | 'CANCELED', number>>
   const pending = counts.PENDING ?? 0
@@ -170,16 +174,18 @@ export function SmsQueueStatusCard() {
                     실패 재실행
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={doRunNow}
-                  disabled={runNow.isPending}
-                  title="큐를 지금 한 번 폴링해 발송을 시도합니다."
-                >
-                  <Play className="mr-1 h-3.5 w-3.5" />
-                  {runNow.isPending ? '실행 중…' : '지금 실행'}
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={doRunNow}
+                    disabled={runNow.isPending}
+                    title="큐를 지금 한 번 폴링해 발송을 시도합니다. (관리자 전용)"
+                  >
+                    <Play className="mr-1 h-3.5 w-3.5" />
+                    {runNow.isPending ? '실행 중…' : '지금 실행'}
+                  </Button>
+                )}
               </div>
             </div>
           )}
