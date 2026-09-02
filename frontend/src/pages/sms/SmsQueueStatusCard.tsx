@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { useRunQueueNow, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
+import { useRunQueueNow, useSmsQueueRows, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
 import { useAuthStore } from '@/stores/authStore'
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
+import { CATEGORY_STYLE, groupByReason } from './smsFailReasonSummary'
 import type { SmsSolapiBalance } from '@/api/sms'
 
 /** yyyy-mm-dd 로컬 날짜 문자열 — Date.toISOString() 은 UTC 라 KST 새벽엔 하루 어긋난다. */
@@ -76,6 +77,15 @@ export function SmsQueueStatusCard() {
   const canceled = counts.CANCELED ?? 0
   const doneToday = data?.done_today ?? 0
 
+  // 실패 사유 Top 3 — 접힘 상태에서도 "지금 실패의 대부분이 뭔지" 헤더에 노출.
+  // failed > 0 일 때만 조회 (enabled). 30초 refetch 는 useSmsQueueRows 기본 캐시로 충분히 최신.
+  // limit 500 은 SmsFailedQueueModal 기본(200)보다 크게 잡아 카테고리 분포 정확도 확보.
+  const failedRowsQuery = useSmsQueueRows('FAILED', 500, failed > 0)
+  const reasonTop = useMemo(
+    () => groupByReason(failedRowsQuery.data ?? []).slice(0, 3),
+    [failedRowsQuery.data],
+  )
+
   const doRunNow = () => {
     runNow.mutate(undefined, {
       onSuccess: (stats) => {
@@ -95,11 +105,25 @@ export function SmsQueueStatusCard() {
         className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50"
         aria-expanded={!collapsed}
       >
-        <span className="flex items-center gap-2">
+        <span className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-semibold text-gray-900">자동 발송 큐</span>
           {failed > 0 && (
             <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700">
               <AlertCircle className="h-3 w-3" />실패 {failed}
+            </span>
+          )}
+          {/* 사유 Top 3 — 관측용이라 클릭 이벤트 없음. 실패 세부는 [실패 재실행] 모달에서. */}
+          {failed > 0 && reasonTop.length > 0 && (
+            <span className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] font-medium text-gray-400">Top</span>
+              {reasonTop.map(({ category, count }) => (
+                <span
+                  key={category}
+                  className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${CATEGORY_STYLE[category]}`}
+                >
+                  {category} {count}
+                </span>
+              ))}
             </span>
           )}
           <span className="text-[11px] font-normal text-gray-500">
