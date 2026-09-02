@@ -164,14 +164,21 @@ export function SmsQueueStatusCard() {
                   <RefreshCw className={`mr-1 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
                   새로고침
                 </Button>
-                {failed > 0 && (
+                {isAdmin && failed > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="text-red-600 hover:bg-red-50 hover:text-red-700"
                     onClick={() => setFailedOpen(true)}
+                    title="실패 큐를 재실행 대기열에 넣습니다. (관리자 전용)"
                   >
                     실패 재실행
+                    <span
+                      aria-label="관리자 전용"
+                      className="ml-1.5 rounded border border-amber-200 bg-amber-50 px-1 py-0 text-[9px] font-semibold uppercase tracking-wide text-amber-700"
+                    >
+                      관리자
+                    </span>
                   </Button>
                 )}
                 {isAdmin && (
