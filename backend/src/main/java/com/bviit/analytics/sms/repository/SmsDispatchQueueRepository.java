@@ -41,6 +41,16 @@ public interface SmsDispatchQueueRepository extends JpaRepository<SmsDispatchQue
             + "GROUP BY q.status", nativeQuery = true)
     List<Object[]> countLatestByStatus();
 
+    /**
+     * 범위 상태별 카운트 — 관리자 화면 상단 KPI 의 "일자 범위" 조회.
+     * scheduled_at 축이라 rows 조회와 통일된다(to 는 exclusive).
+     * "최신 사이클" 이 아니라 그 범위에 예정된 큐 전체를 상태별로 센다.
+     */
+    @Query(value = "SELECT status, COUNT(*) FROM sms_dispatch_queue "
+            + "WHERE scheduled_at >= :from AND scheduled_at < :to "
+            + "GROUP BY status", nativeQuery = true)
+    List<Object[]> countByScheduledAtRangeGroupByStatus(LocalDateTime from, LocalDateTime to);
+
     /** 오늘 처리 완료(DONE) 카운트 — sms.dispatch.daily-limit 판정. */
     long countByStatusAndProcessedAtGreaterThanEqualAndProcessedAtLessThan(
             String status, LocalDateTime from, LocalDateTime to);

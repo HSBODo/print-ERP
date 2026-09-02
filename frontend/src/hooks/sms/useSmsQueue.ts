@@ -4,11 +4,14 @@ import { smsApi, type SmsQueueStatus } from '@/api/sms'
 /**
  * 자동 발송 큐 상태 요약 — 문자 발송 페이지 상단 KPI 카드에 씀.
  * 5분 폴러가 큐를 밀어내므로 30초 refetch 로 KPI 를 살짝만 늦게 반영해도 충분.
+ *
+ * range 를 넘기면 scheduled_at 기준 그 기간의 상태별 카운트를, 비우면 "최신 사이클"
+ * 카운트를 돌려준다. queryKey 에 range 를 포함해 캐시가 겹치지 않게 한다.
  */
-export function useSmsQueueStatus() {
+export function useSmsQueueStatus(range: { from?: string; to?: string } = {}) {
   return useQuery({
-    queryKey: ['sms', 'queue', 'status'] as const,
-    queryFn: () => smsApi.getQueueStatus(),
+    queryKey: ['sms', 'queue', 'status', range.from ?? null, range.to ?? null] as const,
+    queryFn: () => smsApi.getQueueStatus(range),
     refetchInterval: 30_000,
     staleTime: 15_000,
   })

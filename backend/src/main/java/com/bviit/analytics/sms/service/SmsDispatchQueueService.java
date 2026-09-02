@@ -266,6 +266,32 @@ public class SmsDispatchQueueService {
 
     @Transactional(readOnly = true)
     public Map<String, Long> statusCounts() {
+        Map<String, Long> counts = zeroInitCounts();
+        for (Object[] row : queueRepository.countLatestByStatus()) {
+            if (row.length < 2 || row[0] == null || row[1] == null) continue;
+            counts.put(row[0].toString(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
+    /**
+     * 범위 상태별 카운트 — scheduled_at 축(rows 조회와 통일, to exclusive).
+     * from/to 가 모두 null 이면 기존 "최신 사이클" 카운트로 위임한다(하위 호환).
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Long> statusCounts(LocalDateTime from, LocalDateTime to) {
+        if (from == null && to == null) return statusCounts();
+        LocalDateTime f = from == null ? LocalDate.of(1970, 1, 1).atStartOfDay() : from;
+        LocalDateTime t = to == null ? LocalDate.of(2999, 12, 31).atStartOfDay() : to;
+        Map<String, Long> counts = zeroInitCounts();
+        for (Object[] row : queueRepository.countByScheduledAtRangeGroupByStatus(f, t)) {
+            if (row.length < 2 || row[0] == null || row[1] == null) continue;
+            counts.put(row[0].toString(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
+    private Map<String, Long> zeroInitCounts() {
         Map<String, Long> counts = new HashMap<>();
         counts.put(SmsDispatchQueue.STATUS_PENDING, 0L);
         counts.put(SmsDispatchQueue.STATUS_PROCESSING, 0L);
@@ -273,10 +299,6 @@ public class SmsDispatchQueueService {
         counts.put(SmsDispatchQueue.STATUS_DONE, 0L);
         counts.put(SmsDispatchQueue.STATUS_FAILED, 0L);
         counts.put(SmsDispatchQueue.STATUS_CANCELED, 0L);
-        for (Object[] row : queueRepository.countLatestByStatus()) {
-            if (row.length < 2 || row[0] == null || row[1] == null) continue;
-            counts.put(row[0].toString(), ((Number) row[1]).longValue());
-        }
         return counts;
     }
 
@@ -293,6 +315,18 @@ public class SmsDispatchQueueService {
         long done = queueRepository.countByStatusAndProcessedAtGreaterThanEqualAndProcessedAtLessThan(
                 SmsDispatchQueue.STATUS_DONE, start, end);
         return received + done;
+    }
+
+    /**
+     * 범위 완료량 — 그 범위(scheduled_at) 에 예정된 RECEIVED + DONE 합.
+     * countDoneToday() 와 축이 다름(그건 processed_at 오늘) — 범위 조회에서는
+     * "그 기간에 예정됐고 결과가 굳은" 건수를 세는 게 관리자 멘탈모델에 맞다.
+     */
+    @Transactional(readOnly = true)
+    public long countDoneInRange(LocalDateTime from, LocalDateTime to) {
+        Map<String, Long> counts = statusCounts(from, to);
+        return counts.getOrDefault(SmsDispatchQueue.STATUS_RECEIVED, 0L)
+             + counts.getOrDefault(SmsDispatchQueue.STATUS_DONE, 0L);
     }
 
     /**

@@ -42,14 +42,32 @@ public class SmsQueueAdminController {
     private final SmsDispatchQueueService queueService;
     private final SmsDispatchJob dispatchJob;
 
-    /** 큐 상태 요약 KPI — 화면 상단 카드. */
+    /**
+     * 큐 상태 요약 KPI — 화면 상단 카드.
+     *
+     * <p>from/to 없이 호출하면 "최신 사이클" 기준(같은 대상+차수의 가장 최신 scheduled_at 한 행만)
+     * 카운트를 돌려준다 — 기존 하위 호환 경로.
+     *
+     * <p>from/to (YYYY-MM-DD, to exclusive) 를 넘기면 scheduled_at 이 그 범위에 든 큐를
+     * 상태별로 센다. done_today 필드는 그 범위의 RECEIVED+DONE 합으로 채워진다.
+     */
     @GetMapping("/status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> status() {
-        Map<String, Long> counts = queueService.statusCounts();
-        long doneToday = queueService.countDoneToday();
+    public ResponseEntity<ApiResponse<Map<String, Object>>> status(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        boolean rangeMode = from != null || to != null;
+        LocalDateTime fromDt = from == null ? null : from.atStartOfDay();
+        LocalDateTime toDt = to == null ? null : to.atStartOfDay();
+        Map<String, Long> counts = rangeMode
+                ? queueService.statusCounts(fromDt, toDt)
+                : queueService.statusCounts();
+        long doneCount = rangeMode
+                ? queueService.countDoneInRange(fromDt, toDt)
+                : queueService.countDoneToday();
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
                 "counts", counts,
-                "done_today", doneToday
+                "done_today", doneCount
         )));
     }
 

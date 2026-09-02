@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -6,14 +6,38 @@ import { useRunQueueNow, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
 import type { SmsSolapiBalance } from '@/api/sms'
 
+/** yyyy-mm-dd 로컬 날짜 문자열 — Date.toISOString() 은 UTC 라 KST 새벽엔 하루 어긋난다. */
+function todayIso(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** yyyy-mm-dd 문자열 하루 뒤 — 백엔드 to 파라미터가 exclusive 라 하루 밀어 보낸다. */
+function addOneDayIso(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() + 1)
+  const yy = dt.getFullYear()
+  const mm = String(dt.getMonth() + 1).padStart(2, '0')
+  const dd = String(dt.getDate()).padStart(2, '0')
+  return `${yy}-${mm}-${dd}`
+}
+
 /**
  * 자동 발송 큐 상태 요약 카드 — 문자 발송 리스트 상단 접힘 카드.
  *
  * <b>표시</b>
  *   · 상태별 카운트 (PENDING · PROCESSING · RECEIVED · DONE · FAILED · CANCELED)
- *   · 오늘 처리량 (done_today = RECEIVED + DONE) — daily-limit 대비
+ *   · 기간 완료량 (RECEIVED + DONE) — 아래 조회 범위 안에서
  *   · [실패 재실행] 버튼 → FAILED 재실행 모달
  *   · [지금 실행] 버튼 → 5분 폴러 즉시 트리거
+ *
+ * <b>조회 범위</b>
+ *   scheduled_at 기준. 로딩 시 오늘 하루가 디폴트. date input 두 개로 관리자가 조정.
+ *   백엔드 to 는 exclusive 라 화면 to+1 을 넘긴다(관리자는 to 포함 관점으로 본다).
  *
  * <b>동작</b>
  *   30초마다 자동 갱신. Phase 2 배치가 비활성(SMS_DISPATCH_ENABLED=false) 이어도
@@ -27,7 +51,15 @@ import type { SmsSolapiBalance } from '@/api/sms'
 export function SmsQueueStatusCard() {
   const [collapsed, setCollapsed] = useState(false)
   const [failedOpen, setFailedOpen] = useState(false)
-  const { data, isLoading, isError, refetch, isFetching } = useSmsQueueStatus()
+  // 로딩 시 오늘 하루가 디폴트. 관리자가 화면에서 다른 범위를 고르면 그 값으로 재조회.
+  const [fromDate, setFromDate] = useState(todayIso)
+  const [toDate, setToDate] = useState(todayIso)
+  const range = useMemo(() => ({
+    from: fromDate,
+    // 백엔드 to 는 exclusive → toDate 가 나타내는 날의 끝까지 포함시키려면 하루 밀어 보낸다.
+    to: addOneDayIso(toDate),
+  }), [fromDate, toDate])
+  const { data, isLoading, isError, refetch, isFetching } = useSmsQueueStatus(range)
   const balanceQuery = useSolapiBalance()
   const runNow = useRunQueueNow()
 
@@ -67,7 +99,7 @@ export function SmsQueueStatusCard() {
             </span>
           )}
           <span className="text-[11px] font-normal text-gray-500">
-            대기 {pending} · 처리중 {processing} · 접수 {received} · 오늘 {doneToday}
+            대기 {pending} · 처리중 {processing} · 접수 {received} · 완료 {doneToday}
           </span>
         </span>
         {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -75,6 +107,35 @@ export function SmsQueueStatusCard() {
 
       {!collapsed && (
         <div className="border-t border-gray-100 p-3">
+          {/* 조회 범위 — scheduled_at 기준. 로딩 시 오늘 하루가 디폴트. */}
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
+            <span className="font-medium text-gray-700">조회 범위</span>
+            <input
+              type="date"
+              value={fromDate}
+              max={toDate}
+              onChange={(e) => setFromDate(e.target.value || todayIso())}
+              className="rounded border border-gray-200 bg-white px-1.5 py-0.5 tabular-nums"
+              aria-label="조회 시작일"
+            />
+            <span className="text-gray-400">~</span>
+            <input
+              type="date"
+              value={toDate}
+              min={fromDate}
+              onChange={(e) => setToDate(e.target.value || todayIso())}
+              className="rounded border border-gray-200 bg-white px-1.5 py-0.5 tabular-nums"
+              aria-label="조회 종료일"
+            />
+            <button
+              type="button"
+              onClick={() => { const t = todayIso(); setFromDate(t); setToDate(t) }}
+              className="rounded border border-gray-200 bg-white px-2 py-0.5 hover:bg-gray-50"
+            >
+              오늘
+            </button>
+            <span className="text-gray-400">· scheduled_at 기준</span>
+          </div>
           {isLoading && <p className="py-4 text-center text-xs text-gray-500">불러오는 중…</p>}
           {isError && <p className="py-4 text-center text-xs text-red-600">큐 상태를 불러오지 못했습니다.</p>}
           {!isLoading && !isError && (
@@ -93,7 +154,7 @@ export function SmsQueueStatusCard() {
                 <StatusChip label="취소" value={canceled} color="text-gray-600 bg-gray-100" />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-gray-500">오늘 처리 {doneToday}</span>
+                <span className="text-[11px] text-gray-500">기간 완료 {doneToday}</span>
                 <SolapiBalancePanel balance={balanceQuery.data} isLoading={balanceQuery.isLoading} isError={balanceQuery.isError} />
                 <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
                   <RefreshCw className={`mr-1 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />

@@ -387,9 +387,17 @@ export const smsApi = {
    * 로컬(H2) 개발 환경에서도 배치 인프라가 로드되면 접근 가능.
    */
 
-  /** 큐 상태 요약 — 상태별 카운트 + 오늘 처리량. */
-  async getQueueStatus(): Promise<SmsQueueStatusResponse> {
-    const res = await api.get('/admin/batch/sms/queue/status')
+  /**
+   * 큐 상태 요약 — 상태별 카운트 + 완료량(RECEIVED+DONE).
+   *
+   * from/to (YYYY-MM-DD, to exclusive) 를 넘기면 scheduled_at 축으로 그 범위 카운트를,
+   * 비우면 "최신 사이클" 카운트를 돌려준다(하위 호환). done_today 필드는 range 모드에서는
+   * 그 범위의 완료량으로 재해석된다.
+   */
+  async getQueueStatus(range: { from?: string; to?: string } = {}): Promise<SmsQueueStatusResponse> {
+    const res = await api.get(withQuery('/admin/batch/sms/queue/status', {
+      from: range.from, to: range.to,
+    }))
     return apiResponseOf(queueStatusResponseSchema).parse(res).data
   },
 
