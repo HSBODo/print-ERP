@@ -39,8 +39,8 @@ import java.util.List;
  *
  * <h3>응답</h3>
  * 항상 5초 안에 200 을 준다. 처리 도중 예외가 나도 200 을 반환하되 로그만 남긴다 — 웹훅은
- * 최대 8번 재시도 후 자동 INACTIVE 되므로 재전송이 오히려 해롭다. fallback 스케줄러가
- * ({@code SolapiSyncService.runScheduledFallback}) 놓친 건을 하루 1회 걷어낸다.
+ * 최대 8번 재시도 후 자동 INACTIVE 되므로 재전송이 오히려 해롭다. fallback 배치가
+ * ({@code SmsResultSyncJob}) 놓친 건을 하루 1회 걷어낸다.
  */
 @Slf4j
 @RestController

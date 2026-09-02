@@ -420,9 +420,9 @@ sms:
 
 ---
 
-## 5. Phase 3 — 결과 동기화 ✅ 대부분 완료 (2026-09-01)
+## 5. Phase 3 — 결과 동기화 ✅ 완료 (2026-09-02 승격)
 
-원래 계획했던 별도 `SmsResultSyncJob` 대신, **웹훅 + 야간 fallback + 수동 sync** 3중 경로로 성격이 재편됨.
+**웹훅 + 야간 fallback(SmsResultSyncJob) + 수동 sync** 3중 경로. 초기(2026-09-01) 는 fallback 이 `SolapiSyncService.runScheduledFallback` 의 `@Scheduled` 로 직접 돌아 `batch_run_log`·Slack 통합이 없었는데, 2026-09-02 별도 잡으로 승격해 다른 배치와 관측 스택을 통일.
 
 ### 실제 이행된 3중 경로
 
@@ -431,11 +431,14 @@ sms:
 - 서명 검증(원본 값 직접 비교) 통과 후 `SolapiWebhookService.applyMessageReports` 가 send_log + 큐 갱신
 - 지연: 수초~수십분 (통신사 회신 후 확정)
 
-**② Fallback 스케줄러 (야간 · 안전망)**
-- `SolapiSyncService.runScheduledFallback` — 매일 03:30 KST (`solapi.sync-cron` env 로 조정)
+**② Fallback 잡 (야간 · 안전망)** — 2026-09-02 승격
+- `SmsResultSyncJob` (`batch/job/SmsResultSyncJob.java`) — 매일 03:30 KST (`solapi.sync-cron` env 로 조정)
+- `SolapiSyncService.sync(from, to)` 를 감싸 `batch_run_log` 이력 + `BatchSlackNotifier` 알림 통과. 다른 배치와 같은 관측 스택
+- stats: `updated` (send_log 갱신 건수), `range_days` (2)
 - 최근 2일 PENDING send_log 를 솔라피 `getMessageList` 로 재조회 → 웹훅과 동일 규칙 적용
 - `recoverStuck` — 접수 응답 자체를 못 받은(messageId null) 10분 초과 PENDING 을 FAILED 로 정리 (멱등키 재개방)
 - Chunk 크기 50 (`SolapiSyncService.CHUNK`), 솔라피 API 실패 시 warn 로그만 남기고 다음 날 재시도
+- 솔라피 미설정 시 조용히 skip (로컬 안전)
 
 **③ 관리자 수동 sync**
 - `POST /api/sms-management/sync?sentFrom=YYYY-MM-DD&sentTo=YYYY-MM-DD` — 새벽까지 안 기다리고 즉시 동기화
@@ -449,7 +452,6 @@ sms:
 
 ### 남은 스코프 (선택)
 
-- **별도 `SmsResultSyncJob` 승격** — 현재 fallback 은 `@Scheduled` 만이라 `batch_run_log`·Slack 통합이 없음. `BatchOrchestrator.Domain` 에 추가하고 stats(`synced`·`still_pending`·`requeued`) 남기려면 별도 잡으로 승격 필요 (2026-08-31 원안). 규모 커지면 검토.
 - **자동 재시도 결정 로직** — 도달 실패로 굳은 큐 행을 자동으로 재시도할지, 관리자가 판단할지. 현재는 수동만.
 
 ---
@@ -660,4 +662,9 @@ sms:
 | 2026-09-01 | 후속 | `044cd4f` | 로컬 개발용 Dockerfile.local · docker-compose.local.yml (infisical 없이 부팅) |
 | 2026-09-01 | 후속 | `1f42d6d` `30f40c5` | 웹훅 서명 진단 로그 · 서명 검증을 원본 값 직접 비교로 (Node 예시와 실제 payload 상이 확인) |
 | 2026-09-01 | 후속 | `e974a8e` | SolapiSendService 에 SendRequestConfig.showMessageList=true 명시 — messageId 저장 정상화 |
-| _다음_ | 검토 | | `SmsResultSyncJob` 별도 승격 (batch_run_log·Slack 통합), 자동 재시도 정책 |
+| 2026-09-02 | 후속 | `3891d00` `0bb2960` `caa61c6` | 자동 발송 큐 카운트 범위 조회 · 리스트 이번달 자동 조회 · 필터 4대 고정 · 오프셋 카드 관리자 전용 |
+| 2026-09-02 | 후속 | `677b0a4` `aeff179` | 큐 카드 [지금 실행] 관리자 전용 · "관리자" 뱃지 |
+| 2026-09-02 | 후속 | `affd495` | dry-run 자동발송 큐를 RECEIVED 대신 곧바로 DONE 으로 굳힘 (웹훅 안 오는 흐름 완결) |
+| 2026-09-02 | 후속 | `e7f2132` | FAILED 큐 임계치 Slack 경고 (상승 엣지, 기본 10건) |
+| 2026-09-02 | Phase 3 | | `SmsResultSyncJob` 별도 승격 — SolapiSyncService.@Scheduled 제거, batch_run_log·Slack 통합 |
+| _다음_ | 검토 | | 자동 재시도 정책 · 큐 자동 정리 잡 (규모 커지면) |
