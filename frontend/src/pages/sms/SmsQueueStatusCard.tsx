@@ -184,6 +184,12 @@ export function SmsQueueStatusCard() {
                   >
                     <Play className="mr-1 h-3.5 w-3.5" />
                     {runNow.isPending ? '실행 중…' : '지금 실행'}
+                    <span
+                      aria-label="관리자 전용"
+                      className="ml-1.5 rounded border border-amber-200 bg-amber-50 px-1 py-0 text-[9px] font-semibold uppercase tracking-wide text-amber-700"
+                    >
+                      관리자
+                    </span>
                   </Button>
                 )}
               </div>
