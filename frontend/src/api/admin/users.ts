@@ -15,7 +15,6 @@ export type UserRow = z.infer<typeof userRowSchema>
 
 const listResponseSchema = apiResponseOf(z.array(userRowSchema))
 const singleResponseSchema = apiResponseOf(userRowSchema)
-const voidResponseSchema = apiResponseOf(z.null())
 
 export interface UserCreatePayload {
   loginId: string
@@ -55,7 +54,8 @@ export const usersApi = {
     return singleResponseSchema.parse(res).data
   },
   remove: async (id: number): Promise<void> => {
-    const res = await api.delete<unknown>(`${BASE}/${id}`)
-    voidResponseSchema.parse(res)
+    // 성공 응답은 { success: true } (backend ApiResponse.ok(null) 이 @JsonInclude(NON_NULL)
+    // 로 data 필드 자체가 생략됨). 실패는 request() 가 예외로 던지므로 스키마 검증 없이 fire-and-forget.
+    await api.delete<unknown>(`${BASE}/${id}`)
   },
 }
