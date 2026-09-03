@@ -61,11 +61,33 @@ const offsetRowInvalid = (d: OffsetDraft): string | null => {
   return null
 }
 
+/**
+ * 서버 값 정규화 — 초 부분 절단 + 분을 5분 단위로 반내림.
+ *
+ * <p>두 가지 케이스 방어:
+ * <ul>
+ *   <li>서버가 "10:00:00" (초 포함) 로 내려 <input type="time"> 이 화면엔 "10:00" 만 보여줘도 state 는
+ *       "10:00:00" 이라 저장 요청이 @JsonFormat("HH:mm") 를 어겨 400 이 뜨는 경우</li>
+ *   <li>옛 저장값이 5분 단위가 아닌 경우(예: "10:03") — 반내림해 "10:00" 으로 정렬. 이후 검증도 통과.</li>
+ * </ul>
+ * 사용자가 직접 입력하는 값은 검증에서 5분 단위 강제 (아래 timeInvalid). load 시엔 정렬, 편집 시엔 검증.
+ */
+const normalizeTime = (t: string | null | undefined): string => {
+  if (!t) return '10:00'
+  const m = /^(\d{1,2}):(\d{2})/.exec(t)
+  if (!m) return t
+  const hh = m[1].padStart(2, '0')
+  const mm = Number(m[2])
+  const aligned = Math.floor(mm / 5) * 5
+  return hh + ':' + String(aligned).padStart(2, '0')
+}
+
 const timeInvalid = (time: string, kind: SmsMessageKind): string | null => {
   if (!/^\d{2}:\d{2}$/.test(time)) return '형식 HH:mm'
   const [hh, mm] = time.split(':').map(Number)
   if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return '잘못된 시각'
-  // 5분 단위 폴러라 그 외 분 값은 다음 5분 사이클에서 처리 → UI 단계에서 5분 단위만 허용.
+  // 폴러가 5분 사이클이라 그 외 분값은 다음 사이클로 밀린다 → UI 단계에서 5분 단위만 허용.
+  // load 시엔 normalizeTime 이 반내림해 정렬하므로 이 err 는 사용자가 직접 5분 외 값을 입력했을 때만 발생.
   if (mm % 5 !== 0) return '5분 단위'
   // 광고톡만 hour 제한. 알림톡은 자유.
   if (kind === 'AD' && (hh < AD_MIN_HOUR || hh > AD_MAX_HOUR)) {
@@ -75,6 +97,24 @@ const timeInvalid = (time: string, kind: SmsMessageKind): string | null => {
 }
 
 const KIND_LABEL: Record<SmsMessageKind, string> = { NOTIFICATION: '알림톡', AD: '광고톡' }
+
+/**
+ * 발송 그룹 정본 순서 — 백엔드 응답이 HashMap 기반이라 매 로드마다 순서가 바뀌므로
+ * 여기서 강제. 목록에 없는 groupCode 는 알파벳 뒤로 밀림 (안전 fallback).
+ */
+const GROUP_ORDER: Record<string, number> = {
+  SMILE: 0,
+  LASIK: 1,
+  LASEK: 2,
+  ICL: 3,
+}
+
+const compareGroup = (a: string, b: string) => {
+  const ai = GROUP_ORDER[a] ?? Number.MAX_SAFE_INTEGER
+  const bi = GROUP_ORDER[b] ?? Number.MAX_SAFE_INTEGER
+  if (ai !== bi) return ai - bi
+  return a.localeCompare(b)
+}
 
 export function SmsOffsetGrid() {
   const [open, setOpen] = useState(false)
@@ -95,19 +135,21 @@ export function SmsOffsetGrid() {
 
   const drafts = useMemo<OffsetDraft[]>(() => {
     if (!data) return []
-    return data.map((r) => {
-      const base = toOffsetDraft(r)
-      const patch = offsetOverrides[r.groupCode]
-      return patch ? { ...base, ...patch } : base
-    })
+    return data
+      .map((r) => {
+        const base = toOffsetDraft(r)
+        const patch = offsetOverrides[r.groupCode]
+        return patch ? { ...base, ...patch } : base
+      })
+      .sort((a, b) => compareGroup(a.groupCode, b.groupCode))
   }, [data, offsetOverrides])
 
   const tiers: TierDraft = useMemo(() => {
     const base = data?.[0]
     return {
-      tier1Time: tierOverrides.tier1Time ?? base?.tier1Time ?? '10:00',
-      tier2Time: tierOverrides.tier2Time ?? base?.tier2Time ?? '10:00',
-      tier3Time: tierOverrides.tier3Time ?? base?.tier3Time ?? '10:00',
+      tier1Time: tierOverrides.tier1Time ?? normalizeTime(base?.tier1Time),
+      tier2Time: tierOverrides.tier2Time ?? normalizeTime(base?.tier2Time),
+      tier3Time: tierOverrides.tier3Time ?? normalizeTime(base?.tier3Time),
       tier1Kind: tierOverrides.tier1Kind ?? base?.tier1Kind ?? 'NOTIFICATION',
       tier2Kind: tierOverrides.tier2Kind ?? base?.tier2Kind ?? 'NOTIFICATION',
       tier3Kind: tierOverrides.tier3Kind ?? base?.tier3Kind ?? 'NOTIFICATION',
@@ -325,7 +367,7 @@ export function SmsOffsetGrid() {
               </div>
 
               <p className="mt-3 text-[11px] leading-relaxed text-gray-500">
-                오프셋 <b>0~30일</b>, <b>1차 ≤ 2차 ≤ 3차</b> 순서. 시각은 <b>5분 단위(HH:mm)</b> 편집 가능 — 폴러가 5분 사이클이라 그 외 분값은 다음 사이클에서 처리됨.
+                오프셋 <b>0~30일</b>, <b>1차 ≤ 2차 ≤ 3차</b> 순서. 시각은 <b>5분 단위(HH:mm)</b> — 폴러 사이클과 맞춤. 옛 저장값이 5분 단위가 아니면 로드 시 자동 반내림.
                 <br />
                 백내장·재수술은 발송 대상이 아니라 이 표에 없습니다. 오프셋 4행 + 시각·종류 3세트가 함께 저장됩니다.
               </p>
