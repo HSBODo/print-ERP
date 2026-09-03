@@ -183,13 +183,6 @@ export function SmsOffsetGrid() {
       >
         <Info className="h-4 w-4 text-blue-600" />
         <span className="font-medium text-gray-900">1·2·3차 오프셋 · 발송 시각 설정</span>
-        <span
-          title="관리자 권한 필요"
-          aria-label="관리자 전용"
-          className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
-        >
-          관리자
-        </span>
         <span className="text-xs text-gray-500">
           수술 그룹별 발송 예정일 + 차수별 시각/종류. 저장 즉시 반영.
         </span>
@@ -222,7 +215,7 @@ export function SmsOffsetGrid() {
                         disabled={!isAdmin}
                         title={isAdmin ? undefined : '수정은 관리자만 가능합니다'}
                         className={
-                          'rounded-md border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ' +
+                          'rounded-md border px-2 py-1 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ' +
                           (err ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white')
                         }
                       />
@@ -307,6 +300,13 @@ export function SmsOffsetGrid() {
                       <Save className="mr-1 h-3.5 w-3.5" />
                       {updateMutation.isPending ? '저장 중…' : '저장'}
                     </Button>
+                    <span
+                      title="관리자 권한 필요"
+                      aria-label="관리자 전용"
+                      className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+                    >
+                      관리자
+                    </span>
                   </>
                 ) : (
                   <span className="text-[11px] text-gray-500">
