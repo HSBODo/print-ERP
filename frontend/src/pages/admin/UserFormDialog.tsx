@@ -207,7 +207,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
                 disabled={roleFieldDisabled}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
               >
-                <option value="ADMIN">ADMIN (개발자)</option>
+                <option value="ADMIN">ADMIN(관리자)</option>
                 <option value="DIRECTOR">DIRECTOR (임원)</option>
                 <option value="MANAGER">MANAGER (실장·팀장)</option>
                 <option value="STAFF">STAFF (실무자)</option>
