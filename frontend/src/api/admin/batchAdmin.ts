@@ -5,7 +5,7 @@ import { withQuery } from '@/api/_shared'
 const batchRunLogSchema = z.object({
   id: z.number(),
   jobName: z.string(),
-  runType: z.enum(['DAILY', 'MONTHLY_RECONCILE', 'MANUAL']),
+  runType: z.enum(['DAILY', 'MONTHLY_RECONCILE', 'MANUAL', 'POLLER']),
   targetFrom: z.string().nullable(),
   targetTo: z.string().nullable(),
   status: z.enum(['RUNNING', 'SUCCESS', 'FAILED']),

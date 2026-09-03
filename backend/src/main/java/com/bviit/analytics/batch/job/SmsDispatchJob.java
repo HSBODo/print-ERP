@@ -84,7 +84,7 @@ public class SmsDispatchJob {
             log.debug("SmsDispatchJob disabled — skip");
             return;
         }
-        runInternal(false);
+        runInternal(false, BatchRunLog.RunType.POLLER);
     }
 
     /**
@@ -94,7 +94,7 @@ public class SmsDispatchJob {
      * <p>매뉴얼 호출(SmsQueueAdminController POST /queue/run) 은 결과와 무관하게 항상 로그.
      */
     public Map<String, Integer> run() {
-        return runInternal(true);
+        return runInternal(true, BatchRunLog.RunType.MANUAL);
     }
 
     /**
@@ -102,8 +102,9 @@ public class SmsDispatchJob {
      *
      * @param forceLog true 면 결과가 비어도 batch_run_log·Slack 남김 (매뉴얼 [지금 실행] 용).
      *                 false 면 실제 발송·시도가 있었을 때만 로그 (스케줄러 용 · picked=0 조용히 종료).
+     * @param runType  batch_run_log.run_type 에 기록 — 사람 트리거는 MANUAL, 스케줄러는 POLLER.
      */
-    private Map<String, Integer> runInternal(boolean forceLog) {
+    private Map<String, Integer> runInternal(boolean forceLog, BatchRunLog.RunType runType) {
         Instant startedAt = Instant.now();
         LocalDateTime startTime = LocalDateTime.now();
         LocalDate today = LocalDate.now();
@@ -115,9 +116,9 @@ public class SmsDispatchJob {
             // 예외는 무조건 로그·Slack — 조용히 넘기면 문제 감지 못 함.
             log.error("SmsDispatchJob failed", e);
             String jobName = JOB_NAME_PREFIX + "[" + startTime.withNano(0) + "]";
-            long runId = runLogRepository.start(jobName, BatchRunLog.RunType.MANUAL, today, today);
+            long runId = runLogRepository.start(jobName, runType, today, today);
             runLogRepository.fail(runId, e.toString());
-            slackNotifier.notifyFailure(jobName, BatchRunLog.RunType.MANUAL, today, today, e.toString(),
+            slackNotifier.notifyFailure(jobName, runType, today, today, e.toString(),
                     Duration.between(startedAt, Instant.now()));
             checkFailedThreshold();
             return Map.of();
@@ -126,9 +127,9 @@ public class SmsDispatchJob {
         // 결과 남기기 판단: 매뉴얼 이거나 실제 활동 있을 때만.
         if (forceLog || hasActivity(stats)) {
             String jobName = JOB_NAME_PREFIX + "[" + startTime.withNano(0) + "]";
-            long runId = runLogRepository.start(jobName, BatchRunLog.RunType.MANUAL, today, today);
+            long runId = runLogRepository.start(jobName, runType, today, today);
             runLogRepository.success(runId, stats);
-            slackNotifier.notifySuccess(jobName, BatchRunLog.RunType.MANUAL, today, today, stats,
+            slackNotifier.notifySuccess(jobName, runType, today, today, stats,
                     Duration.between(startedAt, Instant.now()));
         }
 

@@ -94,6 +94,25 @@ const STATUS_STYLE: Record<BatchRunLog['status'], string> = {
   FAILED: 'bg-red-100 text-red-700',
 }
 
+/**
+ * runType 표시 라벨 · 색상 — 사람 트리거(MANUAL) 와 시스템 자동(POLLER) 을 구분.
+ * DAILY/MONTHLY_RECONCILE 은 정기 스케줄 (하루/한 달 주기), POLLER 는 고빈도 폴러 (5분·시간대) — 셋 다 자동이지만
+ * 성격이 달라 라벨을 나눔.
+ */
+const RUNTYPE_LABEL: Record<BatchRunLog['runType'], string> = {
+  DAILY: '일간',
+  MONTHLY_RECONCILE: '월간 재계산',
+  MANUAL: '수동',
+  POLLER: '폴러',
+}
+
+const RUNTYPE_STYLE: Record<BatchRunLog['runType'], string> = {
+  DAILY: 'bg-gray-100 text-gray-700',
+  MONTHLY_RECONCILE: 'bg-indigo-100 text-indigo-700',
+  MANUAL: 'bg-amber-100 text-amber-800',
+  POLLER: 'bg-slate-100 text-slate-600',
+}
+
 const formatDateTime = (iso: string | null) => {
   if (!iso) return '-'
   return iso.replace('T', ' ').slice(0, 19)
@@ -452,7 +471,14 @@ export function BatchManagementPage() {
                           </td>
                           <td className="px-3 py-2 tabular-nums text-muted-foreground">{log.id}</td>
                           <td className="px-3 py-2 font-mono text-xs">{log.jobName}</td>
-                          <td className="px-3 py-2">{log.runType}</td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`rounded px-2 py-0.5 text-xs font-medium ${RUNTYPE_STYLE[log.runType]}`}
+                              title={log.runType}
+                            >
+                              {RUNTYPE_LABEL[log.runType]}
+                            </span>
+                          </td>
                           <td className="px-3 py-2 tabular-nums text-xs">
                             {log.targetFrom ?? '-'} ~ {log.targetTo ?? '-'}
                           </td>

@@ -28,7 +28,14 @@ public record BatchRunLog(
         String errorMessage
 ) {
     public enum RunType {
-        DAILY, MONTHLY_RECONCILE, MANUAL
+        /** 매일 새벽 D-1 마트 적재 (03:00 · 예약통계 10:00). */
+        DAILY,
+        /** 매월 1일 03:30 전월 소급 재계산 (원데이 검사 소급 보정 포함). */
+        MONTHLY_RECONCILE,
+        /** 관리자 UI · Admin API 에서 사람이 명시적으로 트리거한 실행 (backfill·재실행·[지금 실행]). */
+        MANUAL,
+        /** 시스템 폴러 자동 실행 — 예: SmsDispatchJob 5분, SmsResultSyncJob 매일 03:30 자동 사이클. */
+        POLLER
     }
 
     public enum Status {

@@ -61,18 +61,25 @@ public class SmsResultSyncJob {
             log.debug("SmsResultSyncJob skip — 솔라피 미설정");
             return;
         }
-        run();
+        // 스케줄러 자동 사이클 — POLLER 로 기록 (사람 수동 트리거와 구분).
+        runInternal(BatchRunLog.RunType.POLLER);
     }
 
     /**
      * 실제 동기화. Admin API 로도 부를 수 있게 public.
      * batch_run_log 이력 + Slack 요약. 예외는 잡아서 로그·Slack 만 남기고 다음 사이클로.
+     *
+     * <p>사람이 명시적으로 트리거하는 경로 — MANUAL 로 기록.
      */
     public Map<String, Integer> run() {
+        return runInternal(BatchRunLog.RunType.MANUAL);
+    }
+
+    private Map<String, Integer> runInternal(BatchRunLog.RunType runType) {
         String jobName = JOB_NAME_PREFIX + "[" + LocalDateTime.now().withNano(0) + "]";
         LocalDate to = LocalDate.now();
         LocalDate from = to.minusDays(SYNC_RANGE_DAYS);
-        long runId = runLogRepository.start(jobName, BatchRunLog.RunType.MANUAL, from, to);
+        long runId = runLogRepository.start(jobName, runType, from, to);
         Instant startedAt = Instant.now();
         Map<String, Integer> stats = new LinkedHashMap<>();
         try {
@@ -80,13 +87,13 @@ public class SmsResultSyncJob {
             stats.put("updated", updated);
             stats.put("range_days", SYNC_RANGE_DAYS);
             runLogRepository.success(runId, stats);
-            slackNotifier.notifySuccess(jobName, BatchRunLog.RunType.MANUAL, from, to, stats,
+            slackNotifier.notifySuccess(jobName, runType, from, to, stats,
                     Duration.between(startedAt, Instant.now()));
             log.info("SmsResultSyncJob done: {}", stats);
         } catch (Exception e) {
             log.error("SmsResultSyncJob failed", e);
             runLogRepository.fail(runId, e.toString());
-            slackNotifier.notifyFailure(jobName, BatchRunLog.RunType.MANUAL, from, to, e.toString(),
+            slackNotifier.notifyFailure(jobName, runType, from, to, e.toString(),
                     Duration.between(startedAt, Instant.now()));
         }
         return stats;
