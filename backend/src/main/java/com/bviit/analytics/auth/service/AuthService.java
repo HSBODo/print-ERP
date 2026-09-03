@@ -32,7 +32,7 @@ public class AuthService {
             throw new InvalidCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        String token = jwtUtil.generateToken(user.getLoginId(), user.getRole());
+        String token = jwtUtil.generateToken(user.getLoginId(), user.getRole(), user.getDepartment());
 
         return new LoginResponse(
                 token,
@@ -41,7 +41,8 @@ public class AuthService {
                         user.getLoginId(),
                         user.getEmail(),
                         user.getName(),
-                        user.getRole()
+                        user.getRole(),
+                        user.getDepartment()
                 )
         );
     }
