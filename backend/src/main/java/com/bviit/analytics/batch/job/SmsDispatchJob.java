@@ -73,6 +73,10 @@ public class SmsDispatchJob {
     /**
      * 매 5분(기본) 실행. cron="-" 이면 스케줄러 미등록.
      * enabled=false 면 조용히 skip — 스케줄러는 붙어 있지만 아무 일도 안 함.
+     *
+     * <p>스케줄러는 <b>빈 사이클(picked=0) 이면 batch_run_log·Slack 을 남기지 않는다</b> —
+     * 5분마다 남으면 배치 관리 페이지·Slack 채널이 sms-dispatch 로 뒤덮여 다른 배치 이력이 파묻힌다.
+     * 매뉴얼 [지금 실행] ({@link #run()}) 은 관리자가 결과를 기다리는 액션이라 결과 유무 무관하게 이력 남김.
      */
     @Scheduled(cron = "${sms.dispatch.cron:0 */5 * * * *}", zone = "Asia/Seoul")
     public void runScheduled() {
@@ -80,32 +84,65 @@ public class SmsDispatchJob {
             log.debug("SmsDispatchJob disabled — skip");
             return;
         }
-        run();
+        runInternal(false);
     }
 
     /**
      * 실제 폴링·발송. Admin API 로도 부를 수 있게 public.
      * batch_run_log 로 이력 남기고 Slack 요약. 예외는 잡아서 로그·Slack.
+     *
+     * <p>매뉴얼 호출(SmsQueueAdminController POST /queue/run) 은 결과와 무관하게 항상 로그.
      */
     public Map<String, Integer> run() {
-        String jobName = JOB_NAME_PREFIX + "[" + LocalDateTime.now().withNano(0) + "]";
-        LocalDate today = LocalDate.now();
-        long runId = runLogRepository.start(jobName, BatchRunLog.RunType.MANUAL, today, today);
+        return runInternal(true);
+    }
+
+    /**
+     * 공통 실행 경로.
+     *
+     * @param forceLog true 면 결과가 비어도 batch_run_log·Slack 남김 (매뉴얼 [지금 실행] 용).
+     *                 false 면 실제 발송·시도가 있었을 때만 로그 (스케줄러 용 · picked=0 조용히 종료).
+     */
+    private Map<String, Integer> runInternal(boolean forceLog) {
         Instant startedAt = Instant.now();
-        Map<String, Integer> stats = new LinkedHashMap<>();
+        LocalDateTime startTime = LocalDateTime.now();
+        LocalDate today = LocalDate.now();
+        Map<String, Integer> stats;
+
         try {
             stats = dispatch();
-            runLogRepository.success(runId, stats);
-            slackNotifier.notifySuccess(jobName, BatchRunLog.RunType.MANUAL, today, today, stats,
-                    Duration.between(startedAt, Instant.now()));
         } catch (Exception e) {
+            // 예외는 무조건 로그·Slack — 조용히 넘기면 문제 감지 못 함.
             log.error("SmsDispatchJob failed", e);
+            String jobName = JOB_NAME_PREFIX + "[" + startTime.withNano(0) + "]";
+            long runId = runLogRepository.start(jobName, BatchRunLog.RunType.MANUAL, today, today);
             runLogRepository.fail(runId, e.toString());
             slackNotifier.notifyFailure(jobName, BatchRunLog.RunType.MANUAL, today, today, e.toString(),
                     Duration.between(startedAt, Instant.now()));
+            checkFailedThreshold();
+            return Map.of();
         }
+
+        // 결과 남기기 판단: 매뉴얼 이거나 실제 활동 있을 때만.
+        if (forceLog || hasActivity(stats)) {
+            String jobName = JOB_NAME_PREFIX + "[" + startTime.withNano(0) + "]";
+            long runId = runLogRepository.start(jobName, BatchRunLog.RunType.MANUAL, today, today);
+            runLogRepository.success(runId, stats);
+            slackNotifier.notifySuccess(jobName, BatchRunLog.RunType.MANUAL, today, today, stats,
+                    Duration.between(startedAt, Instant.now()));
+        }
+
         checkFailedThreshold();
         return stats;
+    }
+
+    /**
+     * 실제 발송·시도가 있었는지 판정 — 스케줄러의 빈 사이클을 필터링하기 위해.
+     * {@code picked > 0} 하나면 충분하다 (sent/failed/canceled 등은 모두 picked 를 전제로 증가).
+     * {@code done_today}·{@code over_limit} 은 활동 지표가 아니라 상태 표기이므로 제외.
+     */
+    private static boolean hasActivity(Map<String, Integer> stats) {
+        return stats.getOrDefault("picked", 0) > 0;
     }
 
     /**
