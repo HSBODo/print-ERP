@@ -98,6 +98,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'visit-reason': 'pending',
   'daily-reception': 'pending',
   'batch-management': 'complete',
+  'account-management': 'complete',
 }
 
 /** 메뉴 구현 상태 조회 (router의 운영 빌드 pending 라우트 차단 등에 사용). */
@@ -114,6 +115,7 @@ export const getMenuStatusIds = (): string[] => Object.keys(MENU_STATUS)
  */
 const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'batch-management',
+  'account-management',
   'overall-exam',
   'overall-exam-weekly',
   'consultation-rate',
@@ -321,7 +323,7 @@ const rawMenuItems: MenuItem[] = [
     icon: Wrench,
     kind: 'section',
     adminOnly: true,
-    children: kids('batch-management'),
+    children: kids('batch-management', 'account-management'),
   },
 ]
 
