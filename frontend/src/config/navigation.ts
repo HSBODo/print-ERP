@@ -5,9 +5,12 @@ import {
   Building2, MessageSquare,
 } from 'lucide-react'
 
-import { getStatsPageById } from './statsPages'
+import { matchesDepartment, type AuthUser, type UserDepartment } from '@/stores/auth-session'
+import { getStatsPageById, statsPages } from './statsPages'
 
 export { getStatsPageById, statsPages, type StatsPageDefinition } from './statsPages'
+
+const STATS_PAGE_ID_SET = new Set<string>(statsPages.map((page) => page.id))
 
 export type MenuStatus = 'complete' | 'frontend-only' | 'backend-only' | 'pending'
 
@@ -106,6 +109,8 @@ export const getMenuStatusIds = (): string[] => Object.keys(MENU_STATUS)
 /**
  * ADMIN 롤 전용 페이지. 사이드바 숨김 + 직접 URL 접근도 placeholder 로 차단(pageRegistry.isRouteBlocked).
  * admin-group 아래의 페이지들 및 그 밖의 관리자 전용 통계와 항상 동기화.
+ *
+ * SMS 는 § SMS 5-2 완화 이후 STAFF 개방됐다 — 부서 gate 로만 판정 (MARKETING 전용).
  */
 const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'batch-management',
@@ -116,9 +121,44 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
-  'sms',
 ])
 export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 마케팅 부서 전용 페이지 (docs/auth/permissions.md § 4-1).
+ * MANAGER·STAFF 가 department='MARKETING' 인 사용자만 접근. ADMIN·DIRECTOR (department='ALL') 는 항상 접근.
+ * MEDICAL 부서 사용자에게는 사이드바에서 숨김 + 직접 URL 접근도 차단.
+ *
+ * 문서에 명시된 채널 페이지 3종(channel-profit·overseas·marketing) 및 마케팅 섹션에서 함께 다루는
+ * 파생 페이지(reservation-channel·channel-analysis·accumulated-eyes·sms) 를 포함한다.
+ * SMS 는 § 5-2 완화 이후 MARKETING 부서만 접근한다 (사용자 결정 2026-09-03).
+ * 편집·[지금 실행]·[실패 재실행] 은 ADMIN 만 (프론트 canSystemOp + 백엔드 hasRole('ADMIN')).
+ */
+const MARKETING_ONLY_PAGE_IDS = new Set<string>([
+  'reservation-channel',
+  'channel-profit',
+  'channel-analysis',
+  'accumulated-eyes',
+  'overseas',
+  'marketing',
+  'sms',
+])
+export const isMarketingOnlyPage = (id: string): boolean => MARKETING_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 페이지의 부서 스코프 (docs/auth/permissions.md § 3, § 4-1).
+ *
+ * 반환값이 undefined 이면 스코프 없음(홈 · 통계 페이지 밖) — matchesDepartment 가 모두 통과시킨다.
+ * 그 외에는 해당 부서만 접근.
+ *
+ * 홈(`/`) 은 statsPages 정의에 없어 여기서 undefined 로 판정된다. 잊지 말 것 — 홈을 default MEDICAL 로
+ * 판정하면 MARKETING STAFF 사이드바에서 홈이 사라지는 버그가 생긴다 (2026-09-03 F1 원인).
+ */
+export const getPageDepartments = (id: string): UserDepartment[] | undefined => {
+  if (!STATS_PAGE_ID_SET.has(id)) return undefined
+  if (isMarketingOnlyPage(id)) return ['MARKETING']
+  return ['MEDICAL']
+}
 
 /**
  * 사이드바에서 숨기는 메뉴(페이지·라우트는 유지 — 직접 URL 접근은 가능). 여기만 수정하면
@@ -259,23 +299,17 @@ const rawMenuItems: MenuItem[] = [
     children: [
       ...kids('reservation-channel', 'channel-profit', 'channel-analysis', 'accumulated-eyes'),
       {
-        // 개발 단계에서는 그룹 통째로 관리자 전용 — 백엔드 /api/sms-management/** 와
-        // /api/admin/batch/sms/queue/** 가 전부 hasRole('ADMIN') 로 잠겨 있어 일반
-        // 사용자가 진입해도 조회 자체가 403 이 되어 "고장난 화면" 이 된다.
-        //
-        // 개발 완료 후 완화 계획 (2026-09-02 결정):
-        //   · adminOnly 를 해제해 일반 사용자에게 노출
-        //   · 관리자만: 오프셋·발송시각 편집(SmsOffsetGrid) · [지금 실행] · [실패 재실행]
-        //   · 일반 사용자도: 대상 조회·홀딩·수신거부·연락처 수정 등
-        //   · 그때 백엔드 SecurityConfig 도 /api/sms-management/** 를 인증만 요구하도록
-        //     완화하고, 관리자 전용 조작만 별도 매처로 분리.
+        // § SMS 5-2 완화 완료 (2026-09-03): STAFF 개방 · 편집·[지금 실행]·[실패 재실행] 만 ADMIN.
+        // 부서 gate: MARKETING 전용 (MARKETING_ONLY_PAGE_IDS 에 'sms' 포함). MEDICAL STAFF 는 안 보임.
+        // 백엔드 매처 분리:
+        //   · PUT /api/sms-management/offsets · POST /send · POST /sync · POST /targets/import → hasRole('ADMIN')
+        //   · 그 외 /api/sms-management/** → MARKETING 부서
+        //   · /api/admin/batch/sms/queue/** → hasRole('ADMIN') (그대로 유지)
         id: 'sms-management',
         label: '문자 발송 관리',
         href: '#',
         icon: MessageSquare,
         kind: 'group',
-        adminOnly: true,
-        adminReal: true,
         children: kids('sms'),
       },
     ],
@@ -329,3 +363,23 @@ const markAdminSectionSubtree = (items: MenuItem[]): MenuItem[] => {
 }
 
 export const menuItems: MenuItem[] = markAdminSectionSubtree(pruneItems(rawMenuItems))
+
+/**
+ * 부서 gate — 잎(link)의 pageId 로 판정. 그룹·섹션은 자식이 모두 필터링돼 비어버리면 함께 제거된다
+ * (문서 § 2-2 대칭 원칙: MARKETING 사용자에게 비앤빛 섹션 자체도 안 보인다).
+ *
+ * ADMIN·DIRECTOR (department='ALL') 는 모든 페이지가 통과 → items 원본과 동등한 결과.
+ * Sidebar 렌더 파이프라인 안에서 hideAdminForNonAdmin 다음 단계로 적용되지만,
+ * 순수 함수라 유닛 테스트에서 격리 검증도 가능하다.
+ */
+export const pruneByDepartment = (
+  items: MenuItem[],
+  user: Pick<AuthUser, 'department'> | null,
+): MenuItem[] =>
+  items
+    .filter((item) => {
+      if (item.children !== undefined) return true
+      return matchesDepartment(user, getPageDepartments(item.id))
+    })
+    .map((item) => (item.children ? { ...item, children: pruneByDepartment(item.children, user) } : item))
+    .filter((item) => item.children === undefined || item.children.length > 0)

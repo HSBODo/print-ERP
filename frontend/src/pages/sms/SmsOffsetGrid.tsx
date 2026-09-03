@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useSmsOffsets, useUpdateSmsOffsets } from '@/hooks/sms/useSmsOffsets'
 import { useAuthStore } from '@/stores/authStore'
+import { canSystemOp } from '@/stores/auth-session'
 import type { SmsMessageKind, SmsOffsetRow } from '@/api/sms'
 
 /**
@@ -78,8 +79,8 @@ export function SmsOffsetGrid() {
   // 모두에게 카드를 노출해 시간·오프셋을 조회할 수 있게 하되, 수정은 관리자만.
   // 발송 정책의 근간이라 일반 사용자가 실수로 바꾸면 안 되지만, "지금 몇 시에 나가는지"
   // 를 관리자만 보면 협업이 어렵다 — 조회는 열고 편집만 잠근다.
-  const role = useAuthStore((s) => s.user?.role)
-  const isAdmin = role === 'ADMIN'
+  const user = useAuthStore((s) => s.user)
+  const isAdmin = canSystemOp(user)
   const { data, isLoading, isError } = useSmsOffsets()
   const updateMutation = useUpdateSmsOffsets()
 

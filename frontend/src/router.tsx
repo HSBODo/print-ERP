@@ -44,12 +44,12 @@ const dashboardRoute = createRoute({
 const isProd = !import.meta.env.DEV
 
 // 통계 페이지 라우트는 navigation.ts 정의로부터 자동 생성한다.
-// role 기반 차단(예: ADMIN 전용)이 실시간으로 반영되도록 렌더 시점에 isRouteBlocked를 호출한다.
+// role · 부서 기반 차단이 실시간으로 반영되도록 렌더 시점에 isRouteBlocked 를 호출한다.
 const statsRoutes = statsPages.map((page) => {
   const PageComponent = PAGE_COMPONENTS[page.id]
   const RenderPage = () => {
-    const role = useAuthStore((s) => s.user?.role)
-    const blocked = isRouteBlocked(page.id, isProd, role)
+    const user = useAuthStore((s) => s.user)
+    const blocked = isRouteBlocked(page.id, isProd, user)
     if (blocked || !PageComponent) return <StatsPlaceholderPage page={page} />
     return <PageComponent />
   }

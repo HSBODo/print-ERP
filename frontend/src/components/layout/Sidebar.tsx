@@ -3,6 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
 import {
   menuItems,
+  pruneByDepartment,
   type MenuItem,
   type MenuStatus,
 } from '@/config/navigation'
@@ -37,6 +38,8 @@ const pruneAdmin = (items: MenuItem[]): MenuItem[] =>
 
 const hideAdminForNonAdmin = (items: MenuItem[], isAdmin: boolean): MenuItem[] =>
   isAdmin ? items : pruneAdmin(items)
+
+// pruneByDepartment 는 @/config/navigation 으로 이동됨 (react-refresh 규칙 · 유닛 테스트 편의).
 
 // 구현 상태별 텍스트 색상 (활성 상태가 아닐 때만 적용)
 const statusTextClass = (status?: MenuStatus): string => {
@@ -109,10 +112,15 @@ const flattenLeaves = (items: MenuItem[]): MenuItem[] =>
 
 export function Sidebar({ collapsed, onToggleSidebar, onNavigate }: { collapsed: boolean; onToggleSidebar: () => void; onNavigate?: () => void }) {
   const location = useLocation()
-  const role = useAuthStore((s) => s.user?.role)
+  const user = useAuthStore((s) => s.user)
+  const role = user?.role
   const visibleMenuItems = useMemo(
-    () => hideAdminForNonAdmin(hidePendingForProd(menuItems), role === 'ADMIN'),
-    [role],
+    () =>
+      pruneByDepartment(
+        hideAdminForNonAdmin(hidePendingForProd(menuItems), role === 'ADMIN'),
+        user,
+      ),
+    [role, user],
   )
 
   const [openMenus, setOpenMenus] = useState<Set<string>>(() => {

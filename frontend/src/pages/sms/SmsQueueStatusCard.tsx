@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useRunQueueNow, useSmsQueueRows, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
 import { useAuthStore } from '@/stores/authStore'
+import { canSystemOp } from '@/stores/auth-session'
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
 import { CATEGORY_STYLE, groupByReason } from './smsFailReasonSummary'
 import type { SmsSolapiBalance } from '@/api/sms'
@@ -66,7 +67,7 @@ export function SmsQueueStatusCard() {
   const runNow = useRunQueueNow()
   // [지금 실행] 은 SMS_DISPATCH_ENABLED 우회 트리거라 관리자 전용 — dry-run+override 조합에서
   // 실 발송이 나갈 수 있어 일반 사용자에게는 아예 보이지 않게 한다.
-  const isAdmin = useAuthStore((s) => s.user?.role) === 'ADMIN'
+  const isAdmin = canSystemOp(useAuthStore((s) => s.user))
 
   const counts = (data?.counts ?? {}) as Partial<Record<'PENDING' | 'PROCESSING' | 'RECEIVED' | 'DONE' | 'FAILED' | 'CANCELED', number>>
   const pending = counts.PENDING ?? 0
