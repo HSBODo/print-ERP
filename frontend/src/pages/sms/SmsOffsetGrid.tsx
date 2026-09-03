@@ -65,6 +65,8 @@ const timeInvalid = (time: string, kind: SmsMessageKind): string | null => {
   if (!/^\d{2}:\d{2}$/.test(time)) return '형식 HH:mm'
   const [hh, mm] = time.split(':').map(Number)
   if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return '잘못된 시각'
+  // 5분 단위 폴러라 그 외 분 값은 다음 5분 사이클에서 처리 → UI 단계에서 5분 단위만 허용.
+  if (mm % 5 !== 0) return '5분 단위'
   // 광고톡만 hour 제한. 알림톡은 자유.
   if (kind === 'AD' && (hh < AD_MIN_HOUR || hh > AD_MAX_HOUR)) {
     return `광고톡 ${AD_MIN_HOUR}..${AD_MAX_HOUR}시`
@@ -210,13 +212,14 @@ export function SmsOffsetGrid() {
                       <span className="text-xs text-gray-500">{label}</span>
                       <input
                         type="time"
+                        step={300}
                         value={tiers[time]}
                         onChange={(e) => updateTime(time, e.target.value)}
                         disabled={!isAdmin}
                         title={isAdmin ? undefined : '수정은 관리자만 가능합니다'}
                         className={
                           'rounded-md border px-2 py-1 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ' +
-                          (err ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white')
+                          (err ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white')
                         }
                       />
                       <select
@@ -322,7 +325,7 @@ export function SmsOffsetGrid() {
               </div>
 
               <p className="mt-3 text-[11px] leading-relaxed text-gray-500">
-                오프셋 <b>0~30일</b>, <b>1차 ≤ 2차 ≤ 3차</b> 순서. 시각은 <b>분 단위(HH:mm)</b> 편집 가능.
+                오프셋 <b>0~30일</b>, <b>1차 ≤ 2차 ≤ 3차</b> 순서. 시각은 <b>5분 단위(HH:mm)</b> 편집 가능 — 폴러가 5분 사이클이라 그 외 분값은 다음 사이클에서 처리됨.
                 <br />
                 백내장·재수술은 발송 대상이 아니라 이 표에 없습니다. 오프셋 4행 + 시각·종류 3세트가 함께 저장됩니다.
               </p>
