@@ -371,6 +371,45 @@ export function SmsOffsetGrid() {
                 <br />
                 백내장·재수술은 발송 대상이 아니라 이 표에 없습니다. 오프셋 4행 + 시각·종류 3세트가 함께 저장됩니다.
               </p>
+
+              <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/60 px-3 py-2.5 text-[12px] leading-relaxed text-gray-700">
+                <div className="mb-1.5 font-semibold text-blue-900">발송 시각은 이렇게 정해집니다</div>
+                <p className="text-gray-700">
+                  <b>실패·취소된 문자를 다시 보내거나</b>, <b>발송중지를 풀거나</b>, <b>오프셋 시간을 바꾸면</b> 예정 시각이 다음 규칙으로 정해집니다.
+                </p>
+                <ul className="mt-1.5 space-y-1 pl-1">
+                  <li>· <b className="text-blue-900">예정 시간이 아직 안 지났다면</b> — 원래 시각 그대로 발송합니다.</li>
+                  <li>· <b className="text-blue-900">예정 시간이 이미 지났다면</b> — 곧바로 다음 발송 사이클(최대 5분 안)에 나갑니다.</li>
+                </ul>
+                <div className="mt-2 rounded bg-white/60 px-2 py-1.5 text-[11px] text-gray-600">
+                  <div className="mb-0.5 font-medium text-gray-700">예시 (지금이 오늘 15시라고 가정)</div>
+                  <ul className="space-y-0.5">
+                    <li>· 어제 10시에 나갈 예정이었던 문자 → 지금 <b>곧바로 발송</b> (오늘 15시)</li>
+                    <li>· 오늘 10시에 나갈 예정 → 아침 9시에 조작 → <b>원래대로 오늘 10시</b>에 발송</li>
+                    <li>· 내일 10시에 나갈 예정 → <b>내일 10시에 그대로</b> 발송</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2.5 text-[12px] leading-relaxed text-gray-700">
+                <div className="mb-1.5 font-semibold text-amber-900">발송중지를 풀면 어떤 문자가 다시 나가나요?</div>
+                <p className="text-gray-700">
+                  발송중지를 풀면 <b>아직 나가지 않은 문자만</b> 다시 발송 대기로 돌아갑니다.
+                </p>
+                <ul className="mt-1.5 space-y-1 pl-1">
+                  <li>
+                    · <b className="text-emerald-700">발송중지로 취소된 문자</b> — 자동으로 다시 나갑니다.
+                    <div className="pl-3 text-[11px] text-gray-500">
+                      예정 시간이 <b>아직 안 지났으면</b> 원래 시각에, <b>이미 지났으면</b> 곧바로 다음 발송 사이클(최대 5분 안)에 나갑니다.
+                    </div>
+                  </li>
+                  <li>· <b className="text-gray-500">이미 나간 문자 (성공 · 실패 무관)</b> — 다시 안 나갑니다.</li>
+                  <li>· <b className="text-red-600">실패한 문자</b> — 자동으로 재시도하지 않습니다 (실수로 대량 재발송되는 것을 막기 위해).</li>
+                </ul>
+                <p className="mt-2 rounded bg-white/60 px-2 py-1.5 text-[11px] text-gray-600">
+                  실패한 문자를 다시 보내려면 큐 상태 카드의 <b className="text-red-600">[실패 재실행]</b> 버튼을 눌러야 합니다.
+                </p>
+              </div>
             </>
           )}
         </div>

@@ -153,19 +153,35 @@ public class SmsDispatchQueue {
         this.updatedAt = now;
     }
 
-    /** 관리자 재실행 — FAILED/CANCELED 를 PENDING 으로 되돌린다. attempt_count 도 리셋. */
+    /**
+     * 관리자 재실행 — FAILED/CANCELED 를 PENDING 으로 되돌린다. attempt_count 도 리셋.
+     *
+     * <p>{@code scheduled_at} 규칙: 원 예정이 아직 안 지났으면 그대로(원 스케줄에 발송),
+     * 이미 지났으면 {@code now} 로 밀어 다음 폴링에서 즉시 발송한다. 이렇게 해야
+     * "이미 시간이 지난 실패 건" 이 다음 폴링에서 바로 재시도되고, "예정 시각 전에 실수로
+     * 취소한 건" 은 원 스케줄을 존중한다. 표시된 예정 시각과 실제 시도 시각이 일치.
+     */
     public void reset(LocalDateTime now) {
         this.status = STATUS_PENDING;
         this.attemptCount = 0;
         this.lastError = null;
         this.pickedAt = null;
         this.processedAt = null;
+        if (this.scheduledAt == null || this.scheduledAt.isBefore(now)) {
+            this.scheduledAt = now;
+        }
         this.updatedAt = now;
     }
 
-    /** 오프셋·시각 편집 후 PENDING 큐 재계산. 상태·재시도 카운트는 유지. */
+    /**
+     * 오프셋·시각 편집 · 홀딩 해제 재등록 시 PENDING 큐 재계산. 상태·재시도 카운트는 유지.
+     *
+     * <p>{@link #reset(LocalDateTime)} 과 같은 규칙: 새 예정이 미래면 그대로,
+     * 과거면 {@code now} 로 밀어 "다음 폴링에서 즉시 발송" 을 표시와 일치시킨다.
+     * 예: 발송중지 해제 시 원 예정이 오늘 10시였는데 15시에 해제 → 15시로 밀림 → 즉시 발송.
+     */
     public void reschedule(LocalDateTime newScheduledAt, String newKind, LocalDateTime now) {
-        this.scheduledAt = newScheduledAt;
+        this.scheduledAt = (newScheduledAt == null || newScheduledAt.isBefore(now)) ? now : newScheduledAt;
         this.kind = newKind;
         this.updatedAt = now;
     }
