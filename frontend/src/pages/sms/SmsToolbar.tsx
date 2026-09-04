@@ -41,7 +41,7 @@ export function SmsToolbar({
   basis, onBasisChange, tierFilter, onTierFilterChange, templates,
   periodMode, onPeriodModeChange, draft, onDraftChange,
   keyword, onKeywordChange, resultCount, isRefreshing, holdPending,
-  onSearch, onReset, onHold, onOptOut, onAdd, onOpenTemplates, onOpenOptOuts,
+  onSearch, onRefresh, onReset, onHold, onOptOut, onAdd, onOpenTemplates, onOpenOptOuts,
 }: {
   basis: SmsQueryBasis
   onBasisChange: (v: SmsQueryBasis) => void
@@ -58,6 +58,8 @@ export function SmsToolbar({
   isRefreshing: boolean
   holdPending: boolean
   onSearch: () => void
+  /** 조회 조건 그대로 다시 서버에서 당겨온다 — 재실행·홀딩 해제 후 큐 상태 즉시 반영용. */
+  onRefresh: () => void
   onReset: () => void
   onHold: (value: 'HOLD' | 'SENDABLE') => void
   /** 선택 대상의 번호를 수신거부 목록에 올린다 — 사람 단위라 다음 수술에도 막힌다. */
@@ -137,6 +139,18 @@ export function SmsToolbar({
       )}
 
       <div className="ml-auto flex items-center gap-1.5">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          title="현재 조회 조건 그대로 다시 서버에서 당겨옵니다 (큐 재실행·홀딩 해제 후 즉시 반영)"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          새로고침
+        </Button>
         <Button type="button" variant="outline" size="sm" className="text-xs" onClick={onReset}>
           <RotateCcw className="h-3.5 w-3.5" />
           초기화

@@ -106,7 +106,7 @@ export function SmsManagementPage() {
   /** 오른쪽 미리보기가 보여줄 대상·차수 — 표의 이름이나 차수 날짜를 누르면 정해진다. */
   const [preview, setPreview] = useState<{ targetId: number; tierCode: string | null } | null>(null)
 
-  const { data: targets = [], isLoading, isFetching, isError } = useSmsTargets(
+  const { data: targets = [], isLoading, isFetching, isError, refetch } = useSmsTargets(
     range.from, range.to, hasSearched, queryBasis.basis, queryBasis.tier || undefined,
   )
   const { data: templates = [] } = useSmsTemplates()
@@ -332,7 +332,7 @@ export function SmsManagementPage() {
   const isRefreshing = hasSearched && isFetching && !isLoading
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
+    <div className="flex min-h-[calc(100vh-5rem)] flex-col gap-3 text-xs text-gray-800">
       <SmsQueueStatusCard />
       <SmsOffsetGrid />
       <SmsToolbar
@@ -351,6 +351,7 @@ export function SmsManagementPage() {
         isRefreshing={isRefreshing}
         holdPending={changeStatusBulk.isPending}
         onSearch={handleSearch}
+        onRefresh={() => { void refetch() }}
         onReset={handleReset}
         onHold={handleHold}
         onOptOut={handleOptOut}
@@ -367,8 +368,10 @@ export function SmsManagementPage() {
         onGroupChange={(v) => { setGroupFilter(v); setCurrentPage(1); setSelected(new Set()) }}
       />
       {/* ── 본문: 좌 8(대상 표) : 우 2(문구 미리보기) ──
-          미리보기는 항상 자리를 차지한다 — 나타났다 사라지면 표 폭이 흔들려 읽기 어렵다. */}
-      <div className="flex min-h-0 flex-1 gap-3">
+          미리보기는 항상 자리를 차지한다 — 나타났다 사라지면 표 폭이 흔들려 읽기 어렵다.
+          카드가 접혔을 땐 flex-1 로 뷰포트 나머지를 다 먹고, 카드가 펼쳐져 페이지 총 높이가
+          뷰포트를 넘으면 min-h 만큼은 지키면서 페이지 자체가 세로 스크롤된다. */}
+      <div className="flex min-h-[32rem] flex-1 gap-3">
       <Card className="min-h-0 flex-[8] border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
           {hasSearched && isError ? (
