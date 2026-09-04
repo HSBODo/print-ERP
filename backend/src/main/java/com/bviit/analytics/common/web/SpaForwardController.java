@@ -10,6 +10,7 @@ public class SpaForwardController {
         "/",
         "/login",
         "/stats/{path:[^\\.]*}",
+        "/accounting/{path:[^\\.]*}",
         "/admin/{path:[^\\.]*}",
         "/report/{path:[^\\.]*}"
     })

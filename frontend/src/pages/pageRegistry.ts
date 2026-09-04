@@ -12,6 +12,7 @@ import { smsPageRoutes } from './sms/routes'
 import { cancelNoshowPageRoutes } from './cancel-noshow/routes'
 import { unitPricePageRoutes } from './unit-price/routes'
 import { etcPageRoutes } from './etc/routes'
+import { accountingPageRoutes } from './accounting/routes'
 import { adminPageRoutes } from './admin/routes'
 
 // 도메인별 페이지 컴포넌트 레지스트리 — 각 pages/<domain>/routes.ts 가 자기 도메인을 소유.
@@ -30,6 +31,7 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
   ...cancelNoshowPageRoutes,
   ...unitPricePageRoutes,
   ...etcPageRoutes,
+  ...accountingPageRoutes,
   ...adminPageRoutes,
 }
 

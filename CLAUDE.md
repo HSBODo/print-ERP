@@ -87,7 +87,7 @@ project-root/
 │   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
 │   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
 │   │   │   ├── report/                 # MonthlyReportPage(월간)·WeeklyReportPage(주차) + 공용 ReportShell·useReportSeries·reportItems
-│   │   │   ├── overall/ · outpatient/ · marketing/ · cancel-noshow/ · unit-price/ · etc/
+│   │   │   ├── overall/ · outpatient/ · marketing/ · accounting/ · cancel-noshow/ · unit-price/ · etc/
 │   │   │   ├── LoginPage.tsx           # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx       # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
 │   │   │   └── StatsPlaceholderPage.tsx # 미구현 통계 페이지 템플릿
@@ -107,7 +107,7 @@ project-root/
 
 ### 도메인별 코드 구성 (백엔드=도메인 중심 / 프론트=레이어 우선)
 
-도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation`(예약) / `exam`(검사) / `surgery`(수술) / `consultation`(전환&성공률) / `report` / `overall`(전체지표) / `outpatient`(외래) / `marketing` / `cancel-noshow` / `unit-price` / `etc`.
+도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation`(예약) / `exam`(검사) / `surgery`(수술) / `consultation`(전환&성공률) / `report` / `overall`(전체지표) / `outpatient`(외래) / `marketing` / `accounting`(회계) / `cancel-noshow` / `unit-price` / `etc`.
 
 - **백엔드(도메인 중심)**: `<domain>/{controller,service,repository,dto}` (예: `reservation/controller`, `reservation/service`). 인증은 `auth/`, 공통 응답·예외·유틸·통계 helper(`StatsPanelSupport`·`StatsRequestValidator`·`StatsResponseMeta`)는 `common/`(특히 `common/stats/`)에 둔다. `Mock*Repository`는 해당 도메인 `repository/`에 둔다.
 - **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
@@ -127,6 +127,7 @@ project-root/
 - 통계 전용 페이지 25종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
+- 회계 프런트 미리보기 4종 (진료 수납·시력교정 매출 원장 및 월별 그래프, 합성 목업 데이터/API 전환 계약)
 
 ### 미구현 (플레이스홀더)
 
@@ -134,7 +135,7 @@ project-root/
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 41개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **미구현(pending)** 12개.
+`statsPages.ts`에 45개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **프런트 전용** 4개 / **미구현(pending)** 12개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
@@ -171,6 +172,10 @@ project-root/
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
 | unit-price | 객단가 | /stats/unit-price | 객단가 | 미구현 |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 프런트 전용 (합성 목업) |
+| accounting-vision | 시력교정 매출 | /accounting/vision-revenue | 회계 | 프런트 전용 (합성 목업) |
+| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 프런트 전용 (합성 목업) |
+| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 프런트 전용 (합성 목업) |
 | dreamlens-revenue | 드림렌즈 장부 | /stats/dreamlens-revenue | 기타 | 완료 (**직접 입력 테이블** · `dreamlens_ledger` JPA CRUD · `/api/dreamlens-ledger`) |
 | b2b-revenue | B2B 매출 | /stats/b2b-revenue | 기타 | 완료 |
 | staff-point | 직원 포인트 | /stats/staff-point | 기타 | 미구현 |

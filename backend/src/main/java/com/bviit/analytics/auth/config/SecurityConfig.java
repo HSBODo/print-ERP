@@ -58,6 +58,7 @@ public class SecurityConfig {
                         "/",
                         "/login",
                         "/stats/**",
+                        "/accounting/**",
                         "/admin/**",
                         "/report/**",
                         "/index.html",

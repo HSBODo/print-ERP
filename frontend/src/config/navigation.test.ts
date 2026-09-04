@@ -42,6 +42,10 @@ describe('navigation menu', () => {
     expect(paths).toContain('/stats/reservation-list')
     expect(paths).toContain('/stats/reservation-overall')
     expect(paths).toContain('/stats/eoeis-checkup')
+    expect(paths).toContain('/accounting/medical-receipts')
+    expect(paths).toContain('/accounting/vision-revenue')
+    expect(paths).toContain('/accounting/vision-revenue-chart')
+    expect(paths).toContain('/accounting/medical-revenue-chart')
   })
 
   it('메뉴의 통계 링크는 statsPages에 정의된 경로만 사용해야 한다', () => {

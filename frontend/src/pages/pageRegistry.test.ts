@@ -57,6 +57,21 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     }
   })
 
+  it('회계 프런트 미리보기는 API 연결 전까지 ADMIN만 접근한다', () => {
+    for (const id of [
+      'accounting-medical',
+      'accounting-vision',
+      'accounting-vision-chart',
+      'accounting-medical-chart',
+    ]) {
+      expect(PAGE_COMPONENTS[id]).toBeDefined()
+      expect(isAdminOnlyPage(id)).toBe(true)
+      expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, false, asDirector)).toBe(true)
+      expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
+    }
+  })
+
   it('pending 페이지는 운영(PROD)에서 차단되고 개발(DEV)에서는 허용된다', () => {
     expect(pendingIds.length).toBeGreaterThan(0)
     for (const id of pendingIds) {

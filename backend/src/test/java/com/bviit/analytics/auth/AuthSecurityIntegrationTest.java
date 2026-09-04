@@ -117,6 +117,19 @@ class AuthSecurityIntegrationTest {
     }
 
     @Test
+    void spaAccountingRoutesArePublic() throws Exception {
+        for (String path : new String[]{
+                "/accounting/medical-receipts",
+                "/accounting/vision-revenue",
+                "/accounting/vision-revenue-chart",
+                "/accounting/medical-revenue-chart"
+        }) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     void statsApiRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/stats/reservation/kpi")
                         .param("years", "2025"))

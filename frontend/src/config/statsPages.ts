@@ -368,6 +368,42 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/unit-price'
   ),
   statsPage(
+    'accounting-medical',
+    '진료 수납',
+    '/accounting/medical-receipts',
+    'accounting-section',
+    '회계',
+    '의사랑(IPLUS) 수납 내역과 보험·상태·미수·지원금별 합계를 조회하는 회계 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/medical-receipts'
+  ),
+  statsPage(
+    'accounting-vision',
+    '시력교정 매출',
+    '/accounting/vision-revenue',
+    'accounting-section',
+    '회계',
+    'SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/vision-receipts'
+  ),
+  statsPage(
+    'accounting-vision-chart',
+    '시력교정 매출 그래프',
+    '/accounting/vision-revenue-chart',
+    'accounting-section',
+    '회계',
+    'SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/vision-receipts/monthly'
+  ),
+  statsPage(
+    'accounting-medical-chart',
+    '진료 매출 그래프',
+    '/accounting/medical-revenue-chart',
+    'accounting-section',
+    '회계',
+    '의사랑(IPLUS) 실수납·공단청구·급여·비급여를 월별·연도별로 비교하는 그래프입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/medical-receipts/monthly'
+  ),
+  statsPage(
     'dreamlens-revenue',
     '드림렌즈 장부',
     '/stats/dreamlens-revenue',

@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Home, CalendarCheck, Microscope, Stethoscope, Syringe,
   Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
-  Building2, MessageSquare,
+  Building2, MessageSquare, Landmark,
 } from 'lucide-react'
 
 import { matchesDepartment, type AuthUser, type UserDepartment } from '@/stores/auth-session'
@@ -88,6 +88,10 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'cancel-rate': 'pending',
   'no-show-rate': 'pending',
   'unit-price': 'pending',
+  'accounting-medical': 'frontend-only',
+  'accounting-vision': 'frontend-only',
+  'accounting-vision-chart': 'frontend-only',
+  'accounting-medical-chart': 'frontend-only',
   'dreamlens-revenue': 'complete',
   'b2b-revenue': 'complete',
   'staff-point': 'pending',
@@ -123,6 +127,10 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
+  'accounting-medical',
+  'accounting-vision',
+  'accounting-vision-chart',
+  'accounting-medical-chart',
 ])
 export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
 
@@ -194,7 +202,7 @@ const kids = (...ids: string[]): MenuItem[] => ids.filter((id) => !isMenuHidden(
 
 /**
  * 사이드바 3단 구조.
- *   Lv1: HOME(잎) + 섹션 3종(비앤빛·마케팅·관리자)
+ *   Lv1: HOME(잎) + 섹션 4종(비앤빛·마케팅·회계·관리자)
  *   Lv2: 섹션 하위 그룹(Report·예약·검사 …) 또는 직접 잎(관리자→배치관리)
  *   Lv3: 그룹 하위 개별 페이지 링크
  */
@@ -315,6 +323,18 @@ const rawMenuItems: MenuItem[] = [
         children: kids('sms'),
       },
     ],
+  },
+  {
+    id: 'accounting-section',
+    label: '회계',
+    href: '#',
+    icon: Landmark,
+    kind: 'section',
+    adminOnly: true,
+    children: kids(
+      'accounting-medical', 'accounting-vision',
+      'accounting-vision-chart', 'accounting-medical-chart',
+    ),
   },
   {
     id: 'admin-section',

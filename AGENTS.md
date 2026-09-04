@@ -70,6 +70,7 @@ project-root/
 │   │   │   ├── statsPages.ts            # 통계 페이지 정의
 │   │   │   └── navigation.ts            # 메뉴 구조 + 구현 상태 맵
 │   │   ├── pages/
+│   │   │   ├── accounting/              # 회계 프런트 미리보기(수납 원장·월별 매출 그래프)
 │   │   │   ├── LoginPage.tsx            # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx        # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
 │   │   │   ├── ReservationPage.tsx      # 예약 비교 (TanStack Query API 연동)
@@ -101,6 +102,7 @@ project-root/
 - ReservationPage (월별/연도별 비교, TanStack Query API 연동)
 - 예약통계_시력교정 / 예약통계_백내장 (스냅샷 우선 + MSSQL 라이브 집계)
 - 예약자 리스트 및 주요 예약/검사/상담/수술 통계 API 일부
+- 회계 프런트 미리보기 4종 (진료 수납·시력교정 매출 원장 및 월별 그래프, 합성 목업 데이터/API 계약)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
 
 ### 미구현 (플레이스홀더)
@@ -123,6 +125,10 @@ project-root/
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 기타 | 플레이스홀더 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 기타 | 플레이스홀더 |
 | unit-price | 객단가 | /stats/unit-price | 기타 | 플레이스홀더 |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 프런트 전용 목업 |
+| accounting-vision | 시력교정 매출 | /accounting/vision-revenue | 회계 | 프런트 전용 목업 |
+| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 프런트 전용 목업 |
+| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 프런트 전용 목업 |
 
 ## 백엔드 컨벤션
 
