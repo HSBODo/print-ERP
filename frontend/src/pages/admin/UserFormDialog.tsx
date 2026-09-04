@@ -38,7 +38,7 @@ const createSchema = z
     password: z.string().min(12, '비밀번호는 12자 이상'),
   })
   .refine((v) => isValidCombination(v.role, v.department), {
-    message: '롤·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING)',
+    message: '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING)',
     path: ['department'],
   })
 
@@ -51,7 +51,7 @@ const updateSchema = z
       .refine((v) => v === '' || v.length >= 12, '비밀번호는 12자 이상 (빈 값이면 유지)'),
   })
   .refine((v) => isValidCombination(v.role, v.department), {
-    message: '롤·부서 조합이 유효하지 않습니다',
+    message: '권한·부서 조합이 유효하지 않습니다',
     path: ['department'],
   })
 
@@ -88,7 +88,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
   const { register, handleSubmit, watch, setValue, formState } = form
   const currentRole = watch('role')
 
-  // 롤 변경 시 부서 자동 정규화 (ADMIN/DIRECTOR → ALL, MANAGER/STAFF → MEDICAL 기본).
+  // 권한 변경 시 부서 자동 정규화 (ADMIN/DIRECTOR → ALL, MANAGER/STAFF → MEDICAL 기본).
   useEffect(() => {
     if (currentRole === 'ADMIN' || currentRole === 'DIRECTOR') {
       setValue('department', 'ALL')
@@ -197,7 +197,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-gray-700 font-medium mb-1">
-                롤
+                권한
                 {roleFieldDisabled && (
                   <span className="ml-1 text-xs text-gray-400 font-normal">(자기 자신 변경 불가)</span>
                 )}
