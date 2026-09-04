@@ -15,8 +15,16 @@ import {
  *   · 체크박스로 선택 → [재실행] → attempt_count 0 리셋 후 PENDING
  *   · 재실행 후 5분 폴러가 자연스럽게 잡음
  */
-export function SmsFailedQueueModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [tab, setTab] = useState<'FAILED' | 'CANCELED'>('FAILED')
+export function SmsFailedQueueModal({
+  open,
+  onClose,
+  initialTab = 'FAILED',
+}: {
+  open: boolean
+  onClose: () => void
+  initialTab?: 'FAILED' | 'CANCELED'
+}) {
+  const [tab, setTab] = useState<'FAILED' | 'CANCELED'>(initialTab)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   // 사유 배지 필터 — 특정 카테고리만 골라 재실행 판단. null = 전체.
   const [reasonFilter, setReasonFilter] = useState<ReasonCategory | null>(null)
