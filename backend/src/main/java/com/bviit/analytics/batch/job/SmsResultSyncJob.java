@@ -83,8 +83,9 @@ public class SmsResultSyncJob {
      * 공통 실행 경로.
      *
      * @param runType  batch_run_log.run_type 에 기록 — 사람 트리거는 MANUAL, 스케줄러는 POLLER.
-     * @param forceLog true 면 결과가 비어도 이력·Slack 남김 (매뉴얼 실행 용).
-     *                 false 면 실제 갱신(updated>0) 이 있었을 때만 로그 (스케줄러 15분 사이클 노이즈 방지).
+     * @param forceLog true 면 결과가 비어도 batch_run_log·Slack 남김 (매뉴얼 실행 용).
+     *                 false 면 실제 갱신(updated>0) 이 있었을 때만 batch_run_log·Slack 남김
+     *                 (스케줄러 15분 사이클 노이즈 방지). 애플리케이션 INFO 로그는 매 사이클 남는다.
      */
     private Map<String, Integer> runInternal(BatchRunLog.RunType runType, boolean forceLog) {
         String jobName = JOB_NAME_PREFIX + "[" + LocalDateTime.now().withNano(0) + "]";
@@ -108,15 +109,13 @@ public class SmsResultSyncJob {
 
         stats.put("updated", updated);
         stats.put("range_days", SYNC_RANGE_DAYS);
+        log.info("SmsResultSyncJob done: {}", stats);
 
         if (forceLog || updated > 0) {
             long runId = runLogRepository.start(jobName, runType, from, to);
             runLogRepository.success(runId, stats);
             slackNotifier.notifySuccess(jobName, runType, from, to, stats,
                     Duration.between(startedAt, Instant.now()));
-            log.info("SmsResultSyncJob done: {}", stats);
-        } else {
-            log.debug("SmsResultSyncJob quiet — updated=0 (스케줄러 스킵)");
         }
         return stats;
     }
