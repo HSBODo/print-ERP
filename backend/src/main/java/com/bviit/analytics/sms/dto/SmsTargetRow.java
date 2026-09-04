@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -35,12 +36,26 @@ public class SmsTargetRow {
     private final boolean optedOut;
     /** 이 대상의 발송 이력(최신순). 템플릿별 발송 여부는 프론트가 이 목록에서 파생한다. */
     private final List<SmsSendLogRow> logs;
+    /**
+     * 이 대상의 차수(T1/T2/T3) 별 <b>최신 큐 상태</b> — 프론트 리스트가 "예정" 셀을 표시할 때
+     * 계산값(scheduleBase+offset) 대신 이 값을 우선 쓴다. 재실행/홀딩 해제/오프셋 편집으로
+     * 큐의 scheduledAt 이 clamp 되었을 때 화면과 실제가 일치하도록.
+     *
+     * <p>키는 templateCode ("T1"·"T2"·"T3"), 값은 해당 tier 의 가장 최신 큐 한 행.
+     * 큐가 아직 없거나 발송 완료 후 이력만 남은 경우 그 tier 는 맵에 없다.
+     */
+    private final Map<String, SmsQueueRow> tierQueues;
 
     public static SmsTargetRow from(SmsTarget target, List<SmsSendLogRow> logs) {
-        return from(target, logs, false);
+        return from(target, logs, false, Map.of());
     }
 
     public static SmsTargetRow from(SmsTarget target, List<SmsSendLogRow> logs, boolean optedOut) {
+        return from(target, logs, optedOut, Map.of());
+    }
+
+    public static SmsTargetRow from(SmsTarget target, List<SmsSendLogRow> logs, boolean optedOut,
+                                     Map<String, SmsQueueRow> tierQueues) {
         return SmsTargetRow.builder()
                 .optedOut(optedOut)
                 .id(target.getId())
@@ -58,6 +73,7 @@ public class SmsTargetRow {
                 .status(target.getStatus())
                 .source(target.getSource())
                 .logs(logs)
+                .tierQueues(tierQueues == null ? Map.of() : tierQueues)
                 .build();
     }
 }

@@ -318,16 +318,23 @@ export const tierCellOf = (
   t: SmsTarget, offsetDays: number, code: string, today: string,
   /** 유예 경계 시각. 이보다 나중에 나간 건은 아직 결과를 기다릴 때다. */
   graceFrom = stampMinutesAgo(DELIVERY_GRACE_MINUTES),
-  /** 이 차수의 발송 예정 시각(HH:mm). 예정·미발송·제외 케이스에서 셀에 붙인다.
-   *  로그가 있는 케이스(도달·접수·미도달·실패) 는 실제 발송/도달 시각을 붙이므로 이 값과 무관.
-   *  안 넘기면 시간 없이 날짜만 표시(기존 호환). */
+  /** 이 차수의 발송 예정 시각(HH:mm). 큐가 없는 tier 의 폴백 표시에만 쓴다.
+   *  큐(t.tierQueues[code])가 있으면 큐의 scheduledAt 을 그대로 쓴다 —
+   *  재실행/홀딩 해제/오프셋 편집으로 clamp 된 실 시각과 화면이 어긋나지 않게. */
   tierTime: string = '',
 ): TierCell => {
-  // 예정일은 수술일이 아니라 **기준일**에서 센다 — 되살아난 행은 기준일이 오늘 쪽으로 밀려 있다.
-  const base = t.scheduleBase || t.surgeryDate
-  const scheduled = base ? addDays(base, offsetDays) : ''
   const log = lastLogOf(t, code)
+  const queue = t.tierQueues?.[code] ?? null
   const replaced = Boolean(log?.replacement)
+
+  // 표시할 예정 시각 — 큐의 scheduledAt(실 값) 이 있으면 우선, 없으면 계산값(폴백).
+  // 큐는 재실행·홀딩 해제·오프셋 편집 시 clamp 로 실제 다음 시도 시각을 담고 있다.
+  const calcBase = t.scheduleBase || t.surgeryDate
+  const calcScheduled = calcBase ? addDays(calcBase, offsetDays) : ''
+  const queueDate = queue?.scheduledAt ? queue.scheduledAt.slice(0, 10) : ''
+  const queueTime = queue?.scheduledAt ? queue.scheduledAt.slice(11, 16) : ''
+  const scheduled = queueDate || calcScheduled
+  const scheduledTime = queueTime || tierTime
 
   if (log?.status === 'SUCCESS') {
     const delivered = log.deliveredAt || log.sentAt
@@ -336,6 +343,15 @@ export const tierCellOf = (
       label: '도달', className: 'font-semibold text-gray-900', replaced,
       date: delivered.slice(0, 10), offsetDays,
       title: `도달 ${log.deliveredAt || '(시각 미상)'} · 발송 ${log.sentAt} · ${log.requestedChannel === 'ALIMTALK' ? '알림톡' : '문자'}${replaced ? ' → 문자 대체' : ''}`,
+    }
+  }
+  // 실패 후 재실행 — send_log 는 FAILED 로 남아 있지만 큐가 PENDING/PROCESSING 이면 재시도 대기 중.
+  // 큐의 scheduledAt 을 그대로 써서 다음 시도 시각을 보여준다.
+  if (log?.status === 'FAILED' && queue && (queue.status === 'PENDING' || queue.status === 'PROCESSING')) {
+    return {
+      text: mdhm(scheduled, scheduledTime), label: '재실행 대기', className: 'font-semibold text-blue-600', replaced: false,
+      date: scheduled, offsetDays,
+      title: `재실행 대기 · 예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''}${log.failReason ? ` · 이전 실패: ${log.failReason}` : ''}`,
     }
   }
   if (log?.status === 'PENDING') {
@@ -362,21 +378,21 @@ export const tierCellOf = (
   if (!scheduled) return { text: '—', label: '', className: 'text-gray-300', replaced: false, title: '', date: '', offsetDays }
   if (!t.phoneValid || isHeld(t) || t.optedOut) {
     return {
-      text: mdhm(scheduled, tierTime), label: '제외', className: 'text-gray-300 line-through', replaced: false,
+      text: mdhm(scheduled, scheduledTime), label: '제외', className: 'text-gray-300 line-through', replaced: false,
       date: scheduled, offsetDays,
-      title: `예정 ${scheduled}${tierTime ? ' ' + tierTime : ''} · ${t.optedOut ? '수신거부' : '홀딩·발송 불가'}라 보내지 않는다`,
+      title: `예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''} · ${t.optedOut ? '수신거부' : '홀딩·발송 불가'}라 보내지 않는다`,
     }
   }
   if (scheduled < today) {
     return {
-      text: mdhm(scheduled, tierTime), label: '미발송', className: 'font-semibold text-red-500', replaced: false,
+      text: mdhm(scheduled, scheduledTime), label: '미발송', className: 'font-semibold text-red-500', replaced: false,
       date: scheduled, offsetDays,
-      title: `예정 ${scheduled}${tierTime ? ' ' + tierTime : ''} — 예정일이 지났는데 아직 발송되지 않았습니다`,
+      title: `예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''} — 예정일이 지났는데 아직 발송되지 않았습니다`,
     }
   }
   return {
-    text: mdhm(scheduled, tierTime), label: '예정', className: 'text-gray-400', replaced: false,
-    title: `발송 예정 ${scheduled}${tierTime ? ' ' + tierTime : ''}`,
+    text: mdhm(scheduled, scheduledTime), label: '예정', className: 'text-gray-400', replaced: false,
+    title: `발송 예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''}`,
     date: scheduled, offsetDays,
   }
 }

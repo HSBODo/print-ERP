@@ -3,15 +3,18 @@ package com.bviit.analytics.sms.service;
 import com.bviit.analytics.common.exception.DataSourceUnavailableException;
 import com.bviit.analytics.sms.dto.SmsImportResult;
 import com.bviit.analytics.sms.dto.SmsLookupRow;
+import com.bviit.analytics.sms.dto.SmsQueueRow;
 import com.bviit.analytics.sms.dto.SmsSendLogRow;
 import com.bviit.analytics.sms.dto.SmsTargetRequest;
 import com.bviit.analytics.sms.config.SolapiProperties;
 import com.bviit.analytics.sms.dto.SmsTargetRow;
 import com.bviit.analytics.sms.dto.SmsTemplateGroupInfo;
 import com.bviit.analytics.sms.dto.SmsTemplateInfo;
+import com.bviit.analytics.sms.entity.SmsDispatchQueue;
 import com.bviit.analytics.sms.entity.SmsOptOut;
 import com.bviit.analytics.sms.entity.SmsSendLog;
 import com.bviit.analytics.sms.entity.SmsTarget;
+import com.bviit.analytics.sms.repository.SmsDispatchQueueRepository;
 import com.bviit.analytics.sms.repository.SmsOptOutRepository;
 import com.bviit.analytics.sms.repository.SmsCrmContactRepository;
 import com.bviit.analytics.sms.repository.SmsSendLogRepository;
@@ -30,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IntSummaryStatistics;
 import java.util.List;
@@ -46,6 +50,11 @@ public class SmsTargetService {
 
     private final SmsTargetRepository targetRepository;
     private final SmsSendLogRepository logRepository;
+    /**
+     * 큐 조회 — target 리스트 응답에 tier 별 최신 큐 상태를 실어보내려고 사용.
+     * ObjectProvider 로 감싸 sms 미로딩·H2 로컬 등 큐 테이블이 없는 환경에서도 안전.
+     */
+    private final ObjectProvider<SmsDispatchQueueRepository> queueRepositoryProvider;
     /** 수신거부 목록 — 적재 때 새 행을 처음부터 홀딩으로 만들고, 화면 표시에도 쓴다. */
     private final SmsOptOutRepository optOutRepository;
     /** postgres-mart 프로파일에서만 존재 — 없으면 자동 등록이 503 으로 응답한다. */
@@ -147,10 +156,33 @@ public class SmsTargetService {
                         .collect(Collectors.groupingBy(SmsSendLogRow::getTargetId));
         // 수신거부는 번호 단위라 행마다 묻지 않고 한 번에 확인한다.
         Set<String> optedOut = optedOutPhones(targets);
+        // tier(T1/T2/T3) 별 최신 큐 상태를 한 번에 조회 — 재실행/홀딩 해제/오프셋 편집으로
+        // 큐의 scheduledAt 이 clamp 됐을 때 화면 "예정" 셀이 실제 발송 시각과 일치하도록.
+        // 큐 미주입(sms 미로딩) 이면 빈 맵.
+        Map<Long, Map<String, SmsQueueRow>> queuesByTarget = loadTierQueues(ids);
         return targets.stream()
                 .map(t -> SmsTargetRow.from(t, logsByTarget.getOrDefault(t.getId(), List.of()),
-                        optedOut.contains(SmsTarget.normalizePhone(t.getPhone()))))
+                        optedOut.contains(SmsTarget.normalizePhone(t.getPhone())),
+                        queuesByTarget.getOrDefault(t.getId(), Map.of())))
                 .toList();
+    }
+
+    /**
+     * tier 별 최신 큐 한 행씩 골라준다. findByTargetIdInOrderByScheduledAtAsc 가 오래된 순으로
+     * 주므로 put 이 덮어써 최종적으로 각 tier 의 가장 최신 scheduledAt 행만 남는다 —
+     * "지금 화면이 이 사람의 다음 예정을 알고 싶을 때" 필요한 것은 그것 뿐.
+     */
+    private Map<Long, Map<String, SmsQueueRow>> loadTierQueues(List<Long> targetIds) {
+        if (targetIds.isEmpty()) return Map.of();
+        SmsDispatchQueueRepository repo = queueRepositoryProvider.getIfAvailable();
+        if (repo == null) return Map.of();
+        List<SmsDispatchQueue> rows = repo.findByTargetIdInOrderByScheduledAtAsc(targetIds);
+        Map<Long, Map<String, SmsQueueRow>> byTarget = new HashMap<>();
+        for (SmsDispatchQueue row : rows) {
+            byTarget.computeIfAbsent(row.getTargetId(), k -> new HashMap<>())
+                    .put(row.getTemplateCode(), SmsQueueRow.from(row));
+        }
+        return byTarget;
     }
 
     private Set<String> optedOutPhones(List<SmsTarget> targets) {

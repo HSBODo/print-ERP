@@ -58,6 +58,24 @@ const targetSchema = z.object({
    */
   optedOut: z.boolean(),
   logs: z.array(sendLogSchema),
+  /**
+   * 이 대상의 tier(T1/T2/T3) 별 최신 큐 상태. 리스트가 "예정" 셀을 표시할 때
+   * scheduleBase+offset 계산값 대신 이 값을 우선 쓴다 — 재실행/홀딩 해제/오프셋 편집으로
+   * 큐 scheduledAt 이 clamp 됐을 때 화면=실제 일치.
+   * 큐가 없거나 발송 완료 후 이력만 남은 tier 는 이 맵에 없다(선택적).
+   */
+  tierQueues: z.record(z.string(), z.object({
+    id: z.number(),
+    targetId: z.number(),
+    templateCode: z.string(),
+    scheduledAt: z.string(),
+    kind: z.enum(['NOTIFICATION', 'AD']),
+    status: z.enum(['PENDING', 'PROCESSING', 'RECEIVED', 'DONE', 'FAILED', 'CANCELED']),
+    attemptCount: z.number(),
+    lastError: z.string().nullish(),
+    pickedAt: z.string().nullish(),
+    processedAt: z.string().nullish(),
+  })).nullish().default({}),
 })
 
 /**

@@ -21,7 +21,7 @@ const target = (over: Partial<SmsTarget> = {}): SmsTarget => ({
   id: 1, chartNo: '2234451', name: '홍길동', phone: '01080690814', phoneValid: true,
   surgeryDate: '2026-08-06', scheduleBase: '2026-08-06', rebased: false,
   surgeryType: '시력교정', opType: 'smilePro', surgeryR: 'SMILE PRO', surgeryL: 'SMILE PRO',
-  status: 'SENDABLE', source: 'AUTO', optedOut: false, logs: [],
+  status: 'SENDABLE', source: 'AUTO', optedOut: false, logs: [], tierQueues: {},
   ...over,
 })
 
