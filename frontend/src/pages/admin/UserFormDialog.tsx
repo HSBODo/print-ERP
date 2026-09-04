@@ -35,7 +35,7 @@ const createSchema = z
       .min(2, '아이디는 2자 이상')
       .max(50)
       .regex(/^[a-z0-9._-]+$/i, '영문·숫자·. _ - 만 가능'),
-    password: z.string().min(12, '비밀번호는 12자 이상'),
+    password: z.string().min(8, '비밀번호는 8자 이상'),
   })
   .refine((v) => isValidCombination(v.role, v.department), {
     message: '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING)',
@@ -48,7 +48,7 @@ const updateSchema = z
     password: z
       .string()
       .min(0)
-      .refine((v) => v === '' || v.length >= 12, '비밀번호는 12자 이상 (빈 값이면 유지)'),
+      .refine((v) => v === '' || v.length >= 8, '비밀번호는 8자 이상 (빈 값이면 유지)'),
   })
   .refine((v) => isValidCombination(v.role, v.department), {
     message: '권한·부서 조합이 유효하지 않습니다',
@@ -247,7 +247,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               autoComplete="new-password"
               {...register('password')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="12자 이상"
+              placeholder="8자 이상"
             />
             {formState.errors.password && (
               <p className="text-red-500 text-xs mt-1">{formState.errors.password.message as string}</p>
