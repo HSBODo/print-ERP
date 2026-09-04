@@ -84,8 +84,10 @@ project-root/
 │   ├── vite.config.ts                   # 프록시: /api → localhost:8080
 │   └── package.json
 │
-├── docker-compose.yml                    # 앱(백엔드+프론트 정적 파일) 컨테이너 · 실행: docker compose up -d
-├── Dockerfile                            # 백엔드 + 프론트 빌드 산출물 이미지
+├── docker-compose.local.yml              # 로컬 개발용 Compose (기본 사용)
+├── Dockerfile.local                      # 로컬 개발용 이미지 (Infisical 미사용)
+├── docker-compose.yml                    # 운영/Jenkins용 Compose
+├── Dockerfile                            # 운영/Jenkins용 이미지
 └── AGENTS.md
 ```
 
@@ -242,9 +244,11 @@ cd frontend && npx shadcn@latest add <component-name>
 ## 실행 명령어
 
 ```bash
-# 도커 컴포즈 (권장 · backend + frontend 정적 파일 한 컨테이너)
-docker compose up -d --build             # 기본 프로파일: prod (docker-compose.yml env)
-docker compose down                       # 종료
+# 로컬 도커 컴포즈 (기본 · backend + frontend 정적 파일 한 컨테이너)
+docker compose -f docker-compose.local.yml up -d --build
+docker compose -f docker-compose.local.yml down
+
+# 운영/Jenkins용 docker-compose.yml · Dockerfile 은 명시적으로 요청받은 경우에만 사용
 
 # 로컬 개별 실행 (개발용)
 cd backend && ./gradlew bootRun          # Backend (H2 인메모리 기본, 프로파일 SPRING_PROFILES_ACTIVE 로 조정)
@@ -261,7 +265,7 @@ cd frontend && npm run test              # Vitest
 ### Git
 
 - 커밋: `feat: 예약 통계 페이지 구현`, `fix: 달성률 소수점 계산 오류`
-- **커밋·푸시는 작업 브랜치 `2026-07-29` 안에서만 한다** (`git push origin 2026-07-29`).
+- **커밋·푸시는 작업 브랜치 `2026-09-04` 안에서만 한다** (`git push origin 2026-09-04`).
 - 🚫 **`main`·`develop` 으로 임의 push·PR 금지** — 운영 반영은 **개발자와 협의**해서 진행한다.
   (자세한 배경은 `CLAUDE.md` 의 같은 항목 참조)
 
@@ -282,6 +286,8 @@ cd frontend && npm run test              # Vitest
 ### 환경 설정
 
 - `application-local.yml`은 환경변수 참조만 담음 — 시크릿은 `backend/.env`(gitignored)에 두고 실행 스크립트가 주입
+- **로컬 Docker 작업은 항상 `docker-compose.local.yml`과 `Dockerfile.local`을 기본으로 사용한다.** `docker-compose.yml`과 `Dockerfile`은 운영/Jenkins용이므로 개발자가 명시적으로 요청하지 않는 한 실행하거나 수정하지 않는다.
+- 로컬 Compose도 사내 Nexus나 `backend/.env`에 지정된 외부 데이터 소스에 연결할 수 있다. 여기서 "로컬"은 완전한 오프라인 환경이 아니라 Infisical 없이 로컬 전용 Docker 설정으로 실행한다는 뜻이다.
 - 프론트 환경변수: `VITE_` 접두사 사용
 - Vite 프록시: `/api` → `http://localhost:8080` (`vite.config.ts`)
 
