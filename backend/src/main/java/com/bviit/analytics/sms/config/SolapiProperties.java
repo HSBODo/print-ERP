@@ -115,16 +115,25 @@ public class SolapiProperties {
     private SmsTemplateGroupInfo slot(SurgeryGroup group, int tier) {
         String prefix = "solapi.templates." + group.code().toLowerCase() + ".t" + tier + ".";
         String templateId = env.getProperty(prefix + "template-id", "");
-        String smsText = env.getProperty(prefix + "sms-text", "");
+        String smsText = readSmsBody(prefix + "sms-text");
         // 1차는 "수술 후 N주가 지났습니다" 같은 경과 선언이 없어 지연 버전이 필요 없다 —
         // 기본 본문을 그대로 쓴다. 그래서 env 키는 2·3차 × 5그룹 = 10개만 둔다.
-        String smsTextDelayed = tier == 1 ? smsText : env.getProperty(prefix + "sms-text-delayed", "");
+        String smsTextDelayed = tier == 1 ? smsText : readSmsBody(prefix + "sms-text-delayed");
         boolean alimtalkReady = isConfigured() && !pfId.isBlank() && !templateId.isBlank();
         boolean smsReady = isConfigured() && !smsText.isBlank();
         boolean delayedReady = isConfigured() && !smsTextDelayed.isBlank();
         return new SmsTemplateGroupInfo(
                 group.code(), group.label(), group.opTypes(), resolveOffset(group, tier),
                 templateId, smsText, smsTextDelayed, alimtalkReady, smsReady, delayedReady);
+    }
+
+    /**
+     * 문자 본문 env 읽기. docker compose env_file 은 escape 시퀀스를 해석하지 않아
+     * 개행이 `\n` 두 글자로 들어온다 — 여기서 실제 개행으로 되돌린다.
+     * .env 는 한 줄 = 한 값이라 개행을 넣을 방법이 이것뿐이다.
+     */
+    private String readSmsBody(String key) {
+        return env.getProperty(key, "").replace("\\n", "\n");
     }
 
     /**

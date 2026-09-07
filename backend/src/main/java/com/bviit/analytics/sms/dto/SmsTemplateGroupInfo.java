@@ -9,6 +9,7 @@ import java.util.List;
  *
  * templateId/smsText 는 발송 내부용이라 화면 응답에 내리지 않는다(@JsonIgnore) —
  * 문구 원문이 브라우저로 나가면 승인 전 문구가 외부에 노출될 수 있다.
+ * 지연 본문(smsTextDelayed)은 예외 — 재조정된 대상 미리보기에 쓰이므로 응답에 실린다.
  *
  * opTypes 는 화면이 <b>행마다 그룹을 찾을 때</b> 쓴다. 마트가 분류한 op_type 코드라
  * 프론트가 수술명을 다시 해석할 필요가 없다.
@@ -27,8 +28,10 @@ public record SmsTemplateGroupInfo(
          * 홀딩 해제·연락처 수정으로 기준일이 밀리면 "수술 후 일주일이 지났습니다"가 사실과
          * 어긋난다(수술 25일 뒤에 2차가 나갈 수 있다). 그래서 그 문장을 뺀 본문을 따로 둔다.
          * 1차는 경과 선언이 없어 기본 본문을 그대로 쓴다.
+         *
+         * 응답에 실려 프론트 문구 미리보기가 이 값을 그대로 쓴다(하드코딩 제거).
          */
-        @JsonIgnore String smsTextDelayed,
+        String smsTextDelayed,
         boolean alimtalkReady,
         boolean smsReady,
         /** 지연 본문이 준비됐는지 — 재조정된 대상은 이게 없으면 보내지 않는다. */

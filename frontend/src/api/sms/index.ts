@@ -91,6 +91,11 @@ const templateGroupSchema = z.object({
   offsetDays: z.number(),
   alimtalkReady: z.boolean(),
   smsReady: z.boolean(),
+  /**
+   * 지연 발송용 문자 본문 — 재조정된 대상의 2·3차 미리보기에 그대로 쓴다.
+   * 1차는 기본 본문과 같은 값(경과 선언이 없어 지연 파생본이 필요 없음).
+   */
+  smsTextDelayed: z.string().nullish(),
 })
 
 const templateSchema = z.object({

@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { MessageSquareText } from 'lucide-react'
 import { OP_TYPE_META, groupOf, groupSlotOf, offsetOf, tierCellOf } from './smsTableModel'
-import { delayedTextOf, fillTemplate } from './smsTemplateTexts'
 import { useSolapiTemplates } from '@/hooks/sms/useSmsManagement'
 import type { SmsSolapiTemplate, SmsTarget, SmsTemplate } from '@/api/sms'
 
@@ -14,8 +13,9 @@ import type { SmsSolapiTemplate, SmsTarget, SmsTemplate } from '@/api/sms'
  * 문구의 #{name}·#{surgeryDate} 은 **실제 값으로 치환해** 보여준다 — 미리보기는 나갈 문장 그대로여야
  * 검수가 된다. 발송 시에는 서버(문자)나 솔라피(알림톡)가 같은 자리를 채운다.
  *
- * <p>기본 본문은 <b>솔라피 API 조회</b>로 가져온다(useSolapiTemplates). 지연 본문은
- * 우리가 파생한 변형이라 로컬(smsTemplateTexts.DELAYED_TEXTS) 을 계속 쓴다.
+ * <p>기본 본문은 <b>솔라피 API 조회</b>로 가져온다(useSolapiTemplates).
+ * 지연 본문은 백엔드 `/templates` 응답의 slot.smsTextDelayed 를 그대로 쓴다 —
+ * .env 의 `SOLAPI_TPL_*_SMS_DELAYED` 가 원천이다.
  */
 export function SmsMessagePreview({ target, templates, selectedTier, today }: {
   target: SmsTarget | null
@@ -93,7 +93,7 @@ export function SmsMessagePreview({ target, templates, selectedTier, today }: {
               // 기준일이 밀린 대상에게는 경과 문장을 뺀 문구가 나간다 — 미리보기도 그걸 보여야 검수가 된다.
               // 1차는 지연 파생본이 없어(경과 선언이 없음) 지연도 API 승인본을 그대로 쓴다.
               const rawText = target.rebased && index > 0
-                ? delayedTextOf(groupCode, index + 1)
+                ? (slot?.smsTextDelayed ?? '')
                 : (solapiByKey.get(keyOf(groupCode, index + 1))?.content ?? '')
               const text = fillTemplate(rawText, target)
               return (
@@ -134,3 +134,18 @@ const indexByGroupTier = (rows: SmsSolapiTemplate[]): Map<string, SmsSolapiTempl
   for (const row of rows) map.set(keyOf(row.groupCode, row.tier), row)
   return map
 }
+
+const koreanDate = (iso: string): string => {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-').map(Number)
+  return `${y}년 ${m}월 ${d}일`
+}
+
+/**
+ * 치환자를 실제 값으로 바꾼다 — 미리보기는 **나갈 문장 그대로** 보여야 검수가 된다.
+ * 발송 시에는 서버(문자)나 솔라피(알림톡)가 같은 자리를 채운다.
+ */
+const fillTemplate = (text: string, target: SmsTarget): string =>
+  text
+    .replaceAll('#{name}', target.name || '고객')
+    .replaceAll('#{surgeryDate}', koreanDate(target.surgeryDate))

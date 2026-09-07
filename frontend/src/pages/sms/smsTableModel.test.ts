@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { buildPaginationItems, groupOf, groupOptionsOf, matchesStatusFilter, targetStateOf, tierCellOf } from './smsTableModel'
-import { delayedTextOf } from './smsTemplateTexts'
 import type { SmsTarget, SmsTemplate } from '@/api/sms'
 
 /**
@@ -248,31 +247,6 @@ describe('차수 칸 판정', () => {
   it('알림톡이 문자로 대체됐으면 표시한다', () => {
     const cell = tierCellOf(target({ logs: [log({ replacement: true, messageType: 'SMS' })] }), 7, 'T1', today)
     expect(cell.replaced).toBe(true)
-  })
-})
-
-describe('지연 문구 (로컬 파생본)', () => {
-  // 승인 알림톡 본문(1~3차 기본)은 이제 솔라피 API 조회라 테스트 대상이 아니다.
-  // 여기 남은 것은 우리가 파생해서 관리하는 지연 본문(2·3차, 경과 문장 제외) 뿐이다.
-  it('재조정된 대상의 2·3차는 경과 선언이 빠진다', () => {
-    // "수술 후 일주일이 지났습니다"는 발송이 밀리면 거짓이 된다(수술 25일 뒤에 나갈 수 있다).
-    expect(delayedTextOf('SMILE', 2)).not.toContain('지났습니다')
-    expect(delayedTextOf('SMILE', 3)).not.toContain('지났습니다')
-    // 안내 내용 자체는 그대로 남아야 한다 — 뺀 건 경과 문장 하나뿐이다.
-    expect(delayedTextOf('SMILE', 2)).toContain('조깅')
-  })
-
-  it('1차는 경과 선언이 없어 지연 파생본이 없다 — 미리보기는 API 승인본을 그대로 쓴다', () => {
-    expect(delayedTextOf('LASEK', 1)).toBe('')
-  })
-
-  it('상대 표현은 기준을 수술일로 못 박는다', () => {
-    // 늦게 보내면 "1개월 후"의 기준이 흔들린다 — 수술 기준임을 문장에 남긴다.
-    expect(delayedTextOf('ICL', 3)).toContain('수술 1개월 후')
-  })
-
-  it('문구가 없는 그룹은 지연 버전도 비어 있다 — 남의 문구로 대신 채우지 않는다', () => {
-    expect(delayedTextOf('ETC', 2)).toBe('')
   })
 })
 
