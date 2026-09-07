@@ -116,6 +116,19 @@ public class SecurityConfig {
                 auth.requestMatchers("/api/accumulated-eyes/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
 
+                // ─── 홈(대시보드) 요약 KPI — 양 부서 개방 (docs/auth/permissions.md § 5-1 "홈화면") ──
+                // DashboardPage 가 부서 관계없이 뜨도록, 홈에서 쓰는 5개 GET 엔드포인트만
+                // MEDICAL gate 앞에 예외 매처를 둔다. 집계 숫자라 개인정보 위험 낮음.
+                // 하위 경로(/cell·/diagnostics/**)는 매칭되지 않아 MEDICAL 전용으로 유지된다.
+                // 수술은 KPI·월별 추이·시술별 비중 세 화면이 모두 /panel/trend 하나를 공유한다.
+                auth.requestMatchers(HttpMethod.GET,
+                                "/api/stats/reservation-overall/monthly",
+                                "/api/stats/procedure-exam/monthly",
+                                "/api/stats/surgery/panel/trend",
+                                "/api/stats/outpatient-count/monthly",
+                                "/api/stats/reservation-stats-system")
+                        .hasAnyAuthority("DEPT_MEDICAL", "DEPT_MARKETING", "DEPT_ALL");
+
                 // ─── 부서 gate: MEDICAL 전용 (나머지 통계·리스트·리포트) ────────
                 auth.requestMatchers("/api/stats/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
