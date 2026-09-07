@@ -413,13 +413,55 @@ class AuthSecurityIntegrationTest {
 
     @Test
     void marketingStaffCannotTriggerSmsQueueRetry() throws Exception {
-        // 재실행(POST /retry) 은 ADMIN 만 — MARKETING STAFF 는 403.
+        // [실패·취소 재실행] 은 MANAGER 이상 — MARKETING STAFF 는 403 (STAFF 는 실무 판단 조작 불가).
         String token = jwtUtil.generateToken("staff-mkt", Role.STAFF, Department.MARKETING);
         mockMvc.perform(post("/api/admin/batch/sms/queue/retry?ids=1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void marketingManagerCanTriggerSmsQueueRetry() throws Exception {
+        // 매니저 이상 완화 — MARKETING MANAGER 는 retry 매처 통과 (403 이 아님).
+        // postgres-mart 프로파일 아니라 실제는 404 등이 나올 수 있으나 403 만 아니면 매처는 통과.
+        String token = jwtUtil.generateToken("mgr-mkt", Role.MANAGER, Department.MARKETING);
+        mockMvc.perform(post("/api/admin/batch/sms/queue/retry?ids=1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(result -> {
+                    if (result.getResponse().getStatus() == 403) {
+                        throw new AssertionError("MARKETING MANAGER 가 SMS retry 매처에서 막힘");
+                    }
+                });
+    }
+
+    @Test
+    void medicalManagerCannotTriggerSmsQueueRetry() throws Exception {
+        // 부서 gate 대칭 — MEDICAL MANAGER 는 SMS 페이지 접근 불가라 API 도 403.
+        String token = jwtUtil.generateToken("mgr-med", Role.MANAGER, Department.MEDICAL);
+        mockMvc.perform(post("/api/admin/batch/sms/queue/retry?ids=1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void directorCanTriggerSmsQueueRetry() throws Exception {
+        // DIRECTOR (dept=ALL) 는 두 그룹 전부 열람 · STAFF 수준 조작만이지만 [실패·취소 재실행] 은 매니저 이상으로 완화됨.
+        String token = jwtUtil.generateToken("director", Role.DIRECTOR, Department.ALL);
+        mockMvc.perform(post("/api/admin/batch/sms/queue/retry?ids=1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(result -> {
+                    if (result.getResponse().getStatus() == 403) {
+                        throw new AssertionError("DIRECTOR 가 SMS retry 매처에서 막힘");
+                    }
+                });
     }
 
     /**

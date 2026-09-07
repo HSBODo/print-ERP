@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -79,15 +80,24 @@ public class SecurityConfig {
                 // 반드시 sms-management 매처보다 앞에 둔다 — 뒤에 두면 규칙이 뒤덮인다.
                 auth.requestMatchers("/api/sms/webhook/**").permitAll();
                 // ─── SMS 큐 상태·목록 조회는 MARKETING STAFF 개방 (docs/auth/permissions.md § 4-2) ───
-                // 실행·재실행 (POST /run · /retry) 은 아래 /api/admin/** 매처가 ADMIN 으로 잡는다.
+                // 실행 (POST /run) 은 아래 /api/admin/** 매처가 ADMIN 으로 잡는다.
                 // 이 GET 매처가 /api/admin/** 보다 반드시 앞에 와야 한다.
                 auth.requestMatchers(HttpMethod.GET,
                                 "/api/admin/batch/sms/queue/status",
                                 "/api/admin/batch/sms/queue/rows",
                                 "/api/admin/batch/sms/queue/statuses")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
+                // ─── [실패·취소 재실행] 은 MANAGER 이상 + MARKETING 부서 개방 ────────────
+                // POST /queue/retry — attempt_count 리셋 후 PENDING 복귀. 실 발송 트리거 아님(폴러가 잡음).
+                // 실무 판단(오래된 취소를 다시 보낼지)이 필요해 매니저 이상에게 상시 노출한다.
+                // MEDICAL MANAGER 는 SMS 페이지 자체 접근 불가지만 API 직접 호출을 부서 gate 로 대칭 차단.
+                // 반드시 /api/admin/** 매처보다 앞에 와야 한다.
+                auth.requestMatchers(HttpMethod.POST, "/api/admin/batch/sms/queue/retry")
+                        .access(new WebExpressionAuthorizationManager(
+                                "(hasAuthority('DEPT_MARKETING') or hasAuthority('DEPT_ALL')) "
+                                        + "and hasAnyRole('ADMIN','DIRECTOR','MANAGER')"));
 
-                // 관리자 전용 API (배치 트리거·로그·SMS 큐 실행/재실행) — ADMIN 롤 필수.
+                // 관리자 전용 API (배치 트리거·로그·SMS [지금 실행]) — ADMIN 롤 필수.
                 // DIRECTOR 도 시스템 조작 불가 (docs/auth/permissions.md § 3).
                 auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
 

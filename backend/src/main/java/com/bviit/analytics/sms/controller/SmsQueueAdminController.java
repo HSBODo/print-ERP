@@ -21,13 +21,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 자동 발송 큐(sms_dispatch_queue) 관리자 API — /api/admin/** 매처가 hasRole('ADMIN').
+ * 자동 발송 큐(sms_dispatch_queue) 관리자 API — 권한은 SecurityConfig 매처에서 분화.
  *
  * <ul>
- *   <li>GET  /status  — 상태별 카운트 + 오늘 처리량 KPI</li>
- *   <li>GET  /rows?status=&limit=&from=&to=  — 상태 행 목록. from/to 는 scheduled_at 기준 YYYY-MM-DD.</li>
- *   <li>POST /retry?ids=1,2,3 — FAILED/CANCELED 를 PENDING 으로 리셋(attempt_count 도 0)</li>
- *   <li>POST /run — 5분 폴러를 즉시 한 번 실행 (테스트·긴급용)</li>
+ *   <li>GET  /status  — 상태별 카운트 + 오늘 처리량 KPI (MARKETING/ALL 부서 개방)</li>
+ *   <li>GET  /rows?status=&limit=&from=&to=  — 상태 행 목록 (MARKETING/ALL 부서 개방)</li>
+ *   <li>POST /retry?ids=1,2,3 — FAILED/CANCELED 를 PENDING 으로 리셋(attempt_count 도 0)
+ *       — MARKETING/ALL 부서 + MANAGER 이상 (STAFF 는 불가)</li>
+ *   <li>POST /run — 5분 폴러를 즉시 한 번 실행 (ADMIN 전용)</li>
  * </ul>
  *
  * <p>{@code postgres-mart} 프로파일 전용 — 큐 테이블은 마트 환경에만 있다.

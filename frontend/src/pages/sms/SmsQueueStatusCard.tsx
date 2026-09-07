@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useRunQueueNow, useSmsQueueRows, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
 import { useAuthStore } from '@/stores/authStore'
-import { canSystemOp } from '@/stores/auth-session'
+import { canManagerOp, canSystemOp, matchesDepartment } from '@/stores/auth-session'
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
 import { CATEGORY_STYLE, groupByReason } from './smsFailReasonSummary'
 import type { SmsSolapiBalance } from '@/api/sms'
@@ -35,8 +35,8 @@ function addOneDayIso(iso: string): string {
  * <b>표시</b>
  *   · 상태별 카운트 (PENDING · PROCESSING · RECEIVED · DONE · FAILED · CANCELED)
  *   · 기간 완료량 (RECEIVED + DONE) — 아래 조회 범위 안에서
- *   · [실패 재실행] 버튼 → FAILED 재실행 모달
- *   · [지금 실행] 버튼 → 5분 폴러 즉시 트리거
+ *   · [실패·취소 재실행] 버튼 → 재실행 모달 (매니저 이상 상시 노출 · 라벨은 실패/취소 카운트에 따라 3분기)
+ *   · [지금 실행] 버튼 → 5분 폴러 즉시 트리거 (ADMIN 전용)
  *
  * <b>조회 범위</b>
  *   scheduled_at 기준. 로딩 시 오늘 하루가 디폴트. date input 두 개로 관리자가 조정.
@@ -65,9 +65,15 @@ export function SmsQueueStatusCard() {
   const { data, isLoading, isError, refetch, isFetching } = useSmsQueueStatus(range)
   const balanceQuery = useSolapiBalance()
   const runNow = useRunQueueNow()
+  const user = useAuthStore((s) => s.user)
   // [지금 실행] 은 SMS_DISPATCH_ENABLED 우회 트리거라 관리자 전용 — dry-run+override 조합에서
   // 실 발송이 나갈 수 있어 일반 사용자에게는 아예 보이지 않게 한다.
-  const isAdmin = canSystemOp(useAuthStore((s) => s.user))
+  const isAdmin = canSystemOp(user)
+  // [실패·취소 재실행] 은 실무 판단(오래된 취소를 다시 보낼지)이 필요해 매니저 이상에게 상시 노출.
+  // 부서 gate 도 함께 본다 — 백엔드 매처 "(DEPT_MARKETING or DEPT_ALL) and MANAGER↑" 와 대칭.
+  // SMS 페이지 자체가 MARKETING 전용이라 실질적으로 여기서 새로 걸리는 케이스는 없지만,
+  // 방어적으로 조건을 명시해 두면 페이지 게이팅이 바뀌어도 카드가 오작동하지 않는다.
+  const canRerun = canManagerOp(user) && matchesDepartment(user, ['MARKETING'])
 
   const counts = (data?.counts ?? {}) as Partial<Record<'PENDING' | 'PROCESSING' | 'RECEIVED' | 'DONE' | 'FAILED' | 'CANCELED', number>>
   const pending = counts.PENDING ?? 0
@@ -113,7 +119,7 @@ export function SmsQueueStatusCard() {
               <AlertCircle className="h-3 w-3" />실패 {failed}
             </span>
           )}
-          {/* 사유 Top 3 — 관측용이라 클릭 이벤트 없음. 실패 세부는 [실패 재실행] 모달에서. */}
+          {/* 사유 Top 3 — 관측용이라 클릭 이벤트 없음. 실패 세부는 [실패·취소 재실행] 모달에서. */}
           {failed > 0 && reasonTop.length > 0 && (
             <span className="flex flex-wrap items-center gap-1">
               <span className="text-[10px] font-medium text-gray-400">Top</span>
@@ -189,20 +195,24 @@ export function SmsQueueStatusCard() {
                   <RefreshCw className={`mr-1 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
                   새로고침
                 </Button>
-                {isAdmin && (failed > 0 || canceled > 0) && (
+                {canRerun && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="text-red-600 hover:bg-red-50 hover:text-red-700"
                     onClick={() => setFailedOpen(true)}
-                    title="실패·취소된 큐를 재실행 대기열에 넣습니다. (관리자 전용)"
+                    title="실패·취소된 큐를 재실행 대기열에 넣습니다. (매니저 이상)"
                   >
-                    {failed > 0 && canceled > 0 ? '실패·취소 재실행' : failed > 0 ? '실패 재실행' : '취소 재실행'}
+                    {failed > 0 && canceled > 0
+                      ? '실패·취소 재실행'
+                      : failed > 0
+                        ? '실패 재실행'
+                        : '취소 재실행'}
                     <span
-                      aria-label="관리자 전용"
+                      aria-label="매니저 이상"
                       className="ml-1.5 rounded border border-amber-200 bg-amber-50 px-1 py-0 text-[9px] font-semibold uppercase tracking-wide text-amber-700"
                     >
-                      관리자
+                      매니저↑
                     </span>
                   </Button>
                 )}

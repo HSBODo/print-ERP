@@ -302,6 +302,14 @@ export const canSystemOp = (user: Pick<AuthUser, 'role'> | null | undefined): bo
   user?.role === 'ADMIN'
 
 /**
+ * 매니저 이상 (ADMIN·DIRECTOR·MANAGER). STAFF 만 제외.
+ * SMS 큐 [실패·취소 재실행] 처럼 실무 판단이 필요하지만 실 발송·정책 조작은 아닌 액션에 쓴다.
+ * 부서 gate 는 별도 — 이 헬퍼는 롤 축만 본다.
+ */
+export const canManagerOp = (user: Pick<AuthUser, 'role'> | null | undefined): boolean =>
+  user?.role === 'ADMIN' || user?.role === 'DIRECTOR' || user?.role === 'MANAGER'
+
+/**
  * 부서 gate 통과 판정. ADMIN·DIRECTOR (department='ALL') 는 항상 통과.
  * MANAGER·STAFF 는 자기 부서가 태그 배열에 포함돼야 통과.
  * 태그 배열이 비어 있으면 페이지에 부서 스코프가 없음 → 항상 통과.
