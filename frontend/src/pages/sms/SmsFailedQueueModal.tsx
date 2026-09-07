@@ -166,7 +166,7 @@ export function SmsFailedQueueModal({
             </p>
           )}
           {!isLoading && !isError && rows.length > 0 && (
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full border-collapse whitespace-nowrap text-xs">
               <thead className="sticky top-0 bg-gray-50 text-gray-500">
                 <tr className="border-b">
                   <th className="w-8 px-3 py-2">
