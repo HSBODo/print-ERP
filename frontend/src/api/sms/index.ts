@@ -195,6 +195,12 @@ const queueRowSchema = z.object({
   lastError: z.string().nullish(),
   pickedAt: z.string().nullish(),
   processedAt: z.string().nullish(),
+  // 대상 조인 결과 — 실패·취소 재실행 모달이 대상 식별에 쓴다.
+  // 옛 큐(대상 삭제)면 null. 큐 상태 카드 등 대상 없이도 되는 경로에서는 무시.
+  chartNo: z.string().nullish(),
+  name: z.string().nullish(),
+  phone: z.string().nullish(),
+  surgeryDate: z.string().nullish(),
 })
 
 const queueStatusResponseSchema = z.object({

@@ -13,6 +13,7 @@ import { SmsOptOutModal } from './SmsOptOutModal'
 import { SmsQueueStatusCard } from './SmsQueueStatusCard'
 import { SmsMessagePreview } from './SmsMessagePreview'
 import { SmsPagination } from './SmsPagination'
+import { formatPhone } from '@/utils/phone'
 import {
   DELIVERY_GRACE_MINUTES, GROUP_META, OP_TYPE_META, isHeld,
   compareSortValue, getSortValue, groupHelpOf, groupOf, matchesStatusFilter, stampMinutesAgo, offsetOf, targetStateOf, tierCellOf, todayIso, toMonthEnd, toMonthStart, toMonthValue,
@@ -134,12 +135,16 @@ export function SmsManagementPage() {
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase()
+    // 하이픈이 섞인 번호 검색(예: 010-1234)도 저장 형식(01012345678) 과 매칭되게 한다.
+    const qDigits = q.replace(/\D/g, '')
     return targets.filter((t) => {
       // 필터는 묶음으로 건다 — 표시 문구는 '2차 미도달'처럼 세분돼도 탭은 그대로다.
       if (!matchesStatusFilter(targetStateOf(t, templates, today, graceFrom), statusFilter)) return false
       if (groupFilter && groupOf(templates, t.opType)?.code !== groupFilter) return false
       if (!q) return true
-      return t.name.toLowerCase().includes(q) || t.chartNo.includes(q) || t.phone.includes(q)
+      return t.name.toLowerCase().includes(q)
+        || t.chartNo.includes(q)
+        || (qDigits.length > 0 && t.phone.includes(qDigits))
     })
   }, [targets, templates, today, graceFrom, keyword, statusFilter, groupFilter])
 
@@ -499,14 +504,14 @@ export function SmsManagementPage() {
                           <button
                             type="button"
                             title={t.phoneValid
-                              ? `${t.phone} — 클릭하면 연락처를 수정합니다`
+                              ? `${formatPhone(t.phone)} — 클릭하면 연락처를 수정합니다`
                               : '유효한 휴대폰 번호가 아닙니다. 클릭해 직접 고치거나, CRM 에서 고친 뒤 다시 [조회]하세요.'}
                             onClick={() => setModal({ mode: 'edit', target: t })}
                             className={`w-full whitespace-nowrap text-left underline decoration-dotted underline-offset-2 transition-colors hover:text-blue-600 ${
                               t.phoneValid ? 'text-gray-800 decoration-gray-300' : 'text-red-500 decoration-red-300'
                             }`}
                           >
-                            {t.phone || '번호 없음'}
+                            {formatPhone(t.phone) || '번호 없음'}
                           </button>
                         </td>
                         <td className={`${TD} whitespace-nowrap`} title={t.surgeryType}>

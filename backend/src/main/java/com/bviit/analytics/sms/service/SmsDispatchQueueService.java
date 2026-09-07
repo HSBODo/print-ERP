@@ -360,6 +360,23 @@ public class SmsDispatchQueueService {
         return findByStatus(status, limit, null, null);
     }
 
+    /**
+     * {@link #findByStatus} 결과에 target 정보(차트번호·이름·연락처·수술일) 를 붙여 반환한다.
+     * 실패 재실행 모달이 대상을 알아볼 수 있게 하려는 것 — 대상이 삭제된 옛 큐는 그 칸이 null.
+     */
+    @Transactional(readOnly = true)
+    public List<com.bviit.analytics.sms.dto.SmsQueueRow> findByStatusEnriched(
+            String status, int limit, LocalDateTime from, LocalDateTime to) {
+        List<SmsDispatchQueue> rows = findByStatus(status, limit, from, to);
+        if (rows.isEmpty()) return List.of();
+        Set<Long> targetIds = rows.stream().map(SmsDispatchQueue::getTargetId).collect(Collectors.toSet());
+        Map<Long, SmsTarget> targetById = targetRepository.findAllById(targetIds).stream()
+                .collect(Collectors.toMap(SmsTarget::getId, t -> t));
+        return rows.stream()
+                .map(row -> com.bviit.analytics.sms.dto.SmsQueueRow.from(row, targetById.get(row.getTargetId())))
+                .toList();
+    }
+
     /* ── 산식 helper ─────────────────────────────────────── */
 
     /** 대상+차수 → 발송 예정 LocalDateTime (기준일 + offset days at timeOf(tier)). */

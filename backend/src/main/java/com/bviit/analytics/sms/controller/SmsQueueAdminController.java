@@ -88,10 +88,8 @@ public class SmsQueueAdminController {
         int cappedLimit = Math.min(Math.max(limit, 1), 500);
         LocalDateTime fromDt = from == null ? null : from.atStartOfDay();
         LocalDateTime toDt = to == null ? null : to.atStartOfDay();
-        List<SmsQueueRow> rows = queueService
-                .findByStatus(status.toUpperCase(), cappedLimit, fromDt, toDt).stream()
-                .map(SmsQueueRow::from)
-                .toList();
+        // enriched — 재실행 모달이 차트번호·이름·연락처·수술일까지 함께 표시하도록 target 조인.
+        List<SmsQueueRow> rows = queueService.findByStatusEnriched(status.toUpperCase(), cappedLimit, fromDt, toDt);
         return ResponseEntity.ok(ApiResponse.ok(rows));
     }
 

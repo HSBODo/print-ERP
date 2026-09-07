@@ -3,6 +3,7 @@ import { RefreshCw, RotateCcw, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useRetryQueueRows, useSmsQueueRows } from '@/hooks/sms/useSmsQueue'
+import { formatPhone } from '@/utils/phone'
 import {
   CATEGORY_STYLE, categorize, groupByReason, type ReasonCategory,
 } from './smsFailReasonSummary'
@@ -176,7 +177,10 @@ export function SmsFailedQueueModal({
                       aria-label="전체 선택"
                     />
                   </th>
-                  <th className="px-3 py-2 text-left font-medium">대상 ID</th>
+                  <th className="px-3 py-2 text-left font-medium">차트번호</th>
+                  <th className="px-3 py-2 text-left font-medium">이름</th>
+                  <th className="px-3 py-2 text-left font-medium">연락처</th>
+                  <th className="px-3 py-2 text-left font-medium">수술일</th>
                   <th className="px-3 py-2 text-left font-medium">차수</th>
                   <th className="px-3 py-2 text-left font-medium">예정 시각</th>
                   <th className="px-3 py-2 text-left font-medium">종류</th>
@@ -195,8 +199,11 @@ export function SmsFailedQueueModal({
                         aria-label={`행 ${row.id} 선택`}
                       />
                     </td>
-                    <td className="px-3 py-2 tabular-nums text-gray-900">{row.targetId}</td>
-                    <td className="px-3 py-2 font-medium text-gray-700">{row.templateCode}</td>
+                    <td className="px-3 py-2 tabular-nums text-gray-900">{row.chartNo || '-'}</td>
+                    <td className="px-3 py-2 text-gray-900">{row.name || '-'}</td>
+                    <td className="px-3 py-2 tabular-nums text-gray-700">{formatPhone(row.phone) || '-'}</td>
+                    <td className="px-3 py-2 tabular-nums text-gray-700">{row.surgeryDate || '-'}</td>
+                    <td className="px-3 py-2 font-medium text-gray-700">{tierLabel(row.templateCode)}</td>
                     <td className="px-3 py-2 tabular-nums text-gray-700">
                       {row.scheduledAt.replace('T', ' ').slice(0, 16)}
                     </td>
@@ -236,4 +243,10 @@ export function SmsFailedQueueModal({
       </div>
     </div>
   )
+}
+
+/** 백엔드 templateCode(T1/T2/T3) → 화면 라벨(1차·2차·3차). 알 수 없는 값은 원본 유지. */
+const tierLabel = (code: string): string => {
+  const m = /^T([0-9]+)$/.exec(code)
+  return m ? `${m[1]}차` : code
 }
