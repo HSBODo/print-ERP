@@ -121,6 +121,7 @@ class AuthSecurityIntegrationTest {
         for (String path : new String[]{
                 "/accounting/medical-receipts",
                 "/accounting/vision-revenue",
+                "/accounting/vision-revenue-summary",
                 "/accounting/vision-revenue-chart",
                 "/accounting/medical-revenue-chart"
         }) {

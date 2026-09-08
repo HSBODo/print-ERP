@@ -61,6 +61,7 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     for (const id of [
       'accounting-medical',
       'accounting-vision',
+      'accounting-vision-summary',
       'accounting-vision-chart',
       'accounting-medical-chart',
     ]) {

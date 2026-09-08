@@ -44,6 +44,7 @@ describe('navigation menu', () => {
     expect(paths).toContain('/stats/eoeis-checkup')
     expect(paths).toContain('/accounting/medical-receipts')
     expect(paths).toContain('/accounting/vision-revenue')
+    expect(paths).toContain('/accounting/vision-revenue-summary')
     expect(paths).toContain('/accounting/vision-revenue-chart')
     expect(paths).toContain('/accounting/medical-revenue-chart')
   })

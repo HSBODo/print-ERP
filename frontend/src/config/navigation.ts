@@ -90,6 +90,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'unit-price': 'pending',
   'accounting-medical': 'frontend-only',
   'accounting-vision': 'frontend-only',
+  'accounting-vision-summary': 'frontend-only',
   'accounting-vision-chart': 'frontend-only',
   'accounting-medical-chart': 'frontend-only',
   'dreamlens-revenue': 'complete',
@@ -129,6 +130,7 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'surgery',
   'accounting-medical',
   'accounting-vision',
+  'accounting-vision-summary',
   'accounting-vision-chart',
   'accounting-medical-chart',
 ])
@@ -333,7 +335,7 @@ const rawMenuItems: MenuItem[] = [
     adminOnly: true,
     children: kids(
       'accounting-medical', 'accounting-vision',
-      'accounting-vision-chart', 'accounting-medical-chart',
+      'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart',
     ),
   },
   {

@@ -378,11 +378,20 @@ export const statsPages: StatsPageDefinition[] = [
   ),
   statsPage(
     'accounting-vision',
-    '시력교정 매출',
+    '시력교정 매출 내역',
     '/accounting/vision-revenue',
     'accounting-section',
     '회계',
     'SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/vision-receipts'
+  ),
+  statsPage(
+    'accounting-vision-summary',
+    '시력교정 매출 집계',
+    '/accounting/vision-revenue-summary',
+    'accounting-section',
+    '회계',
+    'SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
     '/api/accounting/vision-receipts'
   ),
   statsPage(

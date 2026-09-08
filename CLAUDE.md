@@ -127,7 +127,7 @@ project-root/
 - 통계 전용 페이지 25종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
-- 회계 프런트 미리보기 4종 (진료 수납·시력교정 매출 원장 및 월별 그래프, 합성 목업 데이터/API 전환 계약)
+- 회계 프런트 미리보기 5종 (진료 수납·시력교정 매출 원장·매출 집계 및 월별 그래프, 합성 목업 데이터/API 전환 계약)
 
 ### 미구현 (플레이스홀더)
 
@@ -173,7 +173,8 @@ project-root/
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
 | unit-price | 객단가 | /stats/unit-price | 객단가 | 미구현 |
 | accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 프런트 전용 (합성 목업) |
-| accounting-vision | 시력교정 매출 | /accounting/vision-revenue | 회계 | 프런트 전용 (합성 목업) |
+| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 프런트 전용 (합성 목업) |
+| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 프런트 전용 (합성 목업) |
 | accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 프런트 전용 (합성 목업) |
 | accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 프런트 전용 (합성 목업) |
 | dreamlens-revenue | 드림렌즈 장부 | /stats/dreamlens-revenue | 기타 | 완료 (**직접 입력 테이블** · `dreamlens_ledger` JPA CRUD · `/api/dreamlens-ledger`) |

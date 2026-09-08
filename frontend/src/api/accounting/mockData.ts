@@ -70,7 +70,7 @@ export interface VisionReceipt {
 }
 
 export const VISION_ITEM_KEYS = [
-  '검사비', '수술', 'DNA', 'PRP', 'PIOL렌즈주문', 'D/L', 'D/L용품', 'H/L',
+  '검사비', '수술', '선결제', 'DNA', 'PRP', 'PIOL렌즈주문', 'D/L', 'D/L용품', 'H/L',
   '올코드라이아이', '올코어아레즈투', '올코어vitc', 'Dr.PNT', '올코어유산균',
   '글라우포뮬러', '플로터포뮬러', '기타', '미분류',
 ] as const

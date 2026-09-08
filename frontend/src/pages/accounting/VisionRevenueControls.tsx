@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react'
 import type { AccountingFilterState } from './accountingTypes'
+import { monthRange, weeksOfMonth } from './accountingPeriod'
 
 export interface VisionExtraFilters {
   category: string
@@ -19,31 +20,7 @@ interface ToolbarProps {
   onCsv: () => void
 }
 
-const iso = (date: Date) => {
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-const monthRange = (month: string) => {
-  const [year, monthNo] = month.split('-').map(Number)
-  return { from: `${month}-01`, to: iso(new Date(year, monthNo, 0)) }
-}
-
-const weeksOfMonth = (month: string) => {
-  const [year, monthNo] = month.split('-').map(Number)
-  const first = new Date(year, monthNo - 1, 1)
-  first.setDate(first.getDate() - ((first.getDay() + 6) % 7))
-  const last = new Date(year, monthNo, 0)
-  const weeks: Array<{ from: string; to: string; label: string }> = []
-  for (const monday = first; monday <= last; monday.setDate(monday.getDate() + 7)) {
-    const sunday = new Date(monday)
-    sunday.setDate(sunday.getDate() + 6)
-    weeks.push({ from: iso(monday), to: iso(sunday), label: `${iso(monday).slice(5)}~${iso(sunday).slice(5)}` })
-  }
-  return weeks
-}
-
-function Segment<T extends string>({ options, value, onChange }: { options: readonly T[]; value: T; onChange: (value: T) => void }) {
+export function Segment<T extends string>({ options, value, onChange }: { options: readonly T[]; value: T; onChange: (value: T) => void }) {
   return (
     <div className="flex h-8 overflow-hidden rounded-md border border-gray-300 bg-white">
       {options.map((option) => <button key={option} type="button" onClick={() => onChange(option)} className={`min-w-11 whitespace-nowrap border-l border-gray-200 px-2.5 text-xs font-medium first:border-l-0 ${value === option ? 'bg-slate-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>{option}</button>)}
@@ -53,7 +30,7 @@ function Segment<T extends string>({ options, value, onChange }: { options: read
 
 type SelectOption = string | { value: string; label: string }
 
-function SelectBox({ label, value, options, width, onChange }: { label: string; value: string; options: SelectOption[]; width: string; onChange: (value: string) => void }) {
+export function SelectBox({ label, value, options, width, onChange }: { label: string; value: string; options: SelectOption[]; width: string; onChange: (value: string) => void }) {
   return (
     <div className="relative flex-none">
       <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className={`${width} h-8 appearance-none rounded-md border border-gray-200 bg-white pl-2.5 pr-8 text-xs text-gray-700 outline-none transition-colors hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100`}>
