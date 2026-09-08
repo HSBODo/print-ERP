@@ -101,10 +101,15 @@ public class SmsDispatchQueueService {
                 }
                 continue;
             }
+            // 과거 예정은 now 로 밀어 화면 표시와 실제 폴링 시각을 일치시킨다.
+            // reschedule()/reset() 은 이미 같은 규칙을 적용하는데 최초 INSERT 만 예외였다 —
+            // 수동 등록→홀딩 해제 시 T1 이 오늘 timeOf(1)(이미 지난 시각)로 저장돼
+            // UI 는 그 시각, 실제 발송은 다음 폴링 시각이 되는 어긋남이 있었다.
+            LocalDateTime scheduledClamped = scheduled.isBefore(now) ? now : scheduled;
             SmsDispatchQueue row = SmsDispatchQueue.builder()
                     .targetId(target.getId())
                     .templateCode("T" + tier)
-                    .scheduledAt(scheduled)
+                    .scheduledAt(scheduledClamped)
                     .kind(kind)
                     .status(SmsDispatchQueue.STATUS_PENDING)
                     .attemptCount(0)
@@ -115,7 +120,7 @@ public class SmsDispatchQueueService {
                 inserted++;
             } catch (org.springframework.dao.DataIntegrityViolationException e) {
                 // 병렬 잡·재실행으로 같은 (target,tier,scheduled_at) 이 이미 있을 때. 조용히 skip.
-                log.debug("큐 중복 skip: target={}, tier={}, scheduled={}", target.getId(), tier, scheduled);
+                log.debug("큐 중복 skip: target={}, tier={}, scheduled={}", target.getId(), tier, scheduledClamped);
             }
         }
         return inserted;
