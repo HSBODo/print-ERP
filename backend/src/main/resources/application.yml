@@ -1,6 +1,6 @@
 spring:
   application:
-    name: analytics
+    name: BNVIIT-ANALYTICS-DASHBOARD
 
   # Local default: run without an external DB
   datasource:

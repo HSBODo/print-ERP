@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,11 +27,16 @@ import java.util.Map;
 public class BatchSlackNotifier {
 
     private final String webhookUrl;
+    private final String appName;
+    private final String serverName;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public BatchSlackNotifier(@Value("${logging.slack.webhook-url:}") String webhookUrl) {
+    public BatchSlackNotifier(@Value("${logging.slack.webhook-url:}") String webhookUrl,
+                              Environment environment) {
         this.webhookUrl = webhookUrl;
+        this.appName = environment.getProperty("spring.application.name", "app");
+        this.serverName = resolveServerName(environment);
     }
 
     public void notifySuccess(String jobName, BatchRunLog.RunType type, LocalDate from, LocalDate to,
@@ -43,9 +49,10 @@ public class BatchSlackNotifier {
                         .orElse("");
         String text = String.format(
                 "✅ *배치 성공*  `%s`%n" +
+                "• 서비스명: `%s`  •  서버: `%s`%n" +
                 "• Type: `%s`  •  Range: `%s ~ %s`  •  Elapsed: `%s`%n" +
                 "*Tables*%n%s",
-                jobName, type, from, to, formatDuration(elapsed), statsText);
+                jobName, appName, serverName, type, from, to, formatDuration(elapsed), statsText);
         send(text, "good");
     }
 
@@ -53,9 +60,10 @@ public class BatchSlackNotifier {
                               String errorMessage, Duration elapsed) {
         String text = String.format(
                 "❌ *배치 실패*  `%s`%n" +
+                "• 서비스명: `%s`  •  서버: `%s`%n" +
                 "• Type: `%s`  •  Range: `%s ~ %s`  •  Elapsed: `%s`%n" +
                 "*Error*%n```%s```",
-                jobName, type, from, to, formatDuration(elapsed), truncate(errorMessage, 800));
+                jobName, appName, serverName, type, from, to, formatDuration(elapsed), truncate(errorMessage, 800));
         send(text, "danger");
     }
 
@@ -64,8 +72,22 @@ public class BatchSlackNotifier {
      * 예: SMS 자동발송 FAILED 큐 누적이 임계치 초과 (관리자 개입 필요).
      */
     public void notifyWarning(String title, String body) {
-        String text = String.format("⚠️ *%s*%n%s", title, body);
+        String text = String.format(
+                "⚠️ *%s*%n" +
+                "• 서비스명: `%s`  •  서버: `%s`%n" +
+                "%s",
+                title, appName, serverName, body);
         send(text, "warning");
+    }
+
+    private static String resolveServerName(Environment environment) {
+        String[] profiles = environment.getActiveProfiles();
+        if (profiles == null || profiles.length == 0) {
+            profiles = environment.getDefaultProfiles();
+        }
+        return (profiles == null || profiles.length == 0)
+                ? "default"
+                : String.join(",", profiles);
     }
 
     private void send(String text, String color) {
