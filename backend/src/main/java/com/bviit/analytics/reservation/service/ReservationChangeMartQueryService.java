@@ -1,5 +1,6 @@
 package com.bviit.analytics.reservation.service;
 
+import com.bviit.analytics.reservation.dto.ReservationChangeDailyResult;
 import com.bviit.analytics.reservation.dto.ReservationChangeResult;
 import com.bviit.analytics.reservation.repository.ReservationChangeMartRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,13 @@ public class ReservationChangeMartQueryService implements ReservationChangeReade
     @Transactional(readOnly = true)
     public ReservationChangeResult getReservationChanges(String from, String to) {
         return new ReservationChangeResult(martRepository.findByRegisteredRange(from, to));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReservationChangeDailyResult getDailyCounts(String from, String to) {
+        return new ReservationChangeDailyResult(
+                martRepository.findDailyByRegistered(from, to),
+                martRepository.findDailyByReserveDate(from, to));
     }
 }

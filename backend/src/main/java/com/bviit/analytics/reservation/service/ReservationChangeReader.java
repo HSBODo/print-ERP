@@ -1,5 +1,6 @@
 package com.bviit.analytics.reservation.service;
 
+import com.bviit.analytics.reservation.dto.ReservationChangeDailyResult;
 import com.bviit.analytics.reservation.dto.ReservationChangeResult;
 
 /**
@@ -8,4 +9,7 @@ import com.bviit.analytics.reservation.dto.ReservationChangeResult;
  */
 public interface ReservationChangeReader {
     ReservationChangeResult getReservationChanges(String from, String to);
+
+    /** 추이 달력 — 일별 등록·변경 건수(등록일 기준 + 예약일 기준). */
+    ReservationChangeDailyResult getDailyCounts(String from, String to);
 }

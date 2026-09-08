@@ -69,6 +69,13 @@ for (const [label, days] of Object.entries(HOLIDAYS)) {
 }
 export const holidayLabel = (date: string) => holidayMap.get(date) ?? ''
 
+const holidayDays = new Map<string, string>()
+for (const [label, days] of Object.entries(HOLIDAYS)) {
+  for (const day of days) holidayDays.set(day, label)
+}
+/** 명절 당일이면 라벨(구정·추석은 당일 하루, 신정은 1/1). 창(±5일)은 holidayLabel 이 담당. */
+export const holidayDayLabel = (date: string) => holidayDays.get(date) ?? ''
+
 /* ── 필터 · 정렬 ── */
 export type ChangeSort = 'date' | 'asof' | 'chg'
 export interface ChangeFilters {

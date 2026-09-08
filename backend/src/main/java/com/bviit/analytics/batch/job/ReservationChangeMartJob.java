@@ -24,7 +24,8 @@ import java.util.Map;
  *
  * <p>초기 백필(2022-01~)은 관리자 수동 실행을 월 단위로 나눠 돌린다 — 한 번에 4년치를 읽으면 MSSQL 조회가 길다.
  *
- * <p>변경이 없는 예약(체인 1개)은 마트에 싣지 않는다 — 화면이 "변경된 예약" 목록이라서다.
+ * <p>변경이 없는 예약(체인 1개)도 change_count=0 으로 싣는다 — 추이 달력의 등록 건수·변경률 분모.
+ * 변경 상세 API 는 change_count ≥ 1 만 돌려준다.
  * BatchOrchestrator 의 RESERVATION 도메인 안에서 ReservationMartJob 뒤에 실행된다.
  */
 @Slf4j
@@ -60,7 +61,7 @@ public class ReservationChangeMartJob {
                     }
                 }
             }
-            ReservationChangeChainBuilder.build(source).ifPresentOrElse(buffer::add, () -> skipped[0]++);
+            ReservationChangeChainBuilder.build(source).ifPresentOrElse(buffer::add, () -> skipped[0]++); // skipped = 유효 예약일 없음
             if (buffer.size() >= FLUSH_SIZE) {
                 upserted[0] += writer.upsert(new ArrayList<>(buffer));
                 buffer.clear();
@@ -70,7 +71,7 @@ public class ReservationChangeMartJob {
 
         successLogRepository.upsert(MART_NAME, to);
 
-        log.info("ReservationChangeMartJob done: reservations={} changed(upserted)={} unchanged(skipped)={} unreadableHistoryTime={}",
+        log.info("ReservationChangeMartJob done: reservations={} upserted={} skipped(no valid date)={} unreadableHistoryTime={}",
                 reservations, upserted[0], skipped[0], unreadableTime[0]);
         return Map.of("list_reservation_change", upserted[0]);
     }

@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Download, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { useReservationChange } from '@/hooks/reservation/useReservationChange'
+import { useReservationChange, useReservationChangeDaily } from '@/hooks/reservation/useReservationChange'
+import { ReservationChangeCalendar } from './reservation-change/ReservationChangeCalendar'
 import { ReservationChangeDetailTable } from './reservation-change/ReservationChangeDetailTable'
 import { downloadReservationChangeCsv } from './reservation-change/reservationChangeCsv'
-import { buildViews, changeColumnCount, type ChangeFilters, type ChangeSort } from './reservation-change/reservationChangeModel'
+import { BASIS_LABEL, METRIC_LABEL, buildCalendar, calendarRange, shiftMonth, type CalendarBasis, type CalendarMetric } from './reservation-change/reservationChangeCalendarModel'
+import { BRANCH_LABEL, buildViews, changeColumnCount, type ChangeFilters, type ChangeSort } from './reservation-change/reservationChangeModel'
 
 /**
  * 예약 변경이력 — 검사예약(시력교정·드림렌즈·백내장)의 예약일이 언제, 어떻게 바뀌었는지.
- * 탭 ① 변경 상세(이 파일) · 탭 ② 추이 그래프(달력 형태로 예정 — 자리만 둔다).
- * 서버 조회는 등록 연도(또는 전체) 범위 하나. 나머지 필터는 [조회] 로 클라이언트에서 적용한다.
+ * 탭 ① 변경 상세: 등록 연도(또는 전체) 범위 하나를 서버에서 받고 나머지 필터는 [조회] 로 클라이언트 적용.
+ * 탭 ② 추이 달력: 선택 월 + 다음 달 두 장을 세로로 — 일별 등록·변경·변경률(등록일/예약일 기준). 기획서 §6 추이 그래프의 달력판.
  */
 
 const DATA_FROM_YEAR = 2022
@@ -21,12 +23,14 @@ const todayIso = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 const currentYear = () => String(new Date().getFullYear())
+const currentMonth = () => todayIso().slice(0, 7)
+const monthLabel = (ym: string) => `${ym.slice(0, 4)}년 ${Number(ym.slice(5))}월`
 const yearOptions = () => Array.from({ length: Number(currentYear()) - DATA_FROM_YEAR + 1 }, (_, i) => String(DATA_FROM_YEAR + i))
 
 interface Draft extends ChangeFilters { year: string }
 const DEFAULT_DRAFT: Draft = { year: currentYear(), month: '', asOf: '', branch: '', state: '', minChanges: 1, sort: 'date', keyword: '' }
 
-/** 조회 범위(등록일) — 연도 하나 또는 2022-01-01~오늘 */
+/** 변경 상세 조회 범위(등록일) — 연도 하나 또는 2022-01-01~오늘 */
 const rangeOf = (year: string) => {
   const today = todayIso()
   if (!year) return { from: `${DATA_FROM_YEAR}-01-01`, to: today }
@@ -35,6 +39,7 @@ const rangeOf = (year: string) => {
 }
 
 const SELECT = 'h-8 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs text-gray-700 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+const BRANCH_OPTIONS = [{ value: '', label: '전체' }, ...Object.entries(BRANCH_LABEL).map(([value, label]) => ({ value, label }))]
 
 function SelectBox<T extends string | number>({ label, value, options, onChange, width = 'w-[7.5rem]' }: {
   label: string; value: T; options: { value: T; label: string }[]; onChange: (v: string) => void; width?: string
@@ -49,17 +54,37 @@ function SelectBox<T extends string | number>({ label, value, options, onChange,
   )
 }
 
+function Segment<T extends string>({ options, value, onChange }: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
+      {options.map((o) => (
+        <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}
+          className={`whitespace-nowrap border-l border-border/70 px-2.5 text-xs font-medium transition-colors first:border-l-0 ${value === o.value ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const Stat = ({ label, value, accent }: { label: string; value: string; accent?: string }) => (
+  <div className="flex h-7 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/80 bg-white px-2.5 text-xs text-gray-600">
+    <span>{label}</span>
+    <strong className={`tabular-nums ${accent ?? 'text-gray-900'}`}>{value}</strong>
+  </div>
+)
+
 export function ReservationChangePage() {
-  const [tab, setTab] = useState<'detail' | 'chart'>('detail')
+  const [tab, setTab] = useState<'detail' | 'calendar'>('detail')
+
+  // ── 변경 상세 ──
   const [draft, setDraft] = useState<Draft>(DEFAULT_DRAFT)
   const [applied, setApplied] = useState<Draft>(DEFAULT_DRAFT)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(100)
-
   const { from, to } = useMemo(() => rangeOf(applied.year), [applied.year])
   const { rows, isLoading, isFetching, isError } = useReservationChange(from, to)
   const loading = isLoading || isFetching
-
   const views = useMemo(() => buildViews(rows, applied), [rows, applied])
   const maxChanges = useMemo(() => changeColumnCount(views), [views])
   const pageMax = Math.max(1, Math.ceil(views.length / pageSize))
@@ -79,26 +104,79 @@ export function ReservationChangePage() {
     `예약변경이력_${applied.year || '전체'}${applied.month ? `-${applied.month}` : ''}.csv`, views, applied.asOf,
   )
 
+  // ── 추이 달력 ──
+  const [calMonth, setCalMonth] = useState(currentMonth())
+  const [basis, setBasis] = useState<CalendarBasis>('rsv')
+  const [metric, setMetric] = useState<CalendarMetric>('total')
+  const [calBranch, setCalBranch] = useState('')
+  // 선택 월 + 다음 달 두 장을 세로로 본다 — 두 달 그리드 범위(최대 11주)를 한 번에 조회한다.
+  const calMonths = useMemo(() => [calMonth, shiftMonth(calMonth, 1)], [calMonth])
+  const calRange = useMemo(() => ({ from: calendarRange(calMonths[0]).from, to: calendarRange(calMonths[1]).to }), [calMonths])
+  const daily = useReservationChangeDaily(calRange.from, calRange.to)
+  const calendars = useMemo(() => {
+    const rows = basis === 'reg' ? daily.daily.byRegistered : daily.daily.byReserveDate
+    return calMonths.map((m) => buildCalendar(m, rows, calBranch))
+  }, [calMonths, basis, daily.daily, calBranch])
+  const calLoading = daily.isLoading || daily.isFetching
+
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-2 overflow-hidden text-xs text-gray-800">
       <div className="flex items-center gap-2">
         <div className="inline-flex rounded-lg bg-gray-100 p-0.5">
-          {([['detail', '변경 상세'], ['chart', '추이 그래프']] as const).map(([key, label]) => (
+          {([['detail', '변경 상세'], ['calendar', '추이 달력']] as const).map(([key, label]) => (
             <button key={key} type="button" onClick={() => setTab(key)}
               className={`h-7 rounded-md px-3 text-xs font-semibold transition-colors ${tab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>
               {label}
             </button>
           ))}
         </div>
-        <span className="text-[11px] text-gray-500">검사예약(시력교정·드림렌즈·백내장) 중 예약일이 1회 이상 바뀐 건 · 취소·미내원 포함 · 등록일 {DATA_FROM_YEAR}-01 ~</span>
+        <span className="text-[11px] text-gray-500">
+          {tab === 'detail'
+            ? `검사예약(시력교정·드림렌즈·백내장) 중 예약일이 1회 이상 바뀐 건 · 취소·미내원 포함 · 등록일 ${DATA_FROM_YEAR}-01 ~`
+            : '일별 등록 건수 · 예약일이 바뀐 건수 · 변경률. 예약일 기준은 그 날로 잡혀 있는 예약(미래 달 포함), 등록일 기준은 그 날 등록된 예약. 명절 당일 ±5일은 호박색 테두리.'}
+        </span>
       </div>
 
-      {tab === 'chart' ? (
-        <Card className="flex-1 border-border/70 shadow-sm">
-          <CardContent className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            추이 그래프는 달력 형태로 준비 중입니다. 변경 상세 탭에서 목록과 CSV 를 이용해 주세요.
-          </CardContent>
-        </Card>
+      {tab === 'calendar' ? (
+        <>
+          <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 shadow-sm">
+            <div className="flex h-8 items-center overflow-hidden rounded-md border border-border/80 bg-white">
+              <button type="button" aria-label="이전 달" onClick={() => setCalMonth((m) => shiftMonth(m, -1))} className="h-full px-1.5 text-gray-600 hover:bg-gray-50"><ChevronLeft className="h-4 w-4" /></button>
+              <input type="month" aria-label="달력 월" value={calMonth} min={`${DATA_FROM_YEAR}-01`} onChange={(e) => e.target.value && setCalMonth(e.target.value)}
+                className="h-full border-x border-border/70 px-2 text-xs font-semibold text-gray-800 outline-none" />
+              <button type="button" aria-label="다음 달" onClick={() => setCalMonth((m) => shiftMonth(m, 1))} className="h-full px-1.5 text-gray-600 hover:bg-gray-50"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+            <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => setCalMonth(currentMonth())}>이번 달</Button>
+            <span className="mx-1 h-6 w-px bg-gray-200" />
+            <Segment value={basis} onChange={setBasis} options={(Object.keys(BASIS_LABEL) as CalendarBasis[]).map((v) => ({ value: v, label: BASIS_LABEL[v] }))} />
+            <Segment value={metric} onChange={setMetric} options={(Object.keys(METRIC_LABEL) as CalendarMetric[]).map((v) => ({ value: v, label: METRIC_LABEL[v] }))} />
+            <Segment value={calBranch} onChange={setCalBranch} options={BRANCH_OPTIONS} />
+          </div>
+          <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
+            <CardContent className="flex h-full min-h-0 flex-col px-0">
+              {daily.isError ? (
+                <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">추이 달력 데이터를 불러오지 못했습니다.</div>
+              ) : (
+                <div className="min-h-0 flex-1 overflow-auto rounded-lg">
+                  {calendars.map((calendar) => (
+                    <section key={calendar.yearMonth} className="border-b border-border/60 last:border-b-0">
+                      <div className="flex flex-wrap items-center gap-1.5 px-2 py-1">
+                        <h3 className="mr-1 text-[13px] font-bold text-gray-900">{monthLabel(calendar.yearMonth)}</h3>
+                        <Stat label="등록" value={`${calendar.total.toLocaleString('ko-KR')}건`} accent="text-blue-700" />
+                        <Stat label="변경" value={`${calendar.changed.toLocaleString('ko-KR')}건`} accent="text-red-600" />
+                        <Stat label="변경률" value={calendar.rate === null ? '—' : `${calendar.rate.toFixed(1)}%`} accent="text-violet-700" />
+                        {!calLoading && calendar.total === 0 && (
+                          <span className="text-[11px] text-muted-foreground">집계된 예약이 없습니다 — 마트 적재(관리자 배치 · 예약 변경이력만) 범위를 확인해 주세요.</span>
+                        )}
+                      </div>
+                      <ReservationChangeCalendar view={calendar} metric={metric} loading={calLoading} />
+                    </section>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 shadow-sm">
@@ -139,7 +217,7 @@ export function ReservationChangePage() {
               ) : (
                 <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
                   <ReservationChangeDetailTable views={visible} maxChanges={maxChanges} asOf={applied.asOf} loading={loading}
-                    emptyText={rows.length === 0 ? '조회 범위에 변경된 예약이 없습니다. 마트 적재(예약 도메인 배치) 여부를 확인해 주세요.' : '조건에 맞는 예약이 없습니다.'} />
+                    emptyText={rows.length === 0 ? '조회 범위에 변경된 예약이 없습니다. 마트 적재(관리자 배치 · 예약 변경이력만) 여부를 확인해 주세요.' : '조건에 맞는 예약이 없습니다.'} />
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-2 rounded-b-lg bg-white px-2 py-1.5 text-xs">

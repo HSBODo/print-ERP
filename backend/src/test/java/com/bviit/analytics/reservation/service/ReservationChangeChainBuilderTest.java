@@ -52,13 +52,18 @@ class ReservationChangeChainBuilderTest {
     }
 
     @Test
-    void 변경이_없으면_마트에_싣지_않는다() {
-        assertThat(ReservationChangeChainBuilder.build(source(
+    void 변경이_없어도_changeCount_0_으로_싣고_유효한_예약일이_없으면_버린다() {
+        ReservationChangeRow unchanged = ReservationChangeChainBuilder.build(source(
                 "2606240001000000000001", "2026-07-01", "2026-06-24 09:00",
                 new HistoryStep("2026-06-24 09:00:00", "2026-07-01"),
                 new HistoryStep("2026-06-25 09:00:00", "2026-07-01")
-        ))).isEmpty();
+        )).orElseThrow();
+        assertThat(unchanged.changeCount()).isZero();
+        assertThat(unchanged.changeChain()).isEqualTo("2026-06-24 09:00@2026-07-01");
+        assertThat(unchanged.firstDate()).isEqualTo("2026-07-01");
         assertThat(ReservationChangeChainBuilder.build(source("2606240001000000000001", "", ""))).isEmpty();
+        assertThat(ReservationChangeChainBuilder.build(source("2606240001000000000001", "2026-07-01", "",
+                new HistoryStep("2026-06-24 09:00:00", "")))).isEmpty();
     }
 
     @Test

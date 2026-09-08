@@ -14,4 +14,5 @@ SELECT
   FROM list_reservation_change
  WHERE registered_at >= CAST(:from AS DATE)
    AND registered_at <= CAST(:to   AS DATE)
+   AND change_count >= 1                       -- 변경 상세는 변경된 예약만 (0 은 달력 분모용)
  ORDER BY registered_at, registered_time, reserve_num

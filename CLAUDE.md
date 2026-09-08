@@ -148,7 +148,7 @@ project-root/
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
-| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 완료 (2026-09-08 신규 · RESERVE_HISTORY 체인 → `list_reservation_change` 마트(예약 도메인 배치) · **변경 상세 탭만 구현**, 추이 그래프 탭은 달력 표시 예정) |
+| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 완료 (2026-09-08 신규 · RESERVE_HISTORY 체인 → `list_reservation_change` 마트(배치 도메인 `RESERVATION_CHANGE`, 범위 = 이력 저장 기간) · 변경 상세 탭 + 추이 달력 탭(일별 등록·변경·변경률, 등록일/예약일 기준)) |
 | overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
 | overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
 | exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 (**관리자 전용**) |

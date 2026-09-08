@@ -18,7 +18,8 @@ import java.util.regex.Pattern;
  * <ol>
  *   <li><b>체인</b>: 이력을 저장 순서대로 보며 예약일이 <i>직전 스텝과 달라질 때만</i> 스텝을 추가한다.
  *       A→B→A 는 변경 2회. 예약일이 빈 이력은 건너뛴다.</li>
- *   <li><b>변경 판정</b>: 스텝이 2개 이상이면 "변경된 예약". 1개 이하면 마트에 싣지 않는다(Optional.empty).</li>
+ *   <li><b>변경 판정</b>: 스텝이 2개 이상이면 "변경된 예약"(changeCount ≥ 1). 스텝 1개면 changeCount 0 으로 싣는다 —
+ *       추이 달력의 등록 건수·변경률 분모가 되기 때문. 예약일이 유효한 이력이 하나도 없으면 Optional.empty.</li>
  *   <li><b>등록일 3순위</b>: ① 이력 첫 저장 시각(H) → ② 등록시각 InsertedDateTime(I) → ③ 예약번호 앞 6자리 YYMMDD 채번일(N, 날짜만).</li>
  *   <li><b>최종 예약일</b>: RESERVATION.RESERVE_DATE(현재값). 비어 있으면 마지막 스텝의 예약일.</li>
  * </ol>
@@ -75,7 +76,7 @@ public final class ReservationChangeChainBuilder {
 
     public static Optional<ReservationChangeRow> build(Source source) {
         List<Step> steps = collapse(source.history());
-        if (steps.size() < 2) {
+        if (steps.isEmpty()) {
             return Optional.empty();
         }
 

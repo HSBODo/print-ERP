@@ -116,7 +116,7 @@ project-root/
 | ID | 이름 | 경로 | 섹션 | 상태 |
 |----|------|------|------|------|
 | reservation | 예약 건수 | /stats/reservation | 유입 | 구현됨 (API 연동) |
-| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 구현됨 (RESERVE_HISTORY 체인 → `list_reservation_change` 마트 · 변경 상세 탭만, 추이 그래프 탭은 달력 예정) |
+| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 구현됨 (RESERVE_HISTORY 체인 → `list_reservation_change` 마트 · 변경 상세 탭 + 추이 달력 탭) |
 | examination | 검사 건수 | /stats/examination | 유입 | 플레이스홀더 |
 | consultation-rate | 상담 전환율 | /stats/consultation-rate | 상담 | 플레이스홀더 |
 | surgery | 수술 건수 | /stats/surgery | 수술 | 플레이스홀더 |

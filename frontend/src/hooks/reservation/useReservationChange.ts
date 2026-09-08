@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { reservationChangeApi, type ReservationChangeItem } from '@/api/reservation/reservationChange'
+import { reservationChangeApi, type ReservationChangeDailyResult, type ReservationChangeItem } from '@/api/reservation/reservationChange'
 
 /**
  * 예약 변경이력 조회 훅. 등록일 범위(from~to)로 서버 조회 — 보통 연도 하나, '연도 전체' 면 2022-01-01~오늘.
@@ -20,4 +20,17 @@ export function useReservationChange(from: string, to: string, enabled = true) {
     isFetching,
     isError,
   }
+}
+
+const EMPTY_DAILY: ReservationChangeDailyResult = { byRegistered: [], byReserveDate: [] }
+
+/** 추이 달력 조회 훅 — 달력 그리드 범위(최대 6주)의 일별 등록·변경 건수. 등록일·예약일 기준을 한 번에 받는다. */
+export function useReservationChangeDaily(from: string, to: string) {
+  const { data, isLoading, isFetching, isError } = useQuery({
+    queryKey: ['reservation-change-daily', from, to],
+    queryFn: () => reservationChangeApi.getDailyCounts(from, to),
+    enabled: Boolean(from && to),
+    staleTime: 5 * 60 * 1000,
+  })
+  return { daily: data ?? EMPTY_DAILY, isLoading, isFetching, isError }
 }
