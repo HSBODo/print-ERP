@@ -45,11 +45,15 @@ public record SurgeryGroup(
             new SurgeryGroup("ICL", "렌즈삽입", List.of("icl", "tIcl", "kpl", "tKpl", "viva"), List.of(3, 7, 14));
 
     /**
-     * TF 범위 밖(백내장·재수술·프레스비욘드 등)과 분류 실패분이 떨어지는 자리.
+     * TF 범위 밖(백내장·재수술 등)과 분류 실패분이 떨어지는 자리.
      *
      * 시점은 스마일과 같게 두되 <b>문구 슬롯은 따로</b>다. 채우지 않으면 이 그룹은
      * '설정 미완료'로 표시되고 발송되지 않는다 — 조용히 남의 문구가 나가는 것보다
      * 안 나가는 편이 안전하다.
+     *
+     * ⚠️ PRESBYOND(노안 레이저) 는 SMS 조회 SQL(select-surgery-targets/by-chart)에서
+     *    '+LE' 유무로 라섹/라식에 흡수 재분류되므로 여기 ETC 로는 오지 않는다.
+     *    자세한 배경: docs/presbyond-reclassification.md
      */
     public static final SurgeryGroup ETC =
             new SurgeryGroup("ETC", "기타", List.of(), List.of(1, 7, 14));

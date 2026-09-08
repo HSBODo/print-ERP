@@ -10,13 +10,24 @@ FROM (
         COALESCE(chart_no, '')              AS "chartNo",
         COALESCE(name, '')                  AS "name",
         COALESCE(surgery_category, '')      AS "surgeryType",
-        COALESCE(
-            surgery_op_type(NULLIF(surgery_r, ''), surgery_category = '백내장'),
-            surgery_op_type(NULLIF(surgery_l, ''), surgery_category = '백내장'),
-            '')                             AS "opType",
+        -- PRESBYOND 는 SMS 발송 판정에서만 '+LE' 유무로 라섹/라식으로 흡수한다
+        -- (select-surgery-targets.sql 과 같은 규칙). 다른 화면·통계는 그대로 presbyond op_type.
+        -- docs/presbyond-reclassification.md
+        CASE
+            WHEN (COALESCE(surgery_r, '') ILIKE '%PRESBYOND%' OR COALESCE(surgery_l, '') ILIKE '%PRESBYOND%')
+                 AND (COALESCE(surgery_r, '') ILIKE '%+LE%' OR COALESCE(surgery_l, '') ILIKE '%+LE%')
+                THEN 'lasek'
+            WHEN COALESCE(surgery_r, '') ILIKE '%PRESBYOND%' OR COALESCE(surgery_l, '') ILIKE '%PRESBYOND%'
+                THEN 'lasik'
+            ELSE COALESCE(
+                surgery_op_type(NULLIF(surgery_r, ''), surgery_category = '백내장'),
+                surgery_op_type(NULLIF(surgery_l, ''), surgery_category = '백내장'),
+                '')
+        END                                 AS "opType",
         COALESCE(surgery_r, '')             AS "surgeryR",
         COALESCE(surgery_l, '')             AS "surgeryL",
-        surgery_date                        AS d,
+        surgery_date                        AS
+        d,
         COALESCE(
             CASE
                 WHEN REPLACE(COALESCE(phone1, ''), '-', '') LIKE '010%' THEN phone1
