@@ -170,6 +170,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/reservation-list-homepage'
   ),
   statsPage(
+    'reservation-change',
+    '예약 변경이력',
+    '/stats/reservation-change',
+    'reservation-group',
+    '예약',
+    '검사예약(시력교정·드림렌즈·백내장)의 예약일이 언제, 어떻게 바뀌었는지 보는 화면입니다. 최초 예약일 → 변경 경로 → 최종 예약일을 등록일 기준으로 조회하고, 기준일을 지정하면 그 시점의 예약일을 재현합니다.',
+    '/api/reservation-change'
+  ),
+  statsPage(
     'exam-list',
     '검사자 리스트',
     '/stats/exam-list',

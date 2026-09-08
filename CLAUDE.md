@@ -25,7 +25,7 @@ project-root/
 │   │   ├── AnalyticsApplication.java
 │   │   ├── auth/                        # 로그인/JWT/사용자 — config(SecurityConfig·JwtUtil·DataInitializer)·controller·service·repository·dto·entity(User)
 │   │   ├── common/                      # 공통 — config·dto(ApiResponse·ErrorResponse)·exception(@RestControllerAdvice)·stats(StatsPanelSupport·StatsRequestValidator·StatsResponseMeta)·util(MonthlyBuckets 등)·web
-│   │   ├── reservation/                 # 예약·예약통계(시력교정/백내장)·스냅샷·진단
+│   │   ├── reservation/                 # 예약·예약통계(시력교정/백내장)·변경이력(RESERVE_HISTORY 체인)·스냅샷·진단
 │   │   ├── exam/                        # 검사 통계·검사자 리스트
 │   │   ├── surgery/                     # 수술 통계·수술자 리스트
 │   │   ├── consultation/                # 전환율·예약률·중단사유
@@ -82,7 +82,7 @@ project-root/
 │   │   ├── pages/                       # 도메인별 폴더 (Login·Dashboard·StatsPlaceholder·pageRegistry만 root)
 │   │   │   ├── pageRegistry.ts          # 도메인 routes.ts 통합 + PROD pending 라우트 차단 정책
 │   │   │   ├── pageRegistry.test.ts     # 라우트 정책 불변식 테스트
-│   │   │   ├── reservation/            # Reservation·ReservationOverall·ReservationList
+│   │   │   ├── reservation/            # Reservation·ReservationOverall·ReservationList·ReservationChange(+reservation-change/)
 │   │   │   ├── exam/                   # ExamList·CataractExamList·Examination(±Vision/Dreamlens)·ProcedureExam
 │   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
 │   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
@@ -135,7 +135,7 @@ project-root/
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 45개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **프런트 전용** 4개 / **미구현(pending)** 12개.
+`statsPages.ts`에 46개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 30개 / **프런트 전용** 4개 / **미구현(pending)** 12개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
@@ -148,6 +148,7 @@ project-root/
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
+| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 완료 (2026-09-08 신규 · RESERVE_HISTORY 체인 → `list_reservation_change` 마트(예약 도메인 배치) · **변경 상세 탭만 구현**, 추이 그래프 탭은 달력 표시 예정) |
 | overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
 | overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
 | exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 (**관리자 전용**) |

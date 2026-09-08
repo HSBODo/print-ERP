@@ -129,7 +129,8 @@ public class SecurityConfig {
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/outpatient-list/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
-                auth.requestMatchers("/api/reservation-list/**", "/api/reservation-list-homepage/**")
+                auth.requestMatchers("/api/reservation-list/**", "/api/reservation-list-homepage/**",
+                                "/api/reservation-change/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/dreamlens-ledger/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");

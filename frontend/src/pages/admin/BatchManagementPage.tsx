@@ -33,6 +33,11 @@ const JOB_OPTIONS: BatchJobOption[] = [
     description: 'mart_reservation_* 관련 잡만 재실행합니다.',
   },
   {
+    value: 'RESERVATION_CHANGE',
+    label: '예약 변경이력만',
+    description: 'list_reservation_change 만 재적재합니다. 기간은 등록일이 아니라 **변경이력이 저장된 기간** — 그 기간에 저장·변경된 예약을 다시 접어 upsert 합니다. 초기 백필(2022~)은 월 단위로 나눠 돌리세요.',
+  },
+  {
     value: 'EXAM',
     label: '검사 도메인만',
     description: 'mart_exam_*·검사 리스트 관련 잡만 재실행합니다.',

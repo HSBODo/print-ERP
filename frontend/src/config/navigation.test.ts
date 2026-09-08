@@ -41,6 +41,7 @@ describe('navigation menu', () => {
     expect(paths).toContain('/report/weekly')
     expect(paths).toContain('/stats/reservation-list')
     expect(paths).toContain('/stats/reservation-overall')
+    expect(paths).toContain('/stats/reservation-change')
     expect(paths).toContain('/stats/eoeis-checkup')
     expect(paths).toContain('/accounting/medical-receipts')
     expect(paths).toContain('/accounting/vision-revenue')

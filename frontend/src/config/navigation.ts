@@ -66,6 +66,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   // 소스(legacy.datasource.url) 미설정 환경에서는 503 — 다른 통계 페이지가 데이터소스 부재 시
   // 503 을 주는 것과 동일한 패턴이라 'complete' 가 맞다(상태는 구현 완료 여부를 뜻한다).
   'reservation-list-homepage': 'complete',
+  'reservation-change': 'complete',
   'exam-list': 'complete',
   'cataract-exam-list': 'complete',
   'all-exam-list': 'complete',
@@ -231,10 +232,10 @@ const rawMenuItems: MenuItem[] = [
         href: '#',
         icon: CalendarCheck,
         kind: 'group',
-        // 예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 순.
+        // 예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 → 예약 변경이력 순.
         children: kids(
           'reservation-list', 'reservation-list-homepage', 'reservation-overall',
-          'reservation-stats-system', 'reservation-stats-cataract',
+          'reservation-stats-system', 'reservation-stats-cataract', 'reservation-change',
         ),
       },
       {

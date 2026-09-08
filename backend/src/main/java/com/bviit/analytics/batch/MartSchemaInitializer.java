@@ -131,6 +131,7 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/sms/tables/V60__sms_opt_out.sql");
         applyScript("sql/mart/sms/tables/V61__sms_offset_config.sql");
         applyScript("sql/mart/sms/tables/V62__sms_dispatch_queue.sql");
+        applyScript("sql/mart/reservation/tables/V63__list_reservation_change.sql");
 
         // functions/ — 뷰에서 참조하므로 뷰 앞에 실행
         applyScript("sql/mart/surgery/functions/V47__surgery_op_type_fn.sql");
