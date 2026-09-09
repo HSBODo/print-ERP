@@ -81,6 +81,10 @@ public class SmsDispatchQueueService {
     }
 
     private int enqueueForTarget(SmsTarget target, LocalDateTime now) {
+        // ETC(문구 미설정 그룹) 는 큐에 심지 않는다 — 어차피 SmsSendService 가 slot 없음으로
+        // SKIPPED 처리하는데, PENDING 으로 남겨두면 폴링마다 재시도되어 로그 소음만 낸다.
+        // 리스트에는 그대로 남고, 프론트가 차수 셀을 "발송 대상 아님" 으로 표시한다.
+        if (SurgeryGroup.of(target.getOpType()) == SurgeryGroup.ETC) return 0;
         // 이미 이 대상에 있는 (template, scheduled_at) 조합을 미리 뽑아서 중복 INSERT 를 피한다.
         Map<String, SmsDispatchQueue> existing = new HashMap<>();
         for (SmsDispatchQueue row : queueRepository.findByTargetIdInOrderByScheduledAtAsc(List.of(target.getId()))) {

@@ -20,10 +20,17 @@ import {
   type SortState, type StatusFilter,
 } from './smsTableModel'
 
-/** 이번달 1일~말일 — 화면 로딩·리셋 시 리스트 조회 디폴트. */
-function currentMonthRange(): { from: string; to: string } {
-  const month = toMonthValue(todayIso())
-  return { from: toMonthStart(month), to: toMonthEnd(month) }
+/**
+ * 오늘 하루 — 화면 로딩·리셋 시 리스트 조회 디폴트.
+ *
+ * 초기 조회 기준은 SCHEDULED(오늘 나갈 예정) + 오늘 하루 조합이다.
+ * 매일 아침 화면을 열자마자 "오늘 나갈 사람"을 확인하는 흐름에 맞춘다.
+ * 수술일(SURGERY) 기준으로 오늘을 보면 마트에 아직 안 실린 대상이 많아 빈 리스트가 되지만,
+ * 예정일 기준이면 어제 이전에 수술한 사람의 오늘 예정 차수가 잡힌다.
+ */
+function todayRange(): { from: string; to: string } {
+  const today = todayIso()
+  return { from: today, to: today }
 }
 import type { SmsQueryBasis, SmsTarget, SmsTargetRequest } from '@/api/sms'
 
@@ -82,14 +89,14 @@ const TH = 'sticky top-0 z-10 whitespace-nowrap border-b border-border/60 bg-gra
 const TD = 'px-1.5 py-1.5'
 
 export function SmsManagementPage() {
-  const [basis, setBasis] = useState<SmsQueryBasis>('SURGERY')
+  const [basis, setBasis] = useState<SmsQueryBasis>('SCHEDULED')
   const [tierFilter, setTierFilter] = useState('')
   // 조회에 실제로 쓰인 기준 — 셀렉트를 바꿔도 [조회] 전까지는 목록이 흔들리지 않게 분리한다.
-  const [queryBasis, setQueryBasis] = useState<{ basis: SmsQueryBasis; tier: string }>({ basis: 'SURGERY', tier: '' })
-  const [periodMode, setPeriodMode] = useState<PeriodMode>('monthly')
-  const [draft, setDraft] = useState(currentMonthRange)
-  const [range, setRange] = useState(currentMonthRange)
-  // 화면에 들어오자마자 이번달 리스트를 자동 조회한다 — 관리자가 매번 [조회] 안 눌러도 되게.
+  const [queryBasis, setQueryBasis] = useState<{ basis: SmsQueryBasis; tier: string }>({ basis: 'SCHEDULED', tier: '' })
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('daily')
+  const [draft, setDraft] = useState(todayRange)
+  const [range, setRange] = useState(todayRange)
+  // 화면에 들어오자마자 오늘 예정 리스트를 자동 조회한다 — 관리자가 매번 [조회] 안 눌러도 되게.
   const [hasSearched, setHasSearched] = useState(true)
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
@@ -235,14 +242,14 @@ export function SmsManagementPage() {
   }
 
   const handleReset = () => {
-    const initial = currentMonthRange()
-    setPeriodMode('monthly')
-    setBasis('SURGERY')
+    const initial = todayRange()
+    setPeriodMode('daily')
+    setBasis('SCHEDULED')
     setTierFilter('')
-    setQueryBasis({ basis: 'SURGERY', tier: '' })
+    setQueryBasis({ basis: 'SCHEDULED', tier: '' })
     setDraft(initial)
     setRange(initial)
-    // 리셋해도 이번달 자동 조회 상태로 되돌린다 — 초기 로딩과 같은 상태.
+    // 리셋해도 오늘 예정 자동 조회 상태로 되돌린다 — 초기 로딩과 같은 상태.
     setHasSearched(true)
     setKeyword('')
     setStatusFilter('전체')
@@ -548,6 +555,16 @@ export function SmsManagementPage() {
                           </span>
                         </td>
                         {templates.map((tpl) => {
+                          // ETC(문구 미설정) 대상은 나갈 수 없으므로 차수 셀도 회색 '—' 로 잠근다 —
+                          // 예정일이 지나면 빨간 '미발송' 으로 뜨던 오해 신호를 없앤다.
+                          if (groupOf(templates, t.opType)?.code === 'ETC') {
+                            return (
+                              <td key={tpl.code} className={`${TD} whitespace-nowrap text-center text-gray-300`}
+                                title="이 수술 종류는 발송 문구가 없어 나가지 않습니다.">
+                                —
+                              </td>
+                            )
+                          }
                           const offsetDays = offsetOf(tpl, t.opType)
                           const cell = tierCellOf(t, offsetDays, tpl.code, today, graceFrom, tierTimeMap[tpl.code])
                           // 오프셋(+1·+3·+5) 배지는 오해 소지가 있어 셀에서 뺐다 — 툴팁에 남긴다.

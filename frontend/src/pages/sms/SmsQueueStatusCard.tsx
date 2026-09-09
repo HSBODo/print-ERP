@@ -169,7 +169,7 @@ export function SmsQueueStatusCard() {
             >
               오늘
             </button>
-            <span className="text-gray-400">· scheduled_at 기준</span>
+            <span className="text-gray-400">· 발송예정일 기준</span>
           </div>
           {isLoading && <p className="py-4 text-center text-xs text-gray-500">불러오는 중…</p>}
           {isError && <p className="py-4 text-center text-xs text-red-600">큐 상태를 불러오지 못했습니다.</p>}

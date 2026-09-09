@@ -66,15 +66,16 @@ describe('수술 분류', () => {
     expect(groupOf([], 'smilePro')).toBeNull()
   })
 
-  it('필터 목록은 데이터 존재 여부와 무관하게 4대 분류(스마일·라식·라섹·렌즈삽입)를 고정 노출한다', () => {
+  it('필터 목록은 데이터 존재 여부와 무관하게 4대 분류(스마일·라식·라섹·렌즈삽입) + 기타를 고정 노출한다', () => {
     // 이번달에 라식이 없다는 이유로 라식 버튼이 사라지면 관리자가 "라식 필터가 왜 없지" 를
-    // 묻는다. 매번 필터가 나타났다 사라지는 화면은 사용법이 흔들린다. ETC(백내장·재수술)는 뺀다.
-    expect(groupOptionsOf(tiers).map((o) => o.label)).toEqual(['스마일', '라식', '라섹', '렌즈삽입'])
+    // 묻는다. 매번 필터가 나타났다 사라지는 화면은 사용법이 흔들린다. 기타(ETC)는 발송되지
+    // 않지만 "누가 분류에서 빠졌나" 확인 창구라 필터에는 남긴다 — 4대 분류 뒤에 붙인다.
+    expect(groupOptionsOf(tiers).map((o) => o.label)).toEqual(['스마일', '라식', '라섹', '렌즈삽입', '기타'])
   })
 
-  it('템플릿을 못 받았어도 4대 분류는 고정으로 낸다', () => {
+  it('템플릿을 못 받았어도 필터 목록은 고정으로 낸다', () => {
     // 로딩 중이거나 서버가 값을 못 준 순간에도 필터 개수·라벨은 흔들리지 않아야 한다.
-    expect(groupOptionsOf([]).map((o) => o.label)).toEqual(['스마일', '라식', '라섹', '렌즈삽입'])
+    expect(groupOptionsOf([]).map((o) => o.label)).toEqual(['스마일', '라식', '라섹', '렌즈삽입', '기타'])
   })
 })
 
@@ -89,7 +90,7 @@ describe('대상 상태 판정', () => {
   it('홀딩은 발송 이력보다 우선한다', () => {
     const state = targetStateOf(target({ status: 'HOLD', logs: [log()] }), tiers, '2026-08-20')
     expect(state.label).toBe('홀딩')
-    expect(state.bucket).toBe('발송 홀딩')
+    expect(state.bucket).toBe('발송 중지')
     expect(state.locked).toBe(false)
   })
 
@@ -101,7 +102,7 @@ describe('대상 상태 판정', () => {
     expect(state.needsCheck).toBe(false)
     // 홀딩 탭과 섞지 않는다 — 홀딩 해제를 누르다 거부한 사람까지 되살리면 안 된다.
     expect(state.bucket).toBe('수신거부')
-    expect(matchesStatusFilter(state, '발송 홀딩')).toBe(false)
+    expect(matchesStatusFilter(state, '발송 중지')).toBe(false)
     expect(matchesStatusFilter(state, '수신거부')).toBe(true)
   })
 
@@ -268,14 +269,20 @@ describe('상태 필터', () => {
     expect(failed.bucket).toBe('발송')
   })
 
-  it('정상 진행 중인 행은 점검 필요에 걸리지 않는다', () => {
+  it('정상 진행·홀딩·수신거부는 점검 필요에 걸리지 않는다', () => {
     const waiting = stateOf(target({ surgeryDate: '2026-08-19', scheduleBase: '2026-08-19' }))
     const held = stateOf(target({ status: 'HOLD' }))
-    const unsendable = stateOf(target({ phoneValid: false }))
     expect(matchesStatusFilter(waiting, '점검 필요')).toBe(false)
-    // 발송 불가는 자기 탭이 따로 있다 — 두 탭에 겹쳐 나오면 건수가 헷갈린다.
-    expect(matchesStatusFilter(unsendable, '점검 필요')).toBe(false)
-    expect(matchesStatusFilter(held, '발송 홀딩')).toBe(true)
+    expect(matchesStatusFilter(held, '점검 필요')).toBe(false)
+    expect(matchesStatusFilter(held, '발송 중지')).toBe(true)
+  })
+
+  it('발송 불가(번호 무효)는 자기 탭과 점검 필요 양쪽에 걸린다', () => {
+    // 매일 여는 창구가 '점검 필요' 하나라 자기 탭에만 두면 CRM 번호 고칠 사람을 계속 놓친다.
+    // 겹치는 카운트 헷갈림보다 놓치는 사고가 크다는 실사용 판단(2026-09-09).
+    const unsendable = stateOf(target({ phoneValid: false }))
+    expect(matchesStatusFilter(unsendable, '점검 필요')).toBe(true)
+    expect(matchesStatusFilter(unsendable, '발송 불가')).toBe(true)
   })
 
   it('전체는 무엇이든 통과시킨다', () => {

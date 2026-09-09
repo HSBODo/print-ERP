@@ -101,17 +101,18 @@ export const groupOf = (templates: SmsTemplate[], opType: string) => {
 }
 
 /**
- * 필터에 노출하는 발송 분류 — 데이터 존재 여부와 무관하게 4개를 **고정 순서**로 낸다.
+ * 필터에 노출하는 발송 분류 — 데이터 존재 여부와 무관하게 **고정 순서**로 낸다.
  *
  * 예전에는 조회 결과에 실제로 있는 분류만 냈지만, 그러면 이번달에 라식 대상이 없다는 이유로
  * 라식 버튼이 사라져 관리자가 "라식 필터가 왜 없지?" 를 물어야 한다. 매번 필터가 나타났다
- * 사라졌다 하면 화면 사용법이 흔들린다. 항상 4개를 놓아 "그 달엔 없다"를 클릭으로 확인할 수 있게 한다.
+ * 사라졌다 하면 화면 사용법이 흔들린다. 항상 같은 버튼을 놓아 "그 달엔 없다"를 클릭으로 확인할 수 있게 한다.
  *
- * ETC(백내장·재수술)는 필터에 두지 않는다 — 이 화면 목적은 시력교정 4대 분류 점검이라,
- * 백내장까지 필터를 두면 목록이 길어진다. label 은 GROUP_META 를 정본으로 쓴다.
+ * ETC(백내장·재수술 등 4대 분류에 안 잡힌 것)는 발송되지 않지만 필터에는 둔다 —
+ * 관리자가 "누가 기타로 빠졌나" 확인하는 창구이기 때문. 4대 분류 뒤에 붙여 시력교정 흐름을
+ * 먼저 훑고 마지막에 예외를 훑는 읽기 순서를 유지한다. label 은 GROUP_META 를 정본으로 쓴다.
  */
 export const groupOptionsOf = (templates: SmsTemplate[]) => {
-  const orderedCodes = ['SMILE', 'LASIK', 'LASEK', 'ICL'] as const
+  const orderedCodes = ['SMILE', 'LASIK', 'LASEK', 'ICL', 'ETC'] as const
   const groupMap = new Map((templates[0]?.groups ?? []).map((g) => [g.groupCode, g]))
   return orderedCodes.map((code) => {
     const g = groupMap.get(code)
@@ -153,8 +154,15 @@ export const isHeld = (t: SmsTarget) => t.status !== 'SENDABLE'
  * `점검 필요`(needsCheck) 하나만 더 둔다.
  */
 export const STATE_UNSENDABLE = '발송 불가'
+/**
+ * ETC(문구 미설정 그룹) 대상 표시 — "번호를 고치면 나갈 수 있다" 는 발송 불가와 성격이 다르다.
+ * 이 사람은 수술 종류가 4대 분류에 안 잡혀 **애초에 나갈 문구가 없다**. 관리자가
+ * "누가 분류에서 빠졌나" 확인하는 창구로 리스트에는 남기되, 미발송 빨강으로 오해되지 않게
+ * 회색 배지로 분리한다. 큐에도 심지 않는다(백엔드 enqueueForTarget 조기 스킵).
+ */
+export const STATE_NO_TEMPLATE = '발송 대상 아님'
 
-export type StatusBucket = '발송 대기' | '발송' | '발송 홀딩' | '수신거부' | typeof STATE_UNSENDABLE
+export type StatusBucket = '발송 대기' | '발송' | '발송 중지' | '수신거부' | typeof STATE_UNSENDABLE | typeof STATE_NO_TEMPLATE
 
 export type TargetState = {
   /** 표에 찍는 문구. 예 '대기' · '2차 대기' · '1차 실패' · '완료' */
@@ -162,9 +170,14 @@ export type TargetState = {
   /** 상태 필터가 세는 묶음 — 전과 같은 4분류. */
   bucket: StatusBucket
   /**
-   * 사람이 손봐야 하는 행(실패·미발송·미도달) — 표에서 빨강·오렌지로 찍히는 것들.
-   * 이 셋은 서로 다른 묶음에 흩어져 있어 bucket 으로는 한 번에 못 모은다.
-   * (발송 불가는 자기 탭이 따로 있어 여기 넣지 않는다 — 두 탭에 겹쳐 나오면 헷갈린다.)
+   * 사람이 손봐야 하는 행 — 실패·미발송·미도달(차수 셀 신호) + 발송 불가(번호 무효).
+   * 이들은 서로 다른 묶음에 흩어져 있어 bucket 으로는 한 번에 못 모은다.
+   *
+   * 발송 불가는 자기 탭('발송 불가')도 있지만 여기에도 함께 넣는다 —
+   * 매일 여는 창구가 '점검 필요' 하나라 자기 탭에만 두면 CRM 번호 고칠 사람을
+   * 계속 놓친다(2026-09-09 실사용 확인). 겹치는 카운트 헷갈림보다 놓치는 사고가 크다.
+   *
+   * 수신거부·홀딩·발송 대상 아님(ETC)·접수·예정·완료는 매일 조치할 성격이 아니라 뺀다.
    */
   needsCheck: boolean
   className: string
@@ -176,6 +189,7 @@ export type TargetState = {
 const STATE_STYLE = {
   optOut:     'bg-slate-200 text-slate-700',
   unsendable: 'bg-red-50 text-red-600',
+  noTemplate: 'bg-slate-100 text-slate-500',
   hold:       'bg-amber-50 text-amber-700 hover:bg-amber-100',
   alert:      'bg-red-50 text-red-600 hover:bg-red-100',
   undelivered:'bg-orange-50 text-orange-600 hover:bg-orange-100',
@@ -197,14 +211,26 @@ export const targetStateOf = (
     }
   }
   if (!t.phoneValid) {
+    // 발송 불가('발송 불가' 탭이 따로 있음)도 **점검 필요에 함께 넣는다** —
+    // 매일 여는 창구가 '점검 필요' 하나뿐인데 여기 안 걸리면 CRM 번호 고쳐야 할 사람을
+    // 계속 놓친다(2026-09-09 실사용 확인). 두 탭에 겹치는 헷갈림보다 놓치는 사고가 크다.
     return {
-      label: STATE_UNSENDABLE, bucket: STATE_UNSENDABLE, needsCheck: false, className: STATE_STYLE.unsendable, locked: true,
+      label: STATE_UNSENDABLE, bucket: STATE_UNSENDABLE, needsCheck: true, className: STATE_STYLE.unsendable, locked: true,
       title: '유효한 휴대폰 번호가 없어 보낼 수 없습니다. CRM 에서 번호를 고친 뒤 다시 [조회]하세요.',
+    }
+  }
+  // ETC 그룹(4대 분류에 안 잡힌 수술) 은 발송할 문구가 없어 나갈 수 없다 —
+  // "번호를 고치면 나갈 수 있다"는 발송 불가와 다른 성격이라 별도 배지로 분리한다.
+  // (백엔드에서 큐에도 심지 않으므로 차수 셀도 아래에서 회색 처리됨)
+  if (tiers.length > 0 && groupOf(tiers, t.opType)?.code === 'ETC') {
+    return {
+      label: STATE_NO_TEMPLATE, bucket: STATE_NO_TEMPLATE, needsCheck: false, className: STATE_STYLE.noTemplate, locked: true,
+      title: '이 수술 종류는 4대 분류(스마일·라식·라섹·렌즈삽입)에 잡히지 않아 발송 문구가 없습니다. 나가지 않지만 어떤 사람이 빠졌는지 확인용으로 표시됩니다.',
     }
   }
   if (isHeld(t)) {
     return {
-      label: '홀딩', bucket: '발송 홀딩', needsCheck: false, className: STATE_STYLE.hold, locked: false,
+      label: '홀딩', bucket: '발송 중지', needsCheck: false, className: STATE_STYLE.hold, locked: false,
       title: '보내지 않기로 한 대상입니다. 클릭하면 홀딩을 풉니다.',
     }
   }
@@ -257,7 +283,7 @@ export const targetStateOf = (
  * 홀딩은 우리가 이 건만 막은 것이고, 수신거부는 **환자가 거부한 것**이라 되돌릴 값이 아니다.
  * 섞어 두면 "홀딩 해제"를 누르다 거부한 사람까지 되살릴 위험이 있다.
  */
-export const STATUS_FILTERS = ['전체', '점검 필요', '발송 대기', '발송', '발송 홀딩', '수신거부', STATE_UNSENDABLE] as const
+export const STATUS_FILTERS = ['전체', '점검 필요', '발송 대기', '발송', '발송 중지', '수신거부', STATE_UNSENDABLE] as const
 export type StatusFilter = typeof STATUS_FILTERS[number]
 
 /** 필터 판정은 여기 한 곳에서만 한다 — 화면이 따로 풀어 쓰면 탭과 결과가 어긋난다. */
