@@ -110,7 +110,8 @@ public class SecurityConfig {
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/stats/channel-profit/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
-                auth.requestMatchers("/api/stats/overseas/**")
+                // 해외마케팅(접수리스트·통계·예약통계) — 조회·수기 입력·CRM 매칭·동기화 모두 MARKETING 부서.
+                auth.requestMatchers("/api/overseas-marketing/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/stats/marketing/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");

@@ -51,7 +51,7 @@
 |---|---|
 | **ALL** (ADMIN·DIRECTOR 전용) | **전체** — 메디컬 그룹 + 마케팅 그룹 모두. 부서 gate 우회. |
 | **MEDICAL** | 홈화면 + 메디컬 그룹 (예약·검사·수술·전환·외래·리포트·기타·관리자) |
-| **MARKETING** | 홈화면 + 마케팅 그룹 (channel-profit·overseas·marketing) |
+| **MARKETING** | 홈화면 + 마케팅 그룹 (channel-profit·marketing) + 해외마케팅 섹션 (overseas-marketing-receptions·overseas-marketing-statistics·overseas-reservation-stats) |
 
 **ADMIN·DIRECTOR 는 부서 축을 벗어난다** — 두 롤 모두 `User.department = ALL`. 차이는 조작 권한에 있음: ADMIN 은 시스템 조작 가능, DIRECTOR 는 STAFF 수준 조작만.
 
@@ -89,7 +89,7 @@
   ├─ 1층 Department gate — "이 페이지·API 는 네 부서에 열려 있나?" (MANAGER/STAFF)
   │    · /                                             → 스코프 없음 (공통 홈)
   │    · /stats/channel-profit, /stats/marketing,
-  │      /stats/overseas, /stats/reservation-channel,
+  │      /stats/overseas-marketing/*, /stats/reservation-channel,
   │      /stats/channel-analysis, /stats/accumulated-eyes
   │                                                    → MARKETING only
   │    · /stats/exam-list, /report/*, /admin/*, 그 외 모든 통계
@@ -118,7 +118,8 @@
 | 그룹 | 페이지 | department |
 |---|---|---|
 | — | 홈화면 `/` | 스코프 없음 (통계 페이지 아님) |
-| **마케팅** | reservation-channel · channel-profit · channel-analysis · accumulated-eyes · overseas · marketing · **sms** | **MARKETING** (MEDICAL 도 접근 X) |
+| **마케팅** | reservation-channel · channel-profit · channel-analysis · accumulated-eyes · marketing · **sms** | **MARKETING** (MEDICAL 도 접근 X) |
+| **해외마케팅** | overseas-marketing-receptions · overseas-marketing-statistics · overseas-reservation-stats (2026-09-09 이관 · 별도 최상위 섹션) | **MARKETING** (MEDICAL 도 접근 X) |
 | 예약 | reservation-list · reservation-overall · reservation-stats-system · reservation-stats-cataract · reservation-list-homepage · (reservation) | MEDICAL |
 | 검사 | overall-exam · overall-exam-weekly · exam-list · cataract-exam-list · all-exam-list · eoeis-checkup · examination · procedure-exam | MEDICAL |
 | 전환&성공률 | consultation-rate · cataract-reservation-rate · stop-rate · stop-reason | MEDICAL |
@@ -172,7 +173,7 @@
 
 **부서 gate 구현 방식 (2026-09-03 X1-A)** — `JwtAuthenticationFilter` 가 인증 시 `DEPT_XXX` 를 SimpleGrantedAuthority 로 추가 → `SecurityConfig` 매처가 `hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL")` 로 판정. URL prefix 로 나눔:
 
-- **MARKETING 전용** — `/api/stats/reservation-channel/**`, `/api/stats/channel-profit/**`, `/api/stats/overseas/**`, `/api/stats/marketing/**`, `/api/accumulated-eyes/**`, `/api/sms-management/**` (조회·홀딩·수신거부·수동 추가 등)
+- **MARKETING 전용** — `/api/stats/reservation-channel/**`, `/api/stats/channel-profit/**`, `/api/overseas-marketing/**` (해외마케팅 조회·수기 입력·CRM 매칭·동기화), `/api/stats/marketing/**`, `/api/accumulated-eyes/**`, `/api/sms-management/**` (조회·홀딩·수신거부·수동 추가 등)
 - **MEDICAL 전용** — `/api/stats/**` (그 외), `/api/report/**`, `/api/exam-list/**`, `/api/cataract-exam-list/**`, `/api/all-exam-list/**`, `/api/eoeis-checkup/**`, `/api/surgery-list/**`, `/api/reoperation-decisions/**`, `/api/outpatient-list/**`, `/api/reservation-list/**`, `/api/reservation-list-homepage/**`, `/api/dreamlens-ledger/**`
 - **ADMIN 전용** — `/api/admin/**`, `PUT /api/sms-management/offsets`, `POST /api/sms-management/{send,sync,targets/import}` (단, `GET /api/admin/batch/sms/queue/{status,rows,statuses}` 3종은 MARKETING 개방 · SMS 페이지 진입 시 자동 조회)
 

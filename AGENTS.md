@@ -103,6 +103,7 @@ project-root/
 - 예약통계_시력교정 / 예약통계_백내장 (스냅샷 우선 + MSSQL 라이브 집계)
 - 예약자 리스트 및 주요 예약/검사/상담/수술 통계 API 일부
 - 회계 프런트 미리보기 5종 (진료 수납·시력교정 매출 원장·매출 집계 및 월별 그래프, 합성 목업 데이터/API 계약)
+- 해외마케팅 3종 (접수리스트·통계·예약통계 · `/api/overseas-marketing` · 마트 `overseas_marketing_sheet`/`overseas_reservation_stats` · 2026-09-09 `2026-08-14` 브랜치에서 이관 · MARKETING 부서 전용)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
 
 ### 미구현 (플레이스홀더)
@@ -121,7 +122,9 @@ project-root/
 | consultation-rate | 상담 전환율 | /stats/consultation-rate | 상담 | 플레이스홀더 |
 | surgery | 수술 건수 | /stats/surgery | 수술 | 플레이스홀더 |
 | surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술비중 | 플레이스홀더 |
-| overseas | 해외 환자 관련 지표 | /stats/overseas | 해외 | 플레이스홀더 |
+| overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 구현됨 (Google Sheet 캐시 + 수기 입력 · CRM 매칭 3단계 · MARKETING 전용) |
+| overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 구현됨 (월별 유입→검사·수술 흐름 · 국가별 · 매출) |
+| overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 구현됨 (레거시 시드 + 접수리스트 자동 집계 · 일간 셀 수정) |
 | marketing | 마케팅 유입 및 효율 | /stats/marketing | 마케팅 | 플레이스홀더 |
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 기타 | 플레이스홀더 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 기타 | 플레이스홀더 |

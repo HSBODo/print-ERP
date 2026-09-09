@@ -19,8 +19,8 @@ import java.sql.SQLException;
  * <h3>파일 구조 (2026-08-26 도메인 자립 구조로 재편)</h3>
  * <pre>
  * sql/mart/
- *   └─ {domain}/     batch · consultation · etc · exam · outpatient · overall · report · reservation · surgery
- *       ├─ tables/   테이블 1개 = 파일 1개 (32 파일)
+ *   └─ {domain}/     batch · consultation · etc · exam · marketing · outpatient · overall · report · reservation · sms · surgery
+ *       ├─ tables/   테이블 1개 = 파일 1개
  *       ├─ views/    CREATE VIEW (surgery/V37 · reservation/V50 · exam/V56)
  *       ├─ functions/ CREATE FUNCTION (surgery/V47 · surgery_op_type · surgery_name_excluded)
  *       ├─ seeds/    시드·골든값·백필 INSERT/UPDATE
@@ -48,6 +48,8 @@ import java.sql.SQLException;
  *
  * <h3>이력</h3>
  * <ul>
+ *   <li>2026-09-09 — 해외마케팅(2026-08-14 브랜치 V58~V64) 이관: marketing/tables/V64(시트 캐시 · 구 V58~V62 CREATE+ALTER 통합) ·
+ *                    V65(예약통계) · marketing/seeds/V66(예약통계 레거시 시드). 번호는 이 브랜치의 V58~V63 과 겹쳐 재부여.</li>
  *   <li>2026-08-26 — DDL 폴더를 도메인 자립 구조로 재편: 최상위 tables/·views/·functions/·seeds/ 삭제,
  *                    각 도메인 하위에 배치({domain}/tables/·{domain}/views/·{domain}/functions/·{domain}/seeds/).
  *                    이로써 mart/{domain}/ (DML) 과 완전 대칭. views/functions 는 대표 도메인 배정
@@ -87,7 +89,7 @@ public class MartSchemaInitializer implements InitializingBean {
     }
 
     /**
-     * DDL 38개 파일 — 테이블 34 + 함수 1 + 뷰 3.
+     * DDL 40개 파일 — 테이블 36 + 함수 1 + 뷰 3.
      * 실행 순서: kind 우선(tables → functions → views · 의존성 방향), kind 내부는 V-번호 오름차순.
      * 파일 위치는 {domain}/{tables|functions|views}/ 로 도메인 하위에 분산됨.
      * 테이블 1개 = 파일 1개 원칙. 동일 V-번호 그룹은 접미사(a/b/c/d)로 구분.
@@ -132,6 +134,8 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/sms/tables/V61__sms_offset_config.sql");
         applyScript("sql/mart/sms/tables/V62__sms_dispatch_queue.sql");
         applyScript("sql/mart/reservation/tables/V63__list_reservation_change.sql");
+        applyScript("sql/mart/marketing/tables/V64__overseas_marketing_sheet.sql");
+        applyScript("sql/mart/marketing/tables/V65__overseas_reservation_stats.sql");
 
         // functions/ — 뷰에서 참조하므로 뷰 앞에 실행
         applyScript("sql/mart/surgery/functions/V47__surgery_op_type_fn.sql");
@@ -143,7 +147,7 @@ public class MartSchemaInitializer implements InitializingBean {
     }
 
     /**
-     * SEED 16개 파일 — 시드·골든값·백필. 순서 규약은 클래스 docstring 참조.
+     * SEED 17개 파일 — 시드·골든값·백필. 순서 규약은 클래스 docstring 참조.
      */
     private void applySeedScripts() {
         applyScript("sql/mart/exam/seeds/V9__legacy_seed.sql");
@@ -162,6 +166,7 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/surgery/seeds/V35__surgery_monthly_2026_01_05_golden.sql");
         applyScript("sql/mart/report/seeds/V55__weekly_report_2025_seed.sql");
         applyScript("sql/mart/report/seeds/V57__weekly_report_2026_h1_daily_distribution.sql");
+        applyScript("sql/mart/marketing/seeds/V66__overseas_reservation_stats_seed.sql");
     }
 
     private void applyScript(String classpathLocation) {

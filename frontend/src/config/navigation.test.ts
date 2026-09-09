@@ -43,11 +43,27 @@ describe('navigation menu', () => {
     expect(paths).toContain('/stats/reservation-overall')
     expect(paths).toContain('/stats/reservation-change')
     expect(paths).toContain('/stats/eoeis-checkup')
+    expect(paths).toContain('/stats/overseas-marketing/receptions')
+    expect(paths).toContain('/stats/overseas-marketing/statistics')
+    expect(paths).toContain('/stats/overseas-marketing/reservation-stats')
     expect(paths).toContain('/accounting/medical-receipts')
     expect(paths).toContain('/accounting/vision-revenue')
     expect(paths).toContain('/accounting/vision-revenue-summary')
     expect(paths).toContain('/accounting/vision-revenue-chart')
     expect(paths).toContain('/accounting/medical-revenue-chart')
+  })
+
+  it('해외마케팅은 독립 최상위 섹션이며 접수리스트·통계·예약통계가 순서대로 배치된다', () => {
+    const marketing = menuItems.find((item) => item.id === 'marketing-section')
+    const overseas = menuItems.find((item) => item.id === 'overseas-marketing-section')
+
+    expect(marketing?.children?.some((item) => item.id === 'overseas-marketing-section')).toBe(false)
+    expect(overseas?.kind).toBe('section')
+    expect(overseas?.children?.map((item) => item.id)).toEqual([
+      'overseas-marketing-receptions',
+      'overseas-marketing-statistics',
+      'overseas-reservation-stats',
+    ])
   })
 
   it('메뉴의 통계 링크는 statsPages에 정의된 경로만 사용해야 한다', () => {

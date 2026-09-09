@@ -332,13 +332,31 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/outpatient-count'
   ),
   statsPage(
-    'overseas',
-    '해외 환자 관련 지표',
-    '/stats/overseas',
-    'overseas',
-    '해외 환자 관련 지표',
-    '해외 환자 유입, 상담, 수술 관련 핵심 지표를 모아보는 화면입니다.',
-    '/api/stats/overseas'
+    'overseas-marketing-receptions',
+    '접수리스트',
+    '/stats/overseas-marketing/receptions',
+    'overseas-marketing-section',
+    '해외마케팅',
+    'ECP 해외마케팅 접수 명단과 CRM의 기존 외국인 고객을 함께 조회하고 매칭·진료 진행 상태를 확인하는 화면입니다.',
+    '/api/overseas-marketing/receptions'
+  ),
+  statsPage(
+    'overseas-marketing-statistics',
+    '통계',
+    '/stats/overseas-marketing/statistics',
+    'overseas-marketing-section',
+    '해외마케팅',
+    '해외마케팅 유입에서 검사·수술까지의 월별 흐름과 국가별 수술, 검사·수술·외래·렌즈 매출을 확인합니다.',
+    '/api/overseas-marketing/statistics'
+  ),
+  statsPage(
+    'overseas-reservation-stats',
+    '예약통계',
+    '/stats/overseas-marketing/reservation-stats',
+    'overseas-marketing-section',
+    '해외마케팅',
+    '해외 예약통계 — 국가그룹·채널별 문의/예약/검사/수술/외래를 월간·주차·일간으로 봅니다. 2026-08-23까지는 레거시 시트 숫자, 이후는 접수리스트 자동 집계이며 일간 화면에서 셀을 직접 수정할 수 있습니다.',
+    '/api/overseas-marketing/reservation-stats'
   ),
   statsPage(
     'marketing',
