@@ -171,68 +171,7 @@ export function BatchManagementPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">배치 실행</CardTitle>
-          <CardDescription>{selectedJob.description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">배치 종류</span>
-              <select
-                value={jobType}
-                onChange={(event) => setJobType(event.target.value as BatchDomain)}
-                disabled={isRunning}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {JOB_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">시작일 (from)</span>
-              <input
-                type="date"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
-                disabled={isRunning}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">종료일 (to)</span>
-              <input
-                type="date"
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
-                disabled={isRunning}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              />
-            </label>
-
-            <Button onClick={handleRun} disabled={isRunning || !from || !to} className="gap-2">
-              {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              {isRunning ? '실행 중...' : '실행'}
-            </Button>
-
-            {rerun.isError ? (
-              <p className="text-sm text-red-600">
-                실행 실패: {rerun.error instanceof Error ? rerun.error.message : String(rerun.error)}
-              </p>
-            ) : null}
-            {rerun.isSuccess ? (
-              <p className="text-sm text-emerald-700">
-                요청 접수 완료 — 배치 결과는 아래 이력에서 확인
-              </p>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
-
+      {/* 실행 전 반드시 읽어야 하는 안전 정보라 최상단 고정. 상세는 details 안에 접혀 있어 화면을 짓누르지 않는다. */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">안전 장치 · 중복 방지 안내</CardTitle>
@@ -328,6 +267,68 @@ export function BatchManagementPage() {
               </section>
             </div>
           </details>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">배치 실행</CardTitle>
+          <CardDescription>{selectedJob.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-end gap-4">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">배치 종류</span>
+              <select
+                value={jobType}
+                onChange={(event) => setJobType(event.target.value as BatchDomain)}
+                disabled={isRunning}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {JOB_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">시작일 (from)</span>
+              <input
+                type="date"
+                value={from}
+                onChange={(event) => setFrom(event.target.value)}
+                disabled={isRunning}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">종료일 (to)</span>
+              <input
+                type="date"
+                value={to}
+                onChange={(event) => setTo(event.target.value)}
+                disabled={isRunning}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </label>
+
+            <Button onClick={handleRun} disabled={isRunning || !from || !to} className="gap-2">
+              {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {isRunning ? '실행 중...' : '실행'}
+            </Button>
+
+            {rerun.isError ? (
+              <p className="text-sm text-red-600">
+                실행 실패: {rerun.error instanceof Error ? rerun.error.message : String(rerun.error)}
+              </p>
+            ) : null}
+            {rerun.isSuccess ? (
+              <p className="text-sm text-emerald-700">
+                요청 접수 완료 — 배치 결과는 아래 이력에서 확인
+              </p>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 
