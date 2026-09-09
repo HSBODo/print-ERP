@@ -63,12 +63,13 @@
               ISNULL(cu.ETC, '')                           AS memo
             FROM (
               SELECT e.CUST_NUM AS cn, e.EXAM_DATE AS d, 0 AS isCat,
-                     -- 원데이 검사: 같은날 시력교정 검사OP 예약(M/5, 내원 I/H), 테스트메모만 제외.
+                     -- 원데이 검사: 같은날 시력교정 검사OP 예약(M/5 또는 M/7, 내원 I/H), 테스트메모만 제외.
                      -- 2026-07-30 확정: 중단/취소(STOP_YN·CANCEL_CD) 단서 제거 (점검/원데이-레거시-비교 §5).
+                     -- 2026-09-09 확정: 재수술 당일OP(M/7) 도 원데이로 포함 (docs/exam/oneday-legacy-align.md §3).
                      CASE WHEN NOT (ISNULL(e.EXAM_MEMO, '') LIKE N'%테스트%' OR LOWER(ISNULL(e.EXAM_MEMO, '')) LIKE '%test%')
                            AND EXISTS (SELECT 1 FROM RESERVATION r WITH(NOLOCK)
                                        WHERE r.CUST_NUM = e.CUST_NUM AND r.RESERVE_DATE = e.EXAM_DATE
-                                         AND r.RESERVE_FLAG = 'M' AND r.RESERVE_JINRYO = '5' AND r.RESERVE_STATE IN ('I','H'))
+                                         AND r.RESERVE_FLAG = 'M' AND r.RESERVE_JINRYO IN ('5','7') AND r.RESERVE_STATE IN ('I','H'))
                           THEN 1 ELSE 0 END AS isOneDay,
                      CAST(N'' AS NVARCHAR(20)) AS catClass
               FROM EXAM e WITH(NOLOCK)

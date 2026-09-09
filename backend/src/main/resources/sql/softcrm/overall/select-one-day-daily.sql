@@ -44,6 +44,7 @@
             WHERE e.EXAM_DATE >= :from AND e.EXAM_DATE <= :to
               -- 2026-07-30 확정: 중단/취소(STOP_YN·CANCEL_CD) 단서 제거 — 원데이 = 당일OP 예약 기준
               -- (docs/점검/원데이-레거시-비교_2026-07.md §5)
+              -- 2026-09-09 확정: 재수술 당일OP(M/7) 도 원데이로 포함 (docs/exam/oneday-legacy-align.md §3).
               AND NOT (
                 ISNULL(cu.CUST_NAME, '') LIKE N'%테스트%'
                 OR LOWER(ISNULL(cu.CUST_NAME, '')) LIKE '%test%'
@@ -56,7 +57,7 @@
                   AND r.RESERVE_DATE = e.EXAM_DATE
                   AND r.RESERVE_FLAG = 'M'
                   AND r.RESERVE_STATE IN ('I','H')
-                  AND r.RESERVE_JINRYO = '5'
+                  AND r.RESERVE_JINRYO IN ('5','7')
                   AND LOWER(ISNULL(r.RESERVE_NUM, '')) NOT LIKE '%test%'
                   AND LOWER(ISNULL(r.RESERVE_NUM, '')) NOT LIKE '%kiosktest%'
               )
