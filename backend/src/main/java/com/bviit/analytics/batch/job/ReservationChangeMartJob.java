@@ -6,6 +6,7 @@ import com.bviit.analytics.reservation.repository.ReservationChangeHistoryReposi
 import com.bviit.analytics.reservation.service.ReservationChangeChainBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,14 @@ public class ReservationChangeMartJob {
     /** 시각 미상(HISTORY_TIME + HISTORY_NUM 모두 실패) 비율이 이 값을 넘으면 log.error → Slack 알림. */
     private static final double TIME_LOST_ERROR_RATE = 0.05;   // 5%
 
+    /**
+     * 시각 미상 샘플 로그 최대 건수. 배치당 이 값까지만 상세 원문(reserveNum·historyNum·historyTime)을 남긴다.
+     * 대량 이관·백필 환경에서는 20~50 정도로 늘려 원본 형식 조사가 유리하다.
+     * 운영은 기본값 5 로 로그 폭주 방지.
+     */
+    @Value("${reservation-change.time-lost-log-samples:5}")
+    private int timeLostLogSamples;
+
     @Transactional
     public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("ReservationChangeMartJob start: history range={}..{}", from, to);
@@ -66,7 +75,7 @@ public class ReservationChangeMartJob {
                         recovered[0]++;
                     } else {
                         timeLost[0]++;
-                        if (timeLost[0] <= 5) {
+                        if (timeLost[0] <= timeLostLogSamples) {
                             log.warn("시각 미상 처리(HISTORY_TIME·HISTORY_NUM 모두 실패): reserveNum={} historyNum={} historyTime={}",
                                     source.reserveNum(), h.historyNum(), raw);
                         }

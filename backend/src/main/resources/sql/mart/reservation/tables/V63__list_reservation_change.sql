@@ -50,3 +50,12 @@ CREATE INDEX IF NOT EXISTS idx_list_reservation_change_chart
 -- 추이 달력 '예약일 기준' 집계용 (final_date 는 YYYY-MM-DD 문자열)
 CREATE INDEX IF NOT EXISTS idx_list_reservation_change_final
     ON list_reservation_change (final_date);
+
+-- 추이 달력 일별 집계 최적화 (2026-09-11 추가) — GROUP BY (axis, branch) 커버 인덱스.
+-- Postgres 는 composite index 첫 컬럼만으로도 range scan 가능해 위 single 인덱스와 공존해도 손해 없음.
+-- 데이터 규모(수만 행) 에서는 유의미하지 않지만 성장 시 index-only scan 가능.
+CREATE INDEX IF NOT EXISTS idx_list_reservation_change_registered_branch
+    ON list_reservation_change (registered_at, branch);
+
+CREATE INDEX IF NOT EXISTS idx_list_reservation_change_final_branch
+    ON list_reservation_change (final_date, branch);
