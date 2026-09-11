@@ -2,6 +2,7 @@
 
 > 작성일: 2026-09-11 · 대상 커밋: 17a9785 (2026-09-04 브랜치 머지분)
 > 관련 파일: `marketing/service/OverseasMarketingService.java` · `OverseasMarketingCrmEnricher.java` · `OverseasMarketingEditService.java` · `sql/mart/marketing/*.sql` · `sql/softcrm/marketing/*.sql`
+> 컬럼·인덱스 상세: [`mart-tables.md`](mart-tables.md) · 마트 전체 인벤토리: [`../db/mart-inventory.md`](../db/mart-inventory.md)
 
 ## 1. 왜 이 문서가 필요한가
 

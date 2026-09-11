@@ -124,7 +124,18 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 
 ---
 
-## 10. JPA 엔티티 (Hibernate `ddl-auto: update`)
+## 10. 해외마케팅 도메인 (2026-09-09 이관)
+
+| 이름 | 종류 | V | 사이드메뉴 | 용도 |
+|---|---|---|---|---|
+| `overseas_marketing_sheet` | TABLE | V64 | 해외마케팅 > 접수리스트 · 통계 | 해외 접수 원본 22컬럼 + 매칭 결과(customer_no·matched_by) + `crm_snapshot`(JSON 19필드). Google Sheet 1회성 이관분(`origin='sheet'`)과 화면 수기 입력(`origin='manual'`, seq 1,000,000+) 공존. **접수리스트·통계 페이지** + CRM 매칭 잡(`sync-crm`) 결과 저장소. |
+| `overseas_reservation_stats` | TABLE | V65 (+V66 시드) | 해외마케팅 > 예약통계 | 예약통계 셀값(`date × group × metric`). 시드(~2026-08-23, `source='seed'`) + 수기 수정(`source='manual'`, 우선) + 조회 시 접수리스트 자동 집계(2026-08-24+) 3중 병합. **예약통계 페이지**. |
+
+> 세부 컬럼·매칭 규칙·JSON 스키마: [`docs/marketing/mart-tables.md`](../marketing/mart-tables.md) · 매칭 로직: [`docs/marketing/overseas-crm-matching.md`](../marketing/overseas-crm-matching.md).
+
+---
+
+## 11. JPA 엔티티 (Hibernate `ddl-auto: update`)
 
 | 이름 | 엔티티 | 사이드메뉴 | 용도 |
 |---|---|---|---|
