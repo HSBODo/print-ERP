@@ -50,7 +50,7 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 | `mart_reservation_overall_monthly` | TABLE | V12 | 예약 > 예약 종합 · 리포트 > 월간/주차 레포트 | 월별 예약 종합·콜·온라인. **예약 종합 페이지** · 월간/주차 레포트. 2024·2025는 골든시드(V12), 2026-06+는 채널 마트 SUM. |
 | `list_reservation` | TABLE | V3 (+V39–V50 ALTER) | 예약 > 예약자 리스트 · (전환&성공률 > 예약률 EXISTS 후보) | RESERVE_FLAG='M' 검사 예약 명단 (풍부한 컬럼: name, channel, doctor, memo 등). **예약자 리스트 페이지** · 시력교정 예약률 후보 EXISTS 조회. |
 | `list_reservation_all` | TABLE | V53 | — (배치·집계 전용, 화면 조회 없음) | 수술(O)/외래(JINRYO=2)/드림렌즈(D) 얇은 리스트. `mart_reservation_monthly` 재집계 원천. **배치·집계 전용** (화면 조회 없음). |
-| `list_reservation_change` | TABLE | V63 | 예약 > 예약 변경이력 | 검사예약(M/D/H) 전부 — `change_count` ≥ 1 이 변경된 예약(변경 상세), 0 은 미변경(추이 달력의 등록 건수·변경률 분모). RESERVE_HISTORY 를 예약 단위 체인(변경시각@예약일)으로 접어 `reserve_num` upsert. 배치 범위 = **이력 저장 기간**(등록일 아님) — 늦은 변경도 D-1 배치가 흡수. |
+| `list_reservation_change` | TABLE | V63 | 예약 > 예약 변경이력 | 검사예약(M/D/H) 전부 — `change_count` ≥ 1 이 변경된 예약(변경 상세), 0 은 미변경(추이 달력의 등록 건수·변경률 분모). RESERVE_HISTORY 를 예약 단위 체인(변경시각@예약일)으로 접어 `reserve_num` upsert. 배치 범위 = **이력 저장 기간**(등록일 아님) — 늦은 변경도 D-1 배치가 흡수. **정본 문서: [`docs/reservation/change-history.md`](../reservation/change-history.md)** (배치 범위·등록일 3순위·HISTORY_TIME 파싱·change_chain 규격·함정 8종). |
 | `mart_list_reservation_homepage` | TABLE | V21 | 예약 > 예약자 리스트_홈페이지 · 예약 > 예약 종합 | 레거시 홈페이지 예약 raw (홈페이지 DB → 마트 이관본). **예약자 리스트_홈페이지 페이지** + 예약 종합의 홈페이지 몫. |
 | `mart_reservation_stats_system_daily` | TABLE | V11 | 예약 > 예약통계_시력교정 · 예약 > 예약 종합 | 시력교정 채널 통계 (CH01~CH24 · 인콜·TM·네이버·카카오·홈페이지 등). **예약통계_시력교정 페이지** + 예약 종합 계산. 2026 H1 시드(V19). |
 | `mart_reservation_stats_cataract_daily` | TABLE | V11 | 예약 > 예약통계_백내장 · 예약 > 예약 종합 | 백내장 채널 통계 (인콜·TM·카카오·온라인). **예약통계_백내장 페이지** + 예약 종합 계산. 2026 H1 시드(V20). |
