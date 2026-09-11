@@ -104,6 +104,35 @@ class ReservationChangeMartWriterIT {
     }
 
     @Test
+    void upsert_conflictOnReserveNum_preservesFirstLoadedAt() throws Exception {
+        // 최초 적재 시점(first_loaded_at) 은 UPSERT 재적재 시에도 유지되어야 감사 추적 가능.
+        writer.upsert(List.of(row("R150", "2026-09-01", "1", "2026-09-15")));
+        java.sql.Timestamp firstLoadedInitial;
+        try (Connection conn = dataSource.getConnection();
+             java.sql.Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(
+                     "SELECT first_loaded_at, loaded_at FROM list_reservation_change WHERE reserve_num = 'R150'")) {
+            rs.next();
+            firstLoadedInitial = rs.getTimestamp("first_loaded_at");
+        }
+        Thread.sleep(10);   // loaded_at 갱신이 관측되도록 시간 벌기
+        writer.upsert(List.of(row("R150", "2026-09-01", "3", "2026-09-25")));   // 늦은 변경 흡수
+
+        try (Connection conn = dataSource.getConnection();
+             java.sql.Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(
+                     "SELECT first_loaded_at, loaded_at FROM list_reservation_change WHERE reserve_num = 'R150'")) {
+            rs.next();
+            assertThat(rs.getTimestamp("first_loaded_at"))
+                    .as("first_loaded_at 은 최초 적재 시점 보존 (UPSERT 재적재에서 갱신 X)")
+                    .isEqualTo(firstLoadedInitial);
+            assertThat(rs.getTimestamp("loaded_at"))
+                    .as("loaded_at 은 재적재마다 갱신")
+                    .isAfterOrEqualTo(firstLoadedInitial);
+        }
+    }
+
+    @Test
     void upsert_emptyList_returnsZeroWithoutError() {
         int total = writer.upsert(List.of());
         assertThat(total).isZero();

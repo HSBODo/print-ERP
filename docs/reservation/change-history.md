@@ -159,6 +159,23 @@ YYYY-MM-DD HH:MM@YYYY-MM-DD | YYYY-MM-DD HH:MM@YYYY-MM-DD | ...
 - API `/api/reservation-change/**` — `DEPT_MEDICAL` · `DEPT_ALL`
 - 관리자 배치 재실행은 ADMIN 만
 
+## 10-A. 감사·관측용 컬럼 정책 (2026-09-11)
+
+`list_reservation_change` 에는 화면·API 에 노출하지 않는 관측 전용 컬럼 3종이 있음.
+
+| 컬럼 | 저장 규칙 | 노출 |
+|---|---|---|
+| `last_changed_at` (VARCHAR(20)) | Writer 가 매번 채움 (마지막 변경 시각 · `change_chain` 의 마지막 스텝 시각과 동일) | ❌ SELECT SQL 에서 제외 · DTO 에도 없음. 관측·정렬 용도(향후 디버깅 SQL 에서 참조). |
+| `first_loaded_at` (TIMESTAMP) | **최초 INSERT 시점 보존.** ON CONFLICT DO UPDATE 에서 의도적으로 SET 절에 없어 원본 유지 | ❌ 감사·디버깅용 (예: "2023년 예약이 언제 마트에 백필됐지?") |
+| `loaded_at` (TIMESTAMP) | UPSERT 마다 `CURRENT_TIMESTAMP` 로 갱신 (최종 재적재 시점) | ❌ 관측용 · 기존 코드에도 있었음 |
+
+**추적성 시나리오**:
+- "2022년 예약이 처음 마트에 언제 들어왔나?" → `first_loaded_at`
+- "이 예약이 마지막으로 언제 재적재됐나?" → `loaded_at`
+- 두 값의 차이 = 늦은 변경이 몇 번 흡수됐는지 간접 지표
+
+**기존 V63 DB 호환**: `V63__list_reservation_change.sql` 이 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS first_loaded_at` + `UPDATE ... SET first_loaded_at = loaded_at WHERE first_loaded_at IS NULL` 소급 처리 후 `NOT NULL` 승격. 기존 행의 `first_loaded_at` 은 마지막 `loaded_at` 으로 근사 (정확값 없음 · 감사 용도로 충분).
+
 ## 11. 함정 (Gotchas) — 유지보수 시 반드시 확인
 
 1. **배치 범위 = 이력 저장 기간, 등록일 아님** — 이 이해 없이 range 를 좁게 잡으면 늦은 변경이 누락됨.

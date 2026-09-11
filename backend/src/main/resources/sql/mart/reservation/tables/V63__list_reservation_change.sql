@@ -26,9 +26,20 @@ CREATE TABLE IF NOT EXISTS list_reservation_change (
     final_date        VARCHAR(20)   NOT NULL DEFAULT '',         -- 최종(현재) 예약일 = RESERVATION.RESERVE_DATE
     change_count      INT           NOT NULL DEFAULT 0,          -- 전체 변경 횟수 (체인 길이 - 1) · 0 = 미변경
     change_chain      TEXT          NOT NULL DEFAULT '',
-    last_changed_at   VARCHAR(20)   NOT NULL DEFAULT '',         -- 마지막 변경 시각 (관측·정렬용)
-    loaded_at         TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
+    last_changed_at   VARCHAR(20)   NOT NULL DEFAULT '',         -- 마지막 변경 시각 (관측·정렬용 · API 노출 X)
+    -- 감사 컬럼 2종 (loaded_at 은 UPSERT 마다 갱신, first_loaded_at 은 최초 INSERT 시점 보존)
+    first_loaded_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 이 예약이 처음 마트에 적재된 시점 (감사·디버깅용)
+    loaded_at         TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP   -- 최종 upsert 시점
 );
+
+-- 기존 V63 배포된 DB 호환 — first_loaded_at 소급 추가 (2026-09-11).
+-- Postgres ADD COLUMN IF NOT EXISTS 는 idempotent, 신규 DB 는 no-op.
+ALTER TABLE list_reservation_change ADD COLUMN IF NOT EXISTS first_loaded_at TIMESTAMP;
+-- 기존 행 소급: loaded_at 을 최초 적재 시점으로 간주(정확한 값은 없어도 감사 시 참조 가능).
+UPDATE list_reservation_change SET first_loaded_at = loaded_at WHERE first_loaded_at IS NULL;
+-- 이후 신규 INSERT 는 DEFAULT 로 자동 채워지지만 소급 컬럼은 NULL 허용 상태 → NOT NULL 승격.
+ALTER TABLE list_reservation_change ALTER COLUMN first_loaded_at SET NOT NULL;
+ALTER TABLE list_reservation_change ALTER COLUMN first_loaded_at SET DEFAULT CURRENT_TIMESTAMP;
 
 CREATE INDEX IF NOT EXISTS idx_list_reservation_change_registered
     ON list_reservation_change (registered_at);
