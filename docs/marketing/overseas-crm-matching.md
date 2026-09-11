@@ -137,7 +137,16 @@ CRM에 `1990-08-15` 를 `1990-15-08` 로 뒤집어 넣은 사례가 실측됨. `
 
 ## 8. 개선 여지 (별도 티켓)
 
-- **매칭 규칙 단위 테스트** — 현 시점 백엔드 테스트 0건. `dobStatus`·`sortedNameTokens`·`uniqueNameDob`·`uniqueEventDate` 는 순수 함수라 테스트 쉬움.
-- **`crm_refreshed_at` 활용** — 매칭 후 N일 경과 시 재갱신 배치, 또는 화면에서 "CRM 재조회" 버튼.
+- **매칭 규칙 단위 테스트** — 완료 (2026-09-11 · `OverseasMarketingCrmEnricherTest` 10건).
+- **`crm_refreshed_at` 활용 — 결정 (2026-09-11): A-1 개별 행 재조회 버튼 우선.**
+  - 배경: 매칭 확정 후 CRM 변경(수술비 확정·외래 진행·상태 변경) 이 화면에 반영 안 됨. 담당자 신뢰도 저하.
+  - 채택: **A-1 — 매칭 팝업(`MatchConfirmDialog`)에 "CRM 재조회" 버튼 추가**. 단건 즉시 스냅샷 재계산.
+  - 반려: A-2 전체 재조회(무거움), B 스케줄러 배치(N일 지연·부하 예측 어려움), C 그대로(부적절).
+  - 구현 스펙:
+    - 백엔드: `OverseasMarketingService.refreshSnapshot(long rowNumber)` 신규. `crmEnricher.enrichDetails` + `costEnricher.enrich` + `persistSnapshots` 재실행. 엔드포인트 `PUT /api/overseas-marketing/receptions/{rowNumber}/refresh-snapshot`.
+    - 권한: MARKETING 부서 (조회 확장 성격 · SMS 차트번호 조회와 동급 "관리 조작 예외"). ADMIN 아님.
+    - 프론트: `MatchConfirmDialog` 에 `matched` 상태에만 노출되는 "CRM 재조회" 버튼. 훅 `useOverseasMarketingSnapshotRefresh` (invalidate `['overseas-marketing']`).
+    - 성공 UX: 토스트로 변경 사항 요약 (예: "수술비 갱신: 예정 → 2,400,000원").
+  - B 스케줄러 병행은 A-1 실사용 데이터 보고 판단(별도 티켓).
 - **`review` 자동 승격을 컬럼에 반영** — 조회 시점 파생 대신 배치가 `candidate_reason` 을 채워두면 조회 SQL 이 단순해진다.
 - **매칭 판정 통합** — 자바 `applySnapshot` + SQL `matchStatus` 파생 로직을 한 곳으로 모으면 유지보수 부담 감소.
