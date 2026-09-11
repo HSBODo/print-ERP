@@ -28,10 +28,14 @@ SELECT
 FROM RESERVATION r WITH(NOLOCK)
 JOIN RESERVE_HISTORY h WITH(NOLOCK) ON h.RESERVE_NUM = r.RESERVE_NUM
 WHERE r.RESERVE_FLAG IN ('M', 'D', 'H')
-  AND r.RESERVE_NUM IN (
-        SELECT x.RESERVE_NUM
+  -- 옵티마이저가 IN 을 semi join 으로 풀지만 EXISTS 가 더 예측 가능(2026-09-11 전환).
+  -- 상관 서브쿼리는 x.RESERVE_NUM = r.RESERVE_NUM 조건이 필요 — 그래야 RESERVE_HISTORY 인덱스(HISTORY_TIME) scan 후
+  -- RESERVE_NUM 으로 조인 대신 IX_RESERVE_HISTORY_RESERVE_NUM 을 활용할 수 있다.
+  AND EXISTS (
+        SELECT 1
         FROM RESERVE_HISTORY x WITH(NOLOCK)
-        WHERE x.HISTORY_TIME >= CONVERT(datetime, :from)
+        WHERE x.RESERVE_NUM = r.RESERVE_NUM
+          AND x.HISTORY_TIME >= CONVERT(datetime, :from)
           AND x.HISTORY_TIME <  DATEADD(DAY, 1, CONVERT(datetime, :to))
   )
   AND NOT (ISNULL(r.CUST_NAME, '') LIKE '%테스트%' OR ISNULL(r.CUST_NAME, '') LIKE '%TEST%')

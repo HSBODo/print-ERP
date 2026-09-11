@@ -190,8 +190,31 @@ YYYY-MM-DD HH:MM@YYYY-MM-DD | YYYY-MM-DD HH:MM@YYYY-MM-DD | ...
 ## 12. 개선 여지 (별도 티켓)
 
 - **timeLost 임계치 조정** — 5% 는 초기 값. 몇 달 관측 후 노이즈·유의미 경계 재조정.
-- **매칭 판정 통합** — 시각 파싱이 자바에 몰림. SQL 에서 `TRY_CONVERT` 로 1차 필터 옵션 검토.
+- **매칭 판정 통합** — 시각 파싱이 자바에 몰림. SQL 에서 `TRY_CONVERT` 로 1차 필터 옵션 검토 (단 MSSQL 2014 미지원).
 - **HISTORY_NUM 시각 검증 강화** — 앞 12자리 형식 이외 케이스 실측 시 fallback 확장.
+
+### 12-A. `final_date VARCHAR(20)` vs DATE — 유지 결정 (2026-09-11)
+
+**의사결정**: 현행 `VARCHAR(20)` 유지. DATE 로 마이그레이션 하지 않는다.
+
+- **이론적 이득**: DATE 인덱스가 문자열 인덱스보다 range scan 이 약간 빠름.
+- **실제 비용이 큼**:
+  1. 스키마 변경 (`ALTER TABLE ... ALTER COLUMN final_date TYPE DATE USING CAST(final_date AS DATE)`) 은 전 행 재작성 · 잠금 위험
+  2. `change_chain` 문자열 규격이 `YYYY-MM-DD` 를 전제로 하므로 프론트 파서·CSV·모델 모두 문자열 기대. 데이터 타입만 바꿔도 SELECT 시 `TO_CHAR` 로 다시 문자열화 필요 → 이득 상쇄
+  3. `first_date`·`last_changed_at` 도 같은 이유로 VARCHAR — 일관성 유지가 낫다
+  4. 현재 데이터 규모(수만~수십만 행) 에서 성능 차이 무의미
+- **조건**: 데이터가 100만 행 넘고 daily 집계 응답이 500ms 초과하면 재고. 그때는 별도 티켓 · 마이그레이션 전략 별도 수립.
+
+### 12-B. Service 계층 직접 단위 테스트 — 유지 결정 (2026-09-11)
+
+**의사결정**: `ReservationChangeMartQueryService` 단위 테스트 없이 현행 유지.
+
+- **이유**: Service 가 Repository 위임만 하는 얇은 계층 (약 15줄). Mocked repository 로 return 값 pass-through 를 확인하는 것은 프로덕션 가치 낮음.
+- **간접 커버 완비**:
+  - Repository 자체는 `ReservationChangeMartWriterIT` 가 Testcontainers 로 검증
+  - HTTP 계약은 `ReservationChangeControllerIntegrationTest` 가 검증
+  - Service 는 두 IT 사이의 pass-through 역할만 함
+- **조건**: Service 에 비즈니스 로직(집계·필터·변환) 이 추가되면 그 시점에 단위 테스트 신설.
 
 ## 13. 관련 파일
 

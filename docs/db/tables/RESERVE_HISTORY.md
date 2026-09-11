@@ -49,6 +49,17 @@
 - **HISTORY_TIME 은 varchar(50)**: 범위 조건은 `HISTORY_TIME >= CONVERT(datetime, :from)` 처럼 datetime 과 비교해야
   인덱스를 탄다(기존 예약통계 SQL 패턴). 형식이 섞인 행이 있을 수 있어 값 자체는 원문으로 가져와 Java 에서 파싱한다
   (`ReservationChangeChainBuilder.parseTime` — 못 읽으면 시각을 비운다). `TRY_CONVERT` 는 서버가 지원하지 않는다.
+- **HISTORY_TIME 인덱스 필수 (2026-09-11 확인 요청)**: 예약 변경이력 배치(`select-reservation-change-history.sql`)의
+  서브쿼리 `WHERE x.HISTORY_TIME >= CONVERT(datetime, :from) AND x.HISTORY_TIME < ...` 성능이 이 인덱스에 결정적.
+  없으면 매일 D-1 배치가 675만 행 scan → 수 분 소요 가능. 확인 SQL:
+  ```sql
+  SELECT ind.name AS idx_name, col.name AS column_name
+  FROM sys.indexes ind
+  JOIN sys.index_columns ic ON ic.object_id = ind.object_id AND ic.index_id = ind.index_id
+  JOIN sys.columns col ON col.object_id = ic.object_id AND col.column_id = ic.column_id
+  WHERE ind.object_id = OBJECT_ID('RESERVE_HISTORY') AND col.name = 'HISTORY_TIME';
+  ```
+  결과가 비어 있으면 DBA 에게 `CREATE INDEX IX_RESERVE_HISTORY_HISTORY_TIME ON RESERVE_HISTORY (HISTORY_TIME)` 요청.
 - **온라인 예약 시각 지연**: 심야 홈페이지 예약이 새벽 배치로 저장돼 HISTORY_TIME 이 +9h 밀려 다음날로 잡히는 케이스가 있다.
   예약통계는 그래서 등록일을 `RESERVE_NUM` 앞 6자리(YYMMDD 채번일)로 본다. 변경이력은 기획서 §3 3순위
   (① 이력 첫 저장 시각 → ② RESERVATION.InsertedDateTime → ③ 채번일)를 따르며 출처를 `reg_source` 로 남긴다.
