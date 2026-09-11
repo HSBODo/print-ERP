@@ -135,6 +135,18 @@ CRM에 `1990-08-15` 를 `1990-15-08` 로 뒤집어 넣은 사례가 실측됨. `
 5. **자동 승격 `review`** — `receptions.sql:45-48` 에서 컬럼 저장 없이 표시만 승격되므로, 재동기화 후에도 상태가 계속 review 로 남는다. 담당자가 수동 매칭할 때까지 계속.
 6. **`OverseasMarketingSyncer`(시트 → 마트)와 `OverseasMarketingCrmEnricher`(마트 → CRM 매칭) 는 별개 잡** — 이름이 비슷해 혼동 주의. 전자는 기본 OFF(`OVERSEAS_GOOGLE_SHEETS_SYNC_ENABLED=false`), 후자는 sync-crm 버튼.
 
+## 7-A. CRM 매칭 자동 스케줄러 (2026-09-11 도입)
+
+**결정**: 매일 새벽 3시(기본) `sync-crm` 잡 자동 실행 → 담당자 수동 클릭 불필요.
+
+- **파일**: `OverseasCrmSyncScheduler.java` (`marketing/service/`)
+- **활성화**: `OVERSEAS_CRM_SYNC_SCHEDULER_ENABLED=true` (기본 `false` — 도입 초기 안전장치로 명시적 opt-in)
+- **cron 조정**: `OVERSEAS_CRM_SYNC_CRON=0 0 3 * * *` (기본), `Asia/Seoul` 기준
+- **실행 방식**: `@Scheduled` 가 `syncCrm()` 호출 → ExecutorService 백그라운드 잡 시작 후 즉시 반환. 진행 상태는 서비스 내부 `[CRM동기화] ...` 로그로 관측.
+- **재진입 안전성**: 단일 실행 락(`syncRunning.compareAndSet`) 덕분에 이전 잡이 3시까지 안 끝났어도 새 잡 시작 안 되고 현재 상태 반환만.
+- **시트 동기화는 자동화하지 않음** — 2026-09-09 이관 완료 후 수기 입력 위주라 자동 실행 이득 없음. 담당자가 필요 시 [시트 동기화] 버튼(ADMIN) 수동 실행.
+- **문제 발생 시**: env 로 즉시 중단. Slack 알림은 `syncCrm()` 내부 `log.error` 로 이미 감지되어 있음(`logging.slack` 설정 별도).
+
 ## 8. 개선 여지 (별도 티켓)
 
 - **매칭 규칙 단위 테스트** — 완료 (2026-09-11 · `OverseasMarketingCrmEnricherTest` 10건).

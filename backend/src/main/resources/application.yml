@@ -71,6 +71,12 @@ overseas:
     credentials-file: ${OVERSEAS_GOOGLE_CREDENTIALS_FILE:}
     spreadsheet-id: ${OVERSEAS_GOOGLE_SPREADSHEET_ID:1IaVjs1priY7ccqS9SwZ1X4wmwyN7_aDlonD7dEL-p8A}
     range: ${OVERSEAS_GOOGLE_RANGE:2026!A5:V}
+  # CRM 매칭 자동 스케줄러 — 매일 새벽 3시에 sync-crm 잡 트리거 (기본 OFF).
+  # 켜면 새 접수가 자동으로 매칭·스냅샷 병합됨. 담당자가 [동기화] 를 매일 안 눌러도 됨.
+  # 문제 발생 시 OVERSEAS_CRM_SYNC_SCHEDULER_ENABLED=false 로 즉시 중단.
+  crm-sync:
+    scheduler-enabled: ${OVERSEAS_CRM_SYNC_SCHEDULER_ENABLED:false}
+    cron: ${OVERSEAS_CRM_SYNC_CRON:0 0 3 * * *}
 
 # Slack 로그 알림 (com.visuworks.lib:slack-logger)
 # 지정된 level 이상 로그를 Slack 웹훅으로 전송. 배치 실패 등 log.error 자동 감지.
