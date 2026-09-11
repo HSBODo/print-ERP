@@ -9,13 +9,14 @@ export type UserRole = 'ADMIN' | 'DIRECTOR' | 'MANAGER' | 'STAFF'
 
 /**
  * 사용자 부서 (docs/auth/permissions.md § 2-2).
- * - ALL      : ADMIN·DIRECTOR 전용. 부서 gate 우회.
- * - MEDICAL  : 진료·수술 부서 (원장·실장·상담사·간호사 등).
- * - MARKETING: 마케팅 부서.
+ * - ALL              : ADMIN·DIRECTOR 전용. 부서 gate 우회.
+ * - MEDICAL          : 진료·수술 부서 (원장·실장·상담사·간호사 등).
+ * - MARKETING        : 마케팅 부서 (채널·SMS·해외마케팅 포함).
+ * - OVERSEAS_MARKETING: 해외마케팅 전담 부서 (2026-09-11 신설 · 홈 + 해외마케팅 3종만).
  *
  * 이 축은 "부서(department)" 다. 향후 "소속(회사·법인)" 축이 별도로 추가될 수 있다.
  */
-export type UserDepartment = 'ALL' | 'MEDICAL' | 'MARKETING'
+export type UserDepartment = 'ALL' | 'MEDICAL' | 'MARKETING' | 'OVERSEAS_MARKETING'
 
 export interface AuthUser {
   id: number
@@ -43,7 +44,7 @@ const TOKEN_STORAGE_KEY = 'token'
 const USER_STORAGE_KEY = 'auth-user'
 
 const KNOWN_ROLES: UserRole[] = ['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF']
-const KNOWN_DEPARTMENTS: UserDepartment[] = ['ALL', 'MEDICAL', 'MARKETING']
+const KNOWN_DEPARTMENTS: UserDepartment[] = ['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING']
 
 const emptySession = (): StoredAuthSession => ({
   token: null,

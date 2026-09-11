@@ -121,31 +121,33 @@ public class SecurityConfig {
                 auth.requestMatchers("/api/stats/channel-profit/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
                 // 해외마케팅 동기화 트리거 — ADMIN 만 실행. 무거운 외부 조회(Google Sheets·MSSQL SOFTCRM) 이 걸려
-                // 실수 실행·오·남용을 방지한다. 반드시 아래 /api/overseas-marketing/** MARKETING 매처보다 앞에 둔다.
+                // 실수 실행·오·남용을 방지한다. 반드시 아래 /api/overseas-marketing/** 부서 매처보다 앞에 둔다.
                 auth.requestMatchers(HttpMethod.POST,
                                 "/api/overseas-marketing/sync-sheet",
                                 "/api/overseas-marketing/sync-crm")
                         .hasRole("ADMIN");
-                // 해외마케팅(접수리스트·통계·예약통계) — 조회·수기 입력·CRM 매칭·수동 확정 은 MARKETING 부서 개방.
+                // 해외마케팅(접수리스트·통계·예약통계) — MARKETING·OVERSEAS_MARKETING·ALL 개방
+                // (OVERSEAS_MARKETING 은 2026-09-11 신설 전담 부서 — 홈 + 해외마케팅만 접근).
                 auth.requestMatchers("/api/overseas-marketing/**")
-                        .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
+                        .hasAnyAuthority("DEPT_MARKETING", "DEPT_OVERSEAS_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/stats/marketing/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/accumulated-eyes/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
 
-                // ─── 홈(대시보드) 요약 KPI — 양 부서 개방 (docs/auth/permissions.md § 5-1 "홈화면") ──
+                // ─── 홈(대시보드) 요약 KPI — 전 부서 개방 (docs/auth/permissions.md § 5-1 "홈화면") ──
                 // DashboardPage 가 부서 관계없이 뜨도록, 홈에서 쓰는 5개 GET 엔드포인트만
                 // MEDICAL gate 앞에 예외 매처를 둔다. 집계 숫자라 개인정보 위험 낮음.
                 // 하위 경로(/cell·/diagnostics/**)는 매칭되지 않아 MEDICAL 전용으로 유지된다.
                 // 수술은 KPI·월별 추이·시술별 비중 세 화면이 모두 /panel/trend 하나를 공유한다.
+                // OVERSEAS_MARKETING 은 홈만 접근 가능한 좁은 부서라 여기 포함 (2026-09-11).
                 auth.requestMatchers(HttpMethod.GET,
                                 "/api/stats/reservation-overall/monthly",
                                 "/api/stats/procedure-exam/monthly",
                                 "/api/stats/surgery/panel/trend",
                                 "/api/stats/outpatient-count/monthly",
                                 "/api/stats/reservation-stats-system")
-                        .hasAnyAuthority("DEPT_MEDICAL", "DEPT_MARKETING", "DEPT_ALL");
+                        .hasAnyAuthority("DEPT_MEDICAL", "DEPT_MARKETING", "DEPT_OVERSEAS_MARKETING", "DEPT_ALL");
 
                 // ─── 부서 gate: MEDICAL 전용 (나머지 통계·리스트·리포트) ────────
                 auth.requestMatchers("/api/stats/**")

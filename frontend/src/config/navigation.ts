@@ -144,24 +144,36 @@ export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(
  * MANAGER·STAFF 가 department='MARKETING' 인 사용자만 접근. ADMIN·DIRECTOR (department='ALL') 는 항상 접근.
  * MEDICAL 부서 사용자에게는 사이드바에서 숨김 + 직접 URL 접근도 차단.
  *
- * 문서에 명시된 채널 페이지(channel-profit·marketing), 해외마케팅 섹션 3종
- * (overseas-marketing-receptions·overseas-marketing-statistics·overseas-reservation-stats) 및 마케팅 섹션에서
- * 함께 다루는 파생 페이지(reservation-channel·channel-analysis·accumulated-eyes·sms) 를 포함한다.
+ * 문서에 명시된 채널 페이지(channel-profit·marketing) 및 마케팅 섹션에서 함께 다루는 파생 페이지
+ * (reservation-channel·channel-analysis·accumulated-eyes·sms) 를 포함한다.
  * SMS 는 § 5-2 완화 이후 MARKETING 부서만 접근한다 (사용자 결정 2026-09-03).
  * 편집·[지금 실행]·[실패 재실행] 은 ADMIN 만 (프론트 canSystemOp + 백엔드 hasRole('ADMIN')).
+ *
+ * <b>주의</b> — 해외마케팅 3종은 별도 SET(OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS) 로 관리.
+ * MARKETING 도 접근하지만 OVERSEAS_MARKETING 전담 부서도 접근하기 때문 (2026-09-11).
  */
 const MARKETING_ONLY_PAGE_IDS = new Set<string>([
   'reservation-channel',
   'channel-profit',
   'channel-analysis',
   'accumulated-eyes',
-  'overseas-marketing-receptions',
-  'overseas-marketing-statistics',
-  'overseas-reservation-stats',
   'marketing',
   'sms',
 ])
 export const isMarketingOnlyPage = (id: string): boolean => MARKETING_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 해외마케팅 3종 페이지 (2026-09-11 신설) — MARKETING·OVERSEAS_MARKETING 두 부서 개방.
+ * MARKETING 은 넓은 스코프의 상위 부서, OVERSEAS_MARKETING 은 이 3종만 전담하는 좁은 스코프.
+ * 사이드바 노출·URL 접근 판정에서 두 부서 모두 통과시킨다.
+ */
+const OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS = new Set<string>([
+  'overseas-marketing-receptions',
+  'overseas-marketing-statistics',
+  'overseas-reservation-stats',
+])
+export const isOverseasMarketingPage = (id: string): boolean =>
+  OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS.has(id)
 
 /**
  * 페이지의 부서 스코프 (docs/auth/permissions.md § 3, § 4-1).
@@ -174,6 +186,7 @@ export const isMarketingOnlyPage = (id: string): boolean => MARKETING_ONLY_PAGE_
  */
 export const getPageDepartments = (id: string): UserDepartment[] | undefined => {
   if (!STATS_PAGE_ID_SET.has(id)) return undefined
+  if (isOverseasMarketingPage(id)) return ['MARKETING', 'OVERSEAS_MARKETING']
   if (isMarketingOnlyPage(id)) return ['MARKETING']
   return ['MEDICAL']
 }

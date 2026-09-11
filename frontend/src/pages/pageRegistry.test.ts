@@ -7,6 +7,7 @@ import {
   hasExplicitMenuStatus,
   isAdminOnlyPage,
   isMarketingOnlyPage,
+  isOverseasMarketingPage,
   statsPages,
 } from '../config/navigation'
 import { matchesDepartment, type UserRole } from '../stores/auth-session'
@@ -121,8 +122,11 @@ describe('통계 페이지 라우트 정책 불변식', () => {
   })
 
   it('부서 gate: MEDICAL 전용 페이지는 MARKETING 부서 STAFF 에게 차단된다', () => {
-    // MEDICAL 전용 = 마케팅 전용 아닌 통계 페이지 (기본값).
-    const medicalIds = completeIds.filter((id) => !isMarketingOnlyPage(id) && !isAdminOnlyPage(id))
+    // MEDICAL 전용 = 마케팅 전용도 아니고 · 해외마케팅 개방도 아니고 · admin 도 아닌 통계 페이지 (기본값).
+    // 해외마케팅 3종은 MARKETING·OVERSEAS_MARKETING 두 부서 개방이라 MARKETING STAFF 도 통과 → 여기서 제외.
+    const medicalIds = completeIds.filter(
+      (id) => !isMarketingOnlyPage(id) && !isOverseasMarketingPage(id) && !isAdminOnlyPage(id),
+    )
     expect(medicalIds.length).toBeGreaterThan(0)
     for (const id of medicalIds) {
       expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)

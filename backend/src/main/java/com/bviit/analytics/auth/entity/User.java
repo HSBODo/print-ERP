@@ -57,7 +57,7 @@ public class User {
 
     /**
      * 롤·부서를 한 번에 갱신. 조합이 유효해야 한다
-     * (ADMIN·DIRECTOR ↔ ALL, MANAGER·STAFF ↔ MEDICAL/MARKETING).
+     * (ADMIN·DIRECTOR ↔ ALL, MANAGER·STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING).
      * DB CHECK 제약으로 최종 방어되지만 여기서 먼저 예외를 던져 400 을 반환한다.
      */
     public void changeRoleAndDepartment(Role newRole, Department newDepartment) {
@@ -74,11 +74,13 @@ public class User {
         this.password = encodedPassword;
     }
 
-    /** ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ MEDICAL/MARKETING */
+    /** ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING */
     public static boolean isValidCombination(Role role, Department department) {
         if (role == Role.ADMIN || role == Role.DIRECTOR) {
             return department == Department.ALL;
         }
-        return department == Department.MEDICAL || department == Department.MARKETING;
+        return department == Department.MEDICAL
+                || department == Department.MARKETING
+                || department == Department.OVERSEAS_MARKETING;
     }
 }

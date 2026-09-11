@@ -9,6 +9,7 @@ import type { AuthUser } from '@/stores/auth-session'
 
 const asMedicalStaff: Pick<AuthUser, 'department'> = { department: 'MEDICAL' }
 const asMarketingStaff: Pick<AuthUser, 'department'> = { department: 'MARKETING' }
+const asOverseasMarketingStaff: Pick<AuthUser, 'department'> = { department: 'OVERSEAS_MARKETING' }
 const asAdminOrDirector: Pick<AuthUser, 'department'> = { department: 'ALL' }
 
 // 트리에서 특정 id 를 재귀로 찾는다.
@@ -83,6 +84,39 @@ describe('pruneByDepartment · 사이드바 부서 gate', () => {
     expect(leafIds).not.toContain('monthly-report')
     expect(leafIds).not.toContain('reservation-list')
     expect(leafIds).not.toContain('exam-list')
+  })
+
+  it('OVERSEAS_MARKETING 부서 STAFF: 홈 + 해외마케팅 3종만 유지 · 그 외 섹션 모두 제거', () => {
+    // 2026-09-11 신설 좁은 스코프 — MARKETING 도 아니고 MEDICAL 도 아님. 홈과 해외마케팅 섹션만.
+    const filtered = pruneByDepartment(menuItems, asOverseasMarketingStaff)
+    const leafIds = collectLeafIds(filtered)
+
+    expect(leafIds).toContain('home')
+    expect(leafIds).toContain('overseas-marketing-receptions')
+    expect(leafIds).toContain('overseas-marketing-statistics')
+    expect(leafIds).toContain('overseas-reservation-stats')
+
+    // 다른 마케팅 파생 페이지·메디컬 페이지는 사라져야 한다
+    expect(leafIds).not.toContain('channel-profit')
+    expect(leafIds).not.toContain('sms')
+    expect(leafIds).not.toContain('reservation-channel')
+    expect(leafIds).not.toContain('monthly-report')
+    expect(leafIds).not.toContain('reservation-list')
+
+    // 비앤빛·마케팅 섹션은 통째로 사라지고, 해외마케팅 섹션만 남는다.
+    expect(findById(filtered, 'bnviit-section')).toBeUndefined()
+    expect(findById(filtered, 'marketing-section')).toBeUndefined()
+    expect(findById(filtered, 'overseas-marketing-section')).toBeDefined()
+  })
+
+  it('MARKETING 부서 STAFF 도 해외마케팅 섹션에 여전히 접근 가능 (상위 스코프)', () => {
+    // OVERSEAS_MARKETING 부서 신설로 해외마케팅 3종이 두 부서 개방으로 확장됐지만
+    // MARKETING 접근이 축소되면 안 된다 (회귀 방지).
+    const filtered = pruneByDepartment(menuItems, asMarketingStaff)
+    const leafIds = collectLeafIds(filtered)
+    expect(leafIds).toContain('overseas-marketing-receptions')
+    expect(leafIds).toContain('overseas-marketing-statistics')
+    expect(leafIds).toContain('overseas-reservation-stats')
   })
 
   it('user=null (미인증) 시 스코프 없는 노드(홈) 만 통과', () => {
