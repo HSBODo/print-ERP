@@ -120,7 +120,13 @@ public class SecurityConfig {
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/stats/channel-profit/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
-                // 해외마케팅(접수리스트·통계·예약통계) — 조회·수기 입력·CRM 매칭·동기화 모두 MARKETING 부서.
+                // 해외마케팅 동기화 트리거 — ADMIN 만 실행. 무거운 외부 조회(Google Sheets·MSSQL SOFTCRM) 이 걸려
+                // 실수 실행·오·남용을 방지한다. 반드시 아래 /api/overseas-marketing/** MARKETING 매처보다 앞에 둔다.
+                auth.requestMatchers(HttpMethod.POST,
+                                "/api/overseas-marketing/sync-sheet",
+                                "/api/overseas-marketing/sync-crm")
+                        .hasRole("ADMIN");
+                // 해외마케팅(접수리스트·통계·예약통계) — 조회·수기 입력·CRM 매칭·수동 확정 은 MARKETING 부서 개방.
                 auth.requestMatchers("/api/overseas-marketing/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/stats/marketing/**")
