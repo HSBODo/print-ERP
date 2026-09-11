@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { menuItems, pruneByDepartment, type MenuItem } from '@/config/navigation'
+import { menuItems, pruneByDepartment, pruneExecutiveOnly, type MenuItem } from '@/config/navigation'
 import type { AuthUser } from '@/stores/auth-session'
 
 /**
@@ -117,6 +117,26 @@ describe('pruneByDepartment · 사이드바 부서 gate', () => {
     expect(leafIds).toContain('overseas-marketing-receptions')
     expect(leafIds).toContain('overseas-marketing-statistics')
     expect(leafIds).toContain('overseas-reservation-stats')
+  })
+
+  it('pruneExecutiveOnly: MANAGER·STAFF 에게는 accounting-section 이 통째로 사라진다', () => {
+    // 2026-09-11 정책 — 회계 그룹은 임원 이상(ADMIN·DIRECTOR) 만 열람.
+    const staffFiltered = pruneExecutiveOnly(menuItems, 'STAFF')
+    const managerFiltered = pruneExecutiveOnly(menuItems, 'MANAGER')
+    expect(findById(staffFiltered, 'accounting-section')).toBeUndefined()
+    expect(findById(managerFiltered, 'accounting-section')).toBeUndefined()
+
+    // 잎도 사라져야 한다 (accounting-medical 등)
+    expect(collectLeafIds(staffFiltered)).not.toContain('accounting-medical')
+    expect(collectLeafIds(managerFiltered)).not.toContain('accounting-vision-summary')
+  })
+
+  it('pruneExecutiveOnly: ADMIN·DIRECTOR 에게는 accounting-section 이 유지된다', () => {
+    const adminFiltered = pruneExecutiveOnly(menuItems, 'ADMIN')
+    const directorFiltered = pruneExecutiveOnly(menuItems, 'DIRECTOR')
+    expect(findById(adminFiltered, 'accounting-section')).toBeDefined()
+    expect(findById(directorFiltered, 'accounting-section')).toBeDefined()
+    expect(collectLeafIds(directorFiltered)).toContain('accounting-medical')
   })
 
   it('user=null (미인증) 시 스코프 없는 노드(홈) 만 통과', () => {

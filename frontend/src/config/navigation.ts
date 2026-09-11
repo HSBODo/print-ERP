@@ -30,6 +30,12 @@ export interface MenuItem {
   /** true 이면 ADMIN 롤 사용자에게만 노출 (Sidebar 필터). */
   adminOnly?: boolean
   /**
+   * true 이면 ADMIN·DIRECTOR (임원 이상) 만 노출 (Sidebar 필터). MANAGER·STAFF 차단.
+   * 회계처럼 임원 열람이 필요한데 시스템 조작 권한과는 무관한 그룹에 쓴다.
+   * `adminOnly` 와 배타적 — 둘 다 true 이면 좁은 쪽(adminOnly) 이 우선한다.
+   */
+  executiveOnly?: boolean
+  /**
    * true 이면 "관리자" 배지 대상(개발 완료된 관리자 전용 도구, amber).
    * 미지정이면 "개발중" 배지(WIP, blue) — 완성 전이라 관리자만 검토용 노출 중.
    * admin-section 트리 안 항목은 rawMenuItems 정의 이후 자동 마킹된다.
@@ -131,13 +137,25 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
+])
+export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지 (2026-09-11 신설).
+ * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
+ *
+ * 회계 그룹은 매출·수납 데이터가 민감하지만 DIRECTOR(임원) 열람이 실무상 필요.
+ * ADMIN 은 시스템 조작자, DIRECTOR 는 임원·경영진 — 두 롤 모두 department='ALL' 로 부서 gate 우회한다.
+ * MANAGER 이하는 부서 관계없이 접근 불가.
+ */
+const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>([
   'accounting-medical',
   'accounting-vision',
   'accounting-vision-summary',
   'accounting-vision-chart',
   'accounting-medical-chart',
 ])
-export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
+export const isExecutiveOnlyPage = (id: string): boolean => EXECUTIVE_ONLY_PAGE_IDS.has(id)
 
 /**
  * 마케팅 부서 전용 페이지 (docs/auth/permissions.md § 4-1).
@@ -215,6 +233,7 @@ const link = (id: string): MenuItem => {
   const page = findPage(id)
   const item: MenuItem = { id, label: page.label, href: page.path, status: getMenuStatus(id) }
   if (isAdminOnlyPage(id)) item.adminOnly = true
+  if (isExecutiveOnlyPage(id)) item.executiveOnly = true
   return item
 }
 
@@ -361,7 +380,9 @@ const rawMenuItems: MenuItem[] = [
     href: '#',
     icon: Landmark,
     kind: 'section',
-    adminOnly: true,
+    // 2026-09-11: ADMIN 전용 → 임원 이상(ADMIN·DIRECTOR) 개방으로 완화.
+    // 매출·수납 데이터는 민감하지만 임원 열람이 실무상 필요. MANAGER 이하는 부서 관계없이 차단.
+    executiveOnly: true,
     children: kids(
       'accounting-medical', 'accounting-vision',
       'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart',
@@ -436,3 +457,25 @@ export const pruneByDepartment = (
     })
     .map((item) => (item.children ? { ...item, children: pruneByDepartment(item.children, user) } : item))
     .filter((item) => item.children === undefined || item.children.length > 0)
+
+/**
+ * 임원 gate — `executiveOnly` 항목은 ADMIN·DIRECTOR 에게만 보이고 나머지 롤에는 제거된다.
+ * 섹션 자체도 `executiveOnly=true` 인 경우 마찬가지로 사라진다(회계 섹션).
+ *
+ * Sidebar 렌더 파이프라인에서 `pruneAdmin` 과 나란히 적용된다. 순수 함수라 유닛 테스트에서 격리 검증 가능.
+ */
+export const pruneExecutiveOnly = (
+  items: MenuItem[],
+  role: string | undefined,
+): MenuItem[] => {
+  const isExecutive = role === 'ADMIN' || role === 'DIRECTOR'
+  if (isExecutive) return items
+  return items
+    .filter((item) => !item.executiveOnly)
+    .map((item) => (item.children ? { ...item, children: pruneExecutiveOnly(item.children, role) } : item))
+    .filter((item) => {
+      if (item.children === undefined) return true
+      if (item.kind === 'section') return true
+      return item.children.length > 0
+    })
+}

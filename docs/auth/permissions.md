@@ -100,6 +100,7 @@
        · GET  /offsets, /targets            → STAFF 이상 (DIRECTOR 포함)
        · PUT  /offsets, POST /queue/run     → ADMIN only (canSystemOp 헬퍼)
        · POST /admin/batch/**               → ADMIN only
+       · 회계 5종 페이지                    → ADMIN·DIRECTOR (임원 gate · 프론트 executiveOnly)
 ```
 
 **두 층을 섞지 않는 이유** — 페이지 추가 시 부서 태그만 붙이면 되고, 롤 조작이 늘어나도 부서 태그를 다시 안 건드림. 지금처럼 판정이 개별 컴포넌트에 흩뿌려지지 않는다.
@@ -128,6 +129,7 @@
 | 외래 | outpatient-list · outpatient-count | MEDICAL |
 | Report | weekly-report · monthly-report | MEDICAL |
 | 기타 | dreamlens-revenue · b2b-revenue · (그 외 미구현 8종) | MEDICAL |
+| **회계** (2026-09-11 신설) | accounting-medical · accounting-vision · accounting-vision-summary · accounting-vision-chart · accounting-medical-chart | **임원 이상(ADMIN·DIRECTOR) 전용** — 매출·수납 민감 데이터 · MANAGER·STAFF 는 부서 무관 차단. 현재 상태 `frontend-only` (합성 목업 · 백엔드 미구현). |
 | 관리자 | batch-management · **account-management** | ADMIN 전용 (부서 무관 · 개발자 전용) — DIRECTOR 도 진입 불가 |
 
 **SMS 는 § 5-2 완화 후 MARKETING 부서 전용**(2026-09-03 사용자 결정) — 조회·홀딩·수신거부·연락처 수정·수동 대상 추가는 MARKETING STAFF 가능. 편집·[지금 실행]·[실패 재실행]·실제 발송·대량 sync/import 는 여전히 ADMIN.

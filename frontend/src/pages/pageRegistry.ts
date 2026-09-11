@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { getMenuStatus, getPageDepartments, isAdminOnlyPage } from '../config/navigation'
+import { getMenuStatus, getPageDepartments, isAdminOnlyPage, isExecutiveOnlyPage } from '../config/navigation'
 import { matchesDepartment, type AuthUser } from '../stores/auth-session'
 import { reportPageRoutes } from './report/routes'
 import { reservationPageRoutes } from './reservation/routes'
@@ -55,6 +55,8 @@ export const isRouteBlocked = (
   if (status === 'backend-only') return true
   if (isProd && status === 'pending') return true
   if (isAdminOnlyPage(pageId) && user?.role !== 'ADMIN') return true
+  // 임원 이상(ADMIN·DIRECTOR) 전용 페이지 — 그 외 롤은 환경 무관하게 차단.
+  if (isExecutiveOnlyPage(pageId) && user?.role !== 'ADMIN' && user?.role !== 'DIRECTOR') return true
   if (!matchesDepartment(user ?? null, getPageDepartments(pageId))) return true
   return false
 }

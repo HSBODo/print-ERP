@@ -6,6 +6,7 @@ import {
   getPageDepartments,
   hasExplicitMenuStatus,
   isAdminOnlyPage,
+  isExecutiveOnlyPage,
   isMarketingOnlyPage,
   isOverseasMarketingPage,
   statsPages,
@@ -58,7 +59,7 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     }
   })
 
-  it('회계 프런트 미리보기는 API 연결 전까지 ADMIN만 접근한다', () => {
+  it('회계 프런트 미리보기는 임원 이상(ADMIN·DIRECTOR) 만 접근한다 (2026-09-11 완화)', () => {
     for (const id of [
       'accounting-medical',
       'accounting-vision',
@@ -67,9 +68,12 @@ describe('통계 페이지 라우트 정책 불변식', () => {
       'accounting-medical-chart',
     ]) {
       expect(PAGE_COMPONENTS[id]).toBeDefined()
-      expect(isAdminOnlyPage(id)).toBe(true)
+      // 회계는 더 이상 adminOnly 아님 · executiveOnly 로 이동
+      expect(isAdminOnlyPage(id)).toBe(false)
+      expect(isExecutiveOnlyPage(id)).toBe(true)
+      // ADMIN·DIRECTOR 는 통과 · MANAGER·STAFF 는 차단
       expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
-      expect(isRouteBlocked(id, false, asDirector)).toBe(true)
+      expect(isRouteBlocked(id, true, asDirector)).toBe(false)
       expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
     }
   })
@@ -137,6 +141,20 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     for (const id of completeIds) {
       // ADMIN 전용 아닌 페이지에 한해 DIRECTOR 도 통과해야 함.
       if (isAdminOnlyPage(id)) continue
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, false, asDirector)).toBe(false)
+    }
+  })
+
+  it('임원 gate: executiveOnly 페이지는 MANAGER·STAFF 에게 차단되고 ADMIN·DIRECTOR 는 통과한다', () => {
+    // 회계 5개 페이지 = executiveOnly. adminOnly 아니라 DIRECTOR 도 접근 가능(2026-09-11 정책).
+    const executiveIds = ids.filter((id) => isExecutiveOnlyPage(id))
+    expect(executiveIds.length).toBeGreaterThan(0)
+    const asManagerMedical = { role: 'MANAGER' as const, department: 'MEDICAL' as const }
+    for (const id of executiveIds) {
+      expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
+      expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)
+      expect(isRouteBlocked(id, false, asManagerMedical)).toBe(true)
       expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
       expect(isRouteBlocked(id, false, asDirector)).toBe(false)
     }
