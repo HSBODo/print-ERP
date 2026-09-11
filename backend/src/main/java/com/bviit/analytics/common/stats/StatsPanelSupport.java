@@ -1,7 +1,6 @@
 package com.bviit.analytics.common.stats;
 
 import com.bviit.analytics.common.dto.ApiResponse;
-import com.bviit.analytics.common.stats.StatsResponseMeta;
 import com.bviit.analytics.common.exception.DataSourceUnavailableException;
 import org.springframework.http.ResponseEntity;
 

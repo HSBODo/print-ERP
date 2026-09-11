@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EtcMartWriterIT {
 
     @Container
+    @SuppressWarnings("resource") // Lifecycle is managed by Testcontainers.
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:18-alpine")
             .withDatabaseName("mart_test")
             .withUsername("test")

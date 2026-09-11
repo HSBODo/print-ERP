@@ -15,7 +15,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -41,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SurgeryMartWriterIT {
 
     @Container
+    @SuppressWarnings("resource") // Lifecycle is managed by Testcontainers.
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:18-alpine")
             .withDatabaseName("mart_test")
             .withUsername("test")

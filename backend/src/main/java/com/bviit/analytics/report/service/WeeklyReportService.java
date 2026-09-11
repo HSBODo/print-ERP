@@ -108,8 +108,6 @@ public class WeeklyReportService implements WeeklyReportReader {
                 lastIsoWeek(weekYears.get(weekYears.size() - 1))).plusDays(6);
         String fromDate = from.toString();
         String toDate = to.toString();
-        // 등록일시(datetime) 비교용 상한 — 마지막 날의 23:59:59 까지 포함해야 한다.
-        String toDateTime = toDate + " 23:59:59";
 
         Map<String, Acc> buckets = new LinkedHashMap<>();
 
