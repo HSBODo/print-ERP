@@ -41,6 +41,9 @@ public class ReservationChangeMartJob {
     private final ReservationChangeMartWriter writer;
     private final BatchSuccessLogRepository successLogRepository;
 
+    /** 시각 미상(HISTORY_TIME + HISTORY_NUM 모두 실패) 비율이 이 값을 넘으면 log.error → Slack 알림. */
+    private static final double TIME_LOST_ERROR_RATE = 0.05;   // 5%
+
     @Transactional
     public Map<String, Integer> run(LocalDate from, LocalDate to) {
         log.info("ReservationChangeMartJob start: history range={}..{}", from, to);
@@ -48,16 +51,25 @@ public class ReservationChangeMartJob {
         List<ReservationChangeRow> buffer = new ArrayList<>(FLUSH_SIZE);
         int[] upserted = {0};
         int[] skipped = {0};
-        int[] unreadableTime = {0};
+        int[] historyTimeFail = {0};   // HISTORY_TIME 파싱 실패 (fallback 여부 무관)
+        int[] recovered = {0};         // 그 중 HISTORY_NUM 시각으로 복구된 건수
+        int[] timeLost = {0};          // 둘 다 실패 → 시각 미상으로 화면에 노출됨
+        int[] totalSteps = {0};        // 시각 판정 시도 총 스텝 수 (분모)
         int reservations = historyRepository.forEachReservation(from.toString(), to.toString(), source -> {
-            // HISTORY_TIME 형식 드리프트 관측 — 못 읽은 원문을 앞 몇 건만 남긴다(HISTORY_NUM 시각으로 대체되므로 실패는 아님).
             for (ReservationChangeChainBuilder.HistoryStep h : source.history()) {
                 String raw = h.historyTime() == null ? "" : h.historyTime().trim();
-                if (!raw.isEmpty() && ReservationChangeChainBuilder.parseTime(raw).isEmpty()) {
-                    unreadableTime[0]++;
-                    if (unreadableTime[0] <= 5) {
-                        log.warn("HISTORY_TIME 형식을 못 읽음 → HISTORY_NUM 시각 사용: reserveNum={} historyNum={} historyTime={}",
-                                source.reserveNum(), h.historyNum(), raw);
+                if (raw.isEmpty()) continue;   // 원래 시각 없음 — 실패 카운트에 넣지 않음
+                totalSteps[0]++;
+                if (ReservationChangeChainBuilder.parseTime(raw).isEmpty()) {
+                    historyTimeFail[0]++;
+                    if (ReservationChangeChainBuilder.parseHistoryNum(h.historyNum()).isPresent()) {
+                        recovered[0]++;
+                    } else {
+                        timeLost[0]++;
+                        if (timeLost[0] <= 5) {
+                            log.warn("시각 미상 처리(HISTORY_TIME·HISTORY_NUM 모두 실패): reserveNum={} historyNum={} historyTime={}",
+                                    source.reserveNum(), h.historyNum(), raw);
+                        }
                     }
                 }
             }
@@ -71,8 +83,21 @@ public class ReservationChangeMartJob {
 
         successLogRepository.upsert(MART_NAME, to);
 
-        log.info("ReservationChangeMartJob done: reservations={} upserted={} skipped(no valid date)={} unreadableHistoryTime={}",
-                reservations, upserted[0], skipped[0], unreadableTime[0]);
-        return Map.of("list_reservation_change", upserted[0]);
+        // 시각 미상 비율이 임계치 초과면 log.error → Slack 알림 (LOGGING_SLACK_LEVEL=ERROR)
+        double lostRate = totalSteps[0] > 0 ? (double) timeLost[0] / totalSteps[0] : 0.0;
+        if (timeLost[0] > 0 && lostRate > TIME_LOST_ERROR_RATE) {
+            log.error("시각 미상 비율 임계치 초과 — HISTORY_TIME/HISTORY_NUM 파싱 원본 확인 필요: totalSteps={} timeLost={} rate={}%",
+                    totalSteps[0], timeLost[0], String.format("%.2f", lostRate * 100));
+        }
+        log.info("ReservationChangeMartJob done: reservations={} upserted={} skipped(no valid date)={} " +
+                        "historyTimeFail={} recovered={} timeLost={} totalSteps={}",
+                reservations, upserted[0], skipped[0], historyTimeFail[0], recovered[0], timeLost[0], totalSteps[0]);
+
+        return Map.of(
+                "list_reservation_change", upserted[0],
+                // batch_run_log.table_stats 에도 실패 통계를 남긴다 — /admin/batch 화면에서 관측 가능.
+                "history_time_fail", historyTimeFail[0],
+                "history_time_recovered", recovered[0],
+                "history_time_lost", timeLost[0]);
     }
 }

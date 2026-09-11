@@ -114,7 +114,7 @@ public final class ReservationChangeChainBuilder {
     }
 
     /** HISTORY_NUM 앞 12자리 yyMMddHHmmss. 형식이 다르면 empty. */
-    static Optional<LocalDateTime> parseHistoryNum(String num) {
+    public static Optional<LocalDateTime> parseHistoryNum(String num) {
         if (num == null) return Optional.empty();
         String s = num.trim();
         if (!HISTORY_NUM_TIME.matcher(s).find()) return Optional.empty();
