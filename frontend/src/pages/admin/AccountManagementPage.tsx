@@ -39,6 +39,8 @@ const DEPT_BADGE: Record<UserDepartment, string> = {
   ALL: 'bg-slate-50 text-slate-700 border-slate-200',
   MEDICAL: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   MARKETING: 'bg-amber-50 text-amber-700 border-amber-200',
+  // 해외마케팅 — MARKETING 계열이지만 좁은 스코프라 다른 톤(rose) 로 구분 (Topbar 배지와 통일).
+  OVERSEAS_MARKETING: 'bg-rose-50 text-rose-700 border-rose-200',
 }
 
 export function AccountManagementPage() {
