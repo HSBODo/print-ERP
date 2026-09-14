@@ -20,12 +20,12 @@ import java.util.Map;
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class OutpatientCountStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL = "sql/outpatient/find-outpatient-count-monthly.sql";
+    private static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL = "sql/softcrm/outpatient/select-outpatient-count-monthly.sql";
 
     private final String findOutpatientCountMonthlySql;
 

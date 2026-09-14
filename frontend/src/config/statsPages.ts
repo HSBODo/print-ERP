@@ -45,11 +45,11 @@ export const getStatsPageById = (id: string): StatsPageDefinition => {
 export const statsPages: StatsPageDefinition[] = [
   statsPage(
     'weekly-report',
-    '주간 레포트',
+    '주차 레포트',
     '/report/weekly',
     'report-group',
     'Report',
-    '한 주간의 핵심 KPI(예약·검사·수술·전환율 등)를 요약한 주간 리포트입니다.',
+    '월간 레포트와 같은 도표를 주차(월~일) 단위로 본 리포트. 전체 주차 또는 특정 월에 걸친 주차(월 경계 주차 포함)를 선택할 수 있습니다.',
     '/api/report/weekly'
   ),
   statsPage(
@@ -67,7 +67,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/overall-exam',
     'exam-group',
     '검사',
-    '총검사자와 소개유형·직업 구성을 월별로 정리한 종합표입니다. 2024·2025년 확정값, 2026년부터 운영 DB 집계 예정.',
+    '총검사자와 소개유형·직업 구성을 월별로 정리한 종합표입니다. 2024·2025년 확정값(마트 시드), 2026년부터는 운영 DB 배치 적재 마트를 조회합니다.',
     '/api/stats/overall-exam'
   ),
   statsPage(
@@ -80,22 +80,13 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/overall-exam/weekly'
   ),
   statsPage(
-    'intake-conversion',
-    '유입(검사예약)',
-    '/stats/intake-conversion',
-    'reservation-group',
-    '예약',
-    '인콜·아웃콜·카카오톡·네이버·홈페이지 채널별 검사예약 전환을 확인하는 화면입니다.',
-    '/api/stats/intake-conversion'
-  ),
-  statsPage(
     'reservation',
     '예약 건수',
     '/stats/reservation',
     'reservation-group',
     '예약',
     '예약 유입 규모와 일자별 변화 추이를 확인하는 화면입니다.',
-    '/api/stats/reservation'
+    '/api/stats/reservation/monthly'
   ),
   statsPage(
     'reservation-overall',
@@ -130,8 +121,53 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/reservation-list',
     'reservation-group',
     '예약',
-    '예약 종합(콜·온라인) 건수를 구성하는 검사예약 인원 명단입니다. 등록일 기준 월 단위 조회 + 주별 승인 → 월별 체크(마감) 워크플로우.',
+    '예약 종합(콜·온라인) 건수를 구성하는 검사예약 인원 명단입니다. 등록일 기준 월 단위로 조회합니다.',
     '/api/reservation-list'
+  ),
+  statsPage(
+    'reservation-channel',
+    '예약 퍼널',
+    '/stats/reservation-channel',
+    'marketing-section',
+    '마케팅',
+    '예약자 리스트를 유입 채널로 묶어 예약 → 취소제외 → 접수 → 검사 → 수술 단계로 좁혀 보는 퍼널입니다. 합계는 예약자 리스트와 같습니다.',
+    '/api/stats/reservation-channel'
+  ),
+  statsPage(
+    'channel-profit',
+    '채널별 수익성',
+    '/stats/channel-profit',
+    'marketing-section',
+    '마케팅',
+    '유입채널이 얼마를 남겼는지(수납액·객단가·공헌이익(렌즈만))와 광고매체가 얼마를 회수했는지(CPA·ROAS)를 나눠서 봅니다. 예약통계_채널별과 같은 뷰를 읽어 인원이 일치합니다.',
+    '/api/stats/channel-profit'
+  ),
+  statsPage(
+    'channel-analysis',
+    '채널별 분석',
+    '/stats/channel-analysis',
+    'marketing-section',
+    '마케팅',
+    '유입 채널별로 고객이 누구이고 객단가가 왜 그런지 정리한 분석 문서 모음입니다. 좌측에서 채널을 고르면 해당 문서가 열립니다. 실측 기준이며 화면은 조회를 하지 않습니다(수치는 본문에 고정).',
+    '(없음 — 정적 문서)'
+  ),
+  statsPage(
+    'sms',
+    '문자 발송 리스트',
+    '/stats/sms',
+    'marketing-section',
+    '마케팅',
+    '수술 후 안내 문자(알림톡·SMS) 1~3차 발송 대상 리스트와 결과 점검. 관리자 전용. 자동화 미구현 상태에서는 대상 관리(추가·연락처 수정·홀딩) 역할.',
+    '/api/sms-management/targets'
+  ),
+  statsPage(
+    'reservation-list-homepage',
+    '예약자 리스트_홈페이지',
+    '/stats/reservation-list-homepage',
+    'reservation-group',
+    '예약',
+    '홈페이지 온라인 예약 신청 명단입니다. 레거시 관리자 화면(counsel/online_list.php)과 동일한 조회 조건·컬럼 구성이며, 등록일 기준 조회입니다.',
+    '/api/reservation-list-homepage'
   ),
   statsPage(
     'exam-list',
@@ -159,6 +195,15 @@ export const statsPages: StatsPageDefinition[] = [
     '검사',
     '시력교정+백내장 검사자를 통합한 명단입니다. 검사구분·내원동기·직업 토글 조회건수가 월별 검사자 종합지표(검사유입·검사수)와 정합합니다.',
     '/api/all-exam-list'
+  ),
+  statsPage(
+    'eoeis-checkup',
+    '아이리더 검사통계',
+    '/stats/eoeis-checkup',
+    'exam-group',
+    '검사',
+    '아이리더 검사기록을 검사자×장비 또는 검사자×기간으로 피벗해 건수와 장비 가중 점수를 확인하는 화면입니다.',
+    '/api/eoeis-checkup'
   ),
   statsPage(
     'examination',
@@ -193,7 +238,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/cataract-reservation-rate',
     'consultation',
     '전환&성공률',
-    '백내장 검사자 대비 수술예약건 비율을 월별로 확인하는 화면입니다.',
+    '시력교정 검사자 대비 수술예약률과, 백내장 진단자 대비 수술예약률을 탭으로 나눠 월별로 확인하는 화면입니다.',
     '/api/stats/cataract-reservation-rate'
   ),
   statsPage(
@@ -238,7 +283,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/surgery-ratio',
     'surgery-ratio',
     '주요 수술별 비중',
-    '주요 수술 종류별 비중과 분포를 보여주는 화면입니다.',
+    '기준 연도와 월(연간 전체 가능)을 선택해 주요 수술 유형별 KPI·점유율과 상위 수술의 월별 추이를 함께 보는 화면입니다.',
     '/api/stats/surgery-ratio'
   ),
   statsPage(
@@ -247,8 +292,26 @@ export const statsPages: StatsPageDefinition[] = [
     '/stats/surgery-composition',
     'surgery',
     '수술',
-    '시술별(라섹·라식·스마일·ICL·백내장 등) 월별 수술 건수와 그룹 내 비중을 표로 보는 화면입니다.',
+    '시술별(라섹·라식·스마일·ICL·백내장 등) 수술 건수와 그룹 내 비중을 월별/주차(ISO)/주별/일별/전체 단위로 골라 보는 표 화면입니다.',
     '/api/stats/surgery-ratio'
+  ),
+  statsPage(
+    'accumulated-eyes',
+    '누적 안수',
+    '/stats/accumulated-eyes',
+    'marketing-section',
+    '마케팅',
+    'MSSQL OPERATION_ACCUMULATED_EYE_COUNT 원천을 마트에 적재해 눈(眼) 단위로 조회하는 화면입니다. 기간 리스트와 이름·차트·전화·안수 검색을 제공합니다.',
+    '/api/accumulated-eyes'
+  ),
+  statsPage(
+    'outpatient-list',
+    '외래수 리스트',
+    '/stats/outpatient-list',
+    'outpatient',
+    '외래',
+    'RESERVATION(외래 F + 내원/퇴원 I,H) 기준 외래수 상세 명단입니다. 리스트 합계가 월별 외래수 지표와 정합합니다.',
+    '/api/outpatient-list'
   ),
   statsPage(
     'outpatient-count',
@@ -306,12 +369,12 @@ export const statsPages: StatsPageDefinition[] = [
   ),
   statsPage(
     'dreamlens-revenue',
-    '드림렌즈 매출',
+    '드림렌즈 장부',
     '/stats/dreamlens-revenue',
     'etc',
     '기타',
-    '드림렌즈 매출 추이와 기간별 비교를 확인하는 화면입니다.',
-    '/api/stats/dreamlens-revenue'
+    'D/L 장부를 직접 입력·수정하는 화면입니다.',
+    '/api/dreamlens-ledger'
   ),
   statsPage(
     'b2b-revenue',
@@ -393,5 +456,14 @@ export const statsPages: StatsPageDefinition[] = [
     '관리자',
     '마트 재적재 배치를 수동 실행하고 실행 이력을 확인합니다. ADMIN 롤 전용.',
     '/api/admin/batch/rerun'
+  ),
+  statsPage(
+    'account-management',
+    '계정 관리',
+    '/admin/accounts',
+    'admin',
+    '관리자',
+    '사용자 계정 CRUD (신규 · 편집 · 삭제). ADMIN 롤 전용. 자기 자신의 롤·부서는 변경할 수 없고, 마지막 ADMIN 은 삭제할 수 없다.',
+    '/api/admin/users'
   ),
 ]

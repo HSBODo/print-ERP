@@ -38,11 +38,6 @@ public class ConsultationRateController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                service,
-                reader -> reader.getMonthlyRates(years),
-                List::of
-        );
+        return StatsPanelSupport.require(service, reader -> reader.getMonthlyRates(years));
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.Connection;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   - partial 플래그 · 날짜 라운드트립 (부분 주/월 재현)
  *   - 여러 주/월에 걸친 upsert
  */
+@EnabledIfEnvironmentVariable(named = "RUN_INTEGRATION_TESTS", matches = "true")
 @Testcontainers
 class OverallMartWriterIT {
 
@@ -59,9 +61,10 @@ class OverallMartWriterIT {
         try (Connection conn = dataSource.getConnection()) {
             execSilently(conn, "DROP TABLE IF EXISTS mart_overall_exam_weekly, "
                     + "mart_overall_exam_monthly, batch_watermark, batch_run_log CASCADE");
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V1__batch_meta.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V7__overall_mart.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/V10__overall_exam_monthly.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1a__batch_run_log.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/batch/tables/V1b__batch_watermark.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/overall/tables/V7__overall_mart.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("sql/mart/exam/tables/V10__overall_exam_monthly.sql"));
         }
     }
 

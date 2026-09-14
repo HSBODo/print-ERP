@@ -18,7 +18,7 @@ import {
  * 예약통계_백내장 — 일자별 원시 카운트.
  * 백엔드: GET /api/stats/reservation-stats-cataract?from&to → ApiResponse<DailyCounts[]>.
  * 비율·합계·총예약건 등 파생값은 프론트(reservationStatsCataractData)가 동일 공식으로 계산한다.
- * 확정 스냅샷 우선, 없으면 mssql 라이브 조회. 미연결 시 503 → 호출부가 미연결 안내 표시.
+ * 확정 스냅샷 우선, 없으면 배치 마트 조회. 미연결 시 503 → 호출부가 미연결 안내 표시.
  */
 /** 셀 손보정 이력 1건 — '이 셀은 수기 보정됨' 마커 + 추적(누가/언제). */
 const cellEditSchema = z.object({
@@ -29,8 +29,30 @@ const cellEditSchema = z.object({
 })
 export type CataractStatsCellEdit = z.infer<typeof cellEditSchema>
 
-/** 손보정 가능한 필드(인입콜/응대콜만) — 백엔드 EDITABLE_FIELDS와 일치. */
-export const CATARACT_EDITABLE_FIELDS = ['inboundCall', 'answeredCall'] as const
+/** 손보정 가능한 필드(원시 카운트 21개 = 채널 18 + 종합 3) — 백엔드 EDITABLE_FIELDS와 일치. */
+export const CATARACT_EDITABLE_FIELDS = [
+  'totalCataract',
+  'totalPresbyopia',
+  'inboundCall',
+  'answeredCall',
+  'newExamInquiry',
+  'newReInquiry',
+  'newPatient',
+  'tmTotalDb',
+  'tmValidDb',
+  'tmReservation',
+  'kakaoTotalInquiry',
+  'kakaoCataractReservation',
+  'kakaoPresbyopiaReservation',
+  'onlineReservation',
+  'onlineNoShow',
+  'cancelOnline',
+  'cancelCrm',
+  'cancelKakao',
+  'visit',
+  'noShowReservation',
+  'cancel',
+] as const
 export type CataractEditableField = (typeof CATARACT_EDITABLE_FIELDS)[number]
 
 const dailyCountsSchema = z.object({
@@ -68,11 +90,6 @@ export type CataractStatsDailyCountsResult = {
 const responseSchema = apiResponseOf(z.array(dailyCountsSchema), reservationStatsResponseMetaSchema)
 const cellEditResponseSchema = apiResponseOf(dailyCountsSchema)
 
-/** 확정 월 요약: period + locked(PDF 고정이면 재확정 금지). */
-const snapshotInfoSchema = z.object({ period: z.string(), locked: z.boolean() })
-export type CataractStatsSnapshotInfo = z.infer<typeof snapshotInfoSchema>
-
-const snapshotsSchema = apiResponseOf(z.array(snapshotInfoSchema))
 const diffResponseSchema = apiResponseOf(reservationStatsDiffSchema)
 const drillDownResponseSchema = apiResponseOf(reservationStatsDrillDownSchema)
 const parityResponseSchema = apiResponseOf(reservationStatsParitySchema)
@@ -84,20 +101,9 @@ export const reservationStatsCataractApi = {
     return { data: parsed.data, meta: parsed.meta }
   },
 
-  /** 확정(스냅샷)된 월 목록(period + locked). */
-  getSnapshots: async (): Promise<CataractStatsSnapshotInfo[]> => {
-    const res = await api.get<unknown>('/stats/reservation-stats-cataract/snapshots')
-    return snapshotsSchema.parse(res).data
-  },
-
-  /** 호출(증분 채움): 해당 월을 D-1까지 라이브 조회해 비어있는 날짜만 채운다(있으면 보존). */
-  fillSnapshot: async (period: string): Promise<void> => {
-    await api.post<unknown>(withQuery('/stats/reservation-stats-cataract/fill', { period }), {})
-  },
-
   /**
-   * 셀 손보정: 특정 일자의 인입콜/응대콜을 PDF/레거시 값으로 직접 수정한다(휴가 등 라이브 어긋남 교정).
-   * 스냅샷 파일만 갱신되며 수정 이력이 남는다. 갱신된 일자 row를 반환.
+   * 셀 손보정: 특정 일자의 원시 카운트(21개 필드) 값을 직접 수정한다.
+   * postgres-mart 프로파일: reservation_stats_override 에 INSERT-only 로 이력 append.
    */
   editCell: async (
     period: string,

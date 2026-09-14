@@ -9,26 +9,24 @@ frontend/.env
 .cache/
 backend/.cache/
 
+# Gradle 로컬 설정 — Nexus 계정(nexusUsername/nexusPassword)이 들어가는 파일이다. 커밋 금지.
+# 계정은 리포 밖(~/.gradle/gradle.properties)에 두는 게 원칙 — 리포 안에는 만들지 말 것.
+# 이 패턴은 방어용이다(실수로 리포에 만들어도 스테이징되지 않게).
+gradle.properties
+
+# docker compose 로컬 오버라이드 — 호스트 경로·개인 설정이 들어간다(머신마다 다름).
+docker-compose.override.yml
+
 # 로컬 데이터 파일 (Excel 원본/Office 잠금파일)
 *.xlsx
 ~$*
 
-# 예약통계 확정 스냅샷 — 런타임 생성분은 커밋 제외, PDF 고정(locked) 시드만 추적
-backend/data/*
-!backend/data/reservation-stats/
-backend/data/reservation-stats/*
-!backend/data/reservation-stats/2026-01.json
-!backend/data/reservation-stats/2026-02.json
-!backend/data/reservation-stats/2026-03.json
-!backend/data/reservation-stats/2026-04.json
-!backend/data/reservation-stats/2026-05.json
-!backend/data/reservation-stats/2026-06.json
-!backend/data/reservation-stats-cataract/
-backend/data/reservation-stats-cataract/*
-!backend/data/reservation-stats-cataract/2026-01.json
-!backend/data/reservation-stats-cataract/2026-02.json
-!backend/data/reservation-stats-cataract/2026-03.json
-!backend/data/reservation-stats-cataract/2026-04.json
-!backend/data/reservation-stats-cataract/2026-05.json
-!backend/data/reservation-stats-cataract/2026-06.json
-data/reservation-stats/
+# (2026-08-26 삭제) backend/data/ 예약통계 스냅샷 JSON 12개 · MonthlySnapshotStore 정리 —
+#   V19/V20 시드가 마트 SSOT 로 이관됨. 관련 예외 규칙 제거.
+
+# 운영 자격증명이 남을 수 있는 .env 백업
+.env.bak*
+
+# D/L 장부 스프레드시트 원본 export — 환자 실명·고객번호가 들어 있어 커밋 금지.
+# (docs/databatch/*.csv 는 집계값이라 추적 대상이므로 *.csv 로 싸잡지 않는다)
+/D_L 장부들*.csv

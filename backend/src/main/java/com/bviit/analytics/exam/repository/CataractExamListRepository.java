@@ -15,7 +15,7 @@ import java.util.Map;
  * 백내장 검사자 리스트 — 성민CRM "백내장 검사자 리스트"(FrmCataract_ExamList) 화면 소스.
  * 소스: Cataract_Exam + Cataract_Operationdata + CUSTOM + EMPLOYEE + RESERVATION(flag 'H') + MOTIVE/COSTPRICE 등.
  * 검사자 리스트(시력교정/EXAM)와 동일한 47필드 계약을 공유하되, 소스 테이블만 백내장 계열로 교체.
- * docs/db/백내장검사리스트-컬럼정의.md 참조.
+ * docs/db/검사자리스트-컬럼정의.md 참조 (백내장 편이 이 문서로 병합됐다).
  *
  * 백내장 특화:
  *   - 예약 진료구분/검사시간/경로 = RESERVE_FLAG='H' 예약 (시력교정의 'M'과 다름)
@@ -26,12 +26,12 @@ import java.util.Map;
  * READ-ONLY · MSSQL 2014 호환(LTRIM/RTRIM). 날짜는 char(10) 'YYYY-MM-DD'.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class CataractExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_CATARACT_EXAM_LIST_SQL = "sql/exam/find-cataract-exam-list.sql";
+    private static final String FIND_CATARACT_EXAM_LIST_SQL = "sql/softcrm/exam/select-cataract-exam-list.sql";
 
     private final String findCataractExamListSql;
 

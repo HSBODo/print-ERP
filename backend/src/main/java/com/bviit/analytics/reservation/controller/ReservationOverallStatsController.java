@@ -1,10 +1,11 @@
 package com.bviit.analytics.reservation.controller;
 
+import com.bviit.analytics.common.stats.StatsPanelSupport;
 import com.bviit.analytics.common.stats.StatsRequestValidator;
 
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
-import com.bviit.analytics.reservation.service.ReservationOverallStatsService;
+import com.bviit.analytics.reservation.service.ReservationOverallStatsReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,16 +14,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 예약 종합(콜, 온라인) 통계 API.
+ *
+ * Reader 인터페이스에만 의존 — postgres-mart 프로파일에서는 MartQueryService(마트 조회)가
+ * @Primary 로 주입된다. 미연결 시 503 응답.
+ * 두 프로파일 모두 아닌 경우(H2 dev) Reader 가 없어 503 으로 응답한다.
  */
 @RestController
 @RequestMapping("/api/stats")
 @RequiredArgsConstructor
 public class ReservationOverallStatsController {
 
-    private final ReservationOverallStatsService reservationOverallStatsService;
+    private final Optional<ReservationOverallStatsReader> reservationOverallStatsReader;
 
     /**
      * GET /api/stats/reservation-overall/monthly?years=2024,2025,2026
@@ -33,6 +39,6 @@ public class ReservationOverallStatsController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return ResponseEntity.ok(ApiResponse.ok(reservationOverallStatsService.getMonthlyStats(years)));
+        return StatsPanelSupport.require(reservationOverallStatsReader, service -> service.getMonthlyStats(years));
     }
 }

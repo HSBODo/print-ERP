@@ -14,7 +14,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,22 +41,6 @@ class ReservationListRepositoryTest {
         verify(jdbc).queryForList(sqlCaptor.capture(), paramsCaptor.capture());
 
         assertThat(sqlCaptor.getValue()).isEqualTo(SqlLoader.load(ReservationListRepository.RESERVATION_LIST_SQL));
-        assertThat(paramsCaptor.getValue().getValue("from")).isEqualTo("2026-06-01");
-        assertThat(paramsCaptor.getValue().getValue("to")).isEqualTo("2026-06-23");
-    }
-
-    @Test
-    void countKakao는_sql_리소스와_날짜_파라미터를_사용하고_null은_0으로_반환한다() {
-        when(jdbc.queryForObject(any(String.class), any(MapSqlParameterSource.class), eq(Integer.class))).thenReturn(null);
-
-        int count = repository.countKakao("2026-06-01", "2026-06-23");
-
-        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<MapSqlParameterSource> paramsCaptor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
-        verify(jdbc).queryForObject(sqlCaptor.capture(), paramsCaptor.capture(), eq(Integer.class));
-
-        assertThat(count).isZero();
-        assertThat(sqlCaptor.getValue()).isEqualTo(SqlLoader.load(ReservationListRepository.KAKAO_COUNT_SQL));
         assertThat(paramsCaptor.getValue().getValue("from")).isEqualTo("2026-06-01");
         assertThat(paramsCaptor.getValue().getValue("to")).isEqualTo("2026-06-23");
     }

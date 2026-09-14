@@ -22,7 +22,7 @@ import {
 } from './formulas/reservationStatsCataractFormulas'
 import { buildStatsCsv, type CsvColumnGroup } from './shared/reservationStatsCsv'
 import type { CellFormat } from './shared/reservationStatsFormat'
-import { buildDisplayRowsFromCounts, type StatsDisplayRow } from './shared/reservationStatsRows'
+import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './shared/reservationStatsRows'
 import { SUMMARY_COLUMNS, computeSummaryRow } from './shared/reservationStatsSummary'
 
 export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './shared/reservationStatsCore'
@@ -122,6 +122,20 @@ export const getDisplayRowsFromCounts = (
   lastDay: number,
 ): CataractDisplayRow[] =>
   buildDisplayRowsFromCounts(granularity, dailies, period, lastDay, {
+    zeroCounts,
+    sumCounts,
+    isZeroCounts,
+    buildRow: countRow,
+  })
+
+/** 시작일/종료일 범위로 표시 행 생성. 단일 월 범위면 getDisplayRowsFromCounts 와 동일 결과. */
+export const getRangeDisplayRowsFromCounts = (
+  granularity: Granularity,
+  dailies: CataractStatsDailyCounts[],
+  from: string,
+  to: string,
+): CataractDisplayRow[] =>
+  buildRangeDisplayRowsFromCounts(granularity, dailies, from, to, {
     zeroCounts,
     sumCounts,
     isZeroCounts,

@@ -22,30 +22,26 @@ import java.util.Map;
  *   - 제외: 테스트/TEST 이름, 공용 더미 고객 8888888888888 (CRM 플레이스홀더)
  *   - 상태(RESERVE_STATE) 필터 없음 — 종합은 등록 시점 기준이라 사후 취소도 포함.
  * 행 1개 = RESERVE_NUM 1개(PK). **명단 행 합계 = 예약 종합 월 값**(둘 다 카카오 미포함).
- * 카카오(countKakao)는 RESERVATION에 행이 없어(해피톡 소스) 명단·종합 모두 제외 → 화면에 참고용으로만 표시.
  *
  * READ-ONLY · MSSQL 2014 호환(TRIM 금지). 날짜 범위는 등록일(InsertedDateTime) 기준.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ReservationListRepository {
 
-    static final String RESERVATION_LIST_SQL = "sql/reservation-list/reservation-list.sql";
-    static final String KAKAO_COUNT_SQL = "sql/reservation-list/kakao-count.sql";
-    static final String KAKAO_DAILY_COUNTS_SQL = "sql/reservation-list/kakao-daily-counts.sql";
+    static final String RESERVATION_LIST_SQL = "sql/softcrm/reservation/list/select-reservation-list.sql";
+    static final String RESERVATION_LIST_ALL_SQL = "sql/softcrm/reservation/list/select-reservation-list-all.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String reservationListSql;
-    private final String kakaoCountSql;
-    private final String kakaoDailyCountsSql;
+    private final String reservationListAllSql;
 
     public ReservationListRepository(
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
     ) {
         this.jdbc = jdbc;
         this.reservationListSql = SqlLoader.load(RESERVATION_LIST_SQL);
-        this.kakaoCountSql = SqlLoader.load(KAKAO_COUNT_SQL);
-        this.kakaoDailyCountsSql = SqlLoader.load(KAKAO_DAILY_COUNTS_SQL);
+        this.reservationListAllSql = SqlLoader.load(RESERVATION_LIST_ALL_SQL);
     }
 
     public List<Map<String, Object>> findReservationList(String from, String to) {
@@ -55,24 +51,12 @@ public class ReservationListRepository {
     }
 
     /**
-     * 카카오(해피톡 대분류 '수술전' + 중분류 '★신환' = 레거시 RSS '카카오톡_예약') 건수 — 참고용.
-     * 카카오 예약은 RESERVE_PATH가 없어 RESERVATION(=명단)엔 안 잡힌다. 예약 종합도 카카오를 빼므로
-     * (레거시가 월마다 포함/미포함 불일치) 합산하지 않고 화면에 참고 수치로만 보여준다.
-     * 등록일 기준 ms 단위 등록시각 distinct, 명단 행 범위와 같은 날짜창(< to+1일).
+     * 예약 전체 얇은 리스트 — mart_reservation_monthly(수술/외래/드림렌즈) 재집계용.
+     * 검사(M) 예약은 여기서 빠진다 — RESERVE_FLAG='O' OR RESERVE_FLAG='D' OR RESERVE_JINRYO='2'.
+     * 예약일(RESERVE_DATE) 기준. 취소(C) 제외.
      */
-    public int countKakao(String from, String to) {
-        Integer count = jdbc.queryForObject(kakaoCountSql, new MapSqlParameterSource()
-                .addValue("from", from)
-                .addValue("to", to), Integer.class);
-        return count == null ? 0 : count;
-    }
-
-    /**
-     * 카카오(해피톡) 일별 신규 신환 예약 건수 — 마트 배치 적재용.
-     * 반환: [{dt: 'YYYY-MM-DD', kakaoCount: int}, ...] (해당 날짜에 건수가 있는 행만).
-     */
-    public List<Map<String, Object>> findKakaoDailyCounts(String from, String to) {
-        return jdbc.queryForList(kakaoDailyCountsSql, new MapSqlParameterSource()
+    public List<Map<String, Object>> findReservationListAll(String from, String to) {
+        return jdbc.queryForList(reservationListAllSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

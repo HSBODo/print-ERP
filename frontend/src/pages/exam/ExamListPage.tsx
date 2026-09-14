@@ -1,20 +1,18 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useExamList } from '@/hooks/exam/useExamList'
-import { useWeeklyApproval } from '@/hooks/useWeeklyApproval'
-import { WeeklyApprovalPanel } from '@/components/stats/WeeklyApprovalPanel'
 import type { ExamListItem } from '@/api/exam/examList'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './examListColumns'
 import {
   dash,
-  examDateOf,
   formatExamType,
   formatCount,
-  DEFAULT_FROM,
-  DEFAULT_TO,
+  defaultFrom,
+  defaultTo,
   PAGE_SIZE_OPTIONS,
   SKELETON_ROWS,
   QUICK_RANGES,
@@ -41,13 +39,13 @@ import {
 export function ExamListPage() {
   const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
   const [activeQuickRange, setActiveQuickRange] = useState<QuickRangeKey | null>(null)
-  const [draftFrom, setDraftFrom] = useState(DEFAULT_FROM)
-  const [draftTo, setDraftTo] = useState(DEFAULT_TO)
+  const [draftFrom, setDraftFrom] = useState(defaultFrom)
+  const [draftTo, setDraftTo] = useState(defaultTo)
   const [draftExamCategory, setDraftExamCategory] = useState('전체')
   const [draftType, setDraftType] = useState('전체')
   const [draftKeyword, setDraftKeyword] = useState('')
-  const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
-  const [queryTo, setQueryTo] = useState(DEFAULT_TO)
+  const [queryFrom, setQueryFrom] = useState(defaultFrom)
+  const [queryTo, setQueryTo] = useState(defaultTo)
   const [queryExamCategory, setQueryExamCategory] = useState('전체')
   const [queryType, setQueryType] = useState('전체')
   const [queryKeyword, setQueryKeyword] = useState('')
@@ -74,12 +72,7 @@ export function ExamListPage() {
     })
   }, [rows, queryExamCategory, queryType, queryKeyword])
 
-  // 주별 승인(주차 버킷 + 승인/선택) — 검사일 기준. 같은 달 조회일 때만 패널 노출(weeksInRange 제약).
-  const approval = useWeeklyApproval(filtered, examDateOf, queryFrom, queryTo)
-  const sameMonth = queryFrom.slice(0, 7) === queryTo.slice(0, 7)
-  const showApproval = hasSearched && !isError && !showSkeleton && sameMonth
-  // 선택 주차로 거른 행이 표/페이지네이션 소스(미선택 시 filtered 그대로)
-  const tableRows = approval.selectedRows
+  const tableRows = filtered
 
   const sortedRows = useMemo(() => {
     if (!sortState) return tableRows
@@ -115,7 +108,6 @@ export function ExamListPage() {
   const handleSearch = () => {
     setHasSearched(true)
     setCurrentPage(1)
-    approval.clearSelection()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryExamCategory(draftExamCategory)
@@ -126,19 +118,18 @@ export function ExamListPage() {
   const handleReset = () => {
     setDraftPeriodMode('daily')
     setActiveQuickRange(null)
-    setDraftFrom(DEFAULT_FROM)
-    setDraftTo(DEFAULT_TO)
+    setDraftFrom(defaultFrom())
+    setDraftTo(defaultTo())
     setDraftExamCategory('전체')
     setDraftType('전체')
     setDraftKeyword('')
-    setQueryFrom(DEFAULT_FROM)
-    setQueryTo(DEFAULT_TO)
+    setQueryFrom(defaultFrom())
+    setQueryTo(defaultTo())
     setQueryExamCategory('전체')
     setQueryType('전체')
     setQueryKeyword('')
     setPageSize(50)
     setCurrentPage(1)
-    approval.reset()
     setHasSearched(false)
   }
 
@@ -206,18 +197,15 @@ export function ExamListPage() {
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
           </div>
           {draftPeriodMode === 'monthly' ? (
-            <input
+            <MonthPicker
               id="exam-list-from"
-              aria-label="검사 기준 월"
-              type="month"
+              ariaLabel="검사 기준 월"
               value={toMonthValue(draftFrom)}
-              onChange={(e) => {
-                if (!e.target.value) return
+              onChange={(v) => {
                 setActiveQuickRange(null)
-                setDraftFrom(toMonthStart(e.target.value))
-                setDraftTo(toMonthEnd(e.target.value))
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
               }}
-              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           ) : (
             <>
@@ -335,18 +323,6 @@ export function ExamListPage() {
           </Button>
         </div>
       </div>
-
-      {showApproval && (
-        <WeeklyApprovalPanel
-          weeks={approval.weeks}
-          approved={approval.approved}
-          selectedWeek={approval.selectedWeek}
-          onToggleApprove={approval.toggleApprove}
-          onSelectWeek={approval.selectWeek}
-          subtitle={`검사자 · ${queryExamCategory} (검사일 기준)`}
-          totalLabel="월 합계"
-        />
-      )}
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">

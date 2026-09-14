@@ -18,7 +18,7 @@ import java.util.Optional;
 
 /**
  * 검사 건수 통계 API.
- * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  * postgres-mart 프로파일에서는 ExaminationMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  */
 @RestController
@@ -41,11 +41,6 @@ public class ExaminationStatsController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                examinationService,
-                service -> service.getMonthlyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(examinationService, service -> service.getMonthlyStats(years));
     }
 }

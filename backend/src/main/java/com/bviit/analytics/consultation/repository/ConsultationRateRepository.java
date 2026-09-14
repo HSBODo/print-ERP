@@ -27,13 +27,13 @@ import java.util.Map;
  *   중단: CUSTOM.MY_optometrist 있음 AND CUSTOM.MY_COUNSELOR='BS0808'
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ConsultationRateRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_MONTHLY_VISION_RATES_SQL = "sql/consultation/find-monthly-vision-rates.sql";
-    private static final String FIND_MONTHLY_CATARACT_RATES_SQL = "sql/consultation/find-monthly-cataract-rates.sql";
+    private static final String FIND_MONTHLY_VISION_RATES_SQL = "sql/softcrm/consultation/select-monthly-vision-rates.sql";
+    private static final String FIND_MONTHLY_CATARACT_RATES_SQL = "sql/softcrm/consultation/select-monthly-cataract-rates.sql";
 
     private final String findMonthlyVisionRatesSql;
     private final String findMonthlyCataractRatesSql;

@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { examApi, type ProcedureExamMonthlyItem } from '@/api/exam'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 interface MonthlyData {
   examCount: number
@@ -26,10 +25,8 @@ function toDataMap(items: ProcedureExamMonthlyItem[]): Record<number, MonthlyDat
 }
 
 export function useProcedureExamTrend(years: number[]) {
-  const source = useDataSourceStore((state) => state.source)
-
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['procedure-exam-trend', years, source],
+    queryKey: ['procedure-exam-trend', years],
     queryFn: () => examApi.getProcedureExamMonthly(years),
     enabled: years.length > 0,
   })

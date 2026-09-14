@@ -18,10 +18,10 @@ import java.util.Optional;
 
 /**
  * 검사자 종합표 월간 집계 API.
- * 실 데이터 리더는 mssql·postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 리더는 postgres-mart 프로파일에서 주입된다. 미연결 시 503으로 응답한다.
  * postgres-mart 프로파일에서는 OverallExamMonthlyMartQueryService(@Primary)가 자동 선택돼 마트를 조회한다.
  *
- * 24·25 는 프론트 하드코딩(레거시 확정치)이 유일한 진실이므로 이 API는 26년+ 데이터만 반환한다.
+ * 24·25 는 V14+V16 마트 시드가 SSOT — API 는 요청된 연도에 대해 마트에 있는 데이터를 그대로 반환한다.
  */
 @RestController
 @RequestMapping("/api/stats")
@@ -42,11 +42,6 @@ public class OverallExamMonthlyController {
     ) {
         StatsRequestValidator.validateYears(years);
 
-        return StatsPanelSupport.resolve(
-                false,
-                overallExamMonthlyService,
-                service -> service.getMonthlyStats(years),
-                List::of
-        );
+        return StatsPanelSupport.require(overallExamMonthlyService, service -> service.getMonthlyStats(years));
     }
 }

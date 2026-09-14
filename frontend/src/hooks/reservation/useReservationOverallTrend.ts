@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { reservationApi, type ReservationOverallMonthlyItem } from '@/api/reservation'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 interface MonthlyData {
   reservations: number | null
@@ -29,10 +28,8 @@ function toDataMap(items: ReservationOverallMonthlyItem[]): Record<number, Month
 }
 
 export function useReservationOverallTrend(years: number[]) {
-  const source = useDataSourceStore((state) => state.source)
-
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['reservation-overall-trend', years, source],
+    queryKey: ['reservation-overall-trend', years],
     queryFn: () => reservationApi.getReservationOverallMonthly(years),
     enabled: years.length > 0,
   })

@@ -8,7 +8,7 @@ import java.util.List;
  * 검사 중단 사유 월별 조회 계약.
  *
  * 구현체:
- *   - StopReasonStatsService          : 항상 활성 (mssql 없으면 0-fill)
+ *   - StopReasonStatsService          : 항상 활성 (Repository 부재 시 0-fill)
  *   - StopReasonStatsMartQueryService : @Profile("postgres-mart") @Primary — Postgres 마트
  */
 public interface StopReasonStatsReader {

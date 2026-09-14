@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useAllExamList } from '@/hooks/exam/useAllExamList'
@@ -11,11 +12,24 @@ import {
   compareSortValue,
   buildPaginationItems,
   formatCount,
-  DEFAULT_FROM,
-  DEFAULT_TO,
+  GROUP_FILTERS,
+  matchesExamGroup,
   PAGE_SIZE_OPTIONS,
+  QUICK_RANGES,
+  previousMonthValue,
+  toMonthValue,
+  toMonthStart,
+  toMonthEnd,
+  toMonthWeekRange,
+  type PeriodMode,
+  type QuickRangeKey,
   type SortState,
 } from './examListUtils'
+
+// 기본 조회 기간 = 오늘 기준 전월 전체 (예: 7월이면 2026-06-01 ~ 2026-06-30)
+const PREV_MONTH = previousMonthValue()
+const DEFAULT_FROM = toMonthStart(PREV_MONTH)
+const DEFAULT_TO = toMonthEnd(PREV_MONTH)
 
 /**
  * 전체 검사자 리스트 — 시력교정(EXAM) + 백내장(Cataract_Exam) 통합 명단.
@@ -23,7 +37,7 @@ import {
  * 레포트 검사유입·검사수 수치와 정합한다. (상세 컬럼은 기존 개별 리스트 유지)
  */
 
-const GROUP_FILTERS = ['전체', '시력교정', '드림렌즈', '백내장'] as const
+const ONEDAY_FILTERS = ['전체', '원데이', '일반'] as const
 const INTRO_FILTERS = ['전체', '일반', '고객소개', '직원소개'] as const
 const JOB_FILTERS = ['전체', '직장인', '학생', '기타'] as const
 const PATIENT_FILTERS = ['전체', '신환', '구환'] as const
@@ -38,6 +52,8 @@ const sortValue = (r: AllExamListItem, key: string, originalIndex: number): stri
 }
 
 export function AllExamListPage() {
+  const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
+  const [activeQuickRange, setActiveQuickRange] = useState<QuickRangeKey | null>(null)
   const [draftFrom, setDraftFrom] = useState(DEFAULT_FROM)
   const [draftTo, setDraftTo] = useState(DEFAULT_TO)
   const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
@@ -45,6 +61,7 @@ export function AllExamListPage() {
   const [hasSearched, setHasSearched] = useState(false)
 
   const [examGroup, setExamGroup] = useState<string>('전체')
+  const [oneDayFilter, setOneDayFilter] = useState<string>('전체')
   const [introType, setIntroType] = useState<string>('전체')
   const [jobBucket, setJobBucket] = useState<string>('전체')
   const [patientType, setPatientType] = useState<string>('전체')
@@ -61,14 +78,15 @@ export function AllExamListPage() {
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase()
     return rows.filter((r) => {
-      if (examGroup !== '전체' && r.examGroup !== examGroup) return false
+      if (!matchesExamGroup(r, examGroup)) return false
+      if (oneDayFilter !== '전체' && r.examType !== oneDayFilter) return false
       if (introType !== '전체' && r.introType !== introType) return false
       if (jobBucket !== '전체' && r.jobBucket !== jobBucket) return false
       if (patientType !== '전체' && r.patientType !== patientType) return false
       if (!q) return true
       return r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q)
     })
-  }, [rows, examGroup, introType, jobBucket, patientType, keyword])
+  }, [rows, examGroup, oneDayFilter, introType, jobBucket, patientType, keyword])
 
   const sorted = useMemo(() => {
     if (!sortState) return filtered
@@ -93,19 +111,49 @@ export function AllExamListPage() {
   const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1
   const rangeEnd = Math.min(safePage * pageSize, filtered.length)
 
+  const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
+
   const handleSearch = () => {
     setHasSearched(true)
-    setQueryFrom(draftFrom)
-    setQueryTo(draftTo)
+    setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
+    setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setCurrentPage(1)
   }
 
+  const handlePeriodModeChange = (mode: PeriodMode) => {
+    setDraftPeriodMode(mode)
+    setActiveQuickRange(null)
+    if (mode === 'monthly') {
+      const month = toMonthValue(draftFrom)
+      setDraftFrom(toMonthStart(month))
+      setDraftTo(toMonthEnd(month))
+    }
+  }
+
+  const handleQuickRange = (key: QuickRangeKey) => {
+    setActiveQuickRange(key)
+    if (key === 'monthly') {
+      setDraftPeriodMode('daily')
+      setDraftFrom(toMonthStart(toMonthValue(draftFrom)))
+      setDraftTo(toMonthEnd(toMonthValue(draftTo)))
+      return
+    }
+    const week = Number(key.replace('w', ''))
+    const { from, to } = toMonthWeekRange(toMonthValue(draftFrom), week)
+    setDraftPeriodMode('daily')
+    setDraftFrom(from)
+    setDraftTo(to)
+  }
+
   const handleReset = () => {
+    setDraftPeriodMode('daily')
+    setActiveQuickRange(null)
     setDraftFrom(DEFAULT_FROM)
     setDraftTo(DEFAULT_TO)
     setQueryFrom(DEFAULT_FROM)
     setQueryTo(DEFAULT_TO)
     setExamGroup('전체')
+    setOneDayFilter('전체')
     setIntroType('전체')
     setJobBucket('전체')
     setPatientType('전체')
@@ -160,21 +208,65 @@ export function AllExamListPage() {
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
       {/* 툴바: 기간 · 검색 · 조회건수 · 액션 */}
       <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-1.5 py-1.5 text-xs shadow-sm">
-        <input
-          aria-label="검사 시작일"
-          type="date"
-          value={draftFrom}
-          onChange={(e) => setDraftFrom(e.target.value)}
-          className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-        />
-        <span className="text-gray-400">~</span>
-        <input
-          aria-label="검사 종료일"
-          type="date"
-          value={draftTo}
-          onChange={(e) => setDraftTo(e.target.value)}
-          className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-        />
+        <div className="flex flex-wrap items-center gap-1 text-xs text-gray-700">
+          <div className="relative">
+            <select
+              aria-label="기간 단위"
+              value={draftPeriodMode}
+              onChange={(e) => handlePeriodModeChange(e.target.value as PeriodMode)}
+              className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="daily">일별</option>
+              <option value="monthly">월별</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+          </div>
+          {draftPeriodMode === 'monthly' ? (
+            <MonthPicker
+              ariaLabel="검사 기준 월"
+              value={toMonthValue(draftFrom)}
+              onChange={(v) => {
+                setActiveQuickRange(null)
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
+              }}
+            />
+          ) : (
+            <>
+              <input
+                aria-label="검사 시작일"
+                type="date"
+                value={draftFrom}
+                onChange={(e) => { setActiveQuickRange(null); setDraftFrom(e.target.value) }}
+                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+              <span className="text-gray-400">~</span>
+              <input
+                aria-label="검사 종료일"
+                type="date"
+                value={draftTo}
+                onChange={(e) => { setActiveQuickRange(null); setDraftTo(e.target.value) }}
+                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </>
+          )}
+        </div>
+        {visibleQuickRanges.length > 0 && (
+          <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
+            {visibleQuickRanges.map((range, index) => (
+              <button
+                key={range.key}
+                type="button"
+                className={`min-w-10 border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
+                  activeQuickRange === range.key ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
+                } ${index === visibleQuickRanges.length - 1 ? 'min-w-12' : ''}`}
+                onClick={() => handleQuickRange(range.key)}
+              >
+                {range.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
           <input
             type="text"
@@ -220,6 +312,7 @@ export function AllExamListPage() {
       {/* 상세 필터 (토글) — 툴바 아래 한 줄 */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-border/60 bg-gray-50/70 px-2.5 py-2 text-xs shadow-sm">
         {filterGroup('검사', GROUP_FILTERS, examGroup, setExamGroup)}
+        {filterGroup('원데이', ONEDAY_FILTERS, oneDayFilter, setOneDayFilter)}
         {filterGroup('동기', INTRO_FILTERS, introType, setIntroType)}
         {filterGroup('직업', JOB_FILTERS, jobBucket, setJobBucket)}
         {filterGroup('환자', PATIENT_FILTERS, patientType, setPatientType)}

@@ -14,7 +14,7 @@ import java.util.Map;
  * 진료구분·검색 등 세부 필터는 프론트에서 클라이언트 사이드로 처리.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class CataractExamListService implements CataractExamListReader {
 

@@ -17,7 +17,8 @@ import java.util.List;
  * 시력교정 RSS와 동일한 PK+예약날짜 LEFT JOIN 모델. 채널 소스:
  *   - 컨택센터 콜(신규문의/신환/재문의): CtiRptLst(+CtiClg) 백내장 코드
  *   - 카톡(검사예약/노안/취소/문의): HappyTalk 백내장검사·백내장외래
- *   - 온라인예약: RESERVATION(FLAG='H') + RESERVE_HISTORY(예약저장) RESERVE_PATH 온라인/네이버
+ *   - 온라인예약: RESERVATION(FLAG='H') 온라인경로(ONLINE/APP/NAVER)를 예약등록일(InsertedDateTime) 기준 집계
+ *       (2026-07-21: 예약저장 이력시각 → 예약등록일로 변경. 레거시 「온라인예약체크」 데스크 예약등록일 필터와 정합)
  *   - 아웃바운드 TM: DB_CUSTOM(TM팀 4명 KC0307·BV1119·BV1207·BV0067 = 시력교정이 제외하던 직원, B2B 군 제외) — PDF값과 일치
  *   - 총예약(백내장): 채널 예약 합(콜 ★신환 + TM 예약 + 카톡 검사예약 + 온라인예약) — PDF 정의와 일치(캘리브레이션)
  *   - 내원(종합): Cataract_Exam(실제 검사기록, EXAM_DATE, 중단 제외) 중 같은 날 백내장 예약(FLAG='H' I/H) 보유분 — 협진/타과 의뢰 제외, PDF '내원'과 일치
@@ -34,11 +35,11 @@ import java.util.List;
  * READ-ONLY · MSSQL 2014 호환(WITH(NOLOCK), 네임드 파라미터 :from/:to).
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class CataractStatsSystemRepository {
 
-    private static final String SQL_LOCATION = "sql/reservation-stats/cataract-daily-counts.sql";
-    private static final String DRILL_DOWN_SQL_LOCATION = "sql/reservation-stats/cataract-drill-down.sql";
+    private static final String SQL_LOCATION = "sql/softcrm/reservation/stats/select-cataract-daily-counts.sql";
+    private static final String DRILL_DOWN_SQL_LOCATION = "sql/softcrm/reservation/stats/select-cataract-drill-down.sql";
     private static final String ISO_DATE = "\\d{4}-\\d{2}-\\d{2}";
 
     private final NamedParameterJdbcTemplate jdbc;

@@ -20,8 +20,24 @@ import java.util.Map;
 /**
  * 전환·성공률 마트값 vs MSSQL 직결값 대사(reconcile). local/dev 전용 스모크.
  *
- * 기대: ConsultationMartJob이 서비스 결과를 그대로 upsert 하므로 diff가 0이어야 정상.
- *       diff가 나오면 배치/서비스/마트 셋 중 하나가 어긋난 것.
+ * ⚠️ diff 0 아님 — 정의가 갈렸다(2026-08-12 하이브리드 이관 이후).
+ *   배치는 이제 list_exam / v_all_exam_list(= select-exam-list.sql 4개 필터 적용된 population)을
+ *   기반으로 계산하고, 소스인 이 raw MSSQL 서비스는 EXAM/RESERVATION 직결이라 그 필터가 없다.
+ *
+ *   예상되는 정상 diff:
+ *     · reservation-rate(cataract) : mart 가 월 20~30명 적음 (미내원 STATE='Y' 제외 때문).
+ *     · stop-reason                : mart 가 월 최대 4건 적음 (테스트·pure cataract empty·
+ *                                    순수 외래 유입·백내장 중복 4개 필터가 이미 걸린 population).
+ *     · consultation-rate          : 같은 population 차이로 소폭 diff.
+ *
+ *   이 diff 는 리스트 정의가 화면과 정확히 정합하도록 하는 설계상 정상 상태이지 버그가 아니다.
+ *   원본 raw MSSQL 정의는 대사(reconcile) 참조용으로만 유지한다 —
+ *   raw 소스와 새 정의의 gap 이 갑자기 커지는지 감시하는 용도.
+ *
+ *   버그를 의심해야 할 신호:
+ *     · 위 예상 범위를 크게 벗어난 diff (예: 월 100+ 명, stop-reason 월 20+ 건)
+ *     · diff 방향이 반대 (mart 가 원본보다 큼)
+ *     · missing-in-mart / missing-in-source 가 새 월에서 튐
  */
 @Service
 @Profile("postgres-mart")

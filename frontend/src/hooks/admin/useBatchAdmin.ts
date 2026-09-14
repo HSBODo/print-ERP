@@ -18,3 +18,16 @@ export const useBatchRerun = () => {
     onSettled: () => queryClient.invalidateQueries({ queryKey: RUN_LOGS_KEY }),
   })
 }
+
+/**
+ * 원데이 검사 소급 보정 수동 실행. 성공/실패 시 실행 이력 자동 재조회.
+ * 정기 매월 배치 실패·backfill·개발 검증용.
+ */
+export const useBatchReconcileOnedayFlag = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ from, to }: { from: string; to: string }) =>
+      batchAdminApi.reconcileOnedayFlag(from, to),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: RUN_LOGS_KEY }),
+  })
+}

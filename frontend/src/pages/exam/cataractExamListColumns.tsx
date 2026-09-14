@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { CataractExamListItem } from '@/api/exam/cataractExamList'
 import { calcAge, dash } from './cataractExamListUtils'
+import { maskJumin, maskName, maskPhone } from '@/utils/mask'
 
 /** CataractExamListPage 컬럼/뱃지 렌더 설정 (순수 로직은 cataractExamListUtils.ts). */
 
@@ -12,6 +13,13 @@ const EXAM_TYPE_STYLE: Record<string, string> = {
 const PATIENT_TYPE_STYLE: Record<string, string> = {
   신환: 'bg-emerald-50 text-emerald-700',
   구환: 'bg-gray-100 text-gray-700',
+}
+// 백내장·중단만 월간 레포트 백내장 검사수에 들어간다(진한 색). 노안/FU·기타는 전체 검사수에만 더해진다(옅은 색).
+const CLASSIFICATION_STYLE: Record<string, string> = {
+  백내장: 'bg-amber-50 text-amber-700',
+  중단: 'bg-rose-50 text-rose-700',
+  '노안/FU': 'bg-sky-50 text-sky-700',
+  기타: 'bg-gray-100 text-gray-600',
 }
 const GRADE_STYLE: Record<string, string> = {
   R: 'bg-emerald-50 text-emerald-700',
@@ -54,18 +62,19 @@ export interface Column {
 export const COLUMNS: Column[] = [
   { key: 'rowNo', label: 'No', align: 'right', min: '3.5rem', render: (_r, rowNumber) => rowNumber.toLocaleString('ko-KR'), csv: (_r, rowNumber) => rowNumber },
   { key: 'examDate', label: '검사일', align: 'center', min: '6rem' },
+  { key: 'classification', label: '분류', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.classification, CLASSIFICATION_STYLE[r.classification]) },
   { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_TYPE_STYLE[r.patientType]) },
   { key: 'examType', label: '진료구분', align: 'center', min: '6rem', render: (r) => cell.badge(r.examType, EXAM_TYPE_STYLE[r.examType]) },
   { key: 'examTime', label: '검사시간', align: 'center', min: '4.5rem' },
   { key: 'chartNo', label: '차트번호', align: 'center', min: '6rem', text: true },
-  { key: 'name', label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
-  { key: 'nameEng', label: '고객명(영)', align: 'left', min: '7rem' },
+  { key: 'name', csv: (r) => maskName(r.name), label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
+  { key: 'nameEng', csv: (r) => maskName(r.nameEng), label: '고객명(영)', align: 'left', min: '7rem' },
   { key: 'grade', label: '등급', align: 'center', min: '3.5rem', render: (r) => cell.badge(r.grade, GRADE_STYLE[r.grade]) },
   { key: 'birth', label: '생년월일', align: 'center', min: '6rem' },
   { key: 'age', label: '만나이', align: 'right', min: '3.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
   { key: 'lunar', label: '양/음', align: 'center', min: '3.5rem' },
-  { key: 'phone2', label: '휴대전화', align: 'left', min: '8rem', text: true },
-  { key: 'phone1', label: '집전화', align: 'left', min: '7rem', text: true },
+  { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'left', min: '8rem', text: true },
+  { key: 'phone1', csv: (r) => maskPhone(r.phone1), label: '집전화', align: 'left', min: '7rem', text: true },
   { key: 'email', label: '이메일', align: 'left', min: '10rem', render: (r) => cell.truncate(r.email, '11rem') },
   { key: 'counselor', label: '상담사', align: 'center', min: '5rem' },
   { key: 'doctor', label: '상담의', align: 'center', min: '5rem' },
@@ -93,7 +102,7 @@ export const COLUMNS: Column[] = [
   { key: 'job', label: '직업', align: 'center', min: '6rem' },
   { key: 'nationality', label: '국적', align: 'center', min: '4.5rem' },
   { key: 'insurance', label: '보험사', align: 'center', min: '4.5rem' },
-  { key: 'jumin', label: '주민번호', align: 'center', min: '8rem', text: true },
+  { key: 'jumin', csv: (r) => maskJumin(r.jumin), label: '주민번호', align: 'center', min: '8rem', text: true },
   { key: 'zip', label: '우편번호', align: 'center', min: '4.5rem', text: true },
   { key: 'addr1', label: '주소1', align: 'left', min: '12rem', render: (r) => cell.truncate(r.addr1, '14rem') },
   { key: 'addr2', label: '주소2', align: 'left', min: '8rem', render: (r) => cell.truncate(r.addr2, '9rem') },

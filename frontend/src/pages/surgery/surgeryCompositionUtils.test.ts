@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { EMPTY, buildSurgeryRows, monthRange, type Cell } from './surgeryCompositionUtils'
+import { COLS, EMPTY, buildSurgeryRows, monthRange, queryRange, type Cell } from './surgeryCompositionUtils'
 
 const cell = (overrides: Partial<Cell> = {}): Cell => ({ ...EMPTY, ...overrides })
 
@@ -60,5 +60,100 @@ describe('buildSurgeryRows', () => {
     expect(tiers[0]).toBe('month')
     expect(tiers.filter((t) => t === 'week').length).toBeGreaterThan(0)
     expect(tiers.filter((t) => t === 'day').length).toBe(lastDay)
+  })
+})
+
+describe('COLS — PIOL 합계와 프레스비욘드', () => {
+  // 헤더 leaf 순서와 1:1. PIOL 합계 = 5번째(0-based 4), 프레스비욘드 = VIVA 다음(0-based 10).
+  const PIOL_TOTAL = 4
+  const PRESBYOND = 10
+
+  it('PIOL 합계는 유형별 합산이 아니라 piolPatients 를 쓴다', () => {
+    // 유형별은 환자당 대표유형 1건만 세므로 정상적으로는 합계와 일치한다(41+68+16+22+1=148).
+    // 여기서는 화면이 자체 합산을 하지 않는다는 것 자체를 고정한다 — 일부러 어긋나게 준 값.
+    const d = cell({
+      icl: 44, tIcl: 76, kpl: 19, tKpl: 28, viva: 1,
+      piolPatients: 148,
+      visionPatients: 296,
+    })
+    const rendered = COLS[PIOL_TOTAL].render(d)
+    expect(rendered).toContain('148')
+    expect(rendered).not.toContain('168') // 44+76+19+28+1 로 더하면 안 된다
+  })
+
+  it('대표유형 기준에서는 유형별 합이 PIOL 합계와 일치한다 (2026-07 실측)', () => {
+    const d = cell({
+      icl: 41, tIcl: 68, kpl: 16, tKpl: 22, viva: 1,
+      piolPatients: 148,
+      visionPatients: 784,
+    })
+    expect(d.icl + d.tIcl + d.kpl + d.tKpl + d.viva).toBe(d.piolPatients)
+    expect(COLS[PIOL_TOTAL].render(d)).toContain('148')
+  })
+
+  it('PIOL 합계는 유형별 값이 0이어도 piolPatients 를 그대로 보여준다', () => {
+    const d = cell({ piolPatients: 12, visionPatients: 100 })
+    expect(COLS[PIOL_TOTAL].render(d)).toContain('12')
+  })
+
+  it('프레스비욘드는 PIOL 밖의 독립 컬럼으로 시력교정 대비 비중을 낸다', () => {
+    const d = cell({ presbyond: 5, visionPatients: 100 })
+    expect(COLS[PRESBYOND].render(d)).toBe('5 (5%)')
+  })
+
+  it('프레스비욘드가 없는 날은 - 로 표시한다', () => {
+    expect(COLS[PRESBYOND].render(cell({ visionPatients: 100 }))).toBe('-')
+  })
+})
+
+describe('queryRange', () => {
+  it('주차는 그 해 전체(1주차 월요일~마지막 주차 일요일), 나머지는 선택한 달', () => {
+    expect(queryRange('yearWeek', '2026-06')).toEqual({ from: '2025-12-29', to: '2027-01-03' })
+    expect(queryRange('week', '2026-06')).toEqual({ from: '2026-06-01', to: '2026-06-30' })
+    expect(queryRange('day', '2026-06')).toEqual({ from: '2026-06-01', to: '2026-06-30' })
+  })
+})
+
+describe('buildSurgeryRows — yearWeek(주차)', () => {
+  // 2026년은 ISO 53주차까지. 1주차 = 2025-12-29~2026-01-04, 53주차 = 2026-12-28~2027-01-03.
+  const yearMap: Record<string, Cell> = {
+    '2025-12-29': cell({ visionPatients: 2, total: 2 }), // 2026년 1주차(전년 12월)
+    '2026-01-02': cell({ visionPatients: 3, total: 3 }), // 2026년 1주차
+    '2026-06-01': cell({ visionPatients: 7, cataractPatients: 1, total: 8 }), // 23주차
+    '2026-12-28': cell({ visionPatients: 4, total: 4 }), // 53주차
+  }
+
+  it('연 합계 + 01주차~53주차를 빠짐없이 만든다', () => {
+    const rows = buildSurgeryRows('yearWeek', yearMap, '2026-06', 30)
+    expect(rows).toHaveLength(1 + 53)
+    expect(rows[0]).toMatchObject({ tier: 'month', label: '2026년' })
+    expect(rows[0].d.total).toBe(17) // 2 + 3 + 8 + 4 — 연 합계 = 주차 합계
+    expect(rows[1].label).toBe('01주차')
+    expect(rows[53].label).toBe('53주차')
+    expect(rows.slice(1).every((r) => r.tier === 'week')).toBe(true)
+  })
+
+  it('1주차는 전년 12월, 마지막 주차는 다음 해 1월을 포함한다', () => {
+    const rows = buildSurgeryRows('yearWeek', yearMap, '2026-06', 30)
+    expect(rows[1].range).toBe('12/29~1/4')
+    expect(rows[1].d.total).toBe(5) // 2025-12-29 + 2026-01-02
+    expect(rows[53].range).toBe('12/28~1/3')
+    expect(rows[53].d.total).toBe(4)
+  })
+
+  it('데이터 없는 주차도 행은 남기고 muted 처리한다', () => {
+    const rows = buildSurgeryRows('yearWeek', yearMap, '2026-06', 30)
+    const week23 = rows[23]
+    expect(week23.label).toBe('23주차')
+    expect(week23.range).toBe('6/1~6/7')
+    expect(week23.d.total).toBe(8)
+    expect(week23.muted).toBe(false)
+    expect(rows[2].muted).toBe(true) // 02주차 — 데이터 없음
+  })
+
+  it('조회 월이 달라도 같은 해면 같은 주차 표가 나온다', () => {
+    const june = buildSurgeryRows('yearWeek', yearMap, '2026-06', 30)
+    const january = buildSurgeryRows('yearWeek', yearMap, '2026-01', 31)
+    expect(january).toEqual(june)
   })
 })

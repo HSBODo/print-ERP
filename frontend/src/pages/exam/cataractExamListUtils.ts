@@ -9,9 +9,6 @@ export type SortState = { key: string; direction: SortDirection } | null
 
 export const dash = (v: string) => (v && v.trim() ? v : '—')
 
-/** 주별 승인 패널의 주차 버킷 기준일 = 검사일 */
-export const examDateOf = (r: CataractExamListItem) => r.examDate
-
 export const calcAge = (birth: string) => {
   if (!/^\d{4}-\d{2}-\d{2}/.test(birth)) return '—'
   const b = new Date(birth)
@@ -22,8 +19,9 @@ export const calcAge = (birth: string) => {
   return age >= 0 && age < 130 ? String(age) : '—'
 }
 
-export const DEFAULT_FROM = '2026-04-01'
-export const DEFAULT_TO = '2026-04-30'
+/** 기본 조회 기간 = 현재 월 1일 ~ 말일. (상수가 아니라 함수 — 탭을 오래 켜둬도 안 낡는다) */
+export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
+export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 export const SKELETON_ROWS = 50
 export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
@@ -35,12 +33,17 @@ export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
 ]
 
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
+const pad = (n: number) => String(n).padStart(2, '0')
+export const todayIso = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
 export const toMonthValue = (date: string) => date.slice(0, 7)
 export const toMonthStart = (month: string) => `${month}-01`
 export const toMonthEnd = (month: string) => {
   const [year, monthNumber] = month.split('-').map(Number)
   const lastDate = new Date(year, monthNumber, 0).getDate()
-  return `${month}-${String(lastDate).padStart(2, '0')}`
+  return `${month}-${pad(lastDate)}`
 }
 export const toMonthWeekRange = (month: string, week: number) => {
   const startDay = ((week - 1) * 7) + 1
@@ -84,4 +87,47 @@ export const compareSortValue = (a: string | number | null, b: string | number |
   if (bEmpty) return -1
   if (typeof a === 'number' && typeof b === 'number') return a - b
   return String(a).localeCompare(String(b), 'ko-KR', { numeric: true, sensitivity: 'base' })
+}
+
+/** 요약 칩에 고정으로 노출할 분류와 순서. 백엔드 분류(find-cataract-exam-list.sql)를 늘리면 여기도 함께 늘릴 것. */
+export const CLASSIFICATION_ORDER: string[] = ['백내장', '중단', '노안/FU', '기타']
+
+/** 월간 레포트 백내장 검사수에 들어가는 분류. sql/fragments/exam-session-source.sql 의 isCat 과 같은 집합. */
+export const EXAM_COUNT_CLASSES: string[] = ['백내장', '중단']
+
+export type ClassificationBreakdown = {
+  breakdown: { name: string; count: number }[]
+  examCount: number
+  total: number
+}
+
+/**
+ * 분류별 건수 집계. 실제 값을 세서 그대로 돌려준다.
+ *
+ * '아니면 백내장'으로 몰면 새 분류가 백내장에 합쳐져 조용히 틀린다
+ * (노안/FU 를 추가했을 때 백내장이 45 대신 91 로 부풀었다).
+ * 모르는 분류는 삼키지 않고 뒤에 붙여 화면에 드러낸다.
+ *
+ * examCount = 백내장 + 중단 = 월간 레포트 백내장 검사수. total(총건수)과 다르다.
+ */
+export const summarizeClassifications = (
+  rows: Pick<CataractExamListItem, 'classification'>[],
+): ClassificationBreakdown => {
+  const counts = new Map<string, number>()
+  for (const row of rows) {
+    const key = row.classification || '(미지정)'
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  const known = CLASSIFICATION_ORDER.map((name) => ({ name, count: counts.get(name) ?? 0 }))
+  const unknown = [...counts.entries()]
+    .filter(([name]) => !CLASSIFICATION_ORDER.includes(name))
+    .map(([name, count]) => ({ name, count }))
+  const breakdown = [...known, ...unknown]
+  return {
+    breakdown,
+    examCount: breakdown
+      .filter(({ name }) => EXAM_COUNT_CLASSES.includes(name))
+      .reduce((sum, { count }) => sum + count, 0),
+    total: rows.length,
+  }
 }

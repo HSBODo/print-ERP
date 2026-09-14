@@ -25,11 +25,11 @@ import java.util.List;
  * READ-ONLY · MSSQL 2014 호환(TRIM 금지, WITH(NOLOCK)).
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ReservationStatsSystemRepository {
 
-    private static final String SQL_LOCATION = "sql/reservation-stats/system-daily-counts.sql";
-    private static final String DRILL_DOWN_SQL_LOCATION = "sql/reservation-stats/system-drill-down.sql";
+    private static final String SQL_LOCATION = "sql/softcrm/reservation/stats/select-system-daily-counts.sql";
+    private static final String DRILL_DOWN_SQL_LOCATION = "sql/softcrm/reservation/stats/select-system-drill-down.sql";
     private static final String ISO_DATE = "\\d{4}-\\d{2}-\\d{2}";
 
     private final NamedParameterJdbcTemplate jdbc;

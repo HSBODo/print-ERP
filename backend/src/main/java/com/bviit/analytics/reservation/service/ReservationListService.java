@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 예약자 리스트 조회 서비스. 등록일 범위 기준 명단 행 + 카카오(해피톡, 명단 외) 건수를 반환한다.
+ * 예약자 리스트 조회 서비스. 등록일 범위 기준 명단 행을 반환한다.
  * 주차 그룹·승인/체크 등 워크플로우는 프론트에서 클라이언트 사이드로 처리한다.
  */
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class ReservationListService implements ReservationListReader {
 
@@ -21,8 +21,6 @@ public class ReservationListService implements ReservationListReader {
     @Override
     @Transactional(readOnly = true)
     public ReservationListResult getReservationList(String from, String to) {
-        return new ReservationListResult(
-                repository.findReservationList(from, to),
-                repository.countKakao(from, to));
+        return new ReservationListResult(repository.findReservationList(from, to));
     }
 }

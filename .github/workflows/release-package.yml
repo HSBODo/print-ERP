@@ -52,8 +52,7 @@ jobs:
           mkdir -p release
           cp backend/build/libs/*.jar release/
           cp backend/.env.example release/backend.env.example
-          cp docs/deployment-release.md release/
-          cp docs/deployment-strategy.md release/
+          cp docs/deployment.md release/
 
       - name: Upload release bundle
         uses: actions/upload-artifact@v4

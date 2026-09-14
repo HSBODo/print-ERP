@@ -28,7 +28,7 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 @RequiredArgsConstructor
 public class OutpatientCountStatsService implements OutpatientCountStatsReader {
 
-    /** mssql·postgres-mart 프로파일에서만 주입됨. 없으면(H2 개발) 데이터 없음(null). */
+    /** postgres-mart 프로파일에서만 주입됨. 없으면(H2 개발) 데이터 없음(null). */
     private final Optional<OutpatientCountStatsRepository> repository;
 
     @Override

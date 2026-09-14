@@ -32,9 +32,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConsultationMartWriter {
 
-    private static final String UPSERT_CONSULTATION_RATE_SQL   = SqlLoader.load("sql/mart/upsert-consultation-rate-monthly.sql");
-    private static final String UPSERT_STOP_REASON_SQL         = SqlLoader.load("sql/mart/upsert-stop-reason-monthly.sql");
-    private static final String UPSERT_RESERVATION_RATE_SQL    = SqlLoader.load("sql/mart/upsert-reservation-rate-monthly.sql");
+    private static final String UPSERT_CONSULTATION_RATE_SQL   = SqlLoader.load("sql/mart/consultation/upsert-consultation-rate-monthly.sql");
+    private static final String UPSERT_STOP_REASON_SQL         = SqlLoader.load("sql/mart/consultation/upsert-stop-reason-monthly.sql");
+    private static final String UPSERT_RESERVATION_RATE_SQL    = SqlLoader.load("sql/mart/consultation/upsert-reservation-rate-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

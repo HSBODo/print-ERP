@@ -15,6 +15,15 @@ const cataractExamListItemSchema = z.object({
   examType: z.string(),
   examRegDate: z.string(),
   examCategory: z.string(),
+  /**
+   * 레거시 내원동기 분류 4종 — 검안사(MY_OPTOMETRIST)·상담사(MY_COUNSELOR) 배정 조합으로 갈린다.
+   *   '백내장'  검안사 O + 상담사 O
+   *   '중단'    검안사 O + 상담사 BS0808(BS미지정)
+   *   '노안/FU' 검안사 X + 상담사 BS0808 — 레거시 라벨 'F/U'
+   *   '기타'    그 외
+   * ⚠️ 월간 레포트 백내장 검사수 = '백내장' + '중단' 만. 리스트 총건수를 검사수로 쓰지 말 것.
+   */
+  classification: z.string(),
   patientType: z.string(),
   examMemo: z.string(),
   estimate: z.string(),

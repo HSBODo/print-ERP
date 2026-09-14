@@ -16,7 +16,7 @@ import java.util.Map;
 import static com.bviit.analytics.common.util.NumberUtils.toInt;
 
 @Service
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 @RequiredArgsConstructor
 public class CataractReservationRateService implements CataractReservationRateReader {
 

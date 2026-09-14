@@ -10,14 +10,10 @@ import {
 import { FilterBar } from '@/components/filters/FilterBar'
 import { useFilterBar } from '@/components/filters/useFilterBar'
 import { PanelShell } from '@/components/PanelShell'
-import { useOverallExamWeekly } from '@/hooks/overall/useOverallExamWeekly'
-import { MONTHLY_LEGACY_CHARTS } from '@/data/monthlyReportLegacy'
+import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
 import { CURRENT_YEAR, MONTHS } from '@/constants/chart'
 
 const RECENCY_COLORS = ['#E11D2E', '#4B5563', '#A8CEDF', '#F59E0B']
-
-// 2024·2025 확정값 + 2026 1~4월 확정값(나머지 월은 null → 운영 DB 라이브). 월간레포트와 동일 소스.
-const LEGACY_STOP_RATE = MONTHLY_LEGACY_CHARTS['stop-rate'].data
 
 const Y_AXIS_DOMAIN: [number, number] = [0, 10]
 const Y_AXIS_TICKS = [0, 2, 4, 6, 8, 10]
@@ -33,19 +29,15 @@ const isFutureMonth = (year: number, monthIndex: number) =>
 export function StopRatePage() {
   const filter = useFilterBar('year', [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR])
   const sortedYears = useMemo(() => [...filter.years].sort((a, b) => a - b), [filter.years])
-  // 라이브 계산이 필요한 연도(2026~): overall-exam 주간을 월별로 합산해 분자·분모를 만든다.
-  const liveYears = useMemo(() => sortedYears.filter((year) => year >= 2026), [sortedYears])
 
-  const overall = useOverallExamWeekly(liveYears)
+  const overall = useOverallExamMonthly(sortedYears)
 
-  // 연·월별 {stopCount, visionExam} 합산 (당해연도 라이브 중단율의 분자·분모)
+  // 연·월별 {stopCount, visionExam} — 마트 응답을 (year → month → item) 로 정리
   const monthlySums = useMemo(() => {
-    const acc: Record<number, Array<{ stopCount: number; visionExam: number }>> = {}
+    const acc: Record<number, Array<{ stopCount: number; visionExam: number } | undefined>> = {}
     for (const it of overall.items) {
-      const rows =
-        acc[it.year] ?? Array.from({ length: 12 }, () => ({ stopCount: 0, visionExam: 0 }))
-      rows[it.month - 1].stopCount += it.stopCount
-      rows[it.month - 1].visionExam += it.visionExam
+      const rows = acc[it.year] ?? Array.from({ length: 12 }, () => undefined)
+      rows[it.month - 1] = { stopCount: it.stopCount, visionExam: it.visionExam }
       acc[it.year] = rows
     }
     return acc
@@ -82,15 +74,7 @@ export function StopRatePage() {
       MONTHS.map((month, monthIndex) => {
         const row: Record<string, string | number | null> = { month }
         sortedYears.forEach((year) => {
-          // 확정값(2024·2025 전월, 2026 1~4월) 우선, 없으면 당해연도 라이브 계산
-          const confirmed = LEGACY_STOP_RATE[year]?.[monthIndex]
-          if (typeof confirmed === 'number') {
-            row[`y${year}`] = confirmed
-            return
-          }
-          const sums = year >= 2026 && !isFutureMonth(year, monthIndex)
-            ? monthlySums[year]?.[monthIndex]
-            : undefined
+          const sums = isFutureMonth(year, monthIndex) ? undefined : monthlySums[year]?.[monthIndex]
           row[`y${year}`] =
             sums && sums.visionExam > 0 ? (sums.stopCount / sums.visionExam) * 100 : null
         })
@@ -99,8 +83,8 @@ export function StopRatePage() {
     [sortedYears, monthlySums],
   )
 
-  const isLoading = liveYears.length > 0 && overall.isLoading
-  const isError = liveYears.length > 0 && overall.isError
+  const isLoading = overall.isLoading
+  const isError = overall.isError
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[40rem] flex-col gap-6">
@@ -112,7 +96,6 @@ export function StopRatePage() {
               <CardTitle>월별 추이 비교</CardTitle>
               <CardDescription>
                 중단율 (검사 중단 / 시력교정 검사자). 시력교정 검사자 대비 검사 중단(STOP_YN) 건 비율입니다.
-                2024·2025 및 2026년 1~4월은 확정값, 이후 달은 운영 DB 라이브입니다.
               </CardDescription>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6">

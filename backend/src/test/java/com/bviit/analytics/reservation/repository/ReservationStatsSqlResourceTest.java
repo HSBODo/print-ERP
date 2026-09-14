@@ -8,10 +8,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReservationStatsSqlResourceTest {
 
-    private static final String SYSTEM_SQL = "sql/reservation-stats/system-daily-counts.sql";
-    private static final String CATARACT_SQL = "sql/reservation-stats/cataract-daily-counts.sql";
-    private static final String SYSTEM_DRILL_DOWN_SQL = "sql/reservation-stats/system-drill-down.sql";
-    private static final String CATARACT_DRILL_DOWN_SQL = "sql/reservation-stats/cataract-drill-down.sql";
+    private static final String SYSTEM_SQL = "sql/softcrm/reservation/stats/select-system-daily-counts.sql";
+    private static final String CATARACT_SQL = "sql/softcrm/reservation/stats/select-cataract-daily-counts.sql";
+    private static final String SYSTEM_DRILL_DOWN_SQL = "sql/softcrm/reservation/stats/select-system-drill-down.sql";
+    private static final String CATARACT_DRILL_DOWN_SQL = "sql/softcrm/reservation/stats/select-cataract-drill-down.sql";
 
     @Test
     void system_sql은_openquery_placeholder만_iso_날짜로_치환한다() {

@@ -26,16 +26,16 @@ import java.util.Map;
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ExaminationStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_VISION_CORRECTION_MONTHLY_SQL = "sql/exam/find-vision-correction-monthly.sql";
-    private static final String FIND_DREAMLENS_MONTHLY_SQL = "sql/exam/find-dreamlens-monthly.sql";
-    private static final String FIND_CATARACT_MONTHLY_SQL = "sql/exam/find-cataract-monthly.sql";
-    private static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL = "sql/exam/find-cataract-reservation-rate-monthly.sql";
-    private static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL = "sql/exam/find-vision-reservation-rate-monthly.sql";
+    private static final String FIND_VISION_CORRECTION_MONTHLY_SQL = "sql/softcrm/exam/select-vision-correction-monthly.sql";
+    private static final String FIND_DREAMLENS_MONTHLY_SQL = "sql/softcrm/exam/select-dreamlens-monthly.sql";
+    private static final String FIND_CATARACT_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-monthly.sql";
+    private static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-reservation-rate-monthly.sql";
+    private static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-vision-reservation-rate-monthly.sql";
 
     private final String findVisionCorrectionMonthlySql;
     private final String findDreamlensMonthlySql;
@@ -76,11 +76,31 @@ public class ExaminationStatsRepository {
     }
 
     /**
-     * 백내장 검사 — 레거시 BCRM "백내장_검사" 화면과 동일하게 RESERVATION 기준 **사람(고객)** 단위.
-     * RESERVE_FLAG='H'(백내장) + RESERVE_JINRYO='1'(검사진료) + STATE 내원(I/H), 고객·검사일별 1건.
-     * 전체 검사자 리스트(AllExamListRepository) 백내장과 동일 정의 → 리스트=레포트 정합.
-     * 2024·2025는 ExaminationStatsService.LEGACY_CATARACT 확정값으로 덮어쓰고 2026+만 이 라이브값 사용.
-     * 레거시 표시값과 ±10 안팎 잔차(라이브·다소스·시점차). 과거 눈(OPERATIONR/L) 정의에서 2026-06 전환.
+     * 백내장 검사 — RESERVATION(백내장검사 예약) 기준 <b>사람</b> 단위.
+     *
+     * <p>레거시 원장은 <b>BCRM &gt; 통계(C) &gt; 통계_백내장_내원동기</b> 의 분류 '백내장' + '중단'.
+     * 2026-07-23 원본 SQL 을 확보해 재현에 성공했다(6월 55/55 정확 일치).
+     * 종전 {@code Cataract_Exam} 눈(안) 기준은 <b>다른 원장</b>이었다 — 5월 67 vs 골든 84 로 −17 이 났고,
+     * 6월의 56 vs 55 는 단위가 우연히 근접한 것뿐이다.
+     *
+     * <p>집계: 기간 내 {@code RESERVE_FLAG='H'} 내원 고객 중 <b>검안사(MY_OPTOMETRIST)가 배정된 사람</b>.
+     * 상담사가 {@code 'BS0808'}(BS미지정)이면 레거시 분류 '중단', 배정돼 있으면 '백내장' — 둘 다 포함한다.
+     * 검안사가 없으면 'F/U'(외래 추적)라 빠진다.
+     *
+     * <p>⚠️ 레거시 원본의 {@code (SELECT EMP_NAME ...) = (SELECT EMP_NAME ...)} 패턴은 사실상 IS NOT NULL 검사다.
+     * {@code MY_OPTOMETRIST IS NOT NULL} 로 옮기면 빈 문자열이 걸려 분류가 뒤집힌다(중단 65 / F/U 3).
+     * 반드시 {@code EXISTS(EMPLOYEE)} 로 판정할 것.
+     *
+     * <p>⚠️ <b>과거월은 소급 변동한다</b> — 분류가 {@code CUSTOM} 의 <b>현재</b> 담당자 값을 참조하므로
+     * 담당자 재배정 시 지난 달 숫자가 바뀐다. 그래서 <b>2026-01~05 는 골든 확정값을 seed 로 고정</b>하고
+     * 이 쿼리는 <b>2026-06 부터</b> 적용한다. 2024·2025 는 종전대로 V9 seed 가 SSOT 이고
+     * {@code ExamMartJob} 의 min-year 가드가 그 구간 write 를 막는다.
+     *
+     * <p>⚠️ 리스트({@code CataractExamListRepository}, {@code Cataract_Exam} 기준)와 모집단이 다르다 —
+     * 6월 레포트 115명 대상 vs 리스트 114건, 겹치는 인원 109. 레포트=예약 기준 / 리스트=검사기록 기준으로
+     * 목적이 달라 의도된 차이다. "두 화면이 안 맞는다"는 보고는 버그가 아니다.
+     *
+     * <p>2026 실측(2026-07-23) vs 골든: 1월 95/96 · 2월 65/68 · 3월 75/76 · 4월 63/58 · 5월 80/84 · 6월 <b>55/55</b>
      */
     public List<Map<String, Object>> findCataractMonthly(String from, String to) {
         String sql = findCataractMonthlySql;

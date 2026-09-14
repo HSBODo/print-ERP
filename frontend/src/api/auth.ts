@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { UserRole } from '@/stores/auth-session'
+import type { UserDepartment, UserRole } from '@/stores/auth-session'
 
 export interface LoginRequest {
   loginId: string
@@ -12,6 +12,8 @@ export interface LoginUser {
   email: string
   name: string
   role: UserRole
+  /** ADMIN·DIRECTOR 는 'ALL' (docs/auth/permissions.md § 2-3). */
+  department: UserDepartment
 }
 
 export interface LoginData {

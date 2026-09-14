@@ -9,10 +9,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ReservationStatsFieldRegistryTest {
 
-    private static final String SYSTEM_DAILY_SQL = "sql/reservation-stats/system-daily-counts.sql";
-    private static final String SYSTEM_DRILL_DOWN_SQL = "sql/reservation-stats/system-drill-down.sql";
-    private static final String CATARACT_DAILY_SQL = "sql/reservation-stats/cataract-daily-counts.sql";
-    private static final String CATARACT_DRILL_DOWN_SQL = "sql/reservation-stats/cataract-drill-down.sql";
+    private static final String SYSTEM_DAILY_SQL = "sql/softcrm/reservation/stats/select-system-daily-counts.sql";
+    private static final String SYSTEM_DRILL_DOWN_SQL = "sql/softcrm/reservation/stats/select-system-drill-down.sql";
+    private static final String CATARACT_DAILY_SQL = "sql/softcrm/reservation/stats/select-cataract-daily-counts.sql";
+    private static final String CATARACT_DRILL_DOWN_SQL = "sql/softcrm/reservation/stats/select-cataract-drill-down.sql";
 
     @Test
     void system_registry_field는_daily_alias와_drill_down_FIELD_MAP에_모두_존재한다() {

@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { examApi, type ExaminationMonthlyItem } from '@/api/exam'
-import { useDataSourceStore } from '@/stores/dataSourceStore'
 
 interface MonthlyData {
   visionCorrection: number
@@ -33,12 +32,9 @@ function toDataMap(items: ExaminationMonthlyItem[]): Record<number, MonthlyData[
 }
 
 export function useExaminationComposition(years: number[]) {
-  const source = useDataSourceStore((state) => state.source)
-  const isMock = source === 'mock'
-
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['examination-composition', years, source],
-    queryFn: () => examApi.getExaminationComposition(years, isMock),
+    queryKey: ['examination-composition', years],
+    queryFn: () => examApi.getExaminationComposition(years),
     enabled: years.length > 0,
   })
 

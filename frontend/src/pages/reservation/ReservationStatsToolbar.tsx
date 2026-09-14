@@ -1,20 +1,20 @@
 import { RotateCcw, Search, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Select } from '@/components/filters/Select'
 import { reservationStatsSourceLabel, type ReservationStatsResponseMeta } from '@/api/reservation/reservationStatsMeta'
 import { GRANULARITIES, type Granularity } from './reservationStatsSystemData'
 
-const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `${i + 1}월` }))
-const pad2 = (n: number) => String(n).padStart(2, '0')
-
 /**
- * 예약통계시스템 전용 툴바 — 월 선택(초안) + 조회 단위(즉시) + 초기화 / 조회 / CSV.
- * 월은 초안(draft)이라 [조회]를 눌러야 적용되고, 조회 단위는 즉시 반영된다(예약자 리스트 패턴과 동일).
+ * 예약통계시스템 전용 툴바 — 시작일/종료일(초안) + 조회 단위(즉시) + 초기화 / 조회 / CSV.
+ * 날짜는 초안(draft)이라 [조회]를 눌러야 적용되고, 조회 단위는 즉시 반영된다(예약자 리스트 패턴과 동일).
+ * 백엔드 92일 제한은 페이지에서 validateRange 로 미리 검증.
  */
 interface Props {
-  draftMonth: string
-  onDraftMonthChange: (month: string) => void
-  maxMonth: string
+  draftFrom: string
+  draftTo: string
+  onDraftFromChange: (from: string) => void
+  onDraftToChange: (to: string) => void
+  /** date input 의 max 값 (미래 날짜 차단). 페이지가 오늘 날짜를 넘겨준다. */
+  maxDate: string
   granularity: Granularity
   onGranularityChange: (g: Granularity) => void
   onSearch: () => void
@@ -28,9 +28,11 @@ interface Props {
 }
 
 export function ReservationStatsToolbar({
-  draftMonth,
-  onDraftMonthChange,
-  maxMonth,
+  draftFrom,
+  draftTo,
+  onDraftFromChange,
+  onDraftToChange,
+  maxDate,
   granularity,
   onGranularityChange,
   onSearch,
@@ -42,16 +44,6 @@ export function ReservationStatsToolbar({
   canRunDiagnostics,
   dataMeta,
 }: Props) {
-  const year = Number(draftMonth.slice(0, 4))
-  const month = Number(draftMonth.slice(5, 7))
-  const currentYear = Number(maxMonth.slice(0, 4))
-  const maxMonthNum = Number(maxMonth.slice(5, 7))
-  const yearOptions = [currentYear - 2, currentYear - 1, currentYear].map((y) => ({ value: y, label: `${y}년` }))
-  // 현재 연도에선 이번 달(maxMonth)까지만 선택 가능 — 미래 월 차단.
-  const monthOptions = year >= currentYear ? MONTH_OPTIONS.filter((o) => o.value <= maxMonthNum) : MONTH_OPTIONS
-
-  const setYear = (y: number) => onDraftMonthChange(`${y}-${pad2(month)}`)
-  const setMonth = (m: number) => onDraftMonthChange(`${year}-${pad2(m)}`)
   const sourceLabel = dataMeta ? reservationStatsSourceLabel(dataMeta) : null
   const sourceTitle = dataMeta
     ? [
@@ -66,12 +58,31 @@ export function ReservationStatsToolbar({
         .join(' · ')
     : undefined
 
+  const dateInputClass =
+    'h-8 rounded border border-input bg-white px-2 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring'
+
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-2 py-1.5 text-xs shadow-sm">
       <div className="flex items-center gap-1.5">
-        <span className="text-muted-foreground">기준 월</span>
-        <Select value={year} onChange={setYear} title="년 선택" options={yearOptions} />
-        <Select value={month} onChange={setMonth} title="월 선택" options={monthOptions} />
+        <span className="text-muted-foreground">조회 기간</span>
+        <input
+          aria-label="시작일"
+          type="date"
+          className={dateInputClass}
+          value={draftFrom}
+          max={draftTo || maxDate}
+          onChange={(e) => onDraftFromChange(e.target.value)}
+        />
+        <span className="text-muted-foreground">~</span>
+        <input
+          aria-label="종료일"
+          type="date"
+          className={dateInputClass}
+          value={draftTo}
+          min={draftFrom || undefined}
+          max={maxDate}
+          onChange={(e) => onDraftToChange(e.target.value)}
+        />
       </div>
 
       <div className="flex h-8 gap-1 rounded-md bg-gray-100 p-1">

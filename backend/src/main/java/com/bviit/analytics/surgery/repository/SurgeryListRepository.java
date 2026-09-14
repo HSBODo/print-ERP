@@ -20,12 +20,12 @@ import java.util.Map;
  * MSSQL 2014 호환: STRING_AGG, TRIM 사용 금지.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class SurgeryListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_SURGERY_LIST_SQL = "sql/surgery/find-surgery-list.sql";
+    private static final String FIND_SURGERY_LIST_SQL = "sql/softcrm/surgery/select-surgery-list.sql";
 
     private final String findSurgeryListSql;
 

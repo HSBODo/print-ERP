@@ -25,12 +25,12 @@ import java.util.Map;
  * READ-ONLY · MSSQL 2014 호환(TRIM 금지 → LTRIM/RTRIM). 날짜는 char(10) 'YYYY-MM-DD'.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_EXAM_LIST_SQL = "sql/exam/find-exam-list.sql";
+    private static final String FIND_EXAM_LIST_SQL = "sql/softcrm/exam/select-exam-list.sql";
 
     private final String findExamListSql;
 

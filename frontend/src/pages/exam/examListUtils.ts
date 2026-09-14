@@ -1,4 +1,5 @@
 import type { ExamListItem } from '@/api/exam/examList'
+import { EXAM_COUNT_CLASSES } from './cataractExamListUtils'
 
 /**
  * ExamListPage 전용 순수 로직/상수 (렌더 무관).
@@ -12,9 +13,6 @@ export type SortState = { key: string; direction: SortDirection } | null
 
 /* ── 표시 헬퍼 ── */
 export const dash = (v: string) => (v && v.trim() ? v : '—')
-
-/** 주별 승인 패널의 주차 버킷 기준일 = 검사일 */
-export const examDateOf = (r: ExamListItem) => r.examDate
 
 export const calcAge = (birth: string) => {
   if (!/^\d{4}-\d{2}-\d{2}/.test(birth)) return '—'
@@ -39,8 +37,9 @@ export const formatExamType = (value: string) => EXAM_TYPE_LABELS[value.trim()] 
 
 export const EXAM_CATEGORY_OPTIONS = ['전체', '시력교정', '드림렌즈']
 
-export const DEFAULT_FROM = '2026-04-01'
-export const DEFAULT_TO = '2026-04-30'
+/** 기본 조회 기간 = 현재 월 1일 ~ 말일. (상수가 아니라 함수 — 탭을 오래 켜둬도 안 낡는다) */
+export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
+export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 export const SKELETON_ROWS = 50
 export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
@@ -53,6 +52,12 @@ export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
 
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
 
+const pad = (n: number) => String(n).padStart(2, '0')
+export const todayIso = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
 export const toMonthValue = (date: string) => date.slice(0, 7)
 
 export const toMonthStart = (month: string) => `${month}-01`
@@ -60,7 +65,14 @@ export const toMonthStart = (month: string) => `${month}-01`
 export const toMonthEnd = (month: string) => {
   const [year, monthNumber] = month.split('-').map(Number)
   const lastDate = new Date(year, monthNumber, 0).getDate()
-  return `${month}-${String(lastDate).padStart(2, '0')}`
+  return `${month}-${pad(lastDate)}`
+}
+
+/** 오늘 기준 전월 'YYYY-MM' (기본 조회 기간용 — 예: 2026-07 이면 '2026-06'). */
+export const previousMonthValue = () => {
+  const now = new Date()
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`
 }
 
 export const toMonthWeekRange = (month: string, week: number) => {
@@ -117,4 +129,30 @@ export const compareSortValue = (a: string | number | null, b: string | number |
     numeric: true,
     sensitivity: 'base',
   })
+}
+
+/**
+ * 전체 검사자 리스트 '검사' 필터 (AllExamListPage).
+ *
+ * 백내장 예약 행은 백엔드에서 한 덩어리(examGroup='백내장', 2026-07 = 102)로 내려오지만,
+ * 그중 월간 레포트 백내장 검사수에 들어가는 건 분류 '백내장'·'중단'(=56)뿐이다.
+ * 나머지(노안/FU·기타 = 46)는 전체 검사수에만 더해지므로 필터에서 갈라 놓는다.
+ * 분류 정의는 sql/exam/find-cataract-exam-list.sql 참조.
+ */
+export const CATARACT_REST_GROUP = '노안/FU/기타'
+export const GROUP_FILTERS = ['전체', '시력교정', '드림렌즈', '백내장', CATARACT_REST_GROUP] as const
+
+export const matchesExamGroup = (
+  row: { examGroup: string; cataractClass: string },
+  selected: string,
+) => {
+  if (selected === '전체') return true
+  // '백내장' 은 레포트 검사수와 같은 집합만. cataractExamListUtils.EXAM_COUNT_CLASSES 와 같은 기준.
+  if (selected === '백내장') {
+    return row.examGroup === '백내장' && EXAM_COUNT_CLASSES.includes(row.cataractClass)
+  }
+  if (selected === CATARACT_REST_GROUP) {
+    return row.examGroup === '백내장' && !EXAM_COUNT_CLASSES.includes(row.cataractClass)
+  }
+  return row.examGroup === selected
 }

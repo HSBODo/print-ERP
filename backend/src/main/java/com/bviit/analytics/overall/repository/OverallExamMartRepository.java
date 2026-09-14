@@ -16,15 +16,15 @@ import java.util.List;
  * 전체지표 마트 read 전용 리포지토리.
  *
  * mart_overall_exam_weekly  — (yr, mo, wk) PK 주 단위 종합지표.
- * mart_overall_exam_monthly — (yr, mo)     PK 월 단위 종합지표 (2026+ 만 저장, 24·25는 프론트 하드코딩).
+ * mart_overall_exam_monthly — (yr, mo)     PK 월 단위 종합지표 (전 연도: 24·25 V14+V16 시드, 26+ 배치).
  */
 @Repository
 @Profile("postgres-mart")
 @RequiredArgsConstructor
 public class OverallExamMartRepository {
 
-    private static final String SELECT_WEEKLY_SQL = SqlLoader.load("sql/mart/select-overall-exam-weekly.sql");
-    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/select-overall-exam-monthly.sql");
+    private static final String SELECT_WEEKLY_SQL = SqlLoader.load("sql/mart/overall/select-overall-exam-weekly.sql");
+    private static final String SELECT_MONTHLY_SQL = SqlLoader.load("sql/mart/overall/select-overall-exam-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

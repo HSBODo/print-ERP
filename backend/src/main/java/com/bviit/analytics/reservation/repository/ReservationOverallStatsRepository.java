@@ -19,26 +19,31 @@ import java.util.Map;
  *
  * 온라인 = RESERVE_PATH ONLINE/APP/NAVER. 콜·온라인 공통 junk(중복/재검/시뮬/차트있음/B2B) 제외 적용.
  * **카카오(해피톡)는 종합에 미포함** — 레거시 RSS가 월마다 카카오를 포함/미포함이 들쭉날쭉해(예: 2026-05는 미포함
- * =1,153, 2월은 포함≈1,892) 일관성을 위해 제외한다. 카카오 건수는 예약자 리스트에서 참고용으로만 표시한다
- * (ReservationListRepository.countKakao). 레거시 화면이 채널마다 다른 원천·정의·날짜축을 섞어 쓰므로 월별
- * 잔차는 남으며 당월까지만 신뢰.
+ * =1,153, 2월은 포함≈1,892) 일관성을 위해 제외한다. 레거시 화면이 채널마다 다른 원천·정의·날짜축을 섞어 쓰므로
+ * 월별 잔차는 남으며 당월까지만 신뢰.
  *
  * READ-ONLY — SELECT만 실행.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class ReservationOverallStatsRepository {
 
-    static final String MONTHLY_SQL = "sql/reservation-overall/monthly.sql";
+    static final String MONTHLY_SQL = "sql/softcrm/reservation/overall/select-monthly.sql";
+    static final String MONTHLY_NAVER_SQL = "sql/softcrm/reservation/overall/select-monthly-naver.sql";
+    static final String MONTHLY_KAKAO_SQL = "sql/softcrm/reservation/overall/select-monthly-kakao.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String monthlySql;
+    private final String monthlyNaverSql;
+    private final String monthlyKakaoSql;
 
     public ReservationOverallStatsRepository(
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
     ) {
         this.jdbc = jdbc;
         this.monthlySql = SqlLoader.load(MONTHLY_SQL);
+        this.monthlyNaverSql = SqlLoader.load(MONTHLY_NAVER_SQL);
+        this.monthlyKakaoSql = SqlLoader.load(MONTHLY_KAKAO_SQL);
     }
 
     /**
@@ -55,6 +60,25 @@ public class ReservationOverallStatsRepository {
      */
     public List<Map<String, Object>> findReservationOverallMonthly(String from, String to) {
         return jdbc.queryForList(monthlySql, params(from, to));
+    }
+
+    /**
+     * 월별 네이버 예약수 — 예약통계_시력교정(RSS)의 '네이버 예약수'와 동일 기준(취소 제외, 정크제외 미적용).
+     * 2026-01 부터의 온라인 예약 재정의(네이버+카카오톡+홈페이지)에 쓴다.
+     *
+     * ⚠️ {@link #findReservationOverallMonthly} 의 online_cnt 안에 있는 NAVER 집계와 값이 다르다.
+     * 기준이 다른 게 의도다 — 맞추려 하지 말 것(SQL 주석 참고).
+     */
+    public List<Map<String, Object>> findNaverMonthly(String from, String to) {
+        return jdbc.queryForList(monthlyNaverSql, params(from, to));
+    }
+
+    /**
+     * 월별 카카오톡 예약수 — 해피톡('수술전' + '★신환') 기준. RESERVATION 이 아니라 별도 원천이다.
+     * 2026-01 이전(2024·2025) 종합에는 카카오가 의도적으로 빠져 있었다(클래스 주석 참고).
+     */
+    public List<Map<String, Object>> findKakaoMonthly(String from, String to) {
+        return jdbc.queryForList(monthlyKakaoSql, params(from, to));
     }
 
     private MapSqlParameterSource params(String from, String to) {

@@ -2,6 +2,7 @@ package com.bviit.analytics.batch.job;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.reservation.dto.ReservationMonthlyItem;
+import com.bviit.analytics.reservation.dto.ReservationOverallMonthlyItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,14 +18,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import static com.bviit.analytics.common.util.NumberUtils.toInt;
-
 /**
  * 예약 도메인 마트 write 컴포넌트 — PR-4a.
  *
  * - 집계(monthly): upsert (ON CONFLICT DO UPDATE)
  * - 리스트(list_reservation): 등록일 범위 delete + 새 데이터 insert
- * - 카카오 일별(mart_reservation_kakao_daily): 범위 delete + insert (배치 재실행 시 정합 보장)
  *
  * 트랜잭션 경계는 각 메서드 단위. 배치 잡이 여러 write를 하나로 묶고 싶으면 상위에서 감싼다.
  */
@@ -34,11 +32,12 @@ import static com.bviit.analytics.common.util.NumberUtils.toInt;
 @RequiredArgsConstructor
 public class ReservationMartWriter {
 
-    private static final String UPSERT_MONTHLY_SQL      = SqlLoader.load("sql/mart/upsert-reservation-monthly.sql");
-    private static final String DELETE_LIST_RANGE_SQL   = SqlLoader.load("sql/mart/delete-list-reservation-range.sql");
-    private static final String INSERT_LIST_SQL         = SqlLoader.load("sql/mart/insert-list-reservation.sql");
-    private static final String DELETE_KAKAO_RANGE_SQL  = SqlLoader.load("sql/mart/delete-kakao-daily-range.sql");
-    private static final String UPSERT_KAKAO_DAILY_SQL  = SqlLoader.load("sql/mart/upsert-reservation-kakao-daily.sql");
+    private static final String UPSERT_MONTHLY_SQL          = SqlLoader.load("sql/mart/reservation/upsert-reservation-monthly.sql");
+    private static final String UPSERT_OVERALL_MONTHLY_SQL  = SqlLoader.load("sql/mart/reservation/upsert-reservation-overall-monthly.sql");
+    private static final String DELETE_LIST_RANGE_SQL       = SqlLoader.load("sql/mart/reservation/delete-list-reservation-range.sql");
+    private static final String INSERT_LIST_SQL             = SqlLoader.load("sql/mart/reservation/insert-list-reservation.sql");
+    private static final String DELETE_LIST_ALL_RANGE_SQL   = SqlLoader.load("sql/mart/reservation/delete-list-reservation-all-range.sql");
+    private static final String INSERT_LIST_ALL_SQL         = SqlLoader.load("sql/mart/reservation/insert-list-reservation-all.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 
@@ -51,6 +50,22 @@ public class ReservationMartWriter {
         int[] updated = jdbc.batchUpdate(UPSERT_MONTHLY_SQL, batch);
         int total = sum(updated);
         log.info("mart_reservation_monthly upserted rows={}", total);
+        return total;
+    }
+
+    /**
+     * 예약 종합(콜/온라인) 월별 upsert. reservations/online/call/total 은 null 저장 가능
+     * (서비스가 미래월 또는 원천 미주입 시 null 반환 — 마트에도 그대로 저장).
+     */
+    @Transactional
+    public int upsertOverallMonthly(List<ReservationOverallMonthlyItem> items) {
+        if (items.isEmpty()) return 0;
+        SqlParameterSource[] batch = items.stream()
+                .map(ReservationMartWriter::toOverallMonthlyParams)
+                .toArray(SqlParameterSource[]::new);
+        int[] updated = jdbc.batchUpdate(UPSERT_OVERALL_MONTHLY_SQL, batch);
+        int total = sum(updated);
+        log.info("mart_reservation_overall_monthly upserted rows={}", total);
         return total;
     }
 
@@ -80,27 +95,29 @@ public class ReservationMartWriter {
     }
 
     /**
-     * 카카오 일별 건수 — 범위 delete + insert.
-     * 소스에서 사후 등록/수정된 카카오 예약도 반영된다.
+     * 예약 전체 얇은 리스트 — 예약일(reserve_date) 기준 범위 delete + insert.
+     * 사후 예약일 변경/취소도 자연히 반영된다.
+     *
+     * mart_reservation_monthly(수술/외래/드림렌즈)의 정의 원천 — 위 리스트를 월로 접어 만든다.
      */
     @Transactional
-    public int replaceKakaoDaily(LocalDate from, LocalDate to, List<Map<String, Object>> rows) {
+    public int replaceListReservationAll(LocalDate from, LocalDate to, List<Map<String, Object>> rows) {
         int deleted = jdbc.update(
-                DELETE_KAKAO_RANGE_SQL,
+                DELETE_LIST_ALL_RANGE_SQL,
                 new MapSqlParameterSource()
                         .addValue("from", from, Types.DATE)
                         .addValue("to", to, Types.DATE)
         );
         if (rows.isEmpty()) {
-            log.info("mart_reservation_kakao_daily deleted={} inserted=0 (empty)", deleted);
+            log.info("list_reservation_all deleted={} inserted=0 (empty)", deleted);
             return 0;
         }
         SqlParameterSource[] batch = rows.stream()
-                .map(ReservationMartWriter::toKakaoDailyParams)
+                .map(ReservationMartWriter::toListAllParams)
                 .toArray(SqlParameterSource[]::new);
-        int[] updated = jdbc.batchUpdate(UPSERT_KAKAO_DAILY_SQL, batch);
+        int[] updated = jdbc.batchUpdate(INSERT_LIST_ALL_SQL, batch);
         int inserted = sum(updated);
-        log.info("mart_reservation_kakao_daily deleted={} inserted={}", deleted, inserted);
+        log.info("list_reservation_all deleted={} inserted={}", deleted, inserted);
         return inserted;
     }
 
@@ -114,9 +131,19 @@ public class ReservationMartWriter {
                 .addValue("total", m.getTotal());
     }
 
+    private static SqlParameterSource toOverallMonthlyParams(ReservationOverallMonthlyItem m) {
+        return new MapSqlParameterSource()
+                .addValue("yr", m.getYear())
+                .addValue("mo", m.getMonth())
+                .addValue("reservations", m.getReservations(), Types.INTEGER)
+                .addValue("online", m.getOnline(), Types.INTEGER)
+                .addValue("call", m.getCall(), Types.INTEGER)
+                .addValue("total", m.getTotal(), Types.INTEGER);
+    }
+
     /**
      * ReservationListRepository의 List&lt;Map&gt; 결과(원본 SQL alias camelCase)를 파라미터로 매핑.
-     * reservation-list.sql의 SELECT alias와 1:1.
+     * select-reservation-list.sql의 SELECT alias와 1:1.
      */
     private static SqlParameterSource toListParams(Map<String, Object> row) {
         MapSqlParameterSource p = new MapSqlParameterSource();
@@ -128,10 +155,23 @@ public class ReservationMartWriter {
         return p;
     }
 
-    private static SqlParameterSource toKakaoDailyParams(Map<String, Object> row) {
+    /**
+     * select-reservation-list-all.sql 의 alias 6개를 파라미터로 매핑. 얇은 리스트라 LIST_KEYS 배열 불필요.
+     * 날짜는 문자열 그대로 넘겨(insert SQL 에서 CAST), 나머지는 trim 만 한다.
+     * chart_no·reserve_num 은 Phase 2 예약률·상담성공률에서 list_exam·list_surgery 와 JOIN 키로 쓴다.
+     */
+    private static SqlParameterSource toListAllParams(Map<String, Object> row) {
         return new MapSqlParameterSource()
-                .addValue("dt", LocalDate.parse(String.valueOf(row.get("dt")).trim()), Types.DATE)
-                .addValue("kakaoCount", toInt(row.get("kakaoCount")));
+                .addValue("reserveDate",   nullSafeTrim(row.get("reserveDate")))
+                .addValue("reserveFlag",   nullSafeTrim(row.get("reserveFlag")))
+                .addValue("reserveJinryo", nullSafeTrim(row.get("reserveJinryo")))
+                .addValue("reserveState",  nullSafeTrim(row.get("reserveState")))
+                .addValue("chartNo",       nullSafeTrim(row.get("chartNo")))
+                .addValue("reserveNum",    nullSafeTrim(row.get("reserveNum")));
+    }
+
+    private static String nullSafeTrim(Object v) {
+        return v == null ? "" : v.toString().trim();
     }
 
     private static final String[] LIST_KEYS = new String[]{
@@ -139,7 +179,10 @@ public class ReservationMartWriter {
             "reserveDate", "reserveTime",
             "chartNo", "name", "reserveState",
             "channel", "channelGroup",
-            "doctor", "counselor", "comment"
+            "doctor", "counselor", "comment", "motiveL", "motiveM", "motiveMSource",
+            "examRegDate", "examStop", "surgeryRegDate", "surgeryDate", "surgeryPayment", "surgeryR", "surgeryL",
+            // 사람 식별용 — 화면·CSV 로는 안 나간다(select-list-reservation.sql 이 뽑지 않음)
+            "hp", "email"
     };
 
     private static int sum(int[] counts) {

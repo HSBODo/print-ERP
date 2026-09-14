@@ -14,8 +14,13 @@ const allExamListItemSchema = z.object({
   name: z.string(),
   examDate: z.string(),
   examGroup: z.string(),
+  // 원데이/일반 이진값 — 빈칸 없음(2026-08-05).
+  //   시력교정 = 같은날 검사OP(M/5) 예약 내원 / 백내장 = 진료구분 C_원데이·C_노안원데이 / 드림렌즈 = 항상 일반
+  examType: z.string(),
+  cataractClass: z.string(), // 백내장분류: 백내장/중단/노안·FU/기타 (백내장 리스트 classification과 동일, 그 외 검사구분은 '')
   patientType: z.string(),
   introType: z.string(),
+  motiveReport: z.string(), // 내원동기(레포트): 내원동기(대) → 9계열 매핑 (B2B군인/B2B기업/소개고객/소개직원/광고/기타/바이럴/프로모션/홈페이지)
   motiveL: z.string(),
   motiveM: z.string(),
   motiveS: z.string(),

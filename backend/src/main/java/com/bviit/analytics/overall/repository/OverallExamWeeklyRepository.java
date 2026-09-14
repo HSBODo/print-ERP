@@ -23,17 +23,17 @@ import java.util.Map;
  * MSSQL 2014 호환: STRING_AGG/TRIM 미사용 (LTRIM/RTRIM 사용).
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class OverallExamWeeklyRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_DEMOGRAPHICS_DAILY_SQL = "sql/overall/find-demographics-daily.sql";
-    private static final String FIND_VISION_DAILY_SQL = "sql/overall/find-vision-daily.sql";
-    private static final String FIND_CATARACT_DAILY_SQL = "sql/overall/find-cataract-daily.sql";
-    private static final String FIND_DREAMLENS_DAILY_SQL = "sql/overall/find-dreamlens-daily.sql";
-    private static final String FIND_STOP_COUNT_DAILY_SQL = "sql/overall/find-stop-count-daily.sql";
-    private static final String FIND_ONE_DAY_DAILY_SQL = "sql/overall/find-one-day-daily.sql";
+    private static final String FIND_DEMOGRAPHICS_DAILY_SQL = "sql/softcrm/overall/select-demographics-daily.sql";
+    private static final String FIND_VISION_DAILY_SQL = "sql/softcrm/overall/select-vision-daily.sql";
+    private static final String FIND_CATARACT_DAILY_SQL = "sql/softcrm/overall/select-cataract-daily.sql";
+    private static final String FIND_DREAMLENS_DAILY_SQL = "sql/softcrm/overall/select-dreamlens-daily.sql";
+    private static final String FIND_STOP_COUNT_DAILY_SQL = "sql/softcrm/overall/select-stop-count-daily.sql";
+    private static final String FIND_ONE_DAY_DAILY_SQL = "sql/softcrm/overall/select-one-day-daily.sql";
 
     private final String findDemographicsDailySql;
     private final String findVisionDailySql;
@@ -46,7 +46,8 @@ public class OverallExamWeeklyRepository {
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
     ) {
         this.jdbc = jdbc;
-        this.findDemographicsDailySql = SqlLoader.load(FIND_DEMOGRAPHICS_DAILY_SQL);
+        this.findDemographicsDailySql = SqlLoader.load(FIND_DEMOGRAPHICS_DAILY_SQL)
+                .replace("__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource());
         this.findVisionDailySql = SqlLoader.load(FIND_VISION_DAILY_SQL);
         this.findCataractDailySql = SqlLoader.load(FIND_CATARACT_DAILY_SQL);
         this.findDreamlensDailySql = SqlLoader.load(FIND_DREAMLENS_DAILY_SQL);

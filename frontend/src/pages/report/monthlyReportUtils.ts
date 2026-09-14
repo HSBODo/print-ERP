@@ -6,55 +6,30 @@ import { CURRENT_YEAR } from '@/constants/chart'
 export const YEARS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]
 
 const now = new Date()
-// 진행 중인 당월은 검사·수술 등이 아직 누적 중이라 값이 급감 → 마지막 '완료된 월'까지만 표시(당월 포함 이후 null)
+// 미래 월은 데이터 자체가 없으므로 null 처리. 당월은 누적 중이지만 값을 노출한다.
 export const isIncompleteMonth = (year: number, monthIndex: number) =>
-  year > now.getFullYear() || (year === now.getFullYear() && monthIndex >= now.getMonth())
+  year > now.getFullYear() || (year === now.getFullYear() && monthIndex > now.getMonth())
 
-/* 예약률 2024·2025 확정값 (CataractReservationRatePage와 동일) */
-export const VISION_RATE_LEGACY: Record<number, number[]> = {
-  2024: [77, 79, 77, 76, 78, 80, 76, 80, 79, 75, 72, 74],
-  2025: [75, 76, 79, 77, 76, 75, 77, 77, 76, 82, 77, 75],
-}
-export const CATARACT_RATE_LEGACY: Record<number, number[]> = {
-  2024: [64, 69, 66, 80, 62, 65, 66, 67, 63, 74, 57, 77],
-  2025: [68, 57, 59, 49, 58, 44, 55, 63, 57, 55, 57, 55],
-}
-
-export const mergeMonthlySeries = (
-  base: Array<number | null | undefined> | undefined,
-  fallback: Array<number | null | undefined> | undefined,
-): Array<number | null> =>
-  Array.from({ length: 12 }, (_, i) => {
-    const baseValue = base?.[i]
-    if (typeof baseValue === 'number') return baseValue
-
-    const fallbackValue = fallback?.[i]
-    return typeof fallbackValue === 'number' ? fallbackValue : null
-  })
-
-export const applyCurrentYearBase = (
-  data: Record<number, Array<number | null>>,
-  currentYear: number,
-  base: Array<number | null | undefined> | undefined,
-): Record<number, Array<number | null>> => {
-  if (!base) return data
-  return {
-    ...data,
-    [currentYear]: mergeMonthlySeries(base, data[currentYear]),
-  }
+/**
+ * MonthlyReportPage 도표별 UI 라벨 (title/suffix/format).
+ * 24·25 확정값은 마트 시드(V12·V13·V14)로 이관됐고, 프론트는 API 응답만 사용한다.
+ */
+export interface ChartLabels {
+  title: string
+  suffix?: string
+  format?: 'percent'
 }
 
-/** overall-exam/weekly 주간 항목을 월별로 합산한 값 (당해연도 라이브 도표용) */
-export interface OverallMonthSums {
-  introGeneral: number
-  introCustomer: number
-  introStaff: number
-  jobOffice: number
-  jobStudent: number
-  jobEtc: number
-  visionExam: number
-  oneDay: number
-  visionBooked: number
-  oneDayBooked: number
-  stopCount: number
+export const MONTHLY_CHART_LABELS: Record<string, ChartLabels> = {
+  'exam-general-customer': { title: '일반 고객 검사', suffix: '(소개 제외)' },
+  'exam-referral-customer': { title: '고객소개 검사' },
+  'exam-referral-staff': { title: '직원소개 검사' },
+  'exam-worker': { title: '직장인 검사' },
+  'exam-student': { title: '학생 검사' },
+  'exam-etc': { title: '기타 검사', suffix: '(직장인·학생 제외)' },
+  'exam-general': { title: '일반 검사' },
+  'ratio-general': { title: '일반검사 비율', format: 'percent' },
+  'rate-vision-general': { title: '시력교정 일반예약률', suffix: '(수술예약건/검사자)', format: 'percent' },
+  'rate-oneday': { title: '원데이 예약률', suffix: '(수술예약건/검사자)', format: 'percent' },
+  'stop-rate': { title: '중단율', format: 'percent' },
 }

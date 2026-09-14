@@ -29,7 +29,7 @@ import {
   DEFAULT_PERIOD,
   SUMMARY_COLUMNS,
   buildReservationStatsCsv,
-  getDisplayRowsFromCounts,
+  getRangeDisplayRowsFromCounts,
   monthFullLabel,
   monthShortLabel,
   type ColumnMeta,
@@ -42,7 +42,11 @@ import {
   type StatsHeaderModel,
   type StatsHeaderNode,
 } from './shared/ReservationStatsTableHeader'
-import { currentMonth, periodRange } from './shared/reservationStatsDateRange'
+import {
+  isSingleMonthRange,
+  periodRange,
+  validateRange,
+} from './shared/reservationStatsDateRange'
 import {
   formatChannelValue,
   formatNumber,
@@ -197,15 +201,33 @@ const SYSTEM_HEADER_NODES: StatsHeaderNode<SystemHeaderColumn>[] = [
   group('예약 종합 (내원 · 부도 · 취소)', `${divider} bg-emerald-200`, summaryLeaves),
 ]
 
-/* ── 셀 손보정(홈/네이버 온라인예약 원시 카운트) ── */
+/* ── 셀 손보정(원시 카운트 24개 = 채널 21 + 종합 3) ── */
 const EDITABLE_FIELD_SET = new Set<string>(RESERVATION_STATS_EDITABLE_FIELDS)
 const EDITABLE_FIELD_LABEL: Record<ReservationStatsEditableField, string> = {
+  inboundCall: '인입콜',
+  answeredCall: '응대콜',
+  newInquiry: '신규예약문의',
+  callReservation: '검사 예약수',
+  tmTotalDb: 'TM 총 DB',
+  tmValidDb: 'TM 유효 DB',
+  tmReservation: 'TM 예약수',
+  tmRecounsel: 'TM 재상담',
+  tmRecounselValid: 'TM 재상담 유효수',
+  tmRecounselReservation: 'TM 재상담 예약수',
   homeReceived: '홈페이지 예약접수',
   homeReservation: '홈페이지 예약수',
   naverReceived: '네이버 예약접수',
   naverRejected: '네이버 파트너거절',
   naverValid: '네이버 유효접수',
   naverReservation: '네이버 예약수',
+  kakaoInquiry: '카톡 문의',
+  kakaoReservation: '카톡 예약수',
+  cancelCallNaver: '취소 콜·네이버',
+  cancelHome: '취소 홈페이지',
+  cancelKakao: '취소 카톡',
+  visit: '내원',
+  noShowReservation: '예약(부도)',
+  cancel: '취소',
 }
 
 type ManualEditsByDate = Map<string, Record<string, ReservationStatsCellEdit>>
@@ -243,35 +265,47 @@ const systemHeaderModel = (period: string): StatsHeaderModel<SystemHeaderColumn>
   nodes: SYSTEM_HEADER_NODES,
 })
 
+/** 기본 조회 범위 = 당월(월초 ~ 어제/월말). 툴바 초기 draft 값 = 첫 조회 값. */
+const DEFAULT_RANGE = periodRange(DEFAULT_PERIOD)
+
 export function ReservationStatsSystemPage() {
-  const [draftMonth, setDraftMonth] = useState(DEFAULT_PERIOD)
-  const [appliedMonth, setAppliedMonth] = useState(DEFAULT_PERIOD)
+  const [draftFrom, setDraftFrom] = useState(DEFAULT_RANGE.from)
+  const [draftTo, setDraftTo] = useState(DEFAULT_RANGE.to)
+  const [appliedFrom, setAppliedFrom] = useState(DEFAULT_RANGE.from)
+  const [appliedTo, setAppliedTo] = useState(DEFAULT_RANGE.to)
   const [granularity, setGranularity] = useState<Granularity>('month')
   const [hasSearched, setHasSearched] = useState(false) // [조회] 누르기 전엔 자동 조회하지 않음
   const [diagnosticDiff, setDiagnosticDiff] = useState<ReservationStatsDiff | null>(null)
   const [diagnosticDrillDown, setDiagnosticDrillDown] = useState<ReservationStatsDrillDown | null>(null)
   const [diagnosticParity, setDiagnosticParity] = useState<ReservationStatsParity | null>(null)
 
-  const { from, to, lastDay } = periodRange(appliedMonth)
-  const { dailies, meta, isLoading, isFetching, isError, refetch } = useReservationStatsSystem(from, to, hasSearched)
+  const { dailies, meta, isLoading, isFetching, isError, refetch } = useReservationStatsSystem(
+    appliedFrom,
+    appliedTo,
+    hasSearched,
+  )
   // 조회 전에는 빈 상태. 운영 데이터가 오면 카운트→행 계산.
   // 미연결/실패(503)는 시드로 폴백하지 않는다(잘못된 수치 표시 방지) — tbody에서 미연결 안내.
   const live = Boolean(dailies && !isError)
-  const rows = !hasSearched || !live ? [] : getDisplayRowsFromCounts(granularity, dailies!, appliedMonth, lastDay)
+  const rows = !hasSearched || !live ? [] : getRangeDisplayRowsFromCounts(granularity, dailies!, appliedFrom, appliedTo)
   const hasData = rows.length > 0
+  const appliedSingleMonth = isSingleMonthRange(appliedFrom, appliedTo)
+  // 진단·CSV 라벨 등 월 단위 값이 필요할 때 사용. 여러 달 범위면 from 의 월을 대표값으로.
+  const appliedPeriod = appliedFrom.slice(0, 7)
 
   const { getDiff, isDiffing, getDrillDown, isDrillingDown, getParity, isCheckingParity } = useReservationStatsSnapshots()
   const { editCell, isEditing } = useReservationStatsSystemCellEdit()
   const tableViewportClass = granularity === 'month' ? 'max-h-[72vh]' : 'min-h-0 flex-1'
 
-  // 셀 손보정: 확정 스냅샷일 때만(라이브는 저장 대상 없음). 일(day) 행의 온라인예약 6개 필드만 대상.
-  const cellEditEnabled = live && meta?.source === 'SNAPSHOT'
+  // 셀 손보정: 확정 스냅샷 or 마트(D-1 배치 적재)일 때 허용. 라이브는 저장 대상 없음.
+  // 편집은 period(YYYY-MM) 단위 스냅샷 저장이라 단일 월 범위에서만 활성.
+  const cellEditEnabled = live && appliedSingleMonth && (meta?.source === 'SNAPSHOT' || meta?.source === 'MART')
   // 일자별 수기 보정 이력(date → field → 이력) — 마커·툴팁 표시용.
   const manualEditsByDate = useMemo(() => buildManualEditsByDate(dailies), [dailies])
 
   const handleEditCell = async (date: string, field: ReservationStatsEditableField, value: number) => {
     try {
-      await editCell({ period: appliedMonth, date, field, value })
+      await editCell({ period: appliedPeriod, date, field, value })
       toast.success('수정 완료', { description: `${date} ${EDITABLE_FIELD_LABEL[field]} → ${value}` })
     } catch (e) {
       toast.error('수정 실패', { description: e instanceof Error ? e.message : undefined })
@@ -279,19 +313,28 @@ export function ReservationStatsSystemPage() {
   }
 
   // 조회 = 호출 통합: 서버 GET이 당월·미잠금이면 자동 증분 채움까지 처리한다.
-  // 같은 월을 다시 조회하면 쿼리 키가 안 바뀌므로 refetch로 강제 갱신(서버 자동 채움 재평가).
+  // 같은 범위를 다시 조회하면 쿼리 키가 안 바뀌므로 refetch로 강제 갱신(서버 자동 채움 재평가).
   const handleSearch = () => {
-    const sameMonth = hasSearched && appliedMonth === draftMonth
-    setAppliedMonth(draftMonth)
+    const validation = validateRange(draftFrom, draftTo)
+    if (!validation.ok) {
+      toast.error('조회 범위 오류', { description: validation.reason })
+      return
+    }
+    const sameRange = hasSearched && appliedFrom === draftFrom && appliedTo === draftTo
+    setAppliedFrom(draftFrom)
+    setAppliedTo(draftTo)
     setHasSearched(true)
     setDiagnosticDiff(null)
     setDiagnosticDrillDown(null)
     setDiagnosticParity(null)
-    if (sameMonth) refetch()
+    if (sameRange) refetch()
   }
   const handleReset = () => {
-    setDraftMonth(DEFAULT_PERIOD)
-    setAppliedMonth(DEFAULT_PERIOD)
+    // DEFAULT_PERIOD 는 모듈 로드 시점 값 — 앱 재시작 없이 월 경계 넘겨도 리셋값은 앱 시작 월. 기존 동작과 동일.
+    setDraftFrom(DEFAULT_RANGE.from)
+    setDraftTo(DEFAULT_RANGE.to)
+    setAppliedFrom(DEFAULT_RANGE.from)
+    setAppliedTo(DEFAULT_RANGE.to)
     setGranularity('month')
     setHasSearched(false)
     setDiagnosticDiff(null)
@@ -300,13 +343,19 @@ export function ReservationStatsSystemPage() {
   }
   const handleDownloadCsv = () => {
     if (!hasData) return
-    downloadCsv(`예약통계_${appliedMonth}_${granularity}.csv`, buildReservationStatsCsv(rows))
+    downloadCsv(`예약통계_${appliedFrom}_${appliedTo}_${granularity}.csv`, buildReservationStatsCsv(rows))
   }
   const handleRunDiagnostics = async () => {
+    // 진단은 확정 스냅샷 vs 라이브 재조회 비교라 period(YYYY-MM) 단위. 여러 달 범위에서는 불가.
+    if (!isSingleMonthRange(draftFrom, draftTo)) {
+      toast.error('진단 불가', { description: '진단은 같은 달 범위에서만 가능합니다.' })
+      return
+    }
+    const draftPeriod = draftFrom.slice(0, 7)
     try {
-      const diff = await getDiff(draftMonth)
+      const diff = await getDiff(draftPeriod)
       if (!diff.snapshotExists) {
-        toast.error('진단 불가', { description: `${draftMonth} 스냅샷이 없습니다.` })
+        toast.error('진단 불가', { description: `${draftPeriod} 스냅샷이 없습니다.` })
         return
       }
       if (diff.diffCount === 0) {
@@ -381,9 +430,11 @@ export function ReservationStatsSystemPage() {
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden p-1 text-xs text-gray-800">
       <ReservationStatsToolbar
-        draftMonth={draftMonth}
-        onDraftMonthChange={setDraftMonth}
-        maxMonth={currentMonth()}
+        draftFrom={draftFrom}
+        draftTo={draftTo}
+        onDraftFromChange={setDraftFrom}
+        onDraftToChange={setDraftTo}
+        maxDate={DEFAULT_RANGE.to}
         granularity={granularity}
         onGranularityChange={setGranularity}
         onSearch={handleSearch}
@@ -399,7 +450,7 @@ export function ReservationStatsSystemPage() {
       <div className={`${tableViewportClass} overflow-auto rounded-md border border-slate-400 bg-white`}>
         <table className="min-w-[1800px] border-separate border-spacing-0 text-xs">
           <ReservationStatsTableHeader
-            model={systemHeaderModel(appliedMonth)}
+            model={systemHeaderModel(appliedPeriod)}
             classes={headerClasses}
             renderLabel={(label) => <ColLabel label={label} />}
           />
@@ -407,7 +458,7 @@ export function ReservationStatsSystemPage() {
                 {!hasSearched ? (
                   <tr>
                     <td colSpan={TOTAL_COL_SPAN} className={`${labelCell} bg-white py-12 text-sm text-muted-foreground`}>
-                      기준 월을 선택하고 <span className="font-semibold text-slate-700">조회</span> 버튼을 눌러 데이터를 불러오세요.
+                      조회 기간(시작일~종료일)을 선택하고 <span className="font-semibold text-slate-700">조회</span> 버튼을 눌러 데이터를 불러오세요.
                     </td>
                   </tr>
                 ) : isLoading || isFetching ? (
@@ -428,7 +479,9 @@ export function ReservationStatsSystemPage() {
                     <td colSpan={TOTAL_COL_SPAN} className={`${labelCell} bg-white py-8 text-sm text-muted-foreground`}>
                       {isError
                         ? '운영 데이터에 연결되지 않았습니다 (미연결). 잠시 후 다시 조회해주세요.'
-                        : `${monthFullLabel(appliedMonth)} 조회 결과가 없습니다.`}
+                        : appliedSingleMonth
+                          ? `${monthFullLabel(appliedPeriod)} 조회 결과가 없습니다.`
+                          : `${appliedFrom} ~ ${appliedTo} 조회 결과가 없습니다.`}
                     </td>
                   </tr>
                 )}
@@ -562,20 +615,38 @@ function BodyRow({
         )
       })}
 
-      {SUMMARY_COLUMNS.map((col, i) =>
-        muted ? (
-          <td key={col.key} className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}>
-            –
-          </td>
-        ) : (
+      {SUMMARY_COLUMNS.map((col, i) => {
+        if (muted) {
+          return (
+            <td key={col.key} className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}>
+              –
+            </td>
+          )
+        }
+        const edit = edits?.[col.key]
+        if (canEditRow && row.date && EDITABLE_FIELD_SET.has(col.key)) {
+          return (
+            <EditableNumberCell
+              key={col.key}
+              value={summary[col.key] as number}
+              edit={edit}
+              busy={isEditing}
+              onSave={(next) => onEditCell(row.date!, col.key as ReservationStatsEditableField, next)}
+              cellClassName={`${numCell} ${i === 0 ? divider : ''} ${col.emphasis ? 'bg-rose-50' : ''}`}
+            />
+          )
+        }
+        return (
           <td
             key={col.key}
+            title={edit ? editMarkTitle(edit) : undefined}
             className={`${numCell} ${i === 0 ? divider : ''} ${col.emphasis ? 'bg-rose-50 text-rose-600' : ''}`}
           >
             {formatSummaryValue(summary[col.key], col.fmt)}
+            {edit ? <EditMark /> : null}
           </td>
-        ),
-      )}
+        )
+      })}
     </tr>
   )
 }

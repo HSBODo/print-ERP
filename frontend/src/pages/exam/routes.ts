@@ -4,12 +4,18 @@ import { CataractExamListPage } from './CataractExamListPage'
 import { AllExamListPage } from './AllExamListPage'
 import { ExaminationPage } from './ExaminationPage'
 import { ProcedureExamPage } from './ProcedureExamPage'
+import { OverallExamPage } from './OverallExamPage'
+import { OverallExamWeeklyPage } from './OverallExamWeeklyPage'
+import { EoeisCheckupStatsPage } from './EoeisCheckupStatsPage'
 
 /** 검사(exam) 도메인 페이지 레지스트리 */
 export const examPageRoutes: Record<string, FC> = {
   'exam-list': ExamListPage,
   'cataract-exam-list': CataractExamListPage,
   'all-exam-list': AllExamListPage,
+  'eoeis-checkup': EoeisCheckupStatsPage,
   'examination': ExaminationPage,
   'procedure-exam': ProcedureExamPage,
+  'overall-exam': OverallExamPage,
+  'overall-exam-weekly': OverallExamWeeklyPage,
 }

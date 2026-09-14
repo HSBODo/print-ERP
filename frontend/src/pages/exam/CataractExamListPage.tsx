@@ -1,19 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonthPicker } from '@/components/filters/MonthPicker'
 import { Card, CardContent } from '@/components/ui/card'
 import { columnsToCsv, downloadCsv } from '@/utils/csv'
 import { useCataractExamList } from '@/hooks/exam/useCataractExamList'
-import { useWeeklyApproval } from '@/hooks/useWeeklyApproval'
-import { WeeklyApprovalPanel } from '@/components/stats/WeeklyApprovalPanel'
 import type { CataractExamListItem } from '@/api/exam/cataractExamList'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './cataractExamListColumns'
 import {
   dash,
-  examDateOf,
   formatCount,
-  DEFAULT_FROM,
-  DEFAULT_TO,
+  defaultFrom,
+  defaultTo,
   PAGE_SIZE_OPTIONS,
   SKELETON_ROWS,
   QUICK_RANGES,
@@ -24,20 +22,26 @@ import {
   buildPaginationItems,
   getSortValue,
   compareSortValue,
+  summarizeClassifications,
+  EXAM_COUNT_CLASSES,
   type PeriodMode,
   type QuickRangeKey,
   type SortState,
 } from './cataractExamListUtils'
 
+/** 백내장 검사수에 안 들어가는 분류는 옅게 — 총건수를 검사수로 오독하지 않게. */
+const CLASS_CHIP_TONE = (name: string) =>
+  EXAM_COUNT_CLASSES.includes(name) ? 'text-amber-800' : 'text-amber-700/70'
+
 export function CataractExamListPage() {
   const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
   const [activeQuickRange, setActiveQuickRange] = useState<QuickRangeKey | null>(null)
-  const [draftFrom, setDraftFrom] = useState(DEFAULT_FROM)
-  const [draftTo, setDraftTo] = useState(DEFAULT_TO)
+  const [draftFrom, setDraftFrom] = useState(defaultFrom)
+  const [draftTo, setDraftTo] = useState(defaultTo)
   const [draftType, setDraftType] = useState('전체')
   const [draftKeyword, setDraftKeyword] = useState('')
-  const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
-  const [queryTo, setQueryTo] = useState(DEFAULT_TO)
+  const [queryFrom, setQueryFrom] = useState(defaultFrom)
+  const [queryTo, setQueryTo] = useState(defaultTo)
   const [queryType, setQueryType] = useState('전체')
   const [queryKeyword, setQueryKeyword] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -62,23 +66,9 @@ export function CataractExamListPage() {
     })
   }, [rows, queryType, queryKeyword])
 
-  // 주별 승인(주차 버킷 + 승인/선택) — 검사일 기준. 같은 달 조회일 때만 패널 노출(weeksInRange 제약).
-  const approval = useWeeklyApproval(filtered, examDateOf, queryFrom, queryTo)
-  const sameMonth = queryFrom.slice(0, 7) === queryTo.slice(0, 7)
-  const showApproval = hasSearched && !isError && !showSkeleton && sameMonth
-  // 선택 주차로 거른 행이 표/페이지네이션·집계 소스(미선택 시 filtered 그대로)
-  const tableRows = approval.selectedRows
+  const tableRows = filtered
 
-  // 적절IOL(R/L) 추천 입력 건수 — 검사건수(눈 단위) 기준. 주차 선택 시 그 주차로 한정.
-  const iolCounts = useMemo(() => {
-    let r = 0
-    let l = 0
-    for (const row of tableRows) {
-      if (row.recommendedR && row.recommendedR.trim()) r += 1
-      if (row.recommendedL && row.recommendedL.trim()) l += 1
-    }
-    return { r, l, total: r + l }
-  }, [tableRows])
+  const classCounts = useMemo(() => summarizeClassifications(tableRows), [tableRows])
 
   const sortedRows = useMemo(() => {
     if (!sortState) return tableRows
@@ -109,7 +99,6 @@ export function CataractExamListPage() {
   const handleSearch = () => {
     setHasSearched(true)
     setCurrentPage(1)
-    approval.clearSelection()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryType(draftType)
@@ -135,18 +124,17 @@ export function CataractExamListPage() {
   const handleReset = () => {
     setDraftPeriodMode('daily')
     setActiveQuickRange(null)
-    setDraftFrom(DEFAULT_FROM)
-    setDraftTo(DEFAULT_TO)
+    setDraftFrom(defaultFrom())
+    setDraftTo(defaultTo())
     setDraftType('전체')
     setDraftKeyword('')
-    setQueryFrom(DEFAULT_FROM)
-    setQueryTo(DEFAULT_TO)
+    setQueryFrom(defaultFrom())
+    setQueryTo(defaultTo())
     setQueryType('전체')
     setQueryKeyword('')
     setPageSize(50)
     setCurrentPage(1)
     setSortState(null)
-    approval.reset()
     setHasSearched(false)
   }
 
@@ -211,17 +199,14 @@ export function CataractExamListPage() {
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
           </div>
           {draftPeriodMode === 'monthly' ? (
-            <input
-              aria-label="백내장 검사 기준 월"
-              type="month"
+            <MonthPicker
+              ariaLabel="백내장 검사 기준 월"
               value={toMonthValue(draftFrom)}
-              onChange={(e) => {
-                if (!e.target.value) return
+              onChange={(v) => {
                 setActiveQuickRange(null)
-                setDraftFrom(toMonthStart(e.target.value))
-                setDraftTo(toMonthEnd(e.target.value))
+                setDraftFrom(toMonthStart(v))
+                setDraftTo(toMonthEnd(v))
               }}
-              className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           ) : (
             <>
@@ -288,20 +273,23 @@ export function CataractExamListPage() {
             className="h-full w-[15.1rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
         </div>
-        <div className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs" aria-live="polite">
-          <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">{formatCount(tableRows.length)}건</strong>
-        </div>
         <div
           className="flex h-8 items-center gap-2.5 rounded-md border border-amber-300 bg-amber-100 px-3 text-xs"
           aria-live="polite"
-          title="적절IOL(R/L)이 입력된 검사건수 — 검사건수(눈 단위) 기준. 리스트 행수(사람)와 다릅니다."
+          title="총건수 = 레거시 BCRM 백내장 검사 전체. 월간 레포트 백내장 검사수는 백내장(검안사·상담사 배정) + 중단(상담사 BS미지정)만 센다. 노안/FU(검안사 미배정 + 상담사 BS미지정)와 기타는 전체 검사수에만 더해진다."
         >
-          <span className="font-medium text-amber-700">검사건수(IOL)</span>
-          <span className="text-amber-800">R <strong className="tabular-nums text-amber-900">{formatCount(iolCounts.r)}</strong></span>
-          <span className="text-amber-800">L <strong className="tabular-nums text-amber-900">{formatCount(iolCounts.l)}</strong></span>
+          <span className="font-medium text-amber-700">총건수</span>
+          <strong className="tabular-nums text-amber-900">{formatCount(classCounts.total)}건</strong>
           <span className="h-3.5 w-px bg-amber-300" />
-          <span className="text-amber-800">합계 <strong className="tabular-nums text-amber-900">{formatCount(iolCounts.total)}건</strong></span>
+          <span className="font-medium text-amber-800">
+            백내장검사수 <strong className="tabular-nums text-amber-900">{formatCount(classCounts.examCount)}</strong>
+          </span>
+          <span className="h-3.5 w-px bg-amber-300" />
+          {classCounts.breakdown.map(({ name, count }) => (
+            <span key={name} className={CLASS_CHIP_TONE(name)}>
+              {name} <strong className="tabular-nums text-amber-900">{formatCount(count)}</strong>
+            </span>
+          ))}
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>
@@ -331,18 +319,6 @@ export function CataractExamListPage() {
           </Button>
         </div>
       </div>
-
-      {showApproval && (
-        <WeeklyApprovalPanel
-          weeks={approval.weeks}
-          approved={approval.approved}
-          selectedWeek={approval.selectedWeek}
-          onToggleApprove={approval.toggleApprove}
-          onSelectWeek={approval.selectWeek}
-          subtitle="백내장 검사자 (검사일 기준)"
-          totalLabel="월 합계"
-        />
-      )}
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">

@@ -1,5 +1,6 @@
 package com.bviit.analytics.auth.config;
 
+import com.bviit.analytics.auth.entity.Department;
 import com.bviit.analytics.auth.entity.Role;
 import com.bviit.analytics.auth.entity.User;
 import com.bviit.analytics.auth.repository.UserRepository;
@@ -41,12 +42,14 @@ public class DataInitializer implements CommandLineRunner {
         String normalizedName = requireText(adminName == null ? null : adminName.trim(), "app.seed.admin-name");
         String seedPassword = requireSecurePassword(adminPassword);
 
+        // ADMIN 은 부서 소속 없음 → Department.ALL 로 저장 (docs/auth/permissions.md § 2-3).
         userRepository.save(User.builder()
                 .loginId(normalizedLoginId)
                 .email(normalizedEmail)
                 .password(passwordEncoder.encode(seedPassword))
                 .name(normalizedName)
                 .role(Role.ADMIN)
+                .department(Department.ALL)
                 .build());
     }
 

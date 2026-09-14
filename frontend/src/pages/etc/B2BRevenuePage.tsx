@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, Minus, TrendingDown, TrendingUp } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -13,9 +13,10 @@ import {
 } from '@/components/ui/chart'
 import { FilterBar } from '@/components/filters/FilterBar'
 import { useFilterBar } from '@/components/filters/useFilterBar'
+import { MetricSection, type MetricDef } from '@/components/stats/MetricSection'
 import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '@/constants/chart'
 import { b2bApi, type B2bRevenueMonthlyItem } from '@/api/etc'
-import { changeRate, periodLabel } from '@/utils/stats'
+import { periodLabel } from '@/utils/stats'
 
 type MonthlyData = {
   totalRevenue: number
@@ -37,12 +38,6 @@ type MonthlyData = {
 type DerivedData = MonthlyData & {
   designatedShareRate: number
   visionShareRate: number
-}
-
-type MetricDef = {
-  key: keyof DerivedData
-  label: string
-  format: (value: number) => string
 }
 
 const EMPTY: MonthlyData = {
@@ -74,14 +69,14 @@ const formatCurrencyCompact = (value: number | string) => {
   return amount.toLocaleString('ko-KR')
 }
 
-const REVENUE_METRICS: MetricDef[] = [
+const REVENUE_METRICS: MetricDef<DerivedData>[] = [
   { key: 'totalRevenue', label: '총 B2B 매출', format: formatWon },
   { key: 'visionRevenue', label: '시력교정 매출', format: formatWon },
   { key: 'cataractRevenue', label: '백내장 매출', format: formatWon },
   { key: 'designatedRevenue', label: '지정 매출', format: formatWon },
 ]
 
-const EFFICIENCY_METRICS: MetricDef[] = [
+const EFFICIENCY_METRICS: MetricDef<DerivedData>[] = [
   { key: 'caseCount', label: 'B2B 건수', format: formatCount },
   { key: 'avgRevenuePerCase', label: '건당 매출', format: formatWon },
   { key: 'designatedShareRate', label: '지정 매출 비중', format: formatPercent },
@@ -165,59 +160,6 @@ const derive = (item: MonthlyData): DerivedData => ({
   designatedShareRate: item.totalRevenue > 0 ? (item.designatedRevenue / item.totalRevenue) * 100 : 0,
   visionShareRate: item.totalRevenue > 0 ? (item.visionRevenue / item.totalRevenue) * 100 : 0,
 })
-
-function MetricSection({
-  title,
-  metrics,
-  source,
-  labels,
-}: {
-  title: string
-  metrics: MetricDef[]
-  source: DerivedData[]
-  labels: string[]
-}) {
-  return (
-    <section>
-      <h3 className="mb-3 text-sm font-medium text-muted-foreground">{title}</h3>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => {
-          const values = source.map((item) => item[metric.key] as number)
-          const base = values[0]
-          return (
-            <Card key={metric.key} className="gap-2 border-border/70 shadow-sm">
-              <CardHeader className="gap-0.5 pb-0">
-                <CardTitle className="text-base font-semibold tracking-normal text-gray-900">{metric.label}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2.5 pt-0">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-3 border-b border-border/60 pb-2.5">
-                  <p className="text-sm text-muted-foreground">{labels[0]} (기준)</p>
-                  <p className="min-w-[9ch] text-right text-2xl font-semibold tracking-tight tabular-nums text-gray-900">{metric.format(base)}</p>
-                </div>
-                {values.slice(1).map((value, index) => {
-                  const rate = changeRate(base, value)
-                  const TrendIcon = rate === 0 ? Minus : rate > 0 ? TrendingUp : TrendingDown
-                  return (
-                    <div key={labels[index + 1]} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3">
-                      <span className="text-sm text-muted-foreground">{labels[index + 1]}</span>
-                      <div className="flex items-center justify-end gap-2">
-                        <span className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${rate === 0 ? 'bg-gray-100 text-gray-600' : rate > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                          <TrendIcon className="h-3 w-3" />
-                          {rate > 0 ? '+' : ''}{rate.toFixed(1)}%
-                        </span>
-                        <span className="min-w-[9ch] text-right text-sm font-medium tabular-nums text-gray-700">{metric.format(value)}</span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
 
 export function B2BRevenuePage() {
   const filter = useFilterBar()

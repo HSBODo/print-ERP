@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EtcMartWriter {
 
-    private static final String UPSERT_B2B_REVENUE_SQL = SqlLoader.load("sql/mart/upsert-b2b-revenue-monthly.sql");
+    private static final String UPSERT_B2B_REVENUE_SQL = SqlLoader.load("sql/mart/etc/upsert-b2b-revenue-monthly.sql");
 
     private final @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc;
 

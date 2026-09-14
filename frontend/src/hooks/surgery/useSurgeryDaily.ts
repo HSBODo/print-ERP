@@ -6,6 +6,10 @@ import { surgeryApi, type SurgeryDailyItem, type SurgeryDailyMeta } from '@/api/
 export interface SurgeryDailyData {
   lasek: number; lasik: number; smile: number; smilePro: number
   icl: number; tIcl: number; kpl: number; tKpl: number; viva: number
+  /** 노안 레이저(PRESBYOND) — PIOL 그룹 밖의 독립 항목 */
+  presbyond: number
+  /** PIOL DISTINCT 환자 수 — 유형별 합산이 아니다(양안 다른 렌즈 환자 이중 계상 방지) */
+  piolPatients: number
   catMulti: number; catMono: number; catEdof: number
   xtra: number; waveVision: number; monoVision: number; contra: number; personal: number
   lasekEx: number; lasekRed: number
@@ -19,6 +23,7 @@ function toDataMap(items: SurgeryDailyItem[]): Record<string, SurgeryDailyData> 
     map[item.date] = {
       lasek: item.lasek, lasik: item.lasik, smile: item.smile, smilePro: item.smilePro,
       icl: item.icl, tIcl: item.tIcl, kpl: item.kpl, tKpl: item.tKpl, viva: item.viva,
+      presbyond: item.presbyond ?? 0, piolPatients: item.piolPatients ?? 0,
       catMulti: item.catMulti, catMono: item.catMono, catEdof: item.catEdof,
       xtra: item.xtra ?? 0, waveVision: item.waveVision ?? 0,
       monoVision: item.monoVision ?? 0, contra: item.contra ?? 0, personal: item.personal ?? 0,
@@ -34,8 +39,8 @@ function toDataMap(items: SurgeryDailyItem[]): Record<string, SurgeryDailyData> 
 
 /**
  * 일자별 수술 유형별 건수 (수술일 기준). from/to는 'YYYY-MM-DD'.
- * 스냅샷 우선(적재) — 적재된 일자는 동결되어 흔들리지 않고, 비는 날은 호출부에서 EMPTY로 보완한다.
- * meta는 출처(스냅샷/라이브) 표시, latestDate는 적재된 마지막 일자.
+ * mart_surgery_daily 조회(D-1 배치 적재). 마트 미적재 구간은 소스 라이브 폴백.
+ * 비는 날은 호출부에서 EMPTY로 보완한다. meta는 출처(MART/LIVE) 표시.
  */
 export function useSurgeryDaily(from: string, to: string, enabled: boolean) {
   const { data, isLoading, isError } = useQuery({

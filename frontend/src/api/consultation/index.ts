@@ -70,12 +70,12 @@ export const consultationApi = {
   getCataractReservationRateTrend: async (years: number[], category: 'vision' | 'cataract' = 'cataract') =>
     cataractReservationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/cataract-reservation-rate/trend', { years, category }))).data,
 
-  getConsultationRateKpi: async (years: number[], mock = true) =>
-    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/kpi', { years, mock }))).data,
+  getConsultationRateKpi: async (years: number[]) =>
+    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/kpi', { years }))).data,
 
-  getConsultationRateTrend: async (years: number[], mock = true) =>
-    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/trend', { years, mock }))).data,
+  getConsultationRateTrend: async (years: number[]) =>
+    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/trend', { years }))).data,
 
-  getConsultationRateComposition: async (years: number[], mock = true) =>
-    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/composition', { years, mock }))).data,
+  getConsultationRateComposition: async (years: number[]) =>
+    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/composition', { years }))).data,
 }

@@ -1,10 +1,12 @@
 /** Shared pure helpers for reservation stats data modules. */
 
-export type Granularity = 'month' | 'week' | 'day' | 'all'
+export type Granularity = 'month' | 'week' | 'yearWeek' | 'day' | 'all'
 
+// 주별 = 해당 월의 주(1~5주) / 주차 = ISO 8601 연간 주차(1~53주). 두 뷰의 버킷 규칙이 달라 라벨·정렬이 다르다.
 export const GRANULARITIES: { key: Granularity; label: string }[] = [
   { key: 'month', label: '월별' },
   { key: 'week', label: '주별' },
+  { key: 'yearWeek', label: '주차' },
   { key: 'day', label: '일별' },
   { key: 'all', label: '전체' },
 ]
@@ -30,6 +32,9 @@ export const weekdayKo = (weekdayIndex: number): string => WEEKDAY_KO[weekdayInd
 
 /** 0-based calendar week within a month. */
 export const weekOf = (day: number, firstWeekday: number): number => Math.floor((day - 1 + firstWeekday) / 7)
+
+/** ISO 8601 주차 (1~53) — 구현은 공용 유틸(@/utils/isoWeek)에 있다. */
+export { isoWeek } from '@/utils/isoWeek'
 
 export const pctInt = (a: number, b: number): number => (b === 0 ? 0 : Math.round((a * 100) / b))
 

@@ -20,7 +20,7 @@ import java.util.Optional;
 /**
  * GET /api/surgery-list?from=YYYY-MM-DD&to=YYYY-MM-DD
  * 수술자 리스트 행 목록. 기준일은 수술일자, 보조일은 검사일자.
- * 실 데이터 서비스는 mssql 프로파일에서만 주입된다. 미연결 시 503으로 응답한다.
+ * 실 데이터 서비스는 postgres-mart 프로파일에서만 주입된다. 미연결 시 503으로 응답한다.
  */
 @RestController
 @RequestMapping("/api/surgery-list")

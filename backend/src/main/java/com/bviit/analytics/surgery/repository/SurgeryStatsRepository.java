@@ -24,24 +24,20 @@ import java.util.Map;
  * READ-ONLY — SELECT만 실행.
  */
 @Repository
-@Profile({"mssql", "postgres-mart"})
+@Profile("postgres-mart")
 public class SurgeryStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_VISION_MONTHLY_BY_TYPE_SQL = "sql/surgery/find-vision-monthly-by-type.sql";
-    private static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL = "sql/surgery/find-cataract-monthly-by-type.sql";
-    private static final String FIND_REOPERATION_MONTHLY_SQL = "sql/surgery/find-reoperation-monthly.sql";
-    private static final String FIND_VISION_DAILY_BY_TYPE_SQL = "sql/surgery/find-vision-daily-by-type.sql";
-    private static final String FIND_CATARACT_DAILY_BY_TYPE_SQL = "sql/surgery/find-cataract-daily-by-type.sql";
-    private static final String FIND_REOPERATION_DAILY_SQL = "sql/surgery/find-reoperation-daily.sql";
+    private static final String FIND_VISION_MONTHLY_BY_TYPE_SQL = "sql/softcrm/surgery/select-vision-monthly-by-type.sql";
+    private static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL = "sql/softcrm/surgery/select-cataract-monthly-by-type.sql";
+    private static final String FIND_VISION_DAILY_BY_TYPE_SQL = "sql/softcrm/surgery/select-vision-daily-by-type.sql";
+    private static final String FIND_CATARACT_DAILY_BY_TYPE_SQL = "sql/softcrm/surgery/select-cataract-daily-by-type.sql";
 
     private final String findVisionMonthlyByTypeSql;
     private final String findCataractMonthlyByTypeSql;
-    private final String findReoperationMonthlySql;
     private final String findVisionDailyByTypeSql;
     private final String findCataractDailyByTypeSql;
-    private final String findReoperationDailySql;
 
     public SurgeryStatsRepository(
             @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
@@ -49,10 +45,8 @@ public class SurgeryStatsRepository {
         this.jdbc = jdbc;
         this.findVisionMonthlyByTypeSql = SqlLoader.load(FIND_VISION_MONTHLY_BY_TYPE_SQL);
         this.findCataractMonthlyByTypeSql = SqlLoader.load(FIND_CATARACT_MONTHLY_BY_TYPE_SQL);
-        this.findReoperationMonthlySql = SqlLoader.load(FIND_REOPERATION_MONTHLY_SQL);
         this.findVisionDailyByTypeSql = SqlLoader.load(FIND_VISION_DAILY_BY_TYPE_SQL);
         this.findCataractDailyByTypeSql = SqlLoader.load(FIND_CATARACT_DAILY_BY_TYPE_SQL);
-        this.findReoperationDailySql = SqlLoader.load(FIND_REOPERATION_DAILY_SQL);
     }
 
     /**
@@ -98,34 +92,6 @@ public class SurgeryStatsRepository {
     }
 
     /**
-     * 시력교정 재수술 월별 건수 (RE_OPERATION, 레코드(건) 단위).
-     *
-     * RE_OPERATION 한 행(=한 번의 재수술 방문)을 1건으로 센다. AGAIN_R 또는 AGAIN_L 중
-     * 하나라도 적격이면 그 행을 카운트(양안 재수술도 1건). 다음은 시력교정 재수술이 아니므로 제외:
-     *   - Irrigation / repo* / *reposition* : 세척·정복술(재수술 아님)
-     *   - Clareon / T-Clareon / Tecnis / LAL / ELANA : 백내장 IOL 명칭(렌즈 교체이나 시력교정 재수술 집계 대상 외)
-     *
-     * 포함되는 시력교정 재수술: 익스체인지(exch/encla/Bio…), 리무벌(remo…), 재교정(EN/ENHANCE/Re-en…) 등.
-     * 레거시 월간보고 p.27 "재수술 합계"(레이저+렌즈)와 단위 동일, 2026 1~4월 ±1 일치
-     * (레거시 32·33·19·19 / 본 쿼리 33·34·18·19).
-     * ⚠ Phase 2 — 레이저/렌즈 세부 분류와 EN/enhancement 포함 여부는 팀장 검증 필요.
-     *
-     * REOP_DATE는 char 'YYYY-MM-DD' → 문자열 비교/추출로 연·월 도출 (MSSQL 2014 호환).
-     * READ-ONLY — SELECT만 실행.
-     */
-    public List<Map<String, Object>> findReoperationMonthly(List<Integer> years) {
-        int minYear = years.stream().mapToInt(Integer::intValue).min().orElse(2025);
-        int maxYear = years.stream().mapToInt(Integer::intValue).max().orElse(2026);
-
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("from", minYear + "-01-01")
-                .addValue("to", maxYear + "-12-31");
-
-        String sql = findReoperationMonthlySql;
-        return jdbc.queryForList(sql, params);
-    }
-
-    /**
      * 시력교정 + 렌즈 수술 일별 환자 수 (월별과 분류 규칙 동일, 일자 단위 GROUP BY).
      * from/to는 'YYYY-MM-DD' 문자열. dt 컬럼은 'YYYY-MM-DD'.
      */
@@ -136,11 +102,6 @@ public class SurgeryStatsRepository {
     /** 백내장 수술 일별 눈(안) 수 (월별과 분류 규칙 동일, 일자 단위 GROUP BY). */
     public List<Map<String, Object>> findCataractDailyByType(String from, String to) {
         return jdbc.queryForList(findCataractDailyByTypeSql, dateRangeParams(from, to));
-    }
-
-    /** 시력교정 재수술 일별 건수 (월별과 분류 규칙 동일, 일자 단위 GROUP BY). */
-    public List<Map<String, Object>> findReoperationDaily(String from, String to) {
-        return jdbc.queryForList(findReoperationDailySql, dateRangeParams(from, to));
     }
 
     private MapSqlParameterSource dateRangeParams(String from, String to) {

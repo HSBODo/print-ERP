@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { niceAxis, niceAxisFor, niceStep } from './niceAxis'
+import { niceAxis, niceAxisFor, niceStep, tightAxis } from './niceAxis'
 
 describe('niceStep', () => {
   it('범위를 1·2·5·10×10ⁿ nice step으로 환산', () => {
@@ -49,6 +49,60 @@ describe('niceAxis', () => {
   it('값이 없으면 [0,1]', () => {
     expect(niceAxis([]).domain).toEqual([0, 1])
     expect(niceAxis([null, undefined]).domain).toEqual([0, 1])
+  })
+})
+
+describe('tightAxis (주차 레포트 — 변동 폭 강조)', () => {
+  /** 눈금이 전부 0 또는 5 로 끝나는지 (step ≥ 10 인 경우의 요구사항) */
+  const endsInZeroOrFive = (ticks: number[]) =>
+    ticks.every((t) => Number.isInteger(t) && (t % 10 === 0 || t % 10 === 5))
+
+  it('주차 콜예약(88~470): niceAxis 0~600 대비 축을 좁혀 데이터 비중을 높인다', () => {
+    const values = [88, 470, 300, 250, 160, 200, 240]
+    const loose = niceAxis(values)
+    const tight = tightAxis(values)
+
+    // 기존: 0~600 (데이터가 축의 64%)
+    expect(loose.domain).toEqual([0, 600])
+    // 개선: 하한이 0 에서 올라가고 상한도 내려온다
+    expect(tight.domain[0]).toBeGreaterThan(0)
+    expect(tight.domain[1]).toBeLessThan(600)
+
+    const ratio = (r: [number, number]) => (470 - 88) / (r[1] - r[0])
+    expect(ratio(tight.domain)).toBeGreaterThan(ratio(loose.domain))
+  })
+
+  it('눈금 값이 0·5 로 떨어진다', () => {
+    expect(endsInZeroOrFive(tightAxis([88, 470, 300, 250]).ticks)).toBe(true)
+    expect(endsInZeroOrFive(tightAxis([168, 608, 341]).ticks)).toBe(true)
+    expect(endsInZeroOrFive(tightAxis([1200, 2900, 2100]).ticks)).toBe(true)
+  })
+
+  it('niceAxis 보다 눈금이 촘촘하다(8등분 기준)', () => {
+    const values = [88, 470, 300, 250, 160]
+    expect(tightAxis(values).ticks.length).toBeGreaterThan(niceAxis(values).ticks.length)
+  })
+
+  it('데이터가 0 근처면 0 부터 그린다', () => {
+    const { domain } = tightAxis([2, 5, 9, 14, 18])
+    expect(domain[0]).toBe(0)
+  })
+
+  it('하한은 음수가 되지 않는다', () => {
+    expect(tightAxis([1, 2, 3]).domain[0]).toBeGreaterThanOrEqual(0)
+    expect(tightAxis([0, 500]).domain[0]).toBeGreaterThanOrEqual(0)
+  })
+
+  it('값이 없으면 [0,1]', () => {
+    expect(tightAxis([]).domain).toEqual([0, 1])
+    expect(tightAxis([null, undefined]).domain).toEqual([0, 1])
+  })
+
+  it('모든 데이터가 도메인 안에 들어온다', () => {
+    const values = [88, 470, 300, 250, 160, 200, 240]
+    const { domain } = tightAxis(values)
+    expect(Math.min(...values)).toBeGreaterThanOrEqual(domain[0])
+    expect(Math.max(...values)).toBeLessThanOrEqual(domain[1])
   })
 })
 
