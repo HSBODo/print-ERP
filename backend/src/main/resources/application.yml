@@ -62,6 +62,26 @@ stats:
     examination:
       enabled: ${STATS_CACHE_EXAMINATION_ENABLED:true}
 
+# 해외마케팅 시트는 Postgres(마트)에 보관하고 CRM 정보는 기존 STATS_DB_* 원본 연결로 직접 조회한다.
+overseas:
+  google-sheets:
+    # true일 때 Google Sheet 전체를 마트 캐시에 갱신하는 API(POST /api/overseas-marketing/sync-sheet)를 등록한다.
+    sync-enabled: ${OVERSEAS_GOOGLE_SHEETS_SYNC_ENABLED:false}
+    credentials-base64: ${OVERSEAS_GOOGLE_CREDENTIALS_BASE64:}
+    credentials-file: ${OVERSEAS_GOOGLE_CREDENTIALS_FILE:}
+    spreadsheet-id: ${OVERSEAS_GOOGLE_SPREADSHEET_ID:1IaVjs1priY7ccqS9SwZ1X4wmwyN7_aDlonD7dEL-p8A}
+    range: ${OVERSEAS_GOOGLE_RANGE:2026!A5:V}
+  # CRM 매칭 자동 스케줄러 — 매일 새벽 3시에 sync-crm 잡 트리거 (기본 OFF).
+  # 켜면 새 접수가 자동으로 매칭·스냅샷 병합됨. 담당자가 [동기화] 를 매일 안 눌러도 됨.
+  # 문제 발생 시 OVERSEAS_CRM_SYNC_SCHEDULER_ENABLED=false 로 즉시 중단.
+  crm-sync:
+    scheduler-enabled: ${OVERSEAS_CRM_SYNC_SCHEDULER_ENABLED:false}
+    cron: ${OVERSEAS_CRM_SYNC_CRON:0 0 3 * * *}
+
+# 예약 변경이력 배치 — 시각 미상 로그 샘플 최대 건수(기본 5). 백필·이관 시 20~50 으로 늘려 원본 형식 조사.
+reservation-change:
+  time-lost-log-samples: ${RESERVATION_CHANGE_TIME_LOST_LOG_SAMPLES:5}
+
 # Slack 로그 알림 (com.visuworks.lib:slack-logger)
 # 지정된 level 이상 로그를 Slack 웹훅으로 전송. 배치 실패 등 log.error 자동 감지.
 # webhook URL 은 커밋 금지 — LOGGING_SLACK_WEBHOOK_URL 환경변수로 주입.

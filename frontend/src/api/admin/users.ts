@@ -9,7 +9,7 @@ const userRowSchema = z.object({
   email: z.string(),
   name: z.string(),
   role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
-  department: z.enum(['ALL', 'MEDICAL', 'MARKETING'] as const),
+  department: z.enum(['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING'] as const),
 })
 export type UserRow = z.infer<typeof userRowSchema>
 

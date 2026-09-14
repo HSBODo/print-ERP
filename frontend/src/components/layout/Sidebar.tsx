@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import {
   menuItems,
   pruneByDepartment,
+  pruneExecutiveOnly,
   type MenuItem,
   type MenuStatus,
 } from '@/config/navigation'
@@ -77,16 +78,31 @@ function WipBadge() {
     </span>
   )
 }
+function ExecutiveBadge() {
+  return (
+    <span
+      title="임원 이상(ADMIN·DIRECTOR) 만 열람 가능"
+      aria-label="임원 이상 전용"
+      className="ml-auto shrink-0 rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-violet-700"
+    >
+      임원↑
+    </span>
+  )
+}
 /**
  * 배지 종류 결정:
  *  - kind='section' (섹션 자체) 또는 adminReal(관리자 섹션 트리 안 항목) → "관리자"
  *  - 그 외 adminOnly 항목 → "개발중"
- *  - adminOnly 아니면 배지 없음
+ *  - executiveOnly (adminOnly 는 아님) → "임원↑" (violet · 회계 그룹)
+ *  - 셋 다 아니면 배지 없음
  */
 function ItemBadge({ item }: { item: MenuItem }) {
-  if (!item.adminOnly) return null
-  const isReal = item.kind === 'section' || item.adminReal
-  return isReal ? <AdminBadge /> : <WipBadge />
+  if (item.adminOnly) {
+    const isReal = item.kind === 'section' || item.adminReal
+    return isReal ? <AdminBadge /> : <WipBadge />
+  }
+  if (item.executiveOnly) return <ExecutiveBadge />
+  return null
 }
 
 /** 깊이 depth 에서 활성 경로가 서브트리에 존재하는지 검사(활성 그룹 하이라이트용). */
@@ -117,7 +133,10 @@ export function Sidebar({ collapsed, onToggleSidebar, onNavigate }: { collapsed:
   const visibleMenuItems = useMemo(
     () =>
       pruneByDepartment(
-        hideAdminForNonAdmin(hidePendingForProd(menuItems), role === 'ADMIN'),
+        pruneExecutiveOnly(
+          hideAdminForNonAdmin(hidePendingForProd(menuItems), role === 'ADMIN'),
+          role,
+        ),
         user,
       ),
     [role, user],

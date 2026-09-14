@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Home, CalendarCheck, Microscope, Stethoscope, Syringe,
   Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
-  Building2, MessageSquare,
+  Building2, MessageSquare, Landmark, Globe2,
 } from 'lucide-react'
 
 import { matchesDepartment, type AuthUser, type UserDepartment } from '@/stores/auth-session'
@@ -16,7 +16,7 @@ export type MenuStatus = 'complete' | 'frontend-only' | 'backend-only' | 'pendin
 
 /**
  * 사이드바 트리의 단일 노드. 재귀적으로 children 을 가질 수 있어 다단(3단) 표현이 가능하다.
- *   - kind === 'section': 최상위 섹션(비앤빛·마케팅·관리자). 자식이 없어도 사이드바에서 제거되지 않는다.
+ *   - kind === 'section': 최상위 섹션(비앤빛·마케팅·해외마케팅·회계·관리자). 자식이 없어도 사이드바에서 제거되지 않는다.
  *   - kind === 'group'  : 확장 가능한 그룹(Report·예약·검사 등). 자식이 모두 숨겨져 비어버리면 자동 제거.
  *   - kind 미지정       : 잎(단일 링크, 예: HOME).
  */
@@ -29,6 +29,12 @@ export interface MenuItem {
   status?: MenuStatus
   /** true 이면 ADMIN 롤 사용자에게만 노출 (Sidebar 필터). */
   adminOnly?: boolean
+  /**
+   * true 이면 ADMIN·DIRECTOR (임원 이상) 만 노출 (Sidebar 필터). MANAGER·STAFF 차단.
+   * 회계처럼 임원 열람이 필요한데 시스템 조작 권한과는 무관한 그룹에 쓴다.
+   * `adminOnly` 와 배타적 — 둘 다 true 이면 좁은 쪽(adminOnly) 이 우선한다.
+   */
+  executiveOnly?: boolean
   /**
    * true 이면 "관리자" 배지 대상(개발 완료된 관리자 전용 도구, amber).
    * 미지정이면 "개발중" 배지(WIP, blue) — 완성 전이라 관리자만 검토용 노출 중.
@@ -66,6 +72,7 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   // 소스(legacy.datasource.url) 미설정 환경에서는 503 — 다른 통계 페이지가 데이터소스 부재 시
   // 503 을 주는 것과 동일한 패턴이라 'complete' 가 맞다(상태는 구현 완료 여부를 뜻한다).
   'reservation-list-homepage': 'complete',
+  'reservation-change': 'complete',
   'exam-list': 'complete',
   'cataract-exam-list': 'complete',
   'all-exam-list': 'complete',
@@ -83,11 +90,18 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'accumulated-eyes': 'complete',
   'outpatient-list': 'complete',
   'outpatient-count': 'complete',
-  'overseas': 'pending',
+  'overseas-marketing-receptions': 'complete',
+  'overseas-marketing-statistics': 'complete',
+  'overseas-reservation-stats': 'complete',
   'marketing': 'pending',
   'cancel-rate': 'pending',
   'no-show-rate': 'pending',
   'unit-price': 'pending',
+  'accounting-medical': 'frontend-only',
+  'accounting-vision': 'frontend-only',
+  'accounting-vision-summary': 'frontend-only',
+  'accounting-vision-chart': 'frontend-only',
+  'accounting-medical-chart': 'frontend-only',
   'dreamlens-revenue': 'complete',
   'b2b-revenue': 'complete',
   'staff-point': 'pending',
@@ -123,29 +137,61 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
+  // 회계 5종 — 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 만 검토.
+  // 리프는 admin-section 밖이라 배지가 "개발중"(WIP) 로 붙는다.
+  'accounting-medical',
+  'accounting-vision',
+  'accounting-vision-summary',
+  'accounting-vision-chart',
+  'accounting-medical-chart',
 ])
 export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지 (2026-09-11 신설).
+ * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
+ *
+ * 현재 대상 페이지 없음 — 회계는 개발 미완성으로 ADMIN 전용으로 되돌렸다.
+ * 인프라(pruneExecutiveOnly·ExecutiveBadge)는 정책 확장 재개 대비로 유지.
+ */
+const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>()
+export const isExecutiveOnlyPage = (id: string): boolean => EXECUTIVE_ONLY_PAGE_IDS.has(id)
 
 /**
  * 마케팅 부서 전용 페이지 (docs/auth/permissions.md § 4-1).
  * MANAGER·STAFF 가 department='MARKETING' 인 사용자만 접근. ADMIN·DIRECTOR (department='ALL') 는 항상 접근.
  * MEDICAL 부서 사용자에게는 사이드바에서 숨김 + 직접 URL 접근도 차단.
  *
- * 문서에 명시된 채널 페이지 3종(channel-profit·overseas·marketing) 및 마케팅 섹션에서 함께 다루는
- * 파생 페이지(reservation-channel·channel-analysis·accumulated-eyes·sms) 를 포함한다.
+ * 문서에 명시된 채널 페이지(channel-profit·marketing) 및 마케팅 섹션에서 함께 다루는 파생 페이지
+ * (reservation-channel·channel-analysis·accumulated-eyes·sms) 를 포함한다.
  * SMS 는 § 5-2 완화 이후 MARKETING 부서만 접근한다 (사용자 결정 2026-09-03).
  * 편집·[지금 실행]·[실패 재실행] 은 ADMIN 만 (프론트 canSystemOp + 백엔드 hasRole('ADMIN')).
+ *
+ * <b>주의</b> — 해외마케팅 3종은 별도 SET(OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS) 로 관리.
+ * MARKETING 도 접근하지만 OVERSEAS_MARKETING 전담 부서도 접근하기 때문 (2026-09-11).
  */
 const MARKETING_ONLY_PAGE_IDS = new Set<string>([
   'reservation-channel',
   'channel-profit',
   'channel-analysis',
   'accumulated-eyes',
-  'overseas',
   'marketing',
   'sms',
 ])
 export const isMarketingOnlyPage = (id: string): boolean => MARKETING_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 해외마케팅 3종 페이지 (2026-09-11 신설) — MARKETING·OVERSEAS_MARKETING 두 부서 개방.
+ * MARKETING 은 넓은 스코프의 상위 부서, OVERSEAS_MARKETING 은 이 3종만 전담하는 좁은 스코프.
+ * 사이드바 노출·URL 접근 판정에서 두 부서 모두 통과시킨다.
+ */
+const OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS = new Set<string>([
+  'overseas-marketing-receptions',
+  'overseas-marketing-statistics',
+  'overseas-reservation-stats',
+])
+export const isOverseasMarketingPage = (id: string): boolean =>
+  OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS.has(id)
 
 /**
  * 페이지의 부서 스코프 (docs/auth/permissions.md § 3, § 4-1).
@@ -158,6 +204,7 @@ export const isMarketingOnlyPage = (id: string): boolean => MARKETING_ONLY_PAGE_
  */
 export const getPageDepartments = (id: string): UserDepartment[] | undefined => {
   if (!STATS_PAGE_ID_SET.has(id)) return undefined
+  if (isOverseasMarketingPage(id)) return ['MARKETING', 'OVERSEAS_MARKETING']
   if (isMarketingOnlyPage(id)) return ['MARKETING']
   return ['MEDICAL']
 }
@@ -172,7 +219,7 @@ export const getPageDepartments = (id: string): UserDepartment[] | undefined => 
  */
 const HIDDEN_MENU_IDS = new Set<string>([
   'reservation',
-  'overseas', 'marketing',
+  'marketing',
   'cancel-rate', 'no-show-rate',
   'unit-price',
   'b2b-revenue', 'staff-point', 'prp-rate',
@@ -186,6 +233,7 @@ const link = (id: string): MenuItem => {
   const page = findPage(id)
   const item: MenuItem = { id, label: page.label, href: page.path, status: getMenuStatus(id) }
   if (isAdminOnlyPage(id)) item.adminOnly = true
+  if (isExecutiveOnlyPage(id)) item.executiveOnly = true
   return item
 }
 
@@ -194,7 +242,7 @@ const kids = (...ids: string[]): MenuItem[] => ids.filter((id) => !isMenuHidden(
 
 /**
  * 사이드바 3단 구조.
- *   Lv1: HOME(잎) + 섹션 3종(비앤빛·마케팅·관리자)
+ *   Lv1: HOME(잎) + 섹션 5종(비앤빛·마케팅·해외마케팅·회계·관리자)
  *   Lv2: 섹션 하위 그룹(Report·예약·검사 …) 또는 직접 잎(관리자→배치관리)
  *   Lv3: 그룹 하위 개별 페이지 링크
  */
@@ -221,10 +269,10 @@ const rawMenuItems: MenuItem[] = [
         href: '#',
         icon: CalendarCheck,
         kind: 'group',
-        // 예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 순.
+        // 예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 → 예약 변경이력 순.
         children: kids(
           'reservation-list', 'reservation-list-homepage', 'reservation-overall',
-          'reservation-stats-system', 'reservation-stats-cataract',
+          'reservation-stats-system', 'reservation-stats-cataract', 'reservation-change',
         ),
       },
       {
@@ -296,7 +344,8 @@ const rawMenuItems: MenuItem[] = [
     kind: 'section',
     // 예약 퍼널은 유입 채널 효율을 보는 화면이라 예약보다 마케팅에 가깝다(2026-08-06 이동).
     // 채널별 수익성은 그 짝이다 — 퍼널이 '얼마나 오나'(전환 축), 이쪽이 '얼마 버나'(가치 축).
-    // 해외 환자·마케팅 효율(overseas·marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
+    // 마케팅 효율(marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
+    // 해외마케팅(접수리스트·통계·예약통계)은 아래 별도 최상위 섹션(overseas-marketing-section)이다.
     // 문자 발송 관리는 향후 하위 페이지(이력·템플릿 등) 확장을 대비해 그룹으로 감쌈.
     children: [
       ...kids('reservation-channel', 'channel-profit', 'channel-analysis', 'accumulated-eyes'),
@@ -315,6 +364,30 @@ const rawMenuItems: MenuItem[] = [
         children: kids('sms'),
       },
     ],
+  },
+  {
+    id: 'overseas-marketing-section',
+    label: '해외마케팅',
+    href: '#',
+    icon: Globe2,
+    kind: 'section',
+    // 2026-09-09 2026-08-14 브랜치에서 이관. 접수리스트 → 통계 → 예약통계 순. 잎은 모두 MARKETING 부서 전용.
+    children: kids('overseas-marketing-receptions', 'overseas-marketing-statistics', 'overseas-reservation-stats'),
+  },
+  {
+    id: 'accounting-section',
+    label: '회계',
+    href: '#',
+    icon: Landmark,
+    kind: 'section',
+    // 회계는 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 전용으로 되돌린다.
+    // 완성돼서 임원(DIRECTOR) 개방 재개 시 adminOnly 제거 + executiveOnly: true 로 되돌리고
+    // ADMIN_ONLY_PAGE_IDS 의 accounting-* 도 EXECUTIVE_ONLY_PAGE_IDS 로 되돌린다.
+    adminOnly: true,
+    children: kids(
+      'accounting-medical', 'accounting-vision',
+      'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart',
+    ),
   },
   {
     id: 'admin-section',
@@ -385,3 +458,25 @@ export const pruneByDepartment = (
     })
     .map((item) => (item.children ? { ...item, children: pruneByDepartment(item.children, user) } : item))
     .filter((item) => item.children === undefined || item.children.length > 0)
+
+/**
+ * 임원 gate — `executiveOnly` 항목은 ADMIN·DIRECTOR 에게만 보이고 나머지 롤에는 제거된다.
+ * 섹션 자체도 `executiveOnly=true` 인 경우 마찬가지로 사라진다(회계 섹션).
+ *
+ * Sidebar 렌더 파이프라인에서 `pruneAdmin` 과 나란히 적용된다. 순수 함수라 유닛 테스트에서 격리 검증 가능.
+ */
+export const pruneExecutiveOnly = (
+  items: MenuItem[],
+  role: string | undefined,
+): MenuItem[] => {
+  const isExecutive = role === 'ADMIN' || role === 'DIRECTOR'
+  if (isExecutive) return items
+  return items
+    .filter((item) => !item.executiveOnly)
+    .map((item) => (item.children ? { ...item, children: pruneExecutiveOnly(item.children, role) } : item))
+    .filter((item) => {
+      if (item.children === undefined) return true
+      if (item.kind === 'section') return true
+      return item.children.length > 0
+    })
+}

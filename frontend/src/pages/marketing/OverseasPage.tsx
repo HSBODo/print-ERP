@@ -1,378 +1,240 @@
 import { useMemo, useState } from 'react'
+import { ChevronDown, RotateCcw, Search } from 'lucide-react'
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
+  Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart'
-import {
-  StatsSelect,
-  TrendChip,
-} from '@/components/stats/StatsPrimitives'
-import { changePoint, changeRate } from '@/components/stats/stats-utils'
-import { formatAxisNumber, getCurrentPeriod } from '@/utils/stats'
-
-type CountryKey = 'japan' | 'china' | 'sea' | 'americas' | 'other'
-
-interface MonthlyData {
-  inquiries: number
-  visitRate: number
-  examinations: number
-  surgeries: number
-  surgeryConversion: number
-  localOutpatient: number
-  agencyContracts: number
-  expoEvents: number
-  revenue: number
-  countries: Record<CountryKey, number>
-}
+import type { OverseasMarketingGranularity } from '@/api/marketing/overseasMarketing'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useOverseasMarketingStatistics } from '@/hooks/marketing/useOverseasMarketing'
+import { formatAxisNumber } from '@/utils/stats'
 
 const CURRENT_YEAR = new Date().getFullYear()
-const YEARS = Array.from({ length: 10 }, (_, index) => CURRENT_YEAR - index)
-const CURRENT_PERIOD = getCurrentPeriod()
-const DEFAULT_YEAR = YEARS.includes(CURRENT_PERIOD.year) ? CURRENT_PERIOD.year : YEARS[0]
-const DEFAULT_MONTH = CURRENT_PERIOD.month
-const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-const yearOptions = YEARS.map((year) => ({ value: year, label: `${year}년` }))
-const monthOptions = MONTHS.map((month, index) => ({ value: index, label: month }))
+const YEARS = Array.from({ length: 7 }, (_, index) => CURRENT_YEAR - index)
 
-const COUNTRIES: { key: CountryKey; label: string; color: string }[] = [
-  { key: 'japan', label: '일본', color: 'var(--chart-1)' },
-  { key: 'china', label: '중국', color: 'var(--chart-3)' },
-  { key: 'sea', label: '동남아', color: 'var(--chart-4)' },
-  { key: 'americas', label: '미주', color: 'var(--chart-5)' },
-  { key: 'other', label: '기타', color: '#94a3b8' },
+const GRANULARITIES: { value: OverseasMarketingGranularity; label: string }[] = [
+  { value: 'month', label: '월별' },
+  { value: 'week', label: '주차별' },
+  { value: 'day', label: '일별' },
+]
+const GRANULARITY_UNIT: Record<OverseasMarketingGranularity, string> = {
+  month: '월',
+  week: '주차',
+  day: '일자',
+}
+
+type TabKey = 'flow' | 'revenue' | 'countries' | 'table'
+const TABS: { key: TabKey; label: string; title: string; description: string }[] = [
+  { key: 'flow', label: '유입·검사·수술', title: '유입·검사·수술', description: '해외마케팅 접수부터 실제 검사와 수술까지의 흐름입니다.' },
+  { key: 'revenue', label: '매출 구성', title: '매출 구성', description: '수납 항목을 검사·수술·외래·렌즈로 분류한 기간별 합계입니다.' },
+  { key: 'countries', label: '국가별 수술 Top 10', title: '국가별 수술 Top 10', description: '매칭된 해외고객의 수술 건수 기준입니다.' },
+  { key: 'table', label: '매출', title: '매출', description: '기간별 문의·검사·수술 건수와 매출 상세 표입니다.' },
 ]
 
-const emptyData = (): MonthlyData => ({
-  inquiries: 0,
-  visitRate: 0,
-  examinations: 0,
-  surgeries: 0,
-  surgeryConversion: 0,
-  localOutpatient: 0,
-  agencyContracts: 0,
-  expoEvents: 0,
-  revenue: 0,
-  countries: { japan: 0, china: 0, sea: 0, americas: 0, other: 0 },
-})
-
-const buildCountryMix = (inquiries: number, monthIndex: number, yearDelta: number) => {
-  const japan = Math.max(0, Math.round(inquiries * (0.34 + Math.sin(monthIndex * 0.45 + 0.2) * 0.03) + yearDelta * 2))
-  const china = Math.max(0, Math.round(inquiries * (0.21 + Math.cos(monthIndex * 0.38 + 0.6) * 0.02) + yearDelta))
-  const sea = Math.max(0, Math.round(inquiries * (0.19 + Math.sin(monthIndex * 0.52 + 1.1) * 0.02) + yearDelta * 1.5))
-  const americas = Math.max(0, Math.round(inquiries * (0.14 + Math.cos(monthIndex * 0.41 + 1.8) * 0.015) + yearDelta))
-
-  return {
-    japan,
-    china,
-    sea,
-    americas,
-    other: Math.max(0, inquiries - japan - china - sea - americas),
-  }
-}
-
-const buildYearData = (year: number): MonthlyData[] => {
-  const yearDelta = year - 2024
-
-  return MONTHS.map((_, monthIndex) => {
-    const inquiries = Math.max(
-      48,
-      Math.round(
-        88 +
-          yearDelta * 11 +
-          Math.sin((monthIndex / 12) * Math.PI * 2 + 0.3) * 15 +
-          (monthIndex === 6 || monthIndex === 9 ? 10 : 0),
-      ),
-    )
-    const visitRate = Number((44 + yearDelta * 1.4 + Math.sin((monthIndex / 12) * Math.PI * 2 + 0.8) * 2.8).toFixed(1))
-    const examinations = Math.max(24, Math.round(inquiries * ((visitRate - 8) / 100)))
-    const surgeries = Math.max(8, Math.round(examinations * (0.31 + yearDelta * 0.01 + Math.cos((monthIndex / 12) * Math.PI * 2 + 1.1) * 0.025)))
-
-    return {
-      inquiries,
-      visitRate,
-      examinations,
-      surgeries,
-      surgeryConversion: Number(((surgeries / Math.max(examinations, 1)) * 100).toFixed(1)),
-      localOutpatient: Math.max(10, Math.round(24 + yearDelta * 2 + Math.cos((monthIndex / 12) * Math.PI * 2 + 0.5) * 4)),
-      agencyContracts: Math.max(4, Math.round(7 + yearDelta + (monthIndex >= 5 ? 1 : 0))),
-      expoEvents: Math.max(0, Math.round((monthIndex % 4 === 0 ? 1 : 0) + (monthIndex === 9 ? 1 : 0))),
-      revenue: Math.round(surgeries * 46 + examinations * 4 + yearDelta * 18),
-      countries: buildCountryMix(inquiries, monthIndex, yearDelta),
-    }
-  })
-}
-
-const mockData = Object.fromEntries(YEARS.map((year) => [year, buildYearData(year)])) as Record<number, MonthlyData[]>
-
-const funnelConfig = {
-  previous: { label: '직전 기준', color: '#cbd5e1' },
-  current: { label: '선택 기준', color: 'var(--chart-1)' },
-} satisfies ChartConfig
-
-const trendConfig = {
-  inquiries: { label: '문의 유입', color: 'var(--chart-1)' },
-  examinations: { label: '검사 건수', color: 'var(--chart-3)' },
-  surgeries: { label: '수술 건수', color: 'var(--chart-4)' },
-} satisfies ChartConfig
-
-const countryConfig = Object.fromEntries(
-  COUNTRIES.map((country) => [
-    country.key,
-    {
-      label: country.label,
-      color: country.color,
-    },
-  ]),
-) satisfies ChartConfig
-
-function formatRevenue(value: number) {
-  return `${(value / 100).toFixed(1)}억원`
+const formatWon = (value: number) => `${Math.round(value).toLocaleString('ko-KR')}원`
+const formatWonAxis = (value: number) => {
+  if (Math.abs(value) >= 100_000_000) return `${(value / 100_000_000).toFixed(1)}억`
+  if (Math.abs(value) >= 10_000) return `${Math.round(value / 10_000).toLocaleString()}만`
+  return value.toLocaleString()
 }
 
 export function OverseasPage() {
-  const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
-  const [selectedMonth, setSelectedMonth] = useState(DEFAULT_MONTH)
-
-  const currentData = mockData[selectedYear]?.[selectedMonth] ?? emptyData()
-  const previousData =
-    selectedMonth > 0
-      ? mockData[selectedYear]?.[selectedMonth - 1] ?? emptyData()
-      : mockData[selectedYear - 1]?.[11] ?? emptyData()
-
-  const summaryItems = [
-    {
-      key: 'inquiries',
-      title: '문의 유입',
-      value: `${currentData.inquiries.toLocaleString()}건`,
-      caption: '해외 환자 문의 수',
-      change: changeRate(previousData.inquiries, currentData.inquiries),
-      suffix: '%',
-    },
-    {
-      key: 'visitRate',
-      title: '내원율',
-      value: `${currentData.visitRate.toFixed(1)}%`,
-      caption: '문의 대비 실제 내원 비율',
-      change: changePoint(previousData.visitRate, currentData.visitRate),
-      suffix: '%p',
-    },
-    {
-      key: 'examinations',
-      title: '검사 건수',
-      value: `${currentData.examinations.toLocaleString()}건`,
-      caption: '실제 실시 검사 수',
-      change: changeRate(previousData.examinations, currentData.examinations),
-      suffix: '%',
-    },
-    {
-      key: 'surgeries',
-      title: '수술 건수',
-      value: `${currentData.surgeries.toLocaleString()}건`,
-      caption: '해외 환자 수술 수',
-      change: changeRate(previousData.surgeries, currentData.surgeries),
-      suffix: '%',
-    },
-    {
-      key: 'surgeryConversion',
-      title: '수술 전환율',
-      value: `${currentData.surgeryConversion.toFixed(1)}%`,
-      caption: '검사 대비 수술 전환 비율',
-      change: changePoint(previousData.surgeryConversion, currentData.surgeryConversion),
-      suffix: '%p',
-    },
-  ]
-
-  const funnelData = [
-    { stage: '문의 유입', previous: previousData.inquiries, current: currentData.inquiries },
-    {
-      stage: '내원 환자',
-      previous: Math.round(previousData.inquiries * (previousData.visitRate / 100)),
-      current: Math.round(currentData.inquiries * (currentData.visitRate / 100)),
-    },
-    { stage: '검사 건수', previous: previousData.examinations, current: currentData.examinations },
-    { stage: '수술 건수', previous: previousData.surgeries, current: currentData.surgeries },
-  ]
-
-  const countryData = COUNTRIES.map((country) => ({
-    key: country.key,
-    name: country.label,
-    value: currentData.countries[country.key],
-    fill: country.color,
-  }))
-
-  const trendData = useMemo(
-    () =>
-      MONTHS.map((month, index) => ({
-        month,
-        inquiries: mockData[selectedYear]?.[index]?.inquiries ?? 0,
-        examinations: mockData[selectedYear]?.[index]?.examinations ?? 0,
-        surgeries: mockData[selectedYear]?.[index]?.surgeries ?? 0,
-      })),
-    [selectedYear],
+  const [year, setYear] = useState(CURRENT_YEAR)
+  const [granularity, setGranularity] = useState<OverseasMarketingGranularity>('month')
+  const [appliedYear, setAppliedYear] = useState<number | null>(null)
+  const [tab, setTab] = useState<TabKey>('flow')
+  // 통계는 CRM 병합이 무거우므로 조회 버튼을 눌렀을 때만 요청한다.
+  // 연도는 초안(draft)이라 [조회]로 적용하고, 집계 단위는 즉시 반영한다(예약통계 툴바 패턴).
+  const statistics = useOverseasMarketingStatistics(
+    appliedYear ?? year,
+    granularity,
+    appliedYear !== null,
   )
+  const buckets = statistics.data?.buckets
+  const countries = statistics.data?.topCountries ?? []
+  const currentTab = TABS.find((item) => item.key === tab) ?? TABS[0]
+  const bucketUnit = GRANULARITY_UNIT[statistics.data?.granularity ?? granularity]
 
-  const totalCountries = countryData.reduce((sum, item) => sum + item.value, 0)
-  const topCountry = [...countryData].sort((left, right) => right.value - left.value)[0]
+  const chartData = useMemo(() => (buckets ?? []).map((item) => ({
+    ...item,
+    totalRevenue: item.examRevenue + item.surgeryRevenue + item.outpatientRevenue + item.lensRevenue,
+  })), [buckets])
 
-  return (
-    <div className="space-y-6">
-      <Card className="border-border/70 shadow-sm !py-0">
-        <CardContent className="flex min-h-14 flex-wrap items-center gap-2 py-1.5">
-          <div className="flex h-8 items-center rounded-md bg-gray-100 px-3 text-sm font-medium text-gray-700">
-            해외 환자 관련 지표
-          </div>
-          <div className="h-5 w-px bg-gray-200" />
-          <StatsSelect value={selectedYear} onChange={setSelectedYear} options={yearOptions} title="연도 선택" />
-          <StatsSelect value={selectedMonth} onChange={setSelectedMonth} options={monthOptions} title="월 선택" />
-          <span className="ml-auto text-sm text-muted-foreground">
-            {selectedYear}년 {MONTHS[selectedMonth]} 기준
-          </span>
-        </CardContent>
-      </Card>
+  const totals = useMemo(() => chartData.reduce((sum, item) => ({
+    inquiries: sum.inquiries + item.inquiries,
+    exams: sum.exams + item.exams,
+    surgeries: sum.surgeries + item.surgeries,
+    revenue: sum.revenue + item.totalRevenue,
+  }), { inquiries: 0, exams: 0, surgeries: 0, revenue: 0 }), [chartData])
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {summaryItems.map((item) => (
-          <Card key={item.key} className="gap-2 border-border/70 shadow-sm">
-            <CardHeader className="gap-0.5 pb-0">
-              <CardTitle className="text-base font-semibold text-gray-900">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 pt-0">
-              <p className="text-3xl font-semibold tracking-tight text-gray-900">{item.value}</p>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm text-muted-foreground">{item.caption}</p>
-                <TrendChip value={item.change} suffix={item.suffix} />
-              </div>
-            </CardContent>
-          </Card>
+  return <div className="space-y-4">
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-2 py-1.5 text-xs shadow-sm">
+      <strong className="whitespace-nowrap px-1 text-[13px] text-gray-900">해외마케팅 통계</strong>
+      <div className="h-6 w-px bg-border" />
+      <div className="flex items-center gap-1.5">
+        <span className="text-muted-foreground">조회 연도</span>
+        <div className="relative">
+          <select
+            value={year}
+            onChange={(event) => setYear(Number(event.target.value))}
+            className="h-8 w-[6.4rem] appearance-none rounded border border-input bg-white pl-2 pr-7 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label="통계 연도"
+          >
+            {YEARS.map((option) => <option key={option} value={option}>{option}년</option>)}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+        </div>
+      </div>
+
+      <div className="flex h-8 gap-1 rounded-md bg-gray-100 p-1">
+        {GRANULARITIES.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={granularity === option.value}
+            onClick={() => setGranularity(option.value)}
+            className={`rounded px-3 text-sm font-medium transition-colors ${
+              granularity === option.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {option.label}
+          </button>
         ))}
-      </section>
+      </div>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>해외 환자 전환 퍼널</CardTitle>
-            <CardDescription>문의 유입부터 검사, 수술까지의 진행량을 직전 기준과 비교합니다.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={funnelConfig} className="h-80 w-full">
-              <BarChart data={funnelData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="stage" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatAxisNumber} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="previous" fill="var(--color-previous)" radius={[4, 4, 0, 0]} barSize={18} />
-                <Bar dataKey="current" fill="var(--color-current)" radius={[4, 4, 0, 0]} barSize={18} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+      <div className="ml-auto flex items-center gap-1.5">
+        <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => { setYear(CURRENT_YEAR); setGranularity('month'); setAppliedYear(null); setTab('flow') }}>
+          <RotateCcw className="h-3.5 w-3.5" />
+          초기화
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          disabled={statistics.isFetching}
+          className="bg-blue-600 text-xs text-white hover:bg-blue-700"
+          onClick={() => setAppliedYear(year)}
+        >
+          <Search className="h-3.5 w-3.5" />
+          조회
+        </Button>
+      </div>
+    </div>
 
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>국가별 분포</CardTitle>
-            <CardDescription>{topCountry?.name ?? '-'} 비중이 가장 높게 나타납니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <ChartContainer config={countryConfig} className="mx-auto h-72 w-full max-w-[320px]">
-              <PieChart>
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                <Pie data={countryData} dataKey="value" nameKey="key" innerRadius={62} outerRadius={96} paddingAngle={4} strokeWidth={3}>
-                  {countryData.map((entry) => (
-                    <Cell key={entry.key} fill={entry.fill} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-            <div className="space-y-2 text-sm">
-              {countryData.map((entry) => (
-                <div key={entry.key} className="flex items-center gap-2 text-muted-foreground">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.fill }} />
-                  <span>{entry.name}</span>
-                  <span className="ml-auto font-medium text-foreground">
-                    {totalCountries ? ((entry.value / totalCountries) * 100).toFixed(1) : '0.0'}%
-                  </span>
-                </div>
+    {appliedYear === null && <Card><CardContent className="py-16 text-center text-sm text-muted-foreground">조회 버튼을 클릭하면 통계를 불러옵니다.</CardContent></Card>}
+    {appliedYear !== null && statistics.isFetching && <Card><CardContent className="py-16 text-center text-sm text-muted-foreground">통계를 불러오는 중…</CardContent></Card>}
+    {appliedYear !== null && statistics.isError && !statistics.isFetching && <Card><CardContent className="py-16 text-center text-sm text-red-500">해외마케팅 통계를 불러오지 못했습니다.</CardContent></Card>}
+
+    {appliedYear !== null && !statistics.isFetching && !statistics.isError && statistics.data && (
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <CardTitle>{currentTab.title}</CardTitle>
+              <CardDescription>{currentTab.description}</CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-1 rounded-md bg-gray-100 p-1">
+              {TABS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setTab(item.key)}
+                  className={`h-8 rounded px-3 text-sm font-medium transition-colors ${
+                    tab === item.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {item.label}
+                </button>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </CardHeader>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>월별 해외 환자 흐름</CardTitle>
-            <CardDescription>문의 유입, 검사 건수, 수술 건수의 연간 흐름을 함께 확인합니다.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={trendConfig} className="h-80 w-full">
-              <LineChart data={trendData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={formatAxisNumber} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line type="monotone" dataKey="inquiries" stroke="var(--color-inquiries)" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="examinations" stroke="var(--color-examinations)" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="surgeries" stroke="var(--color-surgeries)" strokeWidth={2.5} dot={false} />
+        {tab === 'flow' && (
+          <CardContent className="h-[420px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="bucket" tickLine={false} axisLine={false} minTickGap={24} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} />
+                <Tooltip formatter={(value) => `${Number(value).toLocaleString()}건`} />
+                <Legend />
+                <Line type="monotone" dataKey="inquiries" name="문의 유입" stroke="#3b82f6" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="exams" name="검사" stroke="#f59e0b" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="surgeries" name="수술" stroke="#10b981" strokeWidth={2.5} dot={false} />
               </LineChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </CardContent>
-        </Card>
+        )}
 
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>운영 지표 요약</CardTitle>
-            <CardDescription>보조 지표를 실제 화면처럼 한 눈에 보이도록 묶었습니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-medium text-gray-900">외래 현지 건 수</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">{currentData.localOutpatient.toLocaleString()}건</p>
-              <p className="mt-1 text-sm text-gray-600">현지 follow-up 및 외래 응대 건수</p>
-            </div>
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-medium text-gray-900">에이전시 계약</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">{currentData.agencyContracts.toLocaleString()}건</p>
-              <p className="mt-1 text-sm text-gray-600">월 기준 활성 계약 에이전시 수</p>
-            </div>
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-medium text-gray-900">현지 상담회/박람회 참가</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">{currentData.expoEvents.toLocaleString()}회</p>
-              <p className="mt-1 text-sm text-gray-600">오프라인 현지 프로모션 참여 횟수</p>
-            </div>
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-medium text-gray-900">해외환자 매출</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">{formatRevenue(currentData.revenue)}</p>
-              <p className="mt-1 text-sm text-gray-600">선택 월 기준 해외 환자 매출</p>
-            </div>
+        {tab === 'revenue' && (
+          <CardContent className="h-[420px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="bucket" tickLine={false} axisLine={false} minTickGap={24} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={formatWonAxis} width={56} />
+                <Tooltip formatter={(value) => formatWon(Number(value))} />
+                <Legend />
+                <Bar dataKey="examRevenue" name="검사" stackId="revenue" fill="#3b82f6" />
+                <Bar dataKey="surgeryRevenue" name="수술" stackId="revenue" fill="#10b981" />
+                <Bar dataKey="outpatientRevenue" name="외래" stackId="revenue" fill="#f59e0b" />
+                <Bar dataKey="lensRevenue" name="렌즈" stackId="revenue" fill="#ef4444" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
-        </Card>
-      </section>
-    </div>
-  )
+        )}
+
+        {tab === 'countries' && (
+          <CardContent className="h-[420px]">
+            {countries.length ? <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={countries} layout="vertical" margin={{ top: 0, right: 24, left: 24, bottom: 0 }}>
+                <CartesianGrid horizontal={false} stroke="#e5e7eb" />
+                <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} />
+                <YAxis type="category" dataKey="nationality" tickLine={false} axisLine={false} width={72} />
+                <Tooltip formatter={(value) => `${Number(value).toLocaleString()}건`} />
+                <Bar dataKey="surgeries" name="수술" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">국가별 수술 데이터가 없습니다.</div>}
+          </CardContent>
+        )}
+
+        {tab === 'table' && (
+          <CardContent className="max-h-[560px] overflow-auto px-0">
+            <table className="w-full min-w-[820px] border-collapse text-xs">
+              <thead><tr className="bg-gray-50 text-gray-700">
+                {[bucketUnit, '문의', '검사', '수술', '검사 매출', '수술 매출', '외래 매출', '렌즈 매출', '합계'].map((label) => <th key={label} className="sticky top-0 border-b border-r border-border/60 bg-gray-50 px-3 py-2 text-center font-semibold last:border-r-0">{label}</th>)}
+              </tr></thead>
+              <tbody>{chartData.map((item) => <tr key={item.bucket} className="border-b border-border/40 hover:bg-blue-50/40">
+                <td className="border-r px-3 py-2 text-center font-semibold">{item.bucket}</td>
+                <td className="border-r px-3 py-2 text-right tabular-nums">{item.inquiries.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right tabular-nums">{item.exams.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right tabular-nums">{item.surgeries.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right tabular-nums">{item.examRevenue.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right tabular-nums">{item.surgeryRevenue.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right tabular-nums">{item.outpatientRevenue.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right tabular-nums">{item.lensRevenue.toLocaleString()}</td>
+                <td className="px-3 py-2 text-right font-semibold tabular-nums">{item.totalRevenue.toLocaleString()}</td>
+              </tr>)}</tbody>
+              <tfoot><tr className="bg-gray-50 font-semibold">
+                <td className="border-r px-3 py-2 text-center">합계</td>
+                <td className="border-r px-3 py-2 text-right">{totals.inquiries.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right">{totals.exams.toLocaleString()}</td>
+                <td className="border-r px-3 py-2 text-right">{totals.surgeries.toLocaleString()}</td>
+                <td colSpan={5} className="px-3 py-2 text-right">총 매출 {formatWon(totals.revenue)}</td>
+              </tr></tfoot>
+            </table>
+          </CardContent>
+        )}
+      </Card>
+    )}
+  </div>
 }

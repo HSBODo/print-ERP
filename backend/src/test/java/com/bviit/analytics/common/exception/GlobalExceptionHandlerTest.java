@@ -4,10 +4,12 @@ import com.bviit.analytics.common.dto.ErrorResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class GlobalExceptionHandlerTest {
 
@@ -50,5 +52,23 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getStatus()).isEqualTo(400);
         assertThat(response.getBody().getMessage()).contains("YYYY-MM");
+    }
+
+    @Test
+    void rowLocked는_409를_반환한다() {
+        ResponseEntity<ErrorResponse> response = handler.handleRowLocked(
+                new RowLockedException("동기화가 지나간 행은 삭제할 수 없습니다.")
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo(409);
+    }
+
+    @Test
+    void 클라이언트_연결종료는_오류응답을_다시_쓰지_않는다() {
+        assertThatCode(() -> handler.handleClientDisconnect(
+                new AsyncRequestNotUsableException("ServletOutputStream failed to write: Broken pipe")
+        )).doesNotThrowAnyException();
     }
 }

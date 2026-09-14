@@ -6,6 +6,7 @@ import { ReservationStatsCataractPage } from './ReservationStatsCataractPage'
 import { ReservationListPage } from './ReservationListPage'
 import { ReservationChannelPage } from './ReservationChannelPage'
 import { ReservationListHomepagePage } from './ReservationListHomepagePage'
+import { ReservationChangePage } from './ReservationChangePage'
 
 /** 예약(reservation) 도메인 페이지 레지스트리 */
 export const reservationPageRoutes: Record<string, FC> = {
@@ -16,4 +17,5 @@ export const reservationPageRoutes: Record<string, FC> = {
   'reservation-list': ReservationListPage,
   'reservation-channel': ReservationChannelPage,
   'reservation-list-homepage': ReservationListHomepagePage,
+  'reservation-change': ReservationChangePage,
 }

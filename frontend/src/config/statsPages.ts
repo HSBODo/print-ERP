@@ -170,6 +170,15 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/reservation-list-homepage'
   ),
   statsPage(
+    'reservation-change',
+    '예약 변경이력',
+    '/stats/reservation-change',
+    'reservation-group',
+    '예약',
+    '검사예약(시력교정·드림렌즈·백내장)의 예약일이 언제, 어떻게 바뀌었는지 보는 화면입니다. 최초 예약일 → 변경 경로 → 최종 예약일을 등록일 기준으로 조회하고, 기준일을 지정하면 그 시점의 예약일을 재현합니다.',
+    '/api/reservation-change'
+  ),
+  statsPage(
     'exam-list',
     '검사자 리스트',
     '/stats/exam-list',
@@ -323,13 +332,31 @@ export const statsPages: StatsPageDefinition[] = [
     '/api/stats/outpatient-count'
   ),
   statsPage(
-    'overseas',
-    '해외 환자 관련 지표',
-    '/stats/overseas',
-    'overseas',
-    '해외 환자 관련 지표',
-    '해외 환자 유입, 상담, 수술 관련 핵심 지표를 모아보는 화면입니다.',
-    '/api/stats/overseas'
+    'overseas-marketing-receptions',
+    '접수리스트',
+    '/stats/overseas-marketing/receptions',
+    'overseas-marketing-section',
+    '해외마케팅',
+    'ECP 해외마케팅 접수 명단과 CRM의 기존 외국인 고객을 함께 조회하고 매칭·진료 진행 상태를 확인하는 화면입니다.',
+    '/api/overseas-marketing/receptions'
+  ),
+  statsPage(
+    'overseas-marketing-statistics',
+    '통계',
+    '/stats/overseas-marketing/statistics',
+    'overseas-marketing-section',
+    '해외마케팅',
+    '해외마케팅 유입에서 검사·수술까지의 월별 흐름과 국가별 수술, 검사·수술·외래·렌즈 매출을 확인합니다.',
+    '/api/overseas-marketing/statistics'
+  ),
+  statsPage(
+    'overseas-reservation-stats',
+    '예약통계',
+    '/stats/overseas-marketing/reservation-stats',
+    'overseas-marketing-section',
+    '해외마케팅',
+    '해외 예약통계 — 국가그룹·채널별 문의/예약/검사/수술/외래를 월간·주차·일간으로 봅니다. 2026-08-23까지는 레거시 시트 숫자, 이후는 접수리스트 자동 집계이며 일간 화면에서 셀을 직접 수정할 수 있습니다.',
+    '/api/overseas-marketing/reservation-stats'
   ),
   statsPage(
     'marketing',
@@ -366,6 +393,51 @@ export const statsPages: StatsPageDefinition[] = [
     '객단가',
     '환자당 평균 매출과 기간별 객단가 흐름을 정리하는 화면입니다.',
     '/api/stats/unit-price'
+  ),
+  statsPage(
+    'accounting-medical',
+    '진료 수납',
+    '/accounting/medical-receipts',
+    'accounting-section',
+    '회계',
+    '의사랑(IPLUS) 수납 내역과 보험·상태·미수·지원금별 합계를 조회하는 회계 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/medical-receipts'
+  ),
+  statsPage(
+    'accounting-vision',
+    '시력교정 매출 내역',
+    '/accounting/vision-revenue',
+    'accounting-section',
+    '회계',
+    'SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/vision-receipts'
+  ),
+  statsPage(
+    'accounting-vision-summary',
+    '시력교정 매출 집계',
+    '/accounting/vision-revenue-summary',
+    'accounting-section',
+    '회계',
+    'SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/vision-receipts'
+  ),
+  statsPage(
+    'accounting-vision-chart',
+    '시력교정 매출 그래프',
+    '/accounting/vision-revenue-chart',
+    'accounting-section',
+    '회계',
+    'SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/vision-receipts/monthly'
+  ),
+  statsPage(
+    'accounting-medical-chart',
+    '진료 매출 그래프',
+    '/accounting/medical-revenue-chart',
+    'accounting-section',
+    '회계',
+    '의사랑(IPLUS) 실수납·공단청구·급여·비급여를 월별·연도별로 비교하는 그래프입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '/api/accounting/medical-receipts/monthly'
   ),
   statsPage(
     'dreamlens-revenue',

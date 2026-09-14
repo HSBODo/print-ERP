@@ -134,6 +134,43 @@ class UserAdminIntegrationTest {
     }
 
     @Test
+    void adminCreatesOverseasMarketingStaff() throws Exception {
+        // 2026-09-11 신설 부서 — STAFF × OVERSEAS_MARKETING 조합 허용 확인.
+        String body = objectMapper.writeValueAsString(Map.of(
+                "loginId", "new-osm",
+                "email", "new-osm@bviit.com",
+                "name", "해외마케팅 담당",
+                "password", "StrongTestPass123!",
+                "role", "STAFF",
+                "department", "OVERSEAS_MARKETING"
+        ));
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/admin/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.department").value("OVERSEAS_MARKETING"));
+    }
+
+    @Test
+    void createRejectsAdminWithOverseasMarketingDepartment() throws Exception {
+        // ADMIN × OVERSEAS_MARKETING 은 금지 (ADMIN 은 ALL 이어야 함).
+        String body = objectMapper.writeValueAsString(Map.of(
+                "loginId", "bad-osm-admin",
+                "email", "bad2@bviit.com",
+                "name", "잘못",
+                "password", "StrongTestPass123!",
+                "role", "ADMIN",
+                "department", "OVERSEAS_MARKETING"
+        ));
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/admin/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void createRejectsDuplicateLoginId() throws Exception {
         String body = objectMapper.writeValueAsString(Map.of(
                 "loginId", "admin",   // 이미 존재

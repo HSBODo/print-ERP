@@ -49,9 +49,10 @@
 
 | 부서 (`department`) | 접근 스코프 |
 |---|---|
-| **ALL** (ADMIN·DIRECTOR 전용) | **전체** — 메디컬 그룹 + 마케팅 그룹 모두. 부서 gate 우회. |
+| **ALL** (ADMIN·DIRECTOR 전용) | **전체** — 메디컬 그룹 + 마케팅 그룹 + 해외마케팅 모두. 부서 gate 우회. |
 | **MEDICAL** | 홈화면 + 메디컬 그룹 (예약·검사·수술·전환·외래·리포트·기타·관리자) |
-| **MARKETING** | 홈화면 + 마케팅 그룹 (channel-profit·overseas·marketing) |
+| **MARKETING** | 홈화면 + 마케팅 그룹 (channel-profit·marketing·reservation-channel·channel-analysis·accumulated-eyes·sms) + 해외마케팅 섹션 (overseas-marketing-receptions·overseas-marketing-statistics·overseas-reservation-stats) |
+| **OVERSEAS_MARKETING** (2026-09-11 신설) | 홈화면 + 해외마케팅 섹션 3종만. MARKETING 보다 좁은 스코프. |
 
 **ADMIN·DIRECTOR 는 부서 축을 벗어난다** — 두 롤 모두 `User.department = ALL`. 차이는 조작 권한에 있음: ADMIN 은 시스템 조작 가능, DIRECTOR 는 STAFF 수준 조작만.
 
@@ -63,19 +64,19 @@
 
 ### 2-3. 조합 매트릭스
 
-| Role \ Department | ALL | MEDICAL | MARKETING |
-|---|---|---|---|
-| ADMIN | ✅ **개발자 전용** (전권 · 전 그룹) | 🚫 CHECK 제약 위반 | 🚫 CHECK 제약 위반 |
-| DIRECTOR | ✅ **임원·경영진** (전 그룹 열람 · 시스템 조작 X) | 🚫 CHECK 제약 위반 | 🚫 CHECK 제약 위반 |
-| MANAGER | 🚫 CHECK 제약 위반 | ✅ 실장·본부장 | ✅ 마케팅 팀장 |
-| STAFF | 🚫 CHECK 제약 위반 | ✅ 상담사·간호사 · 원장 | ✅ 마케팅 실무자 |
+| Role \ Department | ALL | MEDICAL | MARKETING | OVERSEAS_MARKETING |
+|---|---|---|---|---|
+| ADMIN | ✅ **개발자 전용** (전권 · 전 그룹) | 🚫 CHECK 위반 | 🚫 CHECK 위반 | 🚫 CHECK 위반 |
+| DIRECTOR | ✅ **임원·경영진** (전 그룹 열람 · 시스템 조작 X) | 🚫 CHECK 위반 | 🚫 CHECK 위반 | 🚫 CHECK 위반 |
+| MANAGER | 🚫 CHECK 위반 | ✅ 실장·본부장 | ✅ 마케팅 팀장 | ✅ 해외마케팅 팀장 |
+| STAFF | 🚫 CHECK 위반 | ✅ 상담사·간호사 · 원장 | ✅ 마케팅 실무자 | ✅ 해외마케팅 실무자 |
 
 **핵심 제약** (DB CHECK `users_role_department_scope_ck` 로 강제):
 - **ADMIN·DIRECTOR ↔ `department = 'ALL'`** — 두 롤 모두 두 그룹 전부 접근.
   - ADMIN: 시스템 조작 가능 (개발자 전용)
   - DIRECTOR: STAFF 수준 조작만 (임원·경영진)
-- **MANAGER·STAFF ↔ `department ∈ ('MEDICAL','MARKETING')`** — 반드시 부서 값을 가진다.
-- 마케팅 부서의 최고 등급은 MANAGER (마케팅에는 ADMIN·DIRECTOR 없음 — 두 롤은 조직 전체를 보는 자리라 부서와 배타적).
+- **MANAGER·STAFF ↔ `department ∈ ('MEDICAL','MARKETING','OVERSEAS_MARKETING')`** — 반드시 부서 값을 가진다.
+- 마케팅·해외마케팅 부서의 최고 등급은 MANAGER (마케팅 계열에는 ADMIN·DIRECTOR 없음 — 두 롤은 조직 전체를 보는 자리라 부서와 배타적).
 
 ---
 
@@ -89,7 +90,7 @@
   ├─ 1층 Department gate — "이 페이지·API 는 네 부서에 열려 있나?" (MANAGER/STAFF)
   │    · /                                             → 스코프 없음 (공통 홈)
   │    · /stats/channel-profit, /stats/marketing,
-  │      /stats/overseas, /stats/reservation-channel,
+  │      /stats/overseas-marketing/*, /stats/reservation-channel,
   │      /stats/channel-analysis, /stats/accumulated-eyes
   │                                                    → MARKETING only
   │    · /stats/exam-list, /report/*, /admin/*, 그 외 모든 통계
@@ -99,6 +100,7 @@
        · GET  /offsets, /targets            → STAFF 이상 (DIRECTOR 포함)
        · PUT  /offsets, POST /queue/run     → ADMIN only (canSystemOp 헬퍼)
        · POST /admin/batch/**               → ADMIN only
+       · 회계 5종 페이지                    → ADMIN·DIRECTOR (임원 gate · 프론트 executiveOnly)
 ```
 
 **두 층을 섞지 않는 이유** — 페이지 추가 시 부서 태그만 붙이면 되고, 롤 조작이 늘어나도 부서 태그를 다시 안 건드림. 지금처럼 판정이 개별 컴포넌트에 흩뿌려지지 않는다.
@@ -118,7 +120,8 @@
 | 그룹 | 페이지 | department |
 |---|---|---|
 | — | 홈화면 `/` | 스코프 없음 (통계 페이지 아님) |
-| **마케팅** | reservation-channel · channel-profit · channel-analysis · accumulated-eyes · overseas · marketing · **sms** | **MARKETING** (MEDICAL 도 접근 X) |
+| **마케팅** | reservation-channel · channel-profit · channel-analysis · accumulated-eyes · marketing · **sms** | **MARKETING** (MEDICAL 도 접근 X) |
+| **해외마케팅** | overseas-marketing-receptions · overseas-marketing-statistics · overseas-reservation-stats (2026-09-09 이관 · 별도 최상위 섹션) | **MARKETING · OVERSEAS_MARKETING** (2026-09-11 두 부서 개방 · MEDICAL 은 접근 X) |
 | 예약 | reservation-list · reservation-overall · reservation-stats-system · reservation-stats-cataract · reservation-list-homepage · (reservation) | MEDICAL |
 | 검사 | overall-exam · overall-exam-weekly · exam-list · cataract-exam-list · all-exam-list · eoeis-checkup · examination · procedure-exam | MEDICAL |
 | 전환&성공률 | consultation-rate · cataract-reservation-rate · stop-rate · stop-reason | MEDICAL |
@@ -126,6 +129,7 @@
 | 외래 | outpatient-list · outpatient-count | MEDICAL |
 | Report | weekly-report · monthly-report | MEDICAL |
 | 기타 | dreamlens-revenue · b2b-revenue · (그 외 미구현 8종) | MEDICAL |
+| **회계** (2026-09-11 신설) | accounting-medical · accounting-vision · accounting-vision-summary · accounting-vision-chart · accounting-medical-chart | **임원 이상(ADMIN·DIRECTOR) 전용** — 매출·수납 민감 데이터 · MANAGER·STAFF 는 부서 무관 차단. 현재 상태 `frontend-only` (합성 목업 · 백엔드 미구현). |
 | 관리자 | batch-management · **account-management** | ADMIN 전용 (부서 무관 · 개발자 전용) — DIRECTOR 도 진입 불가 |
 
 **SMS 는 § 5-2 완화 후 MARKETING 부서 전용**(2026-09-03 사용자 결정) — 조회·홀딩·수신거부·연락처 수정·수동 대상 추가는 MARKETING STAFF 가능. 편집·[지금 실행]·[실패 재실행]·실제 발송·대량 sync/import 는 여전히 ADMIN.
@@ -171,12 +175,28 @@
 2. 컬럼 추가 & 데이터 정정: `ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(20) NOT NULL DEFAULT 'MEDICAL';` · `UPDATE users SET role='STAFF' WHERE role='USER';` · `UPDATE users SET department='ALL' WHERE role IN ('ADMIN','DIRECTOR');`
 3. 조합 CHECK 부여: `ALTER TABLE users ADD CONSTRAINT users_role_department_scope_ck CHECK ((role IN ('ADMIN','DIRECTOR') AND department='ALL') OR (role IN ('STAFF','MANAGER') AND department IN ('MEDICAL','MARKETING')));`
 
+**2026-09-11 후속: OVERSEAS_MARKETING 부서 추가** — DB CHECK 를 재정의해야 신규 부서로 계정 생성이 가능하다. 모든 환경(local·dev·prod)에서 아래 SQL 을 앱 배포 **전에** 순차 실행. `ddl-auto: update` 도 CHECK 제약은 자동 갱신 안 함(운영은 `ddl-auto: none`).
+
+```sql
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_department_scope_ck;
+ALTER TABLE users ADD CONSTRAINT users_role_department_scope_ck CHECK (
+    (role IN ('ADMIN','DIRECTOR') AND department='ALL')
+    OR (role IN ('STAFF','MANAGER') AND department IN ('MEDICAL','MARKETING','OVERSEAS_MARKETING'))
+);
+```
+
+**배포 순서** — 역순으로 하면 사고:
+1. DB CHECK 재정의 (위 SQL) — dev 부터 검증
+2. 앱 배포 — 새 enum·gate·UI 활성화
+3. 관리자 계정 페이지에서 OVERSEAS_MARKETING 부서 사용자 생성
+
 **부서 gate 구현 방식 (2026-09-03 X1-A)** — `JwtAuthenticationFilter` 가 인증 시 `DEPT_XXX` 를 SimpleGrantedAuthority 로 추가 → `SecurityConfig` 매처가 `hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL")` 로 판정. URL prefix 로 나눔:
 
-- **MARKETING 전용** — `/api/stats/reservation-channel/**`, `/api/stats/channel-profit/**`, `/api/stats/overseas/**`, `/api/stats/marketing/**`, `/api/accumulated-eyes/**`, `/api/sms-management/**` (조회·홀딩·수신거부·수동 추가 등)
-- **홈(대시보드) 요약 KPI — 양 부서 개방** (§ 5-1 "홈화면" 규정 이행 · 2026-09-07): `GET /api/stats/reservation-overall/monthly` · `GET /api/stats/procedure-exam/monthly` · `GET /api/stats/surgery/panel/trend` (KPI·월별 추이·시술별 비중 공용) · `GET /api/stats/outpatient-count/monthly` · `GET /api/stats/reservation-stats-system` (base 경로만 · 하위 `/cell`·`/diagnostics/**` 는 MEDICAL 유지)
+- **MARKETING 전용** — `/api/stats/reservation-channel/**`, `/api/stats/channel-profit/**`, `/api/stats/marketing/**`, `/api/accumulated-eyes/**`, `/api/sms-management/**` (조회·홀딩·수신거부·수동 추가 등)
+- **MARKETING·OVERSEAS_MARKETING 개방** (2026-09-11): `/api/overseas-marketing/**` (해외마케팅 조회·수기 입력·수동 매칭 · **단 `POST /sync-sheet`·`/sync-crm` 은 ADMIN 만**)
+- **홈(대시보드) 요약 KPI — 전 부서 개방** (§ 5-1 "홈화면" 규정 이행 · 2026-09-07 · 2026-09-11 OVERSEAS_MARKETING 추가): `GET /api/stats/reservation-overall/monthly` · `GET /api/stats/procedure-exam/monthly` · `GET /api/stats/surgery/panel/trend` (KPI·월별 추이·시술별 비중 공용) · `GET /api/stats/outpatient-count/monthly` · `GET /api/stats/reservation-stats-system` (base 경로만 · 하위 `/cell`·`/diagnostics/**` 는 MEDICAL 유지)
 - **MEDICAL 전용** — `/api/stats/**` (그 외), `/api/report/**`, `/api/exam-list/**`, `/api/cataract-exam-list/**`, `/api/all-exam-list/**`, `/api/eoeis-checkup/**`, `/api/surgery-list/**`, `/api/reoperation-decisions/**`, `/api/outpatient-list/**`, `/api/reservation-list/**`, `/api/reservation-list-homepage/**`, `/api/dreamlens-ledger/**`
-- **ADMIN 전용** — `/api/admin/**`, `PUT /api/sms-management/offsets`, `POST /api/sms-management/{send,sync,targets/import}` (예외 두 건: `GET /api/admin/batch/sms/queue/{status,rows,statuses}` 3종은 MARKETING 개방 · SMS 페이지 진입 시 자동 조회 / `POST /api/admin/batch/sms/queue/retry` 는 MANAGER 이상 + MARKETING 부서 개방 · 2026-09-07 완화)
+- **ADMIN 전용** — `/api/admin/**`, `PUT /api/sms-management/offsets`, `POST /api/sms-management/{send,sync,targets/import}`, `POST /api/overseas-marketing/{sync-sheet,sync-crm}` (**2026-09-11 강화**: 해외마케팅 두 동기화 잡은 무거운 외부 조회를 켜므로 ADMIN 만) (예외 두 건: `GET /api/admin/batch/sms/queue/{status,rows,statuses}` 3종은 MARKETING 개방 · SMS 페이지 진입 시 자동 조회 / `POST /api/admin/batch/sms/queue/retry` 는 MANAGER 이상 + MARKETING 부서 개방 · 2026-09-07 완화)
 
 `DEPT_ALL` 이 항상 허용 목록에 들어가 있어 ADMIN·DIRECTOR 는 자동 통과.
 

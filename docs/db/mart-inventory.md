@@ -50,6 +50,7 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 | `mart_reservation_overall_monthly` | TABLE | V12 | 예약 > 예약 종합 · 리포트 > 월간/주차 레포트 | 월별 예약 종합·콜·온라인. **예약 종합 페이지** · 월간/주차 레포트. 2024·2025는 골든시드(V12), 2026-06+는 채널 마트 SUM. |
 | `list_reservation` | TABLE | V3 (+V39–V50 ALTER) | 예약 > 예약자 리스트 · (전환&성공률 > 예약률 EXISTS 후보) | RESERVE_FLAG='M' 검사 예약 명단 (풍부한 컬럼: name, channel, doctor, memo 등). **예약자 리스트 페이지** · 시력교정 예약률 후보 EXISTS 조회. |
 | `list_reservation_all` | TABLE | V53 | — (배치·집계 전용, 화면 조회 없음) | 수술(O)/외래(JINRYO=2)/드림렌즈(D) 얇은 리스트. `mart_reservation_monthly` 재집계 원천. **배치·집계 전용** (화면 조회 없음). |
+| `list_reservation_change` | TABLE | V63 (+2026-09-11 first_loaded_at 소급) | 예약 > 예약 변경이력 | 검사예약(M/D/H) 전부 — `change_count` ≥ 1 이 변경된 예약(변경 상세), 0 은 미변경(추이 달력의 등록 건수·변경률 분모). RESERVE_HISTORY 를 예약 단위 체인(변경시각@예약일)으로 접어 `reserve_num` upsert. 배치 범위 = **이력 저장 기간**(등록일 아님) — 늦은 변경도 D-1 배치가 흡수. 감사 컬럼 2종: `first_loaded_at`(최초 적재 · UPSERT 보존) · `loaded_at`(재적재마다 갱신). **정본 문서: [`docs/reservation/change-history.md`](../reservation/change-history.md)** (배치 범위·등록일 3순위·HISTORY_TIME 파싱·change_chain 규격·함정 8종·감사 컬럼 정책 §10-A). |
 | `mart_list_reservation_homepage` | TABLE | V21 | 예약 > 예약자 리스트_홈페이지 · 예약 > 예약 종합 | 레거시 홈페이지 예약 raw (홈페이지 DB → 마트 이관본). **예약자 리스트_홈페이지 페이지** + 예약 종합의 홈페이지 몫. |
 | `mart_reservation_stats_system_daily` | TABLE | V11 | 예약 > 예약통계_시력교정 · 예약 > 예약 종합 | 시력교정 채널 통계 (CH01~CH24 · 인콜·TM·네이버·카카오·홈페이지 등). **예약통계_시력교정 페이지** + 예약 종합 계산. 2026 H1 시드(V19). |
 | `mart_reservation_stats_cataract_daily` | TABLE | V11 | 예약 > 예약통계_백내장 · 예약 > 예약 종합 | 백내장 채널 통계 (인콜·TM·카카오·온라인). **예약통계_백내장 페이지** + 예약 종합 계산. 2026 H1 시드(V20). |
@@ -123,7 +124,18 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 
 ---
 
-## 10. JPA 엔티티 (Hibernate `ddl-auto: update`)
+## 10. 해외마케팅 도메인 (2026-09-09 이관)
+
+| 이름 | 종류 | V | 사이드메뉴 | 용도 |
+|---|---|---|---|---|
+| `overseas_marketing_sheet` | TABLE | V64 | 해외마케팅 > 접수리스트 · 통계 | 해외 접수 원본 22컬럼 + 매칭 결과(customer_no·matched_by) + `crm_snapshot`(JSON 19필드). Google Sheet 1회성 이관분(`origin='sheet'`)과 화면 수기 입력(`origin='manual'`, seq 1,000,000+) 공존. **접수리스트·통계 페이지** + CRM 매칭 잡(`sync-crm`) 결과 저장소. |
+| `overseas_reservation_stats` | TABLE | V65 (+V66 시드) | 해외마케팅 > 예약통계 | 예약통계 셀값(`date × group × metric`). 시드(~2026-08-23, `source='seed'`) + 수기 수정(`source='manual'`, 우선) + 조회 시 접수리스트 자동 집계(2026-08-24+) 3중 병합. **예약통계 페이지**. |
+
+> 세부 컬럼·매칭 규칙·JSON 스키마: [`docs/marketing/mart-tables.md`](../marketing/mart-tables.md) · 매칭 로직: [`docs/marketing/overseas-crm-matching.md`](../marketing/overseas-crm-matching.md).
+
+---
+
+## 11. JPA 엔티티 (Hibernate `ddl-auto: update`)
 
 | 이름 | 엔티티 | 사이드메뉴 | 용도 |
 |---|---|---|---|
@@ -168,6 +180,7 @@ primary list 배치가 각 마트를 만들 때 조인하는 원본. 이 list �
 |---|---|---|
 | `list_reservation` | `sql/softcrm/reservation/list/select-reservation-list.sql` | **RESERVATION** · EXAM · OPERATIONDATA · Cataract_Operationdata · EMPLOYEE · COSTPRICE · MOTIVE_NEW02 · DB_CUSTOM |
 | `list_reservation_all` | `sql/softcrm/reservation/list/select-reservation-list-all.sql` | **RESERVATION** |
+| `list_reservation_change` | `sql/softcrm/reservation/history/select-reservation-change-history.sql` | **RESERVE_HISTORY** · RESERVATION |
 | `list_exam` | `sql/softcrm/exam/select-exam-list.sql` | **EXAM** · OPERATIONDATA · RESERVATION · Cataract_Exam · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
 | `list_cataract_exam` | `sql/softcrm/exam/select-cataract-exam-list.sql` | **Cataract_Exam** · Cataract_Operationdata · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · CSTPRCSUB · PRCITMLST · PrcItmDtl · MOTIVE_NEW01 · MOTIVE_NEW02 · CANCEL_CFG · MEDICAL_SUB_CFG · NationCustom_CFG · EtcCfg |
 | `list_surgery` | `sql/softcrm/surgery/select-surgery-list.sql` | **OPERATIONDATA** · **Cataract_Operationdata** · EXAM · Cataract_Exam · RESERVATION · CUSTOM · EMPLOYEE · COSTPRICE · MOTIVE_NEW01 · MOTIVE_NEW02 · NationCustom_CFG · EtcCfg |

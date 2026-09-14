@@ -10,19 +10,19 @@ import type { UserRow } from '@/api/admin/users'
 import type { UserDepartment, UserRole } from '@/stores/auth-session'
 
 /**
- * ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ MEDICAL/MARKETING 조합 강제
+ * ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING 조합 강제
  * (백엔드 CHECK 제약과 동일 · docs/auth/permissions.md § 2-3).
  */
 const isValidCombination = (role: UserRole, department: UserDepartment) => {
   if (role === 'ADMIN' || role === 'DIRECTOR') return department === 'ALL'
-  return department === 'MEDICAL' || department === 'MARKETING'
+  return department === 'MEDICAL' || department === 'MARKETING' || department === 'OVERSEAS_MARKETING'
 }
 
 const baseFields = {
   email: z.string().trim().email('이메일 형식이 올바르지 않습니다'),
   name: z.string().trim().min(1, '이름을 입력하세요').max(100),
   role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
-  department: z.enum(['ALL', 'MEDICAL', 'MARKETING'] as const),
+  department: z.enum(['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING'] as const),
 }
 
 const createSchema = z
@@ -38,7 +38,7 @@ const createSchema = z
     password: z.string().min(8, '비밀번호는 8자 이상'),
   })
   .refine((v) => isValidCombination(v.role, v.department), {
-    message: '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING)',
+    message: '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING)',
     path: ['department'],
   })
 
@@ -226,6 +226,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
                   <>
                     <option value="MEDICAL">MEDICAL</option>
                     <option value="MARKETING">MARKETING</option>
+                    <option value="OVERSEAS_MARKETING">OVERSEAS_MARKETING (해외마케팅 전담)</option>
                   </>
                 )}
               </select>

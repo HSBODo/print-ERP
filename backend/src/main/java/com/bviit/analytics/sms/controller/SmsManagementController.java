@@ -15,7 +15,6 @@ import com.bviit.analytics.sms.dto.SmsTargetRequest;
 import com.bviit.analytics.sms.dto.SmsStatusRequest;
 import com.bviit.analytics.sms.dto.SmsTargetRow;
 import com.bviit.analytics.sms.dto.SmsTemplateInfo;
-import com.bviit.analytics.sms.entity.SmsOffsetConfig;
 import com.bviit.analytics.sms.service.SmsOffsetConfigService;
 import com.bviit.analytics.sms.service.SmsOptOutService;
 import com.bviit.analytics.sms.service.SmsSendService;
