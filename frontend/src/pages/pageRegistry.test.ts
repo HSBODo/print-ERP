@@ -54,12 +54,13 @@ describe('통계 페이지 라우트 정책 불변식', () => {
   it('frontend-only 페이지가 있으면 컴포넌트가 있고 운영에서도 목업 UI를 표시한다', () => {
     for (const id of frontendOnlyIds) {
       expect(PAGE_COMPONENTS[id]).toBeDefined()
+      // ADMIN 은 adminOnly 여부와 무관하게 통과.
       expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
       expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
     }
   })
 
-  it('회계 프런트 미리보기는 임원 이상(ADMIN·DIRECTOR) 만 접근한다 (2026-09-11 완화)', () => {
+  it('회계 프런트 미리보기는 ADMIN 만 접근한다 (개발 완성 전까지 되돌림)', () => {
     for (const id of [
       'accounting-medical',
       'accounting-vision',
@@ -68,12 +69,13 @@ describe('통계 페이지 라우트 정책 불변식', () => {
       'accounting-medical-chart',
     ]) {
       expect(PAGE_COMPONENTS[id]).toBeDefined()
-      // 회계는 더 이상 adminOnly 아님 · executiveOnly 로 이동
-      expect(isAdminOnlyPage(id)).toBe(false)
-      expect(isExecutiveOnlyPage(id)).toBe(true)
-      // ADMIN·DIRECTOR 는 통과 · MANAGER·STAFF 는 차단
+      // 회계는 adminOnly 로 되돌림 · executiveOnly 아님
+      expect(isAdminOnlyPage(id)).toBe(true)
+      expect(isExecutiveOnlyPage(id)).toBe(false)
+      // ADMIN 통과 · DIRECTOR·MANAGER·STAFF 모두 차단
       expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
-      expect(isRouteBlocked(id, true, asDirector)).toBe(false)
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, true, asDirector)).toBe(true)
       expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
     }
   })
@@ -147,9 +149,9 @@ describe('통계 페이지 라우트 정책 불변식', () => {
   })
 
   it('임원 gate: executiveOnly 페이지는 MANAGER·STAFF 에게 차단되고 ADMIN·DIRECTOR 는 통과한다', () => {
-    // 회계 5개 페이지 = executiveOnly. adminOnly 아니라 DIRECTOR 도 접근 가능(2026-09-11 정책).
+    // 현재 executiveOnly 대상 페이지 없음(회계는 ADMIN 전용으로 되돌림). 인프라 자체는 유지되므로
+    // 대상이 다시 지정되면 자동으로 이 케이스가 활성화된다.
     const executiveIds = ids.filter((id) => isExecutiveOnlyPage(id))
-    expect(executiveIds.length).toBeGreaterThan(0)
     const asManagerMedical = { role: 'MANAGER' as const, department: 'MEDICAL' as const }
     for (const id of executiveIds) {
       expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)

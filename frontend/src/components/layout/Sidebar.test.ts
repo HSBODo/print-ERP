@@ -119,24 +119,33 @@ describe('pruneByDepartment · 사이드바 부서 gate', () => {
     expect(leafIds).toContain('overseas-reservation-stats')
   })
 
-  it('pruneExecutiveOnly: MANAGER·STAFF 에게는 accounting-section 이 통째로 사라진다', () => {
-    // 2026-09-11 정책 — 회계 그룹은 임원 이상(ADMIN·DIRECTOR) 만 열람.
-    const staffFiltered = pruneExecutiveOnly(menuItems, 'STAFF')
-    const managerFiltered = pruneExecutiveOnly(menuItems, 'MANAGER')
-    expect(findById(staffFiltered, 'accounting-section')).toBeUndefined()
-    expect(findById(managerFiltered, 'accounting-section')).toBeUndefined()
-
-    // 잎도 사라져야 한다 (accounting-medical 등)
-    expect(collectLeafIds(staffFiltered)).not.toContain('accounting-medical')
-    expect(collectLeafIds(managerFiltered)).not.toContain('accounting-vision-summary')
+  it('pruneExecutiveOnly: 현재 executiveOnly 대상 없음 — 모든 롤에게 no-op', () => {
+    // 회계는 개발 완성 전까지 ADMIN 전용으로 되돌렸다(admin 게이트가 담당).
+    // 인프라 자체는 유지되므로 대상이 다시 지정되면 자동으로 이 케이스가 활성화된다.
+    for (const role of ['STAFF', 'MANAGER', 'DIRECTOR', 'ADMIN'] as const) {
+      const filtered = pruneExecutiveOnly(menuItems, role)
+      expect(collectLeafIds(filtered)).toEqual(collectLeafIds(menuItems))
+    }
   })
 
-  it('pruneExecutiveOnly: ADMIN·DIRECTOR 에게는 accounting-section 이 유지된다', () => {
-    const adminFiltered = pruneExecutiveOnly(menuItems, 'ADMIN')
-    const directorFiltered = pruneExecutiveOnly(menuItems, 'DIRECTOR')
-    expect(findById(adminFiltered, 'accounting-section')).toBeDefined()
-    expect(findById(directorFiltered, 'accounting-section')).toBeDefined()
-    expect(collectLeafIds(directorFiltered)).toContain('accounting-medical')
+  it('accounting-section 은 adminOnly 로 마킹돼 있어 admin 게이트가 담당한다', () => {
+    // Sidebar 내부의 pruneAdmin 이 non-ADMIN 에게 accounting-section 을 제거하도록 하는 근거.
+    const section = findById(menuItems, 'accounting-section')
+    expect(section).toBeDefined()
+    expect(section?.adminOnly).toBe(true)
+    expect(section?.executiveOnly).toBeFalsy()
+
+    // 회계 잎들도 ADMIN_ONLY_PAGE_IDS 를 통해 adminOnly=true 로 마킹된다.
+    for (const id of [
+      'accounting-medical',
+      'accounting-vision',
+      'accounting-vision-summary',
+      'accounting-vision-chart',
+      'accounting-medical-chart',
+    ]) {
+      const leaf = findById(menuItems, id)
+      expect(leaf?.adminOnly).toBe(true)
+    }
   })
 
   it('user=null (미인증) 시 스코프 없는 노드(홈) 만 통과', () => {

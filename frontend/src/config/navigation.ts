@@ -137,6 +137,13 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
+  // 회계 5종 — 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 만 검토.
+  // 리프는 admin-section 밖이라 배지가 "개발중"(WIP) 로 붙는다.
+  'accounting-medical',
+  'accounting-vision',
+  'accounting-vision-summary',
+  'accounting-vision-chart',
+  'accounting-medical-chart',
 ])
 export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
 
@@ -144,17 +151,10 @@ export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(
  * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지 (2026-09-11 신설).
  * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
  *
- * 회계 그룹은 매출·수납 데이터가 민감하지만 DIRECTOR(임원) 열람이 실무상 필요.
- * ADMIN 은 시스템 조작자, DIRECTOR 는 임원·경영진 — 두 롤 모두 department='ALL' 로 부서 gate 우회한다.
- * MANAGER 이하는 부서 관계없이 접근 불가.
+ * 현재 대상 페이지 없음 — 회계는 개발 미완성으로 ADMIN 전용으로 되돌렸다.
+ * 인프라(pruneExecutiveOnly·ExecutiveBadge)는 정책 확장 재개 대비로 유지.
  */
-const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>([
-  'accounting-medical',
-  'accounting-vision',
-  'accounting-vision-summary',
-  'accounting-vision-chart',
-  'accounting-medical-chart',
-])
+const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>()
 export const isExecutiveOnlyPage = (id: string): boolean => EXECUTIVE_ONLY_PAGE_IDS.has(id)
 
 /**
@@ -380,9 +380,10 @@ const rawMenuItems: MenuItem[] = [
     href: '#',
     icon: Landmark,
     kind: 'section',
-    // 2026-09-11: ADMIN 전용 → 임원 이상(ADMIN·DIRECTOR) 개방으로 완화.
-    // 매출·수납 데이터는 민감하지만 임원 열람이 실무상 필요. MANAGER 이하는 부서 관계없이 차단.
-    executiveOnly: true,
+    // 회계는 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 전용으로 되돌린다.
+    // 완성돼서 임원(DIRECTOR) 개방 재개 시 adminOnly 제거 + executiveOnly: true 로 되돌리고
+    // ADMIN_ONLY_PAGE_IDS 의 accounting-* 도 EXECUTIVE_ONLY_PAGE_IDS 로 되돌린다.
+    adminOnly: true,
     children: kids(
       'accounting-medical', 'accounting-vision',
       'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart',
