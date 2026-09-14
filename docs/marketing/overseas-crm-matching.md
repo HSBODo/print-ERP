@@ -78,6 +78,21 @@ CRM에 `1990-08-15` 를 `1990-15-08` 로 뒤집어 넣은 사례가 실측됨. `
 
 ## 5. 조작별 저장 규칙
 
+### 5.0 매칭 트리거 요약 — "어떤 조작이 매칭을 만드나?"
+
+접수리스트 담당자·개발자가 가장 자주 혼동하는 부분. 매칭 결과가 마트 컬럼(`customer_no`·`crm_snapshot` 등)에 실제로 저장되는 경로는 **두 개뿐**이고, 그 밖의 조작은 매칭에 손대지 않거나 **자동 매칭 결과를 무효화**해서 다음 sync-crm 을 기다리게 한다.
+
+| # | 조작 | 엔드포인트 · 진입점 | 매칭 저장? | 비고 |
+|---|---|---|---|---|
+| 1 | **시트 동기화** | `POST /sync-sheet` · `OverseasMarketingSyncService.syncSheet` | ❌ | Google Sheet → `overseas_marketing_sheet` 행 교체만. 자동 매칭 행은 `replaceSheetRows` 의 DELETE 로 사라졌다가 재삽입되므로 매칭이 초기화되지만, 새로 매칭을 만들지는 않음. 수동 매칭·수기 수정 행은 보존. |
+| 2 | **CRM 매칭** | `POST /sync-crm` · `OverseasMarketingReader.syncCrm` (백그라운드 잡) | ✅ 자동 매칭 저장 | 마트의 미매칭 행 전체에 § 4 의 4단계 규칙 적용. 확정 → `saveMatches`(matched_by=`'CRM_Sync'`), 확인필요 → `saveCandidates`, 파생값 → `saveCrmSnapshots`. |
+| 3 | **행 추가 (수기 접수)** | `POST /receptions` · `OverseasMarketingEditService.createRow` | ❌ | `insertManualRow` 만 실행. 새 행은 다음 sync-crm(수동 또는 자동 스케줄러) 이 돌 때 매칭 후보에 들어감. |
+| 4 | **수동 고객번호 확정** | `PUT /receptions/{row}/match` · `confirmMatch` | ✅ 즉시 저장 | 팝업에서 CRM 실존을 `GET /crm-customers/{no}` 로 미리 검증 → `saveMatches`(matched_by=로그인 ID). 이후 시트 동기화·행 수정에서도 보존. |
+| 5 | **행 수정** | `PUT /receptions/{row}` · `updateRow` · `row-update.sql` | ➖ 자동 매칭만 무효화 | 이름·생일이 바뀌었을 수 있어 `matched_by='CRM_Sync'` 인 행은 `customer_no`·`crm_snapshot` 등 NULL. 다음 sync-crm 에서 재계산. 수동 매칭은 보존. |
+| 6 | **자동 스케줄러** | `OverseasCrmSyncScheduler` (매일 03:00 KST) | ✅ #2 와 동일 | `overseas.crm-sync.scheduler-enabled=true` 로 opt-in. 상세는 § 7-A. |
+
+**참고 — 조회 순간 승격**: 위와 별개로, 매칭·후보 둘 다 없지만 `exam_date` 에 실날짜(YYYY-MM-DD)가 있는 행은 `receptions.sql:45-48` 이 조회 시점에만 `review` 로 승격해서 화면에 노출한다 (컬럼 저장 없음, § 3 참고). 즉 화면상 `review` 는 (a) sync-crm 이 `candidate_customer_no` 저장한 경우 + (b) 조회 파생 두 경로가 있다.
+
 ### 5.1 sync-crm (자동 매칭 배치)
 
 - **단일 실행 락** (`syncRunning.compareAndSet`) — 중복 클릭·새로고침으로 MSSQL 풀 3개가 겹치지 않게.
