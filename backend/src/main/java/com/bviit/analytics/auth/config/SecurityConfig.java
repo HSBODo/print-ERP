@@ -73,6 +73,8 @@ public class SecurityConfig {
                         "/error"
                 ).permitAll();
                 auth.requestMatchers("/api/auth/**").permitAll();
+                // 헬스체크 — Docker HEALTHCHECK·LB·업타임 모니터가 인증 없이 호출.
+                auth.requestMatchers(HttpMethod.GET, "/api/health").permitAll();
                 if (h2ConsoleEnabled) {
                     auth.requestMatchers("/h2-console/**").permitAll();
                 }
