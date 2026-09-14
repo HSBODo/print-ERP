@@ -1,6 +1,6 @@
 import type { FC } from 'react'
-import { getMenuStatus, isAdminOnlyPage } from '../config/navigation'
-import type { UserRole } from '../stores/auth-session'
+import { getMenuStatus, getPageDepartments, isAdminOnlyPage } from '../config/navigation'
+import { matchesDepartment, type AuthUser } from '../stores/auth-session'
 import { reportPageRoutes } from './report/routes'
 import { reservationPageRoutes } from './reservation/routes'
 import { examPageRoutes } from './exam/routes'
@@ -8,6 +8,7 @@ import { consultationPageRoutes } from './consultation/routes'
 import { surgeryPageRoutes } from './surgery/routes'
 import { outpatientPageRoutes } from './outpatient/routes'
 import { marketingPageRoutes } from './marketing/routes'
+import { smsPageRoutes } from './sms/routes'
 import { cancelNoshowPageRoutes } from './cancel-noshow/routes'
 import { unitPricePageRoutes } from './unit-price/routes'
 import { etcPageRoutes } from './etc/routes'
@@ -23,6 +24,9 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
   ...surgeryPageRoutes,
   ...outpatientPageRoutes,
   ...marketingPageRoutes,
+  // smsPageRoutes 를 marketing 뒤에 두어 'sms' 키를 실제 SmsManagementPage 로 오버라이드
+  // (marketing 의 mock SmsPage 는 삭제됨).
+  ...smsPageRoutes,
   ...cancelNoshowPageRoutes,
   ...unitPricePageRoutes,
   ...etcPageRoutes,
@@ -36,16 +40,19 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
  * 개발(DEV)에서는 WIP 페이지를 미리보기로 허용한다.
  * 정책: "개발에는 페이지가 존재하지만 운영에서는 숨김/차단" (Sidebar 숨김 + 이 라우트 차단 이중 가드).
  *
- * ADMIN 전용 페이지는 role !== 'ADMIN' 이면 환경 무관하게 차단.
+ * ADMIN 전용 페이지는 user.role !== 'ADMIN' 이면 환경 무관하게 차단.
+ * 부서 gate: 페이지의 부서 스코프와 user.department 가 어긋나면 차단
+ * (ADMIN·DIRECTOR (department='ALL') 는 항상 통과 · docs/auth/permissions.md § 3).
  */
 export const isRouteBlocked = (
   pageId: string,
   isProd: boolean,
-  role: UserRole | undefined = undefined,
+  user: Pick<AuthUser, 'role' | 'department'> | null | undefined = undefined,
 ): boolean => {
   const status = getMenuStatus(pageId)
   if (status === 'backend-only') return true
   if (isProd && status === 'pending') return true
-  if (isAdminOnlyPage(pageId) && role !== 'ADMIN') return true
+  if (isAdminOnlyPage(pageId) && user?.role !== 'ADMIN') return true
+  if (!matchesDepartment(user ?? null, getPageDepartments(pageId))) return true
   return false
 }

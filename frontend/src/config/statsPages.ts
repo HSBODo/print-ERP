@@ -457,4 +457,13 @@ export const statsPages: StatsPageDefinition[] = [
     '마트 재적재 배치를 수동 실행하고 실행 이력을 확인합니다. ADMIN 롤 전용.',
     '/api/admin/batch/rerun'
   ),
+  statsPage(
+    'account-management',
+    '계정 관리',
+    '/admin/accounts',
+    'admin',
+    '관리자',
+    '사용자 계정 CRUD (신규 · 편집 · 삭제). ADMIN 롤 전용. 자기 자신의 롤·부서는 변경할 수 없고, 마지막 ADMIN 은 삭제할 수 없다.',
+    '/api/admin/users'
+  ),
 ]

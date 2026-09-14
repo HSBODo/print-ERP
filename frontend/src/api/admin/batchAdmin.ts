@@ -5,7 +5,7 @@ import { withQuery } from '@/api/_shared'
 const batchRunLogSchema = z.object({
   id: z.number(),
   jobName: z.string(),
-  runType: z.enum(['DAILY', 'MONTHLY_RECONCILE', 'MANUAL']),
+  runType: z.enum(['DAILY', 'MONTHLY_RECONCILE', 'MANUAL', 'POLLER']),
   targetFrom: z.string().nullable(),
   targetTo: z.string().nullable(),
   status: z.enum(['RUNNING', 'SUCCESS', 'FAILED']),
@@ -39,6 +39,7 @@ export type BatchDomain =
   | 'OUTPATIENT'
   | 'OVERALL'
   | 'ETC'
+  | 'SMS'
 
 export const batchAdminApi = {
   listRunLogs: async (limit = 50): Promise<BatchRunLog[]> =>
@@ -47,5 +48,18 @@ export const batchAdminApi = {
   rerun: async (from: string, to: string, domain: BatchDomain = 'ALL') =>
     rerunResponseSchema.parse(
       await api.post<unknown>(withQuery('/admin/batch/rerun', { from, to, domain }), null),
+    ),
+
+  /**
+   * 원데이 검사 소급 보정만 수동 실행 (검사 도메인 특수 보정).
+   * 정기: 매월 1일 03:30 KST 자동. 이 엔드포인트는 스케줄러 실패·backfill·개발 검증용.
+   * min-year 가드 없음.
+   */
+  reconcileOnedayFlag: async (from: string, to: string) =>
+    rerunResponseSchema.parse(
+      await api.post<unknown>(
+        withQuery('/admin/batch/exam/reconcile-oneday-flag', { from, to }),
+        null,
+      ),
     ),
 }

@@ -16,10 +16,12 @@
                          THEN 1 ELSE 0 END AS counsel,
                     CASE WHEN rs.MIN_RSV_DATE IS NOT NULL THEN 1 ELSE 0 END AS booked,
                     CASE WHEN mo.MIN_OP_DATE IS NOT NULL THEN 1 ELSE 0 END AS actual,
+                    -- 원데이(od) 플래그 — 2026-09-09 확정: 재수술 당일OP(M/7) 도 포함
+                    -- (docs/exam/oneday-legacy-align.md §3).
                     CASE WHEN EXISTS (
                             SELECT 1 FROM RESERVATION r WITH(NOLOCK)
                              WHERE r.CUST_NUM = E.CUST_NUM AND r.RESERVE_DATE = E.EXAM_DATE
-                               AND r.RESERVE_FLAG = 'M' AND r.RESERVE_STATE IN ('I','H') AND r.RESERVE_JINRYO = '5'
+                               AND r.RESERVE_FLAG = 'M' AND r.RESERVE_STATE IN ('I','H') AND r.RESERVE_JINRYO IN ('5','7')
                          ) THEN 1 ELSE 0 END AS od
                 FROM EXAM E WITH(NOLOCK)
                 LEFT JOIN (

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: analytics
+    name: BNVIIT-ANALYTICS-DASHBOARD
 
   # Local default: run without an external DB
   datasource:
@@ -71,3 +71,128 @@ logging:
     webhook-url: ${LOGGING_SLACK_WEBHOOK_URL:}
     level: ${LOGGING_SLACK_LEVEL:ERROR}
     enabled: ${LOGGING_SLACK_ENABLED:false}
+
+sms:
+  dispatch:
+    # 자동 발송 배치 스위치. 기본 false — 관리자가 화면에서 [발송] 버튼 누르는 Phase 1 흐름 유지.
+    # 운영 활성화 순서: (1) SMS_DISPATCH_ENABLED=true → 스케줄러 활성 (2) SOLAPI_DRY_RUN=false → 실 API 호출.
+    enabled: ${SMS_DISPATCH_ENABLED:false}
+    # 폴링 주기 — 매 5분. 기본이면 하루 288회 폴링.
+    cron: ${SMS_DISPATCH_CRON:0 */5 * * * *}
+    # 한 사이클에 잡는 큐 최대 개수 (FOR UPDATE SKIP LOCKED LIMIT).
+    batch-size: ${SMS_DISPATCH_BATCH_SIZE:50}
+    # 하루 최대 DONE 카운트. 초과 시 사이클 skip + Slack 임계치 알림.
+    daily-limit: ${SMS_DISPATCH_DAILY_LIMIT:500}
+    # 큐 행당 재시도 상한. 도달 시 status=FAILED 로 굳고 관리자 재실행 API 로만 되살아남.
+    max-attempts: ${SMS_DISPATCH_MAX_ATTEMPTS:3}
+    # 광고톡 발송 허용 시(hour) — 정보통신망법상 광고성 21~08 금지. 알림톡은 시간 제한 없음.
+    ad-window-start-hour: ${SMS_DISPATCH_AD_START_HOUR:8}
+    ad-window-end-hour: ${SMS_DISPATCH_AD_END_HOUR:20}
+    # FAILED 큐 누적 카운트가 이 값 이상이면 Slack 경고 (상승 엣지에서만). 0 이하면 비활성.
+    failed-alert-threshold: ${SMS_DISPATCH_FAILED_ALERT_THRESHOLD:10}
+
+solapi:
+  # ⚠️ Dry-run 안전장치 — 기본 true(개발단계). 실제 알림톡·문자를 나가게 하려면 SOLAPI_DRY_RUN=false 로 명시 해제.
+  # true 일 때: SolapiSendService 가 실제 API 호출 없이 SUCCESS 반환. sms_send_log 에 messageType=DRY_RUN 로 남는다.
+  dry-run: ${SOLAPI_DRY_RUN:true}
+  # 수신자 강제 대체 — dry-run=true 안에서만 유효. 값이 있으면 실 솔라피 API 호출하되 수신자를 이 번호로만 보낸다
+  # ("내 폰으로만 나가게" 패턴). 로컬·dev 에서 실 흐름 검증할 때 사용. dry-run=false 이면 무시.
+  override-to: ${SOLAPI_OVERRIDE_TO:}
+  api-key: ${SOLAPI_API_KEY:}
+  api-secret: ${SOLAPI_API_SECRET:}
+  from: ${SOLAPI_FROM:}
+  pf-id: ${SOLAPI_PFID:}
+  # 웹훅(SINGLE-REPORT) 서명 검증용 — 콘솔 웹훅 등록 시 넣은 secret 과 동일해야 한다.
+  # 비어 있으면 서명 검증 skip (로컬 부트스트랩용). 운영은 반드시 채울 것.
+  webhook-secret: ${SOLAPI_WEBHOOK_SECRET:}
+  # fallback 동기화 스케줄 — 웹훅 유실·비활성 대비. 하루 1회 최근 2일 재확인.
+  # 웹훅이 정상이면 갱신 0건이 정상이다. cron="-" 이면 스케줄 비활성.
+  sync-cron: ${SOLAPI_SYNC_CRON:0 30 3 * * *}
+  templates:
+    # 차수 라벨 — 화면 컬럼명. 오프셋은 수술 그룹마다 달라 SurgeryGroup 이 갖는다.
+    t1:
+      label: ${SOLAPI_TPL1_LABEL:수술 후 안내 1차}
+    t2:
+      label: ${SOLAPI_TPL2_LABEL:수술 후 안내 2차}
+    t3:
+      label: ${SOLAPI_TPL3_LABEL:수술 후 안내 3차}
+    # ── 그룹 × 차수 = 15 슬롯 ──
+    # 2·3차에는 sms-text-delayed 가 하나 더 붙는다 — 기준일이 재조정된 대상에게 나가는,
+    # 경과 선언("수술 후 일주일이 지났습니다")을 뺀 문자 본문이다(1차는 그 문장이 없어 불필요).
+    # 수술마다 회복 속도가 달라 1차 시점과 문구가 다르다(고객케어 TF 확정안 v5).
+    # 알림톡 ID 나 문자 본문 중 하나 이상을 채워야 그 슬롯이 발송된다.
+    # 스마일수술 — 스마일프로·스마일라식 공용 (D+1·7·14)
+    smile:
+      t1:
+        template-id: ${SOLAPI_TPL_SMILE_1_ID:}
+        sms-text: ${SOLAPI_TPL_SMILE_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_SMILE_2_ID:}
+        sms-text: ${SOLAPI_TPL_SMILE_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_SMILE_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_SMILE_3_ID:}
+        sms-text: ${SOLAPI_TPL_SMILE_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_SMILE_3_SMS_DELAYED:}
+    # 라식 (D+1·7·14)
+    lasik:
+      t1:
+        template-id: ${SOLAPI_TPL_LASIK_1_ID:}
+        sms-text: ${SOLAPI_TPL_LASIK_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_LASIK_2_ID:}
+        sms-text: ${SOLAPI_TPL_LASIK_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASIK_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_LASIK_3_ID:}
+        sms-text: ${SOLAPI_TPL_LASIK_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASIK_3_SMS_DELAYED:}
+    # 라섹 — 렌즈 제거 후라 1차가 가장 늦다 (D+5·7·14)
+    lasek:
+      t1:
+        template-id: ${SOLAPI_TPL_LASEK_1_ID:}
+        sms-text: ${SOLAPI_TPL_LASEK_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_LASEK_2_ID:}
+        sms-text: ${SOLAPI_TPL_LASEK_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASEK_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_LASEK_3_ID:}
+        sms-text: ${SOLAPI_TPL_LASEK_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_LASEK_3_SMS_DELAYED:}
+    # 렌즈삽입 — ICL·KPL·VIVA (D+3·7·14)
+    icl:
+      t1:
+        template-id: ${SOLAPI_TPL_ICL_1_ID:}
+        sms-text: ${SOLAPI_TPL_ICL_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_ICL_2_ID:}
+        sms-text: ${SOLAPI_TPL_ICL_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ICL_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_ICL_3_ID:}
+        sms-text: ${SOLAPI_TPL_ICL_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ICL_3_SMS_DELAYED:}
+    # 기타 — 백내장·재수술·분류 실패분. 비워 두면 발송되지 않는다 (D+1·7·14)
+    etc:
+      t1:
+        template-id: ${SOLAPI_TPL_ETC_1_ID:}
+        sms-text: ${SOLAPI_TPL_ETC_1_SMS:}
+      t2:
+        template-id: ${SOLAPI_TPL_ETC_2_ID:}
+        sms-text: ${SOLAPI_TPL_ETC_2_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ETC_2_SMS_DELAYED:}
+      t3:
+        template-id: ${SOLAPI_TPL_ETC_3_ID:}
+        sms-text: ${SOLAPI_TPL_ETC_3_SMS:}
+        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
+        sms-text-delayed: ${SOLAPI_TPL_ETC_3_SMS_DELAYED:}

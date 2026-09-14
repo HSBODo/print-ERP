@@ -3,10 +3,24 @@ import { PAGE_COMPONENTS, isRouteBlocked } from './pageRegistry'
 import {
   getMenuStatus,
   getMenuStatusIds,
+  getPageDepartments,
   hasExplicitMenuStatus,
   isAdminOnlyPage,
+  isMarketingOnlyPage,
   statsPages,
 } from '../config/navigation'
+import { matchesDepartment, type UserRole } from '../stores/auth-session'
+
+// ADMIN·DIRECTOR 는 department='ALL' 이라 부서 gate 를 우회하므로 테스트에서 편의상 사용.
+const asAdmin = { role: 'ADMIN' as const, department: 'ALL' as const }
+const asDirector = { role: 'DIRECTOR' as const, department: 'ALL' as const }
+const asStaffMedical = { role: 'STAFF' as const, department: 'MEDICAL' as const }
+const asStaffMarketing = { role: 'STAFF' as const, department: 'MARKETING' as const }
+
+const asRoleUser = (role: UserRole) =>
+  role === 'ADMIN' || role === 'DIRECTOR'
+    ? ({ role, department: 'ALL' as const })
+    : ({ role, department: 'MEDICAL' as const })
 
 /**
  * 통계 페이지 라우트 정책 불변식 가드.
@@ -30,31 +44,31 @@ describe('통계 페이지 라우트 정책 불변식', () => {
 
   it('backend-only 페이지는 모든 환경에서 placeholder로 차단된다', () => {
     for (const id of backendOnlyIds) {
-      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(true)
-      expect(isRouteBlocked(id, false, 'ADMIN')).toBe(true)
+      expect(isRouteBlocked(id, true, asAdmin)).toBe(true)
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(true)
     }
   })
 
   it('frontend-only 페이지가 있으면 컴포넌트가 있고 운영에서도 목업 UI를 표시한다', () => {
     for (const id of frontendOnlyIds) {
       expect(PAGE_COMPONENTS[id]).toBeDefined()
-      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(false)
-      expect(isRouteBlocked(id, false, 'ADMIN')).toBe(false)
+      expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
     }
   })
 
   it('pending 페이지는 운영(PROD)에서 차단되고 개발(DEV)에서는 허용된다', () => {
     expect(pendingIds.length).toBeGreaterThan(0)
     for (const id of pendingIds) {
-      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(true) // 운영: 차단(placeholder)
-      expect(isRouteBlocked(id, false, 'ADMIN')).toBe(false) // 개발: WIP 미리보기 허용
+      expect(isRouteBlocked(id, true, asAdmin)).toBe(true) // 운영: 차단(placeholder)
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(false) // 개발: WIP 미리보기 허용
     }
   })
 
   it('완료(live) 페이지는 운영에서도 차단되지 않는다 (ADMIN 롤 기준)', () => {
     // admin-only 페이지도 ADMIN 롤에게는 열려있어야 한다.
     for (const id of completeIds) {
-      expect(isRouteBlocked(id, true, 'ADMIN')).toBe(false)
+      expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
     }
   })
 
@@ -62,9 +76,11 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     const adminOnlyIds = completeIds.filter((id) => isAdminOnlyPage(id))
     expect(adminOnlyIds.length).toBeGreaterThan(0)
     for (const id of adminOnlyIds) {
-      expect(isRouteBlocked(id, false, 'USER')).toBe(true)
-      expect(isRouteBlocked(id, true, 'USER')).toBe(true)
+      expect(isRouteBlocked(id, false, asRoleUser('STAFF'))).toBe(true)
+      expect(isRouteBlocked(id, true, asRoleUser('STAFF'))).toBe(true)
       expect(isRouteBlocked(id, false, undefined)).toBe(true)
+      // DIRECTOR 도 시스템 조작 불가 — 관리자 페이지는 차단.
+      expect(isRouteBlocked(id, true, asDirector)).toBe(true)
     }
   })
 
@@ -77,5 +93,52 @@ describe('통계 페이지 라우트 정책 불변식', () => {
 
     expect(ids.filter((id) => !hasExplicitMenuStatus(id))).toEqual([])
     expect(statusIds.filter((id) => !ids.includes(id))).toEqual([])
+  })
+
+  it('부서 gate: MARKETING 전용 페이지는 MEDICAL 부서 STAFF 에게 차단된다', () => {
+    const marketingIds = ids.filter((id) => isMarketingOnlyPage(id))
+    expect(marketingIds.length).toBeGreaterThan(0)
+    for (const id of marketingIds) {
+      // 개발 환경 · MEDICAL 부서 STAFF → 차단
+      expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
+    }
+  })
+
+  it('부서 gate: MEDICAL 전용 페이지는 MARKETING 부서 STAFF 에게 차단된다', () => {
+    // MEDICAL 전용 = 마케팅 전용 아닌 통계 페이지 (기본값).
+    const medicalIds = completeIds.filter((id) => !isMarketingOnlyPage(id) && !isAdminOnlyPage(id))
+    expect(medicalIds.length).toBeGreaterThan(0)
+    for (const id of medicalIds) {
+      expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)
+    }
+  })
+
+  it('부서 gate: ADMIN·DIRECTOR (department=ALL) 는 부서와 무관하게 통과', () => {
+    for (const id of completeIds) {
+      // ADMIN 전용 아닌 페이지에 한해 DIRECTOR 도 통과해야 함.
+      if (isAdminOnlyPage(id)) continue
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, false, asDirector)).toBe(false)
+    }
+  })
+
+  it('페이지 부서 스코프 헬퍼는 statsPages 안 id 는 항상 정의된 배열을 반환한다', () => {
+    for (const id of ids) {
+      const deps = getPageDepartments(id)
+      expect(deps).toBeDefined()
+      expect(Array.isArray(deps)).toBe(true)
+    }
+  })
+
+  it('홈(home) · 통계 페이지 밖 id 는 스코프 없음(undefined) — 모든 부서 통과', () => {
+    // 사이드바 pruneByDepartment 가 잎 노드마다 getPageDepartments 를 조회하는데,
+    // 홈은 statsPages 에 없으므로 default 'MEDICAL' 로 잘못 판정되면 MARKETING STAFF 에게 홈이 사라진다.
+    expect(getPageDepartments('home')).toBeUndefined()
+    expect(getPageDepartments('some-unknown-id')).toBeUndefined()
+
+    // matchesDepartment 는 undefined 를 "스코프 없음 → 통과" 로 처리해야 함
+    expect(matchesDepartment(asStaffMedical, getPageDepartments('home'))).toBe(true)
+    expect(matchesDepartment(asStaffMarketing, getPageDepartments('home'))).toBe(true)
+    expect(matchesDepartment(asAdmin, getPageDepartments('home'))).toBe(true)
   })
 })

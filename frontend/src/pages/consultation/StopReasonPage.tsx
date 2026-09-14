@@ -39,7 +39,7 @@ const chartConfig: ChartConfig = {
 
 export function StopReasonPage() {
   const [year, setYear] = useState(CURRENT_YEAR)
-  const [month, setMonth] = useState(4)
+  const [month, setMonth] = useState(new Date().getMonth() + 1)
 
   const { dataMap, isLoading, isError } = useStopReasonMonthly([year])
   const item = dataMap[year]?.[month - 1] ?? null

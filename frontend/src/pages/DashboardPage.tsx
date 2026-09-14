@@ -272,6 +272,25 @@ export function DashboardPage() {
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
+            <CardTitle>월별 예약 추이</CardTitle>
+            <CardDescription>{CURRENT_YEAR}년 · 콜/온라인</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={reservationTrendConfig} className="h-80 w-full">
+              <BarChart data={reservationTrendData}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
+                <Bar dataKey="call" stackId="res" fill="var(--color-call)" radius={[0, 0, 6, 6]} />
+                <Bar dataKey="online" stackId="res" fill="var(--color-online)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
             <CardTitle>월별 수술 추이</CardTitle>
             <CardDescription>{CURRENT_YEAR}년 · 시술별 스택</CardDescription>
           </CardHeader>
@@ -293,67 +312,10 @@ export function DashboardPage() {
             </ChartContainer>
           </CardContent>
         </Card>
-
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>월별 예약 추이</CardTitle>
-            <CardDescription>{CURRENT_YEAR}년 · 콜/온라인</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={reservationTrendConfig} className="h-80 w-full">
-              <BarChart data={reservationTrendData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-                <Bar dataKey="call" stackId="res" fill="var(--color-call)" radius={[0, 0, 6, 6]} />
-                <Bar dataKey="online" stackId="res" fill="var(--color-online)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
       </section>
 
       {/* ── 작은 차트 3개 ── */}
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* 이번달 시술별 비중 */}
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>이번달 시술별 비중</CardTitle>
-            <CardDescription>{CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 기준</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {surgeryTypeData.length === 0 ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">
-                {surgery.isLoading ? '불러오는 중…' : '이번달 수술 없음'}
-              </div>
-            ) : (
-              <>
-                <ChartContainer config={surgeryTrendConfig} className="mx-auto h-56 w-full max-w-[260px]">
-                  <PieChart>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                    <Pie data={surgeryTypeData} dataKey="value" nameKey="key"
-                         innerRadius={56} outerRadius={84} paddingAngle={3} strokeWidth={3}>
-                      {surgeryTypeData.map((d) => <Cell key={d.key} fill={d.fill} />)}
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-                <div className="grid grid-cols-2 gap-1.5 text-xs">
-                  {surgeryTypeData.map((d) => (
-                    <div key={d.key} className="flex items-center gap-1.5 text-muted-foreground">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.fill }} />
-                      <span>{d.name}</span>
-                      <span className="ml-auto font-medium text-foreground">
-                        {surgeryTypeTotal ? Math.round((d.value / surgeryTypeTotal) * 100) : 0}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
         {/* 예약 채널 비중 */}
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
@@ -391,6 +353,44 @@ export function DashboardPage() {
                       <span>{d.name}</span>
                       <span className="ml-auto font-medium text-foreground">
                         {channelTotal ? Math.round((d.value / channelTotal) * 100) : 0}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 이번달 시술별 비중 */}
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>이번달 시술별 비중</CardTitle>
+            <CardDescription>{CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 기준</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {surgeryTypeData.length === 0 ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                {surgery.isLoading ? '불러오는 중…' : '이번달 수술 없음'}
+              </div>
+            ) : (
+              <>
+                <ChartContainer config={surgeryTrendConfig} className="mx-auto h-56 w-full max-w-[260px]">
+                  <PieChart>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <Pie data={surgeryTypeData} dataKey="value" nameKey="key"
+                         innerRadius={56} outerRadius={84} paddingAngle={3} strokeWidth={3}>
+                      {surgeryTypeData.map((d) => <Cell key={d.key} fill={d.fill} />)}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                  {surgeryTypeData.map((d) => (
+                    <div key={d.key} className="flex items-center gap-1.5 text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.fill }} />
+                      <span>{d.name}</span>
+                      <span className="ml-auto font-medium text-foreground">
+                        {surgeryTypeTotal ? Math.round((d.value / surgeryTypeTotal) * 100) : 0}%
                       </span>
                     </div>
                   ))}

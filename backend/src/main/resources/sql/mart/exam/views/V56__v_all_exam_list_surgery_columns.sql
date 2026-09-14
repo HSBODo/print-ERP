@@ -70,7 +70,7 @@ SELECT
     COALESCE(name, '')          AS name,
     COALESCE(exam_category, '') AS exam_group,
     -- 원데이/일반 이진값. 빈칸(해당없음)은 두지 않는다 — 2026-08-05 확정.
-    --   시력교정 : list_exam.one_day          (같은날 M/5 예약 내원)
+    --   시력교정 : list_exam.one_day          (같은날 M/5 또는 M/7 예약 내원, 2026-09-09 M/7 포함)
     --   백내장   : list_cataract_exam.one_day (진료구분 C_원데이·C_노안원데이, V32)
     --   드림렌즈 : 구조상 원데이 불가(M 예약이 있으면 시력교정으로 분류) → 항상 '일반'
     CASE WHEN one_day = 'Y' THEN '원데이' ELSE '일반' END AS exam_type,

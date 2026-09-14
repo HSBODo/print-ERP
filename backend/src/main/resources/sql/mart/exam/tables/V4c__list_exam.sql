@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS list_exam (
     last_visit              VARCHAR(20)   NOT NULL DEFAULT '',
     insurance               VARCHAR(100)  NOT NULL DEFAULT '',
     nationality             VARCHAR(100)  NOT NULL DEFAULT '',
-    -- 원데이 판정 (V26 통합) — 같은날 M/5 예약 내원. exam_type 파생에 사용 (v_all_exam_list).
+    -- 원데이 판정 (V26 통합) — 같은날 M/5 또는 M/7 예약 내원 (2026-09-09 M/7 포함).
+    -- exam_type 파생에 사용 (v_all_exam_list). 판정 원천은 select-exam-list.sql.
     one_day                 VARCHAR(4)    NOT NULL DEFAULT 'N',
     loaded_at               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

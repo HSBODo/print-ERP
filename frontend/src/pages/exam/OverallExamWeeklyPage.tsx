@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useOverallExamWeekly } from '@/hooks/overall/useOverallExamWeekly'
+import { CURRENT_YEAR } from '@/constants/chart'
 import type { OverallExamWeeklyItem } from '@/api/overall'
 
 /**
@@ -39,7 +40,7 @@ const FLAT_COLS = GROUPS.flatMap((g) =>
   g.cols.map((label, i) => ({ label, isGroupStart: i === 0 })),
 )
 
-const YEAR_OPTIONS = [2024, 2025, 2026]
+const YEAR_OPTIONS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]
 
 /** 정수 카운트 천 단위 표시. */
 const num = (v: number) => v.toLocaleString('ko-KR')
@@ -99,7 +100,7 @@ const rangeLabel = (start: string, end: string) =>
   `${start.slice(5).replace('-', '.')}~${end.slice(5).replace('-', '.')}`
 
 export function OverallExamWeeklyPage() {
-  const [years, setYears] = useState<number[]>([2026])
+  const [years, setYears] = useState<number[]>([CURRENT_YEAR])
   const { items, isLoading, isError } = useOverallExamWeekly(years)
 
   const rows = useMemo(

@@ -53,6 +53,7 @@ describe('auth session storage', () => {
     email: 'admin@bviit.com',
     name: '관리자',
     role: 'ADMIN',
+    department: 'ALL',
   }
 
   beforeEach(() => {
@@ -112,7 +113,8 @@ describe('auth session storage', () => {
         loginId: 'viewer',
         email: '',
         name: 'viewer',
-        role: 'USER',
+        role: 'STAFF',
+        department: 'MEDICAL',
       },
       isAuthenticated: true,
     })
