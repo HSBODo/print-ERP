@@ -1,0 +1,16 @@
+services:
+  prod-bnviit-dashboard:
+    image: 708289399808.dkr.ecr.ap-northeast-2.amazonaws.com/bnviit/bnviit-dashboard:${BNVIIT_DASHBOARD_TAG}
+    container_name: prod-bnviit-dashboard
+    restart: unless-stopped
+    ports:
+      - "5000:18080"
+    environment:
+      INFISICAL_TOKEN: ${INFISICAL_TOKEN}
+      INFISICAL_API_URL: ${INFISICAL_API_URL}
+      INFISICAL_PROJECT_ID: "2a424b8f-7518-4c5d-a097-d323dc7b2e95"
+      INFISICAL_ENV: "prod"
+    volumes:
+      - analytics-cache:/app/.cache
+volumes:
+  analytics-cache:
