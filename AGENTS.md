@@ -36,7 +36,7 @@ project-root/
 │   │   │   ├── stats/
 │   │   │   ├── util/
 │   │   │   └── web/
-│   │   ├── reservation/                 # 예약/예약통계/스냅샷/진단
+│   │   ├── reservation/                 # 예약/예약통계/변경이력(RESERVE_HISTORY 체인)/스냅샷/진단
 │   │   ├── exam/                        # 검사 통계 및 검사자 리스트
 │   │   ├── surgery/                     # 수술 통계 및 수술 리스트
 │   │   ├── consultation/                # 상담/전환율/중단사유
@@ -70,6 +70,7 @@ project-root/
 │   │   │   ├── statsPages.ts            # 통계 페이지 정의
 │   │   │   └── navigation.ts            # 메뉴 구조 + 구현 상태 맵
 │   │   ├── pages/
+│   │   │   ├── accounting/              # 회계 프런트 미리보기(수납 원장·매출 집계·월별 그래프)
 │   │   │   ├── LoginPage.tsx            # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx        # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
 │   │   │   ├── ReservationPage.tsx      # 예약 비교 (TanStack Query API 연동)
@@ -84,8 +85,10 @@ project-root/
 │   ├── vite.config.ts                   # 프록시: /api → localhost:8080
 │   └── package.json
 │
-├── docker-compose.yml                    # 앱(백엔드+프론트 정적 파일) 컨테이너 · 실행: docker compose up -d
-├── Dockerfile                            # 백엔드 + 프론트 빌드 산출물 이미지
+├── docker-compose.local.yml              # 로컬 개발용 Compose (기본 사용)
+├── Dockerfile.local                      # 로컬 개발용 이미지 (Infisical 미사용)
+├── docker-compose.yml                    # 운영/Jenkins용 Compose
+├── Dockerfile                            # 운영/Jenkins용 이미지
 └── AGENTS.md
 ```
 
@@ -99,6 +102,8 @@ project-root/
 - ReservationPage (월별/연도별 비교, TanStack Query API 연동)
 - 예약통계_시력교정 / 예약통계_백내장 (스냅샷 우선 + MSSQL 라이브 집계)
 - 예약자 리스트 및 주요 예약/검사/상담/수술 통계 API 일부
+- 회계 프런트 미리보기 5종 (진료 수납·시력교정 매출 원장·매출 집계 및 월별 그래프, 합성 목업 데이터/API 계약)
+- 해외마케팅 3종 (접수리스트·통계·예약통계 · `/api/overseas-marketing` · 마트 `overseas_marketing_sheet`/`overseas_reservation_stats` · 2026-09-09 `2026-08-14` 브랜치에서 이관 · MARKETING 부서 전용)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
 
 ### 미구현 (플레이스홀더)
@@ -112,15 +117,23 @@ project-root/
 | ID | 이름 | 경로 | 섹션 | 상태 |
 |----|------|------|------|------|
 | reservation | 예약 건수 | /stats/reservation | 유입 | 구현됨 (API 연동) |
+| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 구현됨 (RESERVE_HISTORY 체인 → `list_reservation_change` 마트 · 변경 상세 탭 + 추이 달력 탭) |
 | examination | 검사 건수 | /stats/examination | 유입 | 플레이스홀더 |
 | consultation-rate | 상담 전환율 | /stats/consultation-rate | 상담 | 플레이스홀더 |
 | surgery | 수술 건수 | /stats/surgery | 수술 | 플레이스홀더 |
 | surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술비중 | 플레이스홀더 |
-| overseas | 해외 환자 관련 지표 | /stats/overseas | 해외 | 플레이스홀더 |
+| overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 구현됨 (Google Sheet 캐시 + 수기 입력 · CRM 매칭 3단계 · MARKETING 전용) |
+| overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 구현됨 (월별 유입→검사·수술 흐름 · 국가별 · 매출) |
+| overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 구현됨 (레거시 시드 + 접수리스트 자동 집계 · 일간 셀 수정) |
 | marketing | 마케팅 유입 및 효율 | /stats/marketing | 마케팅 | 플레이스홀더 |
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 기타 | 플레이스홀더 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 기타 | 플레이스홀더 |
 | unit-price | 객단가 | /stats/unit-price | 기타 | 플레이스홀더 |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 프런트 전용 목업 |
+| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 프런트 전용 목업 |
+| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 프런트 전용 목업 |
+| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 프런트 전용 목업 |
+| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 프런트 전용 목업 |
 
 ## 백엔드 컨벤션
 
@@ -242,9 +255,11 @@ cd frontend && npx shadcn@latest add <component-name>
 ## 실행 명령어
 
 ```bash
-# 도커 컴포즈 (권장 · backend + frontend 정적 파일 한 컨테이너)
-docker compose up -d --build             # 기본 프로파일: prod (docker-compose.yml env)
-docker compose down                       # 종료
+# 로컬 도커 컴포즈 (기본 · backend + frontend 정적 파일 한 컨테이너)
+docker compose -f docker-compose.local.yml up -d --build
+docker compose -f docker-compose.local.yml down
+
+# 운영/Jenkins용 docker-compose.yml · Dockerfile 은 명시적으로 요청받은 경우에만 사용
 
 # 로컬 개별 실행 (개발용)
 cd backend && ./gradlew bootRun          # Backend (H2 인메모리 기본, 프로파일 SPRING_PROFILES_ACTIVE 로 조정)
@@ -261,7 +276,7 @@ cd frontend && npm run test              # Vitest
 ### Git
 
 - 커밋: `feat: 예약 통계 페이지 구현`, `fix: 달성률 소수점 계산 오류`
-- **커밋·푸시는 작업 브랜치 `2026-07-29` 안에서만 한다** (`git push origin 2026-07-29`).
+- **커밋·푸시는 작업 브랜치 `2026-09-04` 안에서만 한다** (`git push origin 2026-09-04`).
 - 🚫 **`main`·`develop` 으로 임의 push·PR 금지** — 운영 반영은 **개발자와 협의**해서 진행한다.
   (자세한 배경은 `CLAUDE.md` 의 같은 항목 참조)
 
@@ -282,6 +297,8 @@ cd frontend && npm run test              # Vitest
 ### 환경 설정
 
 - `application-local.yml`은 환경변수 참조만 담음 — 시크릿은 `backend/.env`(gitignored)에 두고 실행 스크립트가 주입
+- **로컬 Docker 작업은 항상 `docker-compose.local.yml`과 `Dockerfile.local`을 기본으로 사용한다.** `docker-compose.yml`과 `Dockerfile`은 운영/Jenkins용이므로 개발자가 명시적으로 요청하지 않는 한 실행하거나 수정하지 않는다.
+- 로컬 Compose도 사내 Nexus나 `backend/.env`에 지정된 외부 데이터 소스에 연결할 수 있다. 여기서 "로컬"은 완전한 오프라인 환경이 아니라 Infisical 없이 로컬 전용 Docker 설정으로 실행한다는 뜻이다.
 - 프론트 환경변수: `VITE_` 접두사 사용
 - Vite 프록시: `/api` → `http://localhost:8080` (`vite.config.ts`)
 

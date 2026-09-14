@@ -7,7 +7,6 @@ import com.bviit.analytics.surgery.service.ReoperationCandidateService;
 import com.bviit.analytics.surgery.service.ReoperationOverlay;
 import com.bviit.analytics.surgery.repository.SurgeryStatsMartRepository;
 import com.bviit.analytics.surgery.service.SurgeryListService;
-import com.bviit.analytics.surgery.service.SurgeryStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +18,6 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * 수술 도메인 마트 적재 잡.
@@ -29,8 +27,7 @@ import java.util.stream.Stream;
  *   - mart_surgery_daily    — from..to 각 날짜 upsert
  *   - list_surgery          — from..to 범위 delete+insert
  *
- * MSSQL 소스에서 읽기는 기존 서비스(SurgeryStatsService, SurgeryListService) 재사용.
- * 월별은 LEGACY_VISION_SURGERY 보정치가 적용된 값으로 저장됨(현재 UI 값과 일치).
+ * MSSQL 리스트 소스는 SurgeryListService를 재사용하고, 통계는 적재한 리스트를 마트에서 집계한다.
  *
  * 24·25 는 V-seed 가 없어 최초 1회 운영자가 admin API 로 백필해야 한다
  * (예: POST /api/admin/batch/rerun?from=2024-01-01&to=2025-12-31&domain=SURGERY,
@@ -63,7 +60,6 @@ public class SurgeryMartJob {
      */
     static final LocalDate MART_LIVE_FROM = LocalDate.of(2026, 6, 1);
 
-    private final SurgeryStatsService statsService;
     private final SurgeryListService listService;
     private final ReoperationCandidateService reopCandidateService;
     private final SurgeryStatsMartRepository martRepository;
@@ -77,7 +73,7 @@ public class SurgeryMartJob {
      * from..to 범위를 적재한다.
      *
      *   - Daily: 각 날짜 upsert
-     *   - Monthly: 범위에 걸친 (yr,mo) 조합을 SurgeryStatsService.getMonthlyStats로 재계산 후 upsert
+     *   - Monthly: 범위에 걸친 (yr,mo) 조합을 적재된 수술 리스트에서 재계산 후 upsert
      *   - List: 범위 delete+insert
      *
      * 반환값은 upsert/insert된 총 행 수 (관측용).
@@ -196,11 +192,6 @@ public class SurgeryMartJob {
 
     static LocalDate maxDate(LocalDate a, LocalDate b) {
         return a.isBefore(b) ? b : a;
-    }
-
-    /** from..to에 걸친 연도 목록 (오름차순, 중복 제거). */
-    private static List<Integer> yearsInRange(LocalDate from, LocalDate to) {
-        return Stream.iterate(from.getYear(), y -> y <= to.getYear(), y -> y + 1).toList();
     }
 
     /** (year, month)가 [from, to] 구간과 겹치는지 판정. */

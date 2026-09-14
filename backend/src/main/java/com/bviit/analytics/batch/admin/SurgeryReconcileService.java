@@ -5,6 +5,7 @@ import com.bviit.analytics.surgery.dto.SurgeryMonthlyItem;
 import com.bviit.analytics.surgery.repository.SurgeryStatsMartRepository;
 import com.bviit.analytics.surgery.service.SurgeryListService;
 import com.bviit.analytics.surgery.service.SurgeryStatsService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -25,6 +26,8 @@ import java.util.Map;
 @Profile("postgres-mart")
 @RequiredArgsConstructor
 public class SurgeryReconcileService {
+
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
     private final SurgeryStatsService statsService;      // MSSQL 직결
     private final SurgeryListService listService;         // MSSQL 직결
@@ -93,8 +96,8 @@ public class SurgeryReconcileService {
     // ─── helpers ──────────────────────────────────────────────
 
     private Map<String, int[]> diffFields(Object source, Object mart) {
-        Map<String, Object> sMap = objectMapper.convertValue(source, Map.class);
-        Map<String, Object> mMap = objectMapper.convertValue(mart, Map.class);
+        Map<String, Object> sMap = objectMapper.convertValue(source, MAP_TYPE);
+        Map<String, Object> mMap = objectMapper.convertValue(mart, MAP_TYPE);
         Map<String, int[]> out = new LinkedHashMap<>();
         for (String key : sMap.keySet()) {
             Object sv = sMap.get(key);

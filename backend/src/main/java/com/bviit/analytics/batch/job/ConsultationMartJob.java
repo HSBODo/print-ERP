@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * 전환·성공률 도메인 마트 적재 잡 — 하이브리드 설계.
@@ -372,10 +371,6 @@ public class ConsultationMartJob {
     }
 
     private static double round1(double v) { return Math.round(v * 10.0) / 10.0; }
-
-    private static List<Integer> yearsInRange(LocalDate from, LocalDate to) {
-        return Stream.iterate(from.getYear(), y -> y <= to.getYear(), y -> y + 1).toList();
-    }
 
     private static boolean isMonthInRange(int year, int month, LocalDate from, LocalDate to) {
         YearMonth ym = YearMonth.of(year, month);

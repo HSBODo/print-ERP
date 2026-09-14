@@ -7,6 +7,7 @@ import com.bviit.analytics.batch.job.EtcMartJob;
 import com.bviit.analytics.batch.job.ExamMartJob;
 import com.bviit.analytics.batch.job.OutpatientMartJob;
 import com.bviit.analytics.batch.job.OverallMartJob;
+import com.bviit.analytics.batch.job.ReservationChangeMartJob;
 import com.bviit.analytics.batch.job.ReservationListHomepageMartJob;
 import com.bviit.analytics.batch.job.ReportMartJob;
 import com.bviit.analytics.batch.job.ReservationMartJob;
@@ -46,7 +47,7 @@ public class BatchOrchestrator {
     private static final Set<Domain> ALL_DOMAINS = EnumSet.allOf(Domain.class);
 
     /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
-    public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC, SMS }
+    public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, RESERVATION_CHANGE, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC, SMS }
 
     private final BatchRunLogRepository runLogRepository;
     private final BatchSlackNotifier slackNotifier;
@@ -55,6 +56,7 @@ public class BatchOrchestrator {
     private final ReservationMartJob reservationMartJob;
     private final ReservationStatsDailyMartJob reservationStatsDailyMartJob;
     private final ReservationListHomepageMartJob reservationListHomepageMartJob;
+    private final ReservationChangeMartJob reservationChangeMartJob;
     private final ExamMartJob examMartJob;
     private final ConsultationMartJob consultationMartJob;
     private final OutpatientMartJob outpatientMartJob;
@@ -214,6 +216,9 @@ public class BatchOrchestrator {
             stats.putAll(reservationMartJob.run(from, to));
             stats.putAll(reservationStatsDailyMartJob.run(from, to));
         }
+        // 예약 변경이력 — 범위 의미가 다르다(이력 저장 기간 · 등록일 아님). 어제 손댄 예약을 다시 접어 upsert.
+        // 초기 백필(2022~)을 월 단위로 이것만 돌릴 수 있도록 ACCUMULATED_EYES 처럼 별도 도메인으로 뒀다.
+        if (targets.contains(Domain.RESERVATION_CHANGE)) stats.putAll(reservationChangeMartJob.run(from, to));
         if (targets.contains(Domain.EXAM))          stats.putAll(examMartJob.run(from, to));
         if (targets.contains(Domain.CONSULTATION))  stats.putAll(consultationMartJob.run(from, to));
         if (targets.contains(Domain.OUTPATIENT))    stats.putAll(outpatientMartJob.run(from, to));

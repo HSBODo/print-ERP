@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.web.server.ResponseStatusException;
@@ -51,6 +52,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(SnapshotLockedException.class)
     public ResponseEntity<ErrorResponse> handleSnapshotLocked(SnapshotLockedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(409, ex.getMessage()));
+    }
+
+    @ExceptionHandler(RowLockedException.class)
+    public ResponseEntity<ErrorResponse> handleRowLocked(RowLockedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(409, ex.getMessage()));
     }
@@ -108,6 +115,15 @@ public class GlobalExceptionHandler {
         int status = ex.getStatusCode().value();
         String message = ex.getReason() != null ? ex.getReason() : ex.getStatusCode().toString();
         return ResponseEntity.status(status).body(ErrorResponse.of(status, message));
+    }
+
+    /**
+     * 브라우저가 화면 이동·새 조회·탭 종료로 응답 수신을 중단한 경우다.
+     * 이미 끊어진 출력 스트림에 오류 응답을 다시 쓰지 않고 정상적인 요청 취소로 처리한다.
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleClientDisconnect(AsyncRequestNotUsableException ex) {
+        log.debug("클라이언트가 응답 수신 전에 연결을 종료했습니다: {}", ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

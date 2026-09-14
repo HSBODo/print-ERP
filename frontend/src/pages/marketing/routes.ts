@@ -1,13 +1,17 @@
 import type { FC } from 'react'
 import { OverseasPage } from './OverseasPage'
+import { OverseasMarketingReceptionPage } from './OverseasMarketingReceptionPage'
+import { OverseasReservationStatsPage } from './OverseasReservationStatsPage'
 import { MarketingPage } from './MarketingPage'
 import { ChannelProfitPage } from './ChannelProfitPage'
 import { ChannelAnalysisPage } from './ChannelAnalysisPage'
 import { AccumulatedEyesPage } from './AccumulatedEyesPage'
 
-/** 마케팅(marketing) 도메인 페이지 레지스트리 (sms 는 별도 pages/sms/routes.ts). */
+/** 마케팅(marketing) 도메인 페이지 레지스트리 (sms 는 별도 pages/sms/routes.ts). 해외마케팅 3종 포함. */
 export const marketingPageRoutes: Record<string, FC> = {
-  'overseas': OverseasPage,
+  'overseas-marketing-receptions': OverseasMarketingReceptionPage,
+  'overseas-marketing-statistics': OverseasPage,
+  'overseas-reservation-stats': OverseasReservationStatsPage,
   'marketing': MarketingPage,
   'channel-profit': ChannelProfitPage,
   'channel-analysis': ChannelAnalysisPage,

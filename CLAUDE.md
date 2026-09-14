@@ -25,13 +25,14 @@ project-root/
 │   │   ├── AnalyticsApplication.java
 │   │   ├── auth/                        # 로그인/JWT/사용자 — config(SecurityConfig·JwtUtil·DataInitializer)·controller·service·repository·dto·entity(User)
 │   │   ├── common/                      # 공통 — config·dto(ApiResponse·ErrorResponse)·exception(@RestControllerAdvice)·stats(StatsPanelSupport·StatsRequestValidator·StatsResponseMeta)·util(MonthlyBuckets 등)·web
-│   │   ├── reservation/                 # 예약·예약통계(시력교정/백내장)·스냅샷·진단
+│   │   ├── reservation/                 # 예약·예약통계(시력교정/백내장)·변경이력(RESERVE_HISTORY 체인)·스냅샷·진단
 │   │   ├── exam/                        # 검사 통계·검사자 리스트
 │   │   ├── surgery/                     # 수술 통계·수술자 리스트
 │   │   ├── consultation/                # 전환율·예약률·중단사유
 │   │   ├── outpatient/                  # 외래수
 │   │   ├── overall/                     # 주간 종합지표
 │   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
+│   │   ├── marketing/                   # 채널별 수익성 · 해외마케팅(접수리스트 시트캐시+수기입력·CRM 매칭·통계·예약통계 — /api/overseas-marketing)
 │   │   ├── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) — init/ 하위에 초기 시더 배치
 │   │   └── batch/                       # 배치 인프라 — job(*MartJob·*MartWriter) · admin(reconcile·admin/controller) · controller(BatchStatusController) · repository · dto
 │   ├── src/main/resources/
@@ -60,6 +61,7 @@ project-root/
 │   │   │   ├── outpatient/             # index.ts(outpatientApi)
 │   │   │   ├── overall/                # index.ts(overallApi)
 │   │   │   ├── report/                 # index.ts(reportApi · 주차 레포트)
+│   │   │   ├── marketing/              # channelProfit.ts · accumulatedEyes.ts · overseasMarketing.ts(해외마케팅 접수리스트·통계·예약통계)
 │   │   │   └── etc/                    # index.ts(b2bApi · B2B 매출)
 │   │   ├── hooks/                       # 도메인별 TanStack Query 훅
 │   │   │   ├── reservation/            # useReservationKpi/Trend/Composition/List/OverallTrend …
@@ -68,6 +70,7 @@ project-root/
 │   │   │   ├── surgery/                # useSurgery*·useSurgeryRatio*
 │   │   │   ├── overall/                # useOverallExamWeekly
 │   │   │   ├── report/                 # useWeeklyReport
+│   │   │   ├── marketing/              # useChannelProfit·useAccumulatedEyes*·useOverseasMarketing(접수/통계/예약통계 + 동기화·매칭 mutation)
 │   │   │   ├── outpatient/             # useOutpatientCountTrend
 │   │   │   └── useIsMobile.ts          # (공용) 반응형 분기
 │   │   ├── components/
@@ -82,12 +85,12 @@ project-root/
 │   │   ├── pages/                       # 도메인별 폴더 (Login·Dashboard·StatsPlaceholder·pageRegistry만 root)
 │   │   │   ├── pageRegistry.ts          # 도메인 routes.ts 통합 + PROD pending 라우트 차단 정책
 │   │   │   ├── pageRegistry.test.ts     # 라우트 정책 불변식 테스트
-│   │   │   ├── reservation/            # Reservation·ReservationOverall·ReservationList
+│   │   │   ├── reservation/            # Reservation·ReservationOverall·ReservationList·ReservationChange(+reservation-change/)
 │   │   │   ├── exam/                   # ExamList·CataractExamList·Examination(±Vision/Dreamlens)·ProcedureExam
 │   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
 │   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
 │   │   │   ├── report/                 # MonthlyReportPage(월간)·WeeklyReportPage(주차) + 공용 ReportShell·useReportSeries·reportItems
-│   │   │   ├── overall/ · outpatient/ · marketing/ · cancel-noshow/ · unit-price/ · etc/
+│   │   │   ├── overall/ · outpatient/ · marketing/ · accounting/ · cancel-noshow/ · unit-price/ · etc/
 │   │   │   ├── LoginPage.tsx           # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx       # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
 │   │   │   └── StatsPlaceholderPage.tsx # 미구현 통계 페이지 템플릿
@@ -98,14 +101,16 @@ project-root/
 │   ├── vite.config.ts                   # 프록시: /api → localhost:8080
 │   └── package.json
 │
-├── docker-compose.yml                    # 앱(백엔드+프론트 정적 파일) 컨테이너 · 실행: docker compose up -d
-├── Dockerfile                            # 백엔드 + 프론트 빌드 산출물 이미지
+├── docker-compose.local.yml              # 로컬 개발용 Compose (기본 사용)
+├── Dockerfile.local                      # 로컬 개발용 이미지 (Infisical 미사용)
+├── docker-compose.yml                    # 운영/Jenkins용 Compose
+├── Dockerfile                            # 운영/Jenkins용 이미지
 └── CLAUDE.md
 ```
 
 ### 도메인별 코드 구성 (백엔드=도메인 중심 / 프론트=레이어 우선)
 
-도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation`(예약) / `exam`(검사) / `surgery`(수술) / `consultation`(전환&성공률) / `report` / `overall`(전체지표) / `outpatient`(외래) / `marketing` / `cancel-noshow` / `unit-price` / `etc`.
+도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation`(예약) / `exam`(검사) / `surgery`(수술) / `consultation`(전환&성공률) / `report` / `overall`(전체지표) / `outpatient`(외래) / `marketing` / `accounting`(회계) / `cancel-noshow` / `unit-price` / `etc`.
 
 - **백엔드(도메인 중심)**: `<domain>/{controller,service,repository,dto}` (예: `reservation/controller`, `reservation/service`). 인증은 `auth/`, 공통 응답·예외·유틸·통계 helper(`StatsPanelSupport`·`StatsRequestValidator`·`StatsResponseMeta`)는 `common/`(특히 `common/stats/`)에 둔다. `Mock*Repository`는 해당 도메인 `repository/`에 둔다.
 - **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
@@ -125,14 +130,16 @@ project-root/
 - 통계 전용 페이지 25종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
+- 회계 프런트 미리보기 5종 (진료 수납·시력교정 매출 원장·매출 집계 및 월별 그래프, 합성 목업 데이터/API 전환 계약)
+- 해외마케팅 3종 (접수리스트·통계·예약통계 — 2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 + 수기 입력 · CRM 매칭 · `/api/overseas-marketing` · MARKETING 부서 전용)
 
 ### 미구현 (플레이스홀더)
 
-통계 페이지 12종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
+통계 페이지 11종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 41개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 29개 / **미구현(pending)** 12개.
+`statsPages.ts`에 48개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 33개 / **프런트 전용** 4개 / **미구현(pending)** 11개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
@@ -145,6 +152,7 @@ project-root/
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
+| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 완료 (2026-09-08 신규 · RESERVE_HISTORY 체인 → `list_reservation_change` 마트(배치 도메인 `RESERVATION_CHANGE`, 범위 = 이력 저장 기간) · 변경 상세 탭 + 추이 달력 탭(일별 등록·변경·변경률, 등록일/예약일 기준)) |
 | overall-exam | 월별 검사자 종합지표 | /stats/overall-exam | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
 | overall-exam-weekly | 주간 검사자 종합지표 | /stats/overall-exam-weekly | 검사 | 완료 (**관리자 전용** · 2026-07-07 전체지표→검사 이동) |
 | exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 (**관리자 전용**) |
@@ -164,11 +172,18 @@ project-root/
 | outpatient-list | 외래수 리스트 | /stats/outpatient-list | 외래 | 완료 (RESERVATION F + I/H, 외래수와 정합) |
 | outpatient-count | 외래수 | /stats/outpatient-count | 외래 | 완료 |
 | channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (2026-08-07 신규 · 탭2: 유입채널 수익성/광고매체 효율 · 광고비·렌즈단가는 화면 입력) |
-| overseas | 해외 환자 관련 지표 | /stats/overseas | 마케팅 | 미구현 |
+| overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 완료 (2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 `overseas_marketing_sheet` + 수기 입력 · CRM 매칭 3단계(접수/매칭/확인필요) · **MARKETING 부서 전용**) |
+| overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 완료 (유입→검사·수술 월별 흐름 · 국가별 수술 · 검사·수술·외래·렌즈 매출 · MARKETING 부서 전용) |
+| overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 완료 (국가그룹·채널별 문의/예약/검사/수술/외래 · ~2026-08-23 레거시 시드 `overseas_reservation_stats` · 이후 접수리스트 자동 집계 · 일간 셀 수정 · MARKETING 부서 전용) |
 | marketing | 마케팅 유입 및 효율 지표 | /stats/marketing | 마케팅 | 미구현 |
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
 | unit-price | 객단가 | /stats/unit-price | 객단가 | 미구현 |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 프런트 전용 (합성 목업) |
+| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 프런트 전용 (합성 목업) |
+| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 프런트 전용 (합성 목업) |
+| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 프런트 전용 (합성 목업) |
+| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 프런트 전용 (합성 목업) |
 | dreamlens-revenue | 드림렌즈 장부 | /stats/dreamlens-revenue | 기타 | 완료 (**직접 입력 테이블** · `dreamlens_ledger` JPA CRUD · `/api/dreamlens-ledger`) |
 | b2b-revenue | B2B 매출 | /stats/b2b-revenue | 기타 | 완료 |
 | staff-point | 직원 포인트 | /stats/staff-point | 기타 | 미구현 |
@@ -182,7 +197,7 @@ project-root/
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
-> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(overseas·marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
+> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
 
 ## 백엔드 컨벤션
 
@@ -205,12 +220,41 @@ GET    /api/dreamlens-ledger?from=2026-07-01&to=2026-08-31
 POST   /api/dreamlens-ledger                          # 행 추가
 PUT    /api/dreamlens-ledger/{id}                     # 행 수정 (전체 필드 교체)
 DELETE /api/dreamlens-ledger/{id}                     # 행 삭제
+
+# 해외마케팅 (마트 overseas_marketing_sheet 조회 + 수기 CRUD · CRM(MSSQL) 은 동기화 시에만 직결 · MARKETING 부서)
+GET    /api/overseas-marketing/receptions?from=&to=&dateType=inquiry_date&dateEnabled=true&status=&source=all&unmatched=false
+POST   /api/overseas-marketing/receptions                  # 수기 행 추가 (origin='manual')
+PUT    /api/overseas-marketing/receptions/{rowNumber}      # 시트 원본 컬럼 수정
+DELETE /api/overseas-marketing/receptions/{rowNumber}      # 삭제 (동기화가 지나간 행은 409 RowLocked)
+PUT    /api/overseas-marketing/receptions/{rowNumber}/match  # 수동 CRM 매칭 {customerNo}
+GET    /api/overseas-marketing/crm-customers/{customerNo}  # 매칭 팝업 검증
+POST   /api/overseas-marketing/sync-crm  · GET /sync-crm/status      # CRM 재매칭 (백그라운드 잡)
+POST   /api/overseas-marketing/sync-sheet · GET /sync-availability   # Google Sheet 전체 동기화 (OVERSEAS_GOOGLE_SHEETS_SYNC_ENABLED)
+GET    /api/overseas-marketing/statistics?year=2026&granularity=month
+GET    /api/overseas-marketing/reservation-stats?year=2026&granularity=month|week|day
+PUT    /api/overseas-marketing/reservation-stats/{date}    # 일간 셀 수정 {groupKey, metricKey, value}
 ```
 
-> ✍️ **예외 — 사용자가 직접 입력하는 원천 데이터**는 마트가 아니라 JPA 엔티티로 다룬다.
-> 현재 `드림렌즈 장부`(`dreamlens_ledger`)가 유일하다. MSSQL 원천이 없고 화면에서 CRUD 하므로
-> 배치·마트 대신 `etc/entity` + `JpaRepository` + `/api/dreamlens-ledger` 로 구성한다.
-> 스키마는 `ddl-auto: update` 가 생성하고, 초기 10행은 `etc/init/DreamlensLedgerSeeder` 가 표가 비었을 때만 넣는다.
+> ✍️ **예외 — 사용자가 직접 입력하는 원천 데이터**는 배치 마트 파이프라인을 타지 않는다.
+> - `드림렌즈 장부`(`dreamlens_ledger`): JPA 엔티티 CRUD (`etc/entity` + `JpaRepository` + `/api/dreamlens-ledger`).
+>   스키마는 `ddl-auto: update` 가 생성하고, 초기 10행은 `etc/init/DreamlensLedgerSeeder` 가 표가 비었을 때만 넣는다.
+> - `해외마케팅 접수리스트`(`overseas_marketing_sheet` · `sql/mart/marketing/tables/V64`): Google Sheet 1회성 이관 + 화면 수기 입력 혼합.
+>   행 추가/수정/삭제는 `/api/overseas-marketing/receptions` (JDBC, `marketing/service/OverseasMarketingEditService`).
+>   수기 행은 `origin='manual'` + 추가자(`created_by`=로그인 ID), 수정은 시트 원본 컬럼에 한정.
+>   **조회는 마트만 읽는다**(`sql/mart/marketing/receptions.sql`): CRM 매칭은 `customer_no`/`matched_at`, 파생값(상태·수술정보·비용·외래)은
+>   `crm_snapshot`(JSON) 으로 저장돼 있고, 갱신은 화면의 [CRM 동기화] 버튼(`POST /sync-crm`, 백그라운드 잡)으로만 수행한다.
+>   CRM 조회 SQL(MSSQL)은 `sql/softcrm/marketing/`(customer-candidates·customer-details·exam/surgery-date-candidates·비용·외래) 에 둔다.
+>   **매칭 3단계**: 매칭(`customer_no` 존재) / 확인필요(`candidate_customer_no`만 존재, **또는 미매칭인데
+>   `exam_date` 에 실제 날짜(YYYY-MM-DD)가 있는 행** — 내원 이력이 있으므로 조회 시점에 승격, `receptions.sql` 파생) / 접수(둘 다 없음).
+>   동기화 매칭 규칙 — 이름+생일(월일 스왑 허용) 유일 일치, 또는 전화 뒷8자리·이메일 유일 후보 + 생일 일치·스왑이면
+>   자동 매칭(`matched_by='CRM_Sync'`); 유일 후보인데 생일이 다르거나 없으면 확인필요(`candidate_reason` 근거 저장).
+>   수동 매칭은 고객번호 셀 클릭 팝업(`PUT /receptions/{row}/match`, `GET /crm-customers/{no}` 검증) →
+>   `matched_by`=로그인 ID 로 저장되며 **행 수정·시트 재동기화에도 보존**된다.
+>   자동 매칭 행은 수정 시 매칭·스냅샷을 비워 다음 CRM 동기화에서 재계산한다.
+>   **동기화(sync-sheet)가 지나간 행은 삭제 불가·수정만 가능**(`locked_at`, 409 `RowLockedException`), 동기화는 수기 행,
+>   화면에서 수정된 시트 행, 수동 매칭 행을 보존한다. 시트 동기화 버튼은 `OVERSEAS_GOOGLE_SHEETS_SYNC_ENABLED=false`(기본) 로 숨긴다.
+> - `해외마케팅 예약통계`(`overseas_reservation_stats` · V65 + 시드 V66): ~2026-08-23 은 레거시 시트 시드, 이후는 접수리스트 자동 집계이며
+>   일간 화면에서 수정한 셀(`source='manual'`)이 있으면 그 값이 우선한다(`PUT /reservation-stats/{date}`).
 
 > 🔌 **화면은 마트를 읽는다.** 통계 API 는 배치가 적재한 Postgres 마트를 조회하고, MSSQL 직결은
 > 배치(적재) 시간대에만 쓴다. 그래서 SSH 터널·VPN 이 끊겨도 화면은 마지막 적재분으로 동작한다.
@@ -330,9 +374,11 @@ cd frontend && npx shadcn@latest add <component-name>
 ## 실행 명령어
 
 ```bash
-# 도커 컴포즈 (권장 · backend + frontend 정적 파일 한 컨테이너)
-docker compose up -d --build             # 기본 프로파일: prod (docker-compose.yml env)
-docker compose down                       # 종료
+# 로컬 도커 컴포즈 (기본 · backend + frontend 정적 파일 한 컨테이너)
+docker compose -f docker-compose.local.yml up -d --build
+docker compose -f docker-compose.local.yml down
+
+# 운영/Jenkins용 docker-compose.yml · Dockerfile 은 명시적으로 요청받은 경우에만 사용
 
 # 로컬 개별 실행 (개발용)
 cd backend && ./gradlew bootRun          # Backend (H2 인메모리 기본, 프로파일 SPRING_PROFILES_ACTIVE 로 조정)
@@ -349,11 +395,11 @@ cd frontend && npm run test              # Vitest
 ### Git
 
 - 커밋: `feat: 예약 통계 페이지 구현`, `fix: 달성률 소수점 계산 오류`
-- **커밋·푸시는 작업 브랜치 `2026-07-29` 안에서만 한다** (`git push origin 2026-07-29`).
+- **커밋·푸시는 작업 브랜치 `2026-09-04` 안에서만 한다** (`git push origin 2026-09-04`).
 - 🚫 **`main` 은 물론 `develop` 으로도 임의로 push·PR 하지 않는다.** 운영 반영은 **개발자와 협의해서** 진행한다.
   협의 없이 `gh pr create --base main` 을 만들거나 다른 브랜치로 밀지 말 것 — 개발자 브랜치와 어긋나면
   복구 비용이 크다(2026-08-05에 실제로 작업분이 갈라져 재적용이 필요했다).
-- 브랜치 정리·머지 시점도 개발자 결정 사항이다. 이쪽에서는 `2026-07-29` 만 최신으로 유지한다.
+- 브랜치 정리·머지 시점도 개발자 결정 사항이다. 이쪽에서는 `2026-09-04` 만 최신으로 유지한다.
 
 ### 코드 품질
 
@@ -372,6 +418,8 @@ cd frontend && npm run test              # Vitest
 ### 환경 설정
 
 - `application-local.yml`은 환경변수 참조만 담음 — 시크릿은 `backend/.env`(gitignored)에 두고 실행 스크립트가 주입
+- **로컬 Docker 작업은 항상 `docker-compose.local.yml`과 `Dockerfile.local`을 기본으로 사용한다.** `docker-compose.yml`과 `Dockerfile`은 운영/Jenkins용이므로 개발자가 명시적으로 요청하지 않는 한 실행하거나 수정하지 않는다.
+- 로컬 Compose도 사내 Nexus나 `backend/.env`에 지정된 외부 데이터 소스에 연결할 수 있다. 여기서 "로컬"은 완전한 오프라인 환경이 아니라 Infisical 없이 로컬 전용 Docker 설정으로 실행한다는 뜻이다.
 - 프론트 환경변수: `VITE_` 접두사 사용
 - Vite 프록시: `/api` → `http://localhost:8080` (`vite.config.ts`)
 

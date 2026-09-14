@@ -117,6 +117,20 @@ class AuthSecurityIntegrationTest {
     }
 
     @Test
+    void spaAccountingRoutesArePublic() throws Exception {
+        for (String path : new String[]{
+                "/accounting/medical-receipts",
+                "/accounting/vision-revenue",
+                "/accounting/vision-revenue-summary",
+                "/accounting/vision-revenue-chart",
+                "/accounting/medical-revenue-chart"
+        }) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     void statsApiRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/stats/reservation/kpi")
                         .param("years", "2025"))
@@ -460,6 +474,172 @@ class AuthSecurityIntegrationTest {
                 .andExpect(result -> {
                     if (result.getResponse().getStatus() == 403) {
                         throw new AssertionError("DIRECTOR 가 SMS retry 매처에서 막힘");
+                    }
+                });
+    }
+
+    // ─── 해외마케팅 (/api/overseas-marketing/**) 부서 gate ────────────────────
+
+    @Test
+    void marketingStaffCanAccessOverseasMarketingApi() throws Exception {
+        // 해외마케팅 접수리스트 · 통계 · 예약통계 등 모든 하위 API 는 MARKETING 부서 개방
+        // (docs/auth/permissions.md § 4-2 · 2026-09-09 이관 후 URL prefix 통합).
+        String token = jwtUtil.generateToken("staff-mkt", Role.STAFF, Department.MARKETING);
+        mockMvc.perform(get("/api/overseas-marketing/receptions")
+                        .param("from", "2026-01-01").param("to", "2026-01-31")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(result -> {
+                    if (result.getResponse().getStatus() == 403) {
+                        throw new AssertionError("MARKETING STAFF 가 해외마케팅 API 에서 막힘");
+                    }
+                });
+    }
+
+    @Test
+    void medicalStaffCannotAccessOverseasMarketingApi() throws Exception {
+        // 해외마케팅은 MEDICAL 부서 접근 X — 대칭 검증.
+        String token = jwtUtil.generateToken("staff-med", Role.STAFF, Department.MEDICAL);
+        mockMvc.perform(get("/api/overseas-marketing/receptions")
+                        .param("from", "2026-01-01").param("to", "2026-01-31")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void medicalStaffCannotWriteToOverseasMarketing() throws Exception {
+        // 조회뿐 아니라 CRUD 도 부서 gate 로 차단 — 대칭 검증.
+        String token = jwtUtil.generateToken("staff-med", Role.STAFF, Department.MEDICAL);
+        mockMvc.perform(post("/api/overseas-marketing/receptions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"홍길동\"}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedCannotAccessOverseasMarketingApi() throws Exception {
+        // 토큰 없이 호출 시 401 — JwtAuthenticationFilter 통과 후 anyRequest().authenticated() 에서 걸린다.
+        mockMvc.perform(get("/api/overseas-marketing/receptions")
+                        .param("from", "2026-01-01").param("to", "2026-01-31"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void directorCanAccessOverseasMarketingApi() throws Exception {
+        // DIRECTOR (dept=ALL) 는 부서 gate 통과.
+        String token = jwtUtil.generateToken("director", Role.DIRECTOR, Department.ALL);
+        mockMvc.perform(get("/api/overseas-marketing/receptions")
+                        .param("from", "2026-01-01").param("to", "2026-01-31")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(result -> {
+                    if (result.getResponse().getStatus() == 403) {
+                        throw new AssertionError("DIRECTOR 가 해외마케팅 부서 gate 에서 막힘");
+                    }
+                });
+    }
+
+    @Test
+    void marketingStaffCannotTriggerOverseasSyncSheet() throws Exception {
+        // 시트 동기화는 무거운 Google Sheets 조회 → ADMIN 만 실행.
+        String token = jwtUtil.generateToken("staff-mkt", Role.STAFF, Department.MARKETING);
+        mockMvc.perform(post("/api/overseas-marketing/sync-sheet")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void marketingManagerCannotTriggerOverseasSyncCrm() throws Exception {
+        // CRM 매칭도 무거운 MSSQL 배치 → MANAGER 라도 실행 불가.
+        String token = jwtUtil.generateToken("mgr-mkt", Role.MANAGER, Department.MARKETING);
+        mockMvc.perform(post("/api/overseas-marketing/sync-crm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void directorCannotTriggerOverseasSyncCrm() throws Exception {
+        // DIRECTOR 도 시스템 조작 불가 정책(§ 3)에 따라 sync 트리거 X.
+        String token = jwtUtil.generateToken("director", Role.DIRECTOR, Department.ALL);
+        mockMvc.perform(post("/api/overseas-marketing/sync-crm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    // ─── OVERSEAS_MARKETING 부서 (2026-09-11 신설) ───────────────────
+
+    @Test
+    void overseasMarketingStaffCanAccessOverseasMarketingApi() throws Exception {
+        // OVERSEAS_MARKETING STAFF 는 해외마케팅 조회 API 통과 (자기 부서 개방).
+        String token = jwtUtil.generateToken("staff-osm", Role.STAFF, Department.OVERSEAS_MARKETING);
+        mockMvc.perform(get("/api/overseas-marketing/receptions")
+                        .param("from", "2026-01-01").param("to", "2026-01-31")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(result -> {
+                    if (result.getResponse().getStatus() == 403) {
+                        throw new AssertionError("OVERSEAS_MARKETING STAFF 가 해외마케팅 API 에서 막힘");
+                    }
+                });
+    }
+
+    @Test
+    void overseasMarketingStaffCannotAccessMedicalOnlyApi() throws Exception {
+        // 좁은 스코프 검증 — MEDICAL 전용 API 는 403.
+        String token = jwtUtil.generateToken("staff-osm", Role.STAFF, Department.OVERSEAS_MARKETING);
+        mockMvc.perform(get("/api/exam-list").param("from", "2026-01-01").param("to", "2026-01-31")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void overseasMarketingStaffCannotAccessMarketingOnlyApi() throws Exception {
+        // 좁은 스코프 검증 — MARKETING 전용 API(reservation-channel·channel-profit·sms 등) 도 403.
+        String token = jwtUtil.generateToken("staff-osm", Role.STAFF, Department.OVERSEAS_MARKETING);
+        mockMvc.perform(get("/api/stats/reservation-channel/anything")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void overseasMarketingStaffCanReadHomeKpi() throws Exception {
+        // 홈 대시보드 KPI 는 전 부서 개방 (OVERSEAS_MARKETING 도 접근).
+        String token = jwtUtil.generateToken("staff-osm", Role.STAFF, Department.OVERSEAS_MARKETING);
+        mockMvc.perform(get("/api/stats/reservation-overall/monthly").param("years", "2026")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(result -> {
+                    if (result.getResponse().getStatus() == 403) {
+                        throw new AssertionError("OVERSEAS_MARKETING STAFF 가 홈 KPI 에서 막힘");
+                    }
+                });
+    }
+
+    @Test
+    void overseasMarketingStaffCannotTriggerOverseasSync() throws Exception {
+        // sync 는 ADMIN 만 — OVERSEAS_MARKETING 도 트리거 불가.
+        String token = jwtUtil.generateToken("staff-osm", Role.STAFF, Department.OVERSEAS_MARKETING);
+        mockMvc.perform(post("/api/overseas-marketing/sync-crm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminCanTriggerOverseasSyncCrm() throws Exception {
+        // ADMIN 만 sync-crm 매처 통과. postgres-mart 프로파일 아니라 실제는 503 등 응답 → 403 만 아니면 통과.
+        String token = jwtUtil.generateToken("admin", Role.ADMIN, Department.ALL);
+        mockMvc.perform(post("/api/overseas-marketing/sync-crm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(result -> {
+                    if (result.getResponse().getStatus() == 403) {
+                        throw new AssertionError("ADMIN 이 해외마케팅 sync-crm 매처에서 막힘");
                     }
                 });
     }

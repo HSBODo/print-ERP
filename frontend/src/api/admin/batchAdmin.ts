@@ -34,6 +34,7 @@ export type BatchDomain =
   | 'SURGERY'
   | 'ACCUMULATED_EYES'
   | 'RESERVATION'
+  | 'RESERVATION_CHANGE'
   | 'EXAM'
   | 'CONSULTATION'
   | 'OUTPATIENT'

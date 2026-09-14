@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { getMenuStatus, getPageDepartments, isAdminOnlyPage } from '../config/navigation'
+import { getMenuStatus, getPageDepartments, isAdminOnlyPage, isExecutiveOnlyPage } from '../config/navigation'
 import { matchesDepartment, type AuthUser } from '../stores/auth-session'
 import { reportPageRoutes } from './report/routes'
 import { reservationPageRoutes } from './reservation/routes'
@@ -12,6 +12,7 @@ import { smsPageRoutes } from './sms/routes'
 import { cancelNoshowPageRoutes } from './cancel-noshow/routes'
 import { unitPricePageRoutes } from './unit-price/routes'
 import { etcPageRoutes } from './etc/routes'
+import { accountingPageRoutes } from './accounting/routes'
 import { adminPageRoutes } from './admin/routes'
 
 // 도메인별 페이지 컴포넌트 레지스트리 — 각 pages/<domain>/routes.ts 가 자기 도메인을 소유.
@@ -30,6 +31,7 @@ export const PAGE_COMPONENTS: Record<string, FC> = {
   ...cancelNoshowPageRoutes,
   ...unitPricePageRoutes,
   ...etcPageRoutes,
+  ...accountingPageRoutes,
   ...adminPageRoutes,
 }
 
@@ -53,6 +55,8 @@ export const isRouteBlocked = (
   if (status === 'backend-only') return true
   if (isProd && status === 'pending') return true
   if (isAdminOnlyPage(pageId) && user?.role !== 'ADMIN') return true
+  // 임원 이상(ADMIN·DIRECTOR) 전용 페이지 — 그 외 롤은 환경 무관하게 차단.
+  if (isExecutiveOnlyPage(pageId) && user?.role !== 'ADMIN' && user?.role !== 'DIRECTOR') return true
   if (!matchesDepartment(user ?? null, getPageDepartments(pageId))) return true
   return false
 }

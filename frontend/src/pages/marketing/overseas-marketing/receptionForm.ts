@@ -1,0 +1,48 @@
+import type {
+  OverseasMarketingReception,
+  OverseasMarketingReceptionInput,
+} from '@/api/marketing/overseasMarketing'
+
+export const EMPTY_RECEPTION_INPUT: OverseasMarketingReceptionInput = {
+  inquiryDate: '',
+  name: '',
+  contact: '',
+  email: '',
+  gender: '',
+  dob: '',
+  nationality: '',
+  ethnicity: '',
+  occupation: '',
+  contactLens: '',
+  medicalConditions: '',
+  medicationAllergy: '',
+  departureSchedule: '',
+  examDate: '',
+  surgeryDate: '',
+  surgeryCost: '',
+  channel: '',
+  onlineChannel: '',
+  remark: '',
+}
+
+export const toReceptionInput = (row: OverseasMarketingReception): OverseasMarketingReceptionInput => ({
+  inquiryDate: row.inquiryDate,
+  name: row.name,
+  contact: row.contact,
+  email: row.email,
+  gender: row.gender,
+  dob: row.birthDate,
+  nationality: row.nationality,
+  ethnicity: row.ethnicity,
+  occupation: row.occupation,
+  contactLens: row.contactLens,
+  medicalConditions: row.medicalConditions,
+  medicationAllergy: row.medicationAllergy,
+  departureSchedule: row.departureSchedule,
+  examDate: row.examDate,
+  surgeryDate: row.surgeryDate,
+  surgeryCost: row.surgeryCost,
+  channel: row.channel,
+  onlineChannel: row.onlineChannel,
+  remark: row.remark,
+})

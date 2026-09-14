@@ -6,7 +6,9 @@ import {
   getPageDepartments,
   hasExplicitMenuStatus,
   isAdminOnlyPage,
+  isExecutiveOnlyPage,
   isMarketingOnlyPage,
+  isOverseasMarketingPage,
   statsPages,
 } from '../config/navigation'
 import { matchesDepartment, type UserRole } from '../stores/auth-session'
@@ -52,8 +54,29 @@ describe('통계 페이지 라우트 정책 불변식', () => {
   it('frontend-only 페이지가 있으면 컴포넌트가 있고 운영에서도 목업 UI를 표시한다', () => {
     for (const id of frontendOnlyIds) {
       expect(PAGE_COMPONENTS[id]).toBeDefined()
+      // ADMIN 은 adminOnly 여부와 무관하게 통과.
       expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
       expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
+    }
+  })
+
+  it('회계 프런트 미리보기는 ADMIN 만 접근한다 (개발 완성 전까지 되돌림)', () => {
+    for (const id of [
+      'accounting-medical',
+      'accounting-vision',
+      'accounting-vision-summary',
+      'accounting-vision-chart',
+      'accounting-medical-chart',
+    ]) {
+      expect(PAGE_COMPONENTS[id]).toBeDefined()
+      // 회계는 adminOnly 로 되돌림 · executiveOnly 아님
+      expect(isAdminOnlyPage(id)).toBe(true)
+      expect(isExecutiveOnlyPage(id)).toBe(false)
+      // ADMIN 통과 · DIRECTOR·MANAGER·STAFF 모두 차단
+      expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, true, asDirector)).toBe(true)
+      expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
     }
   })
 
@@ -105,8 +128,11 @@ describe('통계 페이지 라우트 정책 불변식', () => {
   })
 
   it('부서 gate: MEDICAL 전용 페이지는 MARKETING 부서 STAFF 에게 차단된다', () => {
-    // MEDICAL 전용 = 마케팅 전용 아닌 통계 페이지 (기본값).
-    const medicalIds = completeIds.filter((id) => !isMarketingOnlyPage(id) && !isAdminOnlyPage(id))
+    // MEDICAL 전용 = 마케팅 전용도 아니고 · 해외마케팅 개방도 아니고 · admin 도 아닌 통계 페이지 (기본값).
+    // 해외마케팅 3종은 MARKETING·OVERSEAS_MARKETING 두 부서 개방이라 MARKETING STAFF 도 통과 → 여기서 제외.
+    const medicalIds = completeIds.filter(
+      (id) => !isMarketingOnlyPage(id) && !isOverseasMarketingPage(id) && !isAdminOnlyPage(id),
+    )
     expect(medicalIds.length).toBeGreaterThan(0)
     for (const id of medicalIds) {
       expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)
@@ -117,6 +143,20 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     for (const id of completeIds) {
       // ADMIN 전용 아닌 페이지에 한해 DIRECTOR 도 통과해야 함.
       if (isAdminOnlyPage(id)) continue
+      expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
+      expect(isRouteBlocked(id, false, asDirector)).toBe(false)
+    }
+  })
+
+  it('임원 gate: executiveOnly 페이지는 MANAGER·STAFF 에게 차단되고 ADMIN·DIRECTOR 는 통과한다', () => {
+    // 현재 executiveOnly 대상 페이지 없음(회계는 ADMIN 전용으로 되돌림). 인프라 자체는 유지되므로
+    // 대상이 다시 지정되면 자동으로 이 케이스가 활성화된다.
+    const executiveIds = ids.filter((id) => isExecutiveOnlyPage(id))
+    const asManagerMedical = { role: 'MANAGER' as const, department: 'MEDICAL' as const }
+    for (const id of executiveIds) {
+      expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
+      expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)
+      expect(isRouteBlocked(id, false, asManagerMedical)).toBe(true)
       expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
       expect(isRouteBlocked(id, false, asDirector)).toBe(false)
     }

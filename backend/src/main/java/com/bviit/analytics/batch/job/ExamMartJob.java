@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 검사 도메인 마트 적재 잡.
@@ -256,11 +255,6 @@ public class ExamMartJob {
     /** 월 단위 누적기 — 필드는 select-exam-daily-agg.sql 의 컬럼과 1:1. */
     private static final class ExamDailyAgg {
         private int total, vision, dreamlens, cataractExam, oneDay;
-    }
-
-    /** from..to에 걸친 연도 목록 (오름차순, 중복 제거). */
-    private static List<Integer> yearsInRange(LocalDate from, LocalDate to) {
-        return Stream.iterate(from.getYear(), y -> y <= to.getYear(), y -> y + 1).toList();
     }
 
     /** (year, month)가 [from, to] 구간과 겹치는지 판정. */

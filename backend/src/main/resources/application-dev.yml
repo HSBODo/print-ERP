@@ -3,7 +3,7 @@
 # ========================================
 # - Primary DB: Dev 전용 Postgres (외부 인스턴스, prod와 분리)
 # - CRM MSSQL: Admin 트리거 시에만 접근 (읽기)
-# - 배치 스케줄러: ON (매일 03:00 D-1 적재, 매월 소급 재계산은 현재 비활성)
+# - 배치 스케줄러: ON (매일 03:00 D-1 적재 + 매월 1일 03:30 전월 소급 재계산)
 # - 배치 트리거(Admin API): ON — POST /api/admin/batch/rerun
 #
 # 실행: SPRING_PROFILES_ACTIVE=dev java -jar app.jar
@@ -16,7 +16,7 @@
 # CRM MSSQL                | 미접속(더미)                 | 실 CRM(읽기)            | 실 CRM(읽기)
 # Hikari(CRM) pool/timeout | 1 / 1s                       | 3 / 10s                 | 3 / 10s
 # ddl-auto                 | update                       | update                  | none
-# 배치 스케줄러            | OFF                          | ON(03:00 D-1, 월간재계산 OFF) | ON(03:00 D-1, 월간재계산 OFF)
+# 배치 스케줄러            | OFF                          | ON(03:00 D-1 + 월 1일 03:30 재계산) | ON(03:00 D-1, 월간재계산 OFF)
 # Admin 수동 배치          | OFF(CRM 없음)                | ON                      | ON
 # app.seed.enabled         | 상위 기본값(false)           | 상위 기본값             | 명시적 false
 # 필수 env                 | POSTGRES_* (기본값 가능)     | POSTGRES_*, STATS_DB_*  | POSTGRES_*, STATS_DB_*, APP_JWT_SECRET
