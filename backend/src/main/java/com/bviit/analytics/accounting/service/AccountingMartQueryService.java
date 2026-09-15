@@ -2,11 +2,10 @@ package com.bviit.analytics.accounting.service;
 
 import com.bviit.analytics.accounting.dto.AccountingStatus;
 import com.bviit.analytics.accounting.dto.MedicalMonthlyPoint;
+import com.bviit.analytics.accounting.dto.MedicalReceiptRow;
 import com.bviit.analytics.accounting.dto.VisionMonthlyPoint;
+import com.bviit.analytics.accounting.dto.VisionReceiptRow;
 import com.bviit.analytics.accounting.repository.AccountingMartRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
@@ -17,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -38,14 +36,11 @@ public class AccountingMartQueryService implements AccountingReader {
     static final String CATEGORY_CATARACT = "백내장";
     private static final Set<String> CATEGORIES = Set.of(CATEGORY_ALL, CATEGORY_OUTPATIENT, CATEGORY_INPATIENT, CATEGORY_CATARACT);
 
-    private static final ObjectMapper JSON = new ObjectMapper();
-    private static final TypeReference<Map<String, Long>> ITEM_AMOUNTS = new TypeReference<>() { };
-
     private final AccountingMartRepository martRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getMedicalReceipts(String from, String to) {
+    public List<MedicalReceiptRow> getMedicalReceipts(String from, String to) {
         return martRepository.findMedicalReceipts(from, to);
     }
 
@@ -72,12 +67,8 @@ public class AccountingMartQueryService implements AccountingReader {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getVisionReceipts(String from, String to) {
-        List<Map<String, Object>> rows = martRepository.findVisionReceipts(from, to);
-        for (Map<String, Object> row : rows) {
-            row.put("itemAmounts", parseItemAmounts(row.get("itemAmounts")));
-        }
-        return rows;
+    public List<VisionReceiptRow> getVisionReceipts(String from, String to) {
+        return martRepository.findVisionReceipts(from, to);
     }
 
     @Override
@@ -90,14 +81,5 @@ public class AccountingMartQueryService implements AccountingReader {
     @Transactional(readOnly = true)
     public AccountingStatus getStatus() {
         return martRepository.findStatus();
-    }
-
-    private static Map<String, Long> parseItemAmounts(Object json) {
-        if (json == null) return Map.of();
-        try {
-            return JSON.readValue(json.toString(), ITEM_AMOUNTS);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("list_vision_receipt.item_amounts 파싱 실패", e);
-        }
     }
 }

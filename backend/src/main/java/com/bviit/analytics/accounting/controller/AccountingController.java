@@ -2,7 +2,9 @@ package com.bviit.analytics.accounting.controller;
 
 import com.bviit.analytics.accounting.dto.AccountingStatus;
 import com.bviit.analytics.accounting.dto.MedicalMonthlyPoint;
+import com.bviit.analytics.accounting.dto.MedicalReceiptRow;
 import com.bviit.analytics.accounting.dto.VisionMonthlyPoint;
+import com.bviit.analytics.accounting.dto.VisionReceiptRow;
 import com.bviit.analytics.accounting.service.AccountingReader;
 import com.bviit.analytics.common.dto.ApiResponse;
 import com.bviit.analytics.common.stats.StatsPanelSupport;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -42,7 +43,7 @@ public class AccountingController {
     private final Optional<AccountingReader> reader;
 
     @GetMapping("/medical-receipts")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMedicalReceipts(
+    public ResponseEntity<ApiResponse<List<MedicalReceiptRow>>> getMedicalReceipts(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
@@ -60,7 +61,7 @@ public class AccountingController {
     }
 
     @GetMapping("/vision-receipts")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getVisionReceipts(
+    public ResponseEntity<ApiResponse<List<VisionReceiptRow>>> getVisionReceipts(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {

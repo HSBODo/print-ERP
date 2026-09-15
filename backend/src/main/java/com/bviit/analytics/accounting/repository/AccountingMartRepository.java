@@ -2,10 +2,16 @@ package com.bviit.analytics.accounting.repository;
 
 import com.bviit.analytics.accounting.dto.AccountingStatus;
 import com.bviit.analytics.accounting.dto.MedicalMonthlyPoint;
+import com.bviit.analytics.accounting.dto.MedicalReceiptRow;
 import com.bviit.analytics.accounting.dto.VisionMonthlyPoint;
+import com.bviit.analytics.accounting.dto.VisionReceiptRow;
 import com.bviit.analytics.common.util.SqlLoader;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -27,14 +33,85 @@ public class AccountingMartRepository {
     private static final String SELECT_VISION_MONTHLY_SQL = SqlLoader.load("sql/mart/accounting/select-vision-receipt-monthly.sql");
     private static final String SELECT_STATUS_SQL = SqlLoader.load("sql/mart/accounting/select-accounting-status.sql");
 
+    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final TypeReference<Map<String, Long>> ITEM_AMOUNTS = new TypeReference<>() { };
+
+    private static final RowMapper<MedicalReceiptRow> MEDICAL_ROW = (rs, n) -> new MedicalReceiptRow(
+            rs.getString("id"),
+            rs.getString("receiptDate"),
+            rs.getString("receiptType"),
+            rs.getString("chartNo"),
+            rs.getInt("serialNo"),
+            rs.getString("patientName"),
+            rs.getString("insuranceType"),
+            rs.getString("doctor"),
+            rs.getString("receiptStaff"),
+            rs.getString("receiptTime"),
+            rs.getString("room"),
+            rs.getString("revenueType"),
+            rs.getString("status"),
+            rs.getBoolean("closed"),
+            rs.getLong("hundredCopay"),
+            rs.getLong("hundredUnpaid"),
+            rs.getLong("salaryTotal"),
+            rs.getLong("claimAmount"),
+            rs.getLong("copay"),
+            rs.getLong("nonCovered"),
+            rs.getLong("totalCopay"),
+            rs.getLong("welfareSupport"),
+            rs.getLong("disabledSupport"),
+            rs.getLong("supportAmount"),
+            rs.getLong("healthLivingExpense"),
+            rs.getLong("actualPaid"),
+            rs.getLong("outstanding"),
+            rs.getLong("discount"),
+            rs.getString("discountReason"),
+            rs.getLong("card"),
+            rs.getLong("cash"),
+            rs.getLong("transfer"),
+            rs.getLong("refund"),
+            rs.getLong("outstandingOccurred"),
+            rs.getLong("outstandingRecovered"),
+            rs.getLong("outstandingCard"),
+            rs.getLong("outstandingCash"),
+            rs.getLong("outstandingTransfer"),
+            rs.getLong("refundOccurred"),
+            rs.getLong("cashReceipt"));
+
+    private static final RowMapper<VisionReceiptRow> VISION_ROW = (rs, n) -> new VisionReceiptRow(
+            rs.getString("id"),
+            rs.getString("receiptDate"),
+            rs.getString("chartNo"),
+            rs.getString("patientName"),
+            rs.getString("customerGrade"),
+            rs.getString("surgeryDate"),
+            rs.getString("surgeon"),
+            rs.getString("procedureRight"),
+            rs.getString("procedureLeft"),
+            rs.getString("counselor"),
+            rs.getString("status"),
+            rs.getString("paymentMethod"),
+            rs.getString("cardCompany"),
+            rs.getString("acquirer"),
+            rs.getString("paymentMode"),
+            rs.getString("category"),
+            rs.getString("productName"),
+            rs.getString("registeredBy"),
+            rs.getString("registeredAt"),
+            rs.getString("paymentMemo"),
+            rs.getLong("amount"),
+            rs.getLong("taxable"),
+            rs.getLong("exempt"),
+            parseItemAmounts(rs.getString("itemAmounts")));
+
     private final NamedParameterJdbcTemplate jdbc;
 
     public AccountingMartRepository(@Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public List<Map<String, Object>> findMedicalReceipts(String from, String to) {
-        return jdbc.queryForList(SELECT_MEDICAL_SQL, range(from, to));
+    public List<MedicalReceiptRow> findMedicalReceipts(String from, String to) {
+        return jdbc.query(SELECT_MEDICAL_SQL, range(from, to), MEDICAL_ROW);
     }
 
     /** 월 전체 행 적재가 완료되지 않은 월의 집계 마트 — 구분 필터 없음. */
@@ -55,8 +132,8 @@ public class AccountingMartRepository {
                         rs.getLong("net"), rs.getLong("claim"), rs.getLong("salaryTotal"), rs.getLong("nonCovered")));
     }
 
-    public List<Map<String, Object>> findVisionReceipts(String from, String to) {
-        return jdbc.queryForList(SELECT_VISION_SQL, range(from, to));
+    public List<VisionReceiptRow> findVisionReceipts(String from, String to) {
+        return jdbc.query(SELECT_VISION_SQL, range(from, to), VISION_ROW);
     }
 
     public List<VisionMonthlyPoint> findVisionMonthly(List<Integer> years) {
@@ -78,5 +155,14 @@ public class AccountingMartRepository {
 
     private static MapSqlParameterSource range(String from, String to) {
         return new MapSqlParameterSource().addValue("from", from).addValue("to", to);
+    }
+
+    private static Map<String, Long> parseItemAmounts(String json) {
+        if (json == null || json.isEmpty()) return Map.of();
+        try {
+            return JSON.readValue(json, ITEM_AMOUNTS);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("list_vision_receipt.item_amounts 파싱 실패", e);
+        }
     }
 }
