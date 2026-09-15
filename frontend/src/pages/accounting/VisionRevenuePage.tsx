@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { accountingApi, type VisionReceipt } from '@/api/accounting'
+import type { VisionReceipt } from '@/api/accounting'
+import { useAccountingStatus, useVisionReceipts } from '@/hooks/accounting/useAccounting'
 import type { AccountingFilterState } from './accountingTypes'
-import { matchesKeyword } from './accountingModel'
+import { dataStamp, matchesKeyword } from './accountingModel'
+import { currentMonthRange } from './accountingPeriod'
 import {
   VisionRevenueFilters,
   VisionRevenueToolbar,
@@ -13,8 +14,7 @@ import { VisionRevenueTable } from './VisionRevenueTable'
 
 const DEFAULT_FILTER: AccountingFilterState = {
   mode: 'daily',
-  from: '2026-08-01',
-  to: '2026-08-31',
+  ...currentMonthRange(),
   category: '전체',
   keyword: '',
 }
@@ -27,6 +27,7 @@ const DEFAULT_EXTRA_FILTERS: VisionExtraFilters = {
   breakdown: '전체',
 }
 
+/** 결제수단 — 원본 수납방법 중 '카드' 만 카드, 나머지(현금·현금영수·통장…)는 현금 버킷 (레거시 피벗 기준). */
 const paymentGroup = (row: VisionReceipt) => row.paymentMethod === '카드' ? '카드' : '현금'
 
 const filterRows = (
@@ -50,23 +51,15 @@ export function VisionRevenuePage() {
   const [draft, setDraft] = useState(DEFAULT_FILTER)
   const [applied, setApplied] = useState(DEFAULT_FILTER)
   const [extra, setExtra] = useState(DEFAULT_EXTRA_FILTERS)
-  const query = useQuery({
-    queryKey: ['accounting-vision-mock', applied.from, applied.to],
-    queryFn: () => accountingApi.getVisionReceipts(applied.from, applied.to),
-  })
+  const query = useVisionReceipts(applied.from, applied.to)
+  const status = useAccountingStatus()
   const rows = useMemo(
     () => filterRows(query.data ?? [], applied, extra),
     [query.data, applied, extra],
   )
   const categories = useMemo(() => optionsOf(query.data ?? [], 'category'), [query.data])
   const acquirers = useMemo(() => optionsOf(query.data ?? [], 'acquirer'), [query.data])
-  const dataDate = useMemo(
-    () => (query.data ?? []).reduce(
-      (latest, row) => row.receiptDate > latest ? row.receiptDate : latest,
-      '',
-    ) || applied.to,
-    [query.data, applied.to],
-  )
+  const stamp = dataStamp(status.data?.visionLoadedAt, status.data?.visionFrom, status.data?.visionTo)
 
   const search = () => {
     const normalized = draft.from <= draft.to
@@ -85,8 +78,8 @@ export function VisionRevenuePage() {
     <div className="flex h-[calc(100vh-5rem)] min-h-[560px] flex-col gap-2">
       <VisionRevenueToolbar
         value={draft}
-        dataDate={dataDate}
-        dataRange={`2026-01-02~${dataDate}`}
+        dataDate={stamp.date}
+        dataRange={stamp.range}
         onChange={setDraft}
         onSearch={search}
         onReset={reset}

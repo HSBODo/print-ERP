@@ -70,7 +70,7 @@ project-root/
 │   │   │   ├── statsPages.ts            # 통계 페이지 정의
 │   │   │   └── navigation.ts            # 메뉴 구조 + 구현 상태 맵
 │   │   ├── pages/
-│   │   │   ├── accounting/              # 회계 프런트 미리보기(수납 원장·매출 집계·월별 그래프)
+│   │   │   ├── accounting/              # 회계 5종 (진료 수납·시력교정 매출 내역·집계·그래프 2종 — /api/accounting 마트 조회 · ADMIN)
 │   │   │   ├── LoginPage.tsx            # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx        # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
 │   │   │   ├── ReservationPage.tsx      # 예약 비교 (TanStack Query API 연동)
@@ -102,7 +102,7 @@ project-root/
 - ReservationPage (월별/연도별 비교, TanStack Query API 연동)
 - 예약통계_시력교정 / 예약통계_백내장 (스냅샷 우선 + MSSQL 라이브 집계)
 - 예약자 리스트 및 주요 예약/검사/상담/수술 통계 API 일부
-- 회계 프런트 미리보기 5종 (진료 수납·시력교정 매출 원장·매출 집계 및 월별 그래프, 합성 목업 데이터/API 계약)
+- 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` · 배치 도메인 `ACCOUNTING` · 의사랑은 링크드서버 OPENQUERY(`common/util/OpenQuerySql`) · ADMIN 전용)
 - 해외마케팅 3종 (접수리스트·통계·예약통계 · `/api/overseas-marketing` · 마트 `overseas_marketing_sheet`/`overseas_reservation_stats` · 2026-09-09 `2026-08-14` 브랜치에서 이관 · MARKETING 부서 전용)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
 
@@ -129,11 +129,11 @@ project-root/
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 기타 | 플레이스홀더 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 기타 | 플레이스홀더 |
 | unit-price | 객단가 | /stats/unit-price | 기타 | 플레이스홀더 |
-| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 프런트 전용 목업 |
-| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 프런트 전용 목업 |
-| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 프런트 전용 목업 |
-| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 프런트 전용 목업 |
-| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 프런트 전용 목업 |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 완료 (관리자 전용 · `list_medical_receipt` 2026~) |
+| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 완료 (관리자 전용 · `list_vision_receipt` 2023~) |
+| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 완료 (관리자 전용 · 피벗은 화면에서 접음) |
+| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 완료 (관리자 전용) |
+| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 완료 (관리자 전용 · 2026~ 행 재집계+구분 · 그 전 `mart_medical_receipt_monthly`) |
 
 ## 백엔드 컨벤션
 

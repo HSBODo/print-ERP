@@ -1,4 +1,4 @@
-import { VISION_ITEM_KEYS, type VisionItemKey, type VisionReceipt } from '@/api/accounting/mockData'
+import { VISION_ITEM_KEYS, type VisionItemKey, type VisionReceipt } from '@/api/accounting'
 
 type DirectKey = Exclude<keyof VisionReceipt, 'itemAmounts'>
 export type VisionColumnKey = DirectKey | '__no' | `item:${VisionItemKey}`
@@ -43,7 +43,7 @@ const itemKey = (key: VisionColumnKey) => key.toString().startsWith('item:')
 export const visionCellValue = (row: VisionReceipt, key: VisionColumnKey): string | number => {
   if (key === '__no') return 0
   const item = itemKey(key)
-  if (item) return row.itemAmounts[item]
+  if (item) return row.itemAmounts[item] ?? 0
   const value = row[key as DirectKey]
   return typeof value === 'number' ? value : String(value)
 }

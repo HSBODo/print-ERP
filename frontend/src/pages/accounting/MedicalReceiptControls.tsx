@@ -12,6 +12,7 @@ export interface MedicalExtraFilters {
 interface ToolbarProps {
   value: AccountingFilterState
   dataDate: string
+  dataRange: string
   onChange: (value: AccountingFilterState) => void
   onSearch: () => void
   onReset: () => void
@@ -50,7 +51,7 @@ function Segment<T extends string>({ options, value, onChange }: { options: read
   )
 }
 
-export function MedicalReceiptToolbar({ value, dataDate, onChange, onSearch, onReset, onCsv }: ToolbarProps) {
+export function MedicalReceiptToolbar({ value, dataDate, dataRange, onChange, onSearch, onReset, onCsv }: ToolbarProps) {
   const month = value.from.slice(0, 7)
   const weeks = weeksOfMonth(month)
   const setRange = (range: { from: string; to: string }) => onChange({ ...value, ...range })
@@ -82,7 +83,7 @@ export function MedicalReceiptToolbar({ value, dataDate, onChange, onSearch, onR
       <span className="mx-1 h-6 w-px bg-gray-200" />
       <Segment options={['전체', '외래', '입원', '백내장'] as const} value={value.category as '전체' | '외래' | '입원' | '백내장'} onChange={(category) => onChange({ ...value, category })} />
       <input aria-label="검색어" value={value.keyword} onChange={(e) => onChange({ ...value, keyword: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && onSearch()} placeholder="환자명 · 차트번호 · 진료의사" className="h-8 w-[200px] rounded-md border border-gray-300 px-2.5 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-      <div className="ml-auto flex items-center gap-1.5"><span className="pr-1 text-[11px] text-gray-500">데이터 기준 <b className="text-gray-700">{dataDate}</b></span><button type="button" onClick={onReset} className="h-8 rounded-md border border-gray-300 bg-white px-3 text-xs font-medium hover:bg-gray-50">초기화</button><button type="button" onClick={onSearch} className="h-8 rounded-md border border-blue-600 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700">조회 (F1)</button><button type="button" onClick={onCsv} className="h-8 rounded-md border border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700">CSV</button></div>
+      <div className="ml-auto flex items-center gap-1.5"><span className="pr-1 text-[11px] text-gray-500">데이터 기준 <b className="text-gray-700">{dataDate}</b>{dataRange && <> · {dataRange}</>}</span><button type="button" onClick={onReset} className="h-8 rounded-md border border-gray-300 bg-white px-3 text-xs font-medium hover:bg-gray-50">초기화</button><button type="button" onClick={onSearch} className="h-8 rounded-md border border-blue-600 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700">조회 (F1)</button><button type="button" onClick={onCsv} className="h-8 rounded-md border border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700">CSV</button></div>
     </div>
   )
 }

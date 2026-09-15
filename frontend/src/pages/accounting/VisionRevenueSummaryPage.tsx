@@ -1,36 +1,34 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { accountingApi } from '@/api/accounting'
-import { monthRange } from './accountingPeriod'
+import { useAccountingStatus, useVisionReceipts } from '@/hooks/accounting/useAccounting'
+import { dataStamp } from './accountingModel'
+import { currentMonthRange } from './accountingPeriod'
 import { VisionRevenueSummaryControls, type VisionSummaryFilter } from './VisionRevenueSummaryControls'
 import { VisionRevenueSummaryTable } from './VisionRevenueSummaryTable'
 import { buildVisionRevenueSummary } from './visionRevenueSummaryModel'
 import { downloadVisionRevenueSummaryCsv } from './visionRevenueSummaryCsv'
 
-const AUGUST_2026 = monthRange('2026-08')
 const DEFAULT_FILTER: VisionSummaryFilter = {
   mode: 'monthly',
-  ...AUGUST_2026,
+  ...currentMonthRange(),
   status: '전체',
   zeroRows: '표시',
 }
 
+/**
+ * 시력교정 매출 집계 — 한울회계법인 제공 피벗(매입사 × 진료명) 재현.
+ * 마트가 2023 부터 행으로 있으므로 어느 달이든 같은 행 경로로 접는다 (원형의 '집계 전용 연도' 분기 없음).
+ */
 export function VisionRevenueSummaryPage() {
   const [draft, setDraft] = useState(DEFAULT_FILTER)
   const [applied, setApplied] = useState(DEFAULT_FILTER)
-  const query = useQuery({
-    queryKey: ['accounting-vision-summary-mock', applied.from, applied.to],
-    queryFn: () => accountingApi.getVisionReceipts(applied.from, applied.to),
-  })
+  const query = useVisionReceipts(applied.from, applied.to)
+  const status = useAccountingStatus()
   const rows = useMemo(
     () => (query.data ?? []).filter((row) => applied.status === '전체' || row.status === applied.status),
     [query.data, applied.status],
   )
   const summary = useMemo(() => buildVisionRevenueSummary(rows), [rows])
-  const dataDate = useMemo(
-    () => (query.data ?? []).reduce((latest, row) => row.receiptDate > latest ? row.receiptDate : latest, '') || applied.to,
-    [query.data, applied.to],
-  )
+  const stamp = dataStamp(status.data?.visionLoadedAt, status.data?.visionFrom, status.data?.visionTo)
   const search = () => {
     const normalized = draft.from <= draft.to ? draft : { ...draft, from: draft.to, to: draft.from }
     setDraft(normalized)
@@ -46,8 +44,8 @@ export function VisionRevenueSummaryPage() {
       <VisionRevenueSummaryControls
         value={draft}
         count={summary.count}
-        dataDate={dataDate}
-        dataRange={`2026-01-02~${dataDate}`}
+        dataDate={stamp.date}
+        dataRange={stamp.range}
         onChange={setDraft}
         onSearch={search}
         onReset={reset}

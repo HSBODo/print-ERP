@@ -60,7 +60,7 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     }
   })
 
-  it('회계 프런트 미리보기는 ADMIN 만 접근한다 (개발 완성 전까지 되돌림)', () => {
+  it('회계 페이지는 ADMIN 만 접근한다 (백엔드 /api/accounting/** 매처와 대칭)', () => {
     for (const id of [
       'accounting-medical',
       'accounting-vision',
