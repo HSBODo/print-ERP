@@ -45,6 +45,13 @@ public class BatchOrchestrator {
 
     static final String ORCHESTRATOR_JOB_PREFIX = "orchestrator";
     private static final Set<Domain> ALL_DOMAINS = EnumSet.allOf(Domain.class);
+    /**
+     * 관리자 화면 "전체 도메인 재실행" 대상. SMS 만 제외한다 — SMS 는 실제 문자 발송 대상
+     * 테이블(sms_target)을 재적재하므로 다른 통계 도메인과 함께 무심코 돌리지 않도록 분리한다.
+     * SMS 만 재실행하려면 관리자 UI 의 "문자 발송 대상만" 옵션을 사용한다.
+     * 자동 스케줄러(runDaily/runMonthlyReconcile)는 계속 ALL_DOMAINS 를 사용한다.
+     */
+    private static final Set<Domain> MANUAL_ALL_DOMAINS = EnumSet.complementOf(EnumSet.of(Domain.SMS));
 
     /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
     public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, RESERVATION_CHANGE, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC, SMS }
@@ -168,7 +175,7 @@ public class BatchOrchestrator {
      * min-year 가드를 따르지 않는다 — 24·25 초기 backfill/보정 시 자유롭게 사용.
      */
     public void runManual(LocalDate from, LocalDate to) {
-        runManual(from, to, EnumSet.allOf(Domain.class));
+        runManual(from, to, MANUAL_ALL_DOMAINS);
     }
 
     /**
@@ -191,7 +198,7 @@ public class BatchOrchestrator {
      */
     public void runManual(LocalDate from, LocalDate to, Set<Domain> targets) {
         Set<Domain> resolved = (targets == null || targets.isEmpty())
-                ? EnumSet.allOf(Domain.class) : EnumSet.copyOf(targets);
+                ? MANUAL_ALL_DOMAINS : EnumSet.copyOf(targets);
         runWithLog(BatchRunLog.RunType.MANUAL, from, to, resolved,
                 () -> runDomains(from, to, resolved));
     }
@@ -273,6 +280,9 @@ public class BatchOrchestrator {
     private static String jobNameOf(Set<Domain> targets) {
         if (targets == null || targets.isEmpty() || targets.containsAll(ALL_DOMAINS)) {
             return ORCHESTRATOR_JOB_PREFIX + "[ALL]";
+        }
+        if (targets.equals(MANUAL_ALL_DOMAINS)) {
+            return ORCHESTRATOR_JOB_PREFIX + "[ALL_EXCEPT_SMS]";
         }
         String list = EnumSet.copyOf(targets).stream()
                 .map(Enum::name)
