@@ -27,4 +27,5 @@ SELECT
 FROM list_vision_receipt
 WHERE receipt_date >= CAST(:from AS DATE)
   AND receipt_date <= CAST(:to   AS DATE)
-ORDER BY receipt_date, cust_num, seq, sub_seq, status DESC
+-- status ASC: '결제처리' 가 '결제취소' 앞에 온다 (원행 다음에 취소행 · 원형과 같은 순서)
+ORDER BY receipt_date, cust_num, seq, sub_seq, status
