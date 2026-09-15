@@ -1,5 +1,7 @@
 UPDATE batch_run_log
    SET status = 'FAILED',
+       rows_upserted = :rows,
+       table_stats = CAST(:tableStats AS JSONB),
        finished_at = :finishedAt,
        duration_ms = EXTRACT(EPOCH FROM (:finishedAt - started_at)) * 1000,
        error_message = :err

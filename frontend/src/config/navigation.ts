@@ -97,11 +97,11 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'cancel-rate': 'pending',
   'no-show-rate': 'pending',
   'unit-price': 'pending',
-  'accounting-medical': 'frontend-only',
-  'accounting-vision': 'frontend-only',
-  'accounting-vision-summary': 'frontend-only',
-  'accounting-vision-chart': 'frontend-only',
-  'accounting-medical-chart': 'frontend-only',
+  'accounting-medical': 'complete',
+  'accounting-vision': 'complete',
+  'accounting-vision-summary': 'complete',
+  'accounting-vision-chart': 'complete',
+  'accounting-medical-chart': 'complete',
   'dreamlens-revenue': 'complete',
   'b2b-revenue': 'complete',
   'staff-point': 'pending',
@@ -137,8 +137,9 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
-  // 회계 5종 — 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 만 검토.
-  // 리프는 admin-section 밖이라 배지가 "개발중"(WIP) 로 붙는다.
+  // 회계 5종 — 마트(list_medical_receipt·list_vision_receipt) + /api/accounting 연동 완료(2026-09-15).
+  // 백엔드 SecurityConfig 도 /api/accounting/** 를 ADMIN 으로 막고 있다. 임원(DIRECTOR) 개방은 개발자 결정 —
+  // 열 때는 EXECUTIVE_ONLY_PAGE_IDS 로 옮기고 백엔드 매처를 hasAnyRole("ADMIN","DIRECTOR") 로 함께 바꾼다.
   'accounting-medical',
   'accounting-vision',
   'accounting-vision-summary',
@@ -380,9 +381,9 @@ const rawMenuItems: MenuItem[] = [
     href: '#',
     icon: Landmark,
     kind: 'section',
-    // 회계는 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 전용으로 되돌린다.
-    // 완성돼서 임원(DIRECTOR) 개방 재개 시 adminOnly 제거 + executiveOnly: true 로 되돌리고
-    // ADMIN_ONLY_PAGE_IDS 의 accounting-* 도 EXECUTIVE_ONLY_PAGE_IDS 로 되돌린다.
+    // 회계 — 마트·API 연동 완료(2026-09-15). 접근은 ADMIN 전용 (백엔드 /api/accounting/** 매처와 대칭).
+    // 임원(DIRECTOR) 개방 시 adminOnly 제거 + executiveOnly: true, ADMIN_ONLY_PAGE_IDS 의 accounting-* 를
+    // EXECUTIVE_ONLY_PAGE_IDS 로 옮기고 백엔드 매처도 함께 바꾼다.
     adminOnly: true,
     children: kids(
       'accounting-medical', 'accounting-vision',

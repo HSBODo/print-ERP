@@ -1,13 +1,17 @@
-import type { VisionItemKey, VisionReceipt } from '@/api/accounting/mockData'
+import type { VisionReceipt } from '@/api/accounting'
 
 export const VISION_SUMMARY_ACQUIRERS = [
   '국민', '농협', '롯데', '비씨', '삼성', '신한', '우리', '하나(구외환)',
   '현대', '제로페이', '나이스정보통신',
 ] as const
 
+/**
+ * key = itemAmounts 의 진료명 키. '선결제' 처럼 레거시 피벗에만 있고 마트 항목에는 없는 줄은 항상 0 으로 남아
+ * 회계법인 표와 한 줄씩 맞대볼 수 있게 자리를 지킨다. kind 'count' 는 값 없는 개수 집계 줄.
+ */
 export interface VisionSummaryRowDefinition {
   label: string
-  key?: VisionItemKey
+  key?: string
   kind: 'free' | 'count' | 'taxed'
 }
 
@@ -62,7 +66,7 @@ export const buildVisionRevenueSummary = (rows: VisionReceipt[]): VisionRevenueS
     const bucket = paymentBucket(receipt)
     for (const row of VISION_SUMMARY_ROWS) {
       if (!row.key) continue
-      cells[row.key][bucket] += receipt.itemAmounts[row.key] ?? 0
+      cells[row.key][bucket] += receipt.itemAmounts[row.key] ?? 0   // 마트에 없는 항목(선결제)은 0
     }
   }
 

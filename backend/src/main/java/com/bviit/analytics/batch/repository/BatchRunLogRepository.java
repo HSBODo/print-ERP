@@ -74,12 +74,18 @@ public class BatchRunLogRepository {
     }
 
     public void fail(long id, String errorMessage) {
+        fail(id, errorMessage, Map.of());
+    }
+
+    public void fail(long id, String errorMessage, Map<String, Integer> tableStats) {
         // 에러 메시지가 지나치게 길면 잘라서 저장 (스택트레이스 전체는 로그로)
         String truncated = errorMessage == null ? null
                 : errorMessage.substring(0, Math.min(errorMessage.length(), 4000));
         jdbc.update(FAIL_SQL, new MapSqlParameterSource()
                 .addValue("id", id)
                 .addValue("finishedAt", LocalDateTime.now())
+                .addValue("rows", tableStats.values().stream().mapToInt(Integer::intValue).sum())
+                .addValue("tableStats", writeJson(tableStats))
                 .addValue("err", truncated));
     }
 

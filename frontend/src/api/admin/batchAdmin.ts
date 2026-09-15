@@ -40,6 +40,7 @@ export type BatchDomain =
   | 'OUTPATIENT'
   | 'OVERALL'
   | 'ETC'
+  | 'ACCOUNTING'
   | 'SMS'
 
 export const batchAdminApi = {

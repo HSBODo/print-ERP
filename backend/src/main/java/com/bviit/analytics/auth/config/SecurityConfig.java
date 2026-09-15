@@ -168,6 +168,8 @@ public class SecurityConfig {
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/dreamlens-ledger/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
+                // 회계(진료 수납·시력교정 매출) — 프런트 navigation.ts 의 ADMIN_ONLY_PAGE_IDS 와 대칭.
+                auth.requestMatchers("/api/accounting/**").hasRole("ADMIN");
 
                 auth.anyRequest().authenticated();
             })
