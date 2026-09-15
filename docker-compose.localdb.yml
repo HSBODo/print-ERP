@@ -1,0 +1,76 @@
+# ─────────────────────────────────────────────────────────────
+# 로컬 자립형 compose — 앱 + 로컬 Postgres 를 한 스택으로 실행한다.
+#
+# 사용법:
+#   DOCKER_BUILDKIT=1 docker compose -f docker-compose.localdb.yml up -d --build
+#   docker compose -f docker-compose.localdb.yml down
+#   docker compose -f docker-compose.localdb.yml down -v    # DB 데이터까지 삭제
+#
+# docker-compose.local.yml 과의 차이:
+#   1) postgres 서비스 포함 (postgres:16-alpine, 데이터는 볼륨에 유지)
+#   2) 앱의 POSTGRES_* 는 backend/.env 대신 로컬 컨테이너로 강제 오버라이드
+#   3) analytics 는 postgres healthcheck 통과 후 기동
+#
+# 원격 사내 Postgres(192.168.x) 에 붙어 개발하려면 이 파일 대신 docker-compose.local.yml 사용.
+# CRM(MSSQL) 등 다른 원격 데이터소스는 여전히 backend/.env 에서 조달한다.
+# ─────────────────────────────────────────────────────────────
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bviit-postgres-local
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-analytics}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-analytics}
+    volumes:
+      - postgres-data-localdb:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-analytics} -d ${POSTGRES_DB:-analytics}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+      secrets:
+        - nexus_id
+        - nexus_pw
+    image: bviit-analytics:${IMAGE_TAG:-local}
+    container_name: bviit-analytics-localdb
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-18080}:18080"
+    env_file:
+      - backend/.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SERVER_PORT: "18080"
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:18080}
+      STATS_CACHE_DIR: /app/.cache/stats
+      # ── POSTGRES_* 는 로컬 postgres 컨테이너로 강제 오버라이드 ──
+      # backend/.env 의 사내 원격 Postgres 값을 덮어써서 이 스택이 자립 실행되도록 한다.
+      # 나머지 도메인 env(HOMEPAGE_DATASOURCE_URL, STATS_DB_* 등)는 backend/.env 그대로 사용.
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-analytics}
+      POSTGRES_DB: ${POSTGRES_DB:-analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-analytics}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-analytics}
+    volumes:
+      - analytics-cache-localdb:/app/.cache
+
+volumes:
+  analytics-cache-localdb:
+  postgres-data-localdb:
+
+secrets:
+  nexus_id:
+    environment: NEXUS_USERNAME
+  nexus_pw:
+    environment: NEXUS_PASSWORD
