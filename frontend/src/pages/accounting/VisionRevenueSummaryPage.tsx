@@ -17,15 +17,16 @@ const DEFAULT_FILTER: VisionSummaryFilter = {
 /**
  * 시력교정 매출 집계 — 한울회계법인 제공 피벗(매입사 × 진료명) 재현.
  * 마트가 2023 부터 행으로 있으므로 어느 달이든 같은 행 경로로 접는다 (원형의 '집계 전용 연도' 분기 없음).
+ * 진입·초기화 = 필터 기본값 + 빈 표. [조회] 를 눌러야 불러온다.
  */
 export function VisionRevenueSummaryPage() {
   const [draft, setDraft] = useState(DEFAULT_FILTER)
-  const [applied, setApplied] = useState(DEFAULT_FILTER)
-  const query = useVisionReceipts(applied.from, applied.to)
+  const [applied, setApplied] = useState<VisionSummaryFilter | null>(null)
+  const query = useVisionReceipts(applied ? { from: applied.from, to: applied.to } : null)
   const status = useAccountingStatus()
   const rows = useMemo(
-    () => (query.data ?? []).filter((row) => applied.status === '전체' || row.status === applied.status),
-    [query.data, applied.status],
+    () => (applied ? (query.data ?? []).filter((row) => applied.status === '전체' || row.status === applied.status) : []),
+    [query.data, applied],
   )
   const summary = useMemo(() => buildVisionRevenueSummary(rows), [rows])
   const stamp = dataStamp(status.data?.visionLoadedAt, status.data?.visionFrom, status.data?.visionTo)
@@ -36,7 +37,7 @@ export function VisionRevenueSummaryPage() {
   }
   const reset = () => {
     setDraft(DEFAULT_FILTER)
-    setApplied(DEFAULT_FILTER)
+    setApplied(null)
   }
 
   return (
@@ -49,15 +50,19 @@ export function VisionRevenueSummaryPage() {
         onChange={setDraft}
         onSearch={search}
         onReset={reset}
-        onCsv={() => downloadVisionRevenueSummaryCsv(summary, applied.from, applied.to)}
+        onCsv={() => downloadVisionRevenueSummaryCsv(summary, applied?.from ?? draft.from, applied?.to ?? draft.to)}
       />
       {query.isError ? (
         <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">시력교정 매출 집계 데이터를 불러오지 못했습니다.</div>
-      ) : (
+      ) : applied ? (
         <VisionRevenueSummaryTable summary={summary} showZeroRows={draft.zeroRows === '표시'} />
+      ) : (
+        <div className="flex min-h-[420px] flex-1 items-center justify-center rounded-lg border border-gray-200 bg-white text-sm text-gray-500 shadow-sm">
+          기간을 고르고 [조회]를 누르면 매입사 × 진료명 집계를 만듭니다.
+        </div>
       )}
       <p className="px-2 text-[11px] leading-5 text-gray-500">
-        <b className="text-gray-700">{applied.from} ~ {applied.to}</b> · 카드는 매입사별, 카드 외 결제(현금·현금영수·통장)는 <b className="text-gray-700">현금</b> 한 칸으로 묶습니다 · 과세는 건기식·영양제 계열만 집계합니다.
+        {applied && <><b className="text-gray-700">{applied.from} ~ {applied.to}</b> · </>}카드는 매입사별, 카드 외 결제(현금·현금영수·통장)는 <b className="text-gray-700">현금</b> 한 칸으로 묶습니다 · 과세는 건기식·영양제 계열만 집계합니다.
       </p>
     </div>
   )

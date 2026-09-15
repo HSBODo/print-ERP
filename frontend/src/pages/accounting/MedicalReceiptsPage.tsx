@@ -27,6 +27,8 @@ const DEFAULT_EXTRA_FILTERS: MedicalExtraFilters = {
   breakdown: '전체',
 }
 
+const IDLE_MESSAGE = '기간을 고르고 [조회]를 누르면 진료 수납 내역을 불러옵니다.'
+
 const matchesCategory = (row: MedicalReceipt, category: string) => {
   if (category === '전체') return true
   if (category === '백내장') return row.revenueType === '입원' || row.revenueType === '입원외'
@@ -57,14 +59,19 @@ const insuranceOptionsOf = (rows: MedicalReceipt[]) => [
   ...new Set(rows.map((row) => row.insuranceType).filter(Boolean).sort((a, b) => a.localeCompare(b, 'ko'))),
 ]
 
+/**
+ * 진입·초기화 = 필터 기본값 + 빈 표. [조회](F1) 를 눌러야 불러온다.
+ * applied 가 null 이면 조회하지 않고, resetKey 로 표(정렬·페이지)를 새로 마운트한다.
+ */
 export function MedicalReceiptsPage() {
   const [draft, setDraft] = useState(DEFAULT_FILTER)
-  const [applied, setApplied] = useState(DEFAULT_FILTER)
+  const [applied, setApplied] = useState<AccountingFilterState | null>(null)
   const [extra, setExtra] = useState(DEFAULT_EXTRA_FILTERS)
-  const query = useMedicalReceipts(applied.from, applied.to)
+  const [resetKey, setResetKey] = useState(0)
+  const query = useMedicalReceipts(applied ? { from: applied.from, to: applied.to } : null)
   const status = useAccountingStatus()
   const rows = useMemo(
-    () => filterRows(query.data ?? [], applied, extra),
+    () => (applied ? filterRows(query.data ?? [], applied, extra) : []),
     [query.data, applied, extra],
   )
   const insuranceOptions = useMemo(() => insuranceOptionsOf(query.data ?? []), [query.data])
@@ -77,8 +84,9 @@ export function MedicalReceiptsPage() {
   }
   const reset = () => {
     setDraft(DEFAULT_FILTER)
-    setApplied(DEFAULT_FILTER)
+    setApplied(null)
     setExtra(DEFAULT_EXTRA_FILTERS)
+    setResetKey((key) => key + 1)
   }
 
   useEffect(() => {
@@ -112,7 +120,12 @@ export function MedicalReceiptsPage() {
           진료 수납 데이터를 불러오지 못했습니다.
         </div>
       ) : (
-        <MedicalReceiptTable rows={rows} breakdown={extra.breakdown} />
+        <MedicalReceiptTable
+          key={resetKey}
+          rows={rows}
+          breakdown={extra.breakdown}
+          emptyMessage={applied ? undefined : IDLE_MESSAGE}
+        />
       )}
     </div>
   )

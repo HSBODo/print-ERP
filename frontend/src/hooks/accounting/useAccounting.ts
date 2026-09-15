@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { accountingApi, type MedicalCategory } from '@/api/accounting'
 
+export interface DateRange {
+  from: string
+  to: string
+}
+
 /** 마트 적재 현황 — "데이터 기준" 표기와 그래프 연도 후보. 배치가 하루 한 번이라 오래 캐시해도 된다. */
 export function useAccountingStatus() {
   return useQuery({
@@ -10,17 +15,20 @@ export function useAccountingStatus() {
   })
 }
 
-export function useMedicalReceipts(from: string, to: string) {
+/** range 가 null 이면 조회하지 않는다 — 리스트 화면은 [조회] 를 누르기 전·초기화 직후 빈 표를 보여준다. */
+export function useMedicalReceipts(range: DateRange | null) {
   return useQuery({
-    queryKey: ['accounting-medical-receipts', from, to],
-    queryFn: () => accountingApi.getMedicalReceipts(from, to),
+    queryKey: ['accounting-medical-receipts', range?.from, range?.to],
+    queryFn: () => accountingApi.getMedicalReceipts(range!.from, range!.to),
+    enabled: range !== null,
   })
 }
 
-export function useVisionReceipts(from: string, to: string) {
+export function useVisionReceipts(range: DateRange | null) {
   return useQuery({
-    queryKey: ['accounting-vision-receipts', from, to],
-    queryFn: () => accountingApi.getVisionReceipts(from, to),
+    queryKey: ['accounting-vision-receipts', range?.from, range?.to],
+    queryFn: () => accountingApi.getVisionReceipts(range!.from, range!.to),
+    enabled: range !== null,
   })
 }
 
