@@ -105,11 +105,13 @@ class AccountingMartIntegrityIT {
         assertThat(reader.getMedicalMonthly(List.of(2026), "전체"))
                 .extracting(MedicalMonthlyPoint::net).containsExactly(600L, 700L);
 
-        when(source.findReceipts(FROM, TO)).thenReturn(List.of(row("2026-07-01", 100), row("2026-07-15", 200)));
-        when(source.findMonthlyParts(FROM, TO)).thenReturn(List.of(part("2026-07", 2, 700)));
-        importer.importRange(LocalDate.of(2026, 7, 15), LocalDate.of(2026, 7, 15));
+        // 달의 앞부분(1일~)은 다시 읽고, 요청 범위 끝(07-15) 이후는 읽지 않는다.
+        LocalDate mid = LocalDate.of(2026, 7, 15);
+        when(source.findReceipts(FROM, mid)).thenReturn(List.of(row("2026-07-01", 100), row("2026-07-15", 200)));
+        when(source.findMonthlyParts(FROM, mid)).thenReturn(List.of(part("2026-07", 2, 700)));
+        importer.importRange(mid, mid);
 
-        verify(source).findReceipts(FROM, TO);
+        verify(source).findReceipts(FROM, mid);
         assertThat(reader.getMedicalMonthly(List.of(2026), "전체"))
                 .extracting(MedicalMonthlyPoint::net).containsExactly(600L, 300L);
         assertThat(reader.getMedicalMonthly(List.of(2026), "외래"))

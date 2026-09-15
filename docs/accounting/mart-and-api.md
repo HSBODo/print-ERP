@@ -10,8 +10,8 @@
 
 | 마트 | V | 원천 | 범위 | 적재 방식 |
 |---|---|---|---|---|
-| `list_medical_receipt` | V67a | 의사랑 IPLUS `PAOSUNAB_New`(외래) + `PAISUNAB_New`(입원) + `PAYTRANS` + `NHICM4AP` + `RECEIPTCASH` — `sql/iplus/accounting/select-medical-receipts-inner.sql` | 2026-01-01~ (_New 체계) | 요청 범위가 걸친 월 전체 delete+insert (자연키 없음 · `row_seq` = 배치 내 순번) |
-| `mart_medical_receipt_monthly` | V67b | 의사랑 구/신 원장 + `PAYTRANS` + `NHICM4AP` 월합 — `select-medical-monthly-inner.sql` | 2023~ | (yr, mo) upsert · from..to 가 걸친 달 통째로 재계산 |
+| `list_medical_receipt` | V67a | 의사랑 IPLUS `PAOSUNAB_New`(외래) + `PAISUNAB_New`(입원) + `PAYTRANS` + `NHICM4AP` + `RECEIPTCASH` — `sql/iplus/accounting/select-medical-receipts-inner.sql` | 2026-01-01~ (_New 체계) | 요청 범위가 걸친 달을 1일부터 `to` 까지 다시 읽어 교체 — 달 전체 delete 후 `to` 까지 insert (자연키 없음 · `row_seq` = 배치 내 순번) |
+| `mart_medical_receipt_monthly` | V67b | 의사랑 구/신 원장 + `PAYTRANS` + `NHICM4AP` 월합 — `select-medical-monthly-inner.sql` | 2023~ | (yr, mo) upsert · from 의 달 1일부터 `to` 까지 재계산 (마지막 달은 `to` 에서 잘림 → 행 마트와 끝 날짜 동일) |
 | `list_vision_receipt` | V67c | SOFTCRM `CstPrcSub` + `PrcItmDtl`/`PrcItmLst` + `OPERATIONDATA` + `COSTPRICE`·`CUSTOM`·`EMPLOYEE` — `sql/softcrm/accounting/select-vision-*.sql` | 2023-01-01~ | 수납일 범위 delete+insert · 취소 전표는 원행 + 취소행(음수) |
 
 ### 의사랑(IPLUS) 접근 — OPENQUERY
