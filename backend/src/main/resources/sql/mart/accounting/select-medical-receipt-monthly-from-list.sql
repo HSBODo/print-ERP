@@ -2,16 +2,19 @@
 -- 실수납합계 = 일련번호 98(환불금) 이면 −refund, 아니면 actual_paid + outstanding_recovered (화면 합계행과 같은 규칙).
 --   :receiptType  '' 이면 전체, 아니면 수납구분 일치 (외래/입원)
 --   :cataract     TRUE 면 매출구분 입원·입원외 (백내장 파트)
-SELECT EXTRACT(YEAR  FROM receipt_date)::INT AS "year",
-       EXTRACT(MONTH FROM receipt_date)::INT AS "month",
-       COUNT(*)::INT                          AS "count",
-       COALESCE(SUM(CASE WHEN serial_no = 98 THEN -refund ELSE actual_paid + outstanding_recovered END), 0) AS "net",
-       COALESCE(SUM(claim_amount), 0)        AS "claim",
-       COALESCE(SUM(salary_total), 0)        AS "salaryTotal",
-       COALESCE(SUM(non_covered), 0)         AS "nonCovered"
-FROM list_medical_receipt
-WHERE EXTRACT(YEAR FROM receipt_date) IN (:years)
+SELECT m.yr AS "year",
+       m.mo AS "month",
+       COUNT(r.id)::INT AS "count",
+       COALESCE(SUM(CASE WHEN serial_no = 98 THEN -r.refund ELSE actual_paid + r.outstanding_recovered END), 0) AS "net",
+       COALESCE(SUM(r.claim_amount), 0)      AS "claim",
+       COALESCE(SUM(r.salary_total), 0)      AS "salaryTotal",
+       COALESCE(SUM(r.non_covered), 0)       AS "nonCovered"
+FROM mart_medical_receipt_monthly m
+LEFT JOIN list_medical_receipt r
+  ON receipt_date >= MAKE_DATE(m.yr, m.mo, 1)
+  AND receipt_date < MAKE_DATE(m.yr, m.mo, 1) + INTERVAL '1 month'
   AND (CAST(:receiptType AS TEXT) = '' OR receipt_type = CAST(:receiptType AS TEXT))
   AND (CAST(:cataract AS BOOLEAN) = FALSE OR revenue_type IN ('입원', '입원외'))
+WHERE m.yr IN (:years) AND m.rows_complete = TRUE
 GROUP BY 1, 2
 ORDER BY 1, 2

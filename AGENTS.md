@@ -103,6 +103,7 @@ project-root/
 - 예약통계_시력교정 / 예약통계_백내장 (스냅샷 우선 + MSSQL 라이브 집계)
 - 예약자 리스트 및 주요 예약/검사/상담/수술 통계 API 일부
 - 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` · 배치 도메인 `ACCOUNTING` · 의사랑은 링크드서버 OPENQUERY(`common/util/OpenQuerySql`) · ADMIN 전용)
+- 회계 정합성: 진료 행·집계는 월 전체를 함께 교체하고 `rows_complete`로 월별 조회 경로를 선택한다. 회계만 매월 2023년부터 과거 이력을 재검산하며, 진료 부분 실패는 성공 데이터 보존 + FAILED 이력으로 처리한다 (`docs/accounting/mart-and-api.md`).
 - 해외마케팅 3종 (접수리스트·통계·예약통계 · `/api/overseas-marketing` · 마트 `overseas_marketing_sheet`/`overseas_reservation_stats` · 2026-09-09 `2026-08-14` 브랜치에서 이관 · MARKETING 부서 전용)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
 

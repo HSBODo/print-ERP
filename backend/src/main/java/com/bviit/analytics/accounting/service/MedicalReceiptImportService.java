@@ -4,7 +4,6 @@ import com.bviit.analytics.accounting.dto.MedicalMonthlyItem;
 import com.bviit.analytics.accounting.repository.MedicalReceiptSourceRepository;
 import com.bviit.analytics.batch.job.AccountingMartWriter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -22,10 +21,9 @@ import java.util.Map;
  * <p>REQUIRES_NEW: 조회가 링크드서버(.240 IPLUS) 를 타므로 원격 장애 시 여기만 실패하고,
  * AccountingMartJob 의 시력교정(SOFTCRM 직결) 적재는 살린다 (EtcMartJob ↔ DreamlensLedgerImportService 와 같은 구조).
  *
- * <p>범위 = 수납일. 행 마트는 2026-01-01(_New 체계) 이후만 싣고, 월 집계는 from..to 가 걸친 달을 통째로 다시 계산해 upsert 한다
- * (2023 부터 조회 가능).
+ * <p>범위가 걸친 달의 행과 월 집계를 함께 교체한다. 행 마트는 2026-01-01 이후만 싣는다.
+ * 빈 달도 0으로 upsert하여 원천에서 삭제된 금액이 남지 않게 한다.
  */
-@Slf4j
 @Service
 @Profile("postgres-mart")
 @RequiredArgsConstructor
@@ -43,17 +41,26 @@ public class MedicalReceiptImportService {
 
         LocalDate monthFrom = YearMonth.from(from).atDay(1);
         LocalDate monthTo = YearMonth.from(to).atEndOfMonth();
-        List<MedicalMonthlyItem> monthly = MedicalMonthlyFolder.fold(sourceRepository.findMonthlyParts(monthFrom, monthTo));
-        stats.put("mart_medical_receipt_monthly", writer.upsertMedicalMonthly(monthly));
-
-        LocalDate rowsFrom = from.isBefore(ROWS_FROM) ? ROWS_FROM : from;
-        if (!rowsFrom.isAfter(to)) {
-            List<Map<String, Object>> rows = sourceRepository.findReceipts(rowsFrom, to);
-            stats.put("list_medical_receipt", writer.replaceMedicalReceipts(rowsFrom, to, rows));
-        } else {
-            log.info("list_medical_receipt skip — range {}..{} is before {}", from, to, ROWS_FROM);
-            stats.put("list_medical_receipt", 0);
+        Map<YearMonth, MedicalMonthlyItem> monthly = new LinkedHashMap<>();
+        MedicalMonthlyFolder.fold(sourceRepository.findMonthlyParts(monthFrom, monthTo))
+                .forEach(m -> monthly.put(YearMonth.of(m.year(), m.month()), m));
+        int rows = 0, months = 0;
+        for (YearMonth month = YearMonth.from(from); !month.isAfter(YearMonth.from(to)); month = month.plusMonths(1)) {
+            boolean rowsComplete = !month.atDay(1).isBefore(ROWS_FROM);
+            if (rowsComplete) {
+                rows += writer.replaceMedicalReceipts(month.atDay(1), month.atEndOfMonth(),
+                        sourceRepository.findReceipts(month.atDay(1), month.atEndOfMonth()));
+            }
+            MedicalMonthlyItem item = monthly.getOrDefault(month, emptyMonth(month));
+            months += writer.upsertMedicalMonthly(List.of(item), rowsComplete);
         }
+        stats.put("mart_medical_receipt_monthly", months);
+        stats.put("list_medical_receipt", rows);
         return stats;
+    }
+
+    private static MedicalMonthlyItem emptyMonth(YearMonth month) {
+        return new MedicalMonthlyItem(month.getYear(), month.getMonthValue(), 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 }

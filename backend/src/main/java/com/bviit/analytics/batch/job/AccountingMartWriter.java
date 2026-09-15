@@ -59,10 +59,10 @@ public class AccountingMartWriter {
     }
 
     @Transactional
-    public int upsertMedicalMonthly(List<MedicalMonthlyItem> items) {
+    public int upsertMedicalMonthly(List<MedicalMonthlyItem> items, boolean rowsComplete) {
         if (items.isEmpty()) return 0;
         SqlParameterSource[] batch = items.stream()
-                .map(AccountingMartWriter::toMonthlyParams)
+                .map(m -> toMonthlyParams(m, rowsComplete))
                 .toArray(SqlParameterSource[]::new);
         int total = sum(jdbc.batchUpdate(UPSERT_MEDICAL_MONTHLY_SQL, batch));
         log.info("mart_medical_receipt_monthly upserted rows={}", total);
@@ -113,9 +113,10 @@ public class AccountingMartWriter {
         return p;
     }
 
-    private static SqlParameterSource toMonthlyParams(MedicalMonthlyItem m) {
+    private static SqlParameterSource toMonthlyParams(MedicalMonthlyItem m, boolean rowsComplete) {
         return new MapSqlParameterSource()
                 .addValue("yr", m.year())
+                .addValue("rowsComplete", rowsComplete)
                 .addValue("mo", m.month())
                 .addValue("receiptCount", m.count())
                 .addValue("copayDue", m.copayDue())

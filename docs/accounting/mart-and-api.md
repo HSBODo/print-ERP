@@ -10,7 +10,7 @@
 
 | 마트 | V | 원천 | 범위 | 적재 방식 |
 |---|---|---|---|---|
-| `list_medical_receipt` | V67a | 의사랑 IPLUS `PAOSUNAB_New`(외래) + `PAISUNAB_New`(입원) + `PAYTRANS` + `NHICM4AP` + `RECEIPTCASH` — `sql/iplus/accounting/select-medical-receipts-inner.sql` | 2026-01-01~ (_New 체계) | 수납일 범위 delete+insert (자연키 없음 · `row_seq` = 배치 내 순번) |
+| `list_medical_receipt` | V67a | 의사랑 IPLUS `PAOSUNAB_New`(외래) + `PAISUNAB_New`(입원) + `PAYTRANS` + `NHICM4AP` + `RECEIPTCASH` — `sql/iplus/accounting/select-medical-receipts-inner.sql` | 2026-01-01~ (_New 체계) | 요청 범위가 걸친 월 전체 delete+insert (자연키 없음 · `row_seq` = 배치 내 순번) |
 | `mart_medical_receipt_monthly` | V67b | 의사랑 구/신 원장 + `PAYTRANS` + `NHICM4AP` 월합 — `select-medical-monthly-inner.sql` | 2023~ | (yr, mo) upsert · from..to 가 걸친 달 통째로 재계산 |
 | `list_vision_receipt` | V67c | SOFTCRM `CstPrcSub` + `PrcItmDtl`/`PrcItmLst` + `OPERATIONDATA` + `COSTPRICE`·`CUSTOM`·`EMPLOYEE` — `sql/softcrm/accounting/select-vision-*.sql` | 2023-01-01~ | 수납일 범위 delete+insert · 취소 전표는 원행 + 취소행(음수) |
 
@@ -24,7 +24,8 @@
   → 8,000자 상한 검증 → `'`→`''` 이스케이프 → `SELECT * FROM OPENQUERY([220.85.109.240], '...')` 로 감싼다.
 - 현재 원장 쿼리는 약 6,900자 — 컬럼을 늘릴 때 상한을 의식할 것(`OpenQuerySqlTest` 가 리소스 길이를 검증한다).
 - 링크드서버 장애 시 조회 전체가 실패하므로 `MedicalReceiptImportService` 가 `REQUIRES_NEW` + try/catch 로 격리한다.
-  실패하면 `batch_run_log.table_stats` 에 `list_medical_receipt_failed=1` 이 남고 시력교정 적재·성공 로그는 유지된다.
+  실패하면 시력교정 적재는 커밋하지만 성공 기준일은 갱신하지 않는다. `batch_run_log`는 `FAILED`,
+  `table_stats`에는 완료된 적재 건수와 `list_medical_receipt_failed=1`이 남고 실패 알림을 보낸다.
 
 ## 2. 숫자 규칙 (원형과 동일)
 
@@ -54,7 +55,12 @@
 
 - 도메인 `BatchOrchestrator.Domain.ACCOUNTING` → `batch/job/AccountingMartJob`. 범위 = **수납일**.
 - 순서: 시력교정(SOFTCRM 직결, 이 트랜잭션) → 진료 수납(의사랑, REQUIRES_NEW 격리) → `batch_watermark(accounting)`.
-- 자동: 매일 03:00 D-1 · 매월 1일 03:30 전월 (다른 도메인과 동일, min-year 가드 2026).
+- 자동: 매일 03:00 D-1 · 매월 1일 03:30 전월. 진료 수납은 하루 요청도 그 달 전체 행·집계를 함께 갱신한다.
+- 월별 보정 후 회계만 `reconcile-accounting-history`로 2023-01부터 전전월까지 다시 조회한다.
+  월 단위로 커밋하고 하나의 실행 로그·알림으로 합친다. 오래된 취소·정정·물리 삭제는 다음 월별 보정에서 반영된다.
+  회계의 원천 전표 재검산에만 적용하는 예외이며 다른 도메인의 `min-year` 확정값 보호는 유지한다.
+- 진료 월 집계는 조회 결과가 빈 달도 0으로 upsert한다. 2026년 이후는 해당 월 전체 행 교체와
+  `rows_complete=true` 저장을 같은 트랜잭션으로 처리한다. 실패하면 기존 행·집계·완료 표시는 모두 보존된다.
 - 초기 백필(관리자 화면 "회계 도메인만"): 시력교정 2023-01~, 진료 월집계 2023-01~(행은 2026-01 부터 실림). **월 단위로 나눠** 돌린다 —
   의사랑 원장 쿼리는 상관 서브쿼리가 많아 한 해를 한 번에 읽으면 길다.
 - 관측: `table_stats` 에 `list_vision_receipt` · `vision_no_item` · `vision_ratio_adjusted` · `mart_medical_receipt_monthly` ·
@@ -65,7 +71,7 @@
 | 메서드 | 경로 | 설명 |
 |---|---|---|
 | GET | `/medical-receipts?from&to` | 진료 수납 행 (≤366일). 화면이 필터·정렬·합계를 클라이언트에서 한다. |
-| GET | `/medical-receipts/monthly?years=&category=` | 진료 월별. 행이 있는 연도는 `list_medical_receipt` 재집계(구분 필터 가능), 그 전 연도는 `mart_medical_receipt_monthly`('전체' 만). |
+| GET | `/medical-receipts/monthly?years=&category=` | 진료 월별. `rows_complete=true`인 월은 행 재집계(구분 필터 가능), 나머지 월은 집계 마트('전체'만). 빈 완료 월은 0. |
 | GET | `/vision-receipts?from&to` | 시력교정 매출 행 (`itemAmounts` JSON 객체 포함). 매출 집계(피벗) 화면도 이 행을 접는다. |
 | GET | `/vision-receipts/monthly?years=` | 시력교정 월별 — 건수는 취소행 포함 행수, 금액은 순액. |
 | GET | `/status` | 적재 현황 — 화면 "데이터 기준 YYYY-MM-DD · from~to" 와 그래프 연도 후보. |
@@ -76,7 +82,7 @@
 
 - 시력교정 2023~2025 를 원형은 브라우저 용량 때문에 월집계만 남겼지만, 마트는 4년치 행(약 15만)을 모두 싣고 월별·피벗은 GROUP BY/화면 집계로 만든다.
   원형 스모크테스트가 "행 경로 = 집계 경로" 를 보장하므로 숫자는 같다.
-- 진료 매출 그래프의 2026 연도 비교 모드: 원형은 월집계(레거시 순액)를 썼지만, 여기서는 행이 있는 연도는 항상 행 재집계(실수납합계)를 쓴다 —
+- 진료 매출 그래프의 2026 연도 비교 모드: 원형은 월집계(레거시 순액)를 썼지만, 여기서는 월 전체 행 적재가 완료된 월은 행 재집계(실수납합계)를 쓴다 —
   단일/비교 모드에서 같은 해가 다른 숫자로 보이지 않게 하기 위해서다. 2023~2025 는 월집계뿐이라 원형과 동일.
 - "데이터 기준" 은 스냅샷 생성일 대신 마트 최종 적재일(`/status`) 을 쓴다.
 
@@ -85,4 +91,14 @@
 - 단위: `OpenQuerySqlTest` · `VisionReceiptAssemblerTest`(항목합 불변식·취소행·폴백·비율 보정·매입사·최근 수술) ·
   `MedicalMonthlyFolderTest`(2026-07 운영 실측 조각) · `AccountingMartJobTest`(의사랑 실패 격리) · `AccountingSqlResourceTest`.
 - 통합: `AccountingControllerIntegrationTest`(401/403/503/400).
+- PostgreSQL: `AccountingMartIntegrityIT`(부분 적재 폴백·빈 달 초기화·실패 롤백·상태 null·실패 이력·V68 마이그레이션).
+- 스케줄러: `AccountingBatchOrchestrationTest`(2023~ 월별 이력 보정·부분 실패 기록·배치 비활성).
 - 운영 대조: 2026-07 의사랑 원장 5,290+45건 · 시력교정 전표 3,033건(취소 93) — 원형 스냅샷(08-27/28 기준 5,334행 · 3,126행)과 이후 입력분만큼 차이.
+
+## 7. 정합성 수정 적용 시
+
+- 앱 기동 시 V68이 기존 월 집계에 `rows_complete BOOLEAN DEFAULT FALSE`를 추가한다. 기존 금액은 유지한다.
+- 기존 행의 월 전체 적재 여부는 증명할 수 없으므로, 월별 보정 전에는 '전체' 그래프에 월 집계값을 사용한다.
+  외래·입원·백내장 그래프는 완료 표시가 있는 월만 반환한다.
+- 배포 직후 구분 그래프까지 사용하려면 관리자 회계 배치로 2026년 이후 필요한 월을 월 단위 재적재한다.
+  정기 월별 보정에서도 자동 전환된다. 진료 수납 내역 조회는 기존 행을 계속 반환한다.

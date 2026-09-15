@@ -17,12 +17,12 @@ import java.util.Map;
 /**
  * 회계 도메인 마트 적재 잡 — 시력교정 매출(SOFTCRM) + 진료 수납(의사랑 링크드서버).
  *
- * <p>범위 = <b>수납일</b>. 두 리스트 마트는 그 범위를 delete+insert 하고, 진료 월집계는 범위가 걸친 달을 통째로 upsert 한다.
+ * <p>범위 = <b>수납일</b>. 시력교정은 요청 범위를 교체하고, 진료 수납은 범위가 걸친 월 전체 행·집계를 함께 갱신한다.
  * 초기 백필은 관리자 수동 실행으로 시력교정 2023-01-01~, 진료 2023-01-01~(행은 2026-01-01 부터 실림) 을 월 단위로 나눠 돌린다.
  *
  * <p>트랜잭션: 시력교정 적재 + 성공 로그는 이 트랜잭션(all-or-nothing). 진료 수납은 링크드서버(.240 IPLUS) 의존이라
- * {@link MedicalReceiptImportService} 가 REQUIRES_NEW 로 따로 커밋하고, 실패해도 시력교정 적재는 살린다
- * (EtcMartJob 의 드림렌즈 초안과 같은 구조). 실패는 table_stats 의 list_medical_receipt_failed=1 로 관측한다.
+ * {@link MedicalReceiptImportService} 가 REQUIRES_NEW 로 따로 커밋하고, 실패해도 시력교정 적재는 살린다.
+ * list_medical_receipt_failed=1 이면 오케스트레이터가 실패 이력·알림을 남기고 성공 기준일은 갱신하지 않는다.
  */
 @Slf4j
 @Component
@@ -58,12 +58,14 @@ public class AccountingMartJob {
         try {
             stats.putAll(medicalReceiptImportService.importRange(from, to));
         } catch (RuntimeException e) {
-            // 링크드서버 장애 등 — 진료 수납만 건너뛰고 배치는 성공 처리. Slack 은 log.error 로 받는다.
+            // 시력교정 트랜잭션은 커밋하고, 호출자가 이 플래그로 배치 실패를 기록한다.
             log.error("MedicalReceiptImport failed (skipped, vision load kept): {}", e.getMessage(), e);
             stats.put("list_medical_receipt_failed", 1);
         }
 
-        successLogRepository.upsert(MART_NAME, to);
+        if (!stats.containsKey("list_medical_receipt_failed")) {
+            successLogRepository.upsert(MART_NAME, to);
+        }
         log.info("AccountingMartJob done: {}", stats);
         return stats;
     }

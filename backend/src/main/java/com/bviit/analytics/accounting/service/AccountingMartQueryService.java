@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -22,9 +23,8 @@ import java.util.Set;
 /**
  * 회계 화면 조회 — Postgres 마트만 읽는다.
  *
- * <p>진료 매출 월별의 두 경로: 행 마트(list_medical_receipt · 2026~) 가 있는 연도는 행에서 재집계하고
- * (구분 필터가 걸리는 유일한 경로 · 화면 합계행과 같은 실수납합계 규칙), 행이 없는 연도(2023~2025) 는
- * 집계 마트(mart_medical_receipt_monthly · 레거시 순액 공식) 를 읽는다. 구분이 '전체' 가 아니면 집계 마트는 쓰지 않는다.
+ * <p>월 전체 행 적재가 완료된 월은 행에서 재집계하고, 나머지 월은 집계 마트를 읽는다.
+ * 구분이 '전체' 가 아니면 구분 정보가 없는 집계 마트는 쓰지 않는다.
  */
 @Service
 @Profile("postgres-mart")
@@ -50,26 +50,21 @@ public class AccountingMartQueryService implements AccountingReader {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public List<MedicalMonthlyPoint> getMedicalMonthly(List<Integer> years, String category) {
+        // 두 조회 사이 배치가 rows_complete를 전환해도 같은 스냅샷에서 월을 선택한다.
         String resolved = category == null || category.isBlank() ? CATEGORY_ALL : category;
         if (!CATEGORIES.contains(resolved)) {
             throw new IllegalArgumentException("category must be one of " + CATEGORIES);
         }
-        List<Integer> rowYears = martRepository.findMedicalRowYears();
-        List<Integer> fromRows = years.stream().filter(rowYears::contains).toList();
-        List<Integer> fromAggregate = years.stream().filter(y -> !rowYears.contains(y)).toList();
-
         List<MedicalMonthlyPoint> out = new ArrayList<>();
-        if (!fromRows.isEmpty()) {
-            String receiptType = switch (resolved) {
-                case CATEGORY_OUTPATIENT, CATEGORY_INPATIENT -> resolved;
-                default -> "";
-            };
-            out.addAll(martRepository.findMedicalMonthlyFromList(fromRows, receiptType, CATEGORY_CATARACT.equals(resolved)));
-        }
-        if (!fromAggregate.isEmpty() && CATEGORY_ALL.equals(resolved)) {
-            out.addAll(martRepository.findMedicalMonthly(fromAggregate));
+        String receiptType = switch (resolved) {
+            case CATEGORY_OUTPATIENT, CATEGORY_INPATIENT -> resolved;
+            default -> "";
+        };
+        out.addAll(martRepository.findMedicalMonthlyFromList(years, receiptType, CATEGORY_CATARACT.equals(resolved)));
+        if (CATEGORY_ALL.equals(resolved)) {
+            out.addAll(martRepository.findMedicalMonthly(years));
         }
         out.sort(Comparator.comparingInt(MedicalMonthlyPoint::year).thenComparingInt(MedicalMonthlyPoint::month));
         return out;

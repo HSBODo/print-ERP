@@ -23,7 +23,6 @@ public class AccountingMartRepository {
     private static final String SELECT_MEDICAL_SQL = SqlLoader.load("sql/mart/accounting/select-list-medical-receipt.sql");
     private static final String SELECT_MEDICAL_MONTHLY_SQL = SqlLoader.load("sql/mart/accounting/select-medical-receipt-monthly.sql");
     private static final String SELECT_MEDICAL_MONTHLY_FROM_LIST_SQL = SqlLoader.load("sql/mart/accounting/select-medical-receipt-monthly-from-list.sql");
-    private static final String SELECT_MEDICAL_YEARS_SQL = SqlLoader.load("sql/mart/accounting/select-medical-receipt-years.sql");
     private static final String SELECT_VISION_SQL = SqlLoader.load("sql/mart/accounting/select-list-vision-receipt.sql");
     private static final String SELECT_VISION_MONTHLY_SQL = SqlLoader.load("sql/mart/accounting/select-vision-receipt-monthly.sql");
     private static final String SELECT_STATUS_SQL = SqlLoader.load("sql/mart/accounting/select-accounting-status.sql");
@@ -38,12 +37,7 @@ public class AccountingMartRepository {
         return jdbc.queryForList(SELECT_MEDICAL_SQL, range(from, to));
     }
 
-    /** 행 데이터가 있는 연도 (오름차순). */
-    public List<Integer> findMedicalRowYears() {
-        return jdbc.queryForList(SELECT_MEDICAL_YEARS_SQL, new MapSqlParameterSource(), Integer.class);
-    }
-
-    /** 집계 마트(레거시 공식) — 구분 필터 없음. */
+    /** 월 전체 행 적재가 완료되지 않은 월의 집계 마트 — 구분 필터 없음. */
     public List<MedicalMonthlyPoint> findMedicalMonthly(List<Integer> years) {
         return jdbc.query(SELECT_MEDICAL_MONTHLY_SQL, new MapSqlParameterSource("years", years),
                 (rs, n) -> new MedicalMonthlyPoint(rs.getInt("year"), rs.getInt("month"), rs.getInt("count"),
@@ -74,9 +68,10 @@ public class AccountingMartRepository {
     public AccountingStatus findStatus() {
         return jdbc.queryForObject(SELECT_STATUS_SQL, new MapSqlParameterSource(), (rs, n) -> {
             int monthlyFromYear = rs.getInt("medicalMonthlyFromYear");
+            Integer firstYear = rs.wasNull() ? null : monthlyFromYear;
             return new AccountingStatus(
                     rs.getString("medicalFrom"), rs.getString("medicalTo"), rs.getString("medicalLoadedAt"),
-                    rs.wasNull() ? null : monthlyFromYear,
+                    firstYear,
                     rs.getString("visionFrom"), rs.getString("visionTo"), rs.getString("visionLoadedAt"));
         });
     }

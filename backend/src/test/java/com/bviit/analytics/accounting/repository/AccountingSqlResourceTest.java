@@ -56,7 +56,7 @@ class AccountingSqlResourceTest {
         assertThat(SqlLoader.load("sql/mart/accounting/select-list-vision-receipt.sql"))
                 .contains("\"id\"", "\"chartNo\"", "\"patientName\"", "\"itemAmounts\"", "\"taxable\"", "\"exempt\"");
         assertThat(SqlLoader.load("sql/mart/accounting/select-medical-receipt-monthly-from-list.sql"))
-                .contains(":years", ":receiptType", ":cataract", "serial_no = 98", "actual_paid + outstanding_recovered");
+                .contains(":years", ":receiptType", ":cataract", "serial_no = 98", "actual_paid + r.outstanding_recovered");
         assertThat(SqlLoader.load("sql/mart/accounting/select-vision-receipt-monthly.sql"))
                 .contains(":years", "\"count\"", "\"amount\"");
     }

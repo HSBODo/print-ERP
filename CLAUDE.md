@@ -132,6 +132,7 @@ project-root/
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
 - 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` 연동 · 배치 도메인 `ACCOUNTING` · ADMIN 전용)
+- 회계 정합성: 진료 행·집계는 월 전체를 함께 교체하고 `rows_complete`로 월별 조회 경로를 선택한다. 회계만 매월 2023년부터 과거 이력을 재검산하며, 진료 부분 실패는 성공 데이터 보존 + FAILED 이력으로 처리한다 (`docs/accounting/mart-and-api.md`).
 - 해외마케팅 3종 (접수리스트·통계·예약통계 — 2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 + 수기 입력 · CRM 매칭 · `/api/overseas-marketing` · MARKETING 부서 전용)
 
 ### 미구현 (플레이스홀더)

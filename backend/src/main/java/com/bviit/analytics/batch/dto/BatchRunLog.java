@@ -9,8 +9,8 @@ import java.util.Map;
 /**
  * batch_run_log 한 행. 잡 실행 시작 시 RUNNING 로 삽입 → 완료/실패 시 finish로 업데이트.
  *
- * tableStats: 어느 테이블에 몇 건 write 했는지의 breakdown. 성공 시에만 세팅되며,
- * 실패·진행중은 null. V17 이전 이력도 null.
+ * tableStats: 테이블별 적재 건수. 회계 부분 실패 시에도 완료된 적재와 실패 표시를 보존한다.
+ * 그 외 실패·진행중 및 V17 이전 이력은 null일 수 있다.
  */
 @Builder
 public record BatchRunLog(

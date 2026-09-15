@@ -1,4 +1,4 @@
--- 진료 매출 월별 (집계 마트) — 행 데이터가 없는 연도(2023~2025) 와 연도 비교 그래프용.
+-- 월 전체 행 적재가 완료되지 않은 월만 집계 마트로 보충한다.
 SELECT yr            AS "year",
        mo            AS "month",
        receipt_count AS "count",
@@ -8,4 +8,5 @@ SELECT yr            AS "year",
        non_covered   AS "nonCovered"
 FROM mart_medical_receipt_monthly
 WHERE yr IN (:years)
+  AND rows_complete = FALSE
 ORDER BY yr, mo

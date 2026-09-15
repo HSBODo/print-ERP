@@ -170,6 +170,24 @@ public class BatchOrchestrator {
             log.info("Batch skip oneday reconcile — target year {} < min-year {}",
                     onedayFrom.getYear(), minYear);
         }
+        // 회계는 원천 전표의 오래된 취소·삭제도 반영해야 한다. 전월은 위에서 처리했으므로 제외.
+        // 다른 도메인의 과거 확정값(min-year)은 재적재하지 않는다.
+        LocalDate historyFrom = LocalDate.of(2023, 1, 1);
+        LocalDate historyTo = from.minusDays(1);
+        if (!historyFrom.isAfter(historyTo)) {
+            runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, historyFrom, historyTo,
+                    "reconcile-accounting-history", () -> reconcileAccountingHistory(historyFrom, historyTo));
+        }
+    }
+
+    /** 월 단위 트랜잭션으로 메모리·잠금 범위를 제한한다. 전체 이력은 하나의 실행 로그에 기록. */
+    private Map<String, Integer> reconcileAccountingHistory(LocalDate from, LocalDate to) {
+        Map<String, Integer> stats = new LinkedHashMap<>();
+        for (YearMonth month = YearMonth.from(from); !month.isAfter(YearMonth.from(to)); month = month.plusMonths(1)) {
+            accountingMartJob.run(month.atDay(1), month.atEndOfMonth())
+                    .forEach((table, count) -> stats.merge(table, count, Integer::sum));
+        }
+        return stats;
     }
 
     /**
@@ -264,6 +282,13 @@ public class BatchOrchestrator {
         Instant startedAt = Instant.now();
         try {
             Map<String, Integer> tableStats = job.run();
+            if (tableStats.getOrDefault("list_medical_receipt_failed", 0) > 0) {
+                String message = "회계 진료 수납 적재 실패: 시력교정 등 완료된 적재는 보존됨. 해당 기간 재실행 필요.";
+                runLogRepository.fail(id, message, tableStats);
+                slackNotifier.notifyFailure(jobName, type, from, to, message,
+                        Duration.between(startedAt, Instant.now()));
+                return;
+            }
             runLogRepository.success(id, tableStats);
             slackNotifier.notifySuccess(jobName, type, from, to, tableStats,
                     Duration.between(startedAt, Instant.now()));

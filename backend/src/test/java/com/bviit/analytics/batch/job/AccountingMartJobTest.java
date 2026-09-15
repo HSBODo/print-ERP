@@ -16,11 +16,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 회계 배치 잡의 격리 규칙을 잠근다 — 의사랑(링크드서버) 적재가 실패해도 시력교정 적재와 성공 로그는 남는다.
+ * 의사랑 적재 실패 시 시력교정 적재는 보존하되 성공 기준일은 갱신하지 않는다.
  * 스프링 컨텍스트 없이 mock 4종.
  */
 class AccountingMartJobTest {
@@ -66,7 +67,7 @@ class AccountingMartJobTest {
     }
 
     @Test
-    void 의사랑_적재가_실패해도_시력교정_적재와_성공_로그는_유지되고_실패를_표시한다() {
+    void 의사랑_적재가_실패하면_시력교정은_유지하되_성공_로그는_갱신하지_않는다() {
         when(medicalImport.importRange(any(), any())).thenThrow(new IllegalStateException("linked server down"));
 
         Map<String, Integer> stats = job.run(FROM, TO);
@@ -74,6 +75,6 @@ class AccountingMartJobTest {
         assertThat(stats).containsEntry("list_vision_receipt", 1)
                 .containsEntry("list_medical_receipt_failed", 1);
         verify(writer).replaceVisionReceipts(eq(FROM), eq(TO), anyList());
-        verify(successLog).upsert(eq("accounting"), eq(TO));
+        verify(successLog, never()).upsert(any(), any());
     }
 }
