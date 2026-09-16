@@ -74,7 +74,10 @@ public class SecurityConfig {
                         // API 문서 — Swagger UI 런처(index.html) + openapi3.yaml + swagger-ui-dist 웹자원.
                         // 결정 근거: docs/api-docs-strategy.md §3(공개) · §4(회계 5+로그인 1 시범).
                         "/docs/**",
-                        "/webjars/**"
+                        "/webjars/**",
+                        // 관리자 가이드(정적 기획서) — 브라우저 새 탭에서 열려 JWT 헤더 첨부 불가.
+                        // 원본은 docs/_build_v2 (관리자 검토용). URL 은 사이드바 "관리자 → 가이드" 로만 노출.
+                        "/guide/**"
                 ).permitAll();
                 auth.requestMatchers("/api/auth/**").permitAll();
                 // 헬스체크 — Docker HEALTHCHECK·LB·업타임 모니터가 인증 없이 호출.

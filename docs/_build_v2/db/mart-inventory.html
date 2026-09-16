@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postgres 마트 인벤토리 — 비앤빛 Analytics</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#f6f6f7;--card:#fff;--line:#e8e8eb;--ink:#1f2328;--muted:#68707b;--muted2:#9298a1;--accent:#7c5cff;--accent-soft:#efebff;--radius:16px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.72;-webkit-font-smoothing:antialiased}
+/* 상단 탭바 · 좌측 목록은 sms.html 과 pages/*.html 의 것과 같은 값이다 —
+   문서가 바뀌어도 윗줄과 왼편이 같은 자리에 같은 모습으로 남아야 한다. */
+html,body{height:100%}body{display:flex;flex-direction:column}
+.tabbar{height:53px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 18px;background:#fff;border-bottom:1px solid var(--line);z-index:40;overflow-x:auto;overflow-y:hidden}
+.tabbar .tabs{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.tabbar .tab{border:1px solid transparent;background:none;text-decoration:none;font-family:inherit;font-size:14px;font-weight:600;line-height:1.35;color:var(--muted2);padding:6px 14px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.tabbar .tab:hover{color:var(--ink)}
+.tabbar .tab.active{color:var(--ink);background:#fff;border-color:var(--line);box-shadow:0 1px 2px rgba(16,18,29,.06)}
+.tabbar .beta{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:6px}
+.tabbar .sep{color:#d4d6db;font-size:13px;letter-spacing:1px;user-select:none}
+.shell{flex:1;min-height:0;display:flex}
+.sidenav{width:232px;flex-shrink:0;height:100%;overflow-y:auto;padding:26px 14px;border-right:1px solid var(--line);background:var(--bg)}
+.nav-title{margin:0 12px 14px;color:var(--muted2);font-size:13px;font-weight:800;letter-spacing:.02em}
+.sidenav nav{display:grid;gap:1px}.sidenav nav a{display:block;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:13.5px;font-weight:500;text-decoration:none}.sidenav nav a:hover{background:#efeff1;color:var(--ink)}.sidenav nav a.active{background:var(--accent-soft);color:#5b3fd1;font-weight:700}
+.main{flex:1;min-width:0;overflow-y:auto;padding:30px 34px 90px}
+/* 지표 요약 카드 — 본문 위에 자기 지표의 단위·날짜 기준·데이터 원천을 먼저 보인다. */
+.metric-summary{width:100%;max-width:1120px;margin:0 auto 16px;padding:20px 24px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.metric-summary .desc{margin:0 0 14px;font-size:15px;font-weight:650;color:var(--ink)}
+.metric-summary .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:0}
+.metric-summary .facts dt{font-size:11px;font-weight:700;color:var(--muted2);letter-spacing:.03em}
+.metric-summary .facts dd{margin:2px 0 0;font-size:13.5px;color:#414852}
+.metric-summary .flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:4px 0 2px}
+.metric-summary .step{min-width:122px;flex:1;padding:13px 14px;border:1px solid #e5e2f4;border-radius:11px;background:#faf9ff}
+.metric-summary .step .n{color:var(--accent);font-size:11px;font-weight:800}
+.metric-summary .step strong{display:block;margin-top:2px;font-size:14px}
+.metric-summary .step span{display:block;margin-top:3px;color:var(--muted2);font-size:11.5px;white-space:nowrap}
+.metric-summary .arrow{display:grid;place-items:center;flex:0 0 14px;color:#b8b2d7;font-size:15px}
+.metric-summary .alert{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe;font-size:13.5px;color:#514b69}.doc-card{width:100%;max-width:1120px;margin:0 auto;padding:42px 48px 50px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.markdown h1{margin:0 0 24px;font-size:29px;line-height:1.3;letter-spacing:-.025em}.markdown h2{margin:50px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:21px;line-height:1.4;letter-spacing:-.015em}.markdown h3{margin:32px 0 12px;font-size:17px;line-height:1.45}.markdown h4{margin:26px 0 10px;font-size:15px}.markdown p{margin:10px 0 16px;color:#414852;font-size:14.5px}.markdown strong{color:var(--ink)}
+.markdown a{color:#6246d2;text-decoration:none;font-weight:650}.markdown a:hover{text-decoration:underline}.markdown code{padding:2px 5px;border-radius:5px;background:#f1eff9;color:#543bc0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em;overflow-wrap:anywhere}
+.markdown pre{margin:18px 0 22px;padding:18px 20px;overflow:auto;border-radius:11px;background:#20242d;color:#eef1f6;line-height:1.6}.markdown pre code{padding:0;background:none;color:inherit;font-size:12.5px;white-space:pre}
+.markdown blockquote{margin:18px 0;padding:13px 16px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe}.markdown blockquote>:first-child{margin-top:0}.markdown blockquote>:last-child{margin-bottom:0}.markdown blockquote p{color:#514b69}
+.markdown ul,.markdown ol{margin:10px 0 18px;padding-left:24px;color:#414852;font-size:14.5px}.markdown li{margin:5px 0}.markdown hr{height:1px;margin:42px 0;border:0;background:var(--line)}
+.table-scroll{max-width:100%;margin:16px 0 24px;overflow:auto;border:1px solid var(--line);border-radius:11px}.markdown table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;line-height:1.55}.markdown th{padding:10px 12px;background:#f7f7f9;color:#505762;font-weight:750;white-space:nowrap}.markdown td{padding:10px 12px;border-top:1px solid var(--line);color:#424954;vertical-align:top}.markdown tr:hover td{background:#fcfcfd}
+.markdown details{margin:18px 0;padding:12px 15px;border:1px solid var(--line);border-radius:10px;background:#fcfcfd}.markdown summary{cursor:pointer;font-weight:750}.markdown details[open] summary{margin-bottom:14px}
+.pager{display:flex;justify-content:space-between;gap:16px;max-width:1120px;margin:18px auto 0}.pager a{color:#5b3fd1;font-size:13px;font-weight:700;text-decoration:none}.pager a:hover{text-decoration:underline}
+@media print{html,body{height:auto;display:block}.tabbar,.sidenav,.pager{display:none}.shell{display:block}.main{display:block;overflow:visible;padding:0}.doc-card,.metric-summary{max-width:none;border:0;border-radius:0;box-shadow:none;padding:0}.markdown h2,.markdown h3{break-after:avoid}.table-scroll{break-inside:avoid}}
+@media(max-width:820px){.shell{display:block}.sidenav{width:auto;height:auto;padding:14px;border-right:0;border-bottom:1px solid var(--line)}.sidenav nav{display:flex;gap:5px;overflow:auto;padding-bottom:2px}.sidenav nav a{white-space:nowrap}.nav-title{display:none}.main{padding:18px 12px 60px}.doc-card{padding:28px 20px 36px;border-radius:13px}.markdown h1{font-size:24px}.markdown h2{font-size:19px}.docbar{padding:0 14px}.crumb{display:none}}
+</style>
+</head>
+<body>
+  <div class="tabbar">
+    <div class="tabs">
+      <a class="tab" href="../prd.html#view-prd">대쉬보드 요구사항</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../지표정의/1-예약.html">지표 정의</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-flow">IA</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-menus">전메뉴 현황</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-expansion">26.10 이후 확장 전략</a>
+    </div>
+  </div>
+  <div class="shell">
+    <aside class="sidenav">
+      <div class="nav-title">DB 문서</div>
+      <nav><a class="" href="검사자리스트-컬럼정의.html">검사자리스트-컬럼정의</a>
+<a class="" href="예약통계_백내장-데이터소스-분석.html">예약통계_백내장-데이터소스-분석</a>
+<a class="" href="중단사유-분류-정의.html">중단사유-분류-정의</a>
+<a class="" href="지표정의.html">지표정의</a>
+<a class="active" href="mart-inventory.html">mart-inventory</a></nav>
+    </aside>
+    <main class="main">
+
+      <article class="doc-card">
+        <div class="markdown"><h1 id="postgres-마트-인벤토리">Postgres 마트 인벤토리</h1>
+<p>작성일: 2026-08-13 프로파일: <code>postgres-mart</code> (운영 표준) JDBC: <code>martJdbcTemplate</code> (Postgres) — 화면 조회는 여기만 사용</p>
+<p>이 문서는 <code>backend/src/main/resources/sql/mart/V*.sql</code> 마이그레이션이 만드는 모든 테이블·뷰와 JPA 엔티티가 만드는 테이블을 도메인별로 정리한다. 각 항목의 <strong>용도</strong> · <strong>원천/적재 경로</strong> · <strong>주요 컨슈머</strong> 를 한눈에.</p>
+<hr>
+<h2 id="총계">총계</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">종류</th><th style="text-align:left">개수</th></tr></thead><tbody><tr><td style="text-align:left">마트 테이블 (<code>mart_*</code>, <code>list_*</code>, 기타 관리 테이블)</td><td style="text-align:left">33</td></tr><tr><td style="text-align:left">마트 뷰 (<code>v_*</code>)</td><td style="text-align:left">3</td></tr><tr><td style="text-align:left">JPA 테이블</td><td style="text-align:left">3</td></tr><tr><td style="text-align:left"><strong>합계</strong></td><td style="text-align:left"><strong>39</strong></td></tr></tbody></table></div>
+<hr>
+<h2 id="1-공용-배치-인프라">1. 공용 배치 인프라</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>batch_run_log</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V1</td><td style="text-align:left">관리자 &gt; 데이터 배치 관리 · (전 페이지 헤더의 배치 성공 시각)</td><td style="text-align:left">배치 실행 이력 (run_type · status · table_stats). <code>/admin/batch</code> 페이지 및 화면의 <code>useBatchLastSuccess</code> 훅 소스.</td></tr><tr><td style="text-align:left"><code>batch_watermark</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V1</td><td style="text-align:left">— (배치 내부용)</td><td style="text-align:left">각 도메인 잡의 최종 성공 시점 저장. 재실행 시점 관리.</td></tr></tbody></table></div>
+<hr>
+<h2 id="2-수술-도메인">2. 수술 도메인</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_surgery_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V2</td><td style="text-align:left">수술 &gt; 수술 건수 · 리포트 &gt; 월간 레포트</td><td style="text-align:left">시력교정·백내장·전체 월별 수술 건수. <strong>수술 건수 페이지</strong> 및 월간 레포트 소스.</td></tr><tr><td style="text-align:left"><code>mart_surgery_daily</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V2</td><td style="text-align:left">수술 &gt; 수술별 비중 · 리포트 &gt; 주차 레포트</td><td style="text-align:left">일별 수술 건수 (subtype 분해). <strong>수술별 비중</strong> 페이지 · 주차 레포트 소스.</td></tr><tr><td style="text-align:left"><code>list_surgery</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V2</td><td style="text-align:left">수술 &gt; 수술자 리스트</td><td style="text-align:left">수술자 리스트 원본 행. <strong>수술자 리스트 페이지</strong> + <code>v_all_surgery_list</code> UNION base.</td></tr><tr><td style="text-align:left"><code>list_reoperation</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V36</td><td style="text-align:left">수술 &gt; 수술자 리스트 (재수술 검토 모달) · 마케팅 &gt; 예약 퍼널 (reop 단계 EXISTS)</td><td style="text-align:left">재수술 후보 (RE_OPERATION 원본 + 자동판정 + 제외사유 + is_lens). <strong>재수술 검토 모달</strong> + <code>v_all_surgery_list</code> UNION base + 예약 퍼널 재수술 코호트 판정.</td></tr><tr><td style="text-align:left"><code>v_all_surgery_list</code></td><td style="text-align:left">VIEW</td><td style="text-align:left">V37</td><td style="text-align:left">수술 &gt; 수술자 리스트 · 리포트 &gt; 월간/주차 레포트</td><td style="text-align:left"><code>list_surgery</code> + <code>list_reoperation</code> + <code>reoperation_decision</code> UNION. 눈 단위로 펼치고 op_type 분류 부여. <strong>전체 수술 리스트·주차 레포트·수술 상세표</strong> 소스.</td></tr></tbody></table></div>
+<hr>
+<h2 id="3-예약-도메인">3. 예약 도메인</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_reservation_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V3</td><td style="text-align:left">예약 &gt; 예약 건수 (메뉴 숨김·라우트 유지)</td><td style="text-align:left">월별 수술/외래/드림렌즈 예약 건수. <code>list_reservation_all</code> 을 월로 접어 만듦. <strong>예약 건수 페이지</strong>(메뉴 숨김, 라우트 유지).</td></tr><tr><td style="text-align:left"><code>mart_reservation_overall_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V12</td><td style="text-align:left">예약 &gt; 예약 종합 · 리포트 &gt; 월간/주차 레포트</td><td style="text-align:left">월별 예약 종합·콜·온라인. <strong>예약 종합 페이지</strong> · 월간/주차 레포트. 2024·2025는 골든시드(V12), 2026-06+는 채널 마트 SUM.</td></tr><tr><td style="text-align:left"><code>mart_reservation_kakao_daily</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V3</td><td style="text-align:left">예약 &gt; 예약자 리스트 (kakaoCount 참고)</td><td style="text-align:left">카카오(해피톡) 일별 건수 — 예약자 리스트 화면의 kakaoCount 참고 표시.</td></tr><tr><td style="text-align:left"><code>list_reservation</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V3 (+V39–V50 ALTER)</td><td style="text-align:left">예약 &gt; 예약자 리스트 · (전환&amp;성공률 &gt; 예약률 EXISTS 후보)</td><td style="text-align:left">RESERVE_FLAG=&#39;M&#39; 검사 예약 명단 (풍부한 컬럼: name, channel, doctor, memo 등). <strong>예약자 리스트 페이지</strong> · 시력교정 예약률 후보 EXISTS 조회.</td></tr><tr><td style="text-align:left"><code>list_reservation_all</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V53</td><td style="text-align:left">— (배치·집계 전용, 화면 조회 없음)</td><td style="text-align:left">수술(O)/외래(JINRYO=2)/드림렌즈(D) 얇은 리스트. <code>mart_reservation_monthly</code> 재집계 원천. <strong>배치·집계 전용</strong> (화면 조회 없음).</td></tr><tr><td style="text-align:left"><code>mart_list_reservation_homepage</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V21</td><td style="text-align:left">예약 &gt; 예약자 리스트_홈페이지 · 예약 &gt; 예약 종합</td><td style="text-align:left">레거시 홈페이지 예약 raw (홈페이지 DB → 마트 이관본). <strong>예약자 리스트_홈페이지 페이지</strong> + 예약 종합의 홈페이지 몫.</td></tr><tr><td style="text-align:left"><code>mart_reservation_stats_system_daily</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V11</td><td style="text-align:left">예약 &gt; 예약통계_시력교정 · 예약 &gt; 예약 종합</td><td style="text-align:left">시력교정 채널 통계 (CH01~CH24 · 인콜·TM·네이버·카카오·홈페이지 등). <strong>예약통계_시력교정 페이지</strong> + 예약 종합 계산. 2026 H1 시드(V19).</td></tr><tr><td style="text-align:left"><code>mart_reservation_stats_cataract_daily</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V11</td><td style="text-align:left">예약 &gt; 예약통계_백내장 · 예약 &gt; 예약 종합</td><td style="text-align:left">백내장 채널 통계 (인콜·TM·카카오·온라인). <strong>예약통계_백내장 페이지</strong> + 예약 종합 계산. 2026 H1 시드(V20).</td></tr><tr><td style="text-align:left"><code>reservation_stats_period_lock</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V11</td><td style="text-align:left">— (배치 방어용)</td><td style="text-align:left">월 확정(잠금) 상태 — 배치 덮어쓰기 방어. V19·V20 seed 로 2026-01~06 잠금 등록.</td></tr><tr><td style="text-align:left"><code>reservation_stats_override</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V11</td><td style="text-align:left">예약 &gt; 예약통계_시력교정/백내장 (수기 보정 저장)</td><td style="text-align:left">예약통계 셀 수기 보정 이력 (INSERT-only 감사 로그). <code>ReservationStatsOverrideCellEditService</code>.</td></tr><tr><td style="text-align:left"><code>reservation_channel_staff</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V43</td><td style="text-align:left">— (<code>v_reservation_channel</code> LEFT JOIN base)</td><td style="text-align:left">예약 채널 스태프 매핑 (담당자 → 채널). <code>v_reservation_channel</code> LEFT JOIN base.</td></tr><tr><td style="text-align:left"><code>v_reservation_channel</code></td><td style="text-align:left">VIEW</td><td style="text-align:left">V43 (+V48/V50 확장)</td><td style="text-align:left">마케팅 &gt; 예약 퍼널 · 마케팅 &gt; 채널별 수익성</td><td style="text-align:left"><code>list_reservation</code> + <code>reservation_channel_staff</code> 파생. 채널 분류 + op_type + 결제금액 컬럼. <strong>채널 퍼널·채널×op_type·채널별 렌즈원가</strong>.</td></tr></tbody></table></div>
+<hr>
+<h2 id="4-검사-도메인">4. 검사 도메인</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_examination_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V4</td><td style="text-align:left">검사 &gt; 시술별</td><td style="text-align:left">시술별 검사수 월별 (vision · dreamlens · cataract). <strong>시술별 페이지</strong>.</td></tr><tr><td style="text-align:left"><code>mart_procedure_exam_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V4</td><td style="text-align:left">검사 &gt; 검사건수 · 리포트 &gt; 월간 레포트</td><td style="text-align:left">검사수 월별 (전체 + 원데이). <strong>검사건수 페이지</strong> + 월간 레포트.</td></tr><tr><td style="text-align:left"><code>list_exam</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V4 (+V26 one_day)</td><td style="text-align:left">검사 &gt; 검사자 리스트 · (전환&amp;성공률 &gt; 전환율 후보)</td><td style="text-align:left">시력교정 검사자 명단 (49필드). <strong>검사자 리스트 페이지</strong> + <code>v_all_exam_list</code> UNION base + 시력교정 상담성공률 후보.</td></tr><tr><td style="text-align:left"><code>list_cataract_exam</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V4 (+V23 classification, V32 one_day)</td><td style="text-align:left">검사 &gt; 백내장 검사자 리스트</td><td style="text-align:left">백내장 검사자 명단. <strong>백내장 검사자 리스트 페이지</strong> + <code>v_all_exam_list</code> UNION base.</td></tr><tr><td style="text-align:left"><code>v_all_exam_list</code></td><td style="text-align:left">VIEW</td><td style="text-align:left">V34 (+V52 확장)</td><td style="text-align:left">검사 &gt; 전체 검사자 리스트 · 리포트 &gt; 월간/주차 레포트</td><td style="text-align:left"><code>list_exam</code> + <code>list_cataract_exam</code> UNION + 파생 컬럼 (exam_group · cataract_class · exam_type · intro_type · job_bucket · stop_yn · stop_reason_bucket). <strong>전체 검사자 리스트 페이지</strong> + 월간/주차 레포트 검사 지표 원천.</td></tr></tbody></table></div>
+<hr>
+<h2 id="5-상담전환-도메인">5. 상담·전환 도메인</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_consultation_rate_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V5</td><td style="text-align:left">전환&amp;성공률 &gt; 전환율 · 리포트 &gt; 월간/주차 레포트</td><td style="text-align:left">상담성공률 월별 (vision + cataract, wide 스키마 12+컬럼). <strong>전환율 페이지</strong> + 월간/주차 레포트.</td></tr><tr><td style="text-align:left"><code>mart_reservation_rate_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V5</td><td style="text-align:left">전환&amp;성공률 &gt; 예약률 · 리포트 &gt; 월간/주차 레포트</td><td style="text-align:left">예약률 월별 (yr,mo,category=&#39;vision&#39;/&#39;cataract&#39; long). <strong>예약률 페이지</strong> + 월간/주차 레포트.</td></tr><tr><td style="text-align:left"><code>mart_stop_reason_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V5</td><td style="text-align:left">전환&amp;성공률 &gt; 중단 사유 · 리포트 &gt; 월간/주차 레포트</td><td style="text-align:left">중단 사유 7버킷 월별. <strong>중단 사유 페이지</strong> + 월간/주차 레포트.</td></tr></tbody></table></div>
+<p>⚠️ <strong>의미 겹치는 곳</strong>: consultation_rate 와 reservation_rate 가 vision·cataract 별 <code>exam_count</code>·<code>surgery_booked</code> 를 양쪽 다 담음. 화면 컨슈머(전환율 vs 예약률)가 달라 통합하지 않고 유지.</p>
+<hr>
+<h2 id="6-외래-도메인">6. 외래 도메인</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_outpatient_count_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V6</td><td style="text-align:left">외래 &gt; 외래수 · 리포트 &gt; 월간/주차 레포트</td><td style="text-align:left">월별 외래수. <strong>외래수 페이지</strong> + 월간/주차 레포트. <code>list_outpatient</code> 를 월로 접어 만듦.</td></tr><tr><td style="text-align:left"><code>list_outpatient</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V25</td><td style="text-align:left">외래 &gt; 외래수 리스트</td><td style="text-align:left">외래(F) + 내원/퇴원(I/H) 행. <strong>외래수 리스트 페이지</strong> + 외래수 일별 집계 원천.</td></tr></tbody></table></div>
+<hr>
+<h2 id="7-종합지표-도메인">7. 종합지표 도메인</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_overall_exam_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V10</td><td style="text-align:left">검사 &gt; 월별 검사자 종합지표 (관리자 전용)</td><td style="text-align:left">월별 검사자 종합지표 (30+지표, 유입·직업·수술 등). <strong>월별 검사자 종합지표 페이지</strong> (관리자 전용).</td></tr><tr><td style="text-align:left"><code>mart_overall_exam_weekly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V7</td><td style="text-align:left">검사 &gt; 주간 검사자 종합지표 (관리자 전용)</td><td style="text-align:left">주간 검사자 종합지표 (&quot;그 달의 주차&quot; 기준). <strong>주간 검사자 종합지표 페이지</strong> (관리자 전용).</td></tr></tbody></table></div>
+<p>⚠️ 주의: 여기서 말하는 &quot;주간&quot;은 <code>mart_weekly_report</code> 의 ISO 8601 주차와 다른 개념 (월 경계로 자른 &quot;그 달의 n주차&quot;). CLAUDE.md 참조.</p>
+<hr>
+<h2 id="8-리포트-도메인">8. 리포트 도메인</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_weekly_report</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V28 (+V29·V38·V54 진화, V27·V30·V31·V38·V55 시드)</td><td style="text-align:left">리포트 &gt; 주차 레포트</td><td style="text-align:left">주차 레포트 원시 집계 30여 컬럼 (예약·유입·검사·수술·외래·드림렌즈 신규/FU 등). <strong>주차 레포트 페이지</strong> 유일 조회 소스. 2025 골든시드(V55) + 2026+ 배치.</td></tr><tr><td style="text-align:left"><code>mart_exam_count_by_class</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V28</td><td style="text-align:left">리포트 &gt; 월간 레포트 (고객분류별 도표)</td><td style="text-align:left">고객분류별 월별 검사수 (9계열 · 내원동기 대분류). <strong>월간 레포트 고객분류별 도표</strong>. 2026+ 배치 (24·25 없음).</td></tr></tbody></table></div>
+<hr>
+<h2 id="9-기타-매출관리자-입력">9. 기타 (매출·관리자 입력)</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">종류</th><th style="text-align:left">V</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>mart_b2b_revenue_monthly</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V8</td><td style="text-align:left">기타 &gt; B2B 매출 (메뉴 숨김·라우트 유지)</td><td style="text-align:left">B2B 매출 월별. <strong>B2B 매출 페이지</strong> (기타 메뉴, 메뉴 숨김).</td></tr><tr><td style="text-align:left"><code>ad_spend</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V51</td><td style="text-align:left">마케팅 &gt; 채널별 수익성 (화면 입력)</td><td style="text-align:left">채널별 수익성 광고비 입력. <strong>채널별 수익성 페이지</strong> (관리자가 화면에서 입력).</td></tr><tr><td style="text-align:left"><code>lens_cost</code></td><td style="text-align:left">TABLE</td><td style="text-align:left">V51</td><td style="text-align:left">마케팅 &gt; 채널별 수익성 (화면 입력)</td><td style="text-align:left">채널별 수익성 렌즈 원가 입력. 상동.</td></tr></tbody></table></div>
+<hr>
+<h2 id="10-jpa-엔티티-hibernate-ddl-auto-update">10. JPA 엔티티 (Hibernate <code>ddl-auto: update</code>)</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">엔티티</th><th style="text-align:left">사이드메뉴</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>users</code></td><td style="text-align:left"><code>User</code></td><td style="text-align:left">— (로그인/인증)</td><td style="text-align:left">로그인·인증 (JWT). <code>AuthController</code> · <code>SecurityConfig</code>.</td></tr><tr><td style="text-align:left"><code>dreamlens_ledger</code></td><td style="text-align:left"><code>DreamlensLedgerEntry</code></td><td style="text-align:left">기타 &gt; 드림렌즈 장부</td><td style="text-align:left">드림렌즈 장부 (직접 입력 테이블). <strong>드림렌즈 장부 페이지</strong> CRUD · <code>DreamlensLedgerSeeder</code> 초기 시드.</td></tr><tr><td style="text-align:left"><code>reoperation_decision</code></td><td style="text-align:left"><code>ReoperationDecision</code></td><td style="text-align:left">수술 &gt; 수술자 리스트 (재수술 검토 모달)</td><td style="text-align:left">재수술 포함/제외 담당자 확정 판정. <strong>재수술 검토 모달</strong> 저장 · <code>v_all_surgery_list</code> LEFT JOIN 오버레이.</td></tr></tbody></table></div>
+<hr>
+<h2 id="뷰-의존성-그래프">뷰 의존성 그래프</h2>
+<pre><code>v_all_exam_list       ← list_exam + list_cataract_exam
+v_all_surgery_list    ← list_surgery + list_reoperation + reoperation_decision (JPA)
+v_reservation_channel ← list_reservation + reservation_channel_staff</code></pre>
+<ul><li><strong>Base 테이블 = 도메인 원천</strong> (배치가 delete+insert 로 적재)</li><li><strong>뷰 = 화면·집계용 파생 규칙 SSOT</strong> — 규칙이 바뀌면 뷰 한 곳만 고침</li></ul>
+<hr>
+<h2 id="배치-시드-요약">배치 · 시드 요약</h2>
+<ul><li><strong>자동 배치</strong>: <code>BatchOrchestrator.runDaily</code> (매일 03:00 D-1) + <code>runReservationStatsIntraday</code> (매일 10:00 D-1) + <code>runMonthlyReconcile</code> (매월 1일 03:30 전월).</li><li><strong>min-year 가드</strong>: <code>batch.mart.min-year=2026</code> — 24·25 시드 보호. 각 도메인 잡이 이 이하 write 차단.</li><li><strong>골든 시드</strong> (담당자 확정값 · 배치가 덮지 않는 구간):</li><li><code>mart_overall_exam_monthly</code> — V14 (24·25) + V16 (26 cataract) + V27 (26-01~05)</li><li><code>mart_reservation_overall_monthly</code> — V12 (24·25) + V24 (26-01~05)</li><li><code>mart_consultation_rate_monthly</code> — V18 (24·25) + V27 (26-01~05)</li><li><code>mart_reservation_rate_monthly</code> — V13 (24·25) + V27 (26-01~05)</li><li><code>mart_surgery_monthly</code> — V15 (24·25) + V35 (26-01~05)</li><li><code>mart_examination_monthly</code> — V22 (26-01~05 백내장 골든)</li><li><code>mart_weekly_report</code> — V27·V30·V31·V38 (26-01~05·26 부분) + V55 (2025 전 구간)</li><li><code>mart_reservation_stats_system_daily</code> — V19 (26 H1)</li><li><code>mart_reservation_stats_cataract_daily</code> — V20 (26 H1)</li></ul>
+<hr>
+<h2 id="데이터-흐름">데이터 흐름</h2>
+<pre><code>[MSSQL 운영 DB]
+    ↓ (배치 시점 SSH 터널)
+    ↓
+[Postgres 마트] ← 화면은 여기만 읽음
+    ↓
+[React 화면]</code></pre>
+<p><strong>화면 조회 시 MSSQL·홈페이지 DB 직접 접근 없음.</strong> (2026-08 감사 확인) 예외:</p>
+<ul><li>관리자 진단(<code>diagnostics/*</code>) 엔드포인트 — mart vs MSSQL 비교 목적</li><li>아이리더 검사통계 페이지 — 별도 <code>eoeisJdbcTemplate</code> 소스</li></ul>
+<hr>
+<h2 id="참고-문서">참고 문서</h2>
+<ul><li><code>CLAUDE.md</code> — 프로젝트 표준·통계 페이지 목록</li><li><code>docs/databatch/strategy.md</code> — 배치 재적재 전략</li><li><code>docs/db/tables/</code> — MSSQL 원본 테이블 카탈로그</li><li><code>docs/db/지표정의.md</code> — 지표별 정의·계산 규칙</li><li><code>docs/db/중단사유-분류-정의.md</code> — 중단사유 7버킷 매핑</li></ul></div>
+      </article>
+      <nav class="pager" aria-label="이전 및 다음 문서"><span></span><span></span></nav>
+    </main>
+  </div>
+</body>
+</html>

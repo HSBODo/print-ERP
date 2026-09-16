@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm ci
 
 COPY frontend/ ./
+# 관리자 가이드 정적 파일 — prebuild 스크립트가 ../docs/_build_v2 를 public/guide 로 복사한다.
+COPY docs/_build_v2 /workspace/docs/_build_v2
 RUN npm run build
 
 # ─────────────────────────────────────────────────────────────

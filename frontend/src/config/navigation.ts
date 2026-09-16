@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Home, CalendarCheck, Microscope, Stethoscope, Syringe,
   Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
-  Building2, MessageSquare, Landmark, Globe2,
+  Building2, MessageSquare, Landmark, Globe2, BookOpen,
 } from 'lucide-react'
 
 import { matchesDepartment, type AuthUser, type UserDepartment } from '@/stores/auth-session'
@@ -41,6 +41,11 @@ export interface MenuItem {
    * admin-section 트리 안 항목은 rawMenuItems 정의 이후 자동 마킹된다.
    */
   adminReal?: boolean
+  /**
+   * true 이면 SPA 라우팅이 아니라 브라우저 새 탭으로 열림. 정적 HTML(가이드 등) 등
+   * TanStack Router 로 처리할 수 없는 링크에 사용.
+   */
+  external?: boolean
   kind?: 'section' | 'group'
 }
 
@@ -397,7 +402,17 @@ const rawMenuItems: MenuItem[] = [
     icon: Wrench,
     kind: 'section',
     adminOnly: true,
-    children: kids('batch-management', 'account-management'),
+    children: [
+      ...kids('batch-management', 'account-management'),
+      // 정적 기획서(docs/_build_v2) 를 frontend/public/guide 로 번들. 새 탭에서 열린다.
+      {
+        id: 'guide',
+        label: '가이드',
+        href: '/guide/prd.html',
+        icon: BookOpen,
+        external: true,
+      },
+    ],
   },
 ]
 
