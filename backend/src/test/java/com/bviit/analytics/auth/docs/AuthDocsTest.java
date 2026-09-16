@@ -29,14 +29,14 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * /api/auth/login 문서화 — 자격증명은 자리표시자만 노출한다(전략 §3).
  * AuthService 를 목킹해 실제 사용자·비밀번호 검증 없이 카나리 응답을 반환한다.
+ *
+ * 파라미터/헤더/필드는 ResourceSnippetParameters.builder 로 전달해야 OpenAPI 스키마에 반영된다.
  */
 @SpringBootTest(properties = {
         "app.jwt.secret=test-jwt-secret-value-for-auth-docs-tests-1234567890",
@@ -75,22 +75,22 @@ class AuthDocsTest {
                 .andDo(document("auth-login",
                         preprocessRequest(modifyUris().host("analytics.bnviit.com").removePort(), prettyPrint()),
                         preprocessResponse(prettyPrint()),
-                        requestFields(
-                                fieldWithPath("loginId").description("로그인 ID (소문자 자동 변환)"),
-                                fieldWithPath("password").description("비밀번호")),
-                        responseFields(
-                                fieldWithPath("success").description("요청 성공 여부 (true)"),
-                                fieldWithPath("data.token").description("JWT Bearer 토큰. 이후 요청은 `Authorization: Bearer <token>` 헤더 필요"),
-                                fieldWithPath("data.user.id").description("사용자 PK"),
-                                fieldWithPath("data.user.loginId").description("로그인 ID"),
-                                fieldWithPath("data.user.email").description("이메일"),
-                                fieldWithPath("data.user.name").description("이름"),
-                                fieldWithPath("data.user.role").description("Role — ADMIN · DIRECTOR · MANAGER · STAFF"),
-                                fieldWithPath("data.user.department").description("Department — ALL · MEDICAL · MARKETING · OVERSEAS_MARKETING")),
                         resource(ResourceSnippetParameters.builder()
                                 .tag("Auth")
                                 .summary("로그인 (JWT 발급)")
                                 .description("아이디·비밀번호로 Bearer 토큰을 발급받는다. 실계정은 관리자에게 문의.")
+                                .requestFields(
+                                        fieldWithPath("loginId").description("로그인 ID (소문자 자동 변환)"),
+                                        fieldWithPath("password").description("비밀번호"))
+                                .responseFields(
+                                        fieldWithPath("success").description("요청 성공 여부 (true)"),
+                                        fieldWithPath("data.token").description("JWT Bearer 토큰. 이후 요청은 `Authorization: Bearer <token>` 헤더 필요"),
+                                        fieldWithPath("data.user.id").description("사용자 PK"),
+                                        fieldWithPath("data.user.loginId").description("로그인 ID"),
+                                        fieldWithPath("data.user.email").description("이메일"),
+                                        fieldWithPath("data.user.name").description("이름"),
+                                        fieldWithPath("data.user.role").description("Role — ADMIN · DIRECTOR · MANAGER · STAFF"),
+                                        fieldWithPath("data.user.department").description("Department — ALL · MEDICAL · MARKETING · OVERSEAS_MARKETING"))
                                 .requestSchema(Schema.schema("LoginRequest"))
                                 .responseSchema(Schema.schema("LoginResponse"))
                                 .build())));
