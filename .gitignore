@@ -34,7 +34,3 @@ docker-compose.override.yml
 # API 문서 스펙 — ./gradlew test openapi3 가 매 빌드마다 새로 만드는 산출물.
 # 배포 파이프라인·전략은 docs/api-docs-strategy.md 참조.
 backend/src/main/resources/static/docs/openapi3.yaml
-
-# 관리자 가이드 — frontend 빌드 시 docs/_build_v2 에서 동기화(prebuild 스크립트).
-# 원본은 docs/_build_v2 (커밋됨). 여기 두면 중복이라 배제.
-frontend/public/guide/

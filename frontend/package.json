@@ -4,9 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "sync:guide": "rm -rf public/guide && mkdir -p public/guide && cp -R ../docs/_build_v2/. public/guide/ && find public/guide -name '.DS_Store' -delete",
-    "predev": "npm run sync:guide",
-    "prebuild": "npm run sync:guide",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
