@@ -404,13 +404,15 @@ const rawMenuItems: MenuItem[] = [
     adminOnly: true,
     children: [
       ...kids('batch-management', 'account-management'),
-      // 정적 기획서(docs/_build_v2) 를 frontend/public/guide 로 번들. 새 탭에서 열린다.
+      // 정적 기획서(frontend/public/guide) — 새 탭에서 열린다.
+      // adminOnly=true 를 명시해야 배지가 뜬다. adminReal 은 markAdminSectionSubtree 가 자동으로 붙여 준다.
       {
         id: 'guide',
         label: '가이드',
         href: '/guide/prd.html',
         icon: BookOpen,
         external: true,
+        adminOnly: true,
       },
     ],
   },
