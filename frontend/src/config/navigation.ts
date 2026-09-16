@@ -414,6 +414,15 @@ const rawMenuItems: MenuItem[] = [
         external: true,
         adminOnly: true,
       },
+      // Swagger UI — backend static /docs/index.html. Vite dev 는 vite.config.ts 의 /docs 프록시 경유.
+      {
+        id: 'api-docs',
+        label: 'API 문서',
+        href: '/docs/',
+        icon: FileText,
+        external: true,
+        adminOnly: true,
+      },
     ],
   },
 ]
