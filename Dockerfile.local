@@ -46,13 +46,18 @@ RUN --mount=type=secret,id=nexus_id \
         -PnexusPassword="$(cat /run/secrets/nexus_pw 2>/dev/null || true)" \
     || true
 
-# 2) 소스 복사 후 bootJar 빌드.
+# 2) 소스 복사 후 test → openapi3 → bootJar.
+#   - test: 유닛 테스트 (Testcontainers 필요한 *IT 는 env 가드로 자동 스킵). 실패 시 이미지 빌드 실패.
+#   - openapi3: 문서화 테스트가 만든 스니펫으로 OpenAPI 3 스펙 생성 → copyOpenApiToResources 가
+#     src/main/resources/static/docs/openapi3.yaml 로 복사 → /docs/openapi3.yaml 로 서빙된다.
+#   - bootJar: mustRunAfter 로 copy 뒤에 오도록 build.gradle 에서 강제. 그대로 이미지에 임베드.
+# 관련: docs/api-docs-strategy.md
 COPY backend/ ./
 COPY --from=frontend-builder /workspace/frontend/dist /workspace/frontend/dist
 RUN --mount=type=secret,id=nexus_id \
     --mount=type=secret,id=nexus_pw \
     --mount=type=cache,target=/root/.gradle,sharing=locked \
-    ./gradlew --no-daemon --build-cache clean bootJar -x test \
+    ./gradlew --no-daemon --build-cache clean openapi3 bootJar \
         -PnexusUsername="$(cat /run/secrets/nexus_id 2>/dev/null || true)" \
         -PnexusPassword="$(cat /run/secrets/nexus_pw 2>/dev/null || true)"
 

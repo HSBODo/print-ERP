@@ -70,7 +70,11 @@ public class SecurityConfig {
                         "/manifest.webmanifest",
                         "/site.webmanifest",
                         "/apple-touch-icon.png",
-                        "/error"
+                        "/error",
+                        // API 문서 — Swagger UI 런처(index.html) + openapi3.yaml + swagger-ui-dist 웹자원.
+                        // 결정 근거: docs/api-docs-strategy.md §3(공개) · §4(회계 5+로그인 1 시범).
+                        "/docs/**",
+                        "/webjars/**"
                 ).permitAll();
                 auth.requestMatchers("/api/auth/**").permitAll();
                 // 헬스체크 — Docker HEALTHCHECK·LB·업타임 모니터가 인증 없이 호출.

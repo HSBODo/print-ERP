@@ -2,6 +2,9 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.0'
 	id 'io.spring.dependency-management' version '1.1.7'
+	// API 문서화 — 테스트가 캡처한 요청/응답 → OpenAPI 3 스펙(build/api-spec/openapi3.yaml).
+	// 관련 설계: docs/api-docs-strategy.md
+	id 'com.epages.restdocs-api-spec' version '0.19.4'
 }
 
 group = 'com.bviit'
@@ -65,9 +68,16 @@ dependencies {
 	runtimeOnly 'org.xerial:sqlite-jdbc:3.47.1.0'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.5.1'
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	// Swagger UI 정적 자산 — /webjars/swagger-ui-dist/5.20.0/* 로 Spring Boot 가 자동 서빙.
+	// src/main/resources/static/docs/index.html 이 이 자산으로 /docs/openapi3.yaml 을 렌더한다.
+	implementation 'org.webjars.npm:swagger-ui-dist:5.20.0'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	// REST Docs (MockMvc) + restdocs-api-spec — 테스트가 실제 요청/응답을 캡처해 OpenAPI 스펙으로 생성.
+	// 관련 설계: docs/api-docs-strategy.md
+	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+	testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.19.4'
 	testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
 	testImplementation 'org.testcontainers:postgresql:1.20.4'
 	testCompileOnly 'org.projectlombok:lombok'
@@ -77,9 +87,15 @@ dependencies {
     implementation 'com.visuworks.lib:slack-logger:1.0.0'
 }
 
+// REST Docs 스니펫 출력 위치 — openapi3 태스크가 이 디렉토리를 읽어 스펙을 만든다.
+def snippetsDir = layout.buildDirectory.dir('generated-snippets')
+
 // 유닛 테스트 — CI 기본 실행. Testcontainers(Docker) 필요한 *IT 는 클래스 어노테이션으로 자체 스킵.
 tasks.named('test', Test) {
 	useJUnitPlatform()
+	// 스니펫을 test 태스크의 출력으로 등록 — 없으면 test 결과가 FROM-CACHE 될 때
+	// generated-snippets/ 가 복원되지 않아 openapi3 가 빈 paths 로 생성됨.
+	outputs.dir(snippetsDir)
 }
 
 // 통합 테스트 — Docker 있는 환경에서 명시적으로: ./gradlew integrationTest
@@ -99,5 +115,47 @@ tasks.register('integrationTest', Test) {
 tasks.named('processResources') {
 	from(frontendDistDir) {
 		into 'static'
+	}
+}
+
+// ─── API 문서화 (docs/api-docs-strategy.md) ────────────────────────────────
+// openapi3 산출물(build/api-spec/openapi3.yaml)을 static 리소스로 끌어와 /docs/openapi3.yaml 로 서빙한다.
+// - 로컬: ./gradlew test openapi3 실행 시 finalizedBy 로 자동 복사.
+// - Docker(Dockerfile/Dockerfile.local): 이미지 빌드 안에서 `./gradlew clean openapi3 bootJar` 를 돌린다.
+//   Jenkins 파이프라인이 별도 test 스테이지를 갖고 있어도 스펙은 도커 빌드에서 자체 생성돼 이미지에 포함된다.
+// - 파일은 .gitignore 로 배제 — 매 빌드마다 새로 만든다.
+openapi3 {
+	servers = [
+		{ url = 'https://dashboard.bnviit-ai.com'; description = 'Production' },
+		{ url = 'http://192.168.6.102:5000';       description = 'Development' },
+		{ url = 'http://localhost:18080';          description = 'Local' }
+	]
+	title = 'B&VIIT Analytics API'
+	version = project.version
+	format = 'yaml'
+	description = '안과(B&VIIT) KPI 대시보드 API — 세부 규칙은 CLAUDE.md · AGENTS.md 참조.'
+}
+
+tasks.register('copyOpenApiToResources', Copy) {
+	from(layout.buildDirectory.file('api-spec/openapi3.yaml'))
+	into(layout.projectDirectory.dir('src/main/resources/static/docs'))
+}
+// 플러그인이 등록하는 openapi3 태스크는 lazy 라서 build-script 평가 시점엔 아직 없다.
+// afterEvaluate 로 평가 완료 후 묶어 준다 — copyOpenApiToResources 가 openapi3 뒤에 자동 실행되도록.
+afterEvaluate {
+	tasks.named('openapi3') {
+		// restdocs-api-spec 플러그인의 `servers` 입력이 swagger-core `Server`(Serializable 아님)라
+		// `--build-cache` 사용 시 fingerprint 실패 + 캐시 미스 시 stale 결과 복원 문제가 있다.
+		// doNotTrackState 로 상태 추적을 꺼서 매 빌드 강제 재실행 (스펙 재생성 비용은 미미).
+		doNotTrackState('swagger-core Server 는 Serializable 이 아니라 fingerprint 불가 — 매 빌드 재실행')
+		finalizedBy 'copyOpenApiToResources'
+	}
+	tasks.named('copyOpenApiToResources') {
+		dependsOn 'openapi3'
+	}
+	// Docker 로컬 빌드(`Dockerfile.local`) 는 `openapi3 bootJar` 를 한 번에 부른다.
+	// mustRunAfter 로 bootJar 가 copy 뒤에 오도록 강제 — 없으면 순서가 뒤집혀 스펙이 이미지에 안 들어갈 수 있다.
+	tasks.named('bootJar') {
+		mustRunAfter 'copyOpenApiToResources'
 	}
 }
