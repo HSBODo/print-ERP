@@ -133,7 +133,7 @@ project-root/
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
 - 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` 연동 · 배치 도메인 `ACCOUNTING` · 임원(ADMIN·DIRECTOR) 이상 · 2026-09-17)
 - 회계 정합성: 진료 행·집계는 월 전체를 함께 교체하고 `rows_complete`로 월별 조회 경로를 선택한다. 회계만 매월 2023년부터 과거 이력을 재검산하며, 진료 부분 실패는 성공 데이터 보존 + FAILED 이력으로 처리한다 (`docs/accounting/mart-and-api.md`).
-- 해외마케팅 3종 (접수리스트·통계·예약통계 — 2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 + 수기 입력 · CRM 매칭 · `/api/overseas-marketing` · MARKETING 부서 전용)
+- 해외마케팅 3종 (접수리스트·통계·예약통계 — 2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 + 수기 입력 · CRM 매칭 · `/api/overseas-marketing` · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제)
 
 ### 미구현 (플레이스홀더)
 
@@ -174,9 +174,9 @@ project-root/
 | outpatient-list | 외래수 리스트 | /stats/outpatient-list | 외래 | 완료 (RESERVATION F + I/H, 외래수와 정합) |
 | outpatient-count | 외래수 | /stats/outpatient-count | 외래 | 완료 |
 | channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (2026-08-07 신규 · 탭2: 유입채널 수익성/광고매체 효율 · 광고비·렌즈단가는 화면 입력) |
-| overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 완료 (2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 `overseas_marketing_sheet` + 수기 입력 · CRM 매칭 3단계(접수/매칭/확인필요) · **MARKETING 부서 전용**) |
-| overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 완료 (유입→검사·수술 월별 흐름 · 국가별 수술 · 검사·수술·외래·렌즈 매출 · MARKETING 부서 전용) |
-| overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 완료 (국가그룹·채널별 문의/예약/검사/수술/외래 · ~2026-08-23 레거시 시드 `overseas_reservation_stats` · 이후 접수리스트 자동 집계 · 일간 셀 수정 · MARKETING 부서 전용) |
+| overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 완료 (2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 `overseas_marketing_sheet` + 수기 입력 · CRM 매칭 3단계(접수/매칭/확인필요) · **OVERSEAS_MARKETING 부서 전용** (2026-09-17 MARKETING 배제)) |
+| overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 완료 (유입→검사·수술 월별 흐름 · 국가별 수술 · 검사·수술·외래·렌즈 매출 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제) |
+| overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 완료 (국가그룹·채널별 문의/예약/검사/수술/외래 · ~2026-08-23 레거시 시드 `overseas_reservation_stats` · 이후 접수리스트 자동 집계 · 일간 셀 수정 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제) |
 | marketing | 마케팅 유입 및 효율 지표 | /stats/marketing | 마케팅 | 미구현 |
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
@@ -230,7 +230,7 @@ POST   /api/dreamlens-ledger                          # 행 추가
 PUT    /api/dreamlens-ledger/{id}                     # 행 수정 (전체 필드 교체)
 DELETE /api/dreamlens-ledger/{id}                     # 행 삭제
 
-# 해외마케팅 (마트 overseas_marketing_sheet 조회 + 수기 CRUD · CRM(MSSQL) 은 동기화 시에만 직결 · MARKETING 부서)
+# 해외마케팅 (마트 overseas_marketing_sheet 조회 + 수기 CRUD · CRM(MSSQL) 은 동기화 시에만 직결 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제)
 GET    /api/overseas-marketing/receptions?from=&to=&dateType=inquiry_date&dateEnabled=true&status=&source=all&unmatched=false
 POST   /api/overseas-marketing/receptions                  # 수기 행 추가 (origin='manual')
 PUT    /api/overseas-marketing/receptions/{rowNumber}      # 시트 원본 컬럼 수정

@@ -109,14 +109,16 @@ describe('pruneByDepartment · 사이드바 부서 gate', () => {
     expect(findById(filtered, 'overseas-marketing-section')).toBeDefined()
   })
 
-  it('MARKETING 부서 STAFF 도 해외마케팅 섹션에 여전히 접근 가능 (상위 스코프)', () => {
-    // OVERSEAS_MARKETING 부서 신설로 해외마케팅 3종이 두 부서 개방으로 확장됐지만
-    // MARKETING 접근이 축소되면 안 된다 (회귀 방지).
+  it('MARKETING 부서 STAFF 는 해외마케팅 섹션 접근 불가 (2026-09-17 스코프 분리)', () => {
+    // 2026-09-17: 해외마케팅 3종을 OVERSEAS_MARKETING 전담 부서로 좁혔다.
+    // 국내 마케팅(MARKETING) 과 해외 프로모션 스코프 분리 — 두 팀 업무·데이터 분리 요구 반영.
     const filtered = pruneByDepartment(menuItems, asMarketingStaff)
     const leafIds = collectLeafIds(filtered)
-    expect(leafIds).toContain('overseas-marketing-receptions')
-    expect(leafIds).toContain('overseas-marketing-statistics')
-    expect(leafIds).toContain('overseas-reservation-stats')
+    expect(leafIds).not.toContain('overseas-marketing-receptions')
+    expect(leafIds).not.toContain('overseas-marketing-statistics')
+    expect(leafIds).not.toContain('overseas-reservation-stats')
+    // 해외마케팅 섹션 자체가 통째로 사라진다 (자식이 모두 필터링되면 섹션도 제거).
+    expect(findById(filtered, 'overseas-marketing-section')).toBeUndefined()
   })
 
   it('pruneExecutiveOnly: MANAGER·STAFF 는 회계 5종 제거, ADMIN·DIRECTOR 는 통과 (2026-09-17)', () => {
