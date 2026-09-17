@@ -188,7 +188,7 @@ class BatchAdminDocsTest {
                                 .summary("배치 실행 이력 (최근 N건)")
                                 .description("batch_run_log 를 id DESC 로 조회. limit 은 1~200 사이로 clamp. ADMIN 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 필수"))
-                                .queryParameters(parameterWithName("limit").description("최대 반환 행 수 (기본 50, clamp 1~200)"))
+                                .queryParameters(parameterWithName("limit").description("최대 반환 행 수 (기본 50, clamp 1~200)").optional())
                                 .responseFields(
                                         fieldWithPath("[].id").description("이력 PK"),
                                         fieldWithPath("[].jobName").description("잡 이름 (mart.surgery 등)"),
@@ -371,7 +371,7 @@ class BatchAdminDocsTest {
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 필수"))
                                 .queryParameters(
                                         parameterWithName("years").description("재집계 연도 목록 (콤마 구분)"),
-                                        parameterWithName("category").description("계열 — cataract(기본) · vision"))
+                                        parameterWithName("category").description("계열 — cataract(기본) · vision").optional())
                                 .responseFields(
                                         fieldWithPath("ok").description("호출 성공"),
                                         subsectionWithPath("note").description("힌트 문구").optional(),

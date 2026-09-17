@@ -135,10 +135,11 @@ public class SecurityConfig {
                                 "/api/overseas-marketing/sync-sheet",
                                 "/api/overseas-marketing/sync-crm")
                         .hasRole("ADMIN");
-                // 해외마케팅(접수리스트·통계·예약통계) — MARKETING·OVERSEAS_MARKETING·ALL 개방
-                // (OVERSEAS_MARKETING 은 2026-09-11 신설 전담 부서 — 홈 + 해외마케팅만 접근).
+                // 해외마케팅(접수리스트·통계·예약통계) — OVERSEAS_MARKETING·ALL 개방 (2026-09-17 MARKETING 배제).
+                // OVERSEAS_MARKETING 은 2026-09-11 신설 전담 부서 (홈 + 해외마케팅만 접근).
+                // MARKETING 부서는 이 메뉴에서 배제 — 국내 마케팅과 해외 프로모션 스코프 분리.
                 auth.requestMatchers("/api/overseas-marketing/**")
-                        .hasAnyAuthority("DEPT_MARKETING", "DEPT_OVERSEAS_MARKETING", "DEPT_ALL");
+                        .hasAnyAuthority("DEPT_OVERSEAS_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/stats/marketing/**")
                         .hasAnyAuthority("DEPT_MARKETING", "DEPT_ALL");
                 auth.requestMatchers("/api/accumulated-eyes/**")

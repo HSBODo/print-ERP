@@ -207,7 +207,7 @@ class AccountingDocsTest {
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN·DIRECTOR 필수"))
                                 .queryParameters(
                                         parameterWithName("years").description("조회 연도 목록 (콤마 구분 · 1~5개)"),
-                                        parameterWithName("category").description("구분 필터 — 전체 · 외래 · 입원 · 백내장 (기본: 전체)"))
+                                        parameterWithName("category").description("구분 필터 — 전체 · 외래 · 입원 · 백내장 (기본: 전체)").optional())
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),
                                         fieldWithPath("data[].year").description("연도"),

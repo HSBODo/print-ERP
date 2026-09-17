@@ -173,7 +173,7 @@ export const isExecutiveOnlyPage = (id: string): boolean => EXECUTIVE_ONLY_PAGE_
  * 편집·[지금 실행]·[실패 재실행] 은 ADMIN 만 (프론트 canSystemOp + 백엔드 hasRole('ADMIN')).
  *
  * <b>주의</b> — 해외마케팅 3종은 별도 SET(OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS) 로 관리.
- * MARKETING 도 접근하지만 OVERSEAS_MARKETING 전담 부서도 접근하기 때문 (2026-09-11).
+ * 2026-09-17 부터 MARKETING 은 해외마케팅에서 배제됨 — OVERSEAS_MARKETING 전담 부서만 접근.
  */
 const MARKETING_ONLY_PAGE_IDS = new Set<string>([
   'reservation-channel',
@@ -186,9 +186,9 @@ const MARKETING_ONLY_PAGE_IDS = new Set<string>([
 export const isMarketingOnlyPage = (id: string): boolean => MARKETING_ONLY_PAGE_IDS.has(id)
 
 /**
- * 해외마케팅 3종 페이지 (2026-09-11 신설) — MARKETING·OVERSEAS_MARKETING 두 부서 개방.
- * MARKETING 은 넓은 스코프의 상위 부서, OVERSEAS_MARKETING 은 이 3종만 전담하는 좁은 스코프.
- * 사이드바 노출·URL 접근 판정에서 두 부서 모두 통과시킨다.
+ * 해외마케팅 3종 페이지 (2026-09-11 신설, 2026-09-17 MARKETING 배제) — OVERSEAS_MARKETING 전담 부서만 접근.
+ * 국내 마케팅(MARKETING)과 해외 프로모션 스코프를 분리 — 두 팀 업무·데이터 분리 요구 반영.
+ * 사이드바 노출·URL 접근 판정에서 OVERSEAS_MARKETING·ALL 만 통과.
  */
 const OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS = new Set<string>([
   'overseas-marketing-receptions',
@@ -209,7 +209,7 @@ export const isOverseasMarketingPage = (id: string): boolean =>
  */
 export const getPageDepartments = (id: string): UserDepartment[] | undefined => {
   if (!STATS_PAGE_ID_SET.has(id)) return undefined
-  if (isOverseasMarketingPage(id)) return ['MARKETING', 'OVERSEAS_MARKETING']
+  if (isOverseasMarketingPage(id)) return ['OVERSEAS_MARKETING']
   if (isMarketingOnlyPage(id)) return ['MARKETING']
   return ['MEDICAL']
 }

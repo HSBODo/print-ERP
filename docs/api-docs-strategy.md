@@ -104,7 +104,7 @@ stage('Docker Build') {
 
 ## 9. 확장 계획 · 진행 현황
 
-전체 계획 127 endpoints / 13 도메인. 2026-09-17 완료 **136 endpoints / 21 태그** (계획 대비 +9 — 실제 컨트롤러 스캔에서 추가 발견분 반영).
+전체 계획 127 endpoints / 13 도메인. 2026-09-17 완료 **137 endpoints / 22 태그** (계획 대비 +10 — 실제 컨트롤러 스캔 + 감사 조치에서 추가 발견분 반영).
 
 | Phase | 도메인 · 태그 | Endpoints | 상태 | 완료일 | 테스트 파일 |
 |-------|--------------|-----------|------|-------|------------|
@@ -144,10 +144,11 @@ stage('Docker Build') {
 | ReservationChannel | 2 | 4 |
 | Auth | 1 | 0 |
 | Batch | 1 | 2 |
+| Health | 1 | 감사 |
 | Report | 1 | 1 |
 | SmsWebhook | 1 | 5 |
 
-**합계 = 136 operations · 21 태그** (스펙 `openapi3.yaml` operationId 총계와 일치)
+**합계 = 137 operations · 22 태그** (스펙 `openapi3.yaml` operationId 총계와 일치 · Health 는 감사 조치 시 추가)
 
 ### 재실행 · 검증
 

@@ -481,18 +481,15 @@ class AuthSecurityIntegrationTest {
     // ─── 해외마케팅 (/api/overseas-marketing/**) 부서 gate ────────────────────
 
     @Test
-    void marketingStaffCanAccessOverseasMarketingApi() throws Exception {
-        // 해외마케팅 접수리스트 · 통계 · 예약통계 등 모든 하위 API 는 MARKETING 부서 개방
-        // (docs/auth/permissions.md § 4-2 · 2026-09-09 이관 후 URL prefix 통합).
+    void marketingStaffCannotAccessOverseasMarketingApi() throws Exception {
+        // 2026-09-17: 해외마케팅을 OVERSEAS_MARKETING 전담 부서로 좁혔다 — MARKETING 은 배제.
+        // 국내 마케팅(MARKETING) 과 해외 프로모션 스코프 분리 (백엔드 SecurityConfig 매처와 대칭).
+        // OVERSEAS_MARKETING STAFF 통과 검증은 아래 overseasMarketingStaffCanAccessOverseasMarketingApi 참조.
         String token = jwtUtil.generateToken("staff-mkt", Role.STAFF, Department.MARKETING);
         mockMvc.perform(get("/api/overseas-marketing/receptions")
                         .param("from", "2026-01-01").param("to", "2026-01-31")
                         .header("Authorization", "Bearer " + token))
-                .andExpect(result -> {
-                    if (result.getResponse().getStatus() == 403) {
-                        throw new AssertionError("MARKETING STAFF 가 해외마케팅 API 에서 막힘");
-                    }
-                });
+                .andExpect(status().isForbidden());
     }
 
     @Test
