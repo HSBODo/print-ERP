@@ -135,6 +135,19 @@ JDBC: `martJdbcTemplate` (Postgres) — 화면 조회는 여기만 사용
 
 ---
 
+## 12. 회계 도메인 (2026-09-15 신설)
+
+| 이름 | 종류 | V | 사이드메뉴 | 용도 |
+|---|---|---|---|---|
+| `list_medical_receipt` | TABLE | V67a | 회계 > 진료 수납 · 진료 매출 그래프(구분 필터) | 의사랑(IPLUS) 외래(`PAOSUNAB_New`)·입원(`PAISUNAB_New`) 수납 원장 행 그대로. **2026-01-01~** (_New 체계). 자연키 없음 → 수납일 범위 delete+insert. |
+| `mart_medical_receipt_monthly` | TABLE | V67b | 회계 > 진료 매출 그래프 | 의사랑 월집계 (건수·수납할금액·청구액·급여총액·비급여·미수회수/발생·환불금/발생·건생비 → 레거시 순액 `net`). **2023~**. 행이 없는 연도의 그래프와 연도 비교가 읽는다. |
+| `list_vision_receipt` | TABLE | V67c | 회계 > 시력교정 매출 내역 · 매출 집계 · 매출 그래프 | SOFTCRM 비급여 수납 전표 상세(`CstPrcSub`+`PrcItmDtl`/`PrcItmLst`+`OPERATIONDATA`) 1줄 = 1행. 취소 전표는 결제취소 행(음수) 추가. 진료명 17종 `item_amounts`(JSONB)·과세/면세. **2023~**. 세 화면 모두 이 표를 조회 시 접는다. |
+
+> 배치 도메인 `ACCOUNTING`(`AccountingMartJob`) · 범위 = **수납일** · 의사랑 구간은 링크드서버 `[220.85.109.240]` OPENQUERY(`sql/iplus/accounting/*-inner.sql`, `OpenQuerySql` 래퍼) 라 `MedicalReceiptImportService` 가 REQUIRES_NEW 로 격리 — 원격 장애 시 진료 수납만 건너뛴다(`list_medical_receipt_failed=1`).
+> 정본: [`docs/accounting/mart-and-api.md`](../accounting/mart-and-api.md).
+
+---
+
 ## 11. JPA 엔티티 (Hibernate `ddl-auto: update`)
 
 | 이름 | 엔티티 | 사이드메뉴 | 용도 |
@@ -164,7 +177,8 @@ v_reservation_channel ← list_reservation + reservation_channel_staff
 
 | # | 외부 DB | JdbcTemplate | 접근 시점 | 용도 |
 |---|---|---|---|---|
-| 1 | **MSSQL 운영 DB** | `statsJdbcTemplate` | 배치 시점만 (SSH 터널) | primary list 마트 적재 + 해피톡 일별 집계 |
+| 1 | **MSSQL 운영 DB** | `statsJdbcTemplate` | 배치 시점만 (SSH 터널) | primary list 마트 적재 + 해피톡 일별 집계 + 회계 시력교정 매출(`CstPrcSub`·`PrcItmDtl`·`PrcItmLst`) |
+| 1' | **의사랑 IPLUS** (MSSQL 링크드서버 `[220.85.109.240]`, 운영 DB 경유) | `statsJdbcTemplate` + `OpenQuerySql` | 배치 시점만 | 회계 진료 수납(`PAOSUNAB(_New)`·`PAISUNAB(_New)`·`PAYTRANS`·`NHICM4AP`·`RECEIPTCASH`) + 드림렌즈 장부 진료비 |
 | 2 | **MariaDB 홈페이지** | `homepageJdbcTemplate` | 배치 시점만 | `mart_list_reservation_homepage` 이관 |
 | 3 | **MSSQL 아이리더** | `eoeisJdbcTemplate` | 화면 조회 시 (예외) | 아이리더 검사통계 페이지 전용 |
 

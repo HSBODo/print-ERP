@@ -46,15 +46,21 @@ RUN --mount=type=secret,id=nexus_id \
         -PnexusPassword="$(cat /run/secrets/nexus_pw 2>/dev/null || true)" \
     || true
 
-# 2) 소스 복사 후 bootJar 빌드.
-#    clean 은 그대로 둔다(운영 빌드의 재현성). 대신 --build-cache 가
-#    지운 산출물을 캐시에서 되살려 주므로 전체 재컴파일이 일어나지 않는다.
+# 2) 소스 복사 후 test → openapi3 → bootJar.
+#    - openapi3 를 도커 빌드 안에서 돌려 이미지가 self-contained 하게 한다
+#      (Jenkins 파이프라인 스테이지 구성과 무관하게 스펙이 이미지에 포함됨).
+#      openapi3 는 test 태스크의 스니펫을 필요로 하므로 -x test 는 뺀다.
+#    - copyOpenApiToResources 가 openapi3 뒤에 자동 실행돼
+#      src/main/resources/static/docs/openapi3.yaml 로 복사 → bootJar 에 임베드.
+#    - clean 은 그대로 둔다(운영 빌드의 재현성). --build-cache 가
+#      지운 산출물을 캐시에서 되살려 주므로 전체 재컴파일이 일어나지 않는다.
+#    관련: docs/api-docs-strategy.md
 COPY backend/ ./
 COPY --from=frontend-builder /workspace/frontend/dist /workspace/frontend/dist
 RUN --mount=type=secret,id=nexus_id \
     --mount=type=secret,id=nexus_pw \
     --mount=type=cache,target=/root/.gradle,sharing=locked \
-    ./gradlew --no-daemon --build-cache clean bootJar -x test \
+    ./gradlew --no-daemon --build-cache clean openapi3 bootJar \
         -PnexusUsername="$(cat /run/secrets/nexus_id 2>/dev/null || true)" \
         -PnexusPassword="$(cat /run/secrets/nexus_pw 2>/dev/null || true)"
 

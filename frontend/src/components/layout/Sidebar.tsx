@@ -322,21 +322,28 @@ function SidebarNode({
               <div className="px-2 py-2 text-sm text-gray-400">비어있음</div>
             ) : (
               <ul className="space-y-1">
-                {flattenLeaves(item.children ?? []).map((leaf) => (
-                  <li key={leaf.id}>
-                    <Link
-                      to={leaf.href}
-                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm transition-colors ${
-                        pathname === leaf.href
-                          ? 'bg-blue-50 font-medium text-blue-600'
-                          : `${statusTextClass(leaf.status)} hover:bg-gray-50`
-                      }`}
-                    >
-                      <span className="truncate">{leaf.label}</span>
-                      <ItemBadge item={leaf} />
-                    </Link>
-                  </li>
-                ))}
+                {flattenLeaves(item.children ?? []).map((leaf) => {
+                  const leafClass = `flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm transition-colors ${
+                    pathname === leaf.href
+                      ? 'bg-blue-50 font-medium text-blue-600'
+                      : `${statusTextClass(leaf.status)} hover:bg-gray-50`
+                  }`
+                  return (
+                    <li key={leaf.id}>
+                      {leaf.external ? (
+                        <a href={leaf.href} target="_blank" rel="noopener noreferrer" className={leafClass}>
+                          <span className="truncate">{leaf.label}</span>
+                          <ItemBadge item={leaf} />
+                        </a>
+                      ) : (
+                        <Link to={leaf.href} className={leafClass}>
+                          <span className="truncate">{leaf.label}</span>
+                          <ItemBadge item={leaf} />
+                        </Link>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -345,23 +352,35 @@ function SidebarNode({
     )
   }
 
-  // 잎(리프) — Link.
+  // 잎(리프) — external 이면 <a target=_blank>, 아니면 SPA Link.
+  const leafClass = `flex items-center rounded-lg ${fontSize} ${fontWeight} transition-colors
+    ${isActive
+      ? 'text-blue-600 bg-blue-50'
+      : `${statusTextClass(item.status) || 'text-gray-700'} hover:bg-gray-100`}
+    ${collapsed && depth === 0 ? `justify-center px-0 ${padY}` : `gap-2 ${padX} ${padY}`}`
+  const leafInner = (
+    <>
+      {depth === 0 && Icon && <Icon className="h-[18px] w-[18px] flex-shrink-0" />}
+      {(!collapsed || depth > 0) && <span className="flex-1 truncate">{item.label}</span>}
+      {(!collapsed || depth > 0) && <ItemBadge item={item} />}
+    </>
+  )
   return (
     <li className="relative">
-      <Link
-        to={item.href}
-        title={collapsed && depth === 0 ? item.label : undefined}
-        onClick={item.id === 'home' ? onHomeClick : onNavigate}
-        className={`flex items-center rounded-lg ${fontSize} ${fontWeight} transition-colors
-          ${isActive
-            ? 'text-blue-600 bg-blue-50'
-            : `${statusTextClass(item.status) || 'text-gray-700'} hover:bg-gray-100`}
-          ${collapsed && depth === 0 ? `justify-center px-0 ${padY}` : `gap-2 ${padX} ${padY}`}`}
-      >
-        {depth === 0 && Icon && <Icon className="h-[18px] w-[18px] flex-shrink-0" />}
-        {(!collapsed || depth > 0) && <span className="flex-1 truncate">{item.label}</span>}
-        {(!collapsed || depth > 0) && <ItemBadge item={item} />}
-      </Link>
+      {item.external ? (
+        <a href={item.href} target="_blank" rel="noopener noreferrer" title={collapsed && depth === 0 ? item.label : undefined} className={leafClass}>
+          {leafInner}
+        </a>
+      ) : (
+        <Link
+          to={item.href}
+          title={collapsed && depth === 0 ? item.label : undefined}
+          onClick={item.id === 'home' ? onHomeClick : onNavigate}
+          className={leafClass}
+        >
+          {leafInner}
+        </Link>
+      )}
     </li>
   )
 }

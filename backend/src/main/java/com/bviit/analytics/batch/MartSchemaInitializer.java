@@ -48,6 +48,9 @@ import java.sql.SQLException;
  *
  * <h3>이력</h3>
  * <ul>
+ *   <li>2026-09-15 — V68: 진료 월 전체 행 적재 완료 표시(rows_complete), 기존 월은 재적재 전 FALSE.</li>
+ *   <li>2026-09-15 — 회계 도메인 신설: accounting/tables/V67a(list_medical_receipt · 의사랑 수납 원장) ·
+ *                    V67b(mart_medical_receipt_monthly · 진료 매출 월집계 2023~) · V67c(list_vision_receipt · SOFTCRM 비급여 수납 2023~).</li>
  *   <li>2026-09-09 — 해외마케팅(2026-08-14 브랜치 V58~V64) 이관: marketing/tables/V64(시트 캐시 · 구 V58~V62 CREATE+ALTER 통합) ·
  *                    V65(예약통계) · marketing/seeds/V66(예약통계 레거시 시드). 번호는 이 브랜치의 V58~V63 과 겹쳐 재부여.</li>
  *   <li>2026-08-26 — DDL 폴더를 도메인 자립 구조로 재편: 최상위 tables/·views/·functions/·seeds/ 삭제,
@@ -136,6 +139,10 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/reservation/tables/V63__list_reservation_change.sql");
         applyScript("sql/mart/marketing/tables/V64__overseas_marketing_sheet.sql");
         applyScript("sql/mart/marketing/tables/V65__overseas_reservation_stats.sql");
+        applyScript("sql/mart/accounting/tables/V67a__list_medical_receipt.sql");
+        applyScript("sql/mart/accounting/tables/V67b__mart_medical_receipt_monthly.sql");
+        applyScript("sql/mart/accounting/tables/V67c__list_vision_receipt.sql");
+        applyScript("sql/mart/accounting/tables/V68__medical_receipt_month_coverage.sql");
 
         // functions/ — 뷰에서 참조하므로 뷰 앞에 실행
         applyScript("sql/mart/surgery/functions/V47__surgery_op_type_fn.sql");

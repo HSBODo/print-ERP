@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!--
+  API 문서 뷰어 — Swagger UI 런처.
+  전략 문서: docs/api-docs-strategy.md
+  스펙 파일: /docs/openapi3.yaml (Jenkins 테스트 스테이지의 `./gradlew test openapi3` 산출물)
+  정적 자산: /webjars/swagger-ui-dist/5.20.0/ (org.webjars.npm:swagger-ui-dist)
+-->
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>B&VIIT Analytics API</title>
+    <link rel="stylesheet" href="/webjars/swagger-ui-dist/5.20.0/swagger-ui.css">
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        html, body { margin: 0; background: #fafafa; }
+    </style>
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="/webjars/swagger-ui-dist/5.20.0/swagger-ui-bundle.js" charset="UTF-8"></script>
+<script src="/webjars/swagger-ui-dist/5.20.0/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+<script>
+    window.onload = () => {
+        window.ui = SwaggerUIBundle({
+            url: '/docs/openapi3.yaml',
+            dom_id: '#swagger-ui',
+            presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+            layout: 'BaseLayout',
+            deepLinking: true,
+            persistAuthorization: true,
+            tryItOutEnabled: true
+        });
+    };
+</script>
+</body>
+</html>

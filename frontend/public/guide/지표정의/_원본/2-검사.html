@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지표정의 2 — 검사 — 비앤빛 Analytics</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#f6f6f7;--card:#fff;--line:#e8e8eb;--ink:#1f2328;--muted:#68707b;--muted2:#9298a1;--accent:#7c5cff;--accent-soft:#efebff;--radius:16px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.72;-webkit-font-smoothing:antialiased}
+/* 상단 탭바 · 좌측 목록은 sms.html 과 pages/*.html 의 것과 같은 값이다 —
+   문서가 바뀌어도 윗줄과 왼편이 같은 자리에 같은 모습으로 남아야 한다. */
+html,body{height:100%}body{display:flex;flex-direction:column}
+.tabbar{height:53px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 18px;background:#fff;border-bottom:1px solid var(--line);z-index:40;overflow-x:auto;overflow-y:hidden}
+.tabbar .tabs{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.tabbar .tab{border:1px solid transparent;background:none;text-decoration:none;font-family:inherit;font-size:14px;font-weight:600;line-height:1.35;color:var(--muted2);padding:6px 14px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.tabbar .tab:hover{color:var(--ink)}
+.tabbar .tab.active{color:var(--ink);background:#fff;border-color:var(--line);box-shadow:0 1px 2px rgba(16,18,29,.06)}
+.tabbar .beta{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:6px}
+.tabbar .sep{color:#d4d6db;font-size:13px;letter-spacing:1px;user-select:none}
+.shell{flex:1;min-height:0;display:flex}
+.sidenav{width:232px;flex-shrink:0;height:100%;overflow-y:auto;padding:26px 14px;border-right:1px solid var(--line);background:var(--bg)}
+.nav-title{margin:0 12px 14px;color:var(--muted2);font-size:13px;font-weight:800;letter-spacing:.02em}
+.sidenav nav{display:grid;gap:1px}.sidenav nav a{display:block;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:13.5px;font-weight:500;text-decoration:none}.sidenav nav a:hover{background:#efeff1;color:var(--ink)}.sidenav nav a.active{background:var(--accent-soft);color:#5b3fd1;font-weight:700}
+.main{flex:1;min-width:0;overflow-y:auto;padding:30px 34px 90px}
+/* 지표 요약 카드 — 본문 위에 자기 지표의 단위·날짜 기준·데이터 원천을 먼저 보인다. */
+.metric-summary{width:100%;max-width:1120px;margin:0 auto 16px;padding:20px 24px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.metric-summary .desc{margin:0 0 14px;font-size:15px;font-weight:650;color:var(--ink)}
+.metric-summary .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:0}
+.metric-summary .facts dt{font-size:11px;font-weight:700;color:var(--muted2);letter-spacing:.03em}
+.metric-summary .facts dd{margin:2px 0 0;font-size:13.5px;color:#414852}
+.metric-summary .flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:4px 0 2px}
+.metric-summary .step{min-width:122px;flex:1;padding:13px 14px;border:1px solid #e5e2f4;border-radius:11px;background:#faf9ff}
+.metric-summary .step .n{color:var(--accent);font-size:11px;font-weight:800}
+.metric-summary .step strong{display:block;margin-top:2px;font-size:14px}
+.metric-summary .step span{display:block;margin-top:3px;color:var(--muted2);font-size:11.5px;white-space:nowrap}
+.metric-summary .arrow{display:grid;place-items:center;flex:0 0 14px;color:#b8b2d7;font-size:15px}
+.metric-summary .alert{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe;font-size:13.5px;color:#514b69}.doc-card{width:100%;max-width:1120px;margin:0 auto;padding:42px 48px 50px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.markdown h1{margin:0 0 24px;font-size:29px;line-height:1.3;letter-spacing:-.025em}.markdown h2{margin:50px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:21px;line-height:1.4;letter-spacing:-.015em}.markdown h3{margin:32px 0 12px;font-size:17px;line-height:1.45}.markdown h4{margin:26px 0 10px;font-size:15px}.markdown p{margin:10px 0 16px;color:#414852;font-size:14.5px}.markdown strong{color:var(--ink)}
+.markdown a{color:#6246d2;text-decoration:none;font-weight:650}.markdown a:hover{text-decoration:underline}.markdown code{padding:2px 5px;border-radius:5px;background:#f1eff9;color:#543bc0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em;overflow-wrap:anywhere}
+.markdown pre{margin:18px 0 22px;padding:18px 20px;overflow:auto;border-radius:11px;background:#20242d;color:#eef1f6;line-height:1.6}.markdown pre code{padding:0;background:none;color:inherit;font-size:12.5px;white-space:pre}
+.markdown blockquote{margin:18px 0;padding:13px 16px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe}.markdown blockquote>:first-child{margin-top:0}.markdown blockquote>:last-child{margin-bottom:0}.markdown blockquote p{color:#514b69}
+.markdown ul,.markdown ol{margin:10px 0 18px;padding-left:24px;color:#414852;font-size:14.5px}.markdown li{margin:5px 0}.markdown hr{height:1px;margin:42px 0;border:0;background:var(--line)}
+.table-scroll{max-width:100%;margin:16px 0 24px;overflow:auto;border:1px solid var(--line);border-radius:11px}.markdown table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;line-height:1.55}.markdown th{padding:10px 12px;background:#f7f7f9;color:#505762;font-weight:750;white-space:nowrap}.markdown td{padding:10px 12px;border-top:1px solid var(--line);color:#424954;vertical-align:top}.markdown tr:hover td{background:#fcfcfd}
+.markdown details{margin:18px 0;padding:12px 15px;border:1px solid var(--line);border-radius:10px;background:#fcfcfd}.markdown summary{cursor:pointer;font-weight:750}.markdown details[open] summary{margin-bottom:14px}
+.pager{display:flex;justify-content:space-between;gap:16px;max-width:1120px;margin:18px auto 0}.pager a{color:#5b3fd1;font-size:13px;font-weight:700;text-decoration:none}.pager a:hover{text-decoration:underline}
+@media print{html,body{height:auto;display:block}.tabbar,.sidenav,.pager{display:none}.shell{display:block}.main{display:block;overflow:visible;padding:0}.doc-card,.metric-summary{max-width:none;border:0;border-radius:0;box-shadow:none;padding:0}.markdown h2,.markdown h3{break-after:avoid}.table-scroll{break-inside:avoid}}
+@media(max-width:820px){.shell{display:block}.sidenav{width:auto;height:auto;padding:14px;border-right:0;border-bottom:1px solid var(--line)}.sidenav nav{display:flex;gap:5px;overflow:auto;padding-bottom:2px}.sidenav nav a{white-space:nowrap}.nav-title{display:none}.main{padding:18px 12px 60px}.doc-card{padding:28px 20px 36px;border-radius:13px}.markdown h1{font-size:24px}.markdown h2{font-size:19px}.docbar{padding:0 14px}.crumb{display:none}}
+</style>
+</head>
+<body>
+  <div class="tabbar">
+    <div class="tabs">
+      <a class="tab" href="../../prd.html#view-prd">대쉬보드 요구사항</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../지표정의/1-예약.html">지표 정의</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-flow">IA</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-expansion">26.10 이후 확장 전략</a>
+    </div>
+  </div>
+  <div class="shell">
+    <aside class="sidenav">
+      <div class="nav-title">지표 정의 — 전체판</div>
+      <nav><a class="" href="1-예약.html">1-예약</a>
+<a class="active" href="2-검사.html">2-검사</a>
+<a class="" href="3-전환율-중단율.html">3-전환율-중단율</a>
+<a class="" href="4-예약률.html">4-예약률</a>
+<a class="" href="5-수술.html">5-수술</a>
+<a class="" href="6-외래.html">6-외래</a></nav>
+    </aside>
+    <main class="main">
+
+      <article class="doc-card">
+        <div class="markdown"><h1 id="지표정의-2-검사">지표정의 2 — 검사</h1>
+<blockquote><p>환자 흐름(예약 → <strong>검사</strong> → 전환율/중단율 → 수술 → 외래)의 두 번째 단계. <strong>무엇으로 이루어지고, 데이터를 어디서 가져오는지</strong>를 정리함.</p></blockquote>
+<blockquote><p>✅ <strong>레포트 = 검사자 리스트 (2026-08-05 확정).</strong> 월간·주차 레포트의 <strong>검사 유입 6종</strong>과 <strong>검사수·원데이·일반</strong>은 각자 계산하지 않고 <strong>전체 검사자 리스트와 같은 모집단</strong>에서 나옴. 화면 두 곳의 숫자가 어긋나면 버그임.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">기준</th></tr></thead><tbody><tr><td style="text-align:left">유입(일반·고객소개·직원소개) · 직업(직장인·학생·기타)</td><td style="text-align:left">리스트의 <code>introType</code> · <code>jobBucket</code> 집계와 동일</td></tr><tr><td style="text-align:left">검사수</td><td style="text-align:left">리스트 전체 행수</td></tr><tr><td style="text-align:left"><strong>원데이 + 일반 = 검사수</strong></td><td style="text-align:left">리스트의 <code>examType</code> 집계와 동일. 원데이는 시력교정(M/5)뿐 아니라 <strong>백내장 원데이(진료구분 7·9)도 포함</strong>함</td></tr></tbody></table></div>
+<p>2026-07 실측: 원데이 561 + 일반 643 = 1,204 = 검사수. <strong>예외 — 백내장 검사수는 56임(102 아님).</strong> 분류 <code>백내장</code>+<code>중단</code>만 세는 값이고, 나머지 46건(노안/FU·기타)은 <strong>검사수 총계에만</strong> 들어감. 그래서 <code>시력교정 + 드림렌즈 + 백내장 ≠ 검사수</code> 인 것이 정상임.</p>
+<p>⚠️ 원데이 정의를 고치면 <strong>세 파일을 함께</strong> 고쳐야 함 — <code>find-one-day-exam-count-monthly.sql</code>(레포트 원데이) · <code>find-one-day-daily.sql</code>(주차·종합지표) · <code>find-all-exam-list.sql</code>(리스트). 한쪽만 고치면 다시 어긋남.</p>
+<p>⚠️ <strong>원데이 예약률의 분자는 시력교정 수술예약만</strong> 셈. 분모(원데이)에 백내장 3건이 들어가 예약률이 소폭 낮아짐(2026-07: 86.6% → 86.1%). 백내장 수술예약을 분자에 넣는 건 별건임.</p></blockquote>
+<h2 id="한눈에-보기">한눈에 보기</h2>
+<p>검사는 <strong>세 종류</strong>로 나뉨. 소스 테이블도 세는 단위도 다름.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">구성</th><th style="text-align:left">무엇인가</th><th style="text-align:left">데이터 출처</th><th style="text-align:left">날짜 기준</th><th style="text-align:left">세는 단위</th></tr></thead><tbody><tr><td style="text-align:left"><strong>시력교정검사</strong></td><td style="text-align:left">라식·라섹·렌즈삽입 등을 위한 검사</td><td style="text-align:left"><code>EXAM</code></td><td style="text-align:left"><code>EXAM_DATE</code></td><td style="text-align:left"><strong>사람</strong></td></tr><tr><td style="text-align:left"><strong>드림렌즈검사</strong></td><td style="text-align:left">각막굴절교정 렌즈 검사</td><td style="text-align:left"><code>EXAM</code></td><td style="text-align:left"><code>EXAM_DATE</code></td><td style="text-align:left"><strong>사람</strong></td></tr><tr><td style="text-align:left"><strong>백내장검사</strong></td><td style="text-align:left">백내장 수술 전 검사</td><td style="text-align:left"><code>RESERVATION</code> (<code>H</code> 예약)</td><td style="text-align:left"><code>RESERVE_DATE</code></td><td style="text-align:left"><strong>사람</strong></td></tr></tbody></table></div>
+<blockquote><p>✅ <strong>2026-07-23 이후 세 종류 모두 &quot;사람&quot; 단위로 통일</strong>됐음. 백내장의 종전 눈(좌/우) 기준은 폐기.</p></blockquote>
+<p><strong>시력교정과 드림렌즈는 같은 테이블(<code>EXAM</code>)에서 나옴.</strong> <code>EXAM</code>에는 검사 종류 컬럼이 없어서 <strong>그날 예약으로 갈라냄.</strong></p>
+<hr>
+<h2 id="1-시력교정검사-드림렌즈검사">1. 시력교정검사 · 드림렌즈검사</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>테이블</strong></td><td style="text-align:left"><code>EXAM</code> (⚠️ <strong>고객당 1행</strong> — 과거 검사 이력이 안 남음)</td></tr><tr><td style="text-align:left"><strong>날짜</strong></td><td style="text-align:left"><code>EXAM_DATE</code> (char(10), <code>YYYY-MM-DD</code>)</td></tr><tr><td style="text-align:left"><strong>단위</strong></td><td style="text-align:left">사람 = <code>COUNT(DISTINCT CUST_NUM)</code> (행 수와 같음)</td></tr><tr><td style="text-align:left"><strong>측정값 필터</strong></td><td style="text-align:left"><strong>없음</strong> — 측정값 미입력 검사도 포함</td></tr><tr><td style="text-align:left"><strong>화면</strong></td><td style="text-align:left"><code>/stats/exam-list</code> 검사자 리스트 · <code>/stats/examination</code> 시술별</td></tr><tr><td style="text-align:left"><strong>쿼리</strong></td><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-exam-list.sql</code> · <code>backend/src/main/resources/sql/exam/find-vision-correction-monthly.sql</code></td></tr></tbody></table></div>
+<h3 id="어떻게-갈라내나">어떻게 갈라내나</h3>
+<pre><code>EXAM 한 행
+ └ 그날 렌즈센터(D) 예약만 있고 검사(M) 예약이 없다  →  드림렌즈
+ └ 그 외 전부                                        →  시력교정</code></pre>
+<pre><code class="language-sql">CASE WHEN visit.hasDreamlens = 1 AND visit.hasMedical = 0 THEN &#39;드림렌즈&#39;
+     ELSE &#39;시력교정&#39; END</code></pre>
+<blockquote><p>⚠️ <strong>시력교정은 기본값(<code>ELSE</code>)임.</strong> 드림렌즈가 아니면 전부 시력교정이 됨. 그래서 <strong>외래(<code>F</code>)·백내장(<code>H</code>) 예약으로 와서 검사 기록만 생긴 건도 시력교정에 섞임</strong> (월 3~4명). 명단과 대응 방안은 <a href="../../점검/시력교정-검사자_2026-06~07.html">시력교정-검사자-점검_2026-06~07.md</a> 참조.</p></blockquote>
+<h3 id="백내장-그림자-행-제외">백내장 그림자 행 제외</h3>
+<p>같은 날 백내장 검사기록이 있으면서 <code>EXAM</code> 측정값이 <strong>전부 비어 있으면</strong> 제외함. 백내장 환자가 <code>EXAM</code>에 껍데기 행만 남기는 경우를 걸러내는 장치임.</p>
+<pre><code class="language-sql">AND NOT (
+  EXISTS (SELECT 1 FROM Cataract_Exam ce WHERE ce.CUST_NUM=e.CUST_NUM AND ce.EXAM_DATE=e.EXAM_DATE)
+  AND RIGHT01~30 · LEFT01~30 이 모두 비어 있음
+)</code></pre>
+<hr>
+<h2 id="2-원데이당일op-일반-구분">2. 원데이(당일OP) / 일반 구분</h2>
+<p>시력교정검사는 다시 <strong>원데이</strong>와 <strong>일반</strong>으로 나뉨.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">구분</th><th style="text-align:left">조건</th></tr></thead><tbody><tr><td style="text-align:left"><strong>원데이</strong></td><td style="text-align:left">그날 <strong>검사OP 예약</strong>(<code>RESERVE_FLAG=&#39;M&#39;</code>, <code>RESERVE_JINRYO=&#39;5&#39;</code>, <code>STATE IN (&#39;I&#39;,&#39;H&#39;)</code>)이 있고<br><code>STOP_YN &lt;&gt; &#39;Y&#39;</code> + <code>CANCEL_CD = &#39;&#39;</code></td></tr><tr><td style="text-align:left"><strong>일반</strong></td><td style="text-align:left">시력교정검사 − 원데이</td></tr></tbody></table></div>
+<blockquote><p><strong>원데이 = 검사받은 그날 바로 수술까지 가는 코스.</strong> 재수술 당일OP(<code>RESERVE_JINRYO=&#39;7&#39;</code>, 검사OP(Re))는 <strong>원데이에 포함하지 않음</strong> (2026-07-29 결정).</p></blockquote>
+<h3 id="같은-판정이-5곳에-흩어져-있음-바꾸려면-전부-함께">⚠️ 같은 판정이 5곳에 흩어져 있음 — 바꾸려면 전부 함께</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">쓰임</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-one-day-exam-count-monthly.sql</code></td><td style="text-align:left">원데이 검사 건수</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/consultation/find-monthly-vision-rates.sql</code></td><td style="text-align:left">상담성공률 원데이/일반 분해</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/overall/find-one-day-daily.sql</code></td><td style="text-align:left">주간 종합지표</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-all-exam-list.sql</code></td><td style="text-align:left">전체 검사자 리스트 표시</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/overall/find-demographics-daily.sql</code></td><td style="text-align:left">검사수 분해</td></tr></tbody></table></div>
+<blockquote><p><strong>미반영 결정 사항</strong> — 수술을 진행하지 못한 분(<code>STOP_YN=&#39;Y&#39;</code>)도 원데이로 세기로 정해졌으나 <strong>코드에는 아직 반영되지 않았음.</strong> 반영 시 2026-07 기준 93 → 98로 바뀜. 자세한 내용은 <a href="../../점검/원데이-레거시-비교_2026-07.html">원데이-레거시-비교_2026-07.md</a> §5.</p></blockquote>
+<hr>
+<h2 id="3-백내장검사">3. 백내장검사</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>테이블</strong></td><td style="text-align:left"><code>RESERVATION</code> (⚠️ <code>Cataract_Exam</code>이 <strong>아님</strong>)</td></tr><tr><td style="text-align:left"><strong>구분</strong></td><td style="text-align:left"><code>RESERVE_FLAG = &#39;H&#39;</code></td></tr><tr><td style="text-align:left"><strong>날짜</strong></td><td style="text-align:left"><code>RESERVE_DATE</code></td></tr><tr><td style="text-align:left"><strong>단위</strong></td><td style="text-align:left">사람</td></tr><tr><td style="text-align:left"><strong>화면</strong></td><td style="text-align:left"><code>/stats/cataract-exam-list</code> · 월간 레포트</td></tr><tr><td style="text-align:left"><strong>쿼리</strong></td><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-cataract-monthly.sql</code> · <code>backend/src/main/resources/sql/exam/find-cataract-exam-list.sql</code></td></tr></tbody></table></div>
+<h3 id="조건">조건</h3>
+<pre><code class="language-sql">RESERVE_FLAG = &#39;H&#39;
+AND ISNULL(RESERVE_JINRYO,&#39;&#39;) &lt;&gt; &#39;3&#39;      -- C_재검사 제외
+AND ISNULL(RESERVE_SEQ, 0)    &lt;&gt; 3        -- 노안5진료실 제외
+AND RESERVE_STATE NOT IN (&#39;C&#39;,&#39;Y&#39;)        -- 취소·미내원 제외
+AND EXISTS (EMPLOYEE E WHERE E.EMP_NUM = 고객.MY_OPTOMETRIST)   -- ★ 검안사 배정됨
+AND ( 고객.MY_COUNSELOR = &#39;BS0808&#39;                              -- 중단
+   OR EXISTS (EMPLOYEE E WHERE E.EMP_NUM = 고객.MY_COUNSELOR) ) -- 백내장</code></pre>
+<h3 id="담당자-배정-상태로-분류가-정해짐">담당자 배정 상태로 분류가 정해짐</h3>
+<p><strong>2026-08-05 개편</strong>으로 리스트 모집단이 넓어지고 분류가 4종이 됐음. 담당자 필터는 <strong>모집단을 거르는 데 쓰지 않고 분류 계산에만</strong> 씀.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">분류</th><th style="text-align:left">검안사(<code>MY_OPTOMETRIST</code>)</th><th style="text-align:left">상담사(<code>MY_COUNSELOR</code>)</th><th style="text-align:left">검사수에 포함?</th><th style="text-align:right">2026-07</th></tr></thead><tbody><tr><td style="text-align:left"><strong>백내장</strong></td><td style="text-align:left">배정 O</td><td style="text-align:left">배정 O</td><td style="text-align:left">✅</td><td style="text-align:right">45</td></tr><tr><td style="text-align:left"><strong>중단</strong></td><td style="text-align:left">배정 O</td><td style="text-align:left"><code>BS0808</code>(미지정)</td><td style="text-align:left">✅</td><td style="text-align:right">11</td></tr><tr><td style="text-align:left"><strong>노안/FU</strong></td><td style="text-align:left">배정 X</td><td style="text-align:left"><code>BS0808</code></td><td style="text-align:left">❌</td><td style="text-align:right">40</td></tr><tr><td style="text-align:left"><strong>기타</strong></td><td style="text-align:left">그 외</td><td style="text-align:left">그 외</td><td style="text-align:left">❌</td><td style="text-align:right">6</td></tr></tbody></table></div>
+<p><strong>건수 불변식 — 깨지면 레포트가 틀어짐</strong></p>
+<pre><code>월간 레포트 백내장 검사수 = &#39;백내장&#39; + &#39;중단&#39;   (2026-06 = 55 · 2026-07 = 56)
+백내장 리스트 전체 행수    = 4분류 합계          (2026-06 = 115 · 2026-07 = 102)</code></pre>
+<blockquote><p>⚠️ <strong>종전 문서의 &quot;2026-07 = 54&quot;는 폐기값임.</strong> 개편 전 모집단(56행)에서 나온 숫자이고, 현행 기준 실측은 <strong>56</strong>(45+11)임. 배경·검증은 <a href="../../점검/인수인계_2026-08-05_백내장검사.html">인수인계_2026-08-05_백내장검사.md</a> §2-4·§3 참조.</p></blockquote>
+<blockquote><p>⚠️ <strong><code>MY_OPTOMETRIST IS NOT NULL</code>로 판정하면 안 됨.</strong> 빈 문자열이 걸려 분류가 뒤집힘. 반드시 <code>EXISTS(EMPLOYEE)</code>로 볼 것.</p></blockquote>
+<hr>
+<h2 id="4-검사수전체-세-종류-합산">4. 검사수(전체) — 세 종류 합산</h2>
+<p><code>/stats/procedure-exam</code> 화면의 <strong>검사수</strong>는 세션 단위 합산임.</p>
+<pre><code>검사수(전체) = EXAM 행 수(시력교정 + 드림렌즈) + 백내장 세션 수</code></pre>
+<hr>
+<h2 id="5-알아둬야-할-함정">5. 알아둬야 할 함정</h2>
+<h3 id="①-exam은-고객당-1행임">① <code>EXAM</code>은 고객당 1행임</h3>
+<p><code>Cataract_Exam</code>과 달리 <strong>누적되지 않음.</strong> 같은 사람이 다시 검사받으면 <strong>덮어씀.</strong> 그래서 <strong>&quot;이전에 검사받은 적 있는지&quot;를 <code>EXAM</code>으로 판정할 수 없음.</strong></p>
+<h3 id="②-검사-유형은-그날-예약을-봄">② 검사 유형은 그날 예약을 봄</h3>
+<p>검사자 리스트의 <code>검사구분</code>(검사·검사OP·재검사·당일재검사 등)은 <strong>그 검사일 당일의 검사 예약</strong>에서 가져옴.</p>
+<p>레거시는 <strong>가장 최근 예약</strong>(날짜 무관, 미래 예약 포함)을 봐서 서로 다름. 레거시 방식은 <strong>미래 예약이 잡히면 지나간 달 숫자가 바뀜.</strong> 자세한 비교는 <a href="../../점검/원데이-레거시-비교_2026-07.html">원데이-레거시-비교_2026-07.md</a>.</p>
+<h3 id="③-화면마다-백내장-모집단이-달랐음-2026-08-05-해소">③ 화면마다 백내장 모집단이 달랐음 — ✅ 2026-08-05 해소</h3>
+<p>종전에는 세 화면이 서로 다른 모집단을 써서 2026-07 기준 <strong>54 / 57 / 88</strong> 세 숫자가 나왔음.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">화면</th><th style="text-align:left">종전 기준</th><th style="text-align:right">종전 07</th></tr></thead><tbody><tr><td style="text-align:left">백내장 검사자 리스트 · 월간 레포트</td><td style="text-align:left">H 예약 + 검안사 배정</td><td style="text-align:right">54</td></tr><tr><td style="text-align:left">전체 검사자 리스트 조회건수</td><td style="text-align:left">H 예약 + <code>JINRYO=&#39;1&#39;</code>만</td><td style="text-align:right">57</td></tr><tr><td style="text-align:left">전체 검사자 리스트 검사수 뱃지</td><td style="text-align:left"><code>Cataract_Exam</code> 세션</td><td style="text-align:right">88</td></tr></tbody></table></div>
+<p><strong>세 SQL 을 한 모집단으로 통일했음</strong> — <code>find-cataract-exam-list.sql</code> · <code>find-all-exam-list.sql</code> · <code>fragments/exam-session-source.sql</code>. <code>CataractExamListSqlResourceTest</code> 가 세 파일의 <code>CASE</code>·술어가 글자까지 같은지 강제하므로 <strong>이 테스트를 지우면 재발함.</strong></p>
+<blockquote><p>⚠️ <strong><code>isCat</code> 이름이 파일마다 뜻이 다름.</strong> <code>fragments/exam-session-source.sql</code> → 검사수 집계 대상(56) / <code>exam/find-all-exam-list.sql</code> → H 예약 행 전부(102). 레포트와 맞출 땐 <code>isCat</code> 말고 <strong><code>catClass IN (&#39;백내장&#39;,&#39;중단&#39;)</code></strong> 을 쓸 것.</p>
+<p>상세는 <a href="../../점검/인수인계_2026-08-05_백내장검사.html">인수인계_2026-08-05_백내장검사.md</a> §3 변경 2·3.</p></blockquote>
+<h3 id="④-레거시-명단의-검사일자는-역대-최초-예약일임">④ 레거시 명단의 <code>검사일자</code>는 역대 최초 예약일임</h3>
+<p>조회 기간과 무관하게 <strong>그 고객이 처음 백내장 검사를 예약한 날</strong>이 찍힘. 그래서 <strong>명단을 검사일자 기준으로 훑으면 재방문자가 통째로 빠짐.</strong></p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left"></th><th style="text-align:right">검사수</th><th style="text-align:right">신환</th><th style="text-align:right">재방문</th></tr></thead><tbody><tr><td style="text-align:left">2026-06</td><td style="text-align:right">55</td><td style="text-align:right">43</td><td style="text-align:right"><strong>12</strong></td></tr><tr><td style="text-align:left">2026-07</td><td style="text-align:right">54</td><td style="text-align:right">46</td><td style="text-align:right"><strong>8</strong></td></tr></tbody></table></div>
+<p><em>&quot;명단 세어보니 43명인데 왜 55인가&quot;</em> 는 여기서 생기는 착시임.</p>
+<h3 id="⑤-visionexam은-중단취소를-거르지-않음">⑤ <code>visionExam</code>은 중단·취소를 거르지 않음</h3>
+<p><code>backend/src/main/resources/sql/exam/find-vision-correction-monthly.sql</code>에는 <code>STOP_YN</code>·<code>CANCEL_CD</code> 조건이 없음. 그래서 <code>일반 검사 = visionExam − 원데이</code> 계산에서 <strong>수술 중단자가 일반 검사로 흘러듦.</strong></p>
+<hr>
+<h2 id="6-관련-쿼리-파일">6. 관련 쿼리 파일</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-exam-list.sql</code></td><td style="text-align:left">시력교정 검사자 리스트</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-cataract-exam-list.sql</code></td><td style="text-align:left">백내장 검사자 리스트</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-all-exam-list.sql</code></td><td style="text-align:left">전체 검사자 리스트 (3종 통합)</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-vision-correction-monthly.sql</code></td><td style="text-align:left">시력교정 검사 월별</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-dreamlens-monthly.sql</code></td><td style="text-align:left">드림렌즈 검사 월별</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-cataract-monthly.sql</code></td><td style="text-align:left">백내장 검사 월별</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-one-day-exam-count-monthly.sql</code></td><td style="text-align:left">원데이 검사 월별</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-total-exam-count-monthly.sql</code></td><td style="text-align:left">전체 검사수 월별</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/overall/find-demographics-daily.sql</code></td><td style="text-align:left">내원동기·직업별 분해</td></tr></tbody></table></div>
+<hr>
+<h2 id="관련-문서">관련 문서</h2>
+<ul><li><a href="../../점검/시력교정-검사자_2026-06~07.html">시력교정-검사자-점검_2026-06~07.md</a></li><li><a href="../../점검/인수인계_2026-08-05_백내장검사.html">인수인계_2026-08-05_백내장검사.md</a> 부록A — 백내장 검사수 점검 이력</li><li><a href="../../점검/원데이-레거시-비교_2026-07.html">원데이-레거시-비교_2026-07.md</a></li></ul></div>
+      </article>
+      <nav class="pager" aria-label="이전 및 다음 문서"><span></span><span></span></nav>
+    </main>
+  </div>
+</body>
+</html>

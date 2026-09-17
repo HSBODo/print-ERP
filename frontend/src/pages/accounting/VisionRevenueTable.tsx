@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
 import type { VisionReceipt } from '@/api/accounting'
 import type { VisionExtraFilters } from './VisionRevenueControls'
+import { AccountingPagination } from './AccountingPagination'
 import {
   VISION_COLUMNS,
   visionCellValue,
@@ -48,7 +48,7 @@ const subtotalGroups = (rows: VisionReceipt[], breakdown: VisionExtraFilters['br
     .sort((a, b) => b.rows.reduce((sum, row) => sum + row.amount, 0) - a.rows.reduce((sum, row) => sum + row.amount, 0))
 }
 
-export function VisionRevenueTable({ rows, breakdown }: { rows: VisionReceipt[]; breakdown: VisionExtraFilters['breakdown'] }) {
+export function VisionRevenueTable({ rows, breakdown, emptyMessage = '조회 결과가 없습니다.' }: { rows: VisionReceipt[]; breakdown: VisionExtraFilters['breakdown']; emptyMessage?: string }) {
   const [sort, setSort] = useState<{ key: VisionColumnKey; direction: 'asc' | 'desc' } | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
@@ -61,13 +61,13 @@ export function VisionRevenueTable({ rows, breakdown }: { rows: VisionReceipt[];
   const toggleSort = (key: VisionColumnKey) => { if (key === '__no') return; setPage(1); setSort((previous) => previous?.key === key ? { key, direction: previous.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' }) }
 
   return (
-    <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div className="flex min-h-[420px] min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="min-h-0 flex-1 overflow-auto border-b border-gray-200">
         <table className="min-w-full border-collapse text-[11px]"><thead><tr>{VISION_COLUMNS.map((column) => { const direction = sort?.key === column.key ? sort.direction : null; return <th key={column.key} onClick={() => toggleSort(column.key)} className={`sticky top-0 z-10 cursor-pointer whitespace-nowrap border-b border-gray-200 px-2.5 py-1.5 font-semibold text-gray-700 ${column.kind === 'status' ? 'min-w-20' : ''} ${column.kind === 'number' || column.kind === 'derived' ? `${column.kind === 'derived' ? 'bg-amber-50' : 'bg-gray-50'} text-right` : 'bg-gray-50 text-center'}`}><span className="inline-flex items-center gap-1"><span>{column.label}</span>{column.kind !== 'no' && <span className="flex flex-col gap-px"><i className={`h-0 w-0 border-x-[3px] border-b-[4px] border-x-transparent ${direction === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'}`} /><i className={`h-0 w-0 border-x-[3px] border-t-[4px] border-x-transparent ${direction === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'}`} /></span>}</span></th> })}</tr>{totals.map((item, index) => <TotalRow key={`${item.label}-${index}`} rows={item.rows} label={item.label} tone={item.tone} top={29 + index * 25} />)}</thead>
-          <tbody>{visible.map((row, rowIndex) => <tr key={row.id} className="border-b border-gray-100 hover:bg-blue-50/50">{VISION_COLUMNS.map((column) => <RowCell key={column.key} column={column} row={row} no={start + rowIndex + 1} />)}</tr>)}{visible.length === 0 && <tr><td colSpan={VISION_COLUMNS.length} className="py-12 text-center text-sm text-gray-500">조회 결과가 없습니다.</td></tr>}</tbody>
+          <tbody>{visible.map((row, rowIndex) => <tr key={row.id} className="border-b border-gray-100 hover:bg-blue-50/50">{VISION_COLUMNS.map((column) => <RowCell key={column.key} column={column} row={row} no={start + rowIndex + 1} />)}</tr>)}{visible.length === 0 && <tr><td colSpan={VISION_COLUMNS.length} className="py-12 text-center text-sm text-gray-500">{emptyMessage}</td></tr>}</tbody>
         </table>
       </div>
-      <div className="flex flex-wrap items-center gap-2 px-2 py-1.5 text-xs"><span className="min-w-32 font-semibold">{rows.length.toLocaleString('ko-KR')}건 중 {rows.length ? start + 1 : 0}-{Math.min(start + pageSize, rows.length)}</span><div className="flex flex-1 justify-center gap-1"><button disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="h-7 rounded-md border px-2 disabled:opacity-40">이전</button>{Array.from({ length: pageMax }, (_, index) => index + 1).map((number) => <button key={number} onClick={() => setPage(number)} className={`h-7 min-w-7 rounded-md border px-2 ${safePage === number ? 'border-slate-900 bg-slate-900 text-white' : 'bg-white'}`}>{number}</button>)}<button disabled={safePage >= pageMax} onClick={() => setPage(safePage + 1)} className="h-7 rounded-md border px-2 disabled:opacity-40">다음</button></div><label className="relative ml-auto flex items-center gap-2 text-gray-500">행 수<select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="h-7 w-[72px] appearance-none rounded-md border border-gray-300 bg-white pl-2.5 pr-7 text-gray-800"><option>50</option><option>100</option><option>200</option><option>500</option></select><ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" /></label></div>
+      <AccountingPagination totalRows={rows.length} page={safePage} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   )
 }

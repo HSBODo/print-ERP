@@ -1,6 +1,8 @@
 package com.bviit.analytics.marketing.service;
 
 import com.bviit.analytics.marketing.repository.OverseasMarketingRepository;
+import com.bviit.analytics.marketing.repository.OverseasMarketingRepository.PhoneEmailCandidates;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -28,6 +30,15 @@ class OverseasMarketingCrmEnricherTest {
 
     private final OverseasMarketingRepository repository = mock(OverseasMarketingRepository.class);
     private final OverseasMarketingCrmEnricher enricher = new OverseasMarketingCrmEnricher(repository);
+
+    /**
+     * findCandidatesByPhoneOrEmail 은 이름 매칭이 성공하는 경로에서도 항상 호출된다(전화·이메일 키가 있으면).
+     * Mockito 기본값이 null 이면 timed2 로그에서 NPE 가 나므로 빈 결과로 초기화한다.
+     */
+    @BeforeEach
+    void stubDefaults() {
+        when(repository.findCandidatesByPhoneOrEmail(any(), any())).thenReturn(noCandidates());
+    }
 
     // ── 1단계: 이름 + 생일 정확 일치 ───────────────────────────────────
 
@@ -90,8 +101,8 @@ class OverseasMarketingCrmEnricherTest {
     void 전화번호_뒷_8자리가_유일하고_생일이_맞으면_매칭한다() {
         Map<String, Object> row = row(300L, "김서로",   "1985-03-20", "010-2222-3333", "");
         when(repository.findCandidatesByNames(List.of("김서로"))).thenReturn(List.of());
-        when(repository.findCandidatesByPhones(List.of("22223333")))
-                .thenReturn(List.of(customer("C300", "다른이름", "1985-03-20", "01022223333")));
+        when(repository.findCandidatesByPhoneOrEmail(any(), any()))
+                .thenReturn(phones(customer("C300", "다른이름", "1985-03-20", "01022223333")));
 
         enricher.matchRows(new ArrayList<>(List.of(row)));
 
@@ -103,8 +114,8 @@ class OverseasMarketingCrmEnricherTest {
     void 전화번호_유일하지만_생일이_다르면_확인필요로_보관한다() {
         Map<String, Object> row = row(301L, "김서로", "1985-03-20", "010-2222-3333", "");
         when(repository.findCandidatesByNames(any())).thenReturn(List.of());
-        when(repository.findCandidatesByPhones(List.of("22223333")))
-                .thenReturn(List.of(customer("C301", "다른이름", "1970-01-01", "01022223333")));
+        when(repository.findCandidatesByPhoneOrEmail(any(), any()))
+                .thenReturn(phones(customer("C301", "다른이름", "1970-01-01", "01022223333")));
 
         enricher.matchRows(new ArrayList<>(List.of(row)));
 
@@ -125,9 +136,8 @@ class OverseasMarketingCrmEnricherTest {
         // 시트 010-2222-3333 · CRM 은 해외 번호로 뒷자리만 겹치는 다른 사람.
         Map<String, Object> row = row(302L, "김서로", "1985-03-20", "010-2222-3333", "");
         when(repository.findCandidatesByNames(any())).thenReturn(List.of());
-        when(repository.findCandidatesByPhones(List.of("22223333")))
-                .thenReturn(List.of(customer("C302", "다른이름", "1985-03-20", "6512223333")));  // 싱가폴 번호
-        when(repository.findCandidatesByEmails(any())).thenReturn(List.of());
+        when(repository.findCandidatesByPhoneOrEmail(any(), any()))
+                .thenReturn(phones(customer("C302", "다른이름", "1985-03-20", "6512223333")));  // 싱가폴 번호
 
         enricher.matchRows(new ArrayList<>(List.of(row)));
 
@@ -144,9 +154,8 @@ class OverseasMarketingCrmEnricherTest {
         Map<String, Object> emailCandidate = customer("C400", "다른이름", "", "");
         emailCandidate.put("email", "hello@example.com");
         when(repository.findCandidatesByNames(any())).thenReturn(List.of());
-        when(repository.findCandidatesByPhones(any())).thenReturn(List.of());
-        when(repository.findCandidatesByEmails(List.of("hello@example.com")))
-                .thenReturn(List.of(emailCandidate));
+        when(repository.findCandidatesByPhoneOrEmail(any(), any()))
+                .thenReturn(emails(emailCandidate));
 
         enricher.matchRows(new ArrayList<>(List.of(row)));
 
@@ -161,8 +170,7 @@ class OverseasMarketingCrmEnricherTest {
     void 후보가_전혀_없으면_행을_건드리지_않는다() {
         Map<String, Object> row = row(500L, "없는사람", "1990-01-01", "010-9999-8888", "nomatch@x.com");
         when(repository.findCandidatesByNames(any())).thenReturn(List.of());
-        when(repository.findCandidatesByPhones(any())).thenReturn(List.of());
-        when(repository.findCandidatesByEmails(any())).thenReturn(List.of());
+        when(repository.findCandidatesByPhoneOrEmail(any(), any())).thenReturn(noCandidates());
 
         enricher.matchRows(new ArrayList<>(List.of(row)));
 
@@ -247,5 +255,19 @@ class OverseasMarketingCrmEnricherTest {
         verify(repository).saveMatches(captor.capture());
         assertThat(captor.getValue()).isNotEmpty();
         return captor.getValue()[0];
+    }
+
+    @SafeVarargs
+    private static PhoneEmailCandidates phones(Map<String, Object>... rows) {
+        return new PhoneEmailCandidates(new ArrayList<>(List.of(rows)), new ArrayList<>());
+    }
+
+    @SafeVarargs
+    private static PhoneEmailCandidates emails(Map<String, Object>... rows) {
+        return new PhoneEmailCandidates(new ArrayList<>(), new ArrayList<>(List.of(rows)));
+    }
+
+    private static PhoneEmailCandidates noCandidates() {
+        return new PhoneEmailCandidates(new ArrayList<>(), new ArrayList<>());
     }
 }

@@ -70,7 +70,14 @@ public class SecurityConfig {
                         "/manifest.webmanifest",
                         "/site.webmanifest",
                         "/apple-touch-icon.png",
-                        "/error"
+                        "/error",
+                        // API 문서 — Swagger UI 런처(index.html) + openapi3.yaml + swagger-ui-dist 웹자원.
+                        // 결정 근거: docs/api-docs-strategy.md §3(공개) · §4(회계 5+로그인 1 시범).
+                        "/docs/**",
+                        "/webjars/**",
+                        // 관리자 가이드(정적 기획서) — 브라우저 새 탭에서 열려 JWT 헤더 첨부 불가.
+                        // 원본은 docs/_build_v2 (관리자 검토용). URL 은 사이드바 "관리자 → 가이드" 로만 노출.
+                        "/guide/**"
                 ).permitAll();
                 auth.requestMatchers("/api/auth/**").permitAll();
                 // 헬스체크 — Docker HEALTHCHECK·LB·업타임 모니터가 인증 없이 호출.
@@ -168,6 +175,9 @@ public class SecurityConfig {
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/dreamlens-ledger/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
+                // 회계(진료 수납·시력교정 매출) — 임원(DIRECTOR) 이상 개방(2026-09-17).
+                // 프런트 navigation.ts 의 EXECUTIVE_ONLY_PAGE_IDS 와 대칭. MANAGER·STAFF 는 차단.
+                auth.requestMatchers("/api/accounting/**").hasAnyRole("ADMIN", "DIRECTOR");
 
                 auth.anyRequest().authenticated();
             })

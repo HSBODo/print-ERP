@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUSTOM — 비앤빛 Analytics</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#f6f6f7;--card:#fff;--line:#e8e8eb;--ink:#1f2328;--muted:#68707b;--muted2:#9298a1;--accent:#7c5cff;--accent-soft:#efebff;--radius:16px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.72;-webkit-font-smoothing:antialiased}
+/* 상단 탭바 · 좌측 목록은 sms.html 과 pages/*.html 의 것과 같은 값이다 —
+   문서가 바뀌어도 윗줄과 왼편이 같은 자리에 같은 모습으로 남아야 한다. */
+html,body{height:100%}body{display:flex;flex-direction:column}
+.tabbar{height:53px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 18px;background:#fff;border-bottom:1px solid var(--line);z-index:40;overflow-x:auto;overflow-y:hidden}
+.tabbar .tabs{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.tabbar .tab{border:1px solid transparent;background:none;text-decoration:none;font-family:inherit;font-size:14px;font-weight:600;line-height:1.35;color:var(--muted2);padding:6px 14px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.tabbar .tab:hover{color:var(--ink)}
+.tabbar .tab.active{color:var(--ink);background:#fff;border-color:var(--line);box-shadow:0 1px 2px rgba(16,18,29,.06)}
+.tabbar .beta{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:6px}
+.tabbar .sep{color:#d4d6db;font-size:13px;letter-spacing:1px;user-select:none}
+.shell{flex:1;min-height:0;display:flex}
+.sidenav{width:232px;flex-shrink:0;height:100%;overflow-y:auto;padding:26px 14px;border-right:1px solid var(--line);background:var(--bg)}
+.nav-title{margin:0 12px 14px;color:var(--muted2);font-size:13px;font-weight:800;letter-spacing:.02em}
+.sidenav nav{display:grid;gap:1px}.sidenav nav a{display:block;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:13.5px;font-weight:500;text-decoration:none}.sidenav nav a:hover{background:#efeff1;color:var(--ink)}.sidenav nav a.active{background:var(--accent-soft);color:#5b3fd1;font-weight:700}
+.main{flex:1;min-width:0;overflow-y:auto;padding:30px 34px 90px}
+/* 지표 요약 카드 — 본문 위에 자기 지표의 단위·날짜 기준·데이터 원천을 먼저 보인다. */
+.metric-summary{width:100%;max-width:1120px;margin:0 auto 16px;padding:20px 24px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.metric-summary .desc{margin:0 0 14px;font-size:15px;font-weight:650;color:var(--ink)}
+.metric-summary .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:0}
+.metric-summary .facts dt{font-size:11px;font-weight:700;color:var(--muted2);letter-spacing:.03em}
+.metric-summary .facts dd{margin:2px 0 0;font-size:13.5px;color:#414852}
+.metric-summary .flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:4px 0 2px}
+.metric-summary .step{min-width:122px;flex:1;padding:13px 14px;border:1px solid #e5e2f4;border-radius:11px;background:#faf9ff}
+.metric-summary .step .n{color:var(--accent);font-size:11px;font-weight:800}
+.metric-summary .step strong{display:block;margin-top:2px;font-size:14px}
+.metric-summary .step span{display:block;margin-top:3px;color:var(--muted2);font-size:11.5px;white-space:nowrap}
+.metric-summary .arrow{display:grid;place-items:center;flex:0 0 14px;color:#b8b2d7;font-size:15px}
+.metric-summary .alert{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe;font-size:13.5px;color:#514b69}.doc-card{width:100%;max-width:1120px;margin:0 auto;padding:42px 48px 50px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.markdown h1{margin:0 0 24px;font-size:29px;line-height:1.3;letter-spacing:-.025em}.markdown h2{margin:50px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:21px;line-height:1.4;letter-spacing:-.015em}.markdown h3{margin:32px 0 12px;font-size:17px;line-height:1.45}.markdown h4{margin:26px 0 10px;font-size:15px}.markdown p{margin:10px 0 16px;color:#414852;font-size:14.5px}.markdown strong{color:var(--ink)}
+.markdown a{color:#6246d2;text-decoration:none;font-weight:650}.markdown a:hover{text-decoration:underline}.markdown code{padding:2px 5px;border-radius:5px;background:#f1eff9;color:#543bc0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em;overflow-wrap:anywhere}
+.markdown pre{margin:18px 0 22px;padding:18px 20px;overflow:auto;border-radius:11px;background:#20242d;color:#eef1f6;line-height:1.6}.markdown pre code{padding:0;background:none;color:inherit;font-size:12.5px;white-space:pre}
+.markdown blockquote{margin:18px 0;padding:13px 16px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe}.markdown blockquote>:first-child{margin-top:0}.markdown blockquote>:last-child{margin-bottom:0}.markdown blockquote p{color:#514b69}
+.markdown ul,.markdown ol{margin:10px 0 18px;padding-left:24px;color:#414852;font-size:14.5px}.markdown li{margin:5px 0}.markdown hr{height:1px;margin:42px 0;border:0;background:var(--line)}
+.table-scroll{max-width:100%;margin:16px 0 24px;overflow:auto;border:1px solid var(--line);border-radius:11px}.markdown table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;line-height:1.55}.markdown th{padding:10px 12px;background:#f7f7f9;color:#505762;font-weight:750;white-space:nowrap}.markdown td{padding:10px 12px;border-top:1px solid var(--line);color:#424954;vertical-align:top}.markdown tr:hover td{background:#fcfcfd}
+.markdown details{margin:18px 0;padding:12px 15px;border:1px solid var(--line);border-radius:10px;background:#fcfcfd}.markdown summary{cursor:pointer;font-weight:750}.markdown details[open] summary{margin-bottom:14px}
+.pager{display:flex;justify-content:space-between;gap:16px;max-width:1120px;margin:18px auto 0}.pager a{color:#5b3fd1;font-size:13px;font-weight:700;text-decoration:none}.pager a:hover{text-decoration:underline}
+@media print{html,body{height:auto;display:block}.tabbar,.sidenav,.pager{display:none}.shell{display:block}.main{display:block;overflow:visible;padding:0}.doc-card,.metric-summary{max-width:none;border:0;border-radius:0;box-shadow:none;padding:0}.markdown h2,.markdown h3{break-after:avoid}.table-scroll{break-inside:avoid}}
+@media(max-width:820px){.shell{display:block}.sidenav{width:auto;height:auto;padding:14px;border-right:0;border-bottom:1px solid var(--line)}.sidenav nav{display:flex;gap:5px;overflow:auto;padding-bottom:2px}.sidenav nav a{white-space:nowrap}.nav-title{display:none}.main{padding:18px 12px 60px}.doc-card{padding:28px 20px 36px;border-radius:13px}.markdown h1{font-size:24px}.markdown h2{font-size:19px}.docbar{padding:0 14px}.crumb{display:none}}
+</style>
+</head>
+<body>
+  <div class="tabbar">
+    <div class="tabs">
+      <a class="tab" href="../../prd.html#view-prd">대쉬보드 요구사항</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../지표정의/1-예약.html">지표 정의</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-flow">IA</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-expansion">26.10 이후 확장 전략</a>
+    </div>
+  </div>
+  <div class="shell">
+    <aside class="sidenav">
+      <div class="nav-title">테이블 카탈로그</div>
+      <nav><a class="" href="_index.html">전체 목록</a>
+<a class="" href="_template.html">_template</a>
+<a class="" href="AS_LIST.html">AS_LIST</a>
+<a class="" href="Cataract_Exam.html">Cataract_Exam</a>
+<a class="" href="Cataract_Operationdata.html">Cataract_Operationdata</a>
+<a class="" href="Clinic_Assign.html">Clinic_Assign</a>
+<a class="" href="COSTPRICE.html">COSTPRICE</a>
+<a class="" href="COUNSEL_LIST.html">COUNSEL_LIST</a>
+<a class="" href="CTI_COUNSEL_LIST.html">CTI_COUNSEL_LIST</a>
+<a class="" href="CusTolCst.html">CusTolCst</a>
+<a class="" href="CUSTOM_HISTORY.html">CUSTOM_HISTORY</a>
+<a class="" href="CUSTOM_MEMO.html">CUSTOM_MEMO</a>
+<a class="active" href="CUSTOM.html">CUSTOM</a>
+<a class="" href="DoctorMaster.html">DoctorMaster</a>
+<a class="" href="EMPLOYEE.html">EMPLOYEE</a>
+<a class="" href="EXAM_FU.html">EXAM_FU</a>
+<a class="" href="EXAM.html">EXAM</a>
+<a class="" href="HOSPITAL_CFG.html">HOSPITAL_CFG</a>
+<a class="" href="LENS.html">LENS</a>
+<a class="" href="mh_java.html">mh_java</a>
+<a class="" href="Mh_Opdesk.html">Mh_Opdesk</a>
+<a class="" href="MOTIVE_NEW01.html">MOTIVE_NEW01</a>
+<a class="" href="MOTIVE_NEW02.html">MOTIVE_NEW02</a>
+<a class="" href="MsgSndLst.html">MsgSndLst</a>
+<a class="" href="Notice_List.html">Notice_List</a>
+<a class="" href="OPERATIONDATA.html">OPERATIONDATA</a>
+<a class="" href="PTNTSIGN_New.html">PTNTSIGN_New</a>
+<a class="" href="RECALL_LIST.html">RECALL_LIST</a>
+<a class="" href="RECALL_MR_LIST.html">RECALL_MR_LIST</a>
+<a class="" href="Relation_List.html">Relation_List</a>
+<a class="" href="RESERVATION_ETC_INFO.html">RESERVATION_ETC_INFO</a>
+<a class="" href="RESERVATION.html">RESERVATION</a>
+<a class="" href="RESERVE_HISTORY.html">RESERVE_HISTORY</a>
+<a class="" href="RFCARD_LIST.html">RFCARD_LIST</a>
+<a class="" href="Schedule_List.html">Schedule_List</a>
+<a class="" href="Schedule.html">Schedule</a>
+<a class="" href="SNS_LIST.html">SNS_LIST</a></nav>
+    </aside>
+    <main class="main">
+
+      <article class="doc-card">
+        <div class="markdown"><h1 id="custom">CUSTOM</h1>
+<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 61개 | <strong>행 수</strong>: ~587,758 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-08-10 (WORK DB 실측 대조)</p></blockquote>
+<h2 id="역할">역할</h2>
+<p>메인 고객 마스터 테이블. 모든 고객의 인적사항, 연락처, 담당 직원, 등급, 내원 이력 등 핵심 정보를 보유하며, 시스템 전체에서 가장 빈번하게 JOIN되는 중심 테이블이다.</p>
+<h2 id="pk-fk-join-키">PK / FK / JOIN 키</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left"><code>CUST_NUM</code></td><td style="text-align:left">char(13)</td><td style="text-align:left">고객번호 (13자리 고정 숫자 문자열, 예: <code>0000006030000</code>)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>MY_COUNSELOR</code></td><td style="text-align:left">char(6)</td><td style="text-align:left">→ <code>EMPLOYEE.EMP_NUM</code> (상담사)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>MY_DOCTOR</code></td><td style="text-align:left">char(6)</td><td style="text-align:left">→ <code>EMPLOYEE.EMP_NUM</code> (강제지정 의사)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>MY_optometrist</code></td><td style="text-align:left">nchar(6)</td><td style="text-align:left">→ <code>EMPLOYEE.EMP_NUM</code> (검안사)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>MY_MEDICDOCTOR</code></td><td style="text-align:left">char(6)</td><td style="text-align:left">→ <code>EMPLOYEE.EMP_NUM</code> (지정의)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>SelectDoc</code></td><td style="text-align:left">nvarchar(6)</td><td style="text-align:left">→ <code>EMPLOYEE.EMP_NUM</code> (상담의)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>regemp_num</code></td><td style="text-align:left">nvarchar(6)</td><td style="text-align:left">→ <code>EMPLOYEE.EMP_NUM</code> (등록자)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>NATION_CODE</code></td><td style="text-align:left">nvarchar(100)</td><td style="text-align:left">→ <code>NationCustom_CFG.Code</code> (국가코드)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>VIP_CODE</code></td><td style="text-align:left">nvarchar(100)</td><td style="text-align:left">→ <code>VIPCustom_CFG.Code</code> (VIP 분류)</td></tr><tr><td style="text-align:left">FK →</td><td style="text-align:left"><code>InsuranceCode</code></td><td style="text-align:left">char(10)</td><td style="text-align:left">보험사 코드 (전용 CFG 테이블 없음, 프론트 하드코딩)</td></tr><tr><td style="text-align:left">← FK</td><td style="text-align:left"><code>CUSTOM_HISTORY</code></td><td style="text-align:left">—</td><td style="text-align:left">변경이력 (CUST_NUM 참조)</td></tr><tr><td style="text-align:left">← FK</td><td style="text-align:left"><code>CUSTOM_MEMO</code></td><td style="text-align:left">—</td><td style="text-align:left">메모 히스토리 (CUST_NUM 참조, RTF 형식)</td></tr><tr><td style="text-align:left">← FK</td><td style="text-align:left"><code>SNS_LIST</code></td><td style="text-align:left">—</td><td style="text-align:left">SNS 정보 (Cust_Num 참조)</td></tr><tr><td style="text-align:left">← FK</td><td style="text-align:left"><code>Relation_List</code></td><td style="text-align:left">—</td><td style="text-align:left">고객 관계 (Cust_num 참조)</td></tr><tr><td style="text-align:left">← FK</td><td style="text-align:left"><code>CusTolCst</code></td><td style="text-align:left">—</td><td style="text-align:left">동의서 관리 (CusNum 참조)</td></tr><tr><td style="text-align:left">JOIN</td><td style="text-align:left"><code>CUST_NUM</code></td><td style="text-align:left">—</td><td style="text-align:left">RESERVATION_LIST, MOTIVE_NEW01, Mh_Opdesk, PrcItmLst 등 거의 모든 테이블과 JOIN</td></tr></tbody></table></div>
+<h2 id="핵심-컬럼-상위-15개">핵심 컬럼 (상위 15개)</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left"><code>CUST_NUM</code></td><td style="text-align:left">char(13)</td><td style="text-align:left">N</td><td style="text-align:left">고객번호</td><td style="text-align:left">PK. 13자리 고정 (예: <code>0000006030000</code>)</td></tr><tr><td style="text-align:left"><code>CUST_NAME</code></td><td style="text-align:left">nvarchar(100)</td><td style="text-align:left">Y</td><td style="text-align:left">성명(한글)</td><td style="text-align:left">검색 시 <code>IX_CUSTOM_CustName_Covering</code> 인덱스 활용</td></tr><tr><td style="text-align:left"><code>CUST_ENAME</code></td><td style="text-align:left">varchar(200)</td><td style="text-align:left">Y</td><td style="text-align:left">성명(영문)</td><td style="text-align:left">해외환자 매칭에 사용</td></tr><tr><td style="text-align:left"><code>BIRTH_DAY</code></td><td style="text-align:left">char(10)</td><td style="text-align:left">Y</td><td style="text-align:left">생년월일</td><td style="text-align:left"><code>YYYY-MM-DD</code> 형식</td></tr><tr><td style="text-align:left"><code>JUMIN_NUM</code></td><td style="text-align:left">varbinary(100)</td><td style="text-align:left">Y</td><td style="text-align:left">주민등록번호 (암호화)</td><td style="text-align:left"><code>DECRYPTBYPASSPHRASE()</code> 복호화 필요. <strong>고비용 — 일반 검색에서 제외</strong>. 성별은 복호화 후 7번째 자리로 파생</td></tr><tr><td style="text-align:left"><code>CALL_NUM1</code></td><td style="text-align:left">varchar(30)</td><td style="text-align:left">Y</td><td style="text-align:left">전화번호</td><td style="text-align:left">하이픈 없이 저장, 프론트에서 <code>formatPhone()</code></td></tr><tr><td style="text-align:left"><code>CALL_NUM2</code></td><td style="text-align:left">varchar(30)</td><td style="text-align:left">Y</td><td style="text-align:left">핸드폰</td><td style="text-align:left">동일. SMS 발송 기본 번호</td></tr><tr><td style="text-align:left"><code>EMAIL</code></td><td style="text-align:left">varchar(50)</td><td style="text-align:left">Y</td><td style="text-align:left">이메일</td><td style="text-align:left">프론트에서 <code>@</code> 기준 split (local/domain)</td></tr><tr><td style="text-align:left"><code>VIP_CODE</code></td><td style="text-align:left">nvarchar(100)</td><td style="text-align:left">Y</td><td style="text-align:left">VIP 분류 코드</td><td style="text-align:left">→ <code>VIPCustom_CFG.Code</code> 참조</td></tr><tr><td style="text-align:left"><code>Level</code></td><td style="text-align:left">nvarchar(1)</td><td style="text-align:left">Y</td><td style="text-align:left">고객 등급</td><td style="text-align:left"><code>V</code>=VIP, <code>G</code>=Gold, <code>S</code>=Silver, <code>R</code>=Normal (기본값 <code>R</code>)</td></tr><tr><td style="text-align:left"><code>MY_COUNSELOR</code></td><td style="text-align:left">char(6)</td><td style="text-align:left">Y</td><td style="text-align:left">담당 상담사</td><td style="text-align:left"><code>E00XXX</code> 형식, EMPLOYEE.EMP_NUM FK</td></tr><tr><td style="text-align:left"><code>MY_DOCTOR</code></td><td style="text-align:left">char(6)</td><td style="text-align:left">Y</td><td style="text-align:left">강제지정 의사</td><td style="text-align:left"><code>E00XXX</code> 또는 <code>KD0618</code> 등</td></tr><tr><td style="text-align:left"><code>MY_optometrist</code></td><td style="text-align:left">nchar(6)</td><td style="text-align:left">Y</td><td style="text-align:left">담당 검안사</td><td style="text-align:left"><code>E00XXX</code> 형식</td></tr><tr><td style="text-align:left"><code>NATION_CODE</code></td><td style="text-align:left">nvarchar(100)</td><td style="text-align:left">Y</td><td style="text-align:left">국가코드</td><td style="text-align:left">→ <code>NationCustom_CFG.Code</code> (숫자코드)</td></tr></tbody></table></div>
+<h3 id="추가-주요-컬럼">추가 주요 컬럼</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left"><code>FIRST_DAY</code></td><td style="text-align:left">char(10)</td><td style="text-align:left">Y</td><td style="text-align:left">등록일</td><td style="text-align:left"><code>YYYY-MM-DD</code>, readonly</td></tr><tr><td style="text-align:left"><code>LAST_DAY</code></td><td style="text-align:left">char(10)</td><td style="text-align:left">Y</td><td style="text-align:left">최종 방문일</td><td style="text-align:left"><code>YYYY-MM-DD</code>, readonly</td></tr><tr><td style="text-align:left"><code>SMS_GEOBU</code></td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">SMS 수신거부</td><td style="text-align:left"><code>Y</code>=거부</td></tr><tr><td style="text-align:left"><code>EMAIL_GEOBU</code></td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">이메일 수신거부</td><td style="text-align:left"><code>Y</code>=거부</td></tr><tr><td style="text-align:left"><code>LUNAR_YN</code></td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">음력 여부</td><td style="text-align:left"><code>Y</code>=음력</td></tr><tr><td style="text-align:left"><code>Marriage_YN</code></td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">기혼 여부</td><td style="text-align:left"><code>Y</code>=기혼</td></tr><tr><td style="text-align:left"><code>POSITIVE_YN</code></td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">PST 여부</td><td style="text-align:left"></td></tr><tr><td style="text-align:left"><code>SENSITIVE_YN</code></td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">관심 고객 여부</td><td style="text-align:left"></td></tr><tr><td style="text-align:left"><code>MY_MEDICDOCTOR</code></td><td style="text-align:left">char(6)</td><td style="text-align:left">Y</td><td style="text-align:left">지정의</td><td style="text-align:left">EMPLOYEE FK</td></tr><tr><td style="text-align:left"><code>SelectDoc</code></td><td style="text-align:left">nvarchar(6)</td><td style="text-align:left">Y</td><td style="text-align:left">상담의</td><td style="text-align:left">EMPLOYEE FK</td></tr><tr><td style="text-align:left"><code>regemp_num</code></td><td style="text-align:left">nvarchar(6)</td><td style="text-align:left">Y</td><td style="text-align:left">등록자</td><td style="text-align:left">EMPLOYEE FK</td></tr><tr><td style="text-align:left"><code>ETC</code></td><td style="text-align:left">varchar(8000)</td><td style="text-align:left">Y</td><td style="text-align:left">고객정보 메모</td><td style="text-align:left">플레인텍스트 (RTF 메모는 CUSTOM_MEMO 테이블). 프론트 입력 상한은 Validation에서 별도 결정</td></tr><tr><td style="text-align:left"><code>ADDR1</code></td><td style="text-align:left">nvarchar(100)</td><td style="text-align:left">Y</td><td style="text-align:left">주소</td><td style="text-align:left"></td></tr><tr><td style="text-align:left"><code>ADDR2</code></td><td style="text-align:left">nvarchar(100)</td><td style="text-align:left">Y</td><td style="text-align:left">상세주소</td><td style="text-align:left"></td></tr><tr><td style="text-align:left"><code>LevelLimit_Flag</code></td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">등급연장 플래그</td><td style="text-align:left">체크박스</td></tr></tbody></table></div>
+<blockquote><p>전체 61개 컬럼은 <code>SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = &#39;CUSTOM&#39;</code> 으로 조회</p></blockquote>
+<h2 id="함정-gotchas">함정 (Gotchas)</h2>
+<ul><li><strong><code>JUMIN_NUM</code> 복호화 비용</strong>: <code>DECRYPTBYPASSPHRASE(hospitalCode, JUMIN_NUM)</code> 호출은 행당 암복호화 연산이 발생하여 매우 느림. 고객 검색 쿼리에서 주민번호 카테고리(<code>category === &#39;jumin&#39;</code>)일 때만 복호화하고, 일반 이름/전화 검색에서는 제외해야 함. 이 최적화로 p99 10s → 1.48s 달성.</li><li><strong><code>CUST_NUM</code>은 char(13) 고정 길이</strong>: 13자리 숫자 문자열로 저장되며 패딩 공백이 없음. JOIN 시 RTRIM은 불필요. 단, 타 테이블에서 char(23) 컬럼과 JOIN할 경우(예: 레거시 테이블) 상대편을 확인할 것.</li><li><strong><code>SEX</code> 컬럼은 존재하지 않음</strong>: CUSTOM 테이블에 별도 성별 컬럼이 없다. 성별이 필요하면 <code>JUMIN_NUM</code>을 <code>DECRYPTBYPASSPHRASE()</code>로 복호화한 뒤 7번째 자리(1/3=남, 2/4=여)로 파생해야 한다. 고비용이므로 필요할 때만.</li><li><strong>법정대리인 연락처는 <code>CALL_NUM3</code> 사용 (GdnContact 미사용)</strong>: DB 스키마에 <code>GdnContact</code>, <code>GdnName</code>, <code>GdnRelation</code>, <code>GdnContactMsgSend</code> 컬럼이 존재하지만 운영 데이터 0건. 실제 시스템은 <code>CALL_NUM3</code>(48,252건 보유)을 법정대리인 연락처로 사용하며, SELECT 시 <code>CALL_NUM3 AS GdnContact</code> 별칭으로 노출. 신규 기능에서도 동일 컨벤션 유지. (2026-04-20 Lint에서 확인)</li><li><strong>6개 직원 필드 모두 <code>EMPLOYEE.EMP_NUM</code> 참조</strong>: <code>MY_COUNSELOR</code>, <code>MY_DOCTOR</code>, <code>MY_optometrist</code>, <code>MY_MEDICDOCTOR</code>, <code>SelectDoc</code>, <code>regemp_num</code> — 모두 char(6), <code>E00XXX</code> 형식. 타입 혼재 주의 (char/nchar/nvarchar). 이 외에 <code>SelectDoc_Second</code>(nvarchar(6), 2차 상담의)도 EMP_NUM 값을 담는다.</li><li><strong>메모는 별도 테이블</strong>: <code>CUSTOM.ETC</code>는 varchar(8000) 플레인텍스트 메모. 본격적인 메모 히스토리는 <code>CUSTOM_MEMO</code> 테이블이며 <strong>RTF 형식</strong>으로 저장됨. 프론트에서 표시 시 RTF → 플레인텍스트 변환 필요.</li><li><strong><code>Level</code> 기본값</strong>: NULL일 수 있으므로 <code>ISNULL(Level, &#39;R&#39;)</code> 처리 필요. 값: <code>V</code>/<code>G</code>/<code>S</code>/<code>R</code>.</li><li><strong><code>InsuranceCode</code> CFG 없음</strong>: 전용 설정 테이블이 존재하지 않아 프론트에서 하드코딩. 코드값 불일치(INS00X vs 0X) 주의.</li><li><strong><code>JUMIN_NUM_TEMP</code></strong>: 마스킹된 임시 주민번호. 조회 전용이며 저장에는 사용하지 않음.</li></ul>
+<h2 id="사용처">사용처</h2>
+<h3 id="eyechartpro-nodejs">EyeChartPro (Node.js)</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th><th style="text-align:left">R/W</th></tr></thead><tbody><tr><td style="text-align:left"><code>services/customer-read-service.js</code></td><td style="text-align:left">고객 검색, 상세 조회, 등급 조회, 전화번호 조회</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>services/customer-write-service.js</code></td><td style="text-align:left">고객 정보 수정, 신규 번호 채번</td><td style="text-align:left">W</td></tr><tr><td style="text-align:left"><code>services/customer-visit-motive-service.js</code></td><td style="text-align:left">내원동기 조회 시 CUSTOM 참조</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>services/customer-etc-panels-service.js</code></td><td style="text-align:left">기타 패널(소개관계 등)</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>services/sp-memo-cache.js</code></td><td style="text-align:left">메모 캐시 — CUSTOM + CUSTOM_MEMO JOIN</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>services/recall-service.js</code></td><td style="text-align:left">리콜 목록 — CUSTOM JOIN</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>services/recall-surgery-service.js</code></td><td style="text-align:left">수술 리콜 — CUSTOM JOIN</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>services/reservation-service.js</code></td><td style="text-align:left">예약 목록 — CUSTOM JOIN</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>services/overseas-marketing-service.js</code></td><td style="text-align:left">해외마케팅 — 이름/생년/이메일로 CUSTOM 매칭</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/customer-qa.js</code></td><td style="text-align:left">고객 QA 조회</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/referral.js</code></td><td style="text-align:left">소개고객 관리</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/vip.js</code></td><td style="text-align:left">VIP 관리</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/referral-vip.js</code></td><td style="text-align:left">소개VIP</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/surgery-lens-order.js</code></td><td style="text-align:left">렌즈 주문 — CUSTOM JOIN</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/cataract-desk.js</code></td><td style="text-align:left">백내장 데스크</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/exam-assignment.js</code></td><td style="text-align:left">검사배정</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/desk-assignment.js</code></td><td style="text-align:left">데스크배정</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/clinic-statistics.js</code></td><td style="text-align:left">진료통계</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/stats-*.js</code></td><td style="text-align:left">각종 통계 (10+개 라우트)</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/overseas-marketing.js</code></td><td style="text-align:left">해외마케팅 라우트</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/overseas-stats.js</code></td><td style="text-align:left">해외통계</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/b2b-*.js</code></td><td style="text-align:left">B2B 법인 (예약/정산/수술)</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/op-chart.js</code></td><td style="text-align:left">수술차트</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/surgery-schedule.js</code></td><td style="text-align:left">수술일정</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/surgery-status.js</code></td><td style="text-align:left">수술현황</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/outpatient-*.js</code></td><td style="text-align:left">외래진료</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/emergency-call.js</code></td><td style="text-align:left">응급연락</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/dna-registration.js</code></td><td style="text-align:left">DNA 등록</td><td style="text-align:left">R</td></tr><tr><td style="text-align:left"><code>routes/point-staff.js</code>, <code>point-director.js</code></td><td style="text-align:left">포인트 관리</td><td style="text-align:left">R</td></tr></tbody></table></div>
+<h2 id="관련-문서">관련 문서</h2>
+<ul><li><code>db-structure-overview.md</code> — 전체 DB 구조 지도</li><li><code>db-customer.md</code> — 고객정보 패널 프론트↔DB 매핑 상세</li><li><code>db-code-tables.md</code> — VIPCustom_CFG, NationCustom_CFG 등 코드 테이블</li></ul>
+<h2 id="대표-조회-예시">대표 조회 예시</h2>
+<pre><code class="language-sql">-- 고객 검색 (이름 기준, 상담사 JOIN, 상위 501건)
+SELECT TOP 501
+  A.CUST_NUM, &#39;구환&#39; AS FLAG, A.CUST_NAME,
+  ISNULL(A.CUST_ENAME, &#39;&#39;) AS CUST_ENAME,
+  &#39;&#39; AS JUMIN,  -- 주민번호는 jumin 카테고리에서만 복호화
+  A.CALL_NUM1, A.CALL_NUM2, A.CALL_NUM3, A.LAST_DAY,
+  ISNULL(A.EMAIL, &#39;&#39;) AS EMAIL,
+  ISNULL(cns.EMP_NAME, &#39;&#39;) AS counselorName
+FROM CUSTOM A WITH(NOLOCK)
+LEFT JOIN EMPLOYEE cns ON cns.EMP_NUM = A.MY_COUNSELOR
+WHERE A.CUST_NAME LIKE @keyword + &#39;%&#39;
+ORDER BY A.CUST_NAME ASC, A.CUST_NUM ASC</code></pre>
+<pre><code class="language-sql">-- 고객 등급 조회
+SELECT ISNULL(Level, &#39;R&#39;) AS level
+FROM CUSTOM WITH(NOLOCK)
+WHERE CUST_NUM = @custNum</code></pre></div>
+      </article>
+      <nav class="pager" aria-label="이전 및 다음 문서"><span></span><span></span></nav>
+    </main>
+  </div>
+</body>
+</html>
