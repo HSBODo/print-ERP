@@ -130,13 +130,23 @@ describe('통계 페이지 라우트 정책 불변식', () => {
   })
 
   it('부서 gate: MEDICAL 전용 페이지는 MARKETING 부서 STAFF 에게 차단된다', () => {
-    // MEDICAL 전용 = 마케팅 전용도 아니고 · 해외마케팅 개방도 아니고 · admin 도 아닌 통계 페이지 (기본값).
-    // 해외마케팅 3종은 MARKETING·OVERSEAS_MARKETING 두 부서 개방이라 MARKETING STAFF 도 통과 → 여기서 제외.
+    // MEDICAL 전용 = 마케팅 전용도 아니고 · 해외마케팅 페이지도 아니고 · admin 도 아닌 통계 페이지 (기본값).
+    // 2026-09-17: 해외마케팅은 OVERSEAS_MARKETING 전담으로 좁혔지만, MARKETING STAFF 는 여전히 차단되므로
+    // MEDICAL-only 판정 대상에 포함시켜도 결과는 같다. 다만 의미상 분리 유지 위해 예외 필터는 그대로.
     const medicalIds = completeIds.filter(
       (id) => !isMarketingOnlyPage(id) && !isOverseasMarketingPage(id) && !isAdminOnlyPage(id),
     )
     expect(medicalIds.length).toBeGreaterThan(0)
     for (const id of medicalIds) {
+      expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)
+    }
+  })
+
+  it('부서 gate: 해외마케팅 3종은 MARKETING 부서 STAFF 에게 차단된다 (2026-09-17 스코프 분리)', () => {
+    // 2026-09-17: MARKETING 을 해외마케팅에서 배제. OVERSEAS_MARKETING 전담 부서만 접근.
+    const overseasIds = completeIds.filter((id) => isOverseasMarketingPage(id))
+    expect(overseasIds.length).toBeGreaterThan(0)
+    for (const id of overseasIds) {
       expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)
     }
   })

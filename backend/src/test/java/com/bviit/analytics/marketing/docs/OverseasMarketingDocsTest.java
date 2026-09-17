@@ -58,7 +58,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * /api/overseas-marketing/** 13개 엔드포인트 문서화.
  *
- * 4개 서비스(Reader/Syncer/Editor/ReservationStatsService) 를 목킹. MARKETING·OVERSEAS_MARKETING 부서 전용.
+ * 4개 서비스(Reader/Syncer/Editor/ReservationStatsService) 를 목킹. OVERSEAS_MARKETING·ALL 부서 전용.
  *
  * 접수 행(getReceptions)·CRM 고객·매칭 결과·통계 buckets 등 응답이 대부분 동적 Map 이라
  * subsectionWithPath 로 상위만 표기하고 세부 키는 description·다른 API 문서·소스 코드 주석에 남긴다.
@@ -154,11 +154,11 @@ class OverseasMarketingDocsTest {
                                 .summary("예약통계 조회 (레거시 시드 + 자동 집계 병합)")
                                 .description("~2026-08-23 은 레거시 구글시트 시드, 이후는 접수리스트 자동 집계. "
                                         + "buckets[].values 는 동적 키(그룹.지표): total/anglo/china/vietnam/mongolia/agency × inq/rsv/exam/surgery/outpatient + 채널별 세부. "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .queryParameters(
                                         parameterWithName("year").description("연도 (2020~2100)"),
-                                        parameterWithName("granularity").description("집계 단위 — month(기본) · week · day"))
+                                        parameterWithName("granularity").description("집계 단위 — month(기본) · week · day").optional())
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),
                                         fieldWithPath("data.year").description("조회 연도"),
@@ -188,8 +188,8 @@ class OverseasMarketingDocsTest {
                                 .summary("예약통계 일별 셀 수동 수정")
                                 .description("저장 즉시 자동 집계·시드보다 우선한다. groupKey 는 total/anglo/china/vietnam/mongolia/agency, "
                                         + "metricKey 는 inq/rsv/exam/surgery/outpatient 또는 그룹별 채널_inq/채널_rsv. value 는 0~99999. "
-                                        + "MARKETING·OVERSEAS_MARKETING·ALL 부서.")
-                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — MARKETING·OVERSEAS_MARKETING·ALL 부서"))
+                                        + "OVERSEAS_MARKETING·ALL 부서.")
+                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — OVERSEAS_MARKETING·ALL 부서"))
                                 .pathParameters(parameterWithName("date").description("수정 대상 날짜 (YYYY-MM-DD)"))
                                 .requestFields(
                                         fieldWithPath("groupKey").description("그룹 키"),
@@ -225,13 +225,13 @@ class OverseasMarketingDocsTest {
                                 .description("overseas_marketing_sheet(구글시트 캐시 + 수기 입력)를 조회. "
                                         + "CRM 스냅샷은 화면 조회 시점에 파생값(상태·수술·비용·외래)으로 병합돼 있다 — 갱신은 sync-crm 버튼. "
                                         + "matchStatus: matched(고객번호 있음) / review(확인필요) / received(미매칭). "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .queryParameters(
                                         parameterWithName("from").description("조회 시작일 (YYYY-MM-DD)"),
                                         parameterWithName("to").description("조회 종료일 (YYYY-MM-DD, 최대 366일)"),
-                                        parameterWithName("dateType").description("날짜 기준 — reg_date(기본) · matched_date · inquiry_date · departure_schedule · exam_date · surgery_date"),
-                                        parameterWithName("source").description("명단 구분 — all(기본) · manual · existing"))
+                                        parameterWithName("dateType").description("날짜 기준 — reg_date(기본) · matched_date · inquiry_date · departure_schedule · exam_date · surgery_date").optional(),
+                                        parameterWithName("source").description("명단 구분 — all(기본) · manual · existing").optional())
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),
                                         subsectionWithPath("data").description("접수 행 목록 (동적 스키마 — 시트 원본 컬럼 + CRM 스냅샷 파생값 병합)"),
@@ -263,7 +263,7 @@ class OverseasMarketingDocsTest {
                                 .tag("OverseasMarketing")
                                 .summary("접수 행 수기 추가")
                                 .description("origin='manual' 로 저장. 추가자(created_by)는 로그인 ID. CRM 매칭은 sync-crm 배치 시점에 자동 시도. "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .requestFields(
                                         fieldWithPath("inquiryDate").description("문의일 (YYYY-MM-DD)"),
@@ -316,7 +316,7 @@ class OverseasMarketingDocsTest {
                                 .tag("OverseasMarketing")
                                 .summary("접수 행 수정 (시트 원본 컬럼만)")
                                 .description("수정자(updated_by) 는 로그인 ID. 자동 매칭 행은 매칭·스냅샷을 비워 다음 sync-crm 에서 재계산. "
-                                        + "수동 매칭 행은 보존. MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "수동 매칭 행은 보존. OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .pathParameters(parameterWithName("rowNumber").description("수정 대상 행 번호"))
                                 .requestFields(
@@ -361,7 +361,7 @@ class OverseasMarketingDocsTest {
                                 .summary("접수 행 삭제")
                                 .description("수기 행(origin='manual') 이고 locked_at 이 없어야 삭제 가능. "
                                         + "sync-sheet 가 지나간 행은 409 (RowLockedException). "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .pathParameters(parameterWithName("rowNumber").description("삭제 대상 행 번호"))
                                 .responseFields(
@@ -387,7 +387,7 @@ class OverseasMarketingDocsTest {
                                 .summary("담당자 수동 매칭 확정")
                                 .description("확인필요 확정 또는 접수 행 직접 매칭. matched_by 는 로그인 ID로 저장되며 이후 행 수정·시트 재동기화에도 보존. "
                                         + "저장 후 해당 행만 즉시 상세·비용 병합해 스냅샷까지 채운다. "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .pathParameters(parameterWithName("rowNumber").description("매칭 대상 행 번호"))
                                 .requestFields(fieldWithPath("customerNo").description("CRM 고객번호 (숫자만, 최대 20자리)"))
@@ -415,11 +415,11 @@ class OverseasMarketingDocsTest {
                                 .tag("OverseasMarketing")
                                 .summary("해외마케팅 통계 (연간)")
                                 .description("유입→검사·수술 월/주/일별 흐름, 국가별 수술, 검사·수술·외래·렌즈 매출. "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .queryParameters(
                                         parameterWithName("year").description("연도"),
-                                        parameterWithName("granularity").description("집계 단위 — month(기본) · week · day"))
+                                        parameterWithName("granularity").description("집계 단위 — month(기본) · week · day").optional())
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),
                                         fieldWithPath("data.year").description("연도"),
@@ -481,7 +481,7 @@ class OverseasMarketingDocsTest {
                                 .tag("OverseasMarketing")
                                 .summary("시트 동기화 버튼 노출 여부")
                                 .description("OVERSEAS_GOOGLE_SHEETS_SYNC_ENABLED 로 화면에서 [시트 동기화] 버튼을 숨기기 위한 여부만 응답. "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),
@@ -506,7 +506,7 @@ class OverseasMarketingDocsTest {
                                 .description("CUSTOM 스트림 매칭 + 스냅샷 병합. 단일 실행 락 — 이미 실행 중이면 시작 없이 현재 상태 반환. "
                                         + "진행·결과는 sync-crm/status 로 폴링. "
                                         + "SecurityConfig 매처: `POST /api/overseas-marketing/sync-crm` 는 `hasRole('ADMIN')` — "
-                                        + "부서 gate(MARKETING·OVERSEAS_MARKETING)보다 좁은 ADMIN 롤이 우선 적용된다. "
+                                        + "부서 gate(OVERSEAS_MARKETING·ALL)보다 좁은 ADMIN 롤이 우선 적용된다. "
                                         + "무거운 외부 조회(MSSQL SOFTCRM) 실수·남용 방지 목적.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 롤 필수"))
                                 .responseFields(
@@ -529,7 +529,7 @@ class OverseasMarketingDocsTest {
                                 .tag("OverseasMarketing")
                                 .summary("CRM 동기화 잡 상태 폴링")
                                 .description("state: idle / running(phase, startedAt) / done(matched, review, elapsedMs) / error(message). "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),
@@ -551,7 +551,7 @@ class OverseasMarketingDocsTest {
                                 .tag("OverseasMarketing")
                                 .summary("CRM 고객 단건 조회 (수동 매칭 검증)")
                                 .description("customerNo 유효성 검증(숫자 1~20자리) 후 CRM 조회. 없으면 400. "
-                                        + "MARKETING·OVERSEAS_MARKETING 부서 전용.")
+                                        + "OVERSEAS_MARKETING·ALL 부서 전용.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — 부서 gate"))
                                 .pathParameters(parameterWithName("customerNo").description("CRM 고객번호 (숫자만)"))
                                 .responseFields(
