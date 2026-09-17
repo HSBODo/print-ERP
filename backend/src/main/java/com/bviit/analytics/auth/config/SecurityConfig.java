@@ -175,8 +175,9 @@ public class SecurityConfig {
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/dreamlens-ledger/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
-                // 회계(진료 수납·시력교정 매출) — 프런트 navigation.ts 의 ADMIN_ONLY_PAGE_IDS 와 대칭.
-                auth.requestMatchers("/api/accounting/**").hasRole("ADMIN");
+                // 회계(진료 수납·시력교정 매출) — 임원(DIRECTOR) 이상 개방(2026-09-17).
+                // 프런트 navigation.ts 의 EXECUTIVE_ONLY_PAGE_IDS 와 대칭. MANAGER·STAFF 는 차단.
+                auth.requestMatchers("/api/accounting/**").hasAnyRole("ADMIN", "DIRECTOR");
 
                 auth.anyRequest().authenticated();
             })

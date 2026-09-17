@@ -60,7 +60,7 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     }
   })
 
-  it('회계 페이지는 ADMIN 만 접근한다 (백엔드 /api/accounting/** 매처와 대칭)', () => {
+  it('회계 페이지는 임원(ADMIN·DIRECTOR) 이상 접근한다 (백엔드 /api/accounting/** 매처와 대칭, 2026-09-17)', () => {
     for (const id of [
       'accounting-medical',
       'accounting-vision',
@@ -69,14 +69,16 @@ describe('통계 페이지 라우트 정책 불변식', () => {
       'accounting-medical-chart',
     ]) {
       expect(PAGE_COMPONENTS[id]).toBeDefined()
-      // 회계는 adminOnly 로 되돌림 · executiveOnly 아님
-      expect(isAdminOnlyPage(id)).toBe(true)
-      expect(isExecutiveOnlyPage(id)).toBe(false)
-      // ADMIN 통과 · DIRECTOR·MANAGER·STAFF 모두 차단
+      // 회계는 executiveOnly · adminOnly 아님
+      expect(isExecutiveOnlyPage(id)).toBe(true)
+      expect(isAdminOnlyPage(id)).toBe(false)
+      // ADMIN·DIRECTOR 통과 · MANAGER·STAFF 차단
       expect(isRouteBlocked(id, true, asAdmin)).toBe(false)
       expect(isRouteBlocked(id, false, asAdmin)).toBe(false)
-      expect(isRouteBlocked(id, true, asDirector)).toBe(true)
+      expect(isRouteBlocked(id, true, asDirector)).toBe(false)
+      expect(isRouteBlocked(id, false, asDirector)).toBe(false)
       expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)
+      expect(isRouteBlocked(id, false, asStaffMarketing)).toBe(true)
     }
   })
 
@@ -148,10 +150,10 @@ describe('통계 페이지 라우트 정책 불변식', () => {
     }
   })
 
-  it('임원 gate: executiveOnly 페이지는 MANAGER·STAFF 에게 차단되고 ADMIN·DIRECTOR 는 통과한다', () => {
-    // 현재 executiveOnly 대상 페이지 없음(회계는 ADMIN 전용으로 되돌림). 인프라 자체는 유지되므로
-    // 대상이 다시 지정되면 자동으로 이 케이스가 활성화된다.
+  it('임원 gate: executiveOnly 페이지는 MANAGER·STAFF 에게 차단되고 ADMIN·DIRECTOR 는 통과한다 (2026-09-17 회계 5종 대상)', () => {
+    // 2026-09-17: 회계 5종이 여기로 이동. MANAGER 는 STAFF 와 동일 취급.
     const executiveIds = ids.filter((id) => isExecutiveOnlyPage(id))
+    expect(executiveIds.length).toBeGreaterThan(0)
     const asManagerMedical = { role: 'MANAGER' as const, department: 'MEDICAL' as const }
     for (const id of executiveIds) {
       expect(isRouteBlocked(id, false, asStaffMedical)).toBe(true)

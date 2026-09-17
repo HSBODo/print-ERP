@@ -111,8 +111,8 @@ class AccountingDocsTest {
                         resource(ResourceSnippetParameters.builder()
                                 .tag("Accounting")
                                 .summary("회계 마트 적재 현황")
-                                .description("화면 상단 '데이터 기준' 표기용. ADMIN 전용.")
-                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 필수"))
+                                .description("화면 상단 '데이터 기준' 표기용. 임원(ADMIN·DIRECTOR) 이상 전용.")
+                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN·DIRECTOR 필수"))
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),
                                         fieldWithPath("data.medicalFrom").description("진료 수납 마트 시작일 (YYYY-MM-DD, 미적재 시 null)"),
@@ -139,8 +139,8 @@ class AccountingDocsTest {
                         resource(ResourceSnippetParameters.builder()
                                 .tag("Accounting")
                                 .summary("진료 수납 내역 조회 (의사랑)")
-                                .description("의사랑 IPLUS 외래·입원 원장 행. 2026-01-01 이후만 행이 실린다. ADMIN 전용.")
-                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 필수"))
+                                .description("의사랑 IPLUS 외래·입원 원장 행. 2026-01-01 이후만 행이 실린다. 임원(ADMIN·DIRECTOR) 이상 전용.")
+                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN·DIRECTOR 필수"))
                                 .queryParameters(
                                         parameterWithName("from").description("조회 시작일 (YYYY-MM-DD)"),
                                         parameterWithName("to").description("조회 종료일 (YYYY-MM-DD, 최대 366일)"))
@@ -203,8 +203,8 @@ class AccountingDocsTest {
                         resource(ResourceSnippetParameters.builder()
                                 .tag("Accounting")
                                 .summary("진료 매출 월별 조회")
-                                .description("행 마트가 있는 월(2026-01~)은 행 재집계, 그 전은 집계 마트. category != '전체' 이면 행 마트만 사용. ADMIN 전용.")
-                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 필수"))
+                                .description("행 마트가 있는 월(2026-01~)은 행 재집계, 그 전은 집계 마트. category != '전체' 이면 행 마트만 사용. 임원(ADMIN·DIRECTOR) 이상 전용.")
+                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN·DIRECTOR 필수"))
                                 .queryParameters(
                                         parameterWithName("years").description("조회 연도 목록 (콤마 구분 · 1~5개)"),
                                         parameterWithName("category").description("구분 필터 — 전체 · 외래 · 입원 · 백내장 (기본: 전체)"))
@@ -234,8 +234,8 @@ class AccountingDocsTest {
                         resource(ResourceSnippetParameters.builder()
                                 .tag("Accounting")
                                 .summary("시력교정 매출 내역 조회 (SOFTCRM)")
-                                .description("비급여 수납 전표 상세 1줄(결제수단별) = 1행. 매출 집계·그래프 화면도 이 응답을 접어 쓴다. ADMIN 전용.")
-                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 필수"))
+                                .description("비급여 수납 전표 상세 1줄(결제수단별) = 1행. 매출 집계·그래프 화면도 이 응답을 접어 쓴다. 임원(ADMIN·DIRECTOR) 이상 전용.")
+                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN·DIRECTOR 필수"))
                                 .queryParameters(
                                         parameterWithName("from").description("조회 시작일 (YYYY-MM-DD)"),
                                         parameterWithName("to").description("조회 종료일 (YYYY-MM-DD, 최대 366일)"))
@@ -282,8 +282,8 @@ class AccountingDocsTest {
                         resource(ResourceSnippetParameters.builder()
                                 .tag("Accounting")
                                 .summary("시력교정 매출 월별 조회")
-                                .description("list_vision_receipt 를 (yr, mo) 로 GROUP BY 한 값. 2023~ 전 기간. ADMIN 전용.")
-                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN 필수"))
+                                .description("list_vision_receipt 를 (yr, mo) 로 GROUP BY 한 값. 2023~ 전 기간. 임원(ADMIN·DIRECTOR) 이상 전용.")
+                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — ADMIN·DIRECTOR 필수"))
                                 .queryParameters(parameterWithName("years").description("조회 연도 목록 (콤마 구분 · 1~5개)"))
                                 .responseFields(
                                         fieldWithPath("success").description("요청 성공 여부"),

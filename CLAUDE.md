@@ -33,7 +33,7 @@ project-root/
 │   │   ├── overall/                     # 주간 종합지표
 │   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
 │   │   ├── marketing/                   # 채널별 수익성 · 해외마케팅(접수리스트 시트캐시+수기입력·CRM 매칭·통계·예약통계 — /api/overseas-marketing)
-│   │   ├── accounting/                  # 회계 — 진료 수납(의사랑 IPLUS 링크드서버 OPENQUERY)·시력교정 매출(SOFTCRM 비급여 수납) 마트 조회 /api/accounting · ADMIN
+│   │   ├── accounting/                  # 회계 — 진료 수납(의사랑 IPLUS 링크드서버 OPENQUERY)·시력교정 매출(SOFTCRM 비급여 수납) 마트 조회 /api/accounting · 임원(ADMIN·DIRECTOR)
 │   │   ├── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) — init/ 하위에 초기 시더 배치
 │   │   └── batch/                       # 배치 인프라 — job(*MartJob·*MartWriter) · admin(reconcile·admin/controller) · controller(BatchStatusController) · repository · dto
 │   ├── src/main/resources/
@@ -131,7 +131,7 @@ project-root/
 - 통계 전용 페이지 25종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
-- 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` 연동 · 배치 도메인 `ACCOUNTING` · ADMIN 전용)
+- 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` 연동 · 배치 도메인 `ACCOUNTING` · 임원(ADMIN·DIRECTOR) 이상 · 2026-09-17)
 - 회계 정합성: 진료 행·집계는 월 전체를 함께 교체하고 `rows_complete`로 월별 조회 경로를 선택한다. 회계만 매월 2023년부터 과거 이력을 재검산하며, 진료 부분 실패는 성공 데이터 보존 + FAILED 이력으로 처리한다 (`docs/accounting/mart-and-api.md`).
 - 해외마케팅 3종 (접수리스트·통계·예약통계 — 2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 + 수기 입력 · CRM 매칭 · `/api/overseas-marketing` · MARKETING 부서 전용)
 
@@ -181,11 +181,11 @@ project-root/
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
 | unit-price | 객단가 | /stats/unit-price | 객단가 | 미구현 |
-| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 완료 (**관리자 전용** · 2026-09-15 · 의사랑 `PAOSUNAB_New`/`PAISUNAB_New` 원장 → `list_medical_receipt` 2026~ · 링크드서버 OPENQUERY) |
-| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 완료 (**관리자 전용** · SOFTCRM `CstPrcSub`+`PrcItmDtl` → `list_vision_receipt` 2023~ · 취소행 음수 상계) |
-| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 완료 (**관리자 전용** · 한울회계법인 피벗(매입사×진료명) · `list_vision_receipt` 를 화면에서 접음) |
-| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 완료 (**관리자 전용** · `list_vision_receipt` 월별 GROUP BY) |
-| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 완료 (**관리자 전용** · 행 연도(2026~)는 `list_medical_receipt` 재집계+구분 필터 · 그 전은 `mart_medical_receipt_monthly` 레거시 순액) |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 완료 (**임원 이상** · 2026-09-15 · 의사랑 `PAOSUNAB_New`/`PAISUNAB_New` 원장 → `list_medical_receipt` 2026~ · 링크드서버 OPENQUERY) |
+| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 완료 (**임원 이상** · SOFTCRM `CstPrcSub`+`PrcItmDtl` → `list_vision_receipt` 2023~ · 취소행 음수 상계) |
+| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 완료 (**임원 이상** · 한울회계법인 피벗(매입사×진료명) · `list_vision_receipt` 를 화면에서 접음) |
+| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 완료 (**임원 이상** · `list_vision_receipt` 월별 GROUP BY) |
+| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 완료 (**임원 이상** · 행 연도(2026~)는 `list_medical_receipt` 재집계+구분 필터 · 그 전은 `mart_medical_receipt_monthly` 레거시 순액) |
 | dreamlens-revenue | 드림렌즈 장부 | /stats/dreamlens-revenue | 기타 | 완료 (**직접 입력 테이블** · `dreamlens_ledger` JPA CRUD · `/api/dreamlens-ledger`) |
 | b2b-revenue | B2B 매출 | /stats/b2b-revenue | 기타 | 완료 |
 | staff-point | 직원 포인트 | /stats/staff-point | 기타 | 미구현 |
@@ -217,7 +217,7 @@ GET    /api/stats/{pageId}/composition?years=2024,2025&mock=false
 GET    /api/{listPageId}?from=2026-01-01&to=2026-01-31  # 리스트 계열
 GET    /api/report/weekly?years=2024,2025,2026       # 주차 레포트 (ISO 8601 연간 주차 원시 집계)
 
-# 회계 (마트 조회 · ADMIN · 범위 최대 366일)
+# 회계 (마트 조회 · 임원 ADMIN·DIRECTOR · 범위 최대 366일)
 GET    /api/accounting/medical-receipts?from&to                 # 진료 수납 내역 (의사랑 · list_medical_receipt 2026~)
 GET    /api/accounting/medical-receipts/monthly?years=&category=전체|외래|입원|백내장   # 행 연도는 재집계, 그 전은 월집계('전체'만)
 GET    /api/accounting/vision-receipts?from&to                  # 시력교정 매출 내역 (집계 화면도 이 행을 접는다)

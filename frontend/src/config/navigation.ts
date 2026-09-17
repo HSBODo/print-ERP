@@ -142,25 +142,24 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
+])
+export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지.
+ * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
+ *
+ * 2026-09-17: 회계 5종을 여기로 이동. 백엔드 SecurityConfig `/api/accounting/**` 매처도
+ * `hasAnyRole("ADMIN","DIRECTOR")` 로 함께 개방 (대칭 유지).
+ */
+const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>([
   // 회계 5종 — 마트(list_medical_receipt·list_vision_receipt) + /api/accounting 연동 완료(2026-09-15).
-  // 백엔드 SecurityConfig 도 /api/accounting/** 를 ADMIN 으로 막고 있다. 임원(DIRECTOR) 개방은 개발자 결정 —
-  // 열 때는 EXECUTIVE_ONLY_PAGE_IDS 로 옮기고 백엔드 매처를 hasAnyRole("ADMIN","DIRECTOR") 로 함께 바꾼다.
   'accounting-medical',
   'accounting-vision',
   'accounting-vision-summary',
   'accounting-vision-chart',
   'accounting-medical-chart',
 ])
-export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
-
-/**
- * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지 (2026-09-11 신설).
- * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
- *
- * 현재 대상 페이지 없음 — 회계는 개발 미완성으로 ADMIN 전용으로 되돌렸다.
- * 인프라(pruneExecutiveOnly·ExecutiveBadge)는 정책 확장 재개 대비로 유지.
- */
-const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>()
 export const isExecutiveOnlyPage = (id: string): boolean => EXECUTIVE_ONLY_PAGE_IDS.has(id)
 
 /**
@@ -386,10 +385,9 @@ const rawMenuItems: MenuItem[] = [
     href: '#',
     icon: Landmark,
     kind: 'section',
-    // 회계 — 마트·API 연동 완료(2026-09-15). 접근은 ADMIN 전용 (백엔드 /api/accounting/** 매처와 대칭).
-    // 임원(DIRECTOR) 개방 시 adminOnly 제거 + executiveOnly: true, ADMIN_ONLY_PAGE_IDS 의 accounting-* 를
-    // EXECUTIVE_ONLY_PAGE_IDS 로 옮기고 백엔드 매처도 함께 바꾼다.
-    adminOnly: true,
+    // 회계 — 마트·API 연동 완료(2026-09-15). 임원(DIRECTOR) 이상 개방(2026-09-17).
+    // 백엔드 /api/accounting/** 매처가 hasAnyRole("ADMIN","DIRECTOR") 로 대칭 유지.
+    executiveOnly: true,
     children: kids(
       'accounting-medical', 'accounting-vision',
       'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart',
