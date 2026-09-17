@@ -78,7 +78,8 @@ class AuthDocsTest {
                         resource(ResourceSnippetParameters.builder()
                                 .tag("Auth")
                                 .summary("로그인 (JWT 발급)")
-                                .description("아이디·비밀번호로 Bearer 토큰을 발급받는다. 실계정은 관리자에게 문의.")
+                                .description("아이디·비밀번호로 Bearer 토큰을 발급받는다. 실계정은 관리자에게 문의. "
+                                        + "SecurityConfig `/api/auth/**` permitAll — 사전 인증 불필요, JWT 미소지 상태에서 호출한다.")
                                 .requestFields(
                                         fieldWithPath("loginId").description("로그인 ID (소문자 자동 변환)"),
                                         fieldWithPath("password").description("비밀번호"))

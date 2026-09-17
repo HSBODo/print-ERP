@@ -1,6 +1,6 @@
 # API 문서화 전략 — REST Docs + Swagger UI
 
-작성일: 2026-09-15 · 상태: **회계 도메인 시범 구현 완료 (2026-09-15 · 로컬 검증 통과)**
+작성일: 2026-09-15 · 최신화: 2026-09-17 · 상태: **✅ 전체 완료 — 136 endpoints 문서화 (Phase 0~6, 초기 계획 127 대비 107%)**
 
 ## 1. 목적
 
@@ -102,16 +102,88 @@ stage('Docker Build') {
 
 **남은 작업 (개발자 몫)**: 이 문서 §5 스니펫을 Jenkins 서버쪽 파이프라인에 추가. 스테이지 실패 시 배포 중단(결정 4). 운영용 `Dockerfile` 은 이 시범에서 손대지 않았다 — 결정 6(Jenkins 서버쪽 config)에 따라 스테이지에서 `./gradlew test openapi3` 를 먼저 돌리고 나서 `docker build` 를 실행하도록 파이프라인에 반영한다.
 
-## 9. 확장 계획
+## 9. 확장 계획 · 진행 현황
 
-시범 성공 후 다른 도메인 도입 순서(권장):
+전체 계획 127 endpoints / 13 도메인. 2026-09-17 완료 **136 endpoints / 21 태그** (계획 대비 +9 — 실제 컨트롤러 스캔에서 추가 발견분 반영).
 
-1. **`report`** (`/api/report/weekly`, `/api/report/monthly`) — 파라미터 단순, 프런트 참조 빈도 높음
-2. **`admin/batch`** (`POST /api/admin/batch/rerun` 등) — 운영 조작 API, 정확한 문서화 필요
-3. **`overseas-marketing`** — 접수/통계/예약통계, MARKETING 부서 API 계약 공유용
-4. **나머지 통계 도메인** (`reservation`, `exam`, `surgery`, `consultation`, ...) — 개별 필요 시점에 추가
+| Phase | 도메인 · 태그 | Endpoints | 상태 | 완료일 | 테스트 파일 |
+|-------|--------------|-----------|------|-------|------------|
+| **0** | 시범 (Accounting 5 + Auth login 1) | 6 | ✅ 완료 | 2026-09-15 | `AccountingDocsTest`, `AuthDocsTest` |
+| **1** | **Auth 잔여 (UserAdmin 5) + Report (1)** | 6 | ✅ 완료 | 2026-09-16 | `UserAdminDocsTest`, `ReportDocsTest` |
+| **2** | **BatchAdmin (21) + Batch Status (1)** | 22 | ✅ 완료 | 2026-09-16 | `BatchAdminDocsTest`, `BatchStatusDocsTest` |
+| **3** | **Marketing (ChannelProfit 5 + OverseasMarketing 13)** | 18 | ✅ 완료 | 2026-09-16 | `ChannelProfitDocsTest`, `OverseasMarketingDocsTest` |
+| **4** | **Reservation (Monthly 5 + List 2 + Change 2 + Channel 2 + StatsSystem 6 + CataractStatsSystem 6)** | 23 | ✅ 완료 | 2026-09-17 | `ReservationMonthlyDocsTest`, `ReservationListDocsTest`, `ReservationChangeDocsTest`, `ReservationChannelDocsTest`, `ReservationStatsSystemDocsTest`, `CataractStatsSystemDocsTest` |
+| **5** | **SMS (Management 18 + QueueAdmin 5 + Webhook 1)** | 24 | ✅ 완료 | 2026-09-17 | `SmsManagementDocsTest`, `SmsQueueAdminDocsTest`, `SmsWebhookDocsTest` |
+| **6** | **Surgery(12) + Exam(10) + Consultation(6) + Outpatient(2) + Overall(2) + Etc(5)** | 37 | ✅ 완료 | 2026-09-17 | `SurgeryDocsTest`, `ExamDocsTest`, `ConsultationDocsTest`, `OutpatientDocsTest`, `OverallExamDocsTest`, `EtcDocsTest` |
 
-각 도메인 도입 시 이 전략 문서에 순서·완료일만 갱신한다. 스코프 결정(SecurityConfig 매처, Bearer 예시 방식) 은 시범에서 확정한 규칙 재활용.
+> **초기 계획 대비 편차 (+9)**:
+> - Phase 4 +4 — 예약통계·백내장통계의 진단 서브루트(diff/drill-down/parity/health) 각 2개
+> - Phase 6 +3 — surgery 계획 11 vs 실제 12(reoperation-decisions PUT + accumulated-eyes total 등 재분류), etc 계획 3 vs 실제 5(dreamlens-ledger CRUD 4개 세분화)
+> - 편차 원인: 최초 계획은 페이지 단위 근사치였고, 실제 개수는 컨트롤러 소스 스캔으로 확정. Phase 시작 전 스캔이 필수(재사용 패턴 #10).
+
+### Phase 별 태그 상세 (완료분)
+
+| Tag | Ops | Phase |
+|-----|-----|-------|
+| BatchAdmin | 21 | 2 |
+| SmsManagement | 18 | 5 |
+| OverseasMarketing | 13 | 3 |
+| Surgery | 12 | 6 |
+| Exam | 10 | 6 |
+| Reservation | 9 | 4 |
+| CataractStatsSystem | 6 | 4 |
+| Consultation | 6 | 6 |
+| ReservationStatsSystem | 6 | 4 |
+| Accounting | 5 | 0 |
+| ChannelProfit | 5 | 3 |
+| Etc | 5 | 6 |
+| SmsQueueAdmin | 5 | 5 |
+| UserAdmin | 5 | 1 |
+| Outpatient | 2 | 6 |
+| Overall | 2 | 6 |
+| ReservationChannel | 2 | 4 |
+| Auth | 1 | 0 |
+| Batch | 1 | 2 |
+| Report | 1 | 1 |
+| SmsWebhook | 1 | 5 |
+
+**합계 = 136 operations · 21 태그** (스펙 `openapi3.yaml` operationId 총계와 일치)
+
+### 재실행 · 검증
+
+```bash
+cd backend
+./gradlew test openapi3           # 스펙 재생성 → build/api-spec/openapi3.yaml
+./gradlew bootRun                 # http://localhost:8080/docs/ → Swagger UI
+```
+
+`build/api-spec/openapi3.yaml` 은 bootJar 가 `BOOT-INF/classes/static/docs/openapi3.yaml` 로 직접 임베드한다 (별도 copy 태스크 없음).
+
+### 프로젝트 종료 상태
+
+전 도메인 문서화 완료. 이후 유지보수 규칙:
+1. **신규 컨트롤러 추가 시** — 해당 도메인 `docs/` 디렉토리에 DocsTest 추가. `./gradlew test openapi3` 가 파이프라인에서 계약을 검증.
+2. **응답 필드 변경 시** — 실패한 DocsTest 가 계약 회귀를 잡아내므로 필드 설명·타입을 그때 갱신.
+3. **Jenkins 파이프라인 스니펫(§5)** — 개발자가 서버쪽 config 에 반영해야 이 문서 정본의 §3-4 결정이 자동화된다.
+
+### 재사용 가능한 패턴 (Phase 0~6 확정)
+
+1. **컨트롤러가 `@Profile("postgres-mart")` 인 경우** — `@TestConfiguration` + `@Bean` 으로 mock 의존성과 컨트롤러를 명시 등록. 클래스 레벨 `@Profile` 은 `@Bean` 메서드로 만들 때 무시된다.
+   - 예: `BatchStatusDocsTest`, `BatchAdminDocsTest`
+2. **컨트롤러가 `Optional<Reader>` 로 감싼 경우** — `@MockitoBean` 으로 Reader/Repository 만 주입하면 자동 해결.
+   - 예: `ReportDocsTest`, `ChannelProfitDocsTest`
+3. **POST 의 query param** — `.param()` 대신 `.queryParam()` 사용 (REST Docs 는 URL 쿼리스트링만 인식).
+4. **`Map.of()` 인자 20개 초과** — `LinkedHashMap` 으로 요청 본문 구성.
+5. **동적 Map 응답** — `subsectionWithPath("data")` 로 상위만 표기, 세부 키는 description 에 남긴다.
+6. **null 필드 검증** — `ApiResponse @JsonInclude(NON_NULL)` 로 응답에서 생략되는 필드는 `.type(JsonFieldType.STRING/NULL).optional()` 명시.
+7. **부서 스코프 (MARKETING · OVERSEAS_MARKETING)** — 현재 스펙 렌더는 `adminOnly` 만 표기. 부서 gate 는 description 에 서술.
+8. **컨트롤러 + Service 가 함께 `@Profile("postgres-mart")`** — @TestConfiguration 에 mock service `@Bean` + `@Bean` 으로 컨트롤러를 명시 등록한다. `@MockitoBean` 만으론 컨트롤러가 안 만들어져 404. (Phase 4 `ReservationStatsSystemDocsTest`·`CataractStatsSystemDocsTest`)
+9. **`@JsonInclude(NON_EMPTY)` 리스트 필드 (예: `manualEdits`)** — `.optional().type(JsonFieldType.ARRAY)` 로 표기. 비어있으면 응답에서 생략된다.
+10. **엔드포인트 수 검증** — 계획 초안(문서 §9 표)과 실제 컨트롤러 소스가 어긋날 수 있다. Phase 시작 전에 컨트롤러 스캔으로 실제 개수를 확인하고 초과분을 문서에 반영한다.
+11. **`.queryParam()` vs `.param()` — POST 뿐 아니라 PUT·DELETE 에도 동일** — REST Docs 는 URL 쿼리스트링만 인식. `PUT /targets/{id}/status?value=...` · `DELETE /opt-outs?phone=...` 같이 GET 이 아닌 메서드에 쿼리스트링을 쓰는 컨트롤러는 반드시 `.queryParam()`. (Phase 5 `SmsManagementDocsTest` 최초 2건 실패 → 교정)
+12. **웹훅 엔드포인트 (JWT 없음)** — SecurityConfig 에서 permitAll + 서명 헤더 검증인 경로는 `@MockitoBean` 으로 SolapiProperties.isWebhookSecretConfigured() = false 로 스텁하면 검증을 건너뛰어 통과. 실제 시크릿을 테스트에 심지 않는다. (Phase 5 `SmsWebhookDocsTest`)
+
+각 도메인 도입 시 이 전략 문서 표만 갱신한다. 스코프 결정(SecurityConfig 매처, Bearer 예시 방식) 은 시범에서 확정한 규칙 재활용.
 
 ## 10. 참고
 
