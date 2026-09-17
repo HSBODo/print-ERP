@@ -1,6 +1,8 @@
 package com.bviit.analytics.marketing.service;
 
 import com.bviit.analytics.marketing.repository.OverseasMarketingRepository;
+import com.bviit.analytics.marketing.repository.OverseasMarketingRepository.PhoneEmailCandidates;
+import com.bviit.analytics.marketing.util.OverseasCustomerKeys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -72,10 +74,11 @@ public class OverseasMarketingCrmEnricher {
         // 후보 조회별 소요시간을 남긴다 — 병목 SQL을 로그만으로 특정하기 위함.
         List<Map<String, Object>> nameCandidates = timed("이름 후보", keys.names.size(), () -> keys.names.isEmpty()
                 ? List.of() : repository.findCandidatesByNames(new ArrayList<>(keys.names)));
-        List<Map<String, Object>> phoneCandidates = timed("전화 후보", keys.phones.size(), () -> keys.phones.isEmpty()
-                ? List.of() : repository.findCandidatesByPhones(new ArrayList<>(keys.phones)));
-        List<Map<String, Object>> emailCandidates = timed("이메일 후보", keys.emails.size(), () -> keys.emails.isEmpty()
-                ? List.of() : repository.findCandidatesByEmails(new ArrayList<>(keys.emails)));
+        // 전화·이메일은 CUSTOM 전수 스캔이 필요해 한 번의 스트림으로 함께 뽑는다(자세한 이유는 저장소 주석).
+        PhoneEmailCandidates phoneOrEmail = timed2("전화·이메일 후보", keys.phones.size() + keys.emails.size(),
+                () -> repository.findCandidatesByPhoneOrEmail(keys.phones, keys.emails));
+        List<Map<String, Object>> phoneCandidates = phoneOrEmail.phones();
+        List<Map<String, Object>> emailCandidates = phoneOrEmail.emails();
         Map<String, List<Map<String, Object>>> examDateCandidates = byEventDate(
                 timed("검사일 후보", keys.examDates.size(), () -> keys.examDates.isEmpty()
                         ? List.of() : repository.findExamDateCandidates(new ArrayList<>(keys.examDates))));
@@ -182,6 +185,16 @@ public class OverseasMarketingCrmEnricher {
         List<Map<String, Object>> result = query.get();
         log.info("[CRM동기화] {} 조회 — 키 {}개 → 후보 {}건 ({}ms)",
                 label, keyCount, result.size(), System.currentTimeMillis() - started);
+        return result;
+    }
+
+    private static PhoneEmailCandidates timed2(String label, int keyCount,
+                                               java.util.function.Supplier<PhoneEmailCandidates> query) {
+        long started = System.currentTimeMillis();
+        PhoneEmailCandidates result = query.get();
+        log.info("[CRM동기화] {} 조회 — 키 {}개 → 전화 {}건·이메일 {}건 ({}ms)",
+                label, keyCount, result.phones().size(), result.emails().size(),
+                System.currentTimeMillis() - started);
         return result;
     }
 
@@ -317,21 +330,9 @@ public class OverseasMarketingCrmEnricher {
         return value(value).replaceAll("[^0-9]", "");
     }
 
+    /** 저장소 스트림 필터와 <b>반드시 같은 규칙</b>이어야 매칭이 일치한다 — {@link OverseasCustomerKeys#email}. */
     private static String email(Object value) {
-        String text = value(value).toLowerCase(Locale.ROOT);
-        int at = text.indexOf('@');
-        if (at < 1) return "";
-        int start = text.lastIndexOf(' ', at);
-        int line = Math.max(text.lastIndexOf('\n', at), text.lastIndexOf('\r', at));
-        start = Math.max(start, line) + 1;
-        int end = text.length();
-        for (int index = at + 1; index < text.length(); index++) {
-            if (Character.isWhitespace(text.charAt(index))) {
-                end = index;
-                break;
-            }
-        }
-        return text.substring(start, end).trim();
+        return OverseasCustomerKeys.email(value(value));
     }
 
     private static String value(Object value) {

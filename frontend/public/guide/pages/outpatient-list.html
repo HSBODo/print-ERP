@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>외래수 리스트 — 기획서</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root {
+    --bg: #f6f6f7; --card: #ffffff; --border: #ececec; --line: #eaeaec;
+    --ink: #1f2328; --muted: #5b6470; --muted-2: #8a909a;
+    --accent: #7c5cff; --accent-soft: #efebff; --accent-ink: #5b3fd1;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; line-height: 1.7; display: flex; }
+
+  nav { width: 232px; flex-shrink: 0; padding: 26px 14px; border-right: 1px solid var(--border); background: var(--bg); overflow-y: auto; position: sticky; top: 0; height: 100vh; }
+  nav .brand { font-size: 13px; font-weight: 800; color: var(--muted-2); padding: 0 12px 14px; letter-spacing: .02em; }
+  nav a { display: block; padding: 8px 12px; border-radius: 9px; color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 500; }
+  nav a:hover { background: #efeff1; color: var(--ink); }
+
+  main { flex: 1; min-width: 0; overflow-y: auto; display: flex; justify-content: center; padding: 26px 40px 96px; }
+  .content { width: 100%; max-width: 1240px; }
+  .topbar { padding: 6px 4px 22px; }
+  .topbar .title { font-size: 23px; font-weight: 800; letter-spacing: -0.02em; }
+  .topbar .sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 34px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(16,18,29,.04); scroll-margin-top: 18px; }
+  .card-head { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; }
+  .chip { width: 28px; height: 28px; border-radius: 9px; background: var(--accent-soft); color: var(--accent-ink);
+    display: grid; place-items: center; flex-shrink: 0; font-size: 13px; font-weight: 800; }
+  .card-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
+  h3 { margin: 22px 0 8px; font-size: 14px; font-weight: 700; }
+  h3:first-child { margin-top: 0; }
+  p { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+  ul { margin: 0 0 10px; padding-left: 18px; font-size: 14px; color: var(--muted); }
+  li { margin-bottom: 4px; }
+  b { color: var(--ink); font-weight: 700; }
+  code { background: #f1f1f3; border-radius: 5px; padding: 1px 5px; font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #3b4048; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 6px 0 12px; }
+  th { text-align: left; font-weight: 700; font-size: 12px; color: var(--muted-2); padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 8px 10px 8px 0; border-bottom: 1px solid #f4f4f5; color: var(--muted); vertical-align: top; }
+  td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; }
+  .t-key { background: #eef2ff; color: #4338ca; }
+  .t-auto { background: #ecfdf5; color: #047857; }
+  .t-user { background: #fff7ed; color: #c2410c; }
+  .t-api { background: #f5f3ff; color: #6d28d9; }
+  .t-warn { background: #fef2f2; color: #b91c1c; }
+
+  .note { border-left: 3px solid var(--accent); background: #faf9ff; padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 12px 0; }
+  .note.warn { border-left-color: #f59e0b; background: #fffbeb; }
+  .note.bad { border-left-color: #ef4444; background: #fef2f2; }
+  .note p:last-child { margin-bottom: 0; }
+  .note .h { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+
+  /* ── 화면 목업 ── 스크린샷 대신 HTML 로 그린다. 이미지 파일은 UI 가 바뀌면
+     문서만 옛날 그림으로 남는데, 목업은 라벨을 고치면 바로 따라온다. */
+  .shot { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 14px 0 8px; background: #fff; }
+  .shot-cap { font-size: 12px; color: var(--muted-2); margin: 0 0 18px; }
+  .shot-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 9px 11px; border-bottom: 1px solid var(--line); background: #fbfbfc; font-size: 11.5px; }
+  .ui { border: 1px solid #d8dbe0; border-radius: 6px; background: #fff; padding: 4px 9px; font-size: 11.5px; color: #35404f; white-space: nowrap; }
+  .ui.dark { background: #1f2328; border-color: #1f2328; color: #fff; }
+  .ui.blue { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .ui.amber { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+  .ui.green { background: #10b981; border-color: #10b981; color: #fff; }
+  .seg { display: flex; border: 1px solid #d8dbe0; border-radius: 6px; overflow: hidden; }
+  .seg > span { padding: 4px 9px; font-size: 11.5px; color: #35404f; border-left: 1px solid #e6e8ec; white-space: nowrap; }
+  .seg > span:first-child { border-left: 0; }
+  .seg > span.on { background: #1f2328; color: #fff; }
+  .seg > span.alert { color: #dc2626; font-weight: 700; }
+  .shot table { font-size: 11.5px; }
+  .shot th { background: #f5f6f8; color: #4b5563; font-weight: 700; padding: 7px 9px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .shot td { padding: 7px 9px; border-bottom: 1px solid #f4f4f5; white-space: nowrap; color: var(--ink); }
+  .shot td:first-child { font-weight: 400; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+  .g-smile { background: #eff6ff; color: #1d4ed8; }
+  .g-lasik { background: #eef2ff; color: #4338ca; }
+  .g-lasek { background: #f0fdfa; color: #0f766e; }
+  .g-icl { background: #fffbeb; color: #b45309; }
+  .st-wait { background: #f3f4f6; color: #4b5563; }
+  .st-no { background: #fef2f2; color: #b91c1c; }
+  .tier-off { color: #9aa2ad; font-size: 10px; }
+  .tier-lb { color: #9aa2ad; font-size: 10.5px; }
+  .strike { color: #cbd0d6; text-decoration: line-through; }
+  .pill.xs { font-size: 10px; }
+  .mt3 { margin-top: 3px; }
+  .scroll-x { overflow-x: auto; }
+
+  /* 목업 안에서 되풀이되는 값의 성격 — 인라인 style 로 흩뿌리면 색 하나 바꿀 때 여러 줄을 뒤져야 한다.
+     .shot 안으로 한정해 본문 표의 색과 섞이지 않게 한다. */
+  .shot .ph { color: #9aa2ad; }        /* 아직 값이 없는 자리(안내 문구) */
+  .shot .link { color: #2563eb; }      /* 눌러서 여는 값(이름·연락처) */
+  .shot .invalid { color: #dc2626; }   /* 무효한 값(더미 번호) */
+  .shot .grow { flex: 1; }
+
+  /* 모달 목업 — 머리·본문·입력 라벨 세 조각이 두 모달에서 반복된다. */
+  .modal { max-width: 420px; }
+  .modal-head { background: #2563eb; color: #fff; padding: 9px 13px; font-size: 12.5px; font-weight: 700; }
+  .modal-body { padding: 13px; }
+  .f-lb { margin: 10px 0 5px; font-size: 11.5px; font-weight: 700; }
+  .f-lb:first-child { margin-top: 0; }
+  .f-val { margin-top: 4px; color: #9aa2ad; }
+  .req { color: #dc2626; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 14px; font-size: 13px; }
+  .flow span.step { background: #f4f4f6; border: 1px solid var(--line); border-radius: 8px; padding: 5px 11px; font-weight: 600; color: var(--ink); }
+  .flow span.arw { color: var(--muted-2); }
+
+  /* ===== 좌측 전메뉴 트리 · 본문 옆 장 목차 =====
+     47장(pages/*.html)과 이 문서가 함께 쓰는 규칙이라 여기 한 곳에만 둔다.
+     생성기는 이 <style> 블록을 통째로 읽어 각 장에 붙인다.
+
+     ⚠ 아래 nav .tree / details.tsec / .tgrp / a.cur 네 벌은 prd.html 의
+     「전메뉴 현황」 탭에 `#view-menus .menus-nav …` 로 한 번 더 있다. prd.html 은
+     이 <style> 을 읽지 않아 물리적으로 합칠 수가 없다. 한쪽만 고치면 두 트리가
+     달라 보이므로, gen.mjs 가 매번 두 벌을 대조해 어긋나면 멈춘다. */
+  /* ── 공용 전메뉴 트리 (좌측 네비) — details/summary 라 JS 없이 접힌다 ── */
+  nav .tree { margin-top: 10px; }
+  nav details.tsec { margin: 1px 0; }
+  nav details.tsec summary { cursor: pointer; padding: 7px 12px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); list-style: none; }
+  nav details.tsec summary::-webkit-details-marker { display: none; }
+  nav details.tsec summary::before { content: '▸'; margin-right: 7px; font-size: 10px; color: var(--muted-2); }
+  nav details.tsec[open] summary::before { content: '▾'; }
+  nav details.tsec summary:hover { background: #efeff1; color: var(--ink); }
+  nav .tgrp { padding: 8px 12px 2px; font-size: 11px; font-weight: 700; color: var(--muted-2); letter-spacing: .03em; }
+  nav details.tsec a { padding: 4px 12px 4px 21px; font-size: 12.5px; }
+  nav a.cur { background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; }
+  /* ── 장 목차 (본문 왼편 세로 · sticky) ──
+     좌측 전메뉴 트리는 nav 안에 있고 여기는 main > .content 안이라 셀렉터가 겹치지 않는다.
+     .chaptoc / .chapmain / .withtoc 세 이름만 쓰고 nav 를 건드리지 않는다. */
+  .withtoc { display: flex; align-items: flex-start; gap: 24px; }
+  .chapmain { flex: 1 1 auto; min-width: 0; }
+  .chaptoc { flex: 0 0 186px; position: sticky; top: 18px; max-height: calc(100vh - 101px); overflow-y: auto;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 8px;
+    box-shadow: 0 1px 2px rgba(16,18,29,.04); }
+  .chaptoc .h { font-size: 11px; font-weight: 700; color: var(--muted-2); letter-spacing: .03em; padding: 0 10px 8px; }
+  .chaptoc a { display: block; padding: 5px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+    color: var(--muted); text-decoration: none; }
+  .chaptoc a:hover { background: #efeff1; color: var(--accent-ink); }
+  .chaptoc a.tbd { color: var(--muted-2); font-weight: 500; }
+  .chaptoc a.tbd::after { content: '작성 예정'; display: inline-block; margin-left: 5px; padding: 0 5px;
+    font-size: 10px; font-weight: 700; color: #b45309; background: #fffbeb; border-radius: 5px; }
+  /* 좁은 화면 — 세로 목차를 본문 위 가로 줄로 접는다. JS 없이 CSS 만으로 동작한다. */
+  @media (max-width: 1100px) {
+    .withtoc { display: block; }
+    .chaptoc { position: static; max-height: none; display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; margin-bottom: 16px; }
+    .chaptoc .h { width: 100%; padding: 0 4px 6px; }
+    .chaptoc a { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; }
+  }
+
+  /* ===== 상단 탭바 — prd.html 과 같은 줄, 같은 모양 =====
+     기획서는 파일이 48개로 나뉘어 있어 링크를 누르면 문서가 통째로 다시 열린다.
+     탭바를 모든 장에 같은 자리로 세워 두면 그 순간에도 윗줄은 그대로 남아,
+     안에서 본문만 바뀐 것처럼 보인다. 탭은 prd.html 의 <button> 대신 <a> 다 —
+     같은 문서 안의 뷰 전환이 아니라 prd.html 의 해시로 돌아가는 이동이기 때문이다. */
+  body { flex-direction: column; }
+  .tabbar { height: 53px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+    padding: 0 18px; background: #fff; border-bottom: 1px solid var(--border); z-index: 40;
+    overflow-x: auto; overflow-y: hidden; }
+  .tabbar .tabs { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+  .tabbar .tab { border: 1px solid transparent; background: none; text-decoration: none;
+    font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--muted-2);
+    padding: 6px 14px; border-radius: 9px; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .tabbar .tab:hover { color: var(--ink); }
+  .tabbar .tab.active { color: var(--ink); background: #fff; border-color: var(--border); box-shadow: 0 1px 2px rgba(16,18,29,.06); }
+  .tabbar .beta { font-size: 10px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; }
+  .tabbar .sep { color: #d4d6db; font-size: 13px; letter-spacing: 1px; user-select: none; }
+  /* 탭바 아래의 두 칸(좌측 네비 · 본문)만 스크롤한다. */
+  .shell { flex: 1; min-height: 0; display: flex; }
+  /* .shell 이 높이를 잡아 주므로 sticky 가 필요 없다. */
+  nav { position: static; top: auto; height: 100%; }
+
+  /* ===== 인쇄 =====
+     화면에서는 탭바 아래 두 칸만 스크롤한다(.shell → main). 그대로 인쇄하면
+     스크롤 칸의 보이는 부분만 찍혀 첫 화면 한 장으로 끝난다.
+     인쇄할 때는 높이 제한을 풀고 탐색용 요소(탭바 · 좌측 트리 · 장 목차)를 감춰
+     본문만 이어서 뽑는다. 발표 자료를 PDF 로 내리는 통로다. */
+  @media print {
+    html, body { height: auto; display: block; }
+    .tabbar, nav { display: none; }
+    .shell { display: block; }
+    main { display: block; overflow: visible; padding: 0; }
+    .content { max-width: none; }
+    .withtoc { display: block; }
+    .chaptoc { display: none; }
+    .card { box-shadow: none; }
+    h2, h3 { break-after: avoid; }
+    table, .shot { break-inside: avoid; }
+  }
+
+  /* ── 기획서 공통 추가분 ── */
+  a { color: var(--accent-ink); }
+  .t-done { background: #ecfdf5; color: #047857; }
+  .t-draft { background: #f3f4f6; color: #4b5563; }
+  .t-plan { background: #fffbeb; color: #b45309; }
+  .t-mart { background: #eef2ff; color: #4338ca; }
+  .t-crm { background: #fff7ed; color: #c2410c; }
+  .t-mixed { background: #f5f3ff; color: #6d28d9; }
+  table.menu td:first-child { white-space: normal; }
+  table.menu td { white-space: normal; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #3b4048; }
+  .todo { border: 1px dashed #d4d4d8; border-radius: 11px; padding: 14px 16px; background: #fcfcfd; margin: 10px 0 4px; }
+  .todo .h { font-size: 12.5px; font-weight: 700; color: var(--muted-2); margin-bottom: 7px; letter-spacing: .02em; }
+  .todo ul { margin-bottom: 0; }
+  .todo li { color: var(--muted); }
+  /* 완성 문서 맨 아래에 남기는 한 줄 참조 — 상단 안내 상자를 대신한다. */
+  .genfoot { margin: 12px 0 0; padding-top: 11px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted-2); }
+  .pager { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-top: 6px; }
+  .pager a { text-decoration: none; font-weight: 600; }
+  /* SQL 리소스 목록은 길어서(최대 75개) 접어 둔다 — 펼치면 그대로 나온다. */
+  details.sqlrefs { margin: 14px 0 4px; border: 1px solid var(--line); border-radius: 10px; background: #fcfcfd; }
+  details.sqlrefs summary { cursor: pointer; padding: 9px 14px; font-size: 13px; font-weight: 700; color: var(--muted); list-style: none; }
+  details.sqlrefs summary::-webkit-details-marker { display: none; }
+  details.sqlrefs summary::before { content: '▸'; margin-right: 7px; font-size: 10px; color: var(--muted-2); }
+  details.sqlrefs[open] summary::before { content: '▾'; }
+  details.sqlrefs summary:hover { color: var(--ink); }
+  details.sqlrefs ul { margin: 0; padding: 0 14px 12px 32px; }
+  details.sqlrefs li { margin-bottom: 2px; }
+</style>
+</head>
+<body>
+  <!-- ===== Top tab bar ===== -->
+  <div class="tabbar">
+    <div class="tabs">
+      <a class="tab" href="../prd.html#view-prd">대쉬보드 요구사항</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../지표정의/1-예약.html">지표 정의</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../glossary.html">용어사전</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-flow">IA</a>
+      <span class="sep">···</span>
+      <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../prd.html#view-expansion">26.10 이후 확장 전략</a>
+    </div>
+  </div>
+<div class="shell">
+
+<nav>
+  <div class="brand">외래수 리스트</div>
+  <div class="tree">
+  <details class="tsec" open>
+    <summary>비앤빛</summary>
+    <div class="tgrp">Report</div>
+    <a href="monthly-report.html">월간 레포트</a>
+    <a href="weekly-report.html">주차 레포트</a>
+    <div class="tgrp">예약</div>
+    <a href="reservation-list.html">예약자 리스트</a>
+    <a href="reservation-list-homepage.html">예약자 리스트_홈페이지</a>
+    <a href="reservation-stats-system.html">예약통계_시력교정</a>
+    <a href="reservation-stats-cataract.html">예약통계_백내장</a>
+    <a href="reservation-change.html">예약 변경이력</a>
+    <div class="tgrp">검사</div>
+    <a href="overall-exam.html">월별 검사자 종합지표</a>
+    <a href="overall-exam-weekly.html">주간 검사자 종합지표</a>
+    <a href="exam-list.html">검사자 리스트</a>
+    <a href="cataract-exam-list.html">백내장 검사자 리스트</a>
+    <a href="all-exam-list.html">전체 검사자 리스트</a>
+    <a href="eoeis-checkup.html">아이리더 검사통계</a>
+    <a href="examination.html">시술별</a>
+    <a href="procedure-exam.html">검사건수</a>
+    <div class="tgrp">전환&amp;성공률</div>
+    <a href="consultation-rate.html">전환율</a>
+    <a href="cataract-reservation-rate.html">예약률</a>
+    <a href="stop-rate.html">중단률</a>
+    <a href="stop-reason.html">중단 사유</a>
+    <div class="tgrp">수술</div>
+    <a href="surgery-list.html">수술자 리스트</a>
+    <a href="surgery.html">수술 건수</a>
+    <a href="surgery-ratio.html">주요 수술별 비중</a>
+    <a href="surgery-composition.html">수술별 비중</a>
+    <div class="tgrp">외래</div>
+    <a href="outpatient-list.html" class="cur">외래수 리스트</a>
+    <a href="outpatient-count.html">외래수</a>
+    <div class="tgrp">기타</div>
+    <a href="dreamlens-revenue.html">드림렌즈 장부</a>
+  </details>
+  <details class="tsec" open>
+    <summary>마케팅</summary>
+    <a href="reservation-channel.html">예약 퍼널</a>
+    <a href="channel-profit.html">채널별 수익성</a>
+    <a href="channel-analysis.html">채널별 분석</a>
+    <a href="accumulated-eyes.html">누적 안수</a>
+    <div class="tgrp">문자 발송 관리</div>
+    <a href="../sms.html">문자 발송 리스트</a>
+  </details>
+  <details class="tsec" open>
+    <summary>해외마케팅</summary>
+    <a href="overseas-marketing-receptions.html">접수리스트</a>
+    <a href="overseas-marketing-statistics.html">통계</a>
+    <a href="overseas-reservation-stats.html">예약통계</a>
+  </details>
+  <details class="tsec" open>
+    <summary>회계</summary>
+    <a href="accounting-medical.html">진료 수납</a>
+    <a href="accounting-vision.html">시력교정 매출 내역</a>
+    <a href="accounting-vision-summary.html">시력교정 매출 집계</a>
+    <a href="accounting-vision-chart.html">시력교정 매출 그래프</a>
+    <a href="accounting-medical-chart.html">진료 매출 그래프</a>
+  </details>
+  <details class="tsec" open>
+    <summary>관리자</summary>
+    <a href="batch-management.html">데이터 배치 관리</a>
+    <a href="account-management.html">계정 관리</a>
+  </details>
+  <details class="tsec" open>
+    <summary>사이드바 비노출</summary>
+    <a href="reservation.html">예약 건수</a>
+    <a href="marketing.html">마케팅 유입 및 효율 지표</a>
+    <a href="cancel-rate.html">예약취소율</a>
+    <a href="no-show-rate.html">부도율</a>
+    <a href="unit-price.html">객단가</a>
+    <a href="b2b-revenue.html">B2B 매출</a>
+    <a href="staff-point.html">직원 포인트</a>
+    <a href="prp-rate.html">PRP 시술율</a>
+    <a href="reoperation-rate.html">재수술율</a>
+    <a href="same-day-op.html">당일OP 비율</a>
+    <a href="designated-doctor.html">지정의 수술 비율</a>
+    <a href="visit-reason.html">내원동기별 비중</a>
+    <a href="daily-reception.html">일일 접수/응대 건수</a>
+  </details>
+  </div>
+</nav>
+
+<main>
+<div class="content">
+  <div class="topbar">
+    <div class="title">외래수 리스트 — 기획서</div>
+    <div class="sub">비앤빛 › 외래 · <span class="mono">/stats/outpatient-list</span> · 뼈대 자동 생성 2026-09-16</div>
+  </div>
+
+  <div class="withtoc">
+    <aside class="chaptoc">
+      <div class="h">이 문서의 장</div>
+      <a href="#s1">1. 개요</a>
+      <a href="#s2">2. 사용자와 쓰임새</a>
+      <a href="#s3">3. 화면 구성</a>
+      <a href="#s4">4. 조회 조건과 필터</a>
+      <a href="#s5">5. 표 · 지표 정의</a>
+      <a href="#s6">6. 데이터 소스</a>
+      <a href="#s7">7. API</a>
+      <a href="#s8">8. 권한과 노출</a>
+      <a href="#s9">9. 연관 문서</a>
+    </aside>
+    <div class="chapmain">
+
+  <div class="card" id="s1">
+    <div class="card-head"><div class="chip">1</div><h2>개요 — 이 화면은 무엇인가</h2></div>
+    <p>RESERVATION(외래 F + 내원/퇴원 I,H) 기준 외래수 상세 명단임. 리스트 합계가 월별 외래수 지표와 정합함.</p>
+    <table>
+      <thead><tr><th>항목</th><th>값</th></tr></thead>
+      <tbody>
+        <tr><td>메뉴 위치</td><td>비앤빛 › 외래</td></tr>
+        <tr><td>화면 경로</td><td><span class="mono">/stats/outpatient-list</span></td></tr>
+        <tr><td>메뉴 ID</td><td><code>outpatient-list</code></td></tr>
+        <tr><td>구현 상태</td><td><span class="tag t-auto">운영 중</span></td></tr>
+        <tr><td>접근 권한</td><td>로그인 사용자 전체</td></tr>
+        <tr><td>사이드바 노출</td><td>노출</td></tr>
+        <tr><td>화면 컴포넌트</td><td><span class="mono">frontend/src/pages/outpatient/OutpatientListPage.tsx</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" id="s2">
+    <div class="card-head"><div class="chip">2</div><h2>사용자와 쓰임새</h2></div>
+
+    <h3>누가 여는가</h3>
+    <p>월별 외래수 지표가 <b>어떤 내원으로 이루어졌는지</b> 펴 보는 화면임.
+       외래수는 숫자 하나로만 보고되는데, 그 안에 진료구분·신구환·해피콜 여부가 섞여 있음.</p>
+    <table>
+      <thead><tr><th>쓰는 장면</th><th>하는 일</th></tr></thead>
+      <tbody>
+        <tr><td>외래수 검증</td><td>조회건수를 <a href="outpatient-count.html">외래수</a> 지표와 맞춤 — <b>정합해야 함</b></td></tr>
+        <tr><td>진료구분 분해</td><td>지표는 전부 합산해 버리므로, 세부 구분은 여기서만 볼 수 있음</td></tr>
+        <tr><td>신환 확인</td><td>외래로 처음 온 사람을 추림</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <div class="h">건수이지 사람 수가 아님</div>
+      <p>같은 사람이 한 달에 세 번 외래로 오면 <b>세 행</b>임. 외래수 지표도 같은 기준이라
+         두 숫자가 맞음. 사람 수를 세려면 차트번호로 접어야 함.</p>
+    </div>
+  
+  </div>
+
+  <div class="card" id="s3">
+    <div class="card-head"><div class="chip">3</div><h2>화면 구성</h2></div>
+
+    <p>다른 리스트와 같은 골격 — 기간·필터 한 줄 + 37컬럼 표.</p>
+
+    <div class="shot">
+      <div class="shot-bar">
+        <span class="seg"><span class="on">일별</span><span>월별</span></span>
+        <span class="ui">2026-08-01</span><span>~</span><span class="ui">2026-08-31</span>
+        <span class="seg"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>월별</span></span>
+        <span class="ui">상태 전체 ▾</span>
+        <span class="ui">신/구환 전체 ▾</span>
+        <span class="ui">진료구분 전체 ▾</span>
+        <span class="ui grow ph">고객명 · 차트번호 · 휴대전화</span>
+        <span class="ui blue">🔍 조회</span>
+        <span class="ui green">⤓ CSV</span>
+      </div>
+      <div class="scroll-x">
+        <table>
+          <thead><tr>
+            <th>No</th><th>예약일</th><th>예약시간</th><th>상태</th><th>진료구분</th><th>신/구환</th>
+            <th>차트번호</th><th>고객명</th><th>등급</th><th>만나이</th><th>휴대전화</th>
+            <th>담당의사</th><th>예약상담사</th><th>해피콜</th><th>당일예약</th><th>예약메모</th><th>…</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td>1</td><td>2026-08-01</td><td>09:30</td><td><span class="pill g-smile">내원</span></td>
+              <td>일반외래</td><td><span class="pill st-wait">구환</span></td>
+              <td>2119004</td><td class="link">정○○</td><td><span class="pill g-lasik">A</span></td><td>62</td>
+              <td class="link">010-****-1234</td><td>박원장</td><td>이상담</td><td>Y</td><td class="ph">—</td><td class="ph">정기 검진</td><td class="ph">…</td>
+            </tr>
+            <tr>
+              <td>2</td><td>2026-08-01</td><td>10:00</td><td><span class="pill st-wait">퇴원</span></td>
+              <td>수술후경과</td><td><span class="pill st-wait">구환</span></td>
+              <td>2229810</td><td class="link">김○○</td><td><span class="pill st-wait">B</span></td><td>29</td>
+              <td class="link">010-****-5678</td><td>이원장</td><td class="ph">—</td><td class="ph">—</td><td>Y</td><td class="ph">—</td><td class="ph">…</td>
+            </tr>
+            <tr>
+              <td>3</td><td>2026-08-01</td><td>11:20</td><td><span class="pill g-smile">내원</span></td>
+              <td class="ph">—</td><td><span class="pill g-smile">신환</span></td>
+              <td>2234901</td><td class="link">서○○</td><td><span class="pill st-wait">C</span></td><td>41</td>
+              <td class="link">010-****-9012</td><td>박원장</td><td>한상담</td><td class="ph">—</td><td class="ph">—</td><td class="ph">타원 진료의뢰</td><td class="ph">…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="shot-cap">3행의 진료구분이 빈 것은 오류가 아님 — 실제로 월 40~50건 있음(5장 참조).</p>
+
+    <h3>구성 요소</h3>
+    <table>
+      <thead><tr><th>영역</th><th>구성</th><th>동작</th></tr></thead>
+      <tbody>
+        <tr><td>기간</td><td>일별·월별 토글 + 빠른 기간 5종</td><td>기준 = <b>예약일</b>(<code>RESERVE_DATE</code>). 기본값 이번 달</td></tr>
+        <tr><td>상태</td><td>전체 · 내원 · 퇴원</td><td>모집단이 이 둘뿐이라 사실상 <b>구성 확인용</b>임</td></tr>
+        <tr><td>신/구환</td><td>전체 · 신환 · 구환</td><td>조회 기간에 따라 값이 바뀜</td></tr>
+        <tr><td>진료구분</td><td>조회 결과에 <b>실제로 있는 값만</b></td><td>그 기간에 없는 구분은 목록에 안 나옴</td></tr>
+        <tr><td>검색어</td><td>고객명 · 차트번호 · 휴대전화</td><td>[조회]를 눌러야 적용</td></tr>
+        <tr><td>표</td><td>37컬럼 · 정렬 · 페이지 25·50·100·200</td><td>—</td></tr>
+      </tbody>
+    </table>
+  
+  </div>
+
+  <div class="card" id="s4">
+    <div class="card-head"><div class="chip">4</div><h2>조회 조건과 필터</h2></div>
+
+    <h3>서버가 받는 것은 기간뿐</h3>
+    <table>
+      <thead><tr><th>조건</th><th>어디서</th><th>규칙</th></tr></thead>
+      <tbody>
+        <tr><td>기간</td><td><b>서버</b></td><td><code>RESERVE_DATE</code> 범위. 월별 모드면 월 1일~말일로 확장</td></tr>
+        <tr><td>상태 · 신구환 · 진료구분</td><td>화면</td><td>문자열 일치</td></tr>
+        <tr><td>검색어</td><td>화면</td><td>고객명 · 차트번호 · 휴대전화 부분일치</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <div class="h">기준 날짜는 예약일임</div>
+      <p>내원한 날이 아니라 <b>예약이 잡힌 날짜</b>(<code>RESERVE_DATE</code>)임.
+         상태가 내원(I)·퇴원(H)인 행만 싣기 때문에 실무상 대체로 같지만, 정의는 예약일 기준임.
+         외래수 지표도 같은 기준이라 두 숫자가 맞음.</p>
+    </div>
+  
+  </div>
+
+  <div class="card" id="s5">
+    <div class="card-head"><div class="chip">5</div><h2>표 · 지표 정의</h2></div>
+
+    <h3>모집단 — 외래 예약 중 실제로 온 건</h3>
+    <table>
+      <thead><tr><th>조건</th><th>값</th><th>뜻</th></tr></thead>
+      <tbody>
+        <tr><td><code>RESERVE_FLAG</code></td><td><code>'F'</code></td><td><b>외래</b>. 검사(M)·수술(O)·백내장외래(Z)는 다른 코드임</td></tr>
+        <tr><td><code>RESERVE_STATE</code></td><td><code>'I'</code> 내원 · <code>'H'</code> 퇴원</td><td>예약(Y)·취소(C)는 뺌 — <b>실제로 온 건만</b></td></tr>
+        <tr><td>고객명</td><td>테스트 계정 제외</td><td><code>%테스트%</code> · <code>%test%</code></td></tr>
+      </tbody>
+    </table>
+    <p>정의의 정본은 <a href="../지표정의/6-외래.html">지표정의/6-외래.md</a> 임. 예약 구분 코드표(§5)도 거기 있음.</p>
+
+    <div class="note bad">
+      <div class="h">⚠️ 백내장 외래는 여기 없음</div>
+      <p>백내장 쪽 외래는 <code>RESERVE_FLAG='Z'</code>(백내장외래)로 따로 있음.
+         이 화면과 외래수 지표는 <b>둘 다 <code>'F'</code> 만</b> 셈. "외래 전부"가 아님.</p>
+    </div>
+
+    <h3>진료구분</h3>
+    <p><code>RESERVE_JINRYO</code> 코드를 <code>MEDICAL_SUB_CFG</code>(<code>RESERVE_FLAG='F'</code>)에서 이름으로 바꿔 보여줌.
+       이름이 없으면 <b>코드 값을 그대로</b> 표시함.</p>
+    <div class="note warn">
+      <div class="h">진료구분이 빈 건이 월 40~50건 있음</div>
+      <p>원천에서 <code>RESERVE_JINRYO</code> 가 비어 들어옴. 데이터 오류가 아니라 <b>알려진 상태</b>임.
+         진료구분별로 나눠 세면 이만큼이 어디에도 안 들어가므로, 합계와 분해 합이 다름.</p>
+    </div>
+    <div class="note warn">
+      <div class="h"><code>RESERVE_JINRYO='3'</code>(수술후망막)을 전역에서 빼지 말 것</div>
+      <p>다른 화면에서 <code>'3'</code> 을 제외하는 규칙이 있어 습관적으로 따라 빼면 외래수가 어긋남.
+         외래 집계는 <b>진료구분을 구분하지 않고 전부 합산</b>함.</p>
+    </div>
+
+    <h3>파생 컬럼</h3>
+    <table>
+      <thead><tr><th>컬럼</th><th>규칙</th></tr></thead>
+      <tbody>
+        <tr><td>상태</td><td><code>I</code> → 내원 · <code>H</code> → 퇴원. 그 외 코드는 원문 그대로</td></tr>
+        <tr><td>신/구환</td><td><code>CUSTOM.FIRST_DAY</code> 가 조회 기간 안이면 신환. <b>기간을 바꾸면 뒤집힘</b></td></tr>
+        <tr><td>만나이</td><td>화면이 생년월일에서 계산 — CSV 는 내려받은 날 기준</td></tr>
+        <tr><td>양/음</td><td><code>LUNAR_YN='Y'</code> 면 음, 아니면 양</td></tr>
+        <tr><td>담당의사</td><td><code>SELECT_DOC</code> 우선, 비면 <code>RESERVE_DOC</code>. <b>퇴직자(<code>EMP_STATE='N'</code>)는 이름이 안 붙음</b></td></tr>
+        <tr><td>내원동기 3단</td><td><code>MOTIVE_NEW02</code> 의 <code>Idx='1'</code> 중 <b>가장 최근 것 하나</b></td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 37개</h3>
+    <p>예약 정보(예약일·시간·상태·진료구분·경로·메모·해피콜·당일예약·구환플래그) +
+       고객 정보(차트·이름·등급·생년월일·연락처·주소·직업·국적·보험사) +
+       직원 정보(담당의사·예약상담사·등록직원) + 내원동기 4칸.
+       검사자 리스트와 겹치는 컬럼은 같은 원천·같은 규칙이라 표기가 일치함.</p>
+  
+  </div>
+
+  <div class="card" id="s6">
+    <div class="card-head"><div class="chip">6</div><h2>데이터 소스</h2></div>
+    <p>마트와 CRM 원천이 함께 잡힘 — 프로파일(postgres-mart / mssql)에 따라 갈리는 구조이거나, 공용 리포지터리를 거치며 다른 화면의 SQL 까지 딸려온 경우임. 어느 쪽이 실제 조회 경로인지는 확인이 필요함.</p>
+    <table>
+      <thead><tr><th>구분</th><th>테이블 · 뷰</th></tr></thead>
+      <tbody>
+        <tr><td>마트 (Postgres)</td><td><code>list_outpatient</code></td></tr>
+        <tr><td>CRM 원천 (MSSQL)</td><td><code>CUSTOM</code> · <code>EMPLOYEE</code> · <code>EtcCfg</code> · <code>MEDICAL_SUB_CFG</code> · <code>MOTIVE_NEW01</code> · <code>MOTIVE_NEW02</code> · <code>NationCustom_CFG</code> · <code>RESERVATION</code></td></tr>
+      </tbody>
+    </table>
+    <details class="sqlrefs">
+      <summary>SQL 리소스 2개 — 펼쳐 보기</summary>
+      <ul>
+        <li><span class="mono">backend/src/main/resources/sql/mart/outpatient/select-list-outpatient.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/softcrm/outpatient/select-outpatient-list.sql</span></li>
+      </ul>
+    </details>
+    <div class="note warn">
+      <div class="h">자동 추출 — 확정 전 검토</div>
+      <p>위 목록은 <b>컨트롤러가 주입받는 클래스를 따라가며</b> 모은 것임.
+         공용 리포지터리 하나에 여러 화면의 SQL 이 함께 들어 있으면 <b>이 화면이 쓰지 않는 테이블까지 섞임</b>.
+         5장(표·지표 정의)을 쓸 때 실제 조회 경로를 확인해 이 표를 줄여 둘 것.
+         테이블별 컬럼·함정은 <a href="../db/tables/_index.html">db/tables/</a> 가 정본임.</p>
+    </div>
+  </div>
+
+  <div class="card" id="s7">
+    <div class="card-head"><div class="chip">7</div><h2>API — 1개</h2></div>
+    <table>
+      <thead><tr><th>메서드 · 경로</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">GET /api/outpatient-list</span></td></tr>
+      </tbody>
+    </table>
+    <h3>백엔드 컨트롤러</h3>
+    <ul>
+      <li><span class="mono">backend/src/main/java/com/bviit/analytics/outpatient/controller/OutpatientListController.java</span></li>
+    </ul>
+  </div>
+
+  <div class="card" id="s8">
+    <div class="card-head"><div class="chip">8</div><h2>권한과 노출</h2></div>
+    <table>
+      <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
+      <tbody>
+        <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
+        <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" id="s9">
+    <div class="card-head"><div class="chip">9</div><h2>연관 문서</h2></div>
+    <table>
+      <thead><tr><th>문서</th><th>왜 보나</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../지표정의/6-외래.html">지표정의/6-외래.md</a></td><td>외래 지표 정의 · 예약 코드표</td></tr>
+      </tbody>
+    </table>
+    <h3>상위 문서</h3>
+    <table>
+      <thead><tr><th>문서</th><th>수록 내용</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../prd.html">PRD</a></td><td>제품 전체의 문제 정의 · 사용자 · 리스크 — 기획서 전체의 입구</td></tr>
+        <tr><td><a href="../prd.html#view-menus">전메뉴 현황</a></td><td>메뉴 55종의 현황과 작성 로드맵 (PRD 의 탭)</td></tr>
+        <tr><td><a href="../sms.html">문자 발송 관리 기획서</a></td><td>메뉴별 기획서의 본보기 (13장)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+
+
+  <div class="card">
+    <div class="pager">
+      <span>← <a href="surgery-composition.html">수술별 비중</a></span>
+      <span><a href="../prd.html#view-menus">전메뉴 현황</a></span>
+      <span><a href="outpatient-count.html">외래수</a> →</span>
+    </div>
+      <p class="genfoot"><b>1 · 6 · 7 · 8 · 9장</b>(개요 · 데이터 소스 · API · 권한 · 연관 문서)은 코드에서 자동 생성 — 고칠 일이 생기면 문서가 아니라 코드를 고치고 다시 생성함. <b>2 · 3 · 4 · 5 · 10장</b>은 손으로 쓴 것이고 <code>_build/content/outpatient-list.mjs</code> 에 있음.</p>
+  </div>
+
+    </div>
+  </div>
+
+</div>
+</main>
+
+</div>
+
+<script>
+/* 좌측 트리는 48장이 모두 같은 모습으로 서 있다. 다만 항목이 많아 현재 항목이 화면 밖에
+   있으면 페이지마다 다른 자리처럼 보이므로, 열자마자 트리 안쪽만 스크롤해 현재 항목을 보인다.
+   문서까지 함께 움직이는 scrollIntoView 대신 nav.scrollTop 을 직접 준다.
+   두 요소의 실제 화면 좌표를 빼서 구한다 — offsetTop 은 nav 가 positioned 인지에 따라
+   기준이 달라져서, CSS 에서 position 한 줄만 바뀌어도 조용히 어긋난다. */
+(function () {
+  var nav = document.querySelector('nav'), cur = document.querySelector('nav a.cur');
+  if (!nav || !cur) return;
+  var y = cur.getBoundingClientRect().top - nav.getBoundingClientRect().top - nav.clientHeight / 2;
+  if (y > 0) nav.scrollTop = nav.scrollTop + y;
+})();
+</script>
+
+</body>
+</html>

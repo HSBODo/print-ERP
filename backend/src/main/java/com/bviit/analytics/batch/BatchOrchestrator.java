@@ -1,6 +1,7 @@
 package com.bviit.analytics.batch;
 
 import com.bviit.analytics.batch.dto.BatchRunLog;
+import com.bviit.analytics.batch.job.AccountingMartJob;
 import com.bviit.analytics.batch.job.AccumulatedEyeMartJob;
 import com.bviit.analytics.batch.job.ConsultationMartJob;
 import com.bviit.analytics.batch.job.EtcMartJob;
@@ -54,7 +55,7 @@ public class BatchOrchestrator {
     private static final Set<Domain> MANUAL_ALL_DOMAINS = EnumSet.complementOf(EnumSet.of(Domain.SMS));
 
     /** 마트 도메인 식별자. Admin API/스케줄러가 부분 실행 지정에 사용. */
-    public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, RESERVATION_CHANGE, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC, SMS }
+    public enum Domain { SURGERY, ACCUMULATED_EYES, RESERVATION, RESERVATION_CHANGE, EXAM, CONSULTATION, OUTPATIENT, OVERALL, REPORT, ETC, ACCOUNTING, SMS }
 
     private final BatchRunLogRepository runLogRepository;
     private final BatchSlackNotifier slackNotifier;
@@ -70,6 +71,7 @@ public class BatchOrchestrator {
     private final OverallMartJob overallMartJob;
     private final ReportMartJob reportMartJob;
     private final EtcMartJob etcMartJob;
+    private final AccountingMartJob accountingMartJob;
     private final SmsImportJob smsImportJob;
 
     @Value("${batch.mart.enabled:true}")
@@ -168,6 +170,24 @@ public class BatchOrchestrator {
             log.info("Batch skip oneday reconcile — target year {} < min-year {}",
                     onedayFrom.getYear(), minYear);
         }
+        // 회계는 원천 전표의 오래된 취소·삭제도 반영해야 한다. 전월은 위에서 처리했으므로 제외.
+        // 다른 도메인의 과거 확정값(min-year)은 재적재하지 않는다.
+        LocalDate historyFrom = LocalDate.of(2023, 1, 1);
+        LocalDate historyTo = from.minusDays(1);
+        if (!historyFrom.isAfter(historyTo)) {
+            runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, historyFrom, historyTo,
+                    "reconcile-accounting-history", () -> reconcileAccountingHistory(historyFrom, historyTo));
+        }
+    }
+
+    /** 월 단위 트랜잭션으로 메모리·잠금 범위를 제한한다. 전체 이력은 하나의 실행 로그에 기록. */
+    private Map<String, Integer> reconcileAccountingHistory(LocalDate from, LocalDate to) {
+        Map<String, Integer> stats = new LinkedHashMap<>();
+        for (YearMonth month = YearMonth.from(from); !month.isAfter(YearMonth.from(to)); month = month.plusMonths(1)) {
+            accountingMartJob.run(month.atDay(1), month.atEndOfMonth())
+                    .forEach((table, count) -> stats.merge(table, count, Integer::sum));
+        }
+        return stats;
     }
 
     /**
@@ -237,6 +257,8 @@ public class BatchOrchestrator {
         // mart_weekly_report 는 자체 서비스 로직(list + MSSQL 브릿지 하이브리드).
         if (targets.contains(Domain.REPORT))        stats.putAll(reportMartJob.run(from, to));
         if (targets.contains(Domain.ETC))           stats.putAll(etcMartJob.run(from, to));
+        // 회계 — 시력교정 매출(SOFTCRM) + 진료 수납(의사랑 링크드서버). 범위 = 수납일. 다른 도메인과 의존 없음.
+        if (targets.contains(Domain.ACCOUNTING))    stats.putAll(accountingMartJob.run(from, to));
         // SMS 는 list_surgery 를 소스로 읽어 sms_target 에 적재하므로 SURGERY 뒤에 실행.
         // Phase 1B — 지금까지 화면 조회가 즉석 upsert 하던 임시 경로를 배치로 승격했다.
         if (targets.contains(Domain.SMS))           stats.putAll(smsImportJob.run(from, to));
@@ -260,6 +282,13 @@ public class BatchOrchestrator {
         Instant startedAt = Instant.now();
         try {
             Map<String, Integer> tableStats = job.run();
+            if (tableStats.getOrDefault("list_medical_receipt_failed", 0) > 0) {
+                String message = "회계 진료 수납 적재 실패: 시력교정 등 완료된 적재는 보존됨. 해당 기간 재실행 필요.";
+                runLogRepository.fail(id, message, tableStats);
+                slackNotifier.notifyFailure(jobName, type, from, to, message,
+                        Duration.between(startedAt, Instant.now()));
+                return;
+            }
             runLogRepository.success(id, tableStats);
             slackNotifier.notifySuccess(jobName, type, from, to, tableStats,
                     Duration.between(startedAt, Instant.now()));

@@ -54,6 +54,9 @@ export default defineConfig({
         target: backendUrl,
         changeOrigin: true,
       },
+      // Swagger UI(백엔드 static /docs/**) 와 그 스펙 YAML, webjars 정적 자산.
+      '/docs': { target: backendUrl, changeOrigin: true },
+      '/webjars': { target: backendUrl, changeOrigin: true },
     },
   },
 })

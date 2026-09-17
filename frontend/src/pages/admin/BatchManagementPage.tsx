@@ -63,6 +63,12 @@ const JOB_OPTIONS: BatchJobOption[] = [
     description: 'mart_b2b_revenue_* 등 기타 잡만 재실행합니다.',
   },
   {
+    value: 'ACCOUNTING',
+    label: '회계 도메인만',
+    description:
+      'list_vision_receipt(SOFTCRM 비급여 수납) · list_medical_receipt(의사랑 수납 원장, 2026~) · mart_medical_receipt_monthly(진료 월집계) 를 재적재합니다. 기간은 **수납일** 기준. 초기 백필(2023~)은 월 단위로 나눠 돌리세요. 의사랑 링크드서버가 끊기면 진료 수납만 건너뛰고 시력교정은 적재됩니다.',
+  },
+  {
     value: 'SMS',
     label: '문자 발송 대상만',
     description:

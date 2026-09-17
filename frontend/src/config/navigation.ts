@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Home, CalendarCheck, Microscope, Stethoscope, Syringe,
   Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
-  Building2, MessageSquare, Landmark, Globe2,
+  Building2, MessageSquare, Landmark, Globe2, BookOpen,
 } from 'lucide-react'
 
 import { matchesDepartment, type AuthUser, type UserDepartment } from '@/stores/auth-session'
@@ -41,6 +41,11 @@ export interface MenuItem {
    * admin-section 트리 안 항목은 rawMenuItems 정의 이후 자동 마킹된다.
    */
   adminReal?: boolean
+  /**
+   * true 이면 SPA 라우팅이 아니라 브라우저 새 탭으로 열림. 정적 HTML(가이드 등) 등
+   * TanStack Router 로 처리할 수 없는 링크에 사용.
+   */
+  external?: boolean
   kind?: 'section' | 'group'
 }
 
@@ -97,11 +102,11 @@ const MENU_STATUS: Record<string, MenuStatus> = {
   'cancel-rate': 'pending',
   'no-show-rate': 'pending',
   'unit-price': 'pending',
-  'accounting-medical': 'frontend-only',
-  'accounting-vision': 'frontend-only',
-  'accounting-vision-summary': 'frontend-only',
-  'accounting-vision-chart': 'frontend-only',
-  'accounting-medical-chart': 'frontend-only',
+  'accounting-medical': 'complete',
+  'accounting-vision': 'complete',
+  'accounting-vision-summary': 'complete',
+  'accounting-vision-chart': 'complete',
+  'accounting-medical-chart': 'complete',
   'dreamlens-revenue': 'complete',
   'b2b-revenue': 'complete',
   'staff-point': 'pending',
@@ -137,24 +142,24 @@ const ADMIN_ONLY_PAGE_IDS = new Set<string>([
   'cataract-exam-list',
   'eoeis-checkup',
   'surgery',
-  // 회계 5종 — 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 만 검토.
-  // 리프는 admin-section 밖이라 배지가 "개발중"(WIP) 로 붙는다.
+])
+export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
+
+/**
+ * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지.
+ * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
+ *
+ * 2026-09-17: 회계 5종을 여기로 이동. 백엔드 SecurityConfig `/api/accounting/**` 매처도
+ * `hasAnyRole("ADMIN","DIRECTOR")` 로 함께 개방 (대칭 유지).
+ */
+const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>([
+  // 회계 5종 — 마트(list_medical_receipt·list_vision_receipt) + /api/accounting 연동 완료(2026-09-15).
   'accounting-medical',
   'accounting-vision',
   'accounting-vision-summary',
   'accounting-vision-chart',
   'accounting-medical-chart',
 ])
-export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
-
-/**
- * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지 (2026-09-11 신설).
- * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
- *
- * 현재 대상 페이지 없음 — 회계는 개발 미완성으로 ADMIN 전용으로 되돌렸다.
- * 인프라(pruneExecutiveOnly·ExecutiveBadge)는 정책 확장 재개 대비로 유지.
- */
-const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>()
 export const isExecutiveOnlyPage = (id: string): boolean => EXECUTIVE_ONLY_PAGE_IDS.has(id)
 
 /**
@@ -380,10 +385,9 @@ const rawMenuItems: MenuItem[] = [
     href: '#',
     icon: Landmark,
     kind: 'section',
-    // 회계는 아직 백엔드·마트 없이 프런트 합성 목업 단계. 개발 완성 전까지 ADMIN 전용으로 되돌린다.
-    // 완성돼서 임원(DIRECTOR) 개방 재개 시 adminOnly 제거 + executiveOnly: true 로 되돌리고
-    // ADMIN_ONLY_PAGE_IDS 의 accounting-* 도 EXECUTIVE_ONLY_PAGE_IDS 로 되돌린다.
-    adminOnly: true,
+    // 회계 — 마트·API 연동 완료(2026-09-15). 임원(DIRECTOR) 이상 개방(2026-09-17).
+    // 백엔드 /api/accounting/** 매처가 hasAnyRole("ADMIN","DIRECTOR") 로 대칭 유지.
+    executiveOnly: true,
     children: kids(
       'accounting-medical', 'accounting-vision',
       'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart',
@@ -396,7 +400,28 @@ const rawMenuItems: MenuItem[] = [
     icon: Wrench,
     kind: 'section',
     adminOnly: true,
-    children: kids('batch-management', 'account-management'),
+    children: [
+      ...kids('batch-management', 'account-management'),
+      // 정적 기획서(frontend/public/guide) — 새 탭에서 열린다.
+      // adminOnly=true 를 명시해야 배지가 뜬다. adminReal 은 markAdminSectionSubtree 가 자동으로 붙여 준다.
+      {
+        id: 'guide',
+        label: '가이드',
+        href: '/guide/prd.html',
+        icon: BookOpen,
+        external: true,
+        adminOnly: true,
+      },
+      // Swagger UI — backend static /docs/index.html. Vite dev 는 vite.config.ts 의 /docs 프록시 경유.
+      {
+        id: 'api-docs',
+        label: 'API 문서',
+        href: '/docs/',
+        icon: FileText,
+        external: true,
+        adminOnly: true,
+      },
+    ],
   },
 ]
 

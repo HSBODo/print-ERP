@@ -8,6 +8,9 @@ export const monthRange = (month: string) => {
   return { from: `${month}-01`, to: iso(new Date(year, monthNo, 0)) }
 }
 
+/** 기본 조회 기간 — 이번 달 1일 ~ 말일 (마트는 D-1 까지 적재된다). */
+export const currentMonthRange = (today = new Date()) => monthRange(iso(today).slice(0, 7))
+
 export const weeksOfMonth = (month: string) => {
   const [year, monthNo] = month.split('-').map(Number)
   const first = new Date(year, monthNo - 1, 1)

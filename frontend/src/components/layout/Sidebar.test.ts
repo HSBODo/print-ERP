@@ -119,23 +119,32 @@ describe('pruneByDepartment · 사이드바 부서 gate', () => {
     expect(leafIds).toContain('overseas-reservation-stats')
   })
 
-  it('pruneExecutiveOnly: 현재 executiveOnly 대상 없음 — 모든 롤에게 no-op', () => {
-    // 회계는 개발 완성 전까지 ADMIN 전용으로 되돌렸다(admin 게이트가 담당).
-    // 인프라 자체는 유지되므로 대상이 다시 지정되면 자동으로 이 케이스가 활성화된다.
-    for (const role of ['STAFF', 'MANAGER', 'DIRECTOR', 'ADMIN'] as const) {
+  it('pruneExecutiveOnly: MANAGER·STAFF 는 회계 5종 제거, ADMIN·DIRECTOR 는 통과 (2026-09-17)', () => {
+    // 회계 5종이 EXECUTIVE_ONLY_PAGE_IDS 로 이동. 백엔드 /api/accounting/** 매처는 hasAnyRole("ADMIN","DIRECTOR") 로 대칭.
+    const accountingIds = [
+      'accounting-medical', 'accounting-vision', 'accounting-vision-summary',
+      'accounting-vision-chart', 'accounting-medical-chart',
+    ]
+    for (const role of ['ADMIN', 'DIRECTOR'] as const) {
       const filtered = pruneExecutiveOnly(menuItems, role)
-      expect(collectLeafIds(filtered)).toEqual(collectLeafIds(menuItems))
+      const ids = collectLeafIds(filtered)
+      for (const id of accountingIds) expect(ids).toContain(id)
+    }
+    for (const role of ['MANAGER', 'STAFF'] as const) {
+      const filtered = pruneExecutiveOnly(menuItems, role)
+      const ids = collectLeafIds(filtered)
+      for (const id of accountingIds) expect(ids).not.toContain(id)
     }
   })
 
-  it('accounting-section 은 adminOnly 로 마킹돼 있어 admin 게이트가 담당한다', () => {
-    // Sidebar 내부의 pruneAdmin 이 non-ADMIN 에게 accounting-section 을 제거하도록 하는 근거.
+  it('accounting-section 은 executiveOnly 로 마킹돼 있어 임원 게이트가 담당한다 (2026-09-17)', () => {
+    // Sidebar 내부의 pruneExecutiveOnly 가 MANAGER·STAFF 에게 accounting-section 을 제거하도록 하는 근거.
     const section = findById(menuItems, 'accounting-section')
     expect(section).toBeDefined()
-    expect(section?.adminOnly).toBe(true)
-    expect(section?.executiveOnly).toBeFalsy()
+    expect(section?.executiveOnly).toBe(true)
+    expect(section?.adminOnly).toBeFalsy()
 
-    // 회계 잎들도 ADMIN_ONLY_PAGE_IDS 를 통해 adminOnly=true 로 마킹된다.
+    // 회계 잎들도 EXECUTIVE_ONLY_PAGE_IDS 를 통해 executiveOnly=true 로 마킹된다.
     for (const id of [
       'accounting-medical',
       'accounting-vision',
@@ -144,7 +153,8 @@ describe('pruneByDepartment · 사이드바 부서 gate', () => {
       'accounting-medical-chart',
     ]) {
       const leaf = findById(menuItems, id)
-      expect(leaf?.adminOnly).toBe(true)
+      expect(leaf?.executiveOnly).toBe(true)
+      expect(leaf?.adminOnly).toBeFalsy()
     }
   })
 

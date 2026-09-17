@@ -30,3 +30,7 @@ docker-compose.override.yml
 # D/L 장부 스프레드시트 원본 export — 환자 실명·고객번호가 들어 있어 커밋 금지.
 # (docs/databatch/*.csv 는 집계값이라 추적 대상이므로 *.csv 로 싸잡지 않는다)
 /D_L 장부들*.csv
+
+# API 문서 스펙 — ./gradlew test openapi3 가 매 빌드마다 새로 만드는 산출물.
+# 배포 파이프라인·전략은 docs/api-docs-strategy.md 참조.
+backend/src/main/resources/static/docs/openapi3.yaml

@@ -1,0 +1,47 @@
+-- 진료 수납 내역 — 수납일 범위. 화면이 필터·정렬·합계를 모두 클라이언트에서 하므로 행을 그대로 돌려준다.
+-- id 는 React key 용 문자열 (재적재 시 bigserial 이 바뀌어도 화면 캐시 키가 흔들리지 않게 자연 성분으로 만든다).
+SELECT
+    TO_CHAR(receipt_date, 'YYYY-MM-DD') || '-' || receipt_type || '-' || chart_no || '-' || serial_no || '-' || row_seq AS "id",
+    TO_CHAR(receipt_date, 'YYYY-MM-DD')  AS "receiptDate",
+    receipt_type                          AS "receiptType",
+    chart_no                              AS "chartNo",
+    serial_no                             AS "serialNo",
+    patient_name                          AS "patientName",
+    insurance_type                        AS "insuranceType",
+    doctor                                AS "doctor",
+    receipt_staff                         AS "receiptStaff",
+    receipt_time                          AS "receiptTime",
+    room                                  AS "room",
+    revenue_type                          AS "revenueType",
+    CASE WHEN status = 1 THEN '정상' ELSE '취소' END AS "status",
+    (closed = 1)                          AS "closed",
+    hundred_copay                         AS "hundredCopay",
+    hundred_unpaid                        AS "hundredUnpaid",
+    salary_total                          AS "salaryTotal",
+    claim_amount                          AS "claimAmount",
+    copay                                 AS "copay",
+    non_covered                           AS "nonCovered",
+    total_copay                           AS "totalCopay",
+    welfare_support                       AS "welfareSupport",
+    disabled_support                      AS "disabledSupport",
+    support_amount                        AS "supportAmount",
+    health_living_expense                 AS "healthLivingExpense",
+    actual_paid                           AS "actualPaid",
+    outstanding                           AS "outstanding",
+    discount                              AS "discount",
+    discount_reason                       AS "discountReason",
+    card                                  AS "card",
+    cash                                  AS "cash",
+    transfer                              AS "transfer",
+    refund                                AS "refund",
+    outstanding_occurred                  AS "outstandingOccurred",
+    outstanding_recovered                 AS "outstandingRecovered",
+    outstanding_card                      AS "outstandingCard",
+    outstanding_cash                      AS "outstandingCash",
+    outstanding_transfer                  AS "outstandingTransfer",
+    refund_occurred                       AS "refundOccurred",
+    cash_receipt                          AS "cashReceipt"
+FROM list_medical_receipt
+WHERE receipt_date >= CAST(:from AS DATE)
+  AND receipt_date <= CAST(:to   AS DATE)
+ORDER BY receipt_date, chart_no, serial_no, row_seq

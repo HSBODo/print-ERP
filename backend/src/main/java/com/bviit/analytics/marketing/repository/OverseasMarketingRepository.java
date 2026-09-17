@@ -2,14 +2,19 @@ package com.bviit.analytics.marketing.repository;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.marketing.dto.OverseasMarketingReceptionQuery;
+import com.bviit.analytics.marketing.util.OverseasCustomerKeys;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Google Sheet 로컬 캐시와 원본 CRM(SOFTCRM) 직결 조회를 분리한 저장소. */
 @Repository
@@ -62,13 +67,78 @@ public class OverseasMarketingRepository {
         return findCandidates("c.CUST_NAME IN (:values)", names);
     }
 
-    public List<Map<String, Object>> findCandidatesByPhones(List<String> phoneSuffixes) {
-        return findCandidates("RIGHT(REPLACE(REPLACE(REPLACE(c.CALL_NUM2, '-', ''), ' ', ''), '+', ''), 8) IN (:values)", phoneSuffixes);
+    /**
+     * 전화 뒷8자리·이메일 매칭 후보를 CUSTOM 전체 스트림 1회로 함께 조회한다.
+     *
+     * 이유(2026-09-16 실장애) — 전화 뒷8자리 매칭은 원래 SQL 이
+     * {@code RIGHT(REPLACE(REPLACE(REPLACE(CALL_NUM2, '-', ''), ' ', ''), '+', ''), 8) IN (:values)}
+     * 였으나 컬럼에 함수를 씌워 non-sargable 이라 CUSTOM(58만+ 행) 전수 스캔 + 행마다 정규화 계산이
+     * 필요해 120s 타임아웃을 초과했다. 이메일도 같은 패턴이라 시간 문제였다. 대신 CUSTOM 전체를
+     * 스트림으로 받아 자바에서 필터링하면 왕복 1회로 끝나고, 서버는 인덱스 없는 순수 스캔만 하면 된다.
+     * 정규화 규칙은 {@link OverseasCustomerKeys} 로 저장소·서비스가 공유한다.
+     */
+    public PhoneEmailCandidates findCandidatesByPhoneOrEmail(Set<String> phoneSuffixes, Set<String> emails) {
+        List<Map<String, Object>> phoneMatches = new ArrayList<>();
+        List<Map<String, Object>> emailMatches = new ArrayList<>();
+        if (phoneSuffixes.isEmpty() && emails.isEmpty()) {
+            return new PhoneEmailCandidates(phoneMatches, emailMatches);
+        }
+        Set<String> phoneKeys = Set.copyOf(phoneSuffixes);
+        Set<String> emailKeys = Set.copyOf(emails);
+        JdbcTemplate raw = crmJdbc.getJdbcTemplate();
+        int previousFetchSize = raw.getFetchSize();
+        raw.setFetchSize(CUSTOMER_STREAM_FETCH_SIZE);
+        try {
+            raw.query(CUSTOMER_STREAM_SQL, rs -> {
+                String customerNo = rs.getString("customerNo");
+                String name = rs.getString("name");
+                String birthDate = rs.getString("birthDate");
+                String contact = rs.getString("contact");
+                String email = rs.getString("email");
+                if (!phoneKeys.isEmpty()) {
+                    String suffix = OverseasCustomerKeys.phoneSuffix(contact);
+                    if (!suffix.isEmpty() && phoneKeys.contains(suffix)) {
+                        phoneMatches.add(candidateRow(customerNo, name, birthDate, contact, email));
+                    }
+                }
+                if (!emailKeys.isEmpty()) {
+                    String normalized = OverseasCustomerKeys.email(email);
+                    if (!normalized.isEmpty() && emailKeys.contains(normalized)) {
+                        emailMatches.add(candidateRow(customerNo, name, birthDate, contact, email));
+                    }
+                }
+            });
+        } finally {
+            raw.setFetchSize(previousFetchSize);
+        }
+        return new PhoneEmailCandidates(phoneMatches, emailMatches);
     }
 
-    public List<Map<String, Object>> findCandidatesByEmails(List<String> emails) {
-        return findCandidates("LOWER(RTRIM(LTRIM(c.EMAIL))) IN (:values)", emails);
+    private static Map<String, Object> candidateRow(String customerNo, String name, String birthDate,
+                                                    String contact, String email) {
+        Map<String, Object> row = new HashMap<>();
+        row.put("customerNo", customerNo);
+        row.put("name", name);
+        row.put("birthDate", birthDate);
+        row.put("contact", contact);
+        row.put("email", email);
+        return row;
     }
+
+    public record PhoneEmailCandidates(
+            List<Map<String, Object>> phones,
+            List<Map<String, Object>> emails
+    ) {}
+
+    private static final String CUSTOMER_STREAM_SQL =
+            "SELECT RTRIM(c.CUST_NUM) AS customerNo, "
+                    + "RTRIM(ISNULL(c.CUST_NAME, '')) AS name, "
+                    + "ISNULL(c.BIRTH_DAY, '') AS birthDate, "
+                    + "ISNULL(c.CALL_NUM2, '') AS contact, "
+                    + "ISNULL(c.EMAIL, '') AS email "
+                    + "FROM CUSTOM c WITH(NOLOCK)";
+
+    private static final int CUSTOMER_STREAM_FETCH_SIZE = 2000;
 
     // MSSQL prepared statement 파라미터 한도(2,100)를 넘지 않도록 IN 절 값을 나눠 조회한다.
     private static final int IN_CLAUSE_CHUNK = 1000;

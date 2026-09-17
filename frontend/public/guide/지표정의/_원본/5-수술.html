@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지표정의 5 — 수술 — 비앤빛 Analytics</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#f6f6f7;--card:#fff;--line:#e8e8eb;--ink:#1f2328;--muted:#68707b;--muted2:#9298a1;--accent:#7c5cff;--accent-soft:#efebff;--radius:16px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.72;-webkit-font-smoothing:antialiased}
+/* 상단 탭바 · 좌측 목록은 sms.html 과 pages/*.html 의 것과 같은 값이다 —
+   문서가 바뀌어도 윗줄과 왼편이 같은 자리에 같은 모습으로 남아야 한다. */
+html,body{height:100%}body{display:flex;flex-direction:column}
+.tabbar{height:53px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 18px;background:#fff;border-bottom:1px solid var(--line);z-index:40;overflow-x:auto;overflow-y:hidden}
+.tabbar .tabs{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.tabbar .tab{border:1px solid transparent;background:none;text-decoration:none;font-family:inherit;font-size:14px;font-weight:600;line-height:1.35;color:var(--muted2);padding:6px 14px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.tabbar .tab:hover{color:var(--ink)}
+.tabbar .tab.active{color:var(--ink);background:#fff;border-color:var(--line);box-shadow:0 1px 2px rgba(16,18,29,.06)}
+.tabbar .beta{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:6px}
+.tabbar .sep{color:#d4d6db;font-size:13px;letter-spacing:1px;user-select:none}
+.shell{flex:1;min-height:0;display:flex}
+.sidenav{width:232px;flex-shrink:0;height:100%;overflow-y:auto;padding:26px 14px;border-right:1px solid var(--line);background:var(--bg)}
+.nav-title{margin:0 12px 14px;color:var(--muted2);font-size:13px;font-weight:800;letter-spacing:.02em}
+.sidenav nav{display:grid;gap:1px}.sidenav nav a{display:block;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:13.5px;font-weight:500;text-decoration:none}.sidenav nav a:hover{background:#efeff1;color:var(--ink)}.sidenav nav a.active{background:var(--accent-soft);color:#5b3fd1;font-weight:700}
+.main{flex:1;min-width:0;overflow-y:auto;padding:30px 34px 90px}
+/* 지표 요약 카드 — 본문 위에 자기 지표의 단위·날짜 기준·데이터 원천을 먼저 보인다. */
+.metric-summary{width:100%;max-width:1120px;margin:0 auto 16px;padding:20px 24px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.metric-summary .desc{margin:0 0 14px;font-size:15px;font-weight:650;color:var(--ink)}
+.metric-summary .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:0}
+.metric-summary .facts dt{font-size:11px;font-weight:700;color:var(--muted2);letter-spacing:.03em}
+.metric-summary .facts dd{margin:2px 0 0;font-size:13.5px;color:#414852}
+.metric-summary .flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:4px 0 2px}
+.metric-summary .step{min-width:122px;flex:1;padding:13px 14px;border:1px solid #e5e2f4;border-radius:11px;background:#faf9ff}
+.metric-summary .step .n{color:var(--accent);font-size:11px;font-weight:800}
+.metric-summary .step strong{display:block;margin-top:2px;font-size:14px}
+.metric-summary .step span{display:block;margin-top:3px;color:var(--muted2);font-size:11.5px;white-space:nowrap}
+.metric-summary .arrow{display:grid;place-items:center;flex:0 0 14px;color:#b8b2d7;font-size:15px}
+.metric-summary .alert{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe;font-size:13.5px;color:#514b69}.doc-card{width:100%;max-width:1120px;margin:0 auto;padding:42px 48px 50px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.markdown h1{margin:0 0 24px;font-size:29px;line-height:1.3;letter-spacing:-.025em}.markdown h2{margin:50px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:21px;line-height:1.4;letter-spacing:-.015em}.markdown h3{margin:32px 0 12px;font-size:17px;line-height:1.45}.markdown h4{margin:26px 0 10px;font-size:15px}.markdown p{margin:10px 0 16px;color:#414852;font-size:14.5px}.markdown strong{color:var(--ink)}
+.markdown a{color:#6246d2;text-decoration:none;font-weight:650}.markdown a:hover{text-decoration:underline}.markdown code{padding:2px 5px;border-radius:5px;background:#f1eff9;color:#543bc0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em;overflow-wrap:anywhere}
+.markdown pre{margin:18px 0 22px;padding:18px 20px;overflow:auto;border-radius:11px;background:#20242d;color:#eef1f6;line-height:1.6}.markdown pre code{padding:0;background:none;color:inherit;font-size:12.5px;white-space:pre}
+.markdown blockquote{margin:18px 0;padding:13px 16px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe}.markdown blockquote>:first-child{margin-top:0}.markdown blockquote>:last-child{margin-bottom:0}.markdown blockquote p{color:#514b69}
+.markdown ul,.markdown ol{margin:10px 0 18px;padding-left:24px;color:#414852;font-size:14.5px}.markdown li{margin:5px 0}.markdown hr{height:1px;margin:42px 0;border:0;background:var(--line)}
+.table-scroll{max-width:100%;margin:16px 0 24px;overflow:auto;border:1px solid var(--line);border-radius:11px}.markdown table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;line-height:1.55}.markdown th{padding:10px 12px;background:#f7f7f9;color:#505762;font-weight:750;white-space:nowrap}.markdown td{padding:10px 12px;border-top:1px solid var(--line);color:#424954;vertical-align:top}.markdown tr:hover td{background:#fcfcfd}
+.markdown details{margin:18px 0;padding:12px 15px;border:1px solid var(--line);border-radius:10px;background:#fcfcfd}.markdown summary{cursor:pointer;font-weight:750}.markdown details[open] summary{margin-bottom:14px}
+.pager{display:flex;justify-content:space-between;gap:16px;max-width:1120px;margin:18px auto 0}.pager a{color:#5b3fd1;font-size:13px;font-weight:700;text-decoration:none}.pager a:hover{text-decoration:underline}
+@media print{html,body{height:auto;display:block}.tabbar,.sidenav,.pager{display:none}.shell{display:block}.main{display:block;overflow:visible;padding:0}.doc-card,.metric-summary{max-width:none;border:0;border-radius:0;box-shadow:none;padding:0}.markdown h2,.markdown h3{break-after:avoid}.table-scroll{break-inside:avoid}}
+@media(max-width:820px){.shell{display:block}.sidenav{width:auto;height:auto;padding:14px;border-right:0;border-bottom:1px solid var(--line)}.sidenav nav{display:flex;gap:5px;overflow:auto;padding-bottom:2px}.sidenav nav a{white-space:nowrap}.nav-title{display:none}.main{padding:18px 12px 60px}.doc-card{padding:28px 20px 36px;border-radius:13px}.markdown h1{font-size:24px}.markdown h2{font-size:19px}.docbar{padding:0 14px}.crumb{display:none}}
+</style>
+</head>
+<body>
+  <div class="tabbar">
+    <div class="tabs">
+      <a class="tab" href="../../prd.html#view-prd">대쉬보드 요구사항</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../지표정의/1-예약.html">지표 정의</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-flow">IA</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-expansion">26.10 이후 확장 전략</a>
+    </div>
+  </div>
+  <div class="shell">
+    <aside class="sidenav">
+      <div class="nav-title">지표 정의 — 전체판</div>
+      <nav><a class="" href="1-예약.html">1-예약</a>
+<a class="" href="2-검사.html">2-검사</a>
+<a class="" href="3-전환율-중단율.html">3-전환율-중단율</a>
+<a class="" href="4-예약률.html">4-예약률</a>
+<a class="active" href="5-수술.html">5-수술</a>
+<a class="" href="6-외래.html">6-외래</a></nav>
+    </aside>
+    <main class="main">
+
+      <article class="doc-card">
+        <div class="markdown"><h1 id="지표정의-5-수술">지표정의 5 — 수술</h1>
+<blockquote><p>환자 흐름(예약 → 검사 → 전환율/중단율 → <strong>수술</strong> → 외래)의 다섯 번째 단계. <strong>무엇으로 이루어지고, 데이터를 어디서 가져오는지</strong>를 정리함.</p></blockquote>
+<h2 id="한눈에-보기">한눈에 보기</h2>
+<p><strong>수술은 세 갈래로 나뉨.</strong> 서로 다른 테이블에서 오고, 세는 단위도 다름.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">구성</th><th style="text-align:left">무엇인가</th><th style="text-align:left">데이터 출처</th><th style="text-align:left">날짜 기준</th><th style="text-align:left">세는 단위</th></tr></thead><tbody><tr><td style="text-align:left"><strong>시력교정수술</strong></td><td style="text-align:left">라식·라섹·스마일·렌즈삽입 등</td><td style="text-align:left"><code>OPERATIONDATA</code></td><td style="text-align:left"><code>OPERATION_DATE</code></td><td style="text-align:left"><strong>사람</strong></td></tr><tr><td style="text-align:left"><strong>백내장수술</strong></td><td style="text-align:left">백내장 인공수정체 수술</td><td style="text-align:left"><code>Cataract_Operationdata</code></td><td style="text-align:left"><code>OPERATIONR_DATE</code><br><code>OPERATIONL_DATE</code></td><td style="text-align:left"><strong>눈</strong> (좌/우 각각)</td></tr><tr><td style="text-align:left"><strong>재수술</strong></td><td style="text-align:left">이미 수술한 눈을 다시 수술</td><td style="text-align:left"><code>RE_OPERATION</code></td><td style="text-align:left"><code>REOP_DATE</code></td><td style="text-align:left"><strong>건</strong></td></tr></tbody></table></div>
+<blockquote><p>⚠️ <strong>단위가 다르므로 단순히 더하면 안 됨.</strong> 시력교정은 사람, 백내장은 눈임. 총 수술수 = 시력교정 <strong>사람</strong> + 백내장 <strong>눈</strong> + 재수술 <strong>건</strong> (2026-07 실측: 784 + 45 + 32 = <strong>861</strong>).</p>
+<p>같은 사람·같은 날이 수술과 재수술에 각각 잡히는 중복이 있으나(렌즈 제거+삽입처럼 한 세션이 두 테이블에 기록된 경우) 레거시도 같은 방식으로 더하므로 걸러내지 않음 — 확정된 정의임.</p></blockquote>
+<h2 id="데이터-흐름-뷰-하나에서-갈라짐-2026-08-06">데이터 흐름 — 뷰 하나에서 갈라짐 (2026-08-06~)</h2>
+<pre><code>list_surgery(시력교정·백내장) + list_reoperation(재수술)
+      └─ v_all_surgery_list (V37, 눈 단위 전개 + 유형 분류)
+            └─ select-surgery-daily-agg.sql (일별)
+                  ├─ 월로 접기   → SurgeryMartJob  → 월간 레포트·수술 건수·주요 수술별 비중
+                  └─ ISO 주차로  → WeeklyReportService → 주차 레포트·수술별 비중</code></pre>
+<p>종전에는 같은 지표를 MSSQL 쿼리 <strong>4벌</strong>(시력교정 월별/일별 · 백내장 월별/일별)이 각자 구현했고, 주석에 <em>&quot;둘은 같은 기준이어야 한다&quot;</em> 고 사람이 지켜야 할 규약으로만 적혀 있었음. 실제로 어긋났음 — <strong>2026-06 백내장이 리스트 62 vs 집계 65</strong>.</p>
+<p><strong>화면 원칙</strong> — 리스트 행은 <strong>사람</strong>, 표시 숫자는 <strong>안</strong>. 수술자 리스트는 사람 목록이라 6월에 62행이지만, 백내장 수술수는 65안이 맞음. 뷰가 눈 단위로 펼쳐 두고 집계에서 갈라 씀.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">지표</th><th style="text-align:left">집계식</th></tr></thead><tbody><tr><td style="text-align:left">시력교정 수술수</td><td style="text-align:left"><code>COUNT(DISTINCT patient_key)</code> — 사람×수술일</td></tr><tr><td style="text-align:left">백내장 수술수</td><td style="text-align:left"><code>COUNT(*)</code> — 안</td></tr><tr><td style="text-align:left">재수술</td><td style="text-align:left"><code>COUNT(*) WHERE included</code> — 건</td></tr></tbody></table></div>
+<blockquote><p>⚠️ <strong>적용 구간은 2026-06 부터임.</strong> <code>SurgeryMartJob.MART_LIVE_FROM = 2026-06-01</code> 가드가 그 이전을 확정값으로 보호함 — 2024·2025 는 <code>V15</code>, 2026-01~05 는 <code>V35</code> 시드가 정본임. 정의를 바꿔도 앞 구간 숫자는 움직이지 않음.</p>
+<p>🙈 그래서 <strong>2026-02 시력교정 리스트 1386 vs 월별 1388(+2)</strong> 은 원인 미규명 상태로 얼어 있음. 나중에 어느 쪽이 맞는지 가려지면 <code>V35</code> 시드를 고치면 됨.</p></blockquote>
+<blockquote><p>⚠️⚠️ <strong>뷰의 패턴 매칭은 <code>ILIKE</code> 로 씀(<code>LIKE</code> 아님).</strong> 원본 MSSQL 의 DB collation 이 <code>Korean_Wansung_CI_AS</code> = <strong>대소문자 무시</strong>라 거기서는 <code>LIKE</code> 가 이미 CI 로 동작함. Postgres <code>LIKE</code> 는 CS 라 그대로 옮기면 분류가 갈림. 실제로 겪었음 — <code>T-Tecnis Puresee</code>(소문자 s)가 <code>%PureSee%</code> 에 안 걸려 catEdof 대신 catMono 로 떨어졌음(2026-07 EDOF 22→21, Mono 2→3). 시술명은 수기 입력이라 대소문자가 제각각이므로 CI 가 맞음.</p></blockquote>
+<blockquote><p>📌 <strong>재수술 포함/제외 판정은 마트에 굳히지 않음.</strong> <code>reoperation_decision</code>(JPA 표)을 뷰가 조회 시점에 <code>LEFT JOIN</code> 하므로, 화면에서 판정을 고치면 배치 없이 즉시 반영됨. 반면 렌즈/레이저 구분(<code>is_lens</code>)은 적재 시점에 자바가 계산해 넣음 — 시술명 패턴의 SSOT 는 <code>ReoperationOverlay.LENS_PATTERNS</code> 한 곳임.</p></blockquote>
+<p><strong>공통 규칙 — 세 갈래 모두 적용</strong></p>
+<ul><li>예약일이 아니라 <strong>실제 수술한 날</strong> 기준</li><li>고객명에 <code>테스트</code>·<code>test</code>가 들어가면 제외</li><li>수술명이 비어 있거나 <code>X</code>·<code>OP불가</code>·<code>모든수술가능</code>·<code>op x</code>·<code>Strabismus</code>·<code>TEST-TEST</code>면 제외</li></ul>
+<hr>
+<h2 id="1-시력교정수술">1. 시력교정수술</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>무엇을 세나</strong></td><td style="text-align:left">그 기간에 시력교정 수술을 실제로 받은 <strong>사람 수</strong></td></tr><tr><td style="text-align:left"><strong>테이블</strong></td><td style="text-align:left"><code>OPERATIONDATA</code> (고객당 1행)</td></tr><tr><td style="text-align:left"><strong>날짜</strong></td><td style="text-align:left"><code>OPERATION_DATE</code></td></tr><tr><td style="text-align:left"><strong>수술명</strong></td><td style="text-align:left"><code>OPERATIONR</code>(오른눈) · <code>OPERATIONL</code>(왼눈)</td></tr><tr><td style="text-align:left"><strong>단위</strong></td><td style="text-align:left">사람 = <code>COUNT(DISTINCT CUST_NUM)</code></td></tr><tr><td style="text-align:left"><strong>화면</strong></td><td style="text-align:left"><code>/stats/surgery</code> 수술 건수 · <code>/stats/surgery-ratio</code> 주요 수술별 비중</td></tr><tr><td style="text-align:left"><strong>쿼리</strong></td><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-vision-monthly-by-type.sql</code></td></tr></tbody></table></div>
+<h3 id="무엇으로-이루어지나-수술-유형-10종">무엇으로 이루어지나 — 수술 유형 10종</h3>
+<p><code>OPERATIONR</code>/<code>OPERATIONL</code>에 적힌 <strong>수술명 문자열을 보고</strong> 분류함.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">유형</th><th style="text-align:left">매칭 키워드</th></tr></thead><tbody><tr><td style="text-align:left">프레스비욘드 <code>presbyond</code></td><td style="text-align:left"><code>PRESBYOND</code></td></tr><tr><td style="text-align:left">스마일프로 <code>smilePro</code></td><td style="text-align:left"><code>SMILE Pro</code> · <code>SMILEpro</code> · <code>SMILE PRO</code></td></tr><tr><td style="text-align:left">스마일 <code>smile</code></td><td style="text-align:left"><code>SMILE</code></td></tr><tr><td style="text-align:left">비바 <code>viva</code></td><td style="text-align:left"><code>VIVA</code></td></tr><tr><td style="text-align:left">T-ICL <code>tIcl</code></td><td style="text-align:left"><code>T-ICL</code> · <code>T-IPCL</code> · <code>T-GLAZE</code> · <code>T-ECHO</code></td></tr><tr><td style="text-align:left">ICL <code>icl</code></td><td style="text-align:left"><code>ICL</code> · <code>IPCL</code> · <code>ARF</code> · <code>ART</code> · <code>ARTIFLEX</code> · <code>GLAZE</code> · <code>ECHO</code></td></tr><tr><td style="text-align:left">T-KPL <code>tKpl</code></td><td style="text-align:left"><code>T-KPL</code></td></tr><tr><td style="text-align:left">KPL <code>kpl</code></td><td style="text-align:left"><code>KPL</code></td></tr><tr><td style="text-align:left">라식 <code>lasik</code></td><td style="text-align:left"><code>FLAP LIFT</code> · <code>OPTI</code> · <code>iFS</code> · <code>VISU</code> · <code>fs200</code> · <code>Micro+</code> · <code>Hybrid</code></td></tr><tr><td style="text-align:left">라섹 <code>lasek</code></td><td style="text-align:left"><code>EYECLE</code> · <code>T-prk</code> · <code>EYE CLE</code> · <code>EYE+</code> · <code>FLAP PRK</code> · <code>PtK</code> · <code>M-LE</code></td></tr></tbody></table></div>
+<blockquote><p><strong>위에서부터 순서대로</strong> 판정함. <code>SMILE Pro</code>가 <code>SMILE</code>보다 먼저 걸리도록 순서가 중요함. <code>PRESBYOND</code>를 맨 앞에 둔 이유는 <code>Mono+PRESBYOND</code> 처럼 다른 표기와 섞여 들어와도 노안 시술로 잡아야 하기 때문임(2026-08-05 신설 — 이전에는 분기가 없어 <code>other</code>로 빠졌음). 어디에도 안 걸리면 <code>other</code>가 되고 유형별 집계에서 빠짐. <strong>신규 수술명이 생기면 여기에 추가해야 함.</strong></p></blockquote>
+<h3 id="piol-유형별은-대표유형-하나만-셈">⚠️ PIOL 유형별은 &quot;대표유형&quot; 하나만 셈</h3>
+<p><strong>PIOL 5종(<code>icl</code>·<code>tIcl</code>·<code>kpl</code>·<code>tKpl</code>·<code>viva</code>)에만 적용되는 예외 규칙임.</strong></p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left"></th><th style="text-align:left">규칙</th></tr></thead><tbody><tr><td style="text-align:left">대표유형</td><td style="text-align:left"><strong>우안(<code>OPERATIONR</code>) 우선.</strong> 우안에 PIOL 이 없으면 좌안(<code>OPERATIONL</code>)</td></tr><tr><td style="text-align:left">집계 단위</td><td style="text-align:left">환자 × 집계버킷(일별=일자, 월별=연·월)당 <strong>한 유형에만</strong> 1</td></tr><tr><td style="text-align:left">적용 범위</td><td style="text-align:left">PIOL 5종만. 라식·라섹·스마일·부가옵션은 종전대로 받은 항목마다 셈</td></tr></tbody></table></div>
+<p><strong>왜.</strong> 양안에 서로 다른 렌즈를 넣는 경우가 흔함(오른눈 ICL · 왼눈 T-ICL). 받은 유형마다 세면 한 사람이 두 칸에 잡혀 <strong>유형별 합이 실제 환자 수보다 커짐.</strong></p>
+<p><strong>근거.</strong> 레거시 월간보고와 대조해 역산했음. 2026-07 혼합 환자 20명 전원이 우안 기준으로 배정할 때 예외 없이 재현됨.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left"></th><th style="text-align:right">받은 유형마다(옛 방식)</th><th style="text-align:right">대표유형(현행)</th><th style="text-align:right">레거시 월간보고</th></tr></thead><tbody><tr><td style="text-align:left">ICL</td><td style="text-align:right">44</td><td style="text-align:right"><strong>41</strong></td><td style="text-align:right">41</td></tr><tr><td style="text-align:left">T-ICL</td><td style="text-align:right">76</td><td style="text-align:right"><strong>68</strong></td><td style="text-align:right">68</td></tr><tr><td style="text-align:left">KPL</td><td style="text-align:right">19</td><td style="text-align:right"><strong>16</strong></td><td style="text-align:right">16</td></tr><tr><td style="text-align:left">T-KPL</td><td style="text-align:right">28</td><td style="text-align:right"><strong>22</strong></td><td style="text-align:right">22</td></tr><tr><td style="text-align:left">VIVA</td><td style="text-align:right">1</td><td style="text-align:right"><strong>1</strong></td><td style="text-align:right">2 ← 레거시 오분류</td></tr><tr><td style="text-align:left">합계</td><td style="text-align:right">168 (합) / 148 (실인원)</td><td style="text-align:right"><strong>148</strong></td><td style="text-align:right">149</td></tr></tbody></table></div>
+<p>레거시 VIVA 2 는 백내장 환자 1명의 <code>Clareon Vivity</code> 를 <code>VIVA</code> 로 본 오분류임(우리 1이 맞음). 그 1명 때문에 시력교정 총계도 레거시 785 vs 우리 784 로 갈림.</p>
+<blockquote><p>그래서 <strong>PIOL 만은 &quot;유형별 합 = 합계&quot;가 성립함.</strong> 아래 함정 ①의 예외임.</p></blockquote>
+<h3 id="부가-옵션-5종-유형과-별개로-중복-집계">부가 옵션 5종 (유형과 별개로 중복 집계)</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">옵션</th><th style="text-align:left">매칭</th></tr></thead><tbody><tr><td style="text-align:left">엑스트라 <code>xtra</code></td><td style="text-align:left"><code>+X</code></td></tr><tr><td style="text-align:left">웨이브비전 <code>waveVision</code></td><td style="text-align:left"><code>W.V</code></td></tr><tr><td style="text-align:left">모노비전 <code>monoVision</code></td><td style="text-align:left"><code>MONO</code>로 시작</td></tr><tr><td style="text-align:left">콘트라 <code>contra</code></td><td style="text-align:left"><code>CONT</code></td></tr><tr><td style="text-align:left">퍼스널 <code>personal</code></td><td style="text-align:left"><code>P.E</code></td></tr><tr><td style="text-align:left">라섹 EX500 / RED</td><td style="text-align:left"><code>EYECLE</code> + <code>EX500</code> / <code>EYECLE</code> + <code>RED</code></td></tr></tbody></table></div>
+<h3 id="쿼리-핵심만">쿼리 (핵심만)</h3>
+<pre><code class="language-sql">-- 좌우 눈을 UNION ALL 로 펼친 뒤 사람 단위로 DISTINCT
+SELECT YEAR(op_date) AS yr, MONTH(op_date) AS mo,
+       COUNT(DISTINCT CASE WHEN op_type=&#39;smile&#39; THEN cust_num END) AS smile,
+       -- ... 유형별 반복 ...
+       COUNT(DISTINCT cust_num) AS visionPatients
+FROM (
+    SELECT o.OPERATION_DATE AS op_date, o.CUST_NUM AS cust_num,
+           o.OPERATIONR AS raw, &lt;위 분류 CASE&gt; AS op_type
+    FROM OPERATIONDATA o WITH(NOLOCK)
+    LEFT JOIN CUSTOM cu WITH(NOLOCK) ON cu.CUST_NUM = o.CUST_NUM
+    WHERE o.OPERATION_DATE &gt;= :from AND o.OPERATION_DATE &lt;= :to
+      AND o.OPERATIONR IS NOT NULL AND RTRIM(o.OPERATIONR) &lt;&gt; &#39;&#39;
+      AND o.OPERATIONR NOT IN (&#39;X&#39;,&#39;OP불가&#39;,&#39;모든수술가능&#39;,&#39;op x&#39;,&#39;Strabismus&#39;,&#39;TEST-TEST&#39;)
+      AND NOT EXISTS (SELECT 1 FROM Cataract_Operationdata co WITH(NOLOCK)
+                      WHERE co.CUST_NUM = o.CUST_NUM)      -- ★ 백내장 고객 제외
+      AND NOT (테스트 고객)
+    UNION ALL
+    &lt;OPERATIONL 로 같은 블록 반복&gt;
+) e
+GROUP BY YEAR(op_date), MONTH(op_date)</code></pre>
+<blockquote><p>⚠️ <strong><code>NOT EXISTS Cataract_Operationdata</code>가 중요함.</strong> 백내장 수술 이력이 있는 고객은 <strong>기간과 무관하게 통째로 빠짐.</strong> 백내장 수술을 받은 분이 나중에 시력교정 수술을 받아도 안 잡힘. 백내장/시력교정 중복 집계를 막으려는 장치지만, 부작용이 있다는 점을 알고 있어야 함.</p></blockquote>
+<hr>
+<h2 id="2-백내장수술">2. 백내장수술</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>무엇을 세나</strong></td><td style="text-align:left">그 기간에 백내장 수술을 받은 <strong>눈 수</strong></td></tr><tr><td style="text-align:left"><strong>테이블</strong></td><td style="text-align:left"><code>Cataract_Operationdata</code></td></tr><tr><td style="text-align:left"><strong>날짜</strong></td><td style="text-align:left"><code>OPERATIONR_DATE</code>(오른눈) · <code>OPERATIONL_DATE</code>(왼눈) — <strong>눈마다 날짜가 다름</strong></td></tr><tr><td style="text-align:left"><strong>수술명</strong></td><td style="text-align:left"><code>OPERATIONR</code> · <code>OPERATIONL</code> (인공수정체 종류)</td></tr><tr><td style="text-align:left"><strong>단위</strong></td><td style="text-align:left">눈 = <code>고객번호 + 수술일 + R/L</code> 조합</td></tr><tr><td style="text-align:left"><strong>화면</strong></td><td style="text-align:left"><code>/stats/surgery</code> · <code>/stats/surgery-composition</code></td></tr><tr><td style="text-align:left"><strong>쿼리</strong></td><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-cataract-monthly-by-type.sql</code></td></tr></tbody></table></div>
+<blockquote><p><strong>왜 눈 단위인가</strong> — 백내장은 좌우를 <strong>다른 날 수술하는 경우가 많음.</strong> 그래서 눈마다 수술일이 따로 있고, 레거시 백내장 수술건수도 눈 기준이라 그에 맞췄음.</p></blockquote>
+<h3 id="무엇으로-이루어지나-인공수정체-3종">무엇으로 이루어지나 — 인공수정체 3종</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">유형</th><th style="text-align:left">매칭 키워드</th></tr></thead><tbody><tr><td style="text-align:left">EDOF <code>catEdof</code></td><td style="text-align:left"><code>EDOF</code> · <code>Vivity</code> · <code>Eyhance</code> · <code>PureSee</code> · <code>Isopure</code> · <code>Symfony</code></td></tr><tr><td style="text-align:left">다초점 <code>catMulti</code></td><td style="text-align:left"><code>Clareon</code> · <code>Panoptix</code> · <code>RESTOR</code> · <code>Lara</code> · <code>LISA</code> · <code>CTR(M)</code> · <code>CTRmulti</code> · <code>3PodF</code> · <code>T-CTR</code> · <code>T-CATARACT</code> · <code>Precizon</code> · <code>LAL</code> · <code>ELANA</code> · <code>Gemetric</code></td></tr><tr><td style="text-align:left">단초점 <code>catMono</code></td><td style="text-align:left"><code>K-flex</code> · <code>Kflex</code> · <strong>그 외 전부</strong></td></tr></tbody></table></div>
+<blockquote><p>⚠️ <strong>단초점이 기본값(<code>ELSE</code>)임.</strong> 새 다초점 렌즈명이 등장하면 조용히 단초점으로 잡힘. 신제품 도입 시 목록 갱신이 필요함.</p></blockquote>
+<blockquote><p>✅ <strong><code>T-Clareon Vivity</code> 는 EDOF(프리미엄)다 — 2026-08-05 확정.</strong> 이름에 <code>Clareon</code>(다초점)과 <code>Vivity</code>(EDOF)가 둘 다 들어 있어 CASE 순서에 따라 갈리는데, <strong>EDOF 를 먼저 보는 현재 순서가 맞음.</strong> 의학적으로 Vivity 는 EDOF 이고, 레거시 월간보고가 <code>Clareon</code> 계열을 통째로 다초점으로 묶은 쪽이 어긋난 것임. <strong>레거시 PDF 에 맞추려고 CASE 순서를 뒤집지 말 것</strong> (2026-06 다초점 36 vs PDF 33, 2026-07 프리미엄 22 vs PDF 21 — 이 차이는 정상임).</p></blockquote>
+<h3 id="쿼리-핵심만-1">쿼리 (핵심만)</h3>
+<pre><code class="language-sql">SELECT YEAR(op_date) AS yr, MONTH(op_date) AS mo,
+       COUNT(DISTINCT CASE WHEN cat_type=&#39;catMulti&#39; THEN eye_key END) AS catMulti,
+       COUNT(DISTINCT CASE WHEN cat_type=&#39;catMono&#39;  THEN eye_key END) AS catMono,
+       COUNT(DISTINCT CASE WHEN cat_type=&#39;catEdof&#39;  THEN eye_key END) AS catEdof,
+       COUNT(DISTINCT eye_key) AS cataractPatients
+FROM (
+    SELECT c.OPERATIONR_DATE AS op_date,
+           LTRIM(RTRIM(c.CUST_NUM)) + &#39;|&#39; + c.OPERATIONR_DATE + &#39;|R&#39; AS eye_key,   -- ★ 눈 키
+           &lt;분류 CASE&gt; AS cat_type
+    FROM Cataract_Operationdata c WITH(NOLOCK)
+    WHERE c.OPERATIONR_DATE &gt;= :from AND c.OPERATIONR_DATE &lt;= :to
+      AND c.OPERATIONR IS NOT NULL AND RTRIM(c.OPERATIONR) &lt;&gt; &#39;&#39;
+      AND c.OPERATIONR NOT IN (&#39;X&#39;,&#39;OP불가&#39;,&#39;TEST-TEST&#39;)
+      AND NOT (테스트 고객)
+    UNION ALL
+    &lt;OPERATIONL / OPERATIONL_DATE 로 같은 블록 반복, eye_key 는 &#39;|L&#39;&gt;
+) e
+GROUP BY YEAR(op_date), MONTH(op_date)</code></pre>
+<hr>
+<h2 id="3-재수술">3. 재수술</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>무엇을 세나</strong></td><td style="text-align:left">이미 수술한 눈을 다시 수술한 <strong>건수</strong></td></tr><tr><td style="text-align:left"><strong>테이블</strong></td><td style="text-align:left"><code>RE_OPERATION</code></td></tr><tr><td style="text-align:left"><strong>날짜</strong></td><td style="text-align:left"><code>REOP_DATE</code></td></tr><tr><td style="text-align:left"><strong>수술명</strong></td><td style="text-align:left"><code>AGAIN_R</code>(오른눈) · <code>AGAIN_L</code>(왼눈)</td></tr><tr><td style="text-align:left"><strong>단위</strong></td><td style="text-align:left">건 (한 행 = 1건, 좌우 합쳐 1건)</td></tr><tr><td style="text-align:left"><strong>화면</strong></td><td style="text-align:left"><code>/stats/reoperation-rate</code> 재수술율 — <strong>미구현</strong></td></tr><tr><td style="text-align:left"><strong>쿼리</strong></td><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-reoperation-candidates.sql</code> + <code>backend/src/main/java/com/bviit/analytics/surgery/service/ReoperationOverlay.java</code> (자바 집계)</td></tr></tbody></table></div>
+<h3 id="무엇으로-이루어지나-레이저-렌즈-2종">무엇으로 이루어지나 — 레이저 / 렌즈 2종</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">유형</th><th style="text-align:left">매칭 키워드</th></tr></thead><tbody><tr><td style="text-align:left">렌즈 <code>reopLens</code></td><td style="text-align:left"><code>remo</code> · <code>exch</code> · <code>ICL</code> · <code>ARF</code> · <code>ART</code> · <code>EVO</code> · <code>ECHO</code> · <code>GLAZE</code> · <code>precizon</code> · <code>Lisa</code> · <code>Gemetric</code> · <code>encla</code></td></tr><tr><td style="text-align:left">레이저 <code>reopLaser</code></td><td style="text-align:left">그 외 전부</td></tr></tbody></table></div>
+<h3 id="재수술로-세지-않는-것-제외-패턴">재수술로 세지 않는 것 (제외 패턴)</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">제외 대상</th><th style="text-align:left">이유</th></tr></thead><tbody><tr><td style="text-align:left"><code>Irrigation%</code></td><td style="text-align:left">세척 — 재수술 아님</td></tr><tr><td style="text-align:left"><code>repo%</code> · <code>%reposition%</code></td><td style="text-align:left">렌즈 위치 조정 — 재수술 아님</td></tr><tr><td style="text-align:left"><code>Clareon%</code> · <code>T-Clareon%</code> · <code>Tecnis%</code> · <code>LAL%</code> · <code>ELANA%</code></td><td style="text-align:left">백내장 인공수정체 — 백내장 수술로 집계</td></tr></tbody></table></div>
+<p>좌우 모두 제외 대상이면 그 행은 통째로 빠짐.</p>
+<blockquote><p>⚠️ <strong>이 판정 방식은 개선 대상임.</strong> 자세한 내용은 아래 §4 참조.</p></blockquote>
+<hr>
+<h2 id="4-알아둬야-할-함정">4. 알아둬야 할 함정</h2>
+<h3 id="①-유형별-합계-전체-인원-단-piol-은-예외">① 유형별 합계 ≠ 전체 인원 (단, PIOL 은 예외)</h3>
+<p><strong>양쪽 눈에 다른 수술을 할 수 있음.</strong> 오른눈 스마일 · 왼눈 라섹이면 <code>smile</code>에도 <code>lasek</code>에도 1명씩 잡히지만 전체 인원(<code>visionPatients</code>)은 1명임. <strong>유형별 숫자를 더해서 전체와 맞추려 하면 안 됨.</strong></p>
+<blockquote><p><strong>예외 — PIOL 5종.</strong> 2026-08-05부터 대표유형(우안 우선) 하나에만 집계하므로 <code>icl+tIcl+kpl+tKpl+viva</code> = <code>piolPatients</code> 가 성립함(위 §PIOL 대표유형 참조). 반대로 <strong>PIOL 유형별 값은 &quot;그 렌즈를 받은 사람 수&quot;가 아님</strong> — 양안에 다른 렌즈를 넣으면 우안 쪽에만 잡히므로 실제 시술 건수보다 작음(2026-07 ICL: 실제 44명 시술 / 대표유형 41명).</p></blockquote>
+<h3 id="②-시력교정에서-백내장-고객이-통째로-빠짐">② 시력교정에서 백내장 고객이 통째로 빠짐</h3>
+<p><code>NOT EXISTS Cataract_Operationdata</code>가 <strong>기간 제한 없이</strong> 걸려 있음. 2020년에 백내장 수술을 받은 분이 2026년에 시력교정 수술을 받아도 시력교정수술에 안 잡힘.</p>
+<h3 id="③-수술명-문자열-매칭이라-신규-수술명에-취약함">③ 수술명 문자열 매칭이라 신규 수술명에 취약함</h3>
+<p>세 갈래 모두 <strong>수술명 텍스트를 <code>LIKE</code>로 훑어</strong> 분류함. 새 수술명·새 렌즈명이 도입되면 조용히 <code>other</code>(시력교정)나 <code>단초점</code>(백내장)으로 흘러감. <strong>신규 수술 도입 시 분류 목록 갱신이 필요함.</strong></p>
+<h3 id="④-재수술-판정-2026-07-31-reasoncd-기반으로-전환-완료">④ 재수술 판정 — ✅ 2026-07-31 <code>REASON_CD</code> 기반으로 전환 완료</h3>
+<blockquote><p><strong>아래 서술은 전환 전 기록임.</strong> 2026-07-31 에 <code>01</code>·<code>07</code>·<code>10</code> 제외 + 시술명 <code>Irrigation</code> 보정 규칙으로 SQL 3개 파일에 반영됐음. 전환 후 2026 월별 실측: 01=32 · 02=33 · 03=18 · 04=19 · 05=23 · 06=17 · 07=31. <strong>비교연도도 함께 바뀌었음</strong>(2024 213→205 · 2025 279→272). 렌즈/레이저 분류도 행 단위 판정으로 바뀌어 2026 렌즈 103→105. ⚠️ 마트를 읽는 화면이라 <strong>SURGERY 도메인 재적재를 해야 반영됨.</strong> 상세·승인 범위: <a href="../../점검/재수술-분류_2026-01~07.html">재수술-분류_2026-01~07.md</a> §적용 기록.</p>
+<p>단, <strong>사유코드에도 오입력이 있어</strong> 시술명 보정을 함께 씀 — 순수 <code>REASON_CD</code> 단독 판정이 아님.</p></blockquote>
+<details><summary>전환 전 기록 (2026-07-29 조사 시점)</summary><p><code>RE_OPERATION</code>에는 <strong>정규화된 사유 컬럼 <code>REASON_CD</code>(char(3)) / <code>REOP_REASON</code></strong> 이 있고, 2025-01 이후 934건에 12종이 빠짐없이 채워져 있음.</p>
+<p><code>01 Irrigation</code> · <code>02 ENHANCE</code> · <code>03 Re-enclavation</code> · <code>04 Bioptics</code> · <code>06 Lens Removal</code> · <code>07 Lens Reposition</code> · <code>08 Lens Exchange</code> · <code>09 Keraring</code> · <code>10 CATARACT</code> · <code>12 RAINDROP Removal</code> · <code>13 Ingrowth Removal</code> · <code>16 enclavation</code></p>
+<p><strong>제외 3종(<code>01</code>·<code>07</code>·<code>10</code>) / 나머지 포함</strong>으로 두면 기획 의도와 정확히 맞음.</p>
+<p>그런데 현재 쿼리는 이 컬럼을 안 쓰고 시술명 문자열로만 판정함. <strong>2026-01~07 306건 중 8건(2.6%)이 어긋남</strong> — 잘못 제외 4건, 잘못 포함 4건. <strong>4건씩이라 월 합계는 우연히 상쇄되지만 개별 명단은 틀림.</strong> 총량만 보면 안 잡히는 종류의 오류임.</p>
+<blockquote><p>재수술 집계·명단 작업 시 문자열 패턴을 늘리지 말고 <strong><code>REASON_CD</code> 기반 전환을 먼저 검토할 것.</strong> 단, 재수술 분류 기준은 <strong>팀장 검증 대기</strong> 상태이므로 기준 변경은 확인 후 착수함.</p></blockquote></details>
+<hr>
+<h2 id="5-관련-쿼리-파일">5. 관련 쿼리 파일</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-vision-monthly-by-type.sql</code></td><td style="text-align:left">시력교정 수술 월별 유형 분해</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-vision-daily-by-type.sql</code></td><td style="text-align:left">위의 일별 버전</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-cataract-monthly-by-type.sql</code></td><td style="text-align:left">백내장 수술 월별 유형 분해</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-cataract-daily-by-type.sql</code></td><td style="text-align:left">위의 일별 버전</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-reoperation-candidates.sql</code></td><td style="text-align:left">재수술 원천 행 (월별·일별 집계는 <code>SurgeryStatsService</code> 가 자바에서 수행)</td></tr><tr><td style="text-align:left"><code>backend/src/main/java/com/bviit/analytics/surgery/service/ReoperationOverlay.java</code></td><td style="text-align:left">저장 판정 오버레이 · 레이저/렌즈 분류 패턴</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/surgery/find-surgery-list.sql</code></td><td style="text-align:left">수술자 리스트 (시력교정+백내장 통합)</td></tr></tbody></table></div>
+<hr>
+<hr>
+<h2 id="관련-문서">관련 문서</h2>
+<ul><li><a href="../../점검/인수인계_2026-08-05_백내장검사.html">인수인계_2026-08-05_백내장검사.md</a> — 백내장 검사수 정의 (부록A 에 점검 이력)</li><li><a href="../../점검/시력교정-검사자_2026-06~07.html">시력교정-검사자-점검_2026-06~07.md</a> — 시력교정 검사자 점검</li><li><a href="../../db/tables/OPERATIONDATA.html">tables/OPERATIONDATA.md</a> — 수술 테이블 함정</li></ul></div>
+      </article>
+      <nav class="pager" aria-label="이전 및 다음 문서"><span></span><span></span></nav>
+    </main>
+  </div>
+</body>
+</html>

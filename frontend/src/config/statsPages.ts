@@ -400,7 +400,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/accounting/medical-receipts',
     'accounting-section',
     '회계',
-    '의사랑(IPLUS) 수납 내역과 보험·상태·미수·지원금별 합계를 조회하는 회계 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '의사랑(IPLUS) 수납 내역과 보험·상태·미수·지원금별 합계를 조회하는 회계 화면입니다..',
     '/api/accounting/medical-receipts'
   ),
   statsPage(
@@ -409,7 +409,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/accounting/vision-revenue',
     'accounting-section',
     '회계',
-    'SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    'SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면입니다..',
     '/api/accounting/vision-receipts'
   ),
   statsPage(
@@ -418,7 +418,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/accounting/vision-revenue-summary',
     'accounting-section',
     '회계',
-    'SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    'SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면입니다..',
     '/api/accounting/vision-receipts'
   ),
   statsPage(
@@ -427,7 +427,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/accounting/vision-revenue-chart',
     'accounting-section',
     '회계',
-    'SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    'SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프입니다..',
     '/api/accounting/vision-receipts/monthly'
   ),
   statsPage(
@@ -436,7 +436,7 @@ export const statsPages: StatsPageDefinition[] = [
     '/accounting/medical-revenue-chart',
     'accounting-section',
     '회계',
-    '의사랑(IPLUS) 실수납·공단청구·급여·비급여를 월별·연도별로 비교하는 그래프입니다. 현재 프런트 합성 목업 데이터로 동작합니다.',
+    '의사랑(IPLUS) 실수납·공단청구·급여·비급여를 월별·연도별로 비교하는 그래프입니다..',
     '/api/accounting/medical-receipts/monthly'
   ),
   statsPage(

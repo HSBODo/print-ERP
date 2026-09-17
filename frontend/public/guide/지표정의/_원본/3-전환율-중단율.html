@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지표정의 3 — 전환율 · 중단율 — 비앤빛 Analytics</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#f6f6f7;--card:#fff;--line:#e8e8eb;--ink:#1f2328;--muted:#68707b;--muted2:#9298a1;--accent:#7c5cff;--accent-soft:#efebff;--radius:16px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.72;-webkit-font-smoothing:antialiased}
+/* 상단 탭바 · 좌측 목록은 sms.html 과 pages/*.html 의 것과 같은 값이다 —
+   문서가 바뀌어도 윗줄과 왼편이 같은 자리에 같은 모습으로 남아야 한다. */
+html,body{height:100%}body{display:flex;flex-direction:column}
+.tabbar{height:53px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 18px;background:#fff;border-bottom:1px solid var(--line);z-index:40;overflow-x:auto;overflow-y:hidden}
+.tabbar .tabs{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.tabbar .tab{border:1px solid transparent;background:none;text-decoration:none;font-family:inherit;font-size:14px;font-weight:600;line-height:1.35;color:var(--muted2);padding:6px 14px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.tabbar .tab:hover{color:var(--ink)}
+.tabbar .tab.active{color:var(--ink);background:#fff;border-color:var(--line);box-shadow:0 1px 2px rgba(16,18,29,.06)}
+.tabbar .beta{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:6px}
+.tabbar .sep{color:#d4d6db;font-size:13px;letter-spacing:1px;user-select:none}
+.shell{flex:1;min-height:0;display:flex}
+.sidenav{width:232px;flex-shrink:0;height:100%;overflow-y:auto;padding:26px 14px;border-right:1px solid var(--line);background:var(--bg)}
+.nav-title{margin:0 12px 14px;color:var(--muted2);font-size:13px;font-weight:800;letter-spacing:.02em}
+.sidenav nav{display:grid;gap:1px}.sidenav nav a{display:block;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:13.5px;font-weight:500;text-decoration:none}.sidenav nav a:hover{background:#efeff1;color:var(--ink)}.sidenav nav a.active{background:var(--accent-soft);color:#5b3fd1;font-weight:700}
+.main{flex:1;min-width:0;overflow-y:auto;padding:30px 34px 90px}
+/* 지표 요약 카드 — 본문 위에 자기 지표의 단위·날짜 기준·데이터 원천을 먼저 보인다. */
+.metric-summary{width:100%;max-width:1120px;margin:0 auto 16px;padding:20px 24px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.metric-summary .desc{margin:0 0 14px;font-size:15px;font-weight:650;color:var(--ink)}
+.metric-summary .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:0}
+.metric-summary .facts dt{font-size:11px;font-weight:700;color:var(--muted2);letter-spacing:.03em}
+.metric-summary .facts dd{margin:2px 0 0;font-size:13.5px;color:#414852}
+.metric-summary .flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:4px 0 2px}
+.metric-summary .step{min-width:122px;flex:1;padding:13px 14px;border:1px solid #e5e2f4;border-radius:11px;background:#faf9ff}
+.metric-summary .step .n{color:var(--accent);font-size:11px;font-weight:800}
+.metric-summary .step strong{display:block;margin-top:2px;font-size:14px}
+.metric-summary .step span{display:block;margin-top:3px;color:var(--muted2);font-size:11.5px;white-space:nowrap}
+.metric-summary .arrow{display:grid;place-items:center;flex:0 0 14px;color:#b8b2d7;font-size:15px}
+.metric-summary .alert{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe;font-size:13.5px;color:#514b69}.doc-card{width:100%;max-width:1120px;margin:0 auto;padding:42px 48px 50px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(16,18,29,.04)}
+.markdown h1{margin:0 0 24px;font-size:29px;line-height:1.3;letter-spacing:-.025em}.markdown h2{margin:50px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line);font-size:21px;line-height:1.4;letter-spacing:-.015em}.markdown h3{margin:32px 0 12px;font-size:17px;line-height:1.45}.markdown h4{margin:26px 0 10px;font-size:15px}.markdown p{margin:10px 0 16px;color:#414852;font-size:14.5px}.markdown strong{color:var(--ink)}
+.markdown a{color:#6246d2;text-decoration:none;font-weight:650}.markdown a:hover{text-decoration:underline}.markdown code{padding:2px 5px;border-radius:5px;background:#f1eff9;color:#543bc0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em;overflow-wrap:anywhere}
+.markdown pre{margin:18px 0 22px;padding:18px 20px;overflow:auto;border-radius:11px;background:#20242d;color:#eef1f6;line-height:1.6}.markdown pre code{padding:0;background:none;color:inherit;font-size:12.5px;white-space:pre}
+.markdown blockquote{margin:18px 0;padding:13px 16px;border-left:3px solid var(--accent);border-radius:0 9px 9px 0;background:#f8f7fe}.markdown blockquote>:first-child{margin-top:0}.markdown blockquote>:last-child{margin-bottom:0}.markdown blockquote p{color:#514b69}
+.markdown ul,.markdown ol{margin:10px 0 18px;padding-left:24px;color:#414852;font-size:14.5px}.markdown li{margin:5px 0}.markdown hr{height:1px;margin:42px 0;border:0;background:var(--line)}
+.table-scroll{max-width:100%;margin:16px 0 24px;overflow:auto;border:1px solid var(--line);border-radius:11px}.markdown table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;line-height:1.55}.markdown th{padding:10px 12px;background:#f7f7f9;color:#505762;font-weight:750;white-space:nowrap}.markdown td{padding:10px 12px;border-top:1px solid var(--line);color:#424954;vertical-align:top}.markdown tr:hover td{background:#fcfcfd}
+.markdown details{margin:18px 0;padding:12px 15px;border:1px solid var(--line);border-radius:10px;background:#fcfcfd}.markdown summary{cursor:pointer;font-weight:750}.markdown details[open] summary{margin-bottom:14px}
+.pager{display:flex;justify-content:space-between;gap:16px;max-width:1120px;margin:18px auto 0}.pager a{color:#5b3fd1;font-size:13px;font-weight:700;text-decoration:none}.pager a:hover{text-decoration:underline}
+@media print{html,body{height:auto;display:block}.tabbar,.sidenav,.pager{display:none}.shell{display:block}.main{display:block;overflow:visible;padding:0}.doc-card,.metric-summary{max-width:none;border:0;border-radius:0;box-shadow:none;padding:0}.markdown h2,.markdown h3{break-after:avoid}.table-scroll{break-inside:avoid}}
+@media(max-width:820px){.shell{display:block}.sidenav{width:auto;height:auto;padding:14px;border-right:0;border-bottom:1px solid var(--line)}.sidenav nav{display:flex;gap:5px;overflow:auto;padding-bottom:2px}.sidenav nav a{white-space:nowrap}.nav-title{display:none}.main{padding:18px 12px 60px}.doc-card{padding:28px 20px 36px;border-radius:13px}.markdown h1{font-size:24px}.markdown h2{font-size:19px}.docbar{padding:0 14px}.crumb{display:none}}
+</style>
+</head>
+<body>
+  <div class="tabbar">
+    <div class="tabs">
+      <a class="tab" href="../../prd.html#view-prd">대쉬보드 요구사항</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../지표정의/1-예약.html">지표 정의</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-flow">IA</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
+      <span class="sep">···</span>
+      <a class="tab" href="../../prd.html#view-expansion">26.10 이후 확장 전략</a>
+    </div>
+  </div>
+  <div class="shell">
+    <aside class="sidenav">
+      <div class="nav-title">지표 정의 — 전체판</div>
+      <nav><a class="" href="1-예약.html">1-예약</a>
+<a class="" href="2-검사.html">2-검사</a>
+<a class="active" href="3-전환율-중단율.html">3-전환율-중단율</a>
+<a class="" href="4-예약률.html">4-예약률</a>
+<a class="" href="5-수술.html">5-수술</a>
+<a class="" href="6-외래.html">6-외래</a></nav>
+    </aside>
+    <main class="main">
+
+      <article class="doc-card">
+        <div class="markdown"><h1 id="지표정의-3-전환율-중단율">지표정의 3 — 전환율 · 중단율</h1>
+<blockquote><p>환자 흐름(예약 → 검사 → <strong>전환율/중단율</strong> → 수술 → 외래)의 중간 단계. 검사받은 사람이 <strong>수술로 이어졌는지 / 중간에 멈췄는지</strong>를 봄. 분모가 되는 검사 정의는 <a href="../2-검사.html">검사</a> 참조.</p></blockquote>
+<h2 id="한눈에-보기">한눈에 보기</h2>
+<p><strong>검사받은 사람이 거치는 단계마다 비율이 하나씩 나옴.</strong></p>
+<pre><code>검사받음  →  상담함  →  수술 예약함  →  실제 수술함
+   │           │            │
+   └ 중단률    └ 상담성공률   └ 전환율</code></pre>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">지표</th><th style="text-align:left">분자 ÷ 분모</th><th style="text-align:left">대상</th><th style="text-align:left">화면</th></tr></thead><tbody><tr><td style="text-align:left"><strong>상담성공률(전환율)</strong></td><td style="text-align:left">수술 예약한 사람 ÷ 상담한 사람</td><td style="text-align:left">시력교정</td><td style="text-align:left"><code>/stats/consultation-rate</code></td></tr><tr><td style="text-align:left"><strong>백내장 예약률</strong></td><td style="text-align:left">수술 예약한 사람 ÷ 백내장 검사자</td><td style="text-align:left">백내장</td><td style="text-align:left"><code>/stats/cataract-reservation-rate</code></td></tr><tr><td style="text-align:left"><strong>중단률</strong></td><td style="text-align:left">중단한 사람 ÷ 시력교정 검사자</td><td style="text-align:left">시력교정</td><td style="text-align:left"><code>/stats/stop-rate</code></td></tr><tr><td style="text-align:left"><strong>중단 사유</strong></td><td style="text-align:left">중단 건을 7개 사유로 분해</td><td style="text-align:left">시력교정</td><td style="text-align:left"><code>/stats/stop-reason</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="1-시력교정-상담성공률-전환율">1. 시력교정 — 상담성공률 / 전환율</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>테이블</strong></td><td style="text-align:left"><code>EXAM</code> + <code>RESERVATION</code>(수술) + <code>OPERATIONDATA</code></td></tr><tr><td style="text-align:left"><strong>날짜</strong></td><td style="text-align:left"><code>EXAM.EXAM_DATE</code> (검사일 기준)</td></tr><tr><td style="text-align:left"><strong>쿼리</strong></td><td style="text-align:left"><code>backend/src/main/resources/sql/consultation/find-monthly-vision-rates.sql</code></td></tr></tbody></table></div>
+<h3 id="무엇으로-이루어지나-4단계-플래그">무엇으로 이루어지나 — 4단계 플래그</h3>
+<p>한 번의 검사(=<code>EXAM</code> 한 행)마다 아래 네 가지를 판정함.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">플래그</th><th style="text-align:left">뜻</th><th style="text-align:left">판정 조건</th></tr></thead><tbody><tr><td style="text-align:left"><code>examCount</code></td><td style="text-align:left">검사함</td><td style="text-align:left"><code>EXAM</code> 행 존재 (<code>CANCEL_CD=&#39;&#39;</code>)</td></tr><tr><td style="text-align:left"><code>counsel</code></td><td style="text-align:left"><strong>상담함</strong></td><td style="text-align:left"><code>STOP_YN &lt;&gt; &#39;Y&#39;</code> <strong>그리고</strong> 적절수술(<code>OPERATIONR</code>·<code>OPERATIONL</code>) 중 하나라도 입력됨</td></tr><tr><td style="text-align:left"><code>booked</code></td><td style="text-align:left"><strong>수술 예약함</strong></td><td style="text-align:left">수술 예약(<code>RESERVE_FLAG=&#39;O&#39;</code>, <code>STATE&lt;&gt;&#39;C&#39;</code>)이 존재</td></tr><tr><td style="text-align:left"><code>actual</code></td><td style="text-align:left"><strong>실제 수술함</strong></td><td style="text-align:left"><code>OPERATIONDATA</code>에 수술 기록 존재</td></tr><tr><td style="text-align:left"><code>od</code></td><td style="text-align:left">원데이</td><td style="text-align:left">그날 검사OP(<code>M</code>/<code>5</code>) 예약 존재</td></tr></tbody></table></div>
+<p><strong><code>counsel</code>이 핵심임.</strong> 검사만 하고 끝난 게 아니라 <strong>의사가 수술 방법을 제시한 상태</strong>를 뜻함. 중단(<code>STOP_YN=&#39;Y&#39;</code>)이면 상담으로 안 침.</p>
+<h3 id="산출되는-값">산출되는 값</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">뜻</th></tr></thead><tbody><tr><td style="text-align:left"><code>counselCount</code></td><td style="text-align:left">상담한 사람</td></tr><tr><td style="text-align:left"><code>surgeryBookedCount</code></td><td style="text-align:left">수술 예약한 사람</td></tr><tr><td style="text-align:left"><code>actualSurgeryCount</code></td><td style="text-align:left">실제 수술한 사람</td></tr><tr><td style="text-align:left"><code>counselOneday</code> / <code>counselBookedOneday</code></td><td style="text-align:left">원데이 상담 / 그중 예약</td></tr><tr><td style="text-align:left"><code>counselGeneral</code> / <code>counselBookedGeneral</code></td><td style="text-align:left">일반 상담 / 그중 예약</td></tr><tr><td style="text-align:left"><code>examGeneral</code> / <code>bookedGeneral</code></td><td style="text-align:left">일반 검사 / 그중 예약</td></tr></tbody></table></div>
+<p><strong>상담성공률 = <code>counselBooked</code> ÷ <code>counsel</code></strong> 을 전체 · 원데이 · 일반 3계열로 냄.</p>
+<h3 id="가장-큰-함정-bookedactual에-기간-제한이-없음">⚠️ 가장 큰 함정 — <code>booked</code>·<code>actual</code>에 기간 제한이 없음</h3>
+<pre><code class="language-sql">LEFT JOIN (
+    SELECT CUST_NUM, MIN(RESERVE_DATE) AS MIN_RSV_DATE
+      FROM RESERVATION WITH(NOLOCK)
+     WHERE RESERVE_FLAG = &#39;O&#39; AND RESERVE_STATE &lt;&gt; &#39;C&#39;
+     GROUP BY CUST_NUM              -- ★ 날짜 조건 없음
+) rs ON rs.CUST_NUM = E.CUST_NUM</code></pre>
+<p><strong>&quot;이 검사 이후에 예약했는지&quot;가 아니라 &quot;언제든 수술 예약 이력이 있는지&quot;</strong> 를 봄. <code>actual</code>(실제 수술)도 마찬가지로 <code>OPERATIONDATA</code> 전체를 봄.</p>
+<p>즉 <strong>2020년에 수술 예약한 이력이 있으면 2026년 검사도 &quot;예약함&quot;으로 잡힘.</strong> 재방문 환자가 많은 달일수록 전환율이 높게 나옴. 해석할 때 감안할 것.</p>
+<hr>
+<h2 id="2-백내장-예약률">2. 백내장 — 예약률</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>테이블</strong></td><td style="text-align:left"><code>RESERVATION</code>(백내장검사 <code>H</code>) + <code>CUSTOM</code></td></tr><tr><td style="text-align:left"><strong>날짜</strong></td><td style="text-align:left"><code>RESERVE_DATE</code></td></tr><tr><td style="text-align:left"><strong>쿼리</strong></td><td style="text-align:left"><code>backend/src/main/resources/sql/consultation/find-monthly-cataract-rates.sql</code></td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">값</th><th style="text-align:left">판정</th></tr></thead><tbody><tr><td style="text-align:left"><code>examCount</code></td><td style="text-align:left">백내장검사 예약 내원 고객 (<code>DISTINCT CUST_NUM</code>)</td></tr><tr><td style="text-align:left"><code>surgeryBookedCount</code></td><td style="text-align:left">그중 <strong>백내장 수술 예약</strong>(<code>FLAG=&#39;O&#39;</code>, <code>JINRYO=&#39;4&#39;</code>, <code>STATE&lt;&gt;&#39;C&#39;</code>) 있는 사람</td></tr><tr><td style="text-align:left"><code>stoppedCount</code></td><td style="text-align:left">검안사 배정됨 + 상담사 <code>BS0808</code> = <strong>중단</strong></td></tr></tbody></table></div>
+<p><strong>예약률 = <code>surgeryBookedCount</code> ÷ <code>examCount</code></strong></p>
+<h3 id="검사수-쿼리와-조건이-다름">⚠️ 검사수 쿼리와 조건이 다름</h3>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left"></th><th style="text-align:left">검사수(<code>backend/src/main/resources/sql/exam/find-cataract-monthly.sql</code>)</th><th style="text-align:left">예약률(이 쿼리)</th></tr></thead><tbody><tr><td style="text-align:left">예약 상태</td><td style="text-align:left"><code>NOT IN (&#39;C&#39;,&#39;Y&#39;)</code> — <strong>미내원 제외</strong></td><td style="text-align:left"><code>&lt;&gt; &#39;C&#39;</code> — <strong>미내원 포함</strong></td></tr><tr><td style="text-align:left">검안사 조건</td><td style="text-align:left"><strong>있음</strong></td><td style="text-align:left">없음</td></tr></tbody></table></div>
+<p><strong>그래서 예약률의 분모(<code>examCount</code>)는 백내장 검사수와 다른 숫자임.</strong> <code>RESERVE_JINRYO=&#39;4&#39;</code>(백내장 수술)도 여기서만 걸림 — 미지정 시 시력교정 수술예약이 섞임.</p>
+<blockquote><p>단위가 눈 → 사람으로 바뀐 뒤 <strong>분모 재검토가 필요한 상태</strong>임.</p></blockquote>
+<hr>
+<h2 id="3-중단률">3. 중단률</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">내용</th></tr></thead><tbody><tr><td style="text-align:left"><strong>정의</strong></td><td style="text-align:left">중단한 사람 ÷ 시력교정 검사자</td></tr><tr><td style="text-align:left"><strong>중단 판정</strong></td><td style="text-align:left"><code>EXAM.STOP_YN = &#39;Y&#39;</code></td></tr><tr><td style="text-align:left"><strong>분모</strong></td><td style="text-align:left"><code>visionExam</code> (시력교정 검사자)</td></tr><tr><td style="text-align:left"><strong>화면</strong></td><td style="text-align:left"><code>/stats/stop-rate</code> (2026-07-07 신규)</td></tr></tbody></table></div>
+<blockquote><p>⚠️ 분모인 <code>visionExam</code>이 바뀌면 중단률도 같이 움직임. 원데이 판정 변경 등 <strong>검사자 정의를 손대면 반드시 함께 확인</strong>할 것.</p></blockquote>
+<hr>
+<h2 id="4-중단-사유-7개-버킷">4. 중단 사유 — 7개 버킷</h2>
+<p>중단 건(<code>STOP_YN=&#39;Y&#39;</code>)을 <strong>상담사가 드롭다운에서 고른 정형 코드</strong> <code>EXAM.CANCEL_CD</code>(char(3))로 분류함. 코드 마스터는 <code>CANCEL_CFG</code>.</p>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">버킷</th><th style="text-align:left">라벨</th><th style="text-align:left">코드</th><th style="text-align:left">그룹</th></tr></thead><tbody><tr><td style="text-align:left"><code>recommendX</code></td><td style="text-align:left">불가-수술권유X</td><td style="text-align:left">121 · 305</td><td style="text-align:left">수술 불가</td></tr><tr><td style="text-align:left"><code>lensImpossible</code></td><td style="text-align:left">불가-렌즈삽입불가</td><td style="text-align:left">122 · 306 · 399</td><td style="text-align:left">수술 불가</td></tr><tr><td style="text-align:left"><code>keratoconus</code></td><td style="text-align:left">불가-원추각막</td><td style="text-align:left">124 · 125 · 308 · 309</td><td style="text-align:left">수술 불가</td></tr><tr><td style="text-align:left"><code>avellino</code></td><td style="text-align:left">불가-아벨리노</td><td style="text-align:left">126 · 310</td><td style="text-align:left">수술 불가</td></tr><tr><td style="text-align:left"><code>glaucoma</code></td><td style="text-align:left">불가-녹내장</td><td style="text-align:left">114 · 303</td><td style="text-align:left"><strong>잠정 중단</strong></td></tr><tr><td style="text-align:left"><code>visionChange</code></td><td style="text-align:left">불가-시력변화</td><td style="text-align:left">111 · 302</td><td style="text-align:left"><strong>잠정 중단</strong></td></tr><tr><td style="text-align:left"><code>other</code></td><td style="text-align:left">기타</td><td style="text-align:left">107 · 199 · 117 · 304 · 127 · 311 · 미지 코드</td><td style="text-align:left"><strong>잠정 중단</strong></td></tr></tbody></table></div>
+<p><strong>코드군이 두 벌임</strong> — <code>1xx</code>(검사 중단) / <code>3xx</code>(같은 라벨 세트). 같은 사유가 두 코드로 들어오므로 <strong>새 코드를 추가할 땐 짝이 있는지 확인</strong>해야 함.</p>
+<p><code>117</code>·<code>304</code>(불가_백내장FU), <code>127</code>·<code>311</code>(불가_기타 각막병증)은 라벨이 <code>불가_</code>로 시작하지만 <strong>검토 결과 기타(잠정 중단)로 귀속하기로 결정</strong>했음(2026-07-15).</p>
+<h3 id="함정-두-가지">⚠️ 함정 두 가지</h3>
+<p><strong>① <code>ELSE</code>로 떨어지는 코드는 조용히 <code>other</code>가 됨</strong></p>
+<p>운영에 새 <code>CANCEL_CD</code>가 생겨도 에러 없이 <strong>기타 항목만 증가함.</strong> 골든 대조에서 기타가 늘면 이걸 먼저 의심할 것. 검토를 마친 코드는 <code>ELSE</code>에 흘리지 말고 <code>WHEN</code>으로 명시해야 <strong>&quot;검토해서 기타로 정한 코드&quot;와 &quot;몰라서 샌 코드&quot;가 구분됨.</strong></p>
+<p><strong>② <code>CANCEL_CD</code>는 이름과 달리 취소 플래그가 아님</strong></p>
+<p>이 쿼리에서는 <strong>중단 사유 코드</strong>로 쓰지만, 다른 쿼리들은 같은 컬럼을 <strong>취소 판정</strong>(<code>ISNULL(e.CANCEL_CD,&#39;&#39;) = &#39;&#39;</code>)에 씀. <strong>한쪽 의미로만 알고 고치면 다른 쪽이 깨짐.</strong></p>
+<hr>
+<h2 id="5-관련-쿼리-파일">5. 관련 쿼리 파일</h2>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/consultation/find-monthly-vision-rates.sql</code></td><td style="text-align:left">시력교정 상담성공률·전환율 (원데이/일반 분해)</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/consultation/find-monthly-cataract-rates.sql</code></td><td style="text-align:left">백내장 예약률</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/consultation/find-stop-reason-monthly.sql</code></td><td style="text-align:left">중단 사유 7버킷 분해</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-vision-reservation-rate-monthly.sql</code></td><td style="text-align:left">시력교정 예약률</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-cataract-reservation-rate-monthly.sql</code></td><td style="text-align:left">백내장 예약률(검사 도메인)</td></tr></tbody></table></div>
+<hr>
+<h2 id="남은-확인-사항">남은 확인 사항</h2>
+<ul><li><strong><code>booked</code>·<code>actual</code>의 기간 무제한 판정</strong> — &quot;이 검사에서 이어진 예약&quot;으로 좁힐지 업무 판단 필요. 좁히면 전환율이 낮아지지만 의미는 정확해짐.</li><li><strong>백내장 예약률 분모</strong> — 검사수(2026-07 = 56)와 다른 모집단을 씀. 단위 변경 후 재검토 대상.</li><li><strong>중단률 분모</strong> — <code>visionExam</code>이 중단·취소를 제외하지 않음(<a href="../2-검사.html">검사</a> §5-⑤).</li></ul>
+<hr>
+<h2 id="관련-문서">관련 문서</h2>
+<ul><li><a href="../../db/중단사유-분류-정의.html">중단사유-분류-정의.md</a> — 매핑 변경법·검증 쿼리·함정</li><li><a href="../2-검사.html">검사</a> — 분모가 되는 검사 정의</li><li><a href="../5-수술.html">수술</a> — 수술</li></ul></div>
+      </article>
+      <nav class="pager" aria-label="이전 및 다음 문서"><span></span><span></span></nav>
+    </main>
+  </div>
+</body>
+</html>
