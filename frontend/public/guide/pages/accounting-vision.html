@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">시력교정 매출 내역 — 기획서</div>
-    <div class="sub">회계 · <span class="mono">/accounting/vision-revenue</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">회계 · <span class="mono">/accounting/vision-revenue</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -358,7 +358,7 @@
 
   <div class="card" id="s1">
     <div class="card-head"><div class="chip">1</div><h2>개요 — 이 화면은 무엇인가</h2></div>
-    <p>SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면임..</p>
+    <p>SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면임.</p>
     <table>
       <thead><tr><th>항목</th><th>값</th></tr></thead>
       <tbody>
@@ -366,8 +366,8 @@
         <tr><td>화면 경로</td><td><span class="mono">/accounting/vision-revenue</span></td></tr>
         <tr><td>메뉴 ID</td><td><code>accounting-vision</code></td></tr>
         <tr><td>구현 상태</td><td><span class="tag t-auto">운영 중</span></td></tr>
-        <tr><td>접근 권한</td><td><b>ADMIN 전용</b> — ADMIN 이 아니면 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘</td></tr>
-        <tr><td>사이드바 노출</td><td>노출 — 단 ADMIN 롤에게만</td></tr>
+        <tr><td>접근 권한</td><td><b>임원 이상(ADMIN · DIRECTOR) 전용</b> — MANAGER · STAFF 는 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘. 백엔드도 <code>/api/accounting/**</code> 를 <code>hasAnyRole(ADMIN, DIRECTOR)</code> 로 막음</td></tr>
+        <tr><td>사이드바 노출</td><td>노출 — 단 ADMIN · DIRECTOR 롤에게만</td></tr>
         <tr><td>화면 컴포넌트</td><td><span class="mono">frontend/src/pages/accounting/VisionRevenuePage.tsx</span></td></tr>
       </tbody>
     </table>
@@ -377,7 +377,7 @@
     <div class="card-head"><div class="chip">2</div><h2>사용자와 쓰임새</h2></div>
     <h3>세무대리인에게 보내던 월 매출자료의 원장</h3>
     <p>시력교정(비급여) 매출은 매월 세무대리인(한울회계법인)에 엑셀로 넘어감. 이 화면은 그 매출자료의 <b>전표 단위 원장</b>임 —
-       <a href="accounting-surgery-pivot.html">매출 집계</a>가 계정 항목별 매출집계표라면, 여기는 개별 전표까지 파고들어 금액 근거를 소명하는 자리임.</p>
+       <a href="accounting-vision-summary.html">매출 집계</a>가 계정 항목별 매출집계표라면, 여기는 개별 전표까지 파고들어 금액 근거를 소명하는 자리임.</p>
     <table>
       <thead><tr><th>쓰는 장면</th><th>하는 일</th></tr></thead>
       <tbody>
@@ -468,7 +468,7 @@
     <div class="note warn">
       <div class="h">순매출을 보려면 [전체] 로 볼 것</div>
       <p>취소는 원행(+)과 취소행(−)의 상계 쌍임. 상태를 [결제처리]로 좁히면 취소행만 빠져 <b>취소 반영 전 총매출</b>이 나옴.
-         취소·환불이 상계된 <b>순매출은 [전체] 합계</b>가 정답임. 이 규칙은 <a href="accounting-surgery-pivot.html">매출 집계</a>의 상태 필터와 반대 방향이니 주의 —
+         취소·환불이 상계된 <b>순매출은 [전체] 합계</b>가 정답임. 이 규칙은 <a href="accounting-vision-summary.html">매출 집계</a>의 상태 필터와 반대 방향이니 주의 —
          집계는 <b>월별(집계 경로)에서</b> [결제처리] = 전체 − 취소로 계산해 순매출이 나옴 (일별·주차별 행 경로는 이 화면과 같음).</p>
     </div>
 
@@ -568,15 +568,25 @@
 
   <div class="card" id="s6">
     <div class="card-head"><div class="chip">6</div><h2>데이터 소스</h2></div>
-    <p>조회 경로가 잡히지 않았음 — 미구현(placeholder)이거나 화면이 조회를 하지 않는 정적 문서임.</p>
+    <p>마트(Postgres) 전용 — 배치가 적재한 테이블만 읽음.</p>
     <table>
       <thead><tr><th>구분</th><th>테이블 · 뷰</th></tr></thead>
       <tbody>
-        <tr><td>마트 (Postgres)</td><td>—</td></tr>
+        <tr><td>마트 (Postgres)</td><td><code>list_medical_receipt</code> · <code>list_vision_receipt</code> · <code>mart_medical_receipt_monthly</code></td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td>—</td></tr>
       </tbody>
     </table>
-
+    <details class="sqlrefs">
+      <summary>SQL 리소스 6개 — 펼쳐 보기</summary>
+      <ul>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-accounting-status.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-list-medical-receipt.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-list-vision-receipt.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-medical-receipt-monthly-from-list.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-medical-receipt-monthly.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-vision-receipt-monthly.sql</span></li>
+      </ul>
+    </details>
     <div class="note warn">
       <div class="h">자동 추출 — 확정 전 검토</div>
       <p>위 목록은 <b>컨트롤러가 주입받는 클래스를 따라가며</b> 모은 것임.
@@ -587,8 +597,21 @@
   </div>
 
   <div class="card" id="s7">
-    <div class="card-head"><div class="chip">7</div><h2>API — 0개</h2></div>
-    <p>이 화면이 호출하는 API 가 없음. 화면이 조회를 하지 않는 정적 문서이거나, 호출 경로가 자동 추출로 잡히지 않았음.</p>
+    <div class="card-head"><div class="chip">7</div><h2>API — 5개</h2></div>
+    <table>
+      <thead><tr><th>메서드 · 경로</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">GET /api/accounting/medical-receipts</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/medical-receipts/monthly</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/status</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/vision-receipts</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/vision-receipts/monthly</span></td></tr>
+      </tbody>
+    </table>
+    <h3>백엔드 컨트롤러</h3>
+    <ul>
+      <li><span class="mono">backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java</span></li>
+    </ul>
   </div>
 
   <div class="card" id="s8">
@@ -596,7 +619,8 @@
     <table>
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
-        <tr><td>ADMIN 전용</td><td><b>예</b></td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td><b>예</b></td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

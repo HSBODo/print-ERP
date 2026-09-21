@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -111,15 +111,16 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 
       <article class="doc-card">
         <div class="markdown"><h1 id="mhjava">mh_java</h1>
-<blockquote><p><strong>DB</strong>: MCRM | <strong>컬럼</strong>: 7개 | <strong>행 수</strong>: ~59,408 (MCRM_WORK DB 기준) <strong>최종 갱신</strong>: 2026-08-10 (MCRM_WORK DB 실측 대조)</p></blockquote>
+<blockquote><p><strong>DB</strong>: MCRM | <strong>컬럼</strong>: 7개 | <strong>행 수</strong>: ~59,406 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-04-20 (자동 생성)</p></blockquote>
 <h2 id="역할">역할</h2>
-<p>고객별 폼/동의서 제출 기록 테이블. 폼 번호(<code>form_no</code>)별로 개인정보 동의(<code>privacy_yn</code>)·AI 활용 동의(<code>ai_privacy_yn</code>) 여부와 등록일(<code>first_day</code>)을 기록한다.</p>
+<p>&lt;!-- TODO: 한 줄 설명 --&gt;</p>
 <h2 id="pk-fk-join-키">PK / FK / JOIN 키</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">(없음 — heap 테이블, 2026-08-10 실측 확인)</td><td style="text-align:left"></td><td style="text-align:left"><code>cust_num</code>+<code>form_no</code>+<code>Seq</code> 모두 NOT NULL이나 제약 미설정</td></tr><tr><td style="text-align:left">JOIN</td><td style="text-align:left">cust_num</td><td style="text-align:left">varchar(20)</td><td style="text-align:left">→ SOFTCRM.CUSTOM.CUST_NUM. ⚠️ 타입 불일치 (char(13) vs varchar(20))</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">(없음 — heap 테이블)</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
+<p>&lt;!-- TODO: FK, JOIN 키 추가 --&gt;</p>
 <h2 id="핵심-컬럼">핵심 컬럼</h2>
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left">cust_num</td><td style="text-align:left">varchar(20)</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">form_no</td><td style="text-align:left">varchar(30)</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">first_day</td><td style="text-align:left">char(10)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">cust_name</td><td style="text-align:left">varchar(50)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">privacy_yn</td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">ai_privacy_yn</td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">Seq</td><td style="text-align:left">int</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
 <h2 id="함정-gotchas">함정 (Gotchas)</h2>
-<ul><li><strong>별도 DB(MCRM)</strong>: SOFTCRM 테이블과 JOIN하려면 크로스 DB 쿼리 필요.</li><li><strong>cust_num 타입 불일치</strong>: varchar(20) — CUSTOM.CUST_NUM(char(13))과 JOIN 시 형변환 주의.</li></ul>
+<p>&lt;!-- TODO: 이 테이블의 알려진 함정 --&gt;</p>
 <h2 id="사용처">사용처</h2>
 <p>&lt;!-- TODO: grep -r &#39;FROM mh_java\|JOIN mh_java&#39; routes services --&gt;</p>
 <h2 id="관련-문서">관련 문서</h2>

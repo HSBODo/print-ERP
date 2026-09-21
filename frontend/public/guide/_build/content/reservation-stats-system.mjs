@@ -100,19 +100,57 @@ export default {
   `,
 
   s5: `
-    <h3>33칼럼 · 6그룹</h3>
+    <h3>컬럼 정의 — 42개</h3>
+    <p>표 하나(가로 스크롤)이며, API 는 일자별 원시 건수만 주고 비율 · 합계는 화면이 계산함.
+       콜 · 온라인 건은 등록일, 내원 · 부도 · 취소는 예약일 기준임.</p>
     <table>
-      <thead><tr><th>그룹</th><th>칼럼 수</th><th>내용</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>콜 &gt; 검사 인입콜</td><td>8</td><td>인입콜 · 응대콜 · <b>응대율</b> · 신규예약문의 · 신규문의 비율 · 예약수 · <b>신규문의 대비 예약율</b> · <b>예약율</b></td></tr>
-        <tr><td>콜 &gt; TM</td><td>10</td><td>총 DB · 유효 DB · 예약수 · <b>유효 DB 예약율</b> · <b>예약율</b> · 재상담 · <b>총 DB 중 재상담비율</b> · 재상담 유효수 · 예약수 · <b>예약율</b></td></tr>
-        <tr><td>온라인 &gt; 홈페이지</td><td>3</td><td>예약접수 · 예약수 · <b>예약율</b></td></tr>
-        <tr><td>온라인 &gt; 네이버</td><td>6</td><td>예약접수 · <b>파트너거절</b> · 유효접수 · 예약수 · <b>유효접수 예약율</b> · <b>예약율</b></td></tr>
-        <tr><td>채팅 &gt; 카카오톡</td><td>3</td><td>문의 · 예약수 · <b>예약율</b></td></tr>
-        <tr><td>취소</td><td>3</td><td>콜·네이버 · 홈페이지 · 카톡</td></tr>
+        <tr><td>1</td><td>(월) Date</td><td><code>date</code></td><td><code>stat_date</code></td><td>각 CH 의 기준일</td><td>행 라벨. 단위가 월/주/일/전체로 바뀌면 라벨만 바뀜. 일별은 달력 1~말일을 채우고 데이터 없는 날은 0(휴무 회색). 손보정된 셀은 <code>manualEdits</code> 로 마커 표시</td></tr>
+        <tr><td>2</td><td>총예약</td><td>— (프론트 <code>totalReservation</code>)</td><td>—</td><td>CH04+CH07+CH10+CH12+CH16+CH18</td><td>검사 예약수 + TM 예약수 + TM 재상담 예약수 + 홈 예약수 + 네이버 예약수 + 카톡 예약수. <b>인입콜은 넣지 않음</b>. 채널별 '예약율' 6개의 공통 분모</td></tr>
+        <tr><td>3</td><td>콜 › 검사 인입콜 › 인입콜</td><td><code>inboundCall</code></td><td><code>inbound_call</code></td><td>EICN(MySQL 링크드서버) <code>stat_user_inbound_bseye.in_total</code> 합 — <code>dcontext='hunt_context'</code>, 큐 2개(00000001121 · 07040180093)</td><td>CRM 밖 데이터. CH01. 손보정 대상</td></tr>
+        <tr><td>4</td><td>응대콜</td><td><code>answeredCall</code></td><td><code>answered_call</code></td><td>같은 행의 <code>in_success</code> 합</td><td>CH02</td></tr>
+        <tr><td>5</td><td>응대율</td><td>— (<code>answerRate</code>)</td><td>—</td><td>응대콜 ÷ 인입콜</td><td>정수 % 반올림, 분모 0 이면 0. 빨강 강조</td></tr>
+        <tr><td>6</td><td>신규예약문의</td><td><code>newInquiry</code></td><td><code>new_inquiry</code></td><td><code>CtiRptLst</code>(<code>CtiRgtDtm</code>) 중 수신(<code>CtiClg.clgIOF='I'</code>)이고 코드 조합이 '검사_신규예약문의' 또는 '검사_예약'</td><td>CH03. 코드 조합은 SQL 의 CASE 참조(GbnCod/CtgCod/DtlCod2)</td></tr>
+        <tr><td>7</td><td>신규문의 비율</td><td>— (<code>newInquiryRate</code>)</td><td>—</td><td>신규예약문의 ÷ 응대콜</td><td>—</td></tr>
+        <tr><td>8</td><td>예약수</td><td><code>callReservation</code></td><td><code>call_reservation</code></td><td><code>CtiRptLst</code> '검사_예약' + '검사_추가예약'(<code>CtiRptMmo</code> 에 +1~+5)</td><td>CH04</td></tr>
+        <tr><td>9</td><td>신규문의 대비 예약율</td><td>— (<code>reservationVsNewInquiry</code>)</td><td>—</td><td>예약수 ÷ 신규예약문의</td><td>빨강 강조</td></tr>
+        <tr><td>10</td><td>예약율</td><td>— (<code>callReservationRate</code>)</td><td>—</td><td>예약수 ÷ 총예약</td><td>빨강 강조</td></tr>
+        <tr><td>11</td><td>콜 › TM › 총 DB</td><td><code>tmTotalDb</code></td><td><code>tm_total_db</code></td><td><code>DB_CUSTOM</code>(<code>assign_date</code>) 전건. 백내장 TM 4명(<code>TM_EMP</code>) 제외, NULL 은 포함</td><td>CH05</td></tr>
+        <tr><td>12</td><td>유효 DB</td><td><code>tmValidDb</code></td><td><code>tm_valid_db</code></td><td>그중 <code>TM_Gubun IN ('1000','2000')</code></td><td>CH06</td></tr>
+        <tr><td>13</td><td>예약수</td><td><code>tmReservation</code></td><td><code>tm_reservation</code></td><td>그중 <code>TM_Gubun='1000'</code></td><td>CH07</td></tr>
+        <tr><td>14</td><td>유효 DB 예약율</td><td>— (<code>tmValidDbRate</code>)</td><td>—</td><td>예약수 ÷ 유효 DB</td><td>빨강 강조</td></tr>
+        <tr><td>15</td><td>예약율</td><td>— (<code>tmReservationRate</code>)</td><td>—</td><td>예약수 ÷ 총예약</td><td>빨강 강조</td></tr>
+        <tr><td>16</td><td>재상담</td><td><code>tmRecounsel</code></td><td><code>tm_recounsel</code></td><td><code>DB_ReCounsel</code>(<code>InsertedDateTime</code>) 전건. 메모에 테스트/TEST 제외</td><td>CH08</td></tr>
+        <tr><td>17</td><td>총 DB 중 재상담비율</td><td>— (<code>tmRecounselRatio</code>)</td><td>—</td><td>재상담 ÷ 총 DB</td><td>빨강 강조</td></tr>
+        <tr><td>18</td><td>재상담 유효수</td><td><code>tmRecounselValid</code></td><td><code>tm_recounsel_valid</code></td><td>그중 <code>recounsel_state='6'</code> 또는 메모가 '…예약'</td><td>CH09</td></tr>
+        <tr><td>19</td><td>예약수</td><td><code>tmRecounselReservation</code></td><td><code>tm_recounsel_reservation</code></td><td>그중 <code>ReCounsel_Memo LIKE '%예약'</code></td><td>CH10</td></tr>
+        <tr><td>20</td><td>예약율</td><td>— (<code>tmRecounselRate</code>)</td><td>—</td><td>재상담 예약수 ÷ 총예약</td><td>빨강 강조</td></tr>
+        <tr><td>21</td><td>온라인 › 홈페이지 › 예약접수</td><td><code>homeReceived</code></td><td><code>home_received</code></td><td><code>RESERVATION</code>(FLAG M · JINRYO '',5,6,7) ⋈ <code>RESERVE_HISTORY</code>(MEMO='예약저장') 중 <code>RESERVE_PATH IN ('ONLINE','APP')</code>. 날짜 = <code>RESERVE_NUM</code> 앞 6자리(YYMMDD)</td><td>CH11. 테스트·재검·차트있음·가상계정·B2B(군인)·더미고객 제외</td></tr>
+        <tr><td>22</td><td>예약수</td><td><code>homeReservation</code></td><td><code>home_reservation</code></td><td>그중 <code>RESERVE_STATE &lt;&gt; 'C'</code></td><td>CH12</td></tr>
+        <tr><td>23</td><td>예약율</td><td>— (<code>homeReservationRate</code>)</td><td>—</td><td>예약수 ÷ 총예약</td><td>빨강 강조</td></tr>
+        <tr><td>24</td><td>온라인 › 네이버 › 예약접수</td><td><code>naverReceived</code></td><td><code>naver_received</code></td><td><code>RESERVATION</code>(PATH NAVER · FLAG M · <code>InsertedDateTime</code>) 전건 + 파트너거절 건</td><td>CH13. 접수 = 유효 + 거절</td></tr>
+        <tr><td>25</td><td>파트너거절</td><td><code>naverRejected</code></td><td><code>naver_rejected</code></td><td><code>RESERVATION_NAVER</code>(<code>NrsRgtDtm</code>) 중 <code>RsvStt='C'</code> 이고 <code>RsvNum</code> 없음</td><td>CH14. 확정 전 거절이라 <code>RESERVATION</code> 에 없음</td></tr>
+        <tr><td>26</td><td>유효접수</td><td><code>naverValid</code></td><td><code>naver_valid</code></td><td>접수 − 거절 = <code>RESERVATION</code> 네이버 전건(취소 포함)</td><td>CH15. 프론트에서 0 미만 클램프</td></tr>
+        <tr><td>27</td><td>예약수</td><td><code>naverReservation</code></td><td><code>naver_reservation</code></td><td>그중 <code>RESERVE_STATE &lt;&gt; 'C'</code></td><td>CH16. 취소는 사유 무관 전부 사용자취소로 봄</td></tr>
+        <tr><td>28</td><td>유효접수 예약율</td><td>— (<code>naverValidRate</code>)</td><td>—</td><td>예약수 ÷ 유효접수</td><td>빨강 강조</td></tr>
+        <tr><td>29</td><td>예약율</td><td>— (<code>naverReservationRate</code>)</td><td>—</td><td>예약수 ÷ 총예약</td><td>빨강 강조</td></tr>
+        <tr><td>30</td><td>채팅 › 카카오톡 › 문의</td><td><code>kakaoInquiry</code></td><td><code>kakao_inquiry</code></td><td><code>HappyTalk_Counsel_List</code>(<code>InsertedDateTime</code>) 중 <code>Category01='수술전'</code> 전건</td><td>CH17. PK 는 밀리초 시각이라 같은 시각 다건은 1건</td></tr>
+        <tr><td>31</td><td>예약수</td><td><code>kakaoReservation</code></td><td><code>kakao_reservation</code></td><td>그중 <code>Category02='★신환'</code></td><td>CH18</td></tr>
+        <tr><td>32</td><td>예약율</td><td>— (<code>kakaoReservationRate</code>)</td><td>—</td><td>예약수 ÷ 총예약</td><td>빨강 강조</td></tr>
+        <tr><td>33</td><td>취소 › 콜·네이버</td><td><code>cancelCallNaver</code></td><td><code>cancel_call_naver</code></td><td><code>RESERVATION.RESERVE_DATE</code> 가 기간이고 <code>RESERVE_STATE='C'</code>, 경로가 ONLINE/APP 이 아닌 건</td><td>CH19. <b>예약일 기준</b></td></tr>
+        <tr><td>34</td><td>홈페이지</td><td><code>cancelHome</code></td><td><code>cancel_home</code></td><td>같은 조건, 경로 ONLINE/APP</td><td>CH20</td></tr>
+        <tr><td>35</td><td>카톡</td><td><code>cancelKakao</code></td><td><code>cancel_kakao</code></td><td>HappyTalk <code>Category02='예약취소'</code></td><td>CH21</td></tr>
+        <tr><td>36</td><td>예약 종합 › 총예약건</td><td>— (<code>totalReservationCount</code>)</td><td>—</td><td>내원 + 예약(부도) + 취소</td><td>2번 총예약과 다른 값(예약일 기준 상태 합)</td></tr>
+        <tr><td>37</td><td>내원</td><td><code>visit</code></td><td><code>visit</code></td><td><code>RESERVATION.RESERVE_DATE</code> 기준 <code>RESERVE_STATE IN ('I','H')</code></td><td>CH22</td></tr>
+        <tr><td>38</td><td>내원율</td><td>— (<code>visitRate</code>)</td><td>—</td><td>내원 ÷ 총예약건</td><td>소수 1자리</td></tr>
+        <tr><td>39</td><td>예약(부도)</td><td><code>noShowReservation</code></td><td><code>no_show_reservation</code></td><td><code>RESERVE_STATE='Y'</code> 이고 <code>RESERVE_DATE &lt;</code> 오늘</td><td>CH23. 아직 오지 않은 날은 세지 않음</td></tr>
+        <tr><td>40</td><td>부도율</td><td>— (<code>noShowRate</code>)</td><td>—</td><td>부도 ÷ 총예약건</td><td>소수 1자리 · 빨강 강조</td></tr>
+        <tr><td>41</td><td>취소</td><td><code>cancel</code></td><td><code>cancel</code></td><td><code>RESERVE_STATE='C'</code></td><td>CH24 = 33 + 34</td></tr>
+        <tr><td>42</td><td>취소율</td><td>— (<code>cancelRate</code>)</td><td>—</td><td>취소 ÷ 총예약건</td><td>소수 1자리 · 빨강 강조</td></tr>
       </tbody>
     </table>
-    <p>굵은 칸이 <b>비율</b>이고 화면에서 빨강으로 강조됨.</p>
+    <p>CSV 는 화면 행 그대로(총예약 · 그룹별 채널 · 종합)이며 휴무일은 빈 칸임. 손보정은 원시 카운트 24개(3·4·6·8·11~13·16·18·19·21·22·24~27·30·31·33~35·37·39·41)만 가능하고 비율 칸은 자동 재계산됨.</p>
 
     <div class="note">
       <div class="h">채널마다 '예약율'의 분모가 다름</div>

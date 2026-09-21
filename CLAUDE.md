@@ -32,10 +32,16 @@ project-root/
 │   │   ├── outpatient/                  # 외래수
 │   │   ├── overall/                     # 주간 종합지표
 │   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
-│   │   ├── marketing/                   # 채널별 수익성 · 해외마케팅(접수리스트 시트캐시+수기입력·CRM 매칭·통계·예약통계 — /api/overseas-marketing)
+│   │   ├── marketing/                   # 채널별 수익성(ChannelProfitController) · 해외마케팅(접수리스트 시트캐시+수기입력·CRM 매칭·통계·예약통계 — /api/overseas-marketing)
+│   │   ├── sms/                         # 문자 발송 — 대상(target) 관리·홀딩·수기 발송·오프셋·수신동의(opt-out)·Solapi 웹훅 · MARKETING 부서(조회) + ADMIN(편집·[지금 실행]·[실패 재실행])
 │   │   ├── accounting/                  # 회계 — 진료 수납(의사랑 IPLUS 링크드서버 OPENQUERY)·시력교정 매출(SOFTCRM 비급여 수납) 마트 조회 /api/accounting · 임원(ADMIN·DIRECTOR)
 │   │   ├── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) — init/ 하위에 초기 시더 배치
 │   │   └── batch/                       # 배치 인프라 — job(*MartJob·*MartWriter) · admin(reconcile·admin/controller) · controller(BatchStatusController) · repository · dto
+│   │
+│   # 예약 퍼널·누적 안수는 도메인 소속(reservation/·surgery/)이 실제 데이터 출처와 맞고,
+│   # 화면 사이드바에서만 마케팅 섹션에 노출된다 (marketing-section).
+│   #   reservation/controller/ReservationChannelController      → /api/stats/reservation-channel · v_reservation_channel 뷰
+│   #   surgery/controller/AccumulatedEyeController              → /api/accumulated-eyes (OPERATION_ACCUMULATED_EYE_COUNT 원천 마트 적재)
 │   ├── src/main/resources/
 │   │   ├── application.yml                     # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
 │   │   ├── application-local.yml               # 로컬 개발 (H2 인메모리, 배치 비활성)
@@ -63,6 +69,9 @@ project-root/
 │   │   │   ├── overall/                # index.ts(overallApi)
 │   │   │   ├── report/                 # index.ts(reportApi · 주차 레포트)
 │   │   │   ├── marketing/              # channelProfit.ts · accumulatedEyes.ts · overseasMarketing.ts(해외마케팅 접수리스트·통계·예약통계)
+│   │   │   ├── sms/                    # index.ts — 대상·오프셋·홀딩·발송·Solapi 템플릿·수신동의
+│   │   │   ├── admin/                  # users.ts (계정 CRUD /api/admin/users) · batchAdmin.ts (수동 실행·재실행)
+│   │   │   ├── batch/                  # index.ts (배치 상태·이력 조회)
 │   │   │   └── etc/                    # index.ts(b2bApi · B2B 매출)
 │   │   ├── hooks/                       # 도메인별 TanStack Query 훅
 │   │   │   ├── reservation/            # useReservationKpi/Trend/Composition/List/OverallTrend …
@@ -71,7 +80,10 @@ project-root/
 │   │   │   ├── surgery/                # useSurgery*·useSurgeryRatio*
 │   │   │   ├── overall/                # useOverallExamWeekly
 │   │   │   ├── report/                 # useWeeklyReport
-│   │   │   ├── marketing/              # useChannelProfit·useAccumulatedEyes*·useOverseasMarketing(접수/통계/예약통계 + 동기화·매칭 mutation)
+│   │   │   ├── marketing/              # useChannelProfit·useAccumulatedEyes*·useOverseasMarketing(접수/통계/예약통계 + 동기화·매칭 mutation)·useReservationChannel(퍼널·op-types)
+│   │   │   ├── sms/                    # useSms* (targets·offsets·send·failed-retry·opt-out·templates)
+│   │   │   ├── admin/                  # useUsers*·useBatchAdmin (계정 CRUD·수동 실행)
+│   │   │   ├── batch/                  # useBatchStatus (상태·이력)
 │   │   │   ├── outpatient/             # useOutpatientCountTrend
 │   │   │   └── useIsMobile.ts          # (공용) 반응형 분기
 │   │   ├── components/
@@ -91,7 +103,11 @@ project-root/
 │   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
 │   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
 │   │   │   ├── report/                 # MonthlyReportPage(월간)·WeeklyReportPage(주차) + 공용 ReportShell·useReportSeries·reportItems
-│   │   │   ├── overall/ · outpatient/ · marketing/ · accounting/ · cancel-noshow/ · unit-price/ · etc/
+│   │   │   ├── reservation/            # …·ReservationChannelPage(예약 퍼널 — 사이드바는 마케팅 섹션)
+│   │   │   ├── marketing/              # ChannelProfit·ChannelAnalysis(+channel-analysis/ 채널별 정적 문서)·AccumulatedEyes·Overseas* 3종
+│   │   │   ├── sms/                    # SmsManagementPage + 하위 컴포넌트(오프셋 그리드·발송 대기열·실패 재실행 모달·수신동의·Solapi 템플릿 등)
+│   │   │   ├── admin/                  # BatchManagementPage·AccountManagementPage(+UserFormDialog·DeleteConfirmDialog)
+│   │   │   ├── overall/ · outpatient/ · accounting/ · cancel-noshow/ · unit-price/ · etc/
 │   │   │   ├── LoginPage.tsx           # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx       # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
 │   │   │   └── StatsPlaceholderPage.tsx # 미구현 통계 페이지 템플릿
@@ -111,7 +127,9 @@ project-root/
 
 ### 도메인별 코드 구성 (백엔드=도메인 중심 / 프론트=레이어 우선)
 
-도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation`(예약) / `exam`(검사) / `surgery`(수술) / `consultation`(전환&성공률) / `report` / `overall`(전체지표) / `outpatient`(외래) / `marketing` / `accounting`(회계) / `cancel-noshow` / `unit-price` / `etc`.
+도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation-group`(예약) / `exam-group`(검사) / `surgery`·`surgery-ratio`(수술) / `consultation`(전환&성공률) / `report-group` / `outpatient`(외래) / `marketing-section`(마케팅 — 채널·SMS·누적안수) / `overseas-marketing-section`(해외마케팅) / `accounting-section`(회계) / `admin`(관리자) / `marketing`·`cancel-noshow`·`unit-price`·`etc`(미구현/개별 잎).
+
+> 🧭 **화면 섹션과 백엔드 도메인은 항상 같지 않다.** 예약 퍼널(`reservation-channel`)은 백엔드에서 `reservation/` 도메인(마트 뷰 `v_reservation_channel`)에 있지만 사이드바는 마케팅 섹션에 노출한다. 누적 안수(`accumulated-eyes`)도 `surgery/` 도메인이지만 마케팅 섹션이다. 판단 기준: **데이터 출처가 있는 곳**에 백엔드 코드를 두고 사이드바만 옮긴다.
 
 - **백엔드(도메인 중심)**: `<domain>/{controller,service,repository,dto}` (예: `reservation/controller`, `reservation/service`). 인증은 `auth/`, 공통 응답·예외·유틸·통계 helper(`StatsPanelSupport`·`StatsRequestValidator`·`StatsResponseMeta`)는 `common/`(특히 `common/stats/`)에 둔다. `Mock*Repository`는 해당 도메인 `repository/`에 둔다.
 - **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
@@ -128,12 +146,14 @@ project-root/
 - DashboardPage (KPI 카드 4개 + 차트 5개, 하드코딩 목업)
 - ReservationPage (월별/연도별 비교, TanStack Query 기반 API 연동)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
-- 통계 전용 페이지 25종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
+- 통계 전용 페이지 44종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
 - 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` 연동 · 배치 도메인 `ACCOUNTING` · 임원(ADMIN·DIRECTOR) 이상 · 2026-09-17)
 - 회계 정합성: 진료 행·집계는 월 전체를 함께 교체하고 `rows_complete`로 월별 조회 경로를 선택한다. 회계만 매월 2023년부터 과거 이력을 재검산하며, 진료 부분 실패는 성공 데이터 보존 + FAILED 이력으로 처리한다 (`docs/accounting/mart-and-api.md`).
 - 해외마케팅 3종 (접수리스트·통계·예약통계 — 2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 + 수기 입력 · CRM 매칭 · `/api/overseas-marketing` · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제)
+- 마케팅 4종 (예약 퍼널·채널별 수익성·채널별 분석·누적 안수 + 문자 발송 리스트 — MARKETING 부서 전용) · 예약 퍼널은 마트 뷰 `v_reservation_channel`(사람 수 기준) · 채널별 분석은 조회 없는 정적 문서 · 누적 안수는 MSSQL 원천 마트 적재 · SMS 는 § 5-2 완화 이후 STAFF 개방, 편집·[지금 실행]·[실패 재실행]은 ADMIN 만
+- 계정 관리 (`/admin/accounts` · ADMIN 롤 전용 · 2026-09-16) — `POST/PUT/DELETE /api/admin/users` · BCrypt · 자기 자신 롤·부서 변경/삭제 400 · 마지막 ADMIN 삭제 400 · 롤×부서 조합은 화면(Zod)과 DB CHECK(`users_role_department_scope_ck`)가 동시에 검증
 
 ### 미구현 (플레이스홀더)
 
@@ -141,7 +161,7 @@ project-root/
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 48개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API) 38개 / **미구현(pending)** 11개.
+`statsPages.ts`에 55개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API 또는 정적 문서) 44개 / **미구현(pending)** 11개.
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
@@ -173,7 +193,11 @@ project-root/
 | surgery-composition | 수술별 비중 | /stats/surgery-composition | 수술 | 완료 (mart_surgery_daily 조회, 파일 스냅샷 폐지 · 주차=ISO 8601) |
 | outpatient-list | 외래수 리스트 | /stats/outpatient-list | 외래 | 완료 (RESERVATION F + I/H, 외래수와 정합) |
 | outpatient-count | 외래수 | /stats/outpatient-count | 외래 | 완료 |
-| channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (2026-08-07 신규 · 탭2: 유입채널 수익성/광고매체 효율 · 광고비·렌즈단가는 화면 입력) |
+| reservation-channel | 예약 퍼널 | /stats/reservation-channel | 마케팅 | 완료 (2026-08-06 예약→마케팅 이동 · 마트 뷰 `v_reservation_channel` · 사람 수 기준 8단계 퍼널 + 수술대기·재수술·객단가 · **MARKETING 부서 전용** · 백엔드는 `reservation/` 도메인) |
+| channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (2026-08-07 신규 · 탭2: 유입채널 수익성/광고매체 효율 · 광고비·렌즈단가는 화면 입력 · **MARKETING 부서 전용**) |
+| channel-analysis | 채널별 분석 | /stats/channel-analysis | 마케팅 | 완료 (2026-09 신규 · **조회 없음 · 정적 문서 10편** · 채널마다 "누가 오는가 · 객단가가 왜 그런가 · 검증/죽은 가설 · 실측 기간" · 일부 채널만 추세 차트에서 라이브 조회 · MARKETING 부서 전용) |
+| accumulated-eyes | 누적 안수 | /stats/accumulated-eyes | 마케팅 | 완료 (MSSQL `OPERATION_ACCUMULATED_EYE_COUNT` 원천 마트 적재 · 기간 리스트 + 이름·차트·전화·안수 검색 · **MARKETING 부서 전용** · 백엔드는 `surgery/` 도메인) |
+| sms | 문자 발송 리스트 | /stats/sms | 마케팅 | 완료 (수술 후 안내 1~3차 알림톡·SMS 대상 관리·홀딩·수기 발송 · Solapi 웹훅으로 결과 반영 · **MARKETING 부서 전용** · § SMS 5-2 완화 이후 STAFF 개방 · 편집·[지금 실행]·[실패 재실행]은 ADMIN 만 · `/api/sms-management/**` + `/api/admin/batch/sms/queue/**`) |
 | overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 완료 (2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 `overseas_marketing_sheet` + 수기 입력 · CRM 매칭 3단계(접수/매칭/확인필요) · **OVERSEAS_MARKETING 부서 전용** (2026-09-17 MARKETING 배제)) |
 | overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 완료 (유입→검사·수술 월별 흐름 · 국가별 수술 · 검사·수술·외래·렌즈 매출 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제) |
 | overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 완료 (국가그룹·채널별 문의/예약/검사/수술/외래 · ~2026-08-23 레거시 시드 `overseas_reservation_stats` · 이후 접수리스트 자동 집계 · 일간 셀 수정 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제) |
@@ -195,11 +219,40 @@ project-root/
 | designated-doctor | 지정의 수술 비율 | /stats/designated-doctor | 기타 | 미구현 |
 | visit-reason | 내원동기별 비중 | /stats/visit-reason | 기타 | 미구현 |
 | daily-reception | 일일 접수/응대 건수 | /stats/daily-reception | 기타 | 미구현 |
-| batch-management | 데이터 배치 관리 | /admin/batch | 관리자 | 완료 (관리자 전용 · 마트 재적재/실행 이력) |
+| batch-management | 데이터 배치 관리 | /admin/batch | 관리자 | 완료 (**ADMIN 전용** · 마트 재적재/실행 이력) |
+| account-management | 계정 관리 | /admin/accounts | 관리자 | 완료 (**ADMIN 전용** · 2026-09-16 신규 · `/api/admin/users` CRUD · 롤×부서 조합은 화면 Zod + DB CHECK 이중 검증 · 자기 자신 롤·부서 변경/삭제 400 · 마지막 ADMIN 삭제 400 · BCrypt) |
+| guide | 가이드 | /guide/prd.html | 관리자 | 완료 (**ADMIN 전용** · `external=true` 새 탭 · `frontend/public/guide/` 정적 사이트 · 대시보드 기획서 · statsPages 정의에 없음, `navigation.ts` link 항목) |
+| api-docs | API 문서 | /docs/ | 관리자 | 완료 (**ADMIN 전용** · Swagger UI 새 탭 · backend static `/docs/index.html` · Vite dev 는 `vite.config.ts` `/docs` 프록시) |
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
 > 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
+
+> 📖 **관리자 > 가이드 (`/guide/prd.html`)** — 사이드바 "가이드"를 누르면 새 탭에서 열리는 **대시보드 기획서 정적 사이트**. 정본은 `backend/new_대쉬보드_v4/`, 배포용 복사본은 `frontend/public/guide/` (Vite 가 `/guide/**` 로 그대로 서빙). 구성:
+>
+> | 경로 | 내용 |
+> |---|---|
+> | `prd.html` | 입구. 대시보드 요구사항 · **전메뉴 현황** 55종 (구현 상태·데이터 경로·로드맵) · 지표 정의 · IA · 화면 조회 쿼리문 · 26.09 목표 · 26.10 이후 확장 전략 |
+> | `pages/<id>.html` | 메뉴별 기획서 54장 (완료 43 · 미작성 12). 1·6·7·8·9장(개요·데이터 소스·API·권한·연관 문서)은 `_build/scan.mjs → gen.mjs` 자동 생성, 2·3·4·5·10장은 `_build/content/<id>.mjs` 사람 본문 |
+> | `sms.html` | 문자 발송 관리 기획서 (메뉴별 기획서의 본보기) |
+> | `glossary.html` | 용어사전 149개 (수술명·검사·지표·수납 · ⚠ 함정 표시 · 파일 상단 `TERMS` 배열만 고치면 됨) |
+> | `지표정의/*.html` | 환자 흐름별 지표 정의 6문서 (예약 → 검사 → 전환율 → 수술 → 외래 → 예약률) — 레포 `docs/` 복사본 |
+> | `db/`, `점검/`, `databatch/` | DB 카탈로그·레거시 대조·배치 전략 (레포 `docs/` 복사본) |
+>
+> ⚙️ **재생성**: 메뉴가 늘거나 API 가 바뀌면 손으로 고치지 말 것. `cd backend/new_대쉬보드_v4/_build && node scan.mjs && node gen.mjs`(그리고 지표는 `node render-metric-docs.mjs`) 로 만들고, 그 결과를 `frontend/public/guide/` 로 복사해 배포한다. `gen.mjs` 는 `prd.html` 의 `<!-- GEN:menu-status --> … <!-- /GEN:menu-status -->` 마커 사이만 갈아끼우므로 손으로 쓴 본문(PRD 도입부 등)은 살아남는다. 레포 경로는 `_build/config.json` (또는 env `DASHBOARD_REPO`).
+>
+> ⚠️ `frontend/public/guide/` 와 `backend/new_대쉬보드_v4/` 는 **원본-복사본 관계**. 정본은 v4 쪽이고 배포 시점에 public/ 로 밀어 넣는다. 한쪽만 수정하면 갈라진다 — 편집은 항상 v4 에서.
+
+> 🔐 **권한 2축 (롤 × 부서)** — 정본은 `docs/auth/permissions.md`. 계정 관리 화면(`/admin/accounts`) 이 유일한 입구이며, 화면(Zod)과 DB CHECK(`users_role_department_scope_ck`) 가 동시 검증한다.
+>
+> | 롤 \ 부서 | ALL | MEDICAL | MARKETING | OVERSEAS_MARKETING |
+> |---|---|---|---|---|
+> | **ADMIN** | ✅ 전권 (개발자) | 🚫 | 🚫 | 🚫 |
+> | **DIRECTOR** | ✅ 임원 열람 (조작 X) | 🚫 | 🚫 | 🚫 |
+> | **MANAGER** | 🚫 | ✅ 실장·본부장 | ✅ 마케팅 팀장 | ✅ 해외마케팅 팀장 |
+> | **STAFF** | 🚫 | ✅ 상담·간호·원장 | ✅ 마케팅 실무 | ✅ 해외마케팅 실무 |
+>
+> 게이팅 지점: `navigation.ts` `isAdminOnlyPage` / `isExecutiveOnlyPage` / `isMarketingOnlyPage` / `isOverseasMarketingPage` · `getPageDepartments` · `pruneByDepartment` · `pruneExecutiveOnly` · `pageRegistry.isRouteBlocked`. 백엔드는 `SecurityConfig` 매처가 대칭 유지 — 예: `/api/accounting/**` = `hasAnyRole("ADMIN","DIRECTOR")`, `/api/admin/**` = `hasRole("ADMIN")`, `/api/overseas-marketing/**` 은 OVERSEAS_MARKETING 부서.
 
 ## 백엔드 컨벤션
 
@@ -242,6 +295,29 @@ POST   /api/overseas-marketing/sync-sheet · GET /sync-availability   # Google S
 GET    /api/overseas-marketing/statistics?year=2026&granularity=month
 GET    /api/overseas-marketing/reservation-stats?year=2026&granularity=month|week|day
 PUT    /api/overseas-marketing/reservation-stats/{date}    # 일간 셀 수정 {groupKey, metricKey, value}
+
+# 예약 퍼널·누적 안수 (마케팅 섹션 · MARKETING 부서 전용)
+GET    /api/stats/reservation-channel?from=2026-07&to=2026-07           # 8단계 퍼널 · 사람 수(DISTINCT) · v_reservation_channel
+GET    /api/stats/reservation-channel/op-types?from&to&channel=          # 수술완료 클릭 시 유형별 인원 (smilePro·smile·lasek·icl·lasik·...)
+GET    /api/accumulated-eyes?from=&to=&keyword=&keywordType=name|chart|phone|eye_count
+
+# 문자 발송 (MARKETING 부서 조회 · ADMIN 편집/발송/실패 재실행)
+GET    /api/sms-management/targets    · POST /targets    · POST /targets/import   # 대상 조회·수기 추가·CRM 재동기화(임포트)
+GET    /api/sms-management/lookup     · GET  /offsets    · PUT  /offsets           # 대상 조회 도우미·오프셋(D+N) · PUT=ADMIN
+GET    /api/sms-management/opt-outs   · POST /opt-outs                             # 수신동의 조회·해지
+POST   /api/sms-management/send                                                     # 수기 발송 (ADMIN)
+POST   /api/sms-management/sync                                                     # CRM 대상 재적재 (ADMIN)
+GET    /api/sms-management/templates  · GET /solapi-templates · GET /solapi-balance # 템플릿·잔액
+POST   /api/sms/webhook/solapi                                                      # Solapi 결과 콜백 (인증 X · 서명 검증)
+# 관리자 배치용 대기열
+GET    /api/admin/batch/sms/queue/status · /rows · /statuses                        # 대기열 조회
+POST   /api/admin/batch/sms/queue/retry  · /run                                     # 실패 재실행·[지금 실행] (MANAGER+ / ADMIN)
+
+# 계정 관리 (ADMIN 롤 전용 · 2026-09-16)
+GET    /api/admin/users                     # 전체 목록 (프론트가 검색·필터·페이지)
+POST   /api/admin/users                     # 신규 (loginId·email·name·role·department·password)
+PUT    /api/admin/users/{id}                # 수정 (loginId 불변, password 빈 값이면 유지)
+DELETE /api/admin/users/{id}                # 삭제 (본인·마지막 ADMIN 400)
 ```
 
 > ✍️ **예외 — 사용자가 직접 입력하는 원천 데이터**는 배치 마트 파이프라인을 타지 않는다.
@@ -436,11 +512,12 @@ cd frontend && npm run test              # Vitest
 
 ## Claude에게 요청할 때 참고사항
 
-- **새 통계 페이지**: `statsPages.ts`에 정의 → `navigation.ts` 상태/메뉴 반영 → 전용 페이지 컴포넌트 작성 → `pages/<domain>/routes.ts`에 등록 → 백엔드 API 구현 (`router.tsx` 직접 수정 금지)
+- **새 통계 페이지**: `statsPages.ts`에 정의 → `navigation.ts` 상태/메뉴 + 롤·부서 게이트(`isAdminOnlyPage`·`isExecutiveOnlyPage`·`isMarketingOnlyPage`·`isOverseasMarketingPage`) 반영 → 전용 페이지 컴포넌트 작성 → `pages/<domain>/routes.ts`에 등록 → 백엔드 API + `SecurityConfig` 매처 대칭 유지 (`router.tsx` 직접 수정 금지)
 - **새 차트**: Recharts 기반, shadcn `ChartContainer` 사용, `CHART_PALETTE` 색상 적용
 - **새 UI 컴포넌트**: `npx shadcn@latest add <name>` (설정: `components.json`)
 - **API 연동**: `api/client.ts` HTTP 클라이언트 사용, TanStack Query `useQuery`로 캐싱
 - **DashboardPage 데이터는 하드코딩 목업** — API 연동 시 교체 필요
+- **기획서 참조**: 메뉴별 화면 규칙·컬럼 정의·함정은 `backend/new_대쉬보드_v4/pages/<id>.html` (원문은 `_build/content/<id>.mjs`) · `prd.html` 「전메뉴 현황」 탭 · 지표 정의는 `지표정의/*.md` · DB 테이블은 `db/tables/`. 코드에서 자동 생성되는 1·6·7·8·9장(개요·데이터 소스·API·권한·연관 문서)은 `_build/scan.mjs → gen.mjs`, 2·3·4·5·10장은 사람이 쓴 본문.
 
 ## DB 테이블 카탈로그
 

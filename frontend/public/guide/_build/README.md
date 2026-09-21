@@ -1,6 +1,6 @@
 # 기획서 생성기
 
-상위 폴더의 `pages/*.html` 47장을 **레포 코드에서 뽑아** 만들고,
+상위 폴더의 `pages/*.html` 54장을 **레포 코드에서 뽑아** 만들고,
 `prd.html` 의 **「전메뉴 현황」 탭 본문을 갈아끼운다.**
 메뉴가 늘거나 API 가 바뀌면 문서를 고치지 말고 여기서 다시 생성한다.
 
@@ -59,7 +59,7 @@ prd.html 의 탭 처리기가 `button.tab` 만 잡는 이유가 이것이다(`<a
 | 뽑는 것 | 원천 |
 |---------|------|
 | 메뉴 목록 · 라벨 · 경로 · 설명 | `frontend/src/config/statsPages.ts` |
-| 구현 상태 · 사이드바 숨김 · ADMIN 전용 · 3단 트리 | `frontend/src/config/navigation.ts` |
+| 구현 상태 · 사이드바 숨김 · ADMIN 전용 · 임원(ADMIN·DIRECTOR) 전용 · 3단 트리 | `frontend/src/config/navigation.ts` |
 | 화면 컴포넌트 | `frontend/src/pages/*/routes.ts` |
 | 호출 API | 컴포넌트에서 시작한 import 그래프의 `api.get/post/...` 리터럴 |
 | 백엔드 컨트롤러 | `@RequestMapping` 이 선언한 경로 중 **가장 긴 접두사**가 맞는 것 하나 |

@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">채널별 수익성 — 기획서</div>
-    <div class="sub">마케팅 · <span class="mono">/stats/channel-profit</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">마케팅 · <span class="mono">/stats/channel-profit</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -528,18 +528,60 @@
          즉 <b>수납액이 곧 순매출</b>임.</p>
     </div>
 
-    <h3>탭1 칼럼</h3>
+    <h3>컬럼 정의 — KPI 4개</h3>
+    <p>퍼널 · 렌즈 원가 · 광고비 API 셋을 합쳐 그림.
+       광고비와 렌즈 단가는 사람이 입력하는 값이라 CRM 원천이 없음.</p>
     <table>
-      <thead><tr><th>묶음</th><th>칼럼</th><th>계산</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td rowspan="3">성과</td><td>수술완료</td><td>실제 수술일이 있는 사람</td></tr>
-        <tr><td>수납액</td><td><code>COSTPRICE</code> 합 (만원 단위로 통일)</td></tr>
-        <tr><td>객단가</td><td>수납액 ÷ <b>수납이 실제로 잡힌 사람</b> — 수술 전인 사람을 분모에 넣으면 낮게 나옴</td></tr>
-        <tr><td>전환</td><td>예약→수술</td><td>수술완료 ÷ 예약</td></tr>
-        <tr><td rowspan="4">원가·품질</td><td>렌즈삽입률</td><td>렌즈 안수 ÷ 수술완료 인원. <b>양안이면 100% 를 넘을 수 있음</b></td></tr>
-        <tr><td>렌즈원가</td><td>사람이 입력한 단가 × 안수</td></tr>
-        <tr><td>재수술</td><td>코호트 기준 재수술 인원</td></tr>
-        <tr><td>공헌이익(렌즈만)</td><td>수납액 − 렌즈원가. <b>단가 미입력 안수가 있으면 공란</b></td></tr>
+        <tr><td>1</td><td>전체 수술완료</td><td><code>totalSurgeryDonePersons</code></td><td><code>total_surgery_done_persons</code></td><td>기간 예약자 중 실제 수술일 있는 DISTINCT <code>person</code>(채널 무관)</td><td>명. 채널 값을 더하지 않음. 힌트 = 채널 수</td></tr>
+        <tr><td>2</td><td>귀속 수술수납액</td><td>Σ <code>surgeryAmount</code> ÷ 10,000</td><td><code>surgery_amount</code></td><td><code>COSTPRICE</code> 합(<code>PayStt='A'</code> 제외)</td><td>억. 채널 행의 합(수납액은 사람 중복이 없어 합산 가능). 회계매출 아님</td></tr>
+        <tr><td>3</td><td>공헌이익(렌즈만)</td><td>2번 − Σ <code>lensCostManwon</code></td><td><code>lens_cost_manwon</code></td><td>—</td><td>억. 어느 채널이든 단가 미입력 안수(<code>lensEyesUnpriced</code>)가 있으면 — 와 '렌즈 단가 미입력'</td></tr>
+        <tr><td>4</td><td>표본 주의 채널</td><td>— (프론트 집계)</td><td>—</td><td>—</td><td>수술완료 100명 미만인 채널 수</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 탭1 「유입채널 수익성」 9개</h3>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>채널</td><td><code>channel</code></td><td><code>v_reservation_channel.channel</code></td><td>내원동기(중) › 직원 설정표 › <code>RESERVE_PATH</code></td><td>30명 미만은 <code>n=</code> 배지, 30~99명은 '표본 주의' 배지. '비교 가능 표본만' 을 켜면 30명 미만 행 숨김. 기본 정렬 수납액 내림차순, <code>null</code> 은 항상 아래</td></tr>
+        <tr><td>2</td><td>수술완료</td><td><code>surgeryDonePersons</code></td><td><code>surgery_done_persons</code></td><td>실제 수술일 있는 DISTINCT <code>person</code></td><td>명. 표본 등급의 기준</td></tr>
+        <tr><td>3</td><td>수납액</td><td><code>surgeryAmount</code> → 만원 반올림</td><td><code>surgery_amount</code></td><td><code>COSTPRICE</code> 합</td><td>억 표시(1억 미만은 소수 2자리)</td></tr>
+        <tr><td>4</td><td>객단가</td><td>수납액(만원) ÷ <code>surgeryPaidPersons</code></td><td><code>surgery_paid_persons</code></td><td>수납 &gt; 0 인 DISTINCT <code>person</code></td><td>만원 정수. 분모 0 이면 —. 합계행은 <code>totalSurgeryPaidPersons</code> 로 나눔</td></tr>
+        <tr><td>5</td><td>예약→수술</td><td><code>surgeryDonePersons ÷ reservedPersons</code></td><td><code>reserved_persons</code></td><td><code>RESERVATION.InsertedDateTime</code> 기준 예약자</td><td>% 소수 1자리. 합계행은 —. 코호트 성숙도 배지의 영향을 가장 크게 받는 칸</td></tr>
+        <tr><td>6</td><td>렌즈삽입률</td><td><code>lensEyes ÷ surgeryDonePersons</code></td><td><code>lens_eyes</code></td><td><code>op_type_r</code>·<code>op_type_l</code> 이 <code>lens_cost</code> 에 있는 유형(icl · tIcl · kpl · tKpl · viva)인 눈의 수</td><td>% 정수. 안 단위라 양안이면 100% 초과 가능. 합계행 —</td></tr>
+        <tr><td>7</td><td>렌즈원가</td><td><code>lensCostManwon</code></td><td><code>lens_cost_manwon</code> = Σ <code>lens_cost.unit_cost_manwon</code></td><td>없음(단가는 사람 입력)</td><td>억 표시. 0 이면 —. 단가 0 인 유형의 안수는 <code>lensEyesUnpriced</code> 로 따로 옴</td></tr>
+        <tr><td>8</td><td>재수술</td><td><code>reopPersons</code></td><td><code>reop_persons</code></td><td><code>list_reoperation</code> 자동판정 행과 차트번호 조인(수술일 이후)</td><td>건 표시, 0 이면 —. 코호트 기준이라 최근 달은 0. 합계행 —</td></tr>
+        <tr><td>9</td><td>공헌이익(렌즈만)</td><td>수납액(만원) − 렌즈원가</td><td>—</td><td>—</td><td>억 표시. <code>lensEyesUnpriced &gt; 0</code> 이면 —(0 원가로 부풀리지 않음). 합계행은 전 채널 합, 하나라도 미입력이면 —</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 탭2 「광고매체 효율」 10개</h3>
+    <p>행은 광고 상품 3개로 고정되고, 성과 칸은 연결된 채널의 탭1 값을 가져옴.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>매체·상품</td><td><code>media</code> (naver_reserve · naver_search · modoodoc)</td><td><code>ad_spend.media</code></td><td>—</td><td>라벨·부제·배지(N/M)는 프론트 상수</td></tr>
+        <tr><td>2</td><td>광고성과 귀속 수준</td><td>— (프론트 <code>attribution</code>)</td><td>—</td><td>—</td><td>예약경로 기반 추정 / 귀속 불가 / 내원동기 기반 추정. 툴팁에 무엇이 섞이는지 표시. 검색광고는 성과 칸 전부 — 와 'ROAS 산출 보류' 안내</td></tr>
+        <tr><td>3</td><td>예약</td><td>귀속 채널의 <code>reservedPersons</code></td><td><code>reserved_persons</code></td><td>탭1 5번과 동일</td><td>귀속 채널 없으면 —</td></tr>
+        <tr><td>4</td><td>수술완료</td><td>귀속 채널의 <code>surgeryDonePersons</code></td><td><code>surgery_done_persons</code></td><td>탭1 2번과 동일</td><td>—</td></tr>
+        <tr><td>5</td><td>전환율</td><td>수술완료 ÷ 예약</td><td>—</td><td>—</td><td>% 소수 1자리</td></tr>
+        <tr><td>6</td><td>광고비(만원)</td><td><code>amountManwon</code></td><td><code>ad_spend.amount_manwon</code> (PK <code>ym</code>, <code>media</code>)</td><td>없음(사람 입력)</td><td>입력칸. 저장은 <code>PUT /api/stats/channel-profit/ad-spend</code>. 입력 전이면 0</td></tr>
+        <tr><td>7</td><td>예약 CPA</td><td>광고비 ÷ 예약</td><td>—</td><td>—</td><td>만원. 광고비 0 또는 예약 0 이면 —</td></tr>
+        <tr><td>8</td><td>수술 CPA</td><td>광고비 ÷ 수술완료</td><td>—</td><td>—</td><td>만원. 조건 동일</td></tr>
+        <tr><td>9</td><td>수납 ROAS</td><td>귀속 채널 수납액(만원) ÷ 광고비</td><td>—</td><td>—</td><td>배 표시(소수 1자리). 1.0배 = 광고비 회수선이지 손익분기 아님</td></tr>
+        <tr><td>10</td><td>공헌이익 ROAS(렌즈만)</td><td>귀속 채널 공헌이익 ÷ 광고비</td><td>—</td><td>—</td><td>공헌이익이 — 이면 —</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 렌즈 매입 단가 입력 2개</h3>
+    <p>탭2 하단의 입력 영역. 수술 유형 목록은 미리 들어가 있고 단가만 0 일 수 있음.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>유형</td><td><code>opType</code></td><td><code>lens_cost.op_type</code></td><td>—</td><td>icl · tIcl · kpl · tKpl · viva(<code>surgery_op_type()</code> 코드). 레이저 계열은 행이 없음 = 렌즈 없음</td></tr>
+        <tr><td>2</td><td>단가</td><td><code>unitCostManwon</code></td><td><code>lens_cost.unit_cost_manwon</code></td><td>없음(사람 입력)</td><td>안(眼) 1개당 만원. 0 이면 미입력으로 보아 그 유형 안수는 <code>lensEyesUnpriced</code> 에 들어감. 저장하면 채널 렌즈원가 캐시 무효화</td></tr>
       </tbody>
     </table>
 
@@ -579,13 +621,18 @@
     <table>
       <thead><tr><th>구분</th><th>테이블 · 뷰</th></tr></thead>
       <tbody>
-        <tr><td>마트 (Postgres)</td><td><code>list_reoperation</code> · <code>v_reservation_channel</code></td></tr>
+        <tr><td>마트 (Postgres)</td><td><code>ad_spend</code> · <code>lens_cost</code> · <code>list_reoperation</code> · <code>v_reservation_channel</code></td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td>—</td></tr>
       </tbody>
     </table>
     <details class="sqlrefs">
-      <summary>SQL 리소스 2개 — 펼쳐 보기</summary>
+      <summary>SQL 리소스 7개 — 펼쳐 보기</summary>
       <ul>
+        <li><span class="mono">backend/src/main/resources/sql/mart/etc/select-ad-spend.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/etc/select-channel-lens-cost.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/etc/select-lens-price.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/etc/update-lens-price.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/etc/upsert-ad-spend.sql</span></li>
         <li><span class="mono">backend/src/main/resources/sql/mart/reservation/select-reservation-channel-funnel.sql</span></li>
         <li><span class="mono">backend/src/main/resources/sql/mart/reservation/select-reservation-channel-optype.sql</span></li>
       </ul>
@@ -600,16 +647,22 @@
   </div>
 
   <div class="card" id="s7">
-    <div class="card-head"><div class="chip">7</div><h2>API — 2개</h2></div>
+    <div class="card-head"><div class="chip">7</div><h2>API — 7개</h2></div>
     <table>
       <thead><tr><th>메서드 · 경로</th></tr></thead>
       <tbody>
+        <tr><td><span class="mono">GET /api/stats/channel-profit/ad-spend</span></td></tr>
+        <tr><td><span class="mono">GET /api/stats/channel-profit/lens-cost</span></td></tr>
+        <tr><td><span class="mono">GET /api/stats/channel-profit/lens-price</span></td></tr>
         <tr><td><span class="mono">GET /api/stats/reservation-channel</span></td></tr>
         <tr><td><span class="mono">GET /api/stats/reservation-channel/op-types</span></td></tr>
+        <tr><td><span class="mono">PUT /api/stats/channel-profit/ad-spend</span></td></tr>
+        <tr><td><span class="mono">PUT /api/stats/channel-profit/lens-price</span></td></tr>
       </tbody>
     </table>
     <h3>백엔드 컨트롤러</h3>
     <ul>
+      <li><span class="mono">backend/src/main/java/com/bviit/analytics/marketing/controller/ChannelProfitController.java</span></li>
       <li><span class="mono">backend/src/main/java/com/bviit/analytics/reservation/controller/ReservationChannelController.java</span></li>
     </ul>
   </div>
@@ -620,6 +673,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

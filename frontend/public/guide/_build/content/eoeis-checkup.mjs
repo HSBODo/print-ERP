@@ -130,6 +130,22 @@ export default {
       <div class="h">2026-07-01 이전은 없음</div>
       <p>아이리더 원천이 그때부터라 하한이 걸려 있음. 그 이전 기간을 넣어도 데이터가 없음.</p>
     </div>
+    <h3>컬럼 정의 — 7개</h3>
+    <p>아이리더 DB 를 직접 읽으므로 마트 컬럼은 없고, 원천 열에는 아이리더 테이블을 적음.
+       피벗 · 합계 · 정렬은 모두 화면에서 계산함.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>검사자</td><td><code>rows[].operatorName</code></td><td>—</td><td><code>checkup_record.operator_nm</code></td><td>빈 값은 <b>「(검사자 미지정)」</b> 으로 남김. <code>(kd</code>·<code>(ls</code> 포함 계정은 SQL 에서 제외. 이름이 <code>[</code> 로 시작하면 그룹 행(굵게). 행 = 조회 결과에 나온 검사자를 이름순</td></tr>
+        <tr><td>2</td><td>합계</td><td>—</td><td>—</td><td>화면 계산</td><td>그 행 셀의 합. 건수 보기 = Σ<code>count</code>, 점수 보기 = Σ(<code>count</code> × 장비 점수). 정렬 가능</td></tr>
+        <tr><td>3</td><td>장비 열(검사자 × 장비 탭, 동적)</td><td><code>rows[].deviceName</code> · <code>rows[].count</code></td><td>—</td><td><code>checkup_record.checkup_kind_nm</code>(소문자·trim 키로 묶음) → 표시명은 <code>checkup_device_score.checkup_kind_nm</code>(MIN)</td><td>점수표에 없는 장비는 원천 이름 중 대표값, 빈 값은 <b>「(미상)」</b>. 열 = 조회 결과 장비를 이름순. 셀 = 기간 전체 합</td></tr>
+        <tr><td>4</td><td>기간 열(검사자 × 기간 탭, 동적)</td><td><code>rows[].date</code> · <code>rows[].count</code></td><td>—</td><td><code>CONVERT(date, checkup_record.record_begin_dt)</code></td><td>화면이 조회 기간의 <b>모든 날짜</b>를 열거해 월별(<code>YYYY년 M월</code>) · 일별(<code>YYYY-MM-DD</code>) · 주차별(월요일 시작, <code>MM.DD ~ MM.DD</code>)로 접음 — 기록 없는 날도 열이 생김. 셀 = 장비 전체 합</td></tr>
+        <tr><td>5</td><td>합계 행</td><td>—</td><td>—</td><td>화면 계산</td><td>열별 합 + 총합. <b>정렬·페이지와 무관하게 전체 행</b> 기준</td></tr>
+        <tr><td>6</td><td>검사 건수 / 환산 점수(상단 총합)</td><td>—</td><td>—</td><td>화면 계산</td><td>전체 행 합계의 합. 보기 토글에 따라 라벨이 바뀜</td></tr>
+        <tr><td>7</td><td>장비 점수(설정 패널)</td><td><code>scores[deviceName]</code></td><td>—</td><td><code>checkup_device_score.score</code>(같은 정규화 키로 묶어 MAX)</td><td>점수표에 없는 장비는 <b>1</b>. 패널에서 덮어쓰면 화면 상태에만 반영, 새로고침하면 초기화. 화면 노출은 점수 보기·설정 패널에서만</td></tr>
+      </tbody>
+    </table>
+
   `,
 
   s10: `

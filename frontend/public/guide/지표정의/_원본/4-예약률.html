@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -107,7 +107,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 <hr>
 <h2 id="2-원데이-예약률-2026-06-정의-교체">2. 원데이 예약률 (2026-06~ 정의 교체)</h2>
 <pre><code>원데이 예약률 = 검사일 이후 수술예약 보유자 ÷ 원데이 검사자</code></pre>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">값</th></tr></thead><tbody><tr><td style="text-align:left">분모</td><td style="text-align:left">원데이 검사자 = 시력교정 원데이(당일 M/5 예약 내원) + 백내장 원데이(진료구분 7·9)</td></tr><tr><td style="text-align:left">분자</td><td style="text-align:left">그중 <code>RESERVE_FLAG=&#39;O&#39;</code> · <code>STATE&lt;&gt;&#39;C&#39;</code> · <strong>예약일 &gt;= 검사일</strong> 보유자</td></tr><tr><td style="text-align:left">쿼리</td><td style="text-align:left"><code>backend/src/main/resources/sql/overall/find-one-day-daily.sql</code></td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">값</th></tr></thead><tbody><tr><td style="text-align:left">분모</td><td style="text-align:left">원데이 검사자 = 시력교정 원데이(당일 M/5 예약 내원) + 백내장 원데이(진료구분 7·9)</td></tr><tr><td style="text-align:left">분자</td><td style="text-align:left">그중 <code>RESERVE_FLAG=&#39;O&#39;</code> · <code>STATE&lt;&gt;&#39;C&#39;</code> · <strong>예약일 &gt;= 검사일</strong> 보유자</td></tr><tr><td style="text-align:left">쿼리</td><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/overall/select-one-day-daily.sql</code></td></tr></tbody></table></div>
 <h3 id="종전-분자는-예약이-아니라-수술-실시였음">⚠️ 종전 분자는 &#39;예약&#39;이 아니라 &#39;수술 실시&#39;였음</h3>
 <p>화면 라벨은 <code>수술예약건/검사자</code> 인데, 실제로는 <code>OPERATIONDATA</code>(수술 실시)에서 <strong>검사일~+7일</strong> 사이 수술한 사람을 셌음. 그래서 두 부류가 빠졌음.</p>
 <ol><li><strong>7일 넘겨 수술한 사람</strong> — 검사 후 2주 뒤 수술은 안 잡힘</li><li><strong>예약만 하고 아직 수술 안 한 사람</strong> — 월말 검사자는 수술까지 갈 시간이 없어 구조적으로 불리</li></ol>
@@ -124,7 +124,7 @@ POST /api/admin/batch/rerun?from=2026-06-01&amp;to=&lt;오늘&gt;&amp;domain=REP
 <blockquote><p>📌 백내장·시력교정 예약률과 달리 <strong>마트에 비율을 저장하지 않음.</strong> <code>one_day</code> · <code>one_day_booked</code> 두 건수만 쌓고 화면에서 나눔. 그래서 §5(백내장 흐름)의 <code>reservation_rate</code> 재계산 이야기는 이 지표에 해당하지 않음.</p></blockquote>
 <hr>
 <h2 id="3-시력교정-예약률">3. 시력교정 예약률</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">값</th></tr></thead><tbody><tr><td style="text-align:left">분모</td><td style="text-align:left">시력교정 검사자 (<code>EXAM</code> 기준, 드림렌즈·순수 외래 제외 — <a href="../2-검사.html">2-검사.md</a> §1)</td></tr><tr><td style="text-align:left">분자</td><td style="text-align:left">수술예약(<code>RESERVE_FLAG=&#39;O&#39;</code>, <code>STATE &lt;&gt; &#39;C&#39;</code>) 보유자</td></tr><tr><td style="text-align:left">쿼리</td><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-vision-reservation-rate-monthly.sql</code></td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">항목</th><th style="text-align:left">값</th></tr></thead><tbody><tr><td style="text-align:left">분모</td><td style="text-align:left">시력교정 검사자 (<code>EXAM</code> 기준, 드림렌즈·순수 외래 제외 — <a href="../2-검사.html">2-검사.md</a> §1)</td></tr><tr><td style="text-align:left">분자</td><td style="text-align:left">수술예약(<code>RESERVE_FLAG=&#39;O&#39;</code>, <code>STATE &lt;&gt; &#39;C&#39;</code>) 보유자</td></tr><tr><td style="text-align:left">쿼리</td><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/exam/select-vision-reservation-rate-monthly.sql</code></td></tr></tbody></table></div>
 <p>2026 실측은 74~82%로 PDF(74~82%)와 <strong>거의 일치</strong>함. <strong>백내장과 달리 손댈 필요가 없음.</strong></p>
 <blockquote><p>백내장만 어긋났던 이유: 시력교정은 검사 당일~수 일 내 예약이 대부분이라 기간 제한 유무의 영향이 작지만, 백내장은 재방문·장기 대기가 많아 과거 이력 오염이 크게 잡힘.</p></blockquote>
 <hr>
@@ -135,7 +135,7 @@ POST /api/admin/batch/rerun?from=2026-06-01&amp;to=&lt;오늘&gt;&amp;domain=REP
 <hr>
 <h2 id="5-데이터-흐름-마트-백내장시력교정">5. 데이터 흐름 (마트) — 백내장·시력교정</h2>
 <pre><code>매일 03시  ConsultationMartJob
-  find-cataract-reservation-rate-monthly.sql   (MSSQL, 배치 시점만)
+  select-cataract-reservation-rate-monthly.sql   (MSSQL, 배치 시점만)
     → CataractReservationRateService           (rate 계산: ceil)
       → mart_reservation_rate_monthly          (yr, mo, category, exam_count, surgery_booked_count, reservation_rate)
         → 화면·월간 레포트는 마트만 조회 (재계산 없음)</code></pre>
@@ -159,7 +159,7 @@ GET  /api/admin/batch/run-logs?limit=1     # SUCCESS 인지 반드시 확인</co
 <p><code>RESERVE_FLAG=&#39;O&#39;</code> 만 걸면 시력교정 수술예약이 섞임. 반대로 시력교정 예약률은 <code>JINRYO</code> 를 걸지 않음(수술 종류를 가리지 않음).</p>
 <hr>
 <h2 id="7-관련-쿼리코드">7. 관련 쿼리·코드</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-cataract-reservation-rate-monthly.sql</code></td><td style="text-align:left">백내장 예약률 원천</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/exam/find-vision-reservation-rate-monthly.sql</code></td><td style="text-align:left">시력교정 예약률 원천</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/overall/find-one-day-daily.sql</code></td><td style="text-align:left"><strong>원데이 예약률 원천</strong> (분모·분자 건수, 비율 저장 안 함)</td></tr><tr><td style="text-align:left"><code>OverallMartJob.java</code></td><td style="text-align:left">원데이 건수 적재 + 2026-01~05 골든 가드</td></tr><tr><td style="text-align:left"><code>CataractReservationRateService.java</code></td><td style="text-align:left">rate 계산(ceil) · 월 버킷</td></tr><tr><td style="text-align:left"><code>ConsultationMartJob.java</code></td><td style="text-align:left">마트 적재 + 시드 보호 가드</td></tr><tr><td style="text-align:left"><code>V13__reservation_rate_monthly_seed.sql</code></td><td style="text-align:left">24·25 확정값</td></tr><tr><td style="text-align:left"><code>V27__monthly_report_2026_01_05_golden.sql</code></td><td style="text-align:left">2026-01~05 골든</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/exam/select-cataract-reservation-rate-monthly.sql</code></td><td style="text-align:left">백내장 예약률 원천</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/exam/select-vision-reservation-rate-monthly.sql</code></td><td style="text-align:left">시력교정 예약률 원천</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/overall/select-one-day-daily.sql</code></td><td style="text-align:left"><strong>원데이 예약률 원천</strong> (분모·분자 건수, 비율 저장 안 함)</td></tr><tr><td style="text-align:left"><code>OverallMartJob.java</code></td><td style="text-align:left">원데이 건수 적재 + 2026-01~05 골든 가드</td></tr><tr><td style="text-align:left"><code>CataractReservationRateService.java</code></td><td style="text-align:left">rate 계산(ceil) · 월 버킷</td></tr><tr><td style="text-align:left"><code>ConsultationMartJob.java</code></td><td style="text-align:left">마트 적재 + 시드 보호 가드</td></tr><tr><td style="text-align:left"><code>V13__reservation_rate_monthly_seed.sql</code></td><td style="text-align:left">24·25 확정값</td></tr><tr><td style="text-align:left"><code>V27__monthly_report_2026_01_05_golden.sql</code></td><td style="text-align:left">2026-01~05 골든</td></tr></tbody></table></div>
 <hr>
 <h2 id="남은-확인-사항">남은 확인 사항</h2>
 <ul><li><strong>레거시 계산법 확인</strong> — 월간보고 PDF 예약률을 만드는 담당자에게 &quot;무엇을 무엇으로 나눴는지&quot; 물으면 남은 ±3%p 차이를 설명할 수 있음. BCRM 화면이 없어 SQL 로는 확인 불가.</li><li><strong>2024·2025 시드의 분자·분모</strong> — 현재 값 없음(<code>exam_count=1</code>). 필요해지면 재산출해야 함.</li><li><strong>월 마감 스냅샷</strong> — 분모 소급 변동을 막는 유일한 방법.</li></ul>

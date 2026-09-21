@@ -92,6 +92,20 @@ export default {
       </tbody>
     </table>
     <p>2026 은 레거시와 대조를 거쳤음 — <a href="../지표정의/6-외래.md">지표정의/6-외래.md §3</a> 참조.</p>
+
+    <h3>컬럼 정의 — 차트 시리즈 1개 · 표 컬럼 3개</h3>
+    <p>조회 경로는 마트 <code>mart_outpatient_count_monthly</code> 이고 외래수 리스트와 정의가 같음.
+       2026-05 이전은 시드 값임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>연도 라인(차트 시리즈 · 연도마다 1개)</td><td><code>outpatientCount</code> (<code>year</code>·<code>month</code> 로 위치)</td><td><code>outpatient_count</code> (<code>yr</code>, <code>mo</code>)</td><td><code>list_outpatient</code> 행 수 = <code>RESERVATION</code>(<code>RESERVE_FLAG='F'</code>, <code>RESERVE_STATE IN ('I','H')</code>, 테스트 이름 제외) — 2026-06 이후. 그 이전은 시드 확정값</td><td>기본 3개 연도(올해·전년·전전년), 필터바에서 바꿈. 최신 연도만 굵은 선 + 값 라벨. null 은 선을 끊음. 색은 최신순 빨강·회색·하늘·주황</td></tr>
+        <tr><td>2</td><td>연도 (표 첫 열)</td><td><code>year</code></td><td><code>yr</code></td><td>—</td><td>시리즈 색 막대 표시. 최신 연도는 색 글씨</td></tr>
+        <tr><td>3</td><td>1월 ~ 12월 (표 셀)</td><td><code>outpatientCount</code></td><td><code>outpatient_count</code></td><td>위와 같음</td><td>천 단위 구분. null 은 빈칸. 응답은 요청 연도 × 12개월이 항상 채워짐(미저장 월은 null)</td></tr>
+        <tr><td>4</td><td>합계</td><td>— (화면 파생)</td><td>—</td><td>—</td><td>12개월 중 숫자만 합산. 0 이면 빈칸</td></tr>
+      </tbody>
+    </table>
+    <p>응답의 <code>total</code>(마트 <code>total</code>)은 <code>outpatient_count</code> 와 같은 값으로 적재되며 화면에서 쓰지 않음.</p>
   `,
 
   s10: `

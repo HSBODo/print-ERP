@@ -1,7 +1,7 @@
 # COSTPRICE
 
-> **DB**: SOFTCRM | **컬럼**: 31개 | **행 수**: ~862,666 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 31개 | **행 수**: ~853,077 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20
 
 ## 역할
 
@@ -16,7 +16,7 @@
 | FK → CUSTOM | CUST_NUM | char(13) | CUSTOM.CUST_NUM |
 | ← FK PrcItmLst | CUST_NUM + SEQ | | PrcItmLst.PrcCusNum + PrcItmLst.PrcSeq (수납 세부 항목) |
 | JOIN | CUST_NUM + COST_DATE | | OPERATIONDATA.CUST_NUM + OPERATION_DATE (수술일 비용 매칭) |
-| JOIN | CUST_NUM + SEQ | | CstPrcSub.CstCusNum + CstPrcSub.CstSeq (카드 결제 상세). ⚠️ 실제 테이블명은 `CstPrcSub` — `CstDtlLst`는 존재하지 않음 (2026-08-10 실측 확인). CstSeq는 smallint |
+| JOIN | CUST_NUM + SEQ | | CstDtlLst.CstCusNum + CstDtlLst.CstSeq (카드 결제 상세) |
 
 ## 핵심 컬럼
 
@@ -79,7 +79,7 @@
 | `routes/referral.js` | 소개 환자 수납 금액 | R |
 | `routes/vip.js` | VIP 수납 이력 | R |
 | `routes/overseas-marketing.js` | 해외마케팅 매출 — COSTPRICE 직접 조회 | R |
-| `routes/desk-card-payment-amount.js` | 카드 결제 금액 조회 (CstPrcSub JOIN) | R |
+| `routes/desk-card-payment-amount.js` | 카드 결제 금액 조회 (CstDtlLst JOIN) | R |
 | `routes/dna-registration.js` | DNA 등록 — PrcItmLst JOIN 비용 확인 | R |
 | `routes/dreamlens-*.js` | 드림렌즈 (검사배정/수가/직원소개) — PrcItmLst JOIN | R |
 | `routes/exam-assignment.js` | 검사 배정 — PrcItmLst JOIN 비용 | R |

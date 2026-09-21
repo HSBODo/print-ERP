@@ -131,24 +131,52 @@ export default {
          외래 집계는 <b>진료구분을 구분하지 않고 전부 합산</b>함.</p>
     </div>
 
-    <h3>파생 컬럼</h3>
+    <h3>컬럼 정의 — 37개</h3>
+    <p>조회 경로는 마트 <code>list_outpatient</code> 이고 원천은 CRM 외래 예약임.
+       검사자 리스트와 겹치는 컬럼은 규칙이 같음.</p>
     <table>
-      <thead><tr><th>컬럼</th><th>규칙</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>상태</td><td><code>I</code> → 내원 · <code>H</code> → 퇴원. 그 외 코드는 원문 그대로</td></tr>
-        <tr><td>신/구환</td><td><code>CUSTOM.FIRST_DAY</code> 가 조회 기간 안이면 신환. <b>기간을 바꾸면 뒤집힘</b></td></tr>
-        <tr><td>만나이</td><td>화면이 생년월일에서 계산 — CSV 는 내려받은 날 기준</td></tr>
-        <tr><td>양/음</td><td><code>LUNAR_YN='Y'</code> 면 음, 아니면 양</td></tr>
-        <tr><td>담당의사</td><td><code>SELECT_DOC</code> 우선, 비면 <code>RESERVE_DOC</code>. <b>퇴직자(<code>EMP_STATE='N'</code>)는 이름이 안 붙음</b></td></tr>
-        <tr><td>내원동기 3단</td><td><code>MOTIVE_NEW02</code> 의 <code>Idx='1'</code> 중 <b>가장 최근 것 하나</b></td></tr>
+        <tr><td>1</td><td>No</td><td>—</td><td>—</td><td>—</td><td>페이지 반영 행 번호(1부터). CSV 도 같은 번호</td></tr>
+        <tr><td>2</td><td>예약일</td><td><code>reserveDate</code></td><td><code>reserve_date</code></td><td><code>RESERVATION.RESERVE_DATE</code></td><td><b>조회 기준 날짜</b>(일별·월별 · 주차 버튼). 기본 정렬 1순위</td></tr>
+        <tr><td>3</td><td>예약시간</td><td><code>reserveTime</code></td><td><code>reserve_time</code></td><td><code>RESERVATION.START_TIME</code></td><td>종료시각은 <code>endTime</code>/<code>end_time</code> 로 응답에 있으나 화면에 없음</td></tr>
+        <tr><td>4</td><td>상태</td><td><code>state</code></td><td><code>state</code></td><td><code>RESERVATION.RESERVE_STATE</code> → I 내원 · H 퇴원</td><td>배지. 그 외 코드는 원문. 원 코드는 <code>stateCode</code>/<code>state_code</code> 로 따로 응답(미표시). 상태 필터(전체·내원·퇴원)</td></tr>
+        <tr><td>5</td><td>진료구분</td><td><code>reserveType</code></td><td><code>reserve_type</code></td><td><code>MEDICAL_SUB_CFG.SUB_NAME</code> (<code>RESERVE_FLAG='F'</code>, <code>SUB_FLAG</code> = <code>RESERVE_JINRYO</code>)</td><td>이름이 없으면 <b>코드 값 그대로</b>. 빈 건이 월 40~50건(알려진 상태). 코드는 <code>reserveJinryoCode</code> 로 별도 응답(미표시). 필터 옵션은 조회 결과에서 동적 생성</td></tr>
+        <tr><td>6</td><td>신/구환</td><td><code>patientType</code></td><td><code>patient_type</code></td><td><code>CUSTOM.FIRST_DAY</code> 가 적재 SQL 의 <code>:from</code>~<code>:to</code> 안이면 신환, 아니면 구환</td><td>배지. <b>마트 적재 시 배치 조회 범위로 판정한 값이 굳음</b> — 화면 조회 기간을 바꿔도 안 변함. 데일리 배치(D-1 하루)면 FIRST_DAY = 예약일인 건만 신환이고, 수동 광역 재적재면 그 범위 기준 — 운영 데이터가 어느 쪽인지는 확인 필요. 필터(전체·신환·구환)</td></tr>
+        <tr><td>7</td><td>차트번호</td><td><code>chartNo</code></td><td><code>chart_no</code></td><td><code>CUSTOM.CUST_NUM</code></td><td>CSV 텍스트 강제(앞 0 보존). 검색 대상</td></tr>
+        <tr><td>8</td><td>고객명</td><td><code>name</code></td><td><code>name</code></td><td><code>CUSTOM.CUST_NAME</code></td><td>화면은 원문, CSV 만 마스킹. 「테스트」·「test」 포함 건 적재 제외. 검색 대상</td></tr>
+        <tr><td>9</td><td>고객명(영)</td><td><code>nameEng</code></td><td><code>name_eng</code></td><td><code>CUSTOM.CUST_ENAME</code></td><td>CSV 만 마스킹</td></tr>
+        <tr><td>10</td><td>등급</td><td><code>grade</code></td><td><code>grade</code></td><td><code>CUSTOM.LEVEL</code></td><td>R·A·B·C·G 배지 색. 빈 값 「—」</td></tr>
+        <tr><td>11</td><td>생년월일</td><td><code>birth</code></td><td><code>birth</code></td><td><code>CUSTOM.BIRTH_DAY</code></td><td>문자열 그대로</td></tr>
+        <tr><td>12</td><td>만나이</td><td>— (화면 파생)</td><td>—</td><td>—</td><td>생년월일(YYYY-MM-DD 꼴일 때만)로 <b>오늘 기준</b> 계산. 0~129 밖이면 「—」. CSV 는 내려받은 날 기준</td></tr>
+        <tr><td>13</td><td>양/음</td><td><code>lunar</code></td><td><code>lunar</code></td><td><code>CUSTOM.LUNAR_YN = 'Y'</code> → 음, 그 외 양</td><td>—</td></tr>
+        <tr><td>14</td><td>휴대전화</td><td><code>phone2</code></td><td><code>phone2</code></td><td><code>CUSTOM.CALL_NUM2</code></td><td>CSV 텍스트 강제 + 마스킹. 검색 대상</td></tr>
+        <tr><td>15</td><td>집전화</td><td><code>phone1</code></td><td><code>phone1</code></td><td><code>CUSTOM.CALL_NUM1</code></td><td>CSV 텍스트 강제 + 마스킹</td></tr>
+        <tr><td>16</td><td>이메일</td><td><code>email</code></td><td><code>email</code></td><td><code>CUSTOM.EMAIL</code></td><td>한 줄 말줄임, 마우스를 올리면 전문</td></tr>
+        <tr><td>17</td><td>담당의사</td><td><code>doctor</code></td><td><code>doctor</code></td><td><code>EMPLOYEE.EMP_NAME</code> ← <code>RESERVATION.SELECT_DOC</code> 우선, 비면 <code>RESERVE_DOC</code></td><td><b>퇴직자(<code>EMP_STATE='N'</code>)는 이름이 안 붙어 빈칸</b></td></tr>
+        <tr><td>18</td><td>예약상담사</td><td><code>counselor</code></td><td><code>counselor</code></td><td><code>EMPLOYEE.EMP_NAME</code> ← <code>RESERVATION.RESERVE_EMP</code></td><td>퇴직자 빈칸</td></tr>
+        <tr><td>19</td><td>등록직원</td><td><code>registeredBy</code></td><td><code>registered_by</code></td><td><code>EMPLOYEE.EMP_NAME</code> ← <code>RESERVATION.REGISTER_EMP</code></td><td>퇴직자 빈칸</td></tr>
+        <tr><td>20</td><td>해피콜</td><td><code>happyCall</code></td><td><code>happy_call</code></td><td><code>RESERVATION.HAPPYCALL_FLAG</code></td><td>Y 만 빨간 「Y」, 그 외 「—」</td></tr>
+        <tr><td>21</td><td>당일예약</td><td><code>todayFlag</code></td><td><code>today_flag</code></td><td><code>RESERVATION.TODAY_FLAG</code></td><td>Y 만 표시</td></tr>
+        <tr><td>22</td><td>구환플래그</td><td><code>oldFlag</code></td><td><code>old_flag</code></td><td><code>RESERVATION.OLD_FLAG</code></td><td>Y 만 표시. 신/구환(FIRST_DAY 파생)과는 다른 값</td></tr>
+        <tr><td>23</td><td>예약메모</td><td><code>comment</code></td><td><code>comment</code></td><td><code>RESERVATION.COMMENT</code></td><td>말줄임 + 툴팁</td></tr>
+        <tr><td>24</td><td>예약경로</td><td><code>route</code></td><td><code>route</code></td><td><code>RESERVATION.RESERVE_PATH</code></td><td>코드 원문(라벨 변환 없음). 빈 값 「—」</td></tr>
+        <tr><td>25</td><td>섹션</td><td><code>section</code></td><td><code>section</code></td><td><code>MOTIVE_NEW02.section</code> (<code>Idx='1'</code> 중 최신 1건)</td><td>빈 값 「—」</td></tr>
+        <tr><td>26</td><td>내원동기(대)</td><td><code>motiveL</code></td><td><code>motive_l</code></td><td><code>MOTIVE_NEW02.category01_name</code></td><td>같은 최신 1건. 빈 값 「—」</td></tr>
+        <tr><td>27</td><td>내원동기(중)</td><td><code>motiveM</code></td><td><code>motive_m</code></td><td><code>MOTIVE_NEW02.category02_name</code></td><td>같음</td></tr>
+        <tr><td>28</td><td>내원동기(세)</td><td><code>motiveS</code></td><td><code>motive_s</code></td><td><code>MOTIVE_NEW02.category03_name</code></td><td>같음</td></tr>
+        <tr><td>29</td><td>동기메모</td><td><code>motiveMemo</code></td><td><code>motive_memo</code></td><td><code>MOTIVE_NEW01.comments</code> 우선, 비면 <code>MOTIVE_NEW02.name</code></td><td>말줄임 + 툴팁</td></tr>
+        <tr><td>30</td><td>직업</td><td><code>job</code></td><td><code>job</code></td><td><code>CUSTOM.JOB</code></td><td>—</td></tr>
+        <tr><td>31</td><td>국적</td><td><code>nationality</code></td><td><code>nationality</code></td><td><code>NationCustom_CFG.Nation_CodeName</code> ← <code>CUSTOM.Nation_code</code></td><td>—</td></tr>
+        <tr><td>32</td><td>보험사</td><td><code>insurance</code></td><td><code>insurance</code></td><td><code>EtcCfg.EtcCodNam</code>(<code>EtcBseCod='InsuranceCfg'</code>) ← <code>CUSTOM.InsuranceCode</code></td><td>—</td></tr>
+        <tr><td>33</td><td>우편번호</td><td><code>zip</code></td><td><code>zip</code></td><td><code>CUSTOM.ZIP_CODE</code></td><td>CSV 텍스트 강제</td></tr>
+        <tr><td>34</td><td>주소1</td><td><code>addr1</code></td><td><code>addr1</code></td><td><code>CUSTOM.ADDR1</code></td><td>말줄임 + 툴팁</td></tr>
+        <tr><td>35</td><td>주소2</td><td><code>addr2</code></td><td><code>addr2</code></td><td><code>CUSTOM.ADDR2</code></td><td>말줄임 + 툴팁</td></tr>
+        <tr><td>36</td><td>최근내원일</td><td><code>lastVisit</code></td><td><code>last_visit</code></td><td><code>CUSTOM.LAST_DAY</code></td><td>—</td></tr>
+        <tr><td>37</td><td>고객메모</td><td><code>memo</code></td><td><code>memo</code></td><td><code>CUSTOM.ETC</code></td><td>말줄임 + 툴팁</td></tr>
       </tbody>
     </table>
-
-    <h3>컬럼 37개</h3>
-    <p>예약 정보(예약일·시간·상태·진료구분·경로·메모·해피콜·당일예약·구환플래그) +
-       고객 정보(차트·이름·등급·생년월일·연락처·주소·직업·국적·보험사) +
-       직원 정보(담당의사·예약상담사·등록직원) + 내원동기 4칸.
-       검사자 리스트와 겹치는 컬럼은 같은 원천·같은 규칙이라 표기가 일치함.</p>
+    <p>응답에만 있고 화면에 없는 필드: <code>reserveNum</code>(행 키) · <code>endTime</code> · <code>stateCode</code> · <code>reserveJinryoCode</code>.</p>
   `,
 
   s10: `

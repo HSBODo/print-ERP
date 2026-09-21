@@ -92,7 +92,7 @@ const SUMMARY = new Map([
 const TAB_ITEMS = [
   ['prd', '대쉬보드 요구사항'], ['metrics', '지표 정의'],
   ['flow', 'IA'], ['menus', '전메뉴 현황'],
-  ['wireframe', '화면 조회 쿼리문 <span class="beta">베타</span>'],
+  ['wireframe', '화면 조회 쿼리문'],
   ['goal', '26.09월 목표'], ['expansion', '26.10 이후 확장 전략'],
 ];
 /* 폴더 깊이만큼 거슬러 올라간다 — db/tables 는 두 칸 위가 문서 뿌리다. */

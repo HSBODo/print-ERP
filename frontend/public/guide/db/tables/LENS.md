@@ -1,18 +1,20 @@
 # LENS
 
-> **DB**: SOFTCRM | **컬럼**: 37개 | **행 수**: ~11,371 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 37개 | **행 수**: ~11,053 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-렌즈(드림렌즈 등) 처방/주문 기록 테이블. 고객당 복수 행(`CUST_NUM`+`SEQ`)으로 렌즈 구분(`LENS_GUBUN`)·종류(`LENS_KIND`)·주문일(`LENS_DATE`)·수령일(`LENS_RECV_DATE`)과 좌/우안 측정값(`RIGHT01~15`/`LEFT01~15`)을 보관한다.
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
-| PK | CUST_NUM | char(13) | → CUSTOM.CUST_NUM |
-| PK | SEQ | int | 고객 내 일련번호 |
+| PK | CUST_NUM | char(13) | |
+| PK | SEQ | int | |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 

@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">중단률 — 기획서</div>
-    <div class="sub">비앤빛 › 전환&amp;성공률 · <span class="mono">/stats/stop-rate</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">비앤빛 › 전환&amp;성공률 · <span class="mono">/stats/stop-rate</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -487,6 +487,33 @@
     <p>2024·2025 는 마트 시드, 2026 이후는 배치 적재 마트임.
        주차 레포트의 중단율은 <b>주차 집계에 값이 있는 연도만</b> 비교선을 그림 —
        마트에 없고 주차 라이브에만 있는 연도가 있어서임.</p>
+
+    <h3>컬럼 정의 — 월별 표 3개</h3>
+    <p>전용 API 없이 종합지표 응답의 중단 건수 · 검사수를 화면이 나눔.
+       차트와 표는 같은 값을 보임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>(행 머리) 연도</td><td><code>year</code></td><td><code>yr</code></td><td>검사일 연도</td><td>연도 칩 색과 같은 색선. 최신 연도만 굵게·값 라벨 표시</td></tr>
+        <tr><td>2</td><td>1월 ~ 12월</td><td>— (프론트 파생)</td><td>—</td><td><code>stopCount</code> ÷ <code>visionExam</code> × 100</td><td>소수 1자리 %. 미래 월이거나 <code>visionExam=0</code> 이면 빈칸(선도 끊김). Y축 0~10% 고정</td></tr>
+        <tr><td>3</td><td>평균</td><td>— (프론트 파생)</td><td>—</td><td>표시된 월 중단률의 산술평균</td><td>건수 가중 아님(연간 중단수 ÷ 연간 검사자 와 다름). 빈칸 월 제외</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 응답 필드 6개</h3>
+    <p>조회 경로는 마트 <code>mart_overall_exam_monthly</code> 이고 2026-05 이전은 시드 값임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>연도</td><td><code>year</code></td><td><code>yr</code></td><td>검사일 연도</td><td>—</td></tr>
+        <tr><td>2</td><td>월</td><td><code>month</code></td><td><code>mo</code></td><td>검사일 월</td><td>마트에 행이 있는 달만 응답(데이터 없는 미래 월은 없음). 프론트가 없는 달을 <code>undefined</code> → 빈칸 처리</td></tr>
+        <tr><td>3</td><td>— (분자: 중단수)</td><td><code>stopCount</code></td><td><code>stop_count</code></td><td><code>v_all_exam_list.exam_group='시력교정'</code> AND <code>stop_yn='Y'</code> 행 수 ← <code>list_exam.exam_stop</code> ← <code>EXAM.STOP_YN='Y'</code></td><td>시력교정만(백내장 <code>Cataract_Exam.Stop_YN</code> 은 안 셈). 중단 사유 화면의 「월 중단합계」와 같은 조건</td></tr>
+        <tr><td>4</td><td>— (분모: 시력교정 검사자)</td><td><code>visionExam</code></td><td><code>vision_exam</code></td><td><code>v_all_exam_list.exam_group='시력교정'</code> 행 수 ← <code>list_exam.exam_category</code> ← <code>EXAM</code> 행 중 당일 <code>RESERVATION D</code>(드림렌즈)만 있고 <code>M</code> 이 없는 건을 뺀 나머지</td><td>세션 단위. 리스트 필터(테스트 이름 · 순수 외래 유입 제외 · 백내장 중복 제거)가 적용된 모집단. <b>중단·취소 건도 분모에 들어 있음</b>(위 노트)</td></tr>
+        <tr><td>5</td><td>— (화면 미사용)</td><td><code>partial</code></td><td><code>partial</code></td><td>배치 시점의 진행 중인 월이면 true</td><td>이 화면은 미래 월 판정을 브라우저 날짜로 따로 함</td></tr>
+        <tr><td>6</td><td>— (화면 미사용)</td><td><code>totalExam</code> · <code>introGeneral</code> · <code>introCustomer</code> · <code>introStaff</code> · <code>jobOffice</code> · <code>jobStudent</code> · <code>jobEtc</code> · <code>visionBooked</code> · <code>cataractTotal</code> · <code>cataractOnly</code> · <code>cataractBooked</code> · <code>dreamlens</code> · <code>oneDay</code> · <code>oneDayBooked</code></td><td>같은 이름의 snake_case 14개</td><td>—</td><td>종합지표 화면용. 정의는 <a href="overall-exam.html">월별 검사자 종합지표</a> 5장</td></tr>
+      </tbody>
+    </table>
+
   
   </div>
 
@@ -544,6 +571,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

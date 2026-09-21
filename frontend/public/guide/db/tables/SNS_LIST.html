@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -111,11 +111,12 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 
       <article class="doc-card">
         <div class="markdown"><h1 id="snslist">SNS_LIST</h1>
-<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 4개 | <strong>행 수</strong>: ~414 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-08-10 (WORK DB 실측 대조)</p></blockquote>
+<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 4개 | <strong>행 수</strong>: ~412 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-04-20 (자동 생성)</p></blockquote>
 <h2 id="역할">역할</h2>
-<p>고객 SNS 계정 정보 테이블. 고객(<code>Cust_Num</code>)별 SNS 종류(<code>SNS_Code</code>)와 계정 ID를 보관하는 소규모 테이블 (~400행).</p>
+<p>&lt;!-- TODO: 한 줄 설명 --&gt;</p>
 <h2 id="pk-fk-join-키">PK / FK / JOIN 키</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">IDX</td><td style="text-align:left">int</td><td style="text-align:left"></td></tr><tr><td style="text-align:left">JOIN</td><td style="text-align:left">Cust_Num</td><td style="text-align:left">char(13)</td><td style="text-align:left">→ CUSTOM.CUST_NUM</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">IDX</td><td style="text-align:left">int</td><td style="text-align:left"></td></tr></tbody></table></div>
+<p>&lt;!-- TODO: FK, JOIN 키 추가 --&gt;</p>
 <h2 id="핵심-컬럼">핵심 컬럼</h2>
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left">IDX</td><td style="text-align:left">int</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left">PK</td></tr><tr><td style="text-align:left">Cust_Num</td><td style="text-align:left">char(13)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">SNS_Code</td><td style="text-align:left">char(3)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">ID</td><td style="text-align:left">varchar(50)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
 <h2 id="함정-gotchas">함정 (Gotchas)</h2>

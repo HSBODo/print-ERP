@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">예약률 — 기획서</div>
-    <div class="sub">비앤빛 › 전환&amp;성공률 · <span class="mono">/stats/cataract-reservation-rate</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">비앤빛 › 전환&amp;성공률 · <span class="mono">/stats/cataract-reservation-rate</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -501,6 +501,35 @@
          <b>단위가 눈 → 사람으로 바뀐 뒤 분모 재검토가 필요하다고 정리된 상태</b>임
          (<a href="../db/지표정의.html">db/지표정의.md §1.4.1</a>).</p>
     </div>
+
+    <h3>컬럼 정의 — 월별 표 3개</h3>
+    <p>탭(시력교정 · 백내장)마다 연도별 선 차트와 월별 표가 같은 값을 보임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>(행 머리) 연도</td><td><code>year</code></td><td><code>yr</code></td><td>검사일 연도</td><td>연도 칩 색과 같은 색선. 최신 연도만 굵게·라벨 표시</td></tr>
+        <tr><td>2</td><td>1월 ~ 12월</td><td><code>reservationRate</code></td><td><code>reservation_rate</code></td><td>아래 응답 필드 표 #5·#8</td><td><b><code>Math.ceil</code> 정수 %</b> 로 표시. 미래 월이거나 <code>examCount=0</code> 이면 빈칸(선도 끊김). 마트에는 소수 1자리 반올림 값이 있고 올림은 화면에서 함</td></tr>
+        <tr><td>3</td><td>평균</td><td>— (프론트 파생)</td><td>—</td><td>표시된 월 값(올림 후)의 산술평균을 다시 <code>Math.ceil</code></td><td>건수 가중 아님. 빈칸 월은 제외. 값이 하나도 없으면 빈칸</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 응답 필드 8개</h3>
+    <p>조회 경로는 마트 <code>mart_reservation_rate_monthly</code> 임.
+       2024·2025 와 2026-01~05 는 시드 값이라 배치가 덮지 않음.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>연도</td><td><code>year</code></td><td><code>yr</code></td><td>검사일 연도</td><td>—</td></tr>
+        <tr><td>2</td><td>월</td><td><code>month</code></td><td><code>mo</code></td><td>검사일 월</td><td>1~12. 마트에 없는 달은 <code>examCount=0</code> 으로 채워 응답</td></tr>
+        <tr><td>3</td><td>[시력교정 탭] — (분모)</td><td><code>examCount</code></td><td><code>exam_count</code> (<code>category='vision'</code>)</td><td><code>v_all_exam_list.exam_group='시력교정'</code> 세션 중 순수 외래 제외 통과분: 당일 M 예약(<code>list_reservation</code>, <code>reserve_state IN ('I','H')</code>) 있음 OR <code>RESERVATION O</code> 최대 예약일 ≥ 검사일 OR <code>OPERATIONDATA</code> 최대 수술일 ≥ 검사일</td><td>세션 단위. 원천은 <code>EXAM</code> + <code>RESERVATION</code> + <code>OPERATIONDATA</code>. 드림렌즈(당일 D 예약만)는 <code>exam_group</code> 에서 이미 빠짐</td></tr>
+        <tr><td>4</td><td>[시력교정 탭] — (분자)</td><td><code>surgeryBookedCount</code></td><td><code>surgery_booked_count</code> (<code>vision</code>)</td><td>#3 중 <code>RESERVATION.RESERVE_FLAG='O'</code> AND <code>RESERVE_STATE &lt;&gt; 'C'</code> 가 1건이라도 존재(<code>maxOAny IS NOT NULL</code>)</td><td><b>검사일 이후 조건이 없음</b>(<code>hasAnyO</code>) — 원본 MSSQL 쿼리(<code>select-vision-reservation-rate-monthly.sql</code>)도 같음. 위 「2026-06 통일」 서술은 시력교정 분자에는 적용되지 않은 상태. 확인 필요</td></tr>
+        <tr><td>5</td><td>시력교정 예약률</td><td><code>reservationRate</code></td><td><code>reservation_rate</code> (<code>vision</code>)</td><td>#4 ÷ #3 × 100</td><td>배치는 소수 1자리 반올림 저장(NUMERIC(6,1)). 레거시 직결 서비스만 <code>Math.ceil</code> 저장이었음. 화면 표시는 올림</td></tr>
+        <tr><td>6</td><td>[백내장 탭] — (분모)</td><td><code>examCount</code></td><td><code>exam_count</code> (<code>category='cataract'</code>)</td><td><code>v_all_exam_list.exam_group='백내장'</code> AND <code>cataract_class IN ('백내장','중단')</code> 의 고객×월 DISTINCT ← <code>list_cataract_exam</code> ← <code>RESERVATION.RESERVE_FLAG='H'</code>, <code>RESERVE_STATE NOT IN ('C','Y')</code>, <code>RESERVE_JINRYO &lt;&gt; '3'</code>, <code>RESERVE_SEQ &lt;&gt; 3</code> + <code>CUSTOM.MY_OPTOMETRIST</code> 가 <code>EMPLOYEE</code> 에 존재</td><td>사람 단위(같은 달 두 번 내원해도 1). 분류가 <code>CUSTOM</code> 의 현재 담당자를 보므로 과거월 소급 변동. 백내장 검사자 리스트의 「백내장」+「중단」 과 같은 모집단</td></tr>
+        <tr><td>7</td><td>[백내장 탭] — (분자)</td><td><code>surgeryBookedCount</code></td><td><code>surgery_booked_count</code> (<code>cataract</code>)</td><td>#6 중 <code>RESERVATION O</code> AND <code>RESERVE_JINRYO='4'</code> AND <code>STATE &lt;&gt; 'C'</code> 의 최대 예약일 ≥ 그 달 <b>첫 검사일</b>(<code>firstExamDate</code>)</td><td>기간 제한 있음(위 「분자에 기간 제한이 필요한 이유」). <code>JINRYO='4'</code> 를 빼면 시력교정 수술예약이 섞임</td></tr>
+        <tr><td>8</td><td>백내장 예약률</td><td><code>reservationRate</code></td><td><code>reservation_rate</code> (<code>cataract</code>)</td><td>#7 ÷ #6 × 100</td><td>#5 와 같은 저장·표시 규칙. 2026-07 실측 32 ÷ 57 → 56.1 저장 → 화면 57%</td></tr>
+      </tbody>
+    </table>
+
   
   </div>
 
@@ -572,6 +601,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

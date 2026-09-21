@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">시력교정 매출 그래프 — 기획서</div>
-    <div class="sub">회계 · <span class="mono">/accounting/vision-revenue-chart</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">회계 · <span class="mono">/accounting/vision-revenue-chart</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -358,7 +358,7 @@
 
   <div class="card" id="s1">
     <div class="card-head"><div class="chip">1</div><h2>개요 — 이 화면은 무엇인가</h2></div>
-    <p>SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프임..</p>
+    <p>SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프임.</p>
     <table>
       <thead><tr><th>항목</th><th>값</th></tr></thead>
       <tbody>
@@ -366,8 +366,8 @@
         <tr><td>화면 경로</td><td><span class="mono">/accounting/vision-revenue-chart</span></td></tr>
         <tr><td>메뉴 ID</td><td><code>accounting-vision-chart</code></td></tr>
         <tr><td>구현 상태</td><td><span class="tag t-auto">운영 중</span></td></tr>
-        <tr><td>접근 권한</td><td><b>ADMIN 전용</b> — ADMIN 이 아니면 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘</td></tr>
-        <tr><td>사이드바 노출</td><td>노출 — 단 ADMIN 롤에게만</td></tr>
+        <tr><td>접근 권한</td><td><b>임원 이상(ADMIN · DIRECTOR) 전용</b> — MANAGER · STAFF 는 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘. 백엔드도 <code>/api/accounting/**</code> 를 <code>hasAnyRole(ADMIN, DIRECTOR)</code> 로 막음</td></tr>
+        <tr><td>사이드바 노출</td><td>노출 — 단 ADMIN · DIRECTOR 롤에게만</td></tr>
         <tr><td>화면 컴포넌트</td><td><span class="mono">frontend/src/pages/accounting/VisionRevenueChartPage.tsx</span></td></tr>
       </tbody>
     </table>
@@ -429,23 +429,29 @@
   <div class="card" id="s4">
     <div class="card-head"><div class="chip">4</div><h2>조회 조건과 필터</h2></div>
     <p>조건은 <b>연도 선택뿐</b>임. 월별 집계 경로만 쓰므로 2023년부터 어느 해든 됨. 필터(진료구분·매입사 등)는 없음 —
-       쪼개 보려면 <a href="accounting-surgery-pivot.html">매출 집계</a>나 <a href="accounting-surgery-revenue.html">매출 내역</a>으로 감.</p>
+       쪼개 보려면 <a href="accounting-vision-summary.html">매출 집계</a>나 <a href="accounting-vision.html">매출 내역</a>으로 감.</p>
 
   </div>
 
   <div class="card" id="s5">
     <div class="card-head"><div class="chip">5</div><h2>표 · 지표 정의</h2></div>
+    <p>마트 <code>list_vision_receipt</code> 를 연 · 월로 GROUP BY 한 결과(<code>/api/accounting/vision-receipts/monthly?years=</code> · 응답 1행 = 연 · 월)를 받아 연도별 선과 월별 표로 그림.
+       원천은 SOFTCRM 비급여 수납 전표(<code>CstPrcSub</code>). 연도 후보는 적재 현황 <code>visionFrom</code> 의 연도부터 올해까지.</p>
+    <h3>컬럼 정의 — KPI 2개 · 차트 시리즈 1개 · 월별 표 3개</h3>
     <table>
-      <thead><tr><th>지표</th><th>정의</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>수납금액 (월)</td><td>그 달 모든 매출전표의 항목 금액 총합 — <b>매출 집계 [전체]의 총합계와 같은 수치</b>. 결제취소가 음수로 상계된 <b>순매출</b> 기준임</td></tr>
-        <tr><td>건수 (월)</td><td>그 달 매출전표 수</td></tr>
-        <tr><td>값 라벨</td><td>메인 연도 선에만 표시. 축약 표기 — 4,904,474,550 → <b>49.0억</b>, 만 단위 이하는 그대로</td></tr>
+        <tr><td>1</td><td>{연도}년 건수 (배지)</td><td><code>count</code> 의 12개월 합</td><td><code>COUNT(*)</code> of <code>list_vision_receipt</code></td><td><code>CstPrcSub</code> 전표 상세 행(취소 전표는 원행 + 취소행 2건)</td><td>선택 연도 중 가장 늦은 연도. 표의 '{연도}년 건수' 행 합계와 같음</td></tr>
+        <tr><td>2</td><td>{연도}년 수납금액 (배지)</td><td><code>amount</code> 의 12개월 합</td><td><code>SUM(amount)</code></td><td><code>CstPrcSub.CstPrc</code> (취소행은 −)</td><td>원 단위 그대로. 매출 집계 [전체] 의 총합계와 같은 수치 — 순매출</td></tr>
+        <tr><td>3</td><td>{연도}년 (선)</td><td><code>amount</code></td><td><code>SUM(amount)</code> (월)</td><td><code>CstPrcSub.CstPrc</code></td><td>연도마다 선 1개. 마지막 연도가 메인(굵은 선 · 값 라벨) — 범례 클릭으로 바꿈. 값 라벨 · Y축은 억/만 축약(4,904,474,550 → <b>49.0억</b>, 만 단위 이하는 그대로), 툴팁은 원 단위</td></tr>
+        <tr><td>4</td><td>{연도}년 건수 (표 행)</td><td><code>count</code></td><td><code>COUNT(*)</code> (월)</td><td>—</td><td>표에만 있고 선은 없음. CSV 에 포함</td></tr>
+        <tr><td>5</td><td>1월 ~ 12월 (열)</td><td><code>month</code></td><td><code>EXTRACT(MONTH FROM receipt_date)</code></td><td><code>CstPrcSub.CstDte</code></td><td>값 없는 달은 null → 빈 칸(선도 끊김). 원 단위 · 천 단위 구분</td></tr>
+        <tr><td>6</td><td>합계 (열)</td><td>— (파생)</td><td>—</td><td>—</td><td>12개월 합(null 은 0). CSV 마지막 열</td></tr>
       </tbody>
     </table>
     <div class="note">
       <div class="h">집계 화면과 숫자가 어긋나면 버그임</div>
-      <p>이 그래프와 <a href="accounting-surgery-pivot.html">매출 집계</a>는 같은 월별 집계에서 읽음.
+      <p>이 그래프와 <a href="accounting-vision-summary.html">매출 집계</a>는 같은 월별 집계에서 읽음.
          같은 달 수치가 다르면 집계 생성이 꼬인 것 — 두 화면을 맞춰 보는 것이 마감 전 대사 절차임.</p>
     </div>
 
@@ -453,15 +459,25 @@
 
   <div class="card" id="s6">
     <div class="card-head"><div class="chip">6</div><h2>데이터 소스</h2></div>
-    <p>조회 경로가 잡히지 않았음 — 미구현(placeholder)이거나 화면이 조회를 하지 않는 정적 문서임.</p>
+    <p>마트(Postgres) 전용 — 배치가 적재한 테이블만 읽음.</p>
     <table>
       <thead><tr><th>구분</th><th>테이블 · 뷰</th></tr></thead>
       <tbody>
-        <tr><td>마트 (Postgres)</td><td>—</td></tr>
+        <tr><td>마트 (Postgres)</td><td><code>list_medical_receipt</code> · <code>list_vision_receipt</code> · <code>mart_medical_receipt_monthly</code></td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td>—</td></tr>
       </tbody>
     </table>
-
+    <details class="sqlrefs">
+      <summary>SQL 리소스 6개 — 펼쳐 보기</summary>
+      <ul>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-accounting-status.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-list-medical-receipt.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-list-vision-receipt.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-medical-receipt-monthly-from-list.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-medical-receipt-monthly.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-vision-receipt-monthly.sql</span></li>
+      </ul>
+    </details>
     <div class="note warn">
       <div class="h">자동 추출 — 확정 전 검토</div>
       <p>위 목록은 <b>컨트롤러가 주입받는 클래스를 따라가며</b> 모은 것임.
@@ -472,8 +488,21 @@
   </div>
 
   <div class="card" id="s7">
-    <div class="card-head"><div class="chip">7</div><h2>API — 0개</h2></div>
-    <p>이 화면이 호출하는 API 가 없음. 화면이 조회를 하지 않는 정적 문서이거나, 호출 경로가 자동 추출로 잡히지 않았음.</p>
+    <div class="card-head"><div class="chip">7</div><h2>API — 5개</h2></div>
+    <table>
+      <thead><tr><th>메서드 · 경로</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">GET /api/accounting/medical-receipts</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/medical-receipts/monthly</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/status</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/vision-receipts</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/vision-receipts/monthly</span></td></tr>
+      </tbody>
+    </table>
+    <h3>백엔드 컨트롤러</h3>
+    <ul>
+      <li><span class="mono">backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java</span></li>
+    </ul>
   </div>
 
   <div class="card" id="s8">
@@ -481,7 +510,8 @@
     <table>
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
-        <tr><td>ADMIN 전용</td><td><b>예</b></td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td><b>예</b></td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

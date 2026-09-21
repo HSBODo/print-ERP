@@ -47,6 +47,9 @@ const idSet = (marker) =>
   new Set([...sliceBlock(marker, '[', ']').matchAll(/'([^']+)'/g)].map((x) => x[1]))
 const adminOnly = idSet('const ADMIN_ONLY_PAGE_IDS')
 const hidden = idSet('const HIDDEN_MENU_IDS')
+// 임원(ADMIN·DIRECTOR) 전용 목록 — 2026-09-17 회계 5종이 ADMIN_ONLY 에서 이쪽으로 옮겨 갔다.
+// 백엔드 SecurityConfig 의 /api/accounting/** 매처(hasAnyRole ADMIN·DIRECTOR)와 짝이다. 목록이 없는 레포면 빈 집합.
+const executiveOnly = navSrc.includes('const EXECUTIVE_ONLY_PAGE_IDS') ? idSet('const EXECUTIVE_ONLY_PAGE_IDS') : new Set()
 
 /* ---------- 3. 사이드바 트리 (섹션 > 그룹 > 페이지) ---------- */
 const treeSrc = navSrc.slice(navSrc.indexOf('const rawMenuItems'))
@@ -138,6 +141,20 @@ const normPath = (raw) => {
   if (p.endsWith('/')) p = p.slice(0, -1) + '/{id}'
   return p
 }
+/**
+ * 경로를 모듈 상수로 빼 둔 api 모듈 보정 — `const BASE = '/admin/users'` 뒤 `api.get(BASE)` · `api.put(`${BASE}/${id}`)`.
+ * EP 정규식은 문자열 리터럴만 읽으므로, 대문자 상수를 값으로 치환한 사본에서 훑는다.
+ * 이걸 빼면 계정 관리(api/admin/users.ts)가 엔드포인트 0개로 잡힌다.
+ */
+const inlinePathConsts = (src) => {
+  let out = src
+  for (const [, name, value] of src.matchAll(/\bconst\s+([A-Z][A-Z0-9_]*)\s*=\s*['"`](\/[^'"`$]*)['"`]/g)) {
+    out = out.split('${' + name + '}').join(value)
+    const call = new RegExp(String.raw`(api\.(?:get|post|put|patch|delete)\s*(?:<[^>]*>)?\s*\(\s*)` + name + String.raw`\b`, 'g')
+    out = out.replace(call, (_, head) => `${head}'${value}'`)
+  }
+  return out
+}
 const endpointsOf = (entry) => {
   if (!entry) return { endpoints: [], files: [] }
   const seen = new Set()
@@ -149,7 +166,7 @@ const endpointsOf = (entry) => {
     seen.add(f)
     if (/\.test\./.test(f)) continue
     const s = read(f)
-    for (const mm of s.matchAll(EP)) out.add(`${mm[1].toUpperCase()} /api${normPath(mm[2])}`)
+    for (const mm of inlinePathConsts(s).matchAll(EP)) out.add(`${mm[1].toUpperCase()} /api${normPath(mm[2])}`)
     // import 문마다 (모듈, 가져온 이름들) 을 본다 — 배럴(index.ts)은 이름별로 실제 모듈까지 내려간다.
     // 타입 전용 import 와 api/hooks 밖의 모듈은 따라가지 않는다 — 페이지 로컬 util 이
     // 상수 하나 때문에 남의 도메인 api 를 끌어와 엔드포인트 목록을 오염시킨다.
@@ -177,11 +194,14 @@ const barrelTargets = (indexFile, names) => {
   const s = read(indexFile)
   const targets = new Set()
   const stars = []
+  const found = new Set()
   for (const mm of s.matchAll(/export\s*(?:type\s*)?\{([^}]*)\}\s*from\s*'([^']+)'/g)) {
     const exported = [...mm[1].matchAll(/[A-Za-z_$][\w$]*/g)].map((x) => x[0])
-    if (exported.some((e) => names.includes(e))) {
+    const hit = exported.filter((e) => names.includes(e))
+    if (hit.length) {
       const r = resolveImport(indexFile, mm[2])
       if (r) targets.add(r)
+      for (const h of hit) found.add(h)
     }
   }
   for (const mm of s.matchAll(/export\s*\*\s*from\s*'([^']+)'/g)) {
@@ -193,6 +213,11 @@ const barrelTargets = (indexFile, names) => {
     if (stars.length) return stars
     return [indexFile]
   }
+  // 재수출에서 못 찾은 이름이 남으면 배럴 자신이 정의한 것이다 — 배럴도 훑는다.
+  // 예: api/accounting/index.ts 는 타입만 './types' 에서 재수출하고 accountingApi 는 안에서 정의한다.
+  // 이걸 빼면 타입 파일만 따라가 회계 5화면의 엔드포인트가 0개로 잡힌다.
+  // (`import { a, type B }` 의 인라인 `type` 토큰은 이름이 아니다.)
+  if (names.some((n) => n !== 'type' && !found.has(n))) targets.add(indexFile)
   return [...targets]
 }
 
@@ -248,7 +273,7 @@ const controllersFor = (eps) => {
 }
 
 /** 컨트롤러 → 참조 클래스(같은 레포) → SqlLoader 로 읽는 .sql 리소스 경로. */
-const sqlRefsOf = (controllers) => {
+const sqlRefsOf = (controllers, entities = new Set()) => {
   const seen = new Set()
   const sqls = new Set()
   const visit = (name, depth) => {
@@ -257,6 +282,8 @@ const sqlRefsOf = (controllers) => {
     const node = byName.get(name)
     if (!node) return
     for (const mm of node.s.matchAll(/"(sql\/[A-Za-z0-9_\-/]+\.sql)"/g)) sqls.add(mm[1])
+    // JPA 리포지터리는 .sql 이 없다 — `extends JpaRepository<User, Long>` 의 엔티티를 모아 테이블로 푼다(jpaTablesOf).
+    for (const mm of node.s.matchAll(/extends\s+(?:Jpa|Crud|ListCrud|PagingAndSorting)Repository\s*<\s*([A-Z][A-Za-z0-9]*)/g)) entities.add(mm[1])
     // 주입된 협력자만 따라간다 (final 필드 타입). 본문에 스쳐 나온 클래스명까지 좇으면
     // 남의 도메인 SQL 이 통째로 딸려 들어온다.
     for (const mm of node.s.matchAll(/(?:private|protected|public)\s+final\s+([A-Za-z0-9_.<>,\s]+?)\s+[a-z][A-Za-z0-9_]*\s*[;=]/g)) {
@@ -277,6 +304,18 @@ const sqlRefsOf = (controllers) => {
   }
   for (const c of controllers) visit(path.basename(c, '.java'), 0)
   return [...sqls].sort()
+}
+
+/** JPA 엔티티 → 테이블명. @Table(name) 이 없으면 Spring 기본 명명(스네이크 케이스)을 따른다. */
+const jpaTablesOf = (entities) => {
+  const tables = new Set()
+  for (const e of entities) {
+    const node = byName.get(e)
+    if (!node || !/@Entity\b/.test(node.s)) continue
+    const mm = node.s.match(/@Table\s*\([^)]*?\bname\s*=\s*"([^"]+)"/)
+    tables.add(mm ? mm[1] : e.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase())
+  }
+  return [...tables].sort()
 }
 
 /** .sql 파일에서 FROM/JOIN 테이블을 뽑는다. CTE 이름은 뺀다. */
@@ -309,8 +348,11 @@ const out = pages.map((p) => {
   const comp = componentOf[p.id] ?? null
   const { endpoints, files } = endpointsOf(comp)
   const controllers = controllersFor(endpoints)
-  const sqlRefs = sqlRefsOf(controllers)
+  const entities = new Set()
+  const sqlRefs = sqlRefsOf(controllers, entities)
   const tables = tablesFromSql(sqlRefs)
+  // 앱 운영 테이블(JPA 엔티티, Postgres) — 배치 마트가 아니므로 martTables 와 섞지 않는다.
+  const appTables = jpaTablesOf(entities)
   // 마트(Postgres)는 전부 소문자 스네이크, CRM(MSSQL) 원천은 대문자가 섞인다.
   const martTables = tables.filter((t) => /^[a-z0-9_.]+$/.test(t))
   const crmTables = tables.filter((t) => !/^[a-z0-9_.]+$/.test(t))
@@ -318,6 +360,7 @@ const out = pages.map((p) => {
     ...p,
     status: status[p.id] ?? 'pending',
     adminOnly: adminOnly.has(p.id),
+    executiveOnly: executiveOnly.has(p.id),
     hidden: hidden.has(p.id),
     component: comp,
     reachedFiles: files.length,
@@ -327,8 +370,9 @@ const out = pages.map((p) => {
     tables,
     martTables,
     crmTables,
+    appTables,
     source:
-      tables.length === 0 ? 'unknown'
+      tables.length === 0 ? (appTables.length ? 'app' : 'unknown')
       : crmTables.length === 0 ? 'mart'
       : martTables.length === 0 ? 'crm'
       : 'mixed',

@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -111,9 +111,9 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 
       <article class="doc-card">
         <div class="markdown"><h1 id="examfu">EXAM_FU</h1>
-<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 35개 | <strong>행 수</strong>: ~15 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-08-10 (WORK·PROD DB 실측 대조)</p></blockquote>
+<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 35개 | <strong>행 수</strong>: ~15 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-04-20 (자동 생성)</p></blockquote>
 <h2 id="역할">역할</h2>
-<p>검사 추적(F/U) 이력 테이블. EXAM(고객당 1행 덮어쓰기)의 이력 보완용 구조이나 <strong>실질 미사용</strong> — WORK 15행 / PROD 14행 (2026-08-10 기준).</p>
+<p>&lt;!-- TODO: 한 줄 설명 --&gt;</p>
 <h2 id="pk-fk-join-키">PK / FK / JOIN 키</h2>
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">CUST_NUM</td><td style="text-align:left">char(13)</td><td style="text-align:left"></td></tr><tr><td style="text-align:left">PK</td><td style="text-align:left">SEQ</td><td style="text-align:left">int</td><td style="text-align:left"></td></tr></tbody></table></div>
 <p>&lt;!-- TODO: FK, JOIN 키 추가 --&gt;</p>
@@ -121,7 +121,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left">CUST_NUM</td><td style="text-align:left">char(13)</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left">PK</td></tr><tr><td style="text-align:left">SEQ</td><td style="text-align:left">int</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left">PK</td></tr><tr><td style="text-align:left">EXAM_DATE</td><td style="text-align:left">char(10)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">EXAM_MEMO</td><td style="text-align:left">varchar(1000)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT01</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT01</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT02</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT02</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT03</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT03</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT04</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT04</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT05</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT05</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT06</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
 <blockquote><p>외 20개 컬럼 — <code>SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = &#39;EXAM_FU&#39;</code> 으로 전체 조회</p></blockquote>
 <h2 id="함정-gotchas">함정 (Gotchas)</h2>
-<ul><li><strong>실질 미사용 테이블</strong>: PROD 14행뿐이라 과거 검사·중단 시점을 복원할 소스가 되지 못한다. EXAM의 덮어쓰기 구조로 인한 시점 통계 왜곡은 이 테이블로 보완할 수 없음 (<a href="EXAM.html">EXAM.md</a> 함정 참조).</li></ul>
+<p>&lt;!-- TODO: 이 테이블의 알려진 함정 --&gt;</p>
 <h2 id="사용처">사용처</h2>
 <p>&lt;!-- TODO: grep -r &#39;FROM EXAM_FU\|JOIN EXAM_FU&#39; routes services --&gt;</p>
 <h2 id="관련-문서">관련 문서</h2>

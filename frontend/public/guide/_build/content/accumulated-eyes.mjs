@@ -92,20 +92,27 @@ export default {
       </tbody>
     </table>
 
-    <h3>표 컬럼</h3>
+    <h3>컬럼 정의 — 12개</h3>
+    <p>조회 경로는 CRM 누적 안수 테이블 → 마트 <code>list_accumulated_eyes</code> 임.
+       활성 행만 보이고 기본 정렬은 누적 안수 내림차순임.</p>
     <table>
-      <thead><tr><th>화면 라벨</th><th>응답 필드</th><th>원천 컬럼</th><th>비고</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>수술일</td><td><code>operationDate</code></td><td><code>OPERATION_DATE</code></td><td>YYYY-MM-DD</td></tr>
-        <tr><td>차트번호 · 이름 · 연락처</td><td><code>custNum</code> · <code>customName</code> · <code>customPhone</code></td><td><code>CUST_NUM</code> · <code>CUSTOM_NAME</code> · <code>CUSTOM_PHONE</code></td><td>원천에 비정규화된 값. CUSTOM 과 다시 조인하지 않음</td></tr>
-        <tr><td>구분</td><td><code>operationCategory</code></td><td><code>OPERATION_CATEGORY</code></td><td>시력교정술 · 렌즈삽입 · 백내장 · 드림렌즈 · 재수술 · 노안 — 원문 그대로. 새 값은 회색 배지</td></tr>
-        <tr><td>수술 코드</td><td><code>operationCode</code></td><td><code>OPERATION_CODE</code></td><td>예: <code>SMILE+X(P)</code> · <code>REMO+X+CTR</code></td></tr>
-        <tr><td>가중치 코드 · 가중치</td><td>화면 파생</td><td>—</td><td>수술 코드를 대문자 부분 문자열로 판정해 배지와 합계(아래)로 보여 줌. <b>설명용</b>이며 정렬 불가</td></tr>
-        <tr><td>안(R/L)</td><td><code>eyePosition</code></td><td><code>EYE_POSITION</code></td><td>'' 이면 표기 없음</td></tr>
-        <tr><td>누적 안수</td><td><code>accumulatedEyeCount</code></td><td><code>ACCUMULATED_EYE_COUNT</code></td><td>기본 정렬 열(내림차순)</td></tr>
-        <tr><td>수정 시각</td><td><code>lastModifiedDate</code></td><td><code>LASTMODIFIED_DATE</code></td><td>원천 배치가 마지막으로 손댄 시각</td></tr>
+        <tr><td>1</td><td>No</td><td>—</td><td>—</td><td>—</td><td>정렬 후 순번(페이지 반영). 정렬 불가. CSV 제외</td></tr>
+        <tr><td>2</td><td>수술일</td><td><code>operationDate</code></td><td><code>operation_date</code></td><td><code>OPERATION_DATE</code></td><td><b>조회 기준</b>(from ≤ 날짜 &lt; to + 1일). YYYY-MM-DD. 서버 기본 정렬 1순위(내림차순)</td></tr>
+        <tr><td>3</td><td>차트번호</td><td><code>custNum</code></td><td><code>cust_num</code> (BIGINT)</td><td><code>CUST_NUM</code></td><td>응답은 문자열. 「차트」 검색 대상 — 부분일치 + 숫자면 정확일치</td></tr>
+        <tr><td>4</td><td>이름</td><td><code>customName</code></td><td><code>custom_name</code></td><td><code>CUSTOM_NAME</code></td><td>「이름」 검색 대상(대소문자 무시 부분일치). 마스킹 없음</td></tr>
+        <tr><td>5</td><td>연락처</td><td><code>customPhone</code></td><td><code>custom_phone</code></td><td><code>CUSTOM_PHONE</code></td><td>「전화」 검색 대상. 마스킹 없음</td></tr>
+        <tr><td>6</td><td>구분</td><td><code>operationCategory</code></td><td><code>operation_category</code></td><td><code>OPERATION_CATEGORY</code></td><td>원문 그대로 배지: 시력교정술 · 렌즈삽입 · 백내장 · 드림렌즈 · 재수술 · 노안. 그 외 값은 회색</td></tr>
+        <tr><td>7</td><td>수술 코드</td><td><code>operationCode</code></td><td><code>operation_code</code></td><td><code>OPERATION_CODE</code></td><td>예: <code>SMILE+X(P)</code> · <code>REMO+X+CTR</code>. 가중치 판정의 입력</td></tr>
+        <tr><td>8</td><td>가중치 코드</td><td>—</td><td>—</td><td>—</td><td>화면 파생 — 수술 코드를 대문자로 바꿔 부분 문자열 판정한 규칙 배지(기본 · +X(P) 또는 +X · REMO+CTR · 수술일 2024-01-01 이전만 +W.V · +CONT). 정렬 불가. CSV 는 라벨을 ' | ' 로 이음</td></tr>
+        <tr><td>9</td><td>가중치</td><td>—</td><td>—</td><td>—</td><td>화면 파생 — 8번 배지 개수(+N). 설명용이며 원천 번호를 다시 계산하지 않음. 정렬 불가. CSV 숫자</td></tr>
+        <tr><td>10</td><td>안(R/L)</td><td><code>eyePosition</code></td><td><code>eye_position</code></td><td><code>EYE_POSITION</code></td><td>'R' | 'L'. 빈 값이면 표기 없음</td></tr>
+        <tr><td>11</td><td>누적 안수</td><td><code>accumulatedEyeCount</code></td><td><code>accumulated_eye_count</code></td><td><code>ACCUMULATED_EYE_COUNT</code></td><td>화면 기본 정렬(내림차순 → 클릭마다 오름차순 → 서버 순). 천 단위 콤마. 「안수」 검색 대상(부분일치 + 숫자면 정확일치)</td></tr>
+        <tr><td>12</td><td>수정 시각</td><td><code>lastModifiedDate</code></td><td><code>last_modified_date</code></td><td><code>LASTMODIFIED_DATE</code></td><td>YYYY-MM-DD HH:MM:SS. 원천 배치가 마지막으로 손댄 시각</td></tr>
       </tbody>
     </table>
+    <p>응답의 <code>id</code>(원천 UUID, 행 key) 와 <code>createDate</code> 는 화면에 없음. 목록 위 「총 N행」은 조회 결과 행 수(눈 단위)임.</p>
 
     <h3>가중치 — 수술 1건당 번호 증가값</h3>
     <table>

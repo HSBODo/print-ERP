@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -70,9 +70,11 @@ html,body{height:100%}body{display:flex;flex-direction:column}
     <aside class="sidenav">
       <div class="nav-title">DB 문서</div>
       <nav><a class="" href="검사자리스트-컬럼정의.html">검사자리스트-컬럼정의</a>
+<a class="" href="비앤빛대시보드-사용테이블목록.html">비앤빛대시보드-사용테이블목록</a>
 <a class="active" href="예약통계_백내장-데이터소스-분석.html">예약통계_백내장-데이터소스-분석</a>
 <a class="" href="중단사유-분류-정의.html">중단사유-분류-정의</a>
 <a class="" href="지표정의.html">지표정의</a>
+<a class="" href="list-migration-plan.html">list-migration-plan</a>
 <a class="" href="mart-inventory.html">mart-inventory</a></nav>
     </aside>
     <main class="main">
@@ -132,7 +134,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 <h3 id="결정-배경-여전히-유효">결정 배경 (여전히 유효)</h3>
 <ul><li><strong>콜</strong>: RSS 합이 레거시 월간보고값과 2·3·4월 <strong>단위까지 정확 일치</strong>(1월만 1,476 vs 1,432, +44) → 정의 확증.</li><li><strong>온라인</strong>: RSS(538·504)가 레거시(493·465)보다 <strong>일관되게 +40~79 높다.</strong> 원인은 <strong>네이버 하나</strong> — RSS 네이버(4월 300)가 라이브 <code>RESERVE_PATH=&#39;NAVER&#39;</code>(225)보다 과다. 홈·카톡은 잘 맞는다. 네이버·카톡은 CRM 밖 다중소스라 원래 재현 불가.</li><li>레거시 월간보고는 <strong>담당자 2명이 서로 다르게 집계</strong>해 비일관 → 작업자 PDF(=RSS 스냅샷)로 단일화했다.</li></ul>
 <h3 id="값은-2026-07-24-에-뒤집혔다">⚠️ 값은 2026-07-24 에 뒤집혔다</h3>
-<p>당시 확정값(2026-01 종합 2,548 등)은 <strong>담당자 지정 확정값으로 대체</strong>됐다. 현행 원천은 <code>backend/src/main/resources/sql/mart/V24__reservation_overall_monthly_2026_h1_seed.sql</code>이며 2026-01~05 는 시드가 못 박고 2026-06 부터 라이브 SUM 이다.</p>
+<p>당시 확정값(2026-01 종합 2,548 등)은 <strong>담당자 지정 확정값으로 대체</strong>됐다. 현행 원천은 <code>backend/src/main/resources/sql/mart/reservation/seeds/V24__reservation_overall_monthly_2026_h1_seed.sql</code>이며 2026-01~05 는 시드가 못 박고 2026-06 부터 라이브 SUM 이다.</p>
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">월</th><th style="text-align:right">종합</th><th style="text-align:right">콜</th><th style="text-align:right">온라인</th></tr></thead><tbody><tr><td style="text-align:left">2026-01</td><td style="text-align:right">2,425</td><td style="text-align:right">1,432</td><td style="text-align:right">993</td></tr><tr><td style="text-align:left">2026-02</td><td style="text-align:right">1,892</td><td style="text-align:right">1,132</td><td style="text-align:right">760</td></tr><tr><td style="text-align:left">2026-03</td><td style="text-align:right">1,318</td><td style="text-align:right">836</td><td style="text-align:right">482</td></tr><tr><td style="text-align:left">2026-04</td><td style="text-align:right">1,243</td><td style="text-align:right">750</td><td style="text-align:right">493</td></tr><tr><td style="text-align:left">2026-05</td><td style="text-align:right">1,153</td><td style="text-align:right">688</td><td style="text-align:right">465</td></tr><tr><td style="text-align:left">2026-06~</td><td style="text-align:right">(라이브 SUM)</td><td style="text-align:right"></td><td style="text-align:right"></td></tr></tbody></table></div>
 <blockquote><p>구 문서의 <em>&quot;레거시값(온라인 493·465, 종합 2,425)으로 되돌리지 말 것&quot;</em> 경고는 <strong>뒤집혔다</strong> — 실제로 레거시 계열 값으로 되돌아갔다. 구 RSS 값(2,548 / 1,476 / 1,072 등)을 화면 값으로 쓰지 말 것. 온라인 예약 공식의 현행 정의는 <a href="../databatch/legacy-homepage-source-strategy.html">databatch/legacy-homepage-source-strategy.md §5</a>.</p></blockquote>
 <hr>

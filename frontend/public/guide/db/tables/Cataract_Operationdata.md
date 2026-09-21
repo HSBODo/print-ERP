@@ -1,11 +1,11 @@
 # Cataract_Operationdata
 
-> **DB**: SOFTCRM | **컬럼**: 144개 | **행 수**: ~5,537 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 144개 | **행 수**: ~5,412 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-백내장 수술 데이터 테이블. 좌/우안 별도 수술일(`OPERATIONR_DATE`/`OPERATIONL_DATE`)·수술의(`OPERATIONR_DOC`/`OPERATIONL_DOC`, 2차 `OperationR_Doc2`/`OperationL_Doc2`)·스태프(`OpREmp1~3`/`OpLEmp1~3`) 구조. 시력교정 `OPERATIONDATA`와 UNION하여 전체 수술 통계를 산출한다 ([OPERATIONDATA.md](./OPERATIONDATA.md) 참조).
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
@@ -39,8 +39,7 @@
 
 ## 함정 (Gotchas)
 
-- **PK 없음(heap) + CUST_NUM 유일하지 않음**: WORK 실측(2026-08-10) 총 5,537행 / 고유 고객 5,459 (**중복 78건**). OPERATIONDATA(PK=CUST_NUM, 고객당 1행)와 달리 고객당 복수 행이 존재할 수 있으므로 "고객당 1행" 가정 금지.
-- **좌/우안 수술일이 별도 컬럼**: 수술일 기준 집계 시 `OPERATIONR_DATE`·`OPERATIONL_DATE` 양쪽을 모두 고려해야 한다 (한쪽만 있는 행, 양쪽 날짜가 다른 행 존재 가능).
+<!-- TODO: 이 테이블의 알려진 함정 -->
 
 ## 사용처
 

@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -146,10 +146,10 @@ GROUP BY YEAR(r.InsertedDateTime), MONTH(r.InsertedDateTime)</code></pre>
 <blockquote><p><strong>예약자 리스트는 위 §1·§2와 완전히 동일한 조건</strong>을 씀. 리스트 행 수 = 예약 종합 건수가 되도록 맞춰져 있음.</p></blockquote>
 <hr>
 <h2 id="6-관련-쿼리-파일">6. 관련 쿼리 파일</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/reservation-list/reservation-list.sql</code></td><td style="text-align:left">예약자 리스트 (채널 분류 포함)</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/reservation/monthly-by-type.sql</code></td><td style="text-align:left">수술·외래·드림렌즈 예약 월별</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/reservation/daily-trend.sql</code></td><td style="text-align:left">일별 추이</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/reservation/hourly-distribution.sql</code></td><td style="text-align:left">시간대 분포</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/reservation/source-breakdown.sql</code></td><td style="text-align:left">유입 경로 분해</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/reservation/summary.sql</code></td><td style="text-align:left">요약</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">파일</th><th style="text-align:left">용도</th></tr></thead><tbody><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/reservation/list/select-reservation-list.sql</code></td><td style="text-align:left">예약자 리스트 (채널 분류 포함)</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/reservation/select-monthly-by-type.sql</code></td><td style="text-align:left">수술·외래·드림렌즈 예약 월별</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/reservation/daily-trend.sql</code></td><td style="text-align:left">일별 추이</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/reservation/hourly-distribution.sql</code></td><td style="text-align:left">시간대 분포</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/reservation/source-breakdown.sql</code></td><td style="text-align:left">유입 경로 분해</td></tr><tr><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/reservation/summary.sql</code></td><td style="text-align:left">요약</td></tr></tbody></table></div>
 <hr>
 <h2 id="남은-확인-사항">남은 확인 사항</h2>
-<ul><li><strong>예약건수(<code>/stats/reservation</code>) 집계 기준 차이</strong> — <code>monthly-by-type.sql</code>은 <code>RESERVE_STATE &lt;&gt; &#39;C&#39;</code> + 예약일 기준으로, 위 종합 정의(등록일)와 기준이 다름.</li><li><strong>카카오 채널 편입 여부</strong> — 해피톡 데이터를 온라인에 합칠지 업무 판단 필요.</li></ul>
+<ul><li><strong>예약건수(<code>/stats/reservation</code>) 집계 기준 차이</strong> — <code>select-monthly-by-type.sql</code>은 <code>RESERVE_STATE &lt;&gt; &#39;C&#39;</code> + 예약일 기준으로, 위 종합 정의(등록일)와 기준이 다름.</li><li><strong>카카오 채널 편입 여부</strong> — 해피톡 데이터를 온라인에 합칠지 업무 판단 필요.</li></ul>
 <hr>
 <h2 id="관련-문서">관련 문서</h2>
 <ul><li><a href="../2-검사.html">검사</a> — 다음 단계</li><li><a href="../../db/tables/RESERVATION.html">tables/RESERVATION.md</a> — 예약 테이블 함정</li></ul></div>

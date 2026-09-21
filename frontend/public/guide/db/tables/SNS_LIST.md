@@ -1,18 +1,19 @@
 # SNS_LIST
 
-> **DB**: SOFTCRM | **컬럼**: 4개 | **행 수**: ~414 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 4개 | **행 수**: ~412 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-고객 SNS 계정 정보 테이블. 고객(`Cust_Num`)별 SNS 종류(`SNS_Code`)와 계정 ID를 보관하는 소규모 테이블 (~400행).
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
 | PK | IDX | int | |
-| JOIN | Cust_Num | char(13) | → CUSTOM.CUST_NUM |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 

@@ -1,18 +1,19 @@
 # PTNTSIGN_New
 
-> **DB**: IPLUS | **컬럼**: 19개 | **행 수**: ~104,941 (IPLUS_WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (IPLUS_WORK DB 실측 대조 — 컬럼 2개 추가 반영)
+> **DB**: IPLUS | **컬럼**: 17개 | **행 수**: ~103,774 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-IPLUS(EMR 계열) 환자 서명/동의 테이블. 병원코드(`HOSPCODE`)·환자번호(`PTNTIDNO`) 단위로 동의 항목(`Agree1~4`, `Agree10~11`, `AI_1`/`AI_2`)과 서명 이미지(`Sign1`/`Sign2`), 환자 인적사항(`pNm`/`pHpp`/`pBith`)을 기록한다.
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
-| PK | (없음 — heap 테이블, 2026-08-10 실측 확인) | | |
-| JOIN | PTNTIDNO | varchar(15) | 환자번호 — CRM 고객번호와 **같은 번호를 공유**하나 타입·패딩이 다름(varchar(15) vs char(13)). `RTRIM(PTNTIDNO) = RTRIM(CUST_NUM)` 패턴으로 매칭 (드림렌즈 장부 초안 SQL의 PAOSUNAB 조인과 동일 체계) |
+| PK | (없음 — heap 테이블) | | |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 
@@ -34,13 +35,11 @@ IPLUS(EMR 계열) 환자 서명/동의 테이블. 병원코드(`HOSPCODE`)·환�
 | pBith | varchar(20) | N | |  |
 | ADDTDATE | datetime | Y | |  |
 
-> 외 4개 컬럼: `Agree1` smallint NOT NULL, `pMt` int, `Agree10`·`Agree11` smallint(2026-04-20 이후 추가) — `SELECT COLUMN_NAME, DATA_TYPE FROM IPLUS_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'PTNTSIGN_New'` 으로 전체 조회
+> 외 2개 컬럼 — `SELECT COLUMN_NAME, DATA_TYPE FROM IPLUS_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'PTNTSIGN_New'` 으로 전체 조회
 
 ## 함정 (Gotchas)
 
-- **컬럼 2개 신규 추가 (`Agree10`, `Agree11`)**: 2026-04-20 문서화 이후 스키마가 확장됨 (2026-08-10 실측 확인). 다른 Agree 컬럼과 달리 NULL 허용.
-- **`Sign1`/`Sign2`는 레거시 `text` 타입**: 신규 코드에서 다룰 때 varchar(max) 캐스팅 주의. 서명 이미지라 목록 조회에서 SELECT 지양.
-- **별도 DB(IPLUS)**: 원무·수납(EMR 계열) 시스템 DB — 운영은 `[220.85.109.240].IPLUS` 링크드서버 경유, 분석은 `IPLUS_WORK` 사본. `PTNTIDNO`는 CRM `CUST_NUM`과 같은 번호 체계이나 타입이 달라 **RTRIM 매칭 필수** (별개 체계로 오해하지 말 것 — 2026-08-12 드림렌즈 장부 PAOSUNAB 조인으로 확인).
+<!-- TODO: 이 테이블의 알려진 함정 -->
 
 ## 사용처
 

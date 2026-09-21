@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -111,9 +111,9 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 
       <article class="doc-card">
         <div class="markdown"><h1 id="cataractexam">Cataract_Exam</h1>
-<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 87개 | <strong>행 수</strong>: ~9,811 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-08-10 (WORK DB 실측 대조)</p></blockquote>
+<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 87개 | <strong>행 수</strong>: ~9,407 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-04-20 (자동 생성)</p></blockquote>
 <h2 id="역할">역할</h2>
-<p>백내장 검사 결과 테이블. <code>CUST_NUM</code>+<code>SEQ</code>로 고객당 복수 행(검사 세션)이 누적된다 — EXAM(시력교정, 고객당 1행 덮어쓰기)과 달리 검사 이력이 행으로 보존된다. 대시보드 &#39;백내장 검사자 리스트&#39;·&#39;검사건수&#39;(EXAM 행 + Cataract_Exam 세션 합산)가 사용.</p>
+<p>&lt;!-- TODO: 한 줄 설명 --&gt;</p>
 <h2 id="pk-fk-join-키">PK / FK / JOIN 키</h2>
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">(없음 — heap 테이블)</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
 <p>&lt;!-- TODO: FK, JOIN 키 추가 --&gt;</p>
@@ -121,7 +121,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left">CUST_NUM</td><td style="text-align:left">char(13)</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">SEQ</td><td style="text-align:left">int</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">EXAM_DATE</td><td style="text-align:left">char(10)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">EXAM_MEMO</td><td style="text-align:left">nvarchar(2000)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">Stop_YN</td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">Cancel_CD</td><td style="text-align:left">char(3)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">Cancel_reason</td><td style="text-align:left">nvarchar(50)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT01</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT01</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT02</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT02</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT03</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT03</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">RIGHT04</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">LEFT04</td><td style="text-align:left">nvarchar(20)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
 <blockquote><p>외 72개 컬럼 — <code>SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = &#39;Cataract_Exam&#39;</code> 으로 전체 조회</p></blockquote>
 <h2 id="함정-gotchas">함정 (Gotchas)</h2>
-<ul><li><strong>PK/유니크 제약 없음 (heap)</strong>: <code>CUST_NUM</code>+<code>SEQ</code> 조합조차 유일하지 않다 — WORK 실측(2026-08-10): 총 9,811행 / 유일 (CUST_NUM,SEQ) 9,589 (<strong>중복 222건</strong>) / 고유 고객 8,822. 세션 단위 집계 시 중복 행 주의.</li><li><strong>EXAM과 구조가 다름</strong>: EXAM은 고객당 1행 덮어쓰기, Cataract_Exam은 세션별 행 누적. 두 테이블을 합산하는 통계(검사건수)에서 집계 단위가 다르다는 점 주의.</li></ul>
+<p>&lt;!-- TODO: 이 테이블의 알려진 함정 --&gt;</p>
 <h2 id="사용처">사용처</h2>
 <p>&lt;!-- TODO: grep -r &#39;FROM Cataract_Exam\|JOIN Cataract_Exam&#39; routes services --&gt;</p>
 <h2 id="관련-문서">관련 문서</h2>

@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">시력교정 매출 집계 — 기획서</div>
-    <div class="sub">회계 · <span class="mono">/accounting/vision-revenue-summary</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">회계 · <span class="mono">/accounting/vision-revenue-summary</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -358,7 +358,7 @@
 
   <div class="card" id="s1">
     <div class="card-head"><div class="chip">1</div><h2>개요 — 이 화면은 무엇인가</h2></div>
-    <p>SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면임..</p>
+    <p>SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면임.</p>
     <table>
       <thead><tr><th>항목</th><th>값</th></tr></thead>
       <tbody>
@@ -366,8 +366,8 @@
         <tr><td>화면 경로</td><td><span class="mono">/accounting/vision-revenue-summary</span></td></tr>
         <tr><td>메뉴 ID</td><td><code>accounting-vision-summary</code></td></tr>
         <tr><td>구현 상태</td><td><span class="tag t-auto">운영 중</span></td></tr>
-        <tr><td>접근 권한</td><td><b>ADMIN 전용</b> — ADMIN 이 아니면 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘</td></tr>
-        <tr><td>사이드바 노출</td><td>노출 — 단 ADMIN 롤에게만</td></tr>
+        <tr><td>접근 권한</td><td><b>임원 이상(ADMIN · DIRECTOR) 전용</b> — MANAGER · STAFF 는 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘. 백엔드도 <code>/api/accounting/**</code> 를 <code>hasAnyRole(ADMIN, DIRECTOR)</code> 로 막음</td></tr>
+        <tr><td>사이드바 노출</td><td>노출 — 단 ADMIN · DIRECTOR 롤에게만</td></tr>
         <tr><td>화면 컴포넌트</td><td><span class="mono">frontend/src/pages/accounting/VisionRevenueSummaryPage.tsx</span></td></tr>
       </tbody>
     </table>
@@ -442,13 +442,37 @@
 
   <div class="card" id="s5">
     <div class="card-head"><div class="chip">5</div><h2>표 · 지표 정의</h2></div>
-    <h3>열 — 결제수단 버킷</h3>
-    <p>카드는 <b>매입사별</b>로 한 열씩(국민 · 농협 · 롯데 · 비씨 · 삼성 · 신한 · 우리 · 하나(구외환) · 현대 · 제로페이 · 나이스정보통신 —
-       원본 시트 순서), 카드가 아닌 결제(현금 · 현금영수 · 통장 …)는 전부 <b>'현금' 한 열</b>로 묶음.
-       데이터에 새 매입사가 나오면 뒤에 덧붙음. <b>카드 계</b> 열은 매입사 열의 합.</p>
+    <p>마트 <code>list_vision_receipt</code>(SOFTCRM 비급여 수납 전표 상세 · 결제수단별 1행 · 취소 전표는 결제취소 음수행이 따로 있음)를 수납일 범위로 받아
+       화면(<code>buildVisionRevenueSummary</code>)이 매입사 × 진료명으로 접음. 상태 필터(전체 · 결제처리 · 결제취소)는 받은 행을 화면에서 거른 뒤 집계함.
+       열은 결제수단 버킷, 행은 진료명 — 행 정의는 다음 표.</p>
+    <h3>컬럼 정의 — 17개</h3>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>값</td><td><code>itemAmounts</code> 의 키</td><td><code>item_amounts</code> (JSONB 키)</td><td><code>PrcItmDtl.PrcCod</code>(분할 없는 전표는 <code>PrcItmLst.PrcCod</code>) → 진료명 환산</td><td>행 라벨. 진료명 21줄 + 합계 5줄 순서는 아래 행 정의 표. 왼쪽 고정 열</td></tr>
+        <tr><td>2</td><td>현금</td><td><code>paymentMethod</code> ≠ '카드' 인 행의 <code>itemAmounts</code> 합</td><td><code>payment_method</code> · <code>item_amounts</code></td><td><code>CstPrcSub.CstPayWay</code> 원문(현금 · 현금영수 · 통장 …)</td><td>카드가 아닌 결제 전부를 한 열로 묶음. 0 이면 빈 칸</td></tr>
+        <tr><td>3</td><td>카드 계</td><td>— (파생)</td><td>—</td><td>—</td><td>현금 열을 뺀 나머지 열의 합(<code>summaryCardTotal</code>). 매입사 열 앞에 둠</td></tr>
+        <tr><td>4</td><td>국민</td><td><code>acquirer</code> = '국민'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>01</code></td><td>이하 매입사 열은 <code>paymentMethod</code> = '카드' 인 행만. 원본 시트 순서 고정</td></tr>
+        <tr><td>5</td><td>농협</td><td><code>acquirer</code> = '농협'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>03</code></td><td>—</td></tr>
+        <tr><td>6</td><td>롯데</td><td><code>acquirer</code> = '롯데'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>04</code></td><td>—</td></tr>
+        <tr><td>7</td><td>비씨</td><td><code>acquirer</code> = '비씨'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>05</code></td><td>—</td></tr>
+        <tr><td>8</td><td>삼성</td><td><code>acquirer</code> = '삼성'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>06</code></td><td>—</td></tr>
+        <tr><td>9</td><td>신한</td><td><code>acquirer</code> = '신한'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>07</code></td><td>—</td></tr>
+        <tr><td>10</td><td>우리</td><td><code>acquirer</code> = '우리'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>22</code></td><td>—</td></tr>
+        <tr><td>11</td><td>하나(구외환)</td><td><code>acquirer</code> = '하나(구외환)'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>20</code></td><td>—</td></tr>
+        <tr><td>12</td><td>현대</td><td><code>acquirer</code> = '현대'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>18</code></td><td>—</td></tr>
+        <tr><td>13</td><td>제로페이</td><td><code>acquirer</code> = '제로페이'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> → 없으면 <code>CstCrdCpn</code> 코드 <code>23</code></td><td>—</td></tr>
+        <tr><td>14</td><td>나이스정보통신</td><td><code>acquirer</code> = '나이스정보통신'</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code> 원문 · 위챗페이 · 알리페이는 별칭으로 이 열에 합침</td><td>—</td></tr>
+        <tr><td>15</td><td>(추가 매입사)</td><td><code>acquirer</code> 가 위 11종 밖인 값</td><td><code>acquirer</code></td><td><code>CstPrcSub.CstMaeNam</code></td><td>데이터에 새 매입사가 나오면 뒤에 열이 붙음(가나다 정렬). 카드인데 매입사가 비면 <code>(미상)</code> 열</td></tr>
+        <tr><td>16</td><td>총합계</td><td>— (파생)</td><td>—</td><td>—</td><td>현금 + 매입사 열 전부의 합(<code>summaryTotal</code>). 카드 계는 제외해 이중 합산 없음. 빨간 점선 왼쪽 테두리</td></tr>
+        <tr><td>17</td><td>건수 (배지)</td><td>응답 배열 길이</td><td>—</td><td>—</td><td>상태 필터 적용 후 행 수. 취소 전표는 원행 + 취소행 2건으로 셈</td></tr>
+      </tbody>
+    </table>
+    <p>금액은 반올림 후 천 단위 구분, 0 은 빈 칸. CSV 는 같은 열 순서이되 과세 공급가액을 <code>Math.round(과세합계 ÷ 1.1)</code> 로 먼저 반올림하고 부가세를 그 차로 계산해 화면과 원 단위가 다를 수 있음.
+       0원 행 [숨김] 은 화면 표시만 거르고 CSV 는 21줄 전부 내보냄.</p>
     <h3>행 정의 — 원본 시트 순서 그대로 (항목 21줄 + 합계 5줄)</h3>
     <p>줄 순서·라벨은 세무대리인 원본 시트와 동일함. 값이 한 번도 안 잡히는 줄도 자리를 지켜야 한 줄씩 대사가 됨.
-       각 항목의 <code>PrcCod</code> 매핑은 <a href="accounting-surgery-revenue.html">매출 내역</a> 5장 ③표가 정본임.</p>
+       각 항목의 <code>PrcCod</code> 매핑은 <a href="accounting-vision.html">매출 내역</a> 5장 ③표가 정본임.</p>
     <table>
       <thead><tr><th>행</th><th>구분</th><th>정의 · 비고</th></tr></thead>
       <tbody>
@@ -480,22 +504,30 @@
         <tr><td>부가세 (매출세액)</td><td>합계 (파생)</td><td>공급대가 − 공급가액 — 부가가치세 신고의 매출세액</td></tr>
       </tbody>
     </table>
-    <h3>건수 배지</h3>
-    <p>행 모드에서는 걸러진 전표 수, 집계 모드에서는 월 건수(상태에 맞춰 전체/처리/취소)를 보여줌.</p>
 
   </div>
 
   <div class="card" id="s6">
     <div class="card-head"><div class="chip">6</div><h2>데이터 소스</h2></div>
-    <p>조회 경로가 잡히지 않았음 — 미구현(placeholder)이거나 화면이 조회를 하지 않는 정적 문서임.</p>
+    <p>마트(Postgres) 전용 — 배치가 적재한 테이블만 읽음.</p>
     <table>
       <thead><tr><th>구분</th><th>테이블 · 뷰</th></tr></thead>
       <tbody>
-        <tr><td>마트 (Postgres)</td><td>—</td></tr>
+        <tr><td>마트 (Postgres)</td><td><code>list_medical_receipt</code> · <code>list_vision_receipt</code> · <code>mart_medical_receipt_monthly</code></td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td>—</td></tr>
       </tbody>
     </table>
-
+    <details class="sqlrefs">
+      <summary>SQL 리소스 6개 — 펼쳐 보기</summary>
+      <ul>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-accounting-status.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-list-medical-receipt.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-list-vision-receipt.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-medical-receipt-monthly-from-list.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-medical-receipt-monthly.sql</span></li>
+        <li><span class="mono">backend/src/main/resources/sql/mart/accounting/select-vision-receipt-monthly.sql</span></li>
+      </ul>
+    </details>
     <div class="note warn">
       <div class="h">자동 추출 — 확정 전 검토</div>
       <p>위 목록은 <b>컨트롤러가 주입받는 클래스를 따라가며</b> 모은 것임.
@@ -506,8 +538,21 @@
   </div>
 
   <div class="card" id="s7">
-    <div class="card-head"><div class="chip">7</div><h2>API — 0개</h2></div>
-    <p>이 화면이 호출하는 API 가 없음. 화면이 조회를 하지 않는 정적 문서이거나, 호출 경로가 자동 추출로 잡히지 않았음.</p>
+    <div class="card-head"><div class="chip">7</div><h2>API — 5개</h2></div>
+    <table>
+      <thead><tr><th>메서드 · 경로</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">GET /api/accounting/medical-receipts</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/medical-receipts/monthly</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/status</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/vision-receipts</span></td></tr>
+        <tr><td><span class="mono">GET /api/accounting/vision-receipts/monthly</span></td></tr>
+      </tbody>
+    </table>
+    <h3>백엔드 컨트롤러</h3>
+    <ul>
+      <li><span class="mono">backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java</span></li>
+    </ul>
   </div>
 
   <div class="card" id="s8">
@@ -515,7 +560,8 @@
     <table>
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
-        <tr><td>ADMIN 전용</td><td><b>예</b></td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td><b>예</b></td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

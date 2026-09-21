@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">예약통계_백내장 — 기획서</div>
-    <div class="sub">비앤빛 › 예약 · <span class="mono">/stats/reservation-stats-cataract</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">비앤빛 › 예약 · <span class="mono">/stats/reservation-stats-cataract</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -476,18 +476,48 @@
   <div class="card" id="s5">
     <div class="card-head"><div class="chip">5</div><h2>표 · 지표 정의</h2></div>
 
-    <h3>25칼럼 · 6그룹</h3>
+    <h3>컬럼 정의 — 33개</h3>
+    <p>표 하나(가로 스크롤)이며, API 는 일자별 원시 건수만 주고 비율 · 합계는 화면이 계산함.
+       콜 · 온라인 건은 등록일, 내원 · 부도 · 취소는 예약일 기준임.</p>
     <table>
-      <thead><tr><th>그룹</th><th>칼럼</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>총예약</td><td>백내장 · 노안 · <b>합계</b></td></tr>
-        <tr><td>인바운드(컨택센터)</td><td>총 인입콜 · 응대콜 · <b>응대율</b> · 총 신규검사문의 · 신규 재문의 · <b>재문의 비율</b> · <b>★신환</b> · <b>예약율</b></td></tr>
-        <tr><td>아웃바운드(TM)</td><td>총 DB · 유효 DB · 예약수 · <b>총 DB 예약율</b> · <b>유효 DB 예약율</b> · <b>아웃바운드 총 예약수</b></td></tr>
-        <tr><td>채팅(카카오톡)</td><td>총문의(모든) · <b>백내장 검사예약</b> · 노안 검사예약</td></tr>
-        <tr><td>온라인예약</td><td>예약수 · <b>부도수</b></td></tr>
-        <tr><td>취소</td><td>온라인 · 컨택센터 현장(CRM) · 카톡</td></tr>
+        <tr><td>1</td><td>(월) Date</td><td><code>date</code></td><td><code>stat_date</code></td><td>각 항목의 기준일</td><td>행 라벨. 월/주/일/전체 단위 전환. 손보정 셀은 <code>manualEdits</code> 마커</td></tr>
+        <tr><td>2</td><td>총 예약(아웃바운드 포함) › 백내장</td><td><code>totalCataract</code></td><td><code>total_cataract</code></td><td>백내장_신환 + 백내장_추가예약 + 카톡_검사예약 + 백내장_온라인예약 + TM_예약</td><td>화면은 응답값을 쓰지 않고 <b>★신환 + TM 예약수 + 카톡 백내장 검사예약 + 온라인 예약수</b>로 재계산함(원천 공식과 같은 값). 따라서 이 칸을 직접 손보정해도 화면에 반영되지 않음 — 구성 칸을 고쳐야 함</td></tr>
+        <tr><td>3</td><td>노안</td><td><code>totalPresbyopia</code></td><td><code>total_presbyopia</code></td><td>없음 — CRM 쿼리가 0 고정</td><td>손보정으로만 채워지는 칸</td></tr>
+        <tr><td>4</td><td>합계</td><td>— (<code>totalSum</code>)</td><td>—</td><td>백내장 + 노안</td><td>다른 화면에서 말하는 '백내장 총예약'은 보통 이 값</td></tr>
+        <tr><td>5</td><td>인바운드(컨택센터) › 총 인입콜</td><td><code>inboundCall</code></td><td><code>inbound_call</code></td><td>EICN <code>stat_user_inbound_bseye.in_total</code> — <code>group_code='0016'</code>(백내장팀 2명)</td><td>큐가 아니라 <b>응대 상담원 그룹</b> 기준. 팀원 부재 시 오버플로 콜이 시력교정팀으로 가 과소집계 → 그런 날은 수기 보정</td></tr>
+        <tr><td>6</td><td>응대콜</td><td><code>answeredCall</code></td><td><code>answered_call</code></td><td>같은 행의 <code>in_success</code></td><td>—</td></tr>
+        <tr><td>7</td><td>응대율</td><td>— (<code>answerRate</code>)</td><td>—</td><td>응대콜 ÷ 총 인입콜</td><td>정수 %. 빨강 강조</td></tr>
+        <tr><td>8</td><td>백내장 › 총 신규검사문의</td><td><code>newExamInquiry</code></td><td><code>new_exam_inquiry</code></td><td><code>CtiRptLst</code>(<code>CtiRgtDtm</code>) 중 '백내장_신규문의'(S/9/21/21 에서 Cod3≠28, 또는 Cod2 32·9) + '백내장_신환'</td><td>추가예약(A/H/10/31)은 넣지 않음</td></tr>
+        <tr><td>9</td><td>신규 재문의</td><td><code>newReInquiry</code></td><td><code>new_re_inquiry</code></td><td><code>CtiRptLst</code> S/9/21/21 이고 Cod3=28, 수신(<code>ClgIOF='I'</code>)</td><td>발신 재문의는 어디에도 집계되지 않음</td></tr>
+        <tr><td>10</td><td>재문의 비율</td><td>— (<code>reInquiryRate</code>)</td><td>—</td><td>신규 재문의 ÷ 총 신규검사문의</td><td>빨강 강조</td></tr>
+        <tr><td>11</td><td>★신환</td><td><code>newPatient</code></td><td><code>new_patient</code></td><td>'백내장_신환'(A/H/10/28·32, S/9/21/41, M/H/7/5) + '백내장_추가예약'(A/H/10/31)</td><td>총예약과 예약 종합(콜) 합산에 쓰이는 칸</td></tr>
+        <tr><td>12</td><td>예약율</td><td>— (<code>inboundReservationRate</code>)</td><td>—</td><td>★신환 ÷ 총 신규검사문의</td><td>빨강 강조. 시력교정과 달리 분모가 총예약이 아님</td></tr>
+        <tr><td>13</td><td>아웃바운드(TM) › 백내장 › 총 DB</td><td><code>tmTotalDb</code></td><td><code>tm_total_db</code></td><td><code>DB_CUSTOM</code>(<code>assign_date</code>) 중 <code>TM_EMP</code> 백내장 TM 4명, <code>Gubun</code> B2B 제외</td><td>시력교정 표가 제외한 4명이 여기 옴</td></tr>
+        <tr><td>14</td><td>유효 DB</td><td><code>tmValidDb</code></td><td><code>tm_valid_db</code></td><td>그중 <code>TM_Gubun IN ('1000','2000')</code></td><td>—</td></tr>
+        <tr><td>15</td><td>예약수</td><td><code>tmReservation</code></td><td><code>tm_reservation</code></td><td>그중 <code>TM_Gubun='1000'</code></td><td>—</td></tr>
+        <tr><td>16</td><td>총 DB 예약율</td><td>— (<code>tmTotalDbRate</code>)</td><td>—</td><td>예약수 ÷ 총 DB</td><td>빨강 강조</td></tr>
+        <tr><td>17</td><td>유효 DB 예약율</td><td>— (<code>tmValidDbRate</code>)</td><td>—</td><td>예약수 ÷ 유효 DB</td><td>빨강 강조</td></tr>
+        <tr><td>18</td><td>아웃바운드 총 예약수</td><td>— (<code>tmOutboundReservation</code>)</td><td>—</td><td>= 예약수(15번)</td><td>같은 값을 강조 칸으로 한 번 더 보여줌</td></tr>
+        <tr><td>19</td><td>채팅(카카오톡) › 총문의(모든)</td><td><code>kakaoTotalInquiry</code></td><td><code>kakao_total_inquiry</code></td><td><code>HappyTalk_Counsel_List</code>(<code>InsertedDateTime</code>) 중 <code>Category01 IN ('백내장검사','백내장외래')</code> 전건</td><td>외래 문의·취소까지 포함한 전체 수</td></tr>
+        <tr><td>20</td><td>백내장 검사예약</td><td><code>kakaoCataractReservation</code></td><td><code>kakao_cataract_reservation</code></td><td>그중 <code>Category01='백내장검사'</code> 이고 <code>Category02 LIKE '★신환%'</code></td><td>빨강 강조. 총예약 구성 칸</td></tr>
+        <tr><td>21</td><td>노안 검사예약</td><td><code>kakaoPresbyopiaReservation</code></td><td><code>kakao_presbyopia_reservation</code></td><td>그중 <code>Category02='노안'</code></td><td>총예약에는 넣지 않음(3번 노안과 별개)</td></tr>
+        <tr><td>22</td><td>온라인예약 › 예약수</td><td><code>onlineReservation</code></td><td><code>online_reservation</code></td><td><code>RESERVATION</code> FLAG H · <code>RESERVE_PATH IN ('ONLINE','APP','NAVER')</code> · <code>RESERVE_STATE&lt;&gt;'C'</code> · JINRYO≠16, <code>InsertedDateTime</code> 기준</td><td>예약수정 시 <code>InsertedDateTime</code> 이 갱신되므로 확정한 날에 잡힘(레거시와 정합)</td></tr>
+        <tr><td>23</td><td>부도수</td><td><code>onlineNoShow</code></td><td><code>online_no_show</code></td><td>= 30번 예약(부도)와 같은 값(경로 무관 전체 부도)</td><td>라벨은 온라인이지만 온라인 경로만 세지 않음 — 레거시 정합</td></tr>
+        <tr><td>24</td><td>취소 › 온라인</td><td><code>cancelOnline</code></td><td><code>cancel_online</code></td><td><code>RESERVATION.RESERVE_DATE</code> 기준 FLAG H · <code>RESERVE_STATE='C'</code> · 경로 ONLINE/APP/NAVER. JINRYO 16·13 제외, <code>RESERVE_HISTORY.MEMO='예약저장'</code> 있는 건</td><td><b>예약일 기준</b></td></tr>
+        <tr><td>25</td><td>컨택센터 현장(CRM)</td><td><code>cancelCrm</code></td><td><code>cancel_crm</code></td><td>같은 조건, 그 외 경로</td><td>—</td></tr>
+        <tr><td>26</td><td>카톡</td><td><code>cancelKakao</code></td><td><code>cancel_kakao</code></td><td>HappyTalk <code>Category02='예약취소'</code></td><td>—</td></tr>
+        <tr><td>27</td><td>예약 종합 › 총예약건</td><td>— (<code>totalReservationCount</code>)</td><td>—</td><td>내원 + 예약(부도) + 취소</td><td>—</td></tr>
+        <tr><td>28</td><td>내원</td><td><code>visit</code></td><td><code>visit</code></td><td><code>RESERVATION.RESERVE_DATE</code> 기준 FLAG H · <code>RESERVE_STATE IN ('I','H')</code> 이고 (JINRYO 1·2 또는 같은 날 <code>Cataract_Exam</code> 기록(중단 제외) 보유)</td><td>재검·수술당일·진료실 슬롯은 검사기록 없으면 제외</td></tr>
+        <tr><td>29</td><td>내원율</td><td>— (<code>visitRate</code>)</td><td>—</td><td>내원 ÷ 총예약건</td><td>소수 1자리</td></tr>
+        <tr><td>30</td><td>예약(부도)</td><td><code>noShowReservation</code></td><td><code>no_show_reservation</code></td><td>FLAG H · <code>RESERVE_STATE='Y'</code> 이고 <code>RESERVE_DATE &lt;</code> 오늘. JINRYO 16·13 제외</td><td>—</td></tr>
+        <tr><td>31</td><td>부도율</td><td>— (<code>noShowRate</code>)</td><td>—</td><td>부도 ÷ 총예약건</td><td>소수 1자리 · 빨강 강조</td></tr>
+        <tr><td>32</td><td>취소</td><td><code>cancel</code></td><td><code>cancel</code></td><td>FLAG H · <code>RESERVE_STATE='C'</code></td><td>= 24 + 25</td></tr>
+        <tr><td>33</td><td>취소율</td><td>— (<code>cancelRate</code>)</td><td>—</td><td>취소 ÷ 총예약건</td><td>소수 1자리 · 빨강 강조</td></tr>
       </tbody>
     </table>
+    <p>CSV 는 화면 행 그대로(총예약 · 그룹별 채널 · 종합)임. 손보정은 원시 카운트 21개(2·3·5·6·8·9·11·13~15·19~26·28·30·32)만 가능하고 비율·합계 칸은 자동 재계산됨.</p>
 
     <div class="note">
       <div class="h">백내장과 노안을 나눠 세고 합계도 냄</div>
@@ -568,6 +598,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

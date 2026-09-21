@@ -123,6 +123,29 @@ export default {
          <b>취소 판정</b>(<code>ISNULL(e.CANCEL_CD,'') = ''</code>)에 씀.
          <b>한쪽 의미로만 알고 고치면 다른 쪽이 깨짐.</b></p>
     </div>
+
+    <h3>컬럼 정의 — 툴바 합계 2개 · 차트 막대 8개</h3>
+    <p>화면에 표는 없고, 한 달을 고르면 합계 2개와 막대 8개를 보임.
+       조회 경로는 마트 <code>mart_stop_reason_monthly</code> 이고 2026-01 이후만 값이 있음.</p>
+    <p>버킷 판정은 뷰의 CASE 한 곳(<code>exam_category='시력교정' AND exam_stop='Y'</code> 일 때 <code>cancel_code</code> 매핑) ←
+       <code>list_exam.exam_stop</code>/<code>cancel_code</code> ← <code>EXAM.STOP_YN</code>/<code>EXAM.CANCEL_CD</code>(<code>LTRIM(RTRIM)</code>).
+       화면 설명문의 「검사메모 키워드 자동분류」 문구는 구현(코드 기반)과 다름 — 문구 정정 필요.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>잠정 중단 (툴바)</td><td>— (프론트 파생)</td><td>—</td><td><code>other</code> + <code>glaucoma</code> + <code>visionChange</code></td><td>연파랑 막대 3개의 합</td></tr>
+        <tr><td>2</td><td>수술 불가 (툴바)</td><td>— (프론트 파생)</td><td>—</td><td><code>recommendX</code> + <code>lensImpossible</code> + <code>keratoconus</code> + <code>avellino</code></td><td>파랑 막대 4개의 합. #1 + #2 = #10</td></tr>
+        <tr><td>3</td><td>기타</td><td><code>other</code></td><td><code>other</code></td><td><code>EXAM.CANCEL_CD IN ('107','199','117','304','127','311')</code> + 그 외 미지 코드·빈값</td><td>잠정 중단 그룹. 새 코드가 생기면 에러 없이 여기로 흘러듦(위 함정 ①)</td></tr>
+        <tr><td>4</td><td>불가-녹내장</td><td><code>glaucoma</code></td><td><code>glaucoma</code></td><td><code>CANCEL_CD IN ('114','303')</code></td><td>잠정 중단 그룹</td></tr>
+        <tr><td>5</td><td>불가-시력변화</td><td><code>visionChange</code></td><td><code>vision_change</code></td><td><code>CANCEL_CD IN ('111','302')</code></td><td>잠정 중단 그룹</td></tr>
+        <tr><td>6</td><td>불가-수술권유X</td><td><code>recommendX</code></td><td><code>recommend_x</code></td><td><code>CANCEL_CD IN ('121','305')</code></td><td>수술 불가 그룹</td></tr>
+        <tr><td>7</td><td>불가-렌즈삽입불가</td><td><code>lensImpossible</code></td><td><code>lens_impossible</code></td><td><code>CANCEL_CD IN ('122','306','399')</code></td><td>수술 불가 그룹</td></tr>
+        <tr><td>8</td><td>불가-원추각막</td><td><code>keratoconus</code></td><td><code>keratoconus</code></td><td><code>CANCEL_CD IN ('124','125','308','309')</code></td><td>수술 불가 그룹. 원추각막 + 의심</td></tr>
+        <tr><td>9</td><td>불가-아벨리노</td><td><code>avellino</code></td><td><code>avellino</code></td><td><code>CANCEL_CD IN ('126','310')</code></td><td>수술 불가 그룹</td></tr>
+        <tr><td>10</td><td>월 중단합계</td><td><code>total</code></td><td><code>total</code></td><td>7버킷 합 = <code>v_all_exam_list.exam_group='시력교정' AND stop_yn='Y'</code> 행 수</td><td>진파랑. 배치 구간에서는 <a href="stop-rate.html">중단률</a>·종합표의 <code>stopCount</code> 와 같은 조건이라 일치. 종합표가 골든 시드인 2026-01~05 는 다를 수 있음</td></tr>
+      </tbody>
+    </table>
+
   `,
 
   s10: `

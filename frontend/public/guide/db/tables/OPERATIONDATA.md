@@ -1,7 +1,7 @@
 # OPERATIONDATA
 
-> **DB**: SOFTCRM | **컬럼**: 84개 | **행 수**: ~306,894 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 84개 | **행 수**: ~304,087 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20
 
 ## 역할
 
@@ -46,7 +46,7 @@
 | MOTIVE_EMP_NUM | char(6) | Y | 내원동기 담당 직원 | |
 | OP_EMP4~OP_EMP6 | char(6) | Y | 추가 스태프 | 사용 빈도 낮음 |
 
-> 외 48개 컬럼 (RIGHT10~30/LEFT10~30 측정값 확장, OP_USER99, FIXATINGEYE, Operation_Ablation, SecretMemo, InsertedDateTime 등) — `SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'OPERATIONDATA'` 으로 전체 조회
+> 외 69개 컬럼 — `SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'OPERATIONDATA'` 으로 전체 조회
 
 ## 함정 (Gotchas)
 

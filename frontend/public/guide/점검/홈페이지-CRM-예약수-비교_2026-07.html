@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -133,7 +133,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 <hr>
 <h2 id="8-확인-방법-재현용">8. 확인 방법 (재현용)</h2>
 <p><strong>두 숫자의 기준 쿼리</strong></p>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">집계</th><th style="text-align:left">쿼리</th><th style="text-align:left">대상</th></tr></thead><tbody><tr><td style="text-align:left">홈페이지(CRM)</td><td style="text-align:left"><code>backend/src/main/resources/sql/reservation-stats/system-daily-counts.sql</code></td><td style="text-align:left">MSSQL · <code>CH11</code>=예약접수 / <code>CH12</code>=예약수</td></tr><tr><td style="text-align:left">홈페이지 집계</td><td style="text-align:left"><code>backend/src/main/resources/sql/reservation-list-homepage/mariadb/reservation-list-homepage.sql</code></td><td style="text-align:left">레거시 MariaDB · <code>TBL_COUNSEL</code></td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">집계</th><th style="text-align:left">쿼리</th><th style="text-align:left">대상</th></tr></thead><tbody><tr><td style="text-align:left">홈페이지(CRM)</td><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/reservation/stats/select-system-daily-counts.sql</code></td><td style="text-align:left">MSSQL · <code>CH11</code>=예약접수 / <code>CH12</code>=예약수</td></tr><tr><td style="text-align:left">홈페이지 집계</td><td style="text-align:left"><code>backend/src/main/resources/sql/homepage/mariadb/select-reservation-list-homepage.sql</code></td><td style="text-align:left">레거시 MariaDB · <code>TBL_COUNSEL</code></td></tr></tbody></table></div>
 <p><strong>건별 대조를 가능하게 한 연결 키</strong></p>
 <p>홈페이지 신청번호와 CRM 예약번호가 <strong>문자 그대로 같습니다</strong> — 예: <code>260601000417357@ONLINE</code>. 이 값으로 한 건씩 짝지어 §3·§4의 사유를 판정했습니다.</p>
 <p><strong>신뢰 근거</strong></p>

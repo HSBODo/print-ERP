@@ -140,6 +140,23 @@ export default {
         <tr><td>규칙에 어긋난 롤·부서 조합</td><td>400 (DB CHECK)</td><td>화면을 우회한 호출도 막음</td></tr>
       </tbody>
     </table>
+    <h3>계정 목록 표</h3>
+    <p>앱 DB(Postgres) 의 <code>users</code> 테이블을 JPA 로 읽음(<code>GET /api/admin/users</code> · 응답 <code>UserRow</code>). 마트도 CRM 도 거치지 않으므로
+       「마트 컬럼」 칸에는 <code>users</code> 컬럼을 적고 CRM 원천은 비움. <code>password</code>(BCrypt 해시)는 응답에 실리지 않음.
+       목록은 한 번에 전부 받고 검색(아이디 · 이름 · 이메일 부분일치) · 권한 · 부서 필터 · 페이지(20 · 50 · 100)는 화면에서 처리함.</p>
+    <h3>컬럼 정의 — 7개</h3>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>#</td><td>—</td><td>—</td><td>—</td><td>페이지 안 순번((페이지−1) × 행 수 + i + 1). 정렬 없음 — 서버가 준 순서 그대로</td></tr>
+        <tr><td>2</td><td>아이디</td><td><code>loginId</code></td><td><code>login_id</code> UNIQUE NOT NULL</td><td>—</td><td>소문자로 정규화해 저장. 고정폭 글꼴. 로그인한 본인 행은 <b>나</b> 배지와 파란 배경</td></tr>
+        <tr><td>3</td><td>이름</td><td><code>name</code></td><td><code>name</code> NOT NULL</td><td>—</td><td>—</td></tr>
+        <tr><td>4</td><td>이메일</td><td><code>email</code></td><td><code>email</code> UNIQUE NOT NULL</td><td>—</td><td>—</td></tr>
+        <tr><td>5</td><td>권한</td><td><code>role</code></td><td><code>role</code> VARCHAR(20) DEFAULT 'STAFF'</td><td>—</td><td><code>ADMIN</code> · <code>DIRECTOR</code> · <code>MANAGER</code> · <code>STAFF</code> 배지(빨강 · 보라 · 파랑 · 회색)</td></tr>
+        <tr><td>6</td><td>부서</td><td><code>department</code></td><td><code>department</code> VARCHAR(20) DEFAULT 'MEDICAL'</td><td>—</td><td><code>ALL</code> · <code>MEDICAL</code> · <code>MARKETING</code> · <code>OVERSEAS_MARKETING</code> 배지. 부서 필터 select 에는 <code>OVERSEAS_MARKETING</code> 항목이 없음(검색어로만 좁힘) — 확인 필요</td></tr>
+        <tr><td>7</td><td>액션</td><td><code>id</code> (편집 · 삭제 호출 키)</td><td><code>id</code> IDENTITY</td><td>—</td><td>편집 · 삭제 아이콘. 본인 행은 삭제 비활성. 삭제는 확인 다이얼로그를 거쳐 <code>DELETE /api/admin/users/{id}</code></td></tr>
+      </tbody>
+    </table>
   `,
 
   s10: `

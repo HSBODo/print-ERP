@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -111,15 +111,16 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 
       <article class="doc-card">
         <div class="markdown"><h1 id="custommemo">CUSTOM_MEMO</h1>
-<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 3개 | <strong>행 수</strong>: ~242,665 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-08-10 (WORK DB 실측 대조)</p></blockquote>
+<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 3개 | <strong>행 수</strong>: ~237,255 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-04-20 (자동 생성)</p></blockquote>
 <h2 id="역할">역할</h2>
-<p>고객 메모 히스토리 테이블. CUSTOM과 1:1(PK=<code>CUST_NUM</code>)로, 본문(<code>ETC</code>)을 <strong>RTF 형식</strong>으로 저장한다. CUSTOM.ETC(플레인텍스트 varchar(8000))와는 별개 저장소.</p>
+<p>&lt;!-- TODO: 한 줄 설명 --&gt;</p>
 <h2 id="pk-fk-join-키">PK / FK / JOIN 키</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">CUST_NUM</td><td style="text-align:left">char(13)</td><td style="text-align:left">→ CUSTOM.CUST_NUM (1:1)</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">CUST_NUM</td><td style="text-align:left">char(13)</td><td style="text-align:left"></td></tr></tbody></table></div>
+<p>&lt;!-- TODO: FK, JOIN 키 추가 --&gt;</p>
 <h2 id="핵심-컬럼">핵심 컬럼</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left">CUST_NUM</td><td style="text-align:left">char(13)</td><td style="text-align:left">N</td><td style="text-align:left">고객번호</td><td style="text-align:left">PK</td></tr><tr><td style="text-align:left">ETC</td><td style="text-align:left">varchar(max)</td><td style="text-align:left">Y</td><td style="text-align:left">메모 본문 (RTF)</td><td style="text-align:left">표시 시 RTF → 플레인텍스트 변환 필요</td></tr><tr><td style="text-align:left">ETC_FLAG</td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left">메모 플래그</td><td style="text-align:left"></td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left">CUST_NUM</td><td style="text-align:left">char(13)</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left">PK</td></tr><tr><td style="text-align:left">ETC</td><td style="text-align:left">varchar(-1)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">ETC_FLAG</td><td style="text-align:left">char(1)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
 <h2 id="함정-gotchas">함정 (Gotchas)</h2>
-<ul><li><strong>본문이 RTF 형식</strong>: 프론트 표시 전 RTF → 플레인텍스트 변환 필요 (<a href="CUSTOM.html">CUSTOM.md</a> 함정 참조).</li><li><strong>ETC는 varchar(max)</strong>: 대형 값 존재 가능 — 목록 조회에서 본문 전체 SELECT 지양.</li></ul>
+<p>&lt;!-- TODO: 이 테이블의 알려진 함정 --&gt;</p>
 <h2 id="사용처">사용처</h2>
 <p>&lt;!-- TODO: grep -r &#39;FROM CUSTOM_MEMO\|JOIN CUSTOM_MEMO&#39; routes services --&gt;</p>
 <h2 id="관련-문서">관련 문서</h2>

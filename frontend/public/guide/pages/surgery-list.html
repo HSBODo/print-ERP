@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">수술자 리스트 — 기획서</div>
-    <div class="sub">비앤빛 › 수술 · <span class="mono">/stats/surgery-list</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">비앤빛 › 수술 · <span class="mono">/stats/surgery-list</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -586,6 +586,78 @@
     <h3>수납금액</h3>
     <p>(고객, 수술일)의 <code>COSTPRICE</code> 합. <code>PayStt='A'</code>(취소분)는 뺌.
        예약자 리스트의 수술금액과 <b>같은 규칙</b>이라 두 화면의 금액이 일치함.</p>
+
+    <h3>컬럼 정의 — 44개</h3>
+    <p>조회 경로는 마트 <code>list_surgery</code> 임.
+       재수술 행은 별도 API 로 받아 10칸만 채우고 나머지는 빈칸임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>No</td><td>—</td><td>—</td><td>—</td><td>행 번호(페이지 반영). 정렬하면 원래 순서 기준. CSV 는 숫자</td></tr>
+        <tr><td>2</td><td>수술일</td><td><code>surgeryDate</code></td><td><code>surgery_date</code></td><td><code>OPERATIONDATA.OPERATION_DATE</code> · <code>Cataract_Operationdata.OPERATIONR_DATE</code>/<code>OPERATIONL_DATE</code> · 재수술은 <code>RE_OPERATION.REOP_DATE</code></td><td><b>조회 기준 날짜</b>. 백내장은 좌·우 날짜가 다르면 행이 갈라지고 같으면 1행(2안). 기본 정렬 1순위</td></tr>
+        <tr><td>3</td><td>검사일</td><td><code>examDate</code></td><td><code>exam_date</code></td><td><code>EXAM.EXAM_DATE</code> · <code>Cataract_Exam.EXAM_DATE</code></td><td>수술일 이전 최신 검사 1건, 없으면 이후 최신 1건. 조회 조건 아님. 재수술 행은 빈칸</td></tr>
+        <tr><td>4</td><td>수술분류</td><td><code>surgeryCategory</code></td><td><code>surgery_category</code></td><td>원천 테이블별 고정값</td><td>시력교정 · 백내장 · 재수술(프론트 고정). 배지. <code>Cataract_Operationdata</code> 에 행이 있는 고객은 시력교정 모집단에서 뺌(<code>NOT EXISTS</code>)</td></tr>
+        <tr><td>5</td><td>신/구환</td><td><code>patientType</code></td><td><code>patient_type</code></td><td><code>CUSTOM.FIRST_DAY</code></td><td>첫 내원일이 적재 쿼리의 <code>:from~:to</code> 안이면 신환, 아니면 구환. 배치는 D-1 하루 범위로 돌므로 <b>판정 범위는 적재 범위</b>이지 화면 조회 기간이 아님 — 확인 필요</td></tr>
+        <tr><td>6</td><td>예약시간</td><td><code>surgeryTime</code></td><td><code>surgery_time</code></td><td><code>RESERVATION.START_TIME</code></td><td>수술예약(<code>RESERVE_FLAG='O'</code>, 취소 제외) 중 수술일과 같은 날 우선, 없으면 최신 1건</td></tr>
+        <tr><td>7</td><td>차트번호</td><td><code>chartNo</code></td><td><code>chart_no</code></td><td><code>CUSTOM.CUST_NUM</code></td><td>trim. CSV 텍스트 강제. 키워드 검색 대상</td></tr>
+        <tr><td>8</td><td>고객명</td><td><code>name</code></td><td><code>name</code></td><td><code>CUSTOM.CUST_NAME</code></td><td>이름에 테스트/test 가 든 고객은 원천에서 제외. CSV 만 마스킹. 검색 대상</td></tr>
+        <tr><td>9</td><td>고객명(영)</td><td><code>nameEng</code></td><td><code>name_eng</code></td><td><code>CUSTOM.CUST_ENAME</code></td><td>CSV 만 마스킹</td></tr>
+        <tr><td>10</td><td>수술방법R</td><td><code>surgeryR</code></td><td><code>surgery_r</code></td><td><code>OPERATIONDATA.OPERATIONR</code> · <code>Cataract_Operationdata.OPERATIONR</code> · <code>RE_OPERATION.AGAIN_R</code></td><td>X · OP불가 · 모든수술가능 · op x · Strabismus · TEST-TEST 는 빈 값 취급(양안 다 비면 행 제외). 유형·옵션·백내장·재수술 필터의 판정 대상 — 좌·우 중 한쪽만 맞아도 해당</td></tr>
+        <tr><td>11</td><td>수술방법L</td><td><code>surgeryL</code></td><td><code>surgery_l</code></td><td><code>…OPERATIONL</code> · <code>AGAIN_L</code></td><td>같음</td></tr>
+        <tr><td>12</td><td>집도의</td><td><code>surgeon</code></td><td><code>surgeon</code></td><td><code>OPERATIONDATA.OPERATION_DOC</code> · <code>Cataract_Operationdata.OPERATIONR_DOC</code>/<code>OPERATIONL_DOC</code> · <code>RE_OPERATION.AGAIN_DOCTOR</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>백내장은 같은 날 좌·우 중 <code>MAX</code> 값 1개</td></tr>
+        <tr><td>13</td><td>적절수술R</td><td><code>recommendedR</code></td><td><code>recommended_r</code></td><td><code>EXAM.OPERATIONR</code> · <code>Cataract_Exam.OPERATIONR</code></td><td>3번 검사일과 같은 검사 건</td></tr>
+        <tr><td>14</td><td>적절수술L</td><td><code>recommendedL</code></td><td><code>recommended_l</code></td><td><code>EXAM.OPERATIONL</code> · <code>Cataract_Exam.OPERATIONL</code></td><td>같음</td></tr>
+        <tr><td>15</td><td>수술예약일</td><td><code>surgeryReserveDate</code></td><td><code>surgery_reserve_date</code></td><td><code>RESERVATION.RESERVE_DATE</code></td><td>6번과 같은 예약 건</td></tr>
+        <tr><td>16</td><td>수술예약등록일</td><td><code>surgeryRegDate</code></td><td><code>surgery_reg_date</code></td><td><code>RESERVATION.RESERVE_NUM</code> 앞 6자리(YYMMDD)</td><td>예약번호를 날짜로 파싱한 값. 6자리 미만이면 빈칸. 등록 시각 컬럼이 아님</td></tr>
+        <tr><td>17</td><td>견적가</td><td><code>estimate</code></td><td><code>estimate</code></td><td><code>EXAM.OP_ESTIMATE</code> · 백내장은 <code>Cataract_Exam.OP_ESTIMATE_R</code> + '/' + <code>OP_ESTIMATE_L</code></td><td>문자열 그대로. 말줄임, 마우스 올리면 전문</td></tr>
+        <tr><td>18</td><td>수술가율</td><td><code>surgeryRate</code></td><td><code>surgery_rate</code></td><td><code>EXAM.ExamPercent</code></td><td>백내장 행은 항상 빈칸</td></tr>
+        <tr><td>19</td><td>수납금액</td><td><code>payment</code></td><td><code>payment</code></td><td><code>COSTPRICE.COST_PRICE</code> 합</td><td>(고객, <code>COST_DATE</code> = 수술일) 합계. <code>PayStt='A'</code> 제외. 0 이면 빈칸. 콤마 문자열이라 정렬은 문자 비교(numeric)</td></tr>
+        <tr><td>20</td><td>상담사</td><td><code>counselor</code></td><td><code>counselor</code></td><td><code>CUSTOM.MY_COUNSELOR</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>고객 마스터의 현재 담당자(수술 시점 아님)</td></tr>
+        <tr><td>21</td><td>상담의</td><td><code>doctor</code></td><td><code>doctor</code></td><td><code>CUSTOM.MY_DOCTOR</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>같음</td></tr>
+        <tr><td>22</td><td>검안사</td><td><code>optometrist</code></td><td><code>optometrist</code></td><td><code>CUSTOM.MY_OPTOMETRIST</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>같음</td></tr>
+        <tr><td>23</td><td>등급</td><td><code>grade</code></td><td><code>grade</code></td><td><code>CUSTOM.LEVEL</code></td><td>배지 R · A · B · C · G. 그 외 값은 회색</td></tr>
+        <tr><td>24</td><td>생년월일</td><td><code>birth</code></td><td><code>birth</code></td><td><code>CUSTOM.BIRTH_DAY</code></td><td>원문 그대로</td></tr>
+        <tr><td>25</td><td>만나이</td><td>—</td><td>—</td><td>—</td><td>화면 파생 <code>calcAge(birth)</code> — 오늘 기준 만 나이. 생년월일이 YYYY-MM-DD 꼴이 아니거나 0~129 밖이면 —. 정렬은 숫자, CSV 도 파생값</td></tr>
+        <tr><td>26</td><td>양/음</td><td><code>lunar</code></td><td><code>lunar</code></td><td><code>CUSTOM.LUNAR_YN</code></td><td>'Y' 면 음, 아니면 양</td></tr>
+        <tr><td>27</td><td>휴대전화</td><td><code>phone2</code></td><td><code>phone2</code></td><td><code>CUSTOM.CALL_NUM2</code></td><td>CSV 마스킹·텍스트 강제. 검색 대상</td></tr>
+        <tr><td>28</td><td>집전화</td><td><code>phone1</code></td><td><code>phone1</code></td><td><code>CUSTOM.CALL_NUM1</code></td><td>CSV 마스킹·텍스트 강제</td></tr>
+        <tr><td>29</td><td>이메일</td><td><code>email</code></td><td><code>email</code></td><td><code>CUSTOM.EMAIL</code></td><td>말줄임</td></tr>
+        <tr><td>30</td><td>예약경로</td><td><code>route</code></td><td><code>route</code></td><td><code>RESERVATION.RESERVE_PATH</code></td><td>6번과 같은 예약 건. 코드 변환 없이 원문</td></tr>
+        <tr><td>31</td><td>섹션</td><td><code>section</code></td><td><code>section</code></td><td><code>MOTIVE_NEW02.section</code></td><td><code>Idx='1'</code> 최신 1건(<code>pkey DESC</code>)</td></tr>
+        <tr><td>32</td><td>내원동기(대)</td><td><code>motiveL</code></td><td><code>motive_l</code></td><td><code>MOTIVE_NEW02.category01_name</code></td><td>31번과 같은 건</td></tr>
+        <tr><td>33</td><td>내원동기(중)</td><td><code>motiveM</code></td><td><code>motive_m</code></td><td><code>MOTIVE_NEW02.category02_name</code></td><td>같음</td></tr>
+        <tr><td>34</td><td>내원동기(세)</td><td><code>motiveS</code></td><td><code>motive_s</code></td><td><code>MOTIVE_NEW02.category03_name</code></td><td>같음</td></tr>
+        <tr><td>35</td><td>동기메모</td><td><code>motiveMemo</code></td><td><code>motive_memo</code></td><td><code>MOTIVE_NEW01.comments</code>, 없으면 <code>MOTIVE_NEW02.name</code></td><td>말줄임</td></tr>
+        <tr><td>36</td><td>직업</td><td><code>job</code></td><td><code>job</code></td><td><code>CUSTOM.JOB</code></td><td>—</td></tr>
+        <tr><td>37</td><td>국적</td><td><code>nationality</code></td><td><code>nationality</code></td><td><code>CUSTOM.Nation_code</code> → <code>NationCustom_CFG.Nation_CodeName</code></td><td>—</td></tr>
+        <tr><td>38</td><td>보험사</td><td><code>insurance</code></td><td><code>insurance</code></td><td><code>CUSTOM.InsuranceCode</code> → <code>EtcCfg.EtcCodNam</code> (<code>EtcBseCod='InsuranceCfg'</code>)</td><td>—</td></tr>
+        <tr><td>39</td><td>우편번호</td><td><code>zip</code></td><td><code>zip</code></td><td><code>CUSTOM.ZIP_CODE</code></td><td>trim. CSV 텍스트 강제</td></tr>
+        <tr><td>40</td><td>주소1</td><td><code>addr1</code></td><td><code>addr1</code></td><td><code>CUSTOM.ADDR1</code></td><td>말줄임</td></tr>
+        <tr><td>41</td><td>주소2</td><td><code>addr2</code></td><td><code>addr2</code></td><td><code>CUSTOM.ADDR2</code></td><td>말줄임</td></tr>
+        <tr><td>42</td><td>최근내원일</td><td><code>lastVisit</code></td><td><code>last_visit</code></td><td><code>CUSTOM.LAST_DAY</code></td><td>적재 시점 값</td></tr>
+        <tr><td>43</td><td>검사특이사항</td><td><code>examMemo</code></td><td><code>exam_memo</code></td><td><code>EXAM.EXAM_MEMO</code> · <code>Cataract_Exam.EXAM_MEMO</code></td><td>3번과 같은 검사 건. 말줄임</td></tr>
+        <tr><td>44</td><td>고객메모</td><td><code>memo</code></td><td><code>memo</code></td><td><code>CUSTOM.ETC</code></td><td>말줄임</td></tr>
+      </tbody>
+    </table>
+    <p>툴바 숫자 두 개는 표에서 파생함 — 「조회건수」는 필터를 거친 행 수(사람×수술일), 백내장 탭의 「수술 N안」은 행의 수술방법R·L 이 채워진 개수 합(같은 날 양안 = 2안)임.
+       재수술 구분 필터(레이저/렌즈)는 프론트 <code>classifyReoperation</code> 로 판정하는데 이 목록에는 <code>KPL</code> 이 없고, 마트 <code>is_lens</code>(자바 <code>ReoperationOverlay</code>)에는 <code>kpl</code> 이 있음 — 리스트 필터와 수술별 비중 표의 렌즈 건수가 KPL 재수술만큼 어긋날 수 있음. 확인 필요.</p>
+
+    <h3>컬럼 정의 — 재수술 검토 팝업 8개</h3>
+    <p>조회 경로는 마트 <code>list_reoperation</code> 이고, 사람이 저장한 판정은 <code>reoperation_decision</code> 테이블에 있음.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>포함 체크</td><td><code>isReoperation</code>(판정) · <code>autoIncluded</code>(후보)</td><td><code>reoperation_decision.is_reoperation</code> · <code>list_reoperation.auto_included</code></td><td><code>RE_OPERATION.REASON_CD</code> · <code>AGAIN_R</code>/<code>AGAIN_L</code> 로 자동 판정</td><td>저장 판정이 있으면 그 값, 없으면 자동판정. 키는 (차트번호, 수술일, 우안, 좌안). 저장은 뒤집은 행만 batch upsert</td></tr>
+        <tr><td>2</td><td>수술일</td><td><code>reopDate</code></td><td><code>reop_date</code></td><td><code>RE_OPERATION.REOP_DATE</code></td><td>조회 기준. 팝업은 MM-DD 만 표시</td></tr>
+        <tr><td>3</td><td>차트번호</td><td><code>chartNo</code></td><td><code>chart_no</code></td><td><code>RE_OPERATION.CUST_NUM</code></td><td>trim</td></tr>
+        <tr><td>4</td><td>고객명</td><td><code>name</code></td><td><code>name</code></td><td><code>CUSTOM.CUST_NAME</code></td><td>테스트 고객 제외. 빈 값 —</td></tr>
+        <tr><td>5</td><td>수술방법 R</td><td><code>againR</code></td><td><code>again_r</code></td><td><code>RE_OPERATION.AGAIN_R</code></td><td>빈 값 —. 렌즈/레이저 판정 입력(마트 <code>is_lens</code>)</td></tr>
+        <tr><td>6</td><td>수술방법 L</td><td><code>againL</code></td><td><code>again_l</code></td><td><code>RE_OPERATION.AGAIN_L</code></td><td>같음</td></tr>
+        <tr><td>7</td><td>수납금액</td><td><code>payment</code></td><td><code>payment</code></td><td><code>COSTPRICE.COST_PRICE</code> 합 (<code>COST_DATE</code> = 재수술일, <code>PayStt≠'A'</code>)</td><td>콤마 문자열 + '원'. 0 이면 —. 요약바 「비용」은 체크된 행의 합</td></tr>
+        <tr><td>8</td><td>제외 사유(그룹 제목)</td><td><code>excludeReason</code></td><td><code>exclude_reason</code></td><td><code>REASON_CD</code> 01/07/10 · 시술명 <code>Irrigation…</code> · 시술명 없음</td><td>자동 제외 행만 값이 있음. 값 종류 고정: 세척(Irrigation) · 재위치(Lens Reposition) · 백내장(CATARACT) · 세척(Irrigation) · 사유코드 오입력 · 시술명 없음 · 기타</td></tr>
+      </tbody>
+    </table>
+    <p>응답의 <code>nameEng</code> · <code>patientType</code> · <code>surgeon</code> 은 팝업에 없고 리스트의 재수술 행(고객명(영) · 신/구환 · 집도의)에만 쓰임. 요약바 「재수술 N건」은 체크된 행 수, 「자동 N건」은 <code>autoIncluded=1</code> 행 수임.</p>
   
   </div>
 
@@ -597,6 +669,7 @@
       <tbody>
         <tr><td>마트 (Postgres)</td><td><code>list_reoperation</code> · <code>list_surgery</code> · <code>mart_surgery_daily</code> · <code>mart_surgery_monthly</code> · <code>v_all_surgery_list</code></td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td><code>COSTPRICE</code> · <code>CUSTOM</code> · <code>Cataract_Exam</code> · <code>Cataract_Operationdata</code> · <code>EMPLOYEE</code> · <code>EXAM</code> · <code>EtcCfg</code> · <code>MOTIVE_NEW01</code> · <code>MOTIVE_NEW02</code> · <code>NationCustom_CFG</code> · <code>OPERATIONDATA</code> · <code>RESERVATION</code> · <code>RE_OPERATION</code></td></tr>
+        <tr><td>앱 테이블 (Postgres · JPA)</td><td><code>reoperation_decision</code></td></tr>
       </tbody>
     </table>
     <details class="sqlrefs">
@@ -652,6 +725,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>
