@@ -36,11 +36,12 @@ import java.util.stream.Stream;
  * write 한다. 이 방어가 있어야 자동 배치가 MSSQL 없이도 25 값을 유지할 수 있다.
  * mart_exam_count_by_class 는 24·25 에 분류 자체가 없어 min-year 필터 대상 아님.
  *
- * <h2>2026 H1 주차 가드 (W1~W22)</h2>
- * V57 시드가 월간 골든(V24·V27·V22·V35) 을 일수 비례로 배분해 2026 W1~W22 를 채운다.
- * 원천 채널 마트가 컷오버(2026-06) 이후 정의만 담고 있고 list_* 도 이 구간이 비어 있어
- * 배치가 재계산해 upsert 하면 대부분 컬럼이 null 로 덮인다 → is2026H1WeeklySeeded() 로 스킵.
- * 시드와 가드는 한 쌍 — 가드를 풀면 시드값이 사라진다.
+ * <h2>2026 H1 시드(V57) 와 공존</h2>
+ * V57 이 컷오버(2026-06) 이전 주(W1~W22) 의 예약 종합·콜·온라인 3컬럼을 월간 골든 배분값으로 채운다.
+ * 그 구간은 WeeklyReportService 가 online 을 산출 못해 3컬럼을 null 로 돌려주는데,
+ * upsert-weekly-report.sql 이 EXCLUDED.online IS NULL 을 스위치로 삼아 3컬럼을 세트로 시드값 유지하고
+ * 나머지 20컬럼(검사·수술·외래·상담)만 list_* 배치값으로 채운다.
+ * 종전에는 이 잡에 W1~W22 스킵 필터가 있었지만 upsert 가 컬럼별로 판별하도록 바꿔 필요 없어졌다.
  */
 @Slf4j
 @Component
@@ -72,8 +73,7 @@ public class ReportMartJob {
         List<Integer> years = yearsInRange(from, to);
 
         List<WeeklyReportItem> weekly = weeklyReportService.getWeeklyStats(years).stream()
-                .filter(w -> w.getYear() >= minYear)                       // V55 seed(2025) 보호
-                .filter(w -> !is2026H1WeeklySeeded(w.getYear(), w.getWeek())) // V57 seed(2026 W1~W22) 보호
+                .filter(w -> w.getYear() >= minYear) // V55 seed(2025) 보호. V57(2026 W1~W22) 은 upsert 가 컬럼별로 지킨다.
                 .toList();
         int weeklyRows = writer.upsertWeekly(weekly);
 
@@ -98,14 +98,5 @@ public class ReportMartJob {
     private static List<Integer> yearsInRange(LocalDate from, LocalDate to) {
         return Stream.iterate(from.getYear(), y -> y <= to.getYear(), y -> y + 1)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
-    }
-
-    /**
-     * 2026 W1~W22 골든 시드 구간 판정 (V57).
-     * 이 주들은 컷오버(2026-06) 이전이라 online 계산이 불가하고 list_* 원천도 없어
-     * 배치가 재계산하면 대부분 컬럼이 null 로 덮인다. V57 이 월간 골든값을 배분해 채운 걸 지킨다.
-     */
-    private static boolean is2026H1WeeklySeeded(int year, int week) {
-        return year == 2026 && week >= 1 && week <= 22;
     }
 }

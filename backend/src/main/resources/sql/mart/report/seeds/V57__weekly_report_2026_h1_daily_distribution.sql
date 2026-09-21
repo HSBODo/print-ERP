@@ -26,8 +26,9 @@
 -- ⚠️ 정합: reservations = call_cnt + online 이 세트로 성립해야 함. call 만 배치값 두고
 --    online 만 시드로 덮으면 예약 종합 정합이 깨진다 → 3개를 한 세트로 시드.
 -- ⚠️ 부정확: 일수 비례라 요일·주 리듬 무시 (±5% 오차 가능). 담당자 주차 확정값이 나오면 교체할 것.
--- ⚠️ 재write 차단: `ReportMartJob.is2026H1WeeklySeeded()` 필터가 W1~W22 upsert 를 스킵한다.
---    시드와 가드는 한 쌍이다 — 가드를 풀면 이 값이 배치에 덮인다.
+-- ⚠️ 재write 보호: upsert-weekly-report.sql 이 EXCLUDED.online IS NULL 을 스위치로 삼아
+--    3컬럼을 세트로 시드값 유지한다(W1~W22 는 배치가 online 을 null 로 돌려주는 구간).
+--    산출 가능한 구간(W23~) 에서는 배치값이 들어가고, 나머지 20컬럼은 항상 배치값을 반영한다.
 -- ⚠️ 멱등: MartSchemaInitializer 가 매 부팅 시 실행. ON CONFLICT (yr, wk) DO UPDATE 로 확정값 재보정.
 -- =========================================================
 
