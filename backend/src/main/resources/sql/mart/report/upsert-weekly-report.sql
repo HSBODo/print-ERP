@@ -54,11 +54,24 @@ ON CONFLICT (yr, wk) DO UPDATE SET
     stop_count         = EXCLUDED.stop_count,
     exam_general_base  = EXCLUDED.exam_general_base,
     booked_general     = EXCLUDED.booked_general,
-    reoperation        = EXCLUDED.reoperation,
+    -- 수술 4컬럼(vision_surgery·cataract_surgery·total_surgery·reoperation)은
+    -- SurgeryMartJob.MART_LIVE_FROM(2026-06-01) 클램프로 W1~W22 구간에 list_surgery 가
+    -- 없어 WeeklyReportService 가 해당 주 수술 집계를 null 로 돌려준다. V57 시드가
+    -- 월간 골든(V35) 배분값으로 채운 세트를 유지하려면 EXCLUDED.total_surgery IS NULL
+    -- (=배치 계산 불가 구간) 이면 4컬럼을 통째로 시드값으로 두고, 산출 가능한 구간(W23~)
+    -- 에서는 배치값을 그대로 반영한다.
+    -- reop_laser/reop_lens 는 시드에 없는 내부 breakdown 이라 그대로 EXCLUDED 를 쓴다.
+    vision_surgery     = CASE WHEN EXCLUDED.total_surgery IS NULL
+                              THEN mart_weekly_report.vision_surgery
+                              ELSE EXCLUDED.vision_surgery END,
+    cataract_surgery   = CASE WHEN EXCLUDED.total_surgery IS NULL
+                              THEN mart_weekly_report.cataract_surgery
+                              ELSE EXCLUDED.cataract_surgery END,
+    total_surgery      = COALESCE(EXCLUDED.total_surgery, mart_weekly_report.total_surgery),
+    reoperation        = CASE WHEN EXCLUDED.total_surgery IS NULL
+                              THEN mart_weekly_report.reoperation
+                              ELSE EXCLUDED.reoperation END,
     reop_laser         = EXCLUDED.reop_laser,
     reop_lens          = EXCLUDED.reop_lens,
-    vision_surgery     = EXCLUDED.vision_surgery,
-    cataract_surgery   = EXCLUDED.cataract_surgery,
-    total_surgery      = EXCLUDED.total_surgery,
     outpatient         = EXCLUDED.outpatient,
     loaded_at          = CURRENT_TIMESTAMP

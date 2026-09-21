@@ -37,10 +37,14 @@ import java.util.stream.Stream;
  * mart_exam_count_by_class 는 24·25 에 분류 자체가 없어 min-year 필터 대상 아님.
  *
  * <h2>2026 H1 시드(V57) 와 공존</h2>
- * V57 이 컷오버(2026-06) 이전 주(W1~W22) 의 예약 종합·콜·온라인 3컬럼을 월간 골든 배분값으로 채운다.
- * 그 구간은 WeeklyReportService 가 online 을 산출 못해 3컬럼을 null 로 돌려주는데,
- * upsert-weekly-report.sql 이 EXCLUDED.online IS NULL 을 스위치로 삼아 3컬럼을 세트로 시드값 유지하고
- * 나머지 20컬럼(검사·수술·외래·상담)만 list_* 배치값으로 채운다.
+ * V57 이 컷오버(2026-06) 이전 주(W1~W22) 의 두 세트를 월간 골든 배분값으로 채운다.
+ * <ul>
+ *   <li>예약 3컬럼 (reservations·call_cnt·online) — 원천: V24. online 정의 부재로 배치가 null 반환.</li>
+ *   <li>수술 4컬럼 (vision_surgery·cataract_surgery·total_surgery·reoperation) — 원천: V35.
+ *       SurgeryMartJob.MART_LIVE_FROM(2026-06-01) 클램프로 list_surgery 부재라 배치가 null 반환.</li>
+ * </ul>
+ * upsert-weekly-report.sql 이 두 스위치(EXCLUDED.online IS NULL · EXCLUDED.total_surgery IS NULL) 로
+ * 세트 단위 시드 보존을 처리하고, 나머지 16컬럼(검사·외래·상담) 은 list_* 배치값으로 채운다.
  * 종전에는 이 잡에 W1~W22 스킵 필터가 있었지만 upsert 가 컬럼별로 판별하도록 바꿔 필요 없어졌다.
  */
 @Slf4j
