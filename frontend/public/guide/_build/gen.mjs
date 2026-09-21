@@ -8,7 +8,7 @@ import url from 'node:url'
  */
 const PLAN = path.resolve(url.fileURLToPath(new URL('.', import.meta.url)), '..')
 const OUT = path.join(PLAN, 'pages')
-const TODAY = '2026-09-16'
+const TODAY = '2026-09-17'
 
 const HERE = url.fileURLToPath(new URL('.', import.meta.url))
 const data = JSON.parse(fs.readFileSync(path.join(process.argv[2] ?? HERE, 'spec-data.json'), 'utf8'))
@@ -150,7 +150,7 @@ const TABBAR = `  <!-- ===== Top tab bar ===== -->
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -213,12 +213,14 @@ const SOURCE_TAG = {
   mart: '<span class="tag t-mart">마트</span>',
   crm: '<span class="tag t-crm">CRM 직결</span>',
   mixed: '<span class="tag t-mixed">마트+CRM</span>',
+  app: '<span class="tag t-mart">앱 테이블</span>',
   unknown: '<span class="tag t-draft">—</span>',
 }
 const SOURCE_TEXT = {
   mart: '마트(Postgres) 전용 — 배치가 적재한 테이블만 읽음.',
   crm: 'CRM(MSSQL) 원천 직결 — 마트 경유 없이 운영 DB를 읽음.',
   mixed: '마트와 CRM 원천이 함께 잡힘 — 프로파일(postgres-mart / mssql)에 따라 갈리는 구조이거나, 공용 리포지터리를 거치며 다른 화면의 SQL 까지 딸려온 경우임. 어느 쪽이 실제 조회 경로인지는 확인이 필요함.',
+  app: '앱 운영 테이블(Postgres) 전용 — 배치 마트나 CRM 이 아니라, 화면이 JPA 엔티티로 직접 읽고 쓰는 테이블임.',
   unknown: '조회 경로가 잡히지 않았음 — 미구현(placeholder)이거나 화면이 조회를 하지 않는 정적 문서임.',
 }
 
@@ -240,6 +242,8 @@ const TIERS = [
     ids: ['reservation-channel', 'channel-profit', 'channel-analysis', 'overseas-marketing-receptions', 'overseas-marketing-statistics', 'overseas-reservation-stats'] },
   { n: '4순위', why: '지표 정의 문서가 확보되어 상당 구간을 링크 참조로 대체할 수 있다.',
     ids: ['consultation-rate', 'cataract-reservation-rate', 'stop-rate', 'stop-reason', 'surgery', 'surgery-ratio', 'surgery-composition', 'reservation-stats-system', 'reservation-stats-cataract', 'cataract-exam-list', 'eoeis-checkup', 'examination', 'procedure-exam', 'outpatient-count', 'dreamlens-revenue', 'reservation-list-homepage', 'batch-management'] },
+  { n: '5순위', why: '로드맵 수립 이후 추가된 메뉴(2026-08 말~09). 코드와 함께 확정된 규칙을 기획서로 옮긴다.',
+    ids: ['reservation-change', 'accumulated-eyes', 'accounting-medical', 'accounting-vision', 'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart', 'account-management'] },
 ]
 
 /* 화면별로 이어 읽을 문서 — 지표정의·점검 기록은 이미 있는 정본이라 링크로 잇는다. */
@@ -292,6 +296,7 @@ const counts = {
   complete: data.pages.filter((p) => p.status === 'complete').length,
   pending: data.pages.filter((p) => p.status === 'pending').length,
   admin: data.pages.filter((p) => p.adminOnly).length,
+  executive: data.pages.filter((p) => p.executiveOnly).length,
   specDone: data.pages.filter((p) => isComplete(p.id)).length,
 }
 
@@ -309,13 +314,22 @@ const menuRow = (id) => {
         ? `<a href="${specHref(id)}">문서 보기</a> <span class="tag t-plan">기획 먼저</span>`
         : `<a href="${specHref(id)}">문서 보기</a> <span class="tag t-draft">초안</span>`
   return `      <tr>
-        <td>${esc(p.label)}${p.adminOnly ? ' <span class="tag t-warn">ADMIN</span>' : ''}</td>
+        <td>${esc(p.label)}${p.adminOnly ? ' <span class="tag t-warn">ADMIN</span>' : p.executiveOnly ? ' <span class="tag t-warn">임원</span>' : ''}</td>
         <td><span class="mono">${esc(p.path)}</span></td>
         <td>${STATUS_TAG[p.status]}</td>
-        <td>${SOURCE_TAG[p.source]}</td>
+        <td>${planSourceTag(id, p)}</td>
         <td>${p.endpoints.length ? p.endpoints.length + '개' : '—'}</td>
         <td>${spec}</td>
       </tr>`
+}
+
+/* 미구현 메뉴는 코드가 없어 자동 추출이 「—」 로 남는다. content/<id>.mjs 가 s6plan(예정 원천)을 적어 두면
+   현황 표에서도 「예정」 으로 구분해 보여 준다 — 코드가 생기면 자동 추출 태그가 우선한다. */
+const PLAN_KIND_LABEL = { crm: 'CRM', mart: '마트', mixed: '마트+CRM' }
+const planSourceTag = (id, p) => {
+  const c = CONTENT.get(id)
+  if (p.source !== 'unknown' || !c?.s6plan) return SOURCE_TAG[p.source]
+  return `<span class="tag t-plan">${PLAN_KIND_LABEL[c.s6planKind] ?? 'CRM'} 예정</span>`
 }
 
 const menuTable = (ids) => `    <table class="menu">
@@ -382,6 +396,7 @@ const menuStatus = `  <div class="topbar">
       <div class="kpi"><div class="n">${counts.pending}</div><div class="l">미착수</div></div>
       <div class="kpi"><div class="n">${counts.hidden}</div><div class="l">사이드바 비노출</div></div>
       <div class="kpi"><div class="n">${counts.admin}</div><div class="l">ADMIN 전용</div></div>
+      <div class="kpi"><div class="n">${counts.executive}</div><div class="l">임원 전용</div></div>
       <div class="kpi"><div class="n">${counts.specDone} / ${counts.total}</div><div class="l">기획서 작성 완료</div></div>
     </div>
     <div class="note">
@@ -404,8 +419,12 @@ const menuStatus = `  <div class="topbar">
         <tr><td>${SOURCE_TAG.mart}</td><td>배치가 적재한 PostgreSQL 마트만 조회</td></tr>
         <tr><td>${SOURCE_TAG.crm}</td><td>CRM(MSSQL) 운영 DB를 직접 조회</td></tr>
         <tr><td>${SOURCE_TAG.mixed}</td><td>두 경로가 모두 탐지됨. 프로파일 분기 또는 공용 리포지터리 경유로 추정되며 개별 확인 필요</td></tr>
+        <tr><td>${SOURCE_TAG.app}</td><td>배치 마트·CRM 조회 없이 앱 운영 테이블(PostgreSQL, JPA 엔티티)만 읽고 씀. 예: 계정 관리의 <code>users</code></td></tr>
+        <tr><td><span class="tag t-warn">ADMIN</span></td><td>ADMIN 롤 전용(<code>ADMIN_ONLY_PAGE_IDS</code>). 그 외 롤에게는 사이드바 숨김 및 직접 URL 접근 차단</td></tr>
+        <tr><td><span class="tag t-warn">임원</span></td><td>임원 이상(ADMIN · DIRECTOR) 전용(<code>EXECUTIVE_ONLY_PAGE_IDS</code>). MANAGER · STAFF 에게는 사이드바 숨김 및 직접 URL 접근 차단. 백엔드 <code>/api/accounting/**</code> 매처와 대칭</td></tr>
         <tr><td><span class="tag t-done">작성 완료</span></td><td>수기 작성 본문을 포함한 기획서 보유</td></tr>
-        <tr><td><span class="tag t-draft">초안</span></td><td>자동 생성 장만 존재. 2·3·4·5·10장 미작성</td></tr>
+${[...CONTENT.values()].some((c) => c?.s6plan) ? `        <tr><td><span class="tag t-plan">CRM 예정</span></td><td>미구현 메뉴의 <b>예정 원천</b>. 코드가 없어 자동 추출이 불가하므로 기획서 6장에 수기로 적은 조회 경로를 표기. 구현 후 재생성하면 자동 추출 태그로 대체</td></tr>
+` : ''}        <tr><td><span class="tag t-draft">초안</span></td><td>자동 생성 장만 존재. 2·3·4·5·10장 미작성</td></tr>
         <tr><td><span class="tag t-plan">기획 먼저</span></td><td>미구현 메뉴로 기획 확정 전이므로 본문 작성 대상 아님</td></tr>
       </tbody>
     </table>
@@ -651,8 +670,8 @@ ${stateNote}  <div class="card" id="s1">
         <tr><td>화면 경로</td><td><span class="mono">${esc(p.path)}</span></td></tr>
         <tr><td>메뉴 ID</td><td><code>${esc(p.id)}</code></td></tr>
         <tr><td>구현 상태</td><td>${STATUS_TAG[p.status]}</td></tr>
-        <tr><td>접근 권한</td><td>${p.adminOnly ? '<b>ADMIN 전용</b> — ADMIN 이 아니면 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘' : '로그인 사용자 전체'}</td></tr>
-        <tr><td>사이드바 노출</td><td>${p.hidden ? '<b>숨김</b>(<code>HIDDEN_MENU_IDS</code>) — 라우트는 살아 있어 URL 로는 접근됨' : p.adminOnly ? '노출 — 단 ADMIN 롤에게만' : '노출'}</td></tr>
+        <tr><td>접근 권한</td><td>${p.adminOnly ? '<b>ADMIN 전용</b> — ADMIN 이 아니면 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘' : p.executiveOnly ? '<b>임원 이상(ADMIN · DIRECTOR) 전용</b> — MANAGER · STAFF 는 사이드바에서 숨고 직접 URL 접근도 placeholder 로 막힘. 백엔드도 <code>/api/accounting/**</code> 를 <code>hasAnyRole(ADMIN, DIRECTOR)</code> 로 막음' : '로그인 사용자 전체'}</td></tr>
+        <tr><td>사이드바 노출</td><td>${p.hidden ? '<b>숨김</b>(<code>HIDDEN_MENU_IDS</code>) — 라우트는 살아 있어 URL 로는 접근됨' : p.adminOnly ? '노출 — 단 ADMIN 롤에게만' : p.executiveOnly ? '노출 — 단 ADMIN · DIRECTOR 롤에게만' : '노출'}</td></tr>
         <tr><td>화면 컴포넌트</td><td>${p.component ? `<span class="mono">${esc(p.component)}</span>` : '없음 — <code>StatsPlaceholderPage</code> 로 렌더'}</td></tr>
       </tbody>
     </table>
@@ -671,13 +690,19 @@ ${written(s.n) ? content['s' + s.n] : `    <p class="shot-cap">작성 예정.</p
 
   <div class="card" id="s6">
     <div class="card-head"><div class="chip">6</div><h2>데이터 소스</h2></div>
-    <p>${SOURCE_TEXT[p.source]}</p>
+${p.source === 'unknown' && content.s6plan ? `    <div class="note">
+      <div class="h">예정 원천 — 기획안</div>
+      <p>화면 코드가 아직 없어 조회 경로를 자동 추출할 수 없음. 아래는 <b>레거시 화면 · 테이블 카탈로그 · WORK DB 실측</b>을 근거로 정한 예정 원천이며,
+         구현 후 재생성하면 코드에서 추출한 표로 바뀜. 원고는 <code>_build/content/${esc(p.id)}.mjs</code> 의 <code>s6plan</code>.</p>
+    </div>
+${content.s6plan}` : `    <p>${SOURCE_TEXT[p.source]}</p>
     <table>
       <thead><tr><th>구분</th><th>테이블 · 뷰</th></tr></thead>
       <tbody>
         <tr><td>마트 (Postgres)</td><td>${tableList(p.martTables)}</td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td>${tableList(p.crmTables)}</td></tr>
-      </tbody>
+${p.appTables?.length ? `        <tr><td>앱 테이블 (Postgres · JPA)</td><td>${tableList(p.appTables)}</td></tr>
+` : ''}      </tbody>
     </table>
 ${p.sqlRefs.length ? `    <details class="sqlrefs">
       <summary>SQL 리소스 ${p.sqlRefs.length}개 — 펼쳐 보기</summary>
@@ -691,7 +716,7 @@ ${p.sqlRefs.map((s) => `        <li><span class="mono">backend/src/main/resource
          공용 리포지터리 하나에 여러 화면의 SQL 이 함께 들어 있으면 <b>이 화면이 쓰지 않는 테이블까지 섞임</b>.
          5장(표·지표 정의)을 쓸 때 실제 조회 경로를 확인해 이 표를 줄여 둘 것.
          테이블별 컬럼·함정은 <a href="../db/tables/_index.md">db/tables/</a> 가 정본임.</p>
-    </div>
+    </div>`}
   </div>
 
   <div class="card" id="s7">
@@ -705,6 +730,7 @@ ${epTable}
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>${p.adminOnly ? '<b>예</b>' : '아니오'}</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>${p.executiveOnly ? '<b>예</b>' : '아니오'}</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>${p.hidden ? '<b>예</b>' : '아니오'}</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>${esc(p.status)}</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>${isPending ? '<b>차단</b> — placeholder 로 렌더' : '차단 없음'}</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

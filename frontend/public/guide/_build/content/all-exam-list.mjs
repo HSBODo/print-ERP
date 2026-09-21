@@ -176,37 +176,36 @@ export default {
          <b>'기타'를 '미검사'로 부르지 말 것</b> — 2026-01~07 총 11건 중 2건은 백내장 검사기록이 있음.</p>
     </div>
 
-    <h3>파생 컬럼 — 원천에 없는 값 6종</h3>
+    <h3>컬럼 정의 — 24개</h3>
+    <p>화면 24열 = API 응답 22필드 + 화면 계산 2열(No · 만나이).
+       조회 경로는 뷰 <code>v_all_exam_list</code>(시력교정 + 백내장 마트)임.</p>
     <table>
-      <thead><tr><th>컬럼</th><th>값</th><th>규칙</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr>
-          <td>원데이</td><td>원데이 · 일반</td>
-          <td><b>빈칸 없는 이진값</b>(2026-08-05 확정).
-              시력교정 = 같은 날 검사OP(<code>M</code>/<code>5</code>) 내원, 중단·취소 제외 /
-              백내장 = 진료구분 C_원데이(7)·C_노안원데이(9) /
-              드림렌즈 = 구조상 원데이가 불가능해 <b>항상 일반</b></td>
-        </tr>
-        <tr>
-          <td>신/구환</td><td>신환 · 구환</td>
-          <td><code>CUSTOM.FIRST_DAY</code> 가 <b>조회 기간 안</b>이면 신환. 기간을 바꾸면 뒤집힘</td>
-        </tr>
-        <tr>
-          <td>소개구분</td><td>일반 · 고객소개 · 직원소개</td>
-          <td>내원동기(대)로 판정 — 소개고객·소개미확인 → 고객소개 / 소개직원 → 직원소개 / 그 외 일반</td>
-        </tr>
-        <tr>
-          <td>내원동기(레포트)</td><td>9계열</td>
-          <td>아래 매핑표. <b>미기재 포함 그 외 전부 '기타'</b></td>
-        </tr>
-        <tr>
-          <td>직업구분</td><td>직장인 · 학생 · 기타</td>
-          <td><code>CUSTOM.JOB</code> 자유입력을 키워드로 접음 — 아래</td>
-        </tr>
-        <tr>
-          <td>만나이</td><td>숫자</td>
-          <td>화면이 생년월일에서 계산. CSV 는 <b>내려받은 날 기준</b></td>
-        </tr>
+        <tr><td>1</td><td>No</td><td>—</td><td>—</td><td>—</td><td>행 번호(페이지 반영). 정렬하면 원래 조회 순서로 매김</td></tr>
+        <tr><td>2</td><td>검사일</td><td><code>examDate</code></td><td><code>exam_date</code></td><td>시력교정·드림렌즈 <code>EXAM.EXAM_DATE</code> / 백내장 <code>RESERVATION.RESERVE_DATE</code>(<code>FLAG='H'</code>)</td><td><b>조회 기준 날짜</b>. 고객 × 검사일 1행. 정렬 기본값(검사일 → 백내장 뒤 → 이름)</td></tr>
+        <tr><td>3</td><td>검사구분</td><td><code>examGroup</code></td><td><code>exam_group</code>(= <code>exam_category</code>)</td><td>같은 날 <code>RESERVATION</code> 에 <code>D</code>(렌즈센터)만 있고 <code>M</code> 이 없으면 드림렌즈, 그 외 시력교정 / 백내장 갈래는 리터럴</td><td>배지 3색. 적재 시 판정</td></tr>
+        <tr><td>4</td><td>원데이</td><td><code>examType</code></td><td><code>exam_type</code>(← <code>one_day</code>)</td><td>시력교정 = 같은 날 <code>RESERVATION</code> <code>M</code> + <code>JINRYO 5·7</code> + <code>STATE I/H</code>(검사메모 테스트 제외) / 백내장 = <code>RESERVE_JINRYO IN (7,9)</code></td><td><b>빈칸 없는 이진값</b>(원데이 · 일반). 드림렌즈는 구조상 항상 일반. 중단·취소는 빼지 않음(2026-07-30)</td></tr>
+        <tr><td>5</td><td>백내장분류</td><td><code>cataractClass</code></td><td><code>cataract_class</code>(= <code>list_cataract_exam.classification</code>)</td><td><code>CUSTOM.MY_OPTOMETRIST</code>·<code>MY_COUNSELOR</code> 의 <code>EMPLOYEE</code> 존재 여부 + <code>BS0808</code> 조합 — 위 4종 표</td><td>백내장 행만 값. 시력교정·드림렌즈는 빈 값 → 대시. 담당자는 고객 마스터라 재배정 시 과거 달이 바뀜</td></tr>
+        <tr><td>6</td><td>신/구환</td><td><code>patientType</code></td><td><code>patient_type</code></td><td><code>CUSTOM.FIRST_DAY</code> 가 적재 범위(<code>:from~:to</code>) 안이면 신환</td><td><b>마트 적재 시점 값</b> — 화면 조회 기간이 아니라 배치 적재 범위 기준. 배지</td></tr>
+        <tr><td>7</td><td>소개구분</td><td><code>introType</code></td><td><code>intro_type</code>(뷰 파생)</td><td><code>motive_l</code> — 소개고객·소개미확인 → 고객소개 / 소개직원 → 직원소개 / 그 외 일반</td><td>배지. 종합지표 검사유입과 같은 규칙</td></tr>
+        <tr><td>8</td><td>내원동기(레포트)</td><td><code>motiveReport</code></td><td><code>motive_report</code>(뷰 파생)</td><td><code>motive_l</code> → 9계열 — 아래 매핑표</td><td><b>미기재 포함 그 외 전부 '기타'</b>. 월간 레포트 도표 #7 과 같은 규칙</td></tr>
+        <tr><td>9</td><td>내원동기(대)</td><td><code>motiveL</code></td><td><code>motive_l</code></td><td><code>MOTIVE_NEW02.category01_name</code>(<code>Idx='1'</code>, 최신 <code>pkey</code>)</td><td>빈 값 대시</td></tr>
+        <tr><td>10</td><td>내원동기(중)</td><td><code>motiveM</code></td><td><code>motive_m</code></td><td><code>MOTIVE_NEW02.category02_name</code></td><td>같은 행에서</td></tr>
+        <tr><td>11</td><td>내원동기(세)</td><td><code>motiveS</code></td><td><code>motive_s</code></td><td><code>MOTIVE_NEW02.category03_name</code></td><td>같은 행에서</td></tr>
+        <tr><td>12</td><td>직업구분</td><td><code>jobBucket</code></td><td><code>job_bucket</code>(뷰 파생)</td><td><code>CUSTOM.JOB</code> 자유입력을 키워드로 접음 — 아래 표</td><td>배지. <b>기본값 직장인</b>(어느 통에도 안 걸리면)</td></tr>
+        <tr><td>13</td><td>직업</td><td><code>job</code></td><td><code>job</code></td><td><code>CUSTOM.JOB</code></td><td>원문 그대로. 빈 값 대시</td></tr>
+        <tr><td>14</td><td>차트번호</td><td><code>chartNo</code></td><td><code>chart_no</code></td><td><code>CUSTOM.CUST_NUM</code></td><td>CSV 는 텍스트 강제(앞 0 보존). 키워드 검색 대상</td></tr>
+        <tr><td>15</td><td>고객명</td><td><code>name</code></td><td><code>name</code></td><td><code>CUSTOM.CUST_NAME</code></td><td>화면 원문, <b>CSV 만 마스킹</b>(홍*동). 키워드 검색 대상. 테스트 고객은 적재 시 제외</td></tr>
+        <tr><td>16</td><td>등급</td><td><code>grade</code></td><td><code>grade</code></td><td><code>CUSTOM.LEVEL</code></td><td>배지 R·A·B·C·G</td></tr>
+        <tr><td>17</td><td>생년월일</td><td><code>birth</code></td><td><code>birth</code></td><td><code>CUSTOM.BIRTH_DAY</code></td><td>문자열 그대로</td></tr>
+        <tr><td>18</td><td>만나이</td><td>—</td><td>—</td><td><code>birth</code> 화면 파생</td><td>YYYY-MM-DD 형식이 아니면 대시. 정렬은 숫자. CSV 는 <b>내려받은 날 기준</b></td></tr>
+        <tr><td>19</td><td>휴대전화</td><td><code>phone2</code></td><td><code>phone2</code></td><td><code>CUSTOM.CALL_NUM2</code></td><td>CSV 마스킹(010-****-5678) + 텍스트 강제. 키워드 검색 대상</td></tr>
+        <tr><td>20</td><td>상담사</td><td><code>counselor</code></td><td><code>counselor</code></td><td><code>CUSTOM.MY_COUNSELOR</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>고객 담당자 기준(방문 아님). 빈 값 대시</td></tr>
+        <tr><td>21</td><td>상담의</td><td><code>doctor</code></td><td><code>doctor</code></td><td><code>CUSTOM.MY_DOCTOR</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>같음</td></tr>
+        <tr><td>22</td><td>검안사</td><td><code>optometrist</code></td><td><code>optometrist</code></td><td><code>CUSTOM.MY_OPTOMETRIST</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>같음. 백내장분류 판정에도 쓰는 필드</td></tr>
+        <tr><td>23</td><td>최근내원일</td><td><code>lastVisit</code></td><td><code>last_visit</code></td><td><code>CUSTOM.LAST_DAY</code></td><td>적재 시점 값</td></tr>
+        <tr><td>24</td><td>고객메모</td><td><code>memo</code></td><td><code>memo</code></td><td><code>CUSTOM.ETC</code></td><td>좌측 정렬. 한 줄로 자르고 마우스를 올리면 전문</td></tr>
       </tbody>
     </table>
 

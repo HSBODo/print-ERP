@@ -1,7 +1,7 @@
 # AS_LIST
 
-> **DB**: SOFTCRM | **컬럼**: 16개 | **행 수**: ~72,233 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 16개 | **행 수**: ~71,791 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20
 
 ## 역할
 
@@ -37,7 +37,7 @@ A/S(사후관리) 이력 테이블. 수술 후 환자의 경과 관찰, 리콜(�
 | AS_Action_EMP_NUM | char(6) | Y | 조치 직원 코드 | EMPLOYEE.EMP_NUM |
 | AS_OP_code | char(2) | Y | 수술 코드 | |
 
-> 외 1개 컬럼: `ReReCallDate` varchar(10) — `SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'AS_LIST'` 으로 전체 조회
+> 외 1개 컬럼 — `SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'AS_LIST'` 으로 전체 조회
 
 ## 함정 (Gotchas)
 

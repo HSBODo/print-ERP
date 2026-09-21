@@ -69,7 +69,7 @@
 | 1 | 재적재 범위 | **매일 어제(D-1) 하루치만 append** (최경량 방식) | ✅ 이행 완료 (`BatchOrchestrator.runDaily`) |
 | 2 | 리스트 실시간성 | **불필요** — 리스트도 T-1 마트로 통합 | ✅ 이행 완료 (`list_*` 4종) |
 | 3 | PII 처리 | **CRM 원본 그대로 복제** (익명화·마스킹 없음) | ✅ 이행 완료 |
-| 4 | Cutover 방식 | **페이지별 `@Profile` 전환** (안전, 롤백 쉬움) | ✅ 이행 완료 (프로파일: `mssql`, `postgres-mart`) |
+| 4 | Cutover 방식 | **페이지별 `@Profile` 전환** (안전, 롤백 쉬움) | ✅ 이행 완료 · `mssql` 프로파일은 2026-08-19 완전 제거 (현재 `postgres-mart` 단일) |
 | 5 | 스냅샷 스토어 | **마트로 흡수 후 삭제** (`SurgerySnapshotStore` 등) | ✅ 이행 완료 — 수술 2026-07-31, 예약통계 2종은 V19/V20 마트 + `period_lock`. §7 참조 |
 | 6 | 배치 러너 | **Spring `@Scheduled`** (Airflow는 이번 스코프 밖) | ✅ 이행 완료 |
 
@@ -89,15 +89,13 @@
 
 ### Spring Datasource 설계 (실제 구성)
 
-두 개의 `@Configuration` 클래스가 프로파일별로 활성화된다.
+단일 `@Configuration` 클래스가 활성화된다 (2026-08-19 `mssql` 프로파일 제거 후).
 
 - `common/config/MartDataSourceConfig.java` — `@Profile("postgres-mart")`
   - `@Primary`: JPA/JdbcTemplate 기본 대상 = Postgres 마트
-  - `@Bean("statsDataSource")` + `@Bean("statsJdbcTemplate")` = MSSQL(배치 전용)
-- `common/config/StatsDataSourceConfig.java` — `@Profile("mssql")`
-  - MSSQL 직결 시절의 조회 경로. Cutover 완결 후 제거 대상
+  - `@Bean("statsDataSource")` + `@Bean("statsJdbcTemplate")` = MSSQL(배치·브릿지·reconcile 전용)
 
-빈 명명: MSSQL 쪽 빈 이름은 문서 초안의 `mssqlDataSource`가 아니라 **`statsDataSource`**로 통일됨. 배치·직결 어느 경로든 동일한 `@Qualifier("statsDataSource")`로 MSSQL을 참조할 수 있음.
+빈 명명: MSSQL 쪽 빈 이름은 **`statsDataSource`**로 통일. `@Qualifier("statsDataSource")`로 참조.
 
 ### application-*.yml (실제 파일)
 
@@ -106,9 +104,7 @@
 | `application.yml` | 공통 기본 (H2) | 개발 편의용 기본값 |
 | `application-local.yml` | 로컬 개발 | `batch.mart.enabled: false` (CRM 접근 없이 프론트 개발) |
 | `application-dev.yml` | 개발 환경 | Docker Postgres 연결, 배치 옵션 |
-| `application-mssql.yml` | (레거시) MSSQL 직결 조회 | Cutover 완료 후 제거 예정 |
-| `application-postgres.yml` | Postgres 조회(JPA 기본 저장소) | |
-| `application-postgres-mart.yml` | **운영 조회 + 배치 실행** | `batch.mart.daily-cron: 0 0 3 * * *`, `batch.mart.monthly-reconcile-cron: 0 30 3 1 * *`, `batch.mart.min-year: 2026` (24·25 레거시 시드 보호) |
+| `application-postgres-mart.yml` | **운영 조회 + 배치 실행** | `batch.mart.daily-cron: 0 0 3 * * *`, `batch.mart.monthly-reconcile-cron: 0 30 3 1 * *`, `batch.mart.min-year: 2026` (24·25 레거시 시드 보호). `local`/`dev`/`prod` 프로파일 그룹이 자동 include. |
 | `application-prod.yml` | 운영 프로파일 그룹 | `postgres-mart` 활성화, 배치 enabled |
 
 ---
@@ -128,7 +124,6 @@
 | `mart_surgery_monthly` | V2 | surgery | ✅ |
 | `mart_surgery_daily` | V2 | surgery | ✅ |
 | `mart_reservation_monthly` | V3 | reservation | ✅ |
-| `mart_reservation_kakao_daily` | V3 | reservation-overall (카카오 채널) | ✅ |
 | `mart_examination_monthly` | V4 | examination | ✅ |
 | `mart_procedure_exam_monthly` | V4 | procedure-exam | ✅ |
 | `mart_consultation_rate_monthly` | V5 | consultation-rate | ✅ |
@@ -173,7 +168,7 @@
 | 테이블 | 목적 | 실제 컬럼 |
 |-------|------|---------|
 | `batch_run_log` | 배치 실행 이력 | job_name, run_type(DAILY/MONTHLY_RECONCILE/MANUAL), target_from/to, status(RUNNING/SUCCESS/FAILED), rows_upserted, started_at, finished_at, duration_ms, error_message |
-| `batch_watermark` | 마트별 마지막 성공 적재 시각 | mart_name(PK), last_loaded_at, updated_at |
+| `batch_watermark` | 마트별 마지막 성공 적재 시각 (감사 로그 · 다음 배치 시작점 결정에는 미사용, 매일 D-1 고정 처리) | mart_name(PK), last_loaded_at, updated_at |
 
 ### 4.4 레거시 시드 (V9)
 
@@ -194,7 +189,7 @@ com.bviit.analytics.batch/
 │   └── BatchRunLog                 // 실행 이력 값 객체
 ├── repository/
 │   ├── BatchRunLogRepository       // batch_run_log CRUD
-│   └── WatermarkRepository         // batch_watermark 조회·갱신
+│   └── BatchSuccessLogRepository   // batch_watermark upsert (감사 로그 용도)
 ├── BatchSlackNotifier               // 실패 시 Slack 알림
 ├── job/  (Job + Writer 페어 10쌍 = 20 파일)
 │   ├── SurgeryMartJob               + SurgeryMartWriter
@@ -228,7 +223,7 @@ com.bviit.analytics.batch/
 2. Postgres 트랜잭션 시작 (`@Transactional`, Writer 계층)
 3. 리스트: `delete-list-*-range.sql` → `insert-list-*.sql`
 4. 집계: `upsert-*.sql` (`INSERT ... ON CONFLICT DO UPDATE`)
-5. `WatermarkRepository.upsert()`로 `batch_watermark` 갱신
+5. `BatchSuccessLogRepository.upsert()`로 `batch_watermark` 에 성공 시각 기록 (감사 로그)
 6. `BatchRunLogRepository`에 성공 기록
 7. 커밋
 
@@ -256,23 +251,23 @@ com.bviit.analytics.batch/
 
 ### 6.1 원칙 (이행 완료)
 
-- ✅ **레포지토리 레벨에서 스위치**: `SurgeryStatsRepository` 인터페이스에 `@Profile({"mssql","postgres-mart"})`, 각 구현체는 `@Profile("mssql")` / `@Profile("postgres-mart")`
+- ✅ **레포지토리 레벨에서 스위치**: 소스 서비스와 마트 QueryService 를 같은 프로파일(`postgres-mart`)에 두고 후자에 `@Primary` 로 우선순위 부여
 - ✅ **한 페이지씩 이행**: 마트 채워진 도메인부터 순차 스위치
-- ✅ **롤백 용이**: 프로파일 원복 시 즉시 MSSQL 직결로 복귀 (`application-mssql.yml` 유지 중)
+- ✅ **롤백 용이**: Cutover 기간에는 프로파일 스위치로 즉시 MSSQL 직결 복귀 가능했음 (2026-08-19 `mssql` 프로파일 완전 제거 · 필요 시 git 히스토리에서 복원)
 
 ### 6.2 도메인별 인터페이스 (실제 코드)
 
 ```
 public interface SurgeryStatsRepository { ... }                              // 공통 인터페이스
 
-@Service @Profile("mssql")
-class SurgeryStatsService implements SurgeryStatsRepository { ... }          // MSSQL 직결
+@Service @Profile("postgres-mart")
+class SurgeryStatsService implements SurgeryStatsRepository { ... }          // MSSQL 직결 (배치 소스·reconcile 용)
 
 @Repository @Profile("postgres-mart")
 class SurgeryStatsMartRepository implements SurgeryStatsRepository { ... }   // 마트
 
 @Service @Profile("postgres-mart") @Primary
-class SurgeryMartQueryService { ... }                                        // 마트 조회 조립
+class SurgeryMartQueryService { ... }                                        // 마트 조회 조립 · 화면은 이 구현이 주입됨
 ```
 
 동일 패턴이 **reservation, exam, consultation, outpatient, overall, etc** 7개 도메인 전부에 적용되어 있음.
@@ -315,9 +310,9 @@ override 는 조회 시점에 서비스가 얹는다 — 즉 **배치 write 경�
 
 ### 7.2 수술 이행 결과 (2026-07-31)
 
-- `SurgeryCompositionReader` 인터페이스 신설 — 두 프로파일 대칭 규약.
+- `SurgeryCompositionReader` 인터페이스 신설 — 마트 QueryService 를 위한 규약.
 - `SurgeryCompositionMartQueryService` (@Primary, postgres-mart) — `mart_surgery_daily` 조회.
-- `SurgeryCompositionQueryService` (mssql 전용) — 소스 라이브 집계로 단순화, read-through fill 폐지.
+- (2026-08-19 `SurgeryCompositionQueryService` 삭제 — mssql 프로파일 제거와 함께 dead code 정리)
 - `SurgeryStatsService`의 `fillSnapshot`/`saveSnapshot` 삭제. `SurgerySnapshot` DTO·`SurgerySnapshotStore` 삭제. 컨트롤러의 `/fill`·`/snapshot`·`/snapshots` 엔드포인트 삭제.
 - 프론트 `SurgeryDailyMeta`에서 `confirmedAt`/`confirmedBy` 필드 제거, `SNAPSHOT` source 삭제 · `MART` 배지 추가.
 - 조회 시점에 MSSQL 을 두드리는 경로가 완전히 사라짐 — 배치가 유일한 write 창.
@@ -328,12 +323,12 @@ override 는 조회 시점에 서비스가 얹는다 — 즉 **배치 write 경�
 
 | PR | 내용 | 상태 |
 |----|------|-----|
-| **PR-1** | Datasource 이중화, Postgres 스키마 초안, `batch_run_log`/`batch_watermark`, `BatchOrchestrator` 뼈대 | ✅ 완료 (`MartDataSourceConfig`, `StatsDataSourceConfig`, `V1__batch_meta.sql`) |
-| **PR-2** | 수술 도메인 마트(monthly/daily/list) + `SurgeryMartJob`·`SurgeryMartWriter`·`SurgeryStatsMartRepository` | ✅ 완료 (`V2__surgery_mart.sql`) |
+| **PR-1** | Datasource 이중화, Postgres 스키마 초안, `batch_run_log`/`batch_watermark`, `BatchOrchestrator` 뼈대 | ✅ 완료 (`MartDataSourceConfig`, `V1a__batch_run_log.sql`·`V1b__batch_watermark.sql`) — 이전에 있던 `StatsDataSourceConfig` 는 2026-08-19 mssql 프로파일 제거와 함께 삭제, stats DataSource 는 `MartDataSourceConfig` 로 통합됨. 2026-08-26 V1 파일을 테이블 단위로 분리 |
+| **PR-2** | 수술 도메인 마트(monthly/daily/list) + `SurgeryMartJob`·`SurgeryMartWriter`·`SurgeryStatsMartRepository` | ✅ 완료 (`V2a__mart_surgery_monthly.sql`·`V2b__mart_surgery_daily.sql`·`V2c__list_surgery.sql`) — 2026-08-26 V2 파일을 테이블 단위로 분리 |
 | **PR-3** | Phase 1 Cutover (surgery 페이지 프로파일 스위치) | ✅ 완료 — surgery/surgery-list/surgery-ratio/surgery-composition 모두 마트. 2026-07-31 surgery-composition도 `mart_surgery_daily` 로 스위치, 스냅샷 파일 폐지 |
-| **PR-4** | 예약 마트 + Phase 2 Cutover | ⚠️ 부분 완료 (`V3__reservation_mart.sql`) — reservation-stats-system/cataract는 스냅샷 유지 |
-| **PR-5** | 검사 마트 + Phase 3 Cutover | ✅ 완료 (`V4__exam_mart.sql`) |
-| **PR-6** | 전환·성공률 마트 + Phase 4 Cutover | ✅ 완료 (`V5__consultation_mart.sql`) |
+| **PR-4** | 예약 마트 + Phase 2 Cutover | ⚠️ 부분 완료 (`V3a__mart_reservation_monthly.sql`·`V3b__list_reservation.sql`) — reservation-stats-system/cataract는 스냅샷 유지. 2026-08-26 V3 파일을 테이블 단위로 분리 |
+| **PR-5** | 검사 마트 + Phase 3 Cutover | ✅ 완료 (`V4a__mart_examination_monthly.sql`·`V4b__mart_procedure_exam_monthly.sql`·`V4c__list_exam.sql`·`V4d__list_cataract_exam.sql`) — 2026-08-26 V4 파일을 테이블 단위로 분리 |
+| **PR-6** | 전환·성공률 마트 + Phase 4 Cutover | ✅ 완료 (`V5a__mart_consultation_rate_monthly.sql`·`V5b__mart_stop_reason_monthly.sql`·`V5c__mart_reservation_rate_monthly.sql`) — 2026-08-26 V5 파일을 테이블 단위로 분리 |
 | **PR-7** | 나머지 마트(외래·전체·기타) + Phase 5 Cutover | ✅ 완료 (`V6..V8`, `V10__overall_exam_monthly.sql`) |
 | **PR-8** | Monthly reconcile 잡, Admin rerun API, 파일캐시·스냅샷 스토어 코드 제거 | ✅ 완료 (§7) |
 | **PR-9** *(신규)* | 미구현 마트 착수 여부 결정 (surgery-ratio/composition, reservation-trend/composition) | ✅ 결정 완료 — 신설 안 함(§4.1) |
@@ -488,7 +483,7 @@ Postgres 마트 테이블 (계산된 최종 숫자만 저장)
 
 `overseas` · `marketing` · `cancel-rate` · `no-show-rate` · `unit-price` · `staff-point` ·
 `prp-rate` · `reoperation-rate` · `same-day-op` · `designated-doctor` · `visit-reason` ·
-`daily-reception` · (`intake-conversion` 숨김)
+`daily-reception`
 
 > ✍️ **`dreamlens-revenue`(드림렌즈 장부)는 이 목록에서 빠졌다** — 마트가 없는 게 아니라
 > **마트 대상이 아니다.** MSSQL 원천이 없고 사용자가 화면에서 직접 입력하는 데이터라
@@ -498,7 +493,7 @@ Postgres 마트 테이블 (계산된 최종 숫자만 저장)
 #### 2-6. 인프라 테이블 (메뉴 아님, 배치 지원용)
 
 - `batch_run_log` — 배치 실행 이력 · 실패 원인 추적
-- `batch_watermark` — 도메인별 마지막 배치 위치
+- `batch_watermark` — 도메인별 마지막 성공 적재일 (감사 로그, `BatchSuccessLogRepository`)
 - `reservation_stats_period_lock` — 월 확정 잠금 (배치 덮어쓰기 방어)
 - `reservation_stats_override` — 예약통계 셀 수기 보정 (INSERT-only audit)
 
@@ -665,7 +660,7 @@ A. 기본은 잠금 상태(V12 seed + min-year 가드). 정말 바꿔야 하면 
 #### 1-4. 관측
 
 - **`batch_run_log`** — 매 실행마다 새 행 (`RUNNING → SUCCESS/FAILED`, `table_stats` JSON 에 각 마트별 upsert 행 수).
-- **`batch_watermark`** — 도메인별 마지막 성공 적재일 (다음 daily 배치의 시작점).
+- **`batch_watermark`** — 도메인별 마지막 성공 적재일 (감사 로그. 매일 D-1 고정 처리이므로 다음 배치의 시작점을 결정하는 데는 미사용, `upsert` 만 호출됨).
 - **Slack 알림** — 실패 시 스택 요약 자동 전송 (`LOGGING_SLACK_*` 프로파일별 활성).
 
 #### 1-5. 재실행 안전 (idempotent)
@@ -703,7 +698,6 @@ INSERT INTO list_* (...) VALUES (...);
 | `mart_reservation_monthly` | ReservationMartJob | UPSERT (yr, mo) | MSSQL | ✅ 적용 | 24·25 는 V9/V12 시드 보호 |
 | `mart_reservation_overall_monthly` | ReservationMartJob | UPSERT (yr, mo) | MSSQL + 홈페이지 마트 | ✅ 적용 | 24·25 는 V12 시드 · 2026-01~05 는 V24 골든 시드(담당자 확정값, 배치 write 차단) · 2026-06~ 는 네이버+카카오+홈페이지(리스트 화면과 동일한 raw) 공식으로 라이브 SUM(오버라이드 즉시 반영) · 현재 진행 중인 달은 부분값 노출 |
 | `list_reservation` | ReservationMartJob | DELETE+INSERT (registered_at) | MSSQL | 없음 | 취소·수정건 자동 흡수 |
-| `mart_reservation_kakao_daily` | ReservationMartJob | DELETE+INSERT (dt) | MSSQL | 없음 | 해피톡 카카오 예약 참고용 |
 | `mart_reservation_stats_system_daily` | ReservationStatsDailyMartJob | UPSERT (stat_date) | MSSQL | ✅ 적용 | **2026-H1 (1~6월) V19 시드 + period_lock** — 배치가 이 6개월 안 덮음 |
 | `mart_reservation_stats_cataract_daily` | ReservationStatsDailyMartJob | UPSERT (stat_date) | MSSQL | ✅ 적용 | **2026-H1 V20 시드 + period_lock** |
 

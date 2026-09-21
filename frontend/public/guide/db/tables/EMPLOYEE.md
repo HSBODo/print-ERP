@@ -1,7 +1,7 @@
 # EMPLOYEE
 
-> **DB**: SOFTCRM | **컬럼**: 50개 | **행 수**: ~1,447 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 50개 | **행 수**: ~1,440 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20
 
 ## 역할
 
@@ -30,7 +30,7 @@
 | EMP_STATE | char(1) | Y | 재직 상태 | `Y`=재직, `N`=퇴직 |
 | FIRST_DAY | char(10) | Y | 입사일 | `YYYY-MM-DD` 문자열 |
 | RETIRE_DAY | char(10) | Y | 퇴사일 | |
-| EMP_Tel | nchar(15) | Y | 전화번호 | |
+| EMP_Tel | varchar | Y | 전화번호 | |
 | MANAGE_FLAG | char(1) | Y | 관리자 여부 플래그 | |
 | SETTING_FLAG | char(1) | Y | 설정 접근 권한 | |
 | ALLIM_FLAG | char(1) | Y | 알림 수신 여부 | |
@@ -45,7 +45,7 @@
 - **LEFT JOIN 폭발**: 검사 데스크(`cataract-exam.js`) 등에서 담당자 필드가 20개 이상이어서 EMPLOYEE를 20번 이상 LEFT JOIN하는 쿼리 존재. 별칭(alias) 관리에 주의
 - **EMP_NUM 형식 혼재**: 레거시 `E00XXX`, ECP 신규 `BW00XX`. `LIKE` 검색 시 접두어 주의
 - **EMP_PW는 레거시 전용**: ECP에서는 `ECP_Auth.password_hash` (bcrypt) 사용. `EMPLOYEE.EMP_PW`에 의존 금지
-- **CUSTOM 테이블의 직원 참조 필드 6개**: `MY_COUNSELOR`, `MY_DOCTOR`, `MY_optometrist`, `MY_MEDICDOCTOR`, `SelectDoc`, `regemp_num` (+`SelectDoc_Second`) — 모두 `EMP_NUM` 값 (char/nchar/nvarchar(6) 타입 혼재). ~~MY_COUNSELOR2, Recommender_Staff~~ 는 CUSTOM에 존재하지 않는 컬럼 (2026-08-10 실측 확인)
+- **CUSTOM 테이블의 직원 참조 필드 6개**: `MY_COUNSELOR`, `MY_DOCTOR`, `MY_optometrist`, `MY_COUNSELOR2`, `Recommender_Staff` 등 — 모두 `EMP_NUM` char(6) 값
 
 ## 사용처
 

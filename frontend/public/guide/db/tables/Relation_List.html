@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -111,15 +111,16 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 
       <article class="doc-card">
         <div class="markdown"><h1 id="relationlist">Relation_List</h1>
-<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 4개 | <strong>행 수</strong>: ~9,879 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-08-10 (WORK DB 실측 대조)</p></blockquote>
+<blockquote><p><strong>DB</strong>: SOFTCRM | <strong>컬럼</strong>: 4개 | <strong>행 수</strong>: ~9,879 (WORK DB 기준) <strong>최종 갱신</strong>: 2026-04-20 (자동 생성)</p></blockquote>
 <h2 id="역할">역할</h2>
-<p>고객 간 관계 테이블. 고객(<code>Cust_num</code>)과 관계 고객(<code>Relation_Cust_num</code>)을 관계명(<code>Relation_Name</code>, 가족/지인 등)으로 연결한다.</p>
+<p>&lt;!-- TODO: 한 줄 설명 --&gt;</p>
 <h2 id="pk-fk-join-키">PK / FK / JOIN 키</h2>
-<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">(없음 — heap 테이블, 2026-08-10 실측 확인)</td><td style="text-align:left"></td><td style="text-align:left"><code>pkey</code> int NOT NULL이 있으나 PK 제약 미설정</td></tr><tr><td style="text-align:left">JOIN</td><td style="text-align:left">Cust_num / Relation_Cust_num</td><td style="text-align:left">nvarchar(50)</td><td style="text-align:left">→ CUSTOM.CUST_NUM. ⚠️ 타입 불일치 (char(13) vs nvarchar(50))</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:left">키</th><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">설명</th></tr></thead><tbody><tr><td style="text-align:left">PK</td><td style="text-align:left">(없음 — heap 테이블)</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
+<p>&lt;!-- TODO: FK, JOIN 키 추가 --&gt;</p>
 <h2 id="핵심-컬럼">핵심 컬럼</h2>
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">컬럼</th><th style="text-align:left">타입</th><th style="text-align:left">NULL</th><th style="text-align:left">설명</th><th style="text-align:left">비고</th></tr></thead><tbody><tr><td style="text-align:left">pkey</td><td style="text-align:left">int</td><td style="text-align:left">N</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">Cust_num</td><td style="text-align:left">nvarchar(50)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">Relation_Cust_num</td><td style="text-align:left">nvarchar(50)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr><tr><td style="text-align:left">Relation_Name</td><td style="text-align:left">nvarchar(50)</td><td style="text-align:left">Y</td><td style="text-align:left"></td><td style="text-align:left"></td></tr></tbody></table></div>
 <h2 id="함정-gotchas">함정 (Gotchas)</h2>
-<ul><li><strong>Cust_num 타입 불일치</strong>: nvarchar(50) — CUSTOM.CUST_NUM(char(13))과 JOIN 시 암시적 형변환 주의.</li><li><strong>PK 제약 없음(heap)</strong>: <code>pkey</code>가 있으나 제약이 걸려 있지 않아 중복 삽입을 DB가 막지 않는다.</li></ul>
+<p>&lt;!-- TODO: 이 테이블의 알려진 함정 --&gt;</p>
 <h2 id="사용처">사용처</h2>
 <p>&lt;!-- TODO: grep -r &#39;FROM Relation_List\|JOIN Relation_List&#39; routes services --&gt;</p>
 <h2 id="관련-문서">관련 문서</h2>

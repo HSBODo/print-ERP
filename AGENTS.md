@@ -36,12 +36,18 @@ project-root/
 │   │   │   ├── stats/
 │   │   │   ├── util/
 │   │   │   └── web/
-│   │   ├── reservation/                 # 예약/예약통계/변경이력(RESERVE_HISTORY 체인)/스냅샷/진단
+│   │   ├── reservation/                 # 예약/예약통계/변경이력(RESERVE_HISTORY 체인)/예약 퍼널(v_reservation_channel)/스냅샷/진단
 │   │   ├── exam/                        # 검사 통계 및 검사자 리스트
-│   │   ├── surgery/                     # 수술 통계 및 수술 리스트
+│   │   ├── surgery/                     # 수술 통계·리스트·누적 안수(OPERATION_ACCUMULATED_EYE_COUNT 마트)
 │   │   ├── consultation/                # 상담/전환율/중단사유
 │   │   ├── outpatient/                  # 외래/내원 관련 통계
 │   │   ├── overall/                     # 종합 주간 지표
+│   │   ├── report/                      # 주차 레포트 (ISO 주차 마트 조회)
+│   │   ├── marketing/                   # 채널별 수익성 · 해외마케팅(접수·통계·예약통계 /api/overseas-marketing)
+│   │   ├── sms/                         # 문자 발송 대상·오프셋·발송·Solapi 웹훅
+│   │   ├── accounting/                  # 진료 수납(IPLUS OPENQUERY)·시력교정 매출(SOFTCRM) 마트 · /api/accounting (임원)
+│   │   ├── batch/                       # 마트 배치 인프라 (job·admin·controller·repository)
+│   │   ├── auth/                        # 로그인/JWT + 계정 관리 /api/admin/users (ADMIN)
 │   │   └── etc/                         # B2B 매출 · 드림렌즈 장부(직접 입력 CRUD) 등 기타
 │   ├── src/main/resources/
 │   │   ├── application.yml                  # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
@@ -96,15 +102,16 @@ project-root/
 
 ### 구현 완료
 
-- JWT 기반 로그인/인증 (백엔드 + 프론트)
+- JWT 기반 로그인/인증 (백엔드 + 프론트) + 계정 관리(`/admin/accounts` · ADMIN · 2026-09-16)
 - 메인 대시보드 레이아웃 (Sidebar + Topbar + Content)
 - DashboardPage (KPI 카드 4개 + 차트 5개, 하드코딩 목업)
 - ReservationPage (월별/연도별 비교, TanStack Query API 연동)
 - 예약통계_시력교정 / 예약통계_백내장 (스냅샷 우선 + MSSQL 라이브 집계)
 - 예약자 리스트 및 주요 예약/검사/상담/수술 통계 API 일부
-- 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` · 배치 도메인 `ACCOUNTING` · 의사랑은 링크드서버 OPENQUERY(`common/util/OpenQuerySql`) · ADMIN 전용)
+- 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` · 배치 도메인 `ACCOUNTING` · 의사랑은 링크드서버 OPENQUERY(`common/util/OpenQuerySql`) · 임원(ADMIN·DIRECTOR) 이상 · 2026-09-17)
 - 회계 정합성: 진료 행·집계는 월 전체를 함께 교체하고 `rows_complete`로 월별 조회 경로를 선택한다. 회계만 매월 2023년부터 과거 이력을 재검산하며, 진료 부분 실패는 성공 데이터 보존 + FAILED 이력으로 처리한다 (`docs/accounting/mart-and-api.md`).
-- 해외마케팅 3종 (접수리스트·통계·예약통계 · `/api/overseas-marketing` · 마트 `overseas_marketing_sheet`/`overseas_reservation_stats` · 2026-09-09 `2026-08-14` 브랜치에서 이관 · MARKETING 부서 전용)
+- 해외마케팅 3종 (접수리스트·통계·예약통계 · `/api/overseas-marketing` · 마트 `overseas_marketing_sheet`/`overseas_reservation_stats` · 2026-09-09 `2026-08-14` 브랜치에서 이관 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제)
+- 마케팅 4종 + SMS (예약 퍼널·채널별 수익성·채널별 분석(정적 문서)·누적 안수 + 문자 발송 리스트 · MARKETING 부서 전용 · SMS 편집/[지금 실행]/[실패 재실행]은 ADMIN 만)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
 
 ### 미구현 (플레이스홀더)
@@ -113,28 +120,32 @@ project-root/
 
 ## 대표 통계 페이지 목록
 
-실제 전체 목록과 라우팅 기준은 `frontend/src/config/statsPages.ts`와 `frontend/src/pages/pageRegistry.ts`를 우선한다.
+실제 전체 목록(55종 · 완료 44 · pending 11)과 라우팅 기준은 `frontend/src/config/statsPages.ts`와 `frontend/src/pages/pageRegistry.ts`를 우선한다. 전체 표는 `CLAUDE.md` 「통계 페이지 목록」 참조.
 
 | ID | 이름 | 경로 | 섹션 | 상태 |
 |----|------|------|------|------|
-| reservation | 예약 건수 | /stats/reservation | 유입 | 구현됨 (API 연동) |
-| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 구현됨 (RESERVE_HISTORY 체인 → `list_reservation_change` 마트 · 변경 상세 탭 + 추이 달력 탭) |
-| examination | 검사 건수 | /stats/examination | 유입 | 플레이스홀더 |
-| consultation-rate | 상담 전환율 | /stats/consultation-rate | 상담 | 플레이스홀더 |
-| surgery | 수술 건수 | /stats/surgery | 수술 | 플레이스홀더 |
-| surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술비중 | 플레이스홀더 |
-| overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 구현됨 (Google Sheet 캐시 + 수기 입력 · CRM 매칭 3단계 · MARKETING 전용) |
-| overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 구현됨 (월별 유입→검사·수술 흐름 · 국가별 · 매출) |
-| overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 구현됨 (레거시 시드 + 접수리스트 자동 집계 · 일간 셀 수정) |
-| marketing | 마케팅 유입 및 효율 | /stats/marketing | 마케팅 | 플레이스홀더 |
-| cancel-rate | 예약취소율 | /stats/cancel-rate | 기타 | 플레이스홀더 |
-| no-show-rate | 부도율 | /stats/no-show-rate | 기타 | 플레이스홀더 |
-| unit-price | 객단가 | /stats/unit-price | 기타 | 플레이스홀더 |
-| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 완료 (관리자 전용 · `list_medical_receipt` 2026~) |
-| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 완료 (관리자 전용 · `list_vision_receipt` 2023~) |
-| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 완료 (관리자 전용 · 피벗은 화면에서 접음) |
-| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 완료 (관리자 전용) |
-| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 완료 (관리자 전용 · 2026~ 행 재집계+구분 · 그 전 `mart_medical_receipt_monthly`) |
+| reservation-list | 예약자 리스트 | /stats/reservation-list | 예약 | 완료 |
+| reservation-change | 예약 변경이력 | /stats/reservation-change | 예약 | 완료 (RESERVE_HISTORY 체인 → `list_reservation_change` 마트) |
+| reservation-channel | 예약 퍼널 | /stats/reservation-channel | 마케팅 | 완료 (v_reservation_channel · 사람 수 8단계 · MARKETING 부서) |
+| channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (MARKETING 부서) |
+| channel-analysis | 채널별 분석 | /stats/channel-analysis | 마케팅 | 완료 (정적 문서 10편, 조회 없음 · MARKETING 부서) |
+| accumulated-eyes | 누적 안수 | /stats/accumulated-eyes | 마케팅 | 완료 (OPERATION_ACCUMULATED_EYE_COUNT 마트 · MARKETING 부서) |
+| sms | 문자 발송 리스트 | /stats/sms | 마케팅 | 완료 (Solapi · MARKETING 부서 · 편집/[지금 실행]/[실패 재실행]은 ADMIN) |
+| examination | 시술별 | /stats/examination | 검사 | 완료 |
+| consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 (관리자 전용) |
+| surgery | 수술 건수 | /stats/surgery | 수술 | 완료 (관리자 전용) |
+| surgery-ratio | 주요 수술별 비중 | /stats/surgery-ratio | 수술 | 완료 |
+| overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 완료 (OVERSEAS_MARKETING 전용) |
+| overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 완료 (OVERSEAS_MARKETING 전용) |
+| overseas-reservation-stats | 예약통계 | /stats/overseas-marketing/reservation-stats | 해외마케팅 | 완료 (일간 셀 수정) |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 완료 (임원 이상 · `list_medical_receipt` 2026~) |
+| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 완료 (임원 이상 · `list_vision_receipt` 2023~) |
+| accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 완료 (임원 이상) |
+| accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 완료 (임원 이상) |
+| accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 완료 (임원 이상) |
+| batch-management | 데이터 배치 관리 | /admin/batch | 관리자 | 완료 (ADMIN) |
+| account-management | 계정 관리 | /admin/accounts | 관리자 | 완료 (ADMIN · 2026-09-16) |
+| marketing · cancel-rate · no-show-rate · unit-price · staff-point · prp-rate · reoperation-rate · same-day-op · designated-doctor · visit-reason · daily-reception | — | — | — | 미구현(11종) |
 
 ## 백엔드 컨벤션
 
@@ -305,8 +316,10 @@ cd frontend && npm run test              # Vitest
 
 ## Codex에게 요청할 때 참고사항
 
-- **새 통계 페이지**: `statsPages.ts`에 페이지 정의 → `navigation.ts` 상태/메뉴 반영 → 전용 페이지 컴포넌트 작성 + 도메인 `routes.ts` 등록 + 백엔드 API 구현
+- **새 통계 페이지**: `statsPages.ts`에 페이지 정의 → `navigation.ts` 상태/메뉴 + 롤·부서 게이트(`isAdminOnlyPage`·`isExecutiveOnlyPage`·`isMarketingOnlyPage`·`isOverseasMarketingPage`) 반영 → 전용 페이지 컴포넌트 작성 + 도메인 `routes.ts` 등록 + 백엔드 API + `SecurityConfig` 매처 대칭 유지
 - **새 차트**: Recharts 기반, shadcn `ChartContainer` 사용, `CHART_PALETTE` 색상 적용
 - **새 UI 컴포넌트**: `npx shadcn@latest add <name>` (설정: `components.json`)
 - **API 연동**: `api/client.ts` HTTP 클라이언트 사용, TanStack Query `useQuery`로 캐싱
 - **DashboardPage 데이터는 하드코딩 목업**이며, `ReservationPage`는 API 연동 상태다.
+- **화면 규칙·컬럼·함정 참조**: 메뉴별 기획서는 `backend/new_대쉬보드_v4/pages/<id>.html` (원문 `_build/content/<id>.mjs`) · 지표는 `지표정의/*.md` · DB는 `db/tables/`. 코드 자동 생성 구간(1·6·7·8·9장)과 사람이 쓴 구간(2·3·4·5·10장)이 나뉜다.
+- **권한 정본**: 롤 × 부서 조합·게이팅 지점은 `docs/auth/permissions.md`. 계정은 `/admin/accounts` 화면(ADMIN)이 유일 입구.

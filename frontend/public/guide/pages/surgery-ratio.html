@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">주요 수술별 비중 — 기획서</div>
-    <div class="sub">비앤빛 › 수술 · <span class="mono">/stats/surgery-ratio</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">비앤빛 › 수술 · <span class="mono">/stats/surgery-ratio</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -488,6 +488,46 @@
       <div class="h">지표 정의</div>
       <p>수술 유형 분류 키워드와 집계 단위는 <a href="../지표정의/5-수술.html">지표정의/5-수술.md</a> 가 정본임.</p>
     </div>
+
+    <h3>컬럼 정의 — KPI 4개</h3>
+    <p>수술 건수와 같은 마트 <code>mart_surgery_monthly</code> 를 읽고 % 는 화면이 계산함.
+       월을 고르면 그 달, 「연간 전체」면 12개월 합이 기준임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>전체 수술 볼륨</td><td>유형 12종의 합(<code>lasek</code>~<code>catEdof</code>)</td><td>12 컬럼 합</td><td>파생</td><td><b>응답 <code>total</code> 이 아님</b>. 시력교정 유형은 환자 DISTINCT(SMILE R + LASIK L 은 2), PIOL 5종은 대표유형 1건, 백내장은 눈 단위 — 수술 건수 화면의 「전체 수술건수」와 값이 다름. 점유율의 분모</td></tr>
+        <tr><td>2</td><td>최대 비중 수술</td><td>12 유형 중 최댓값의 라벨</td><td>—</td><td>—</td><td>값 0 제외, 건수 내림차순 첫 항목. 부제는 그 유형의 점유율(%). 없으면 '-'</td></tr>
+        <tr><td>3</td><td>프리미엄 수술 비중</td><td><code>smile</code> + <code>smilePro</code> + <code>icl</code> + <code>tIcl</code> + <code>viva</code> 의 점유율 합</td><td><code>smile</code> · <code>smile_pro</code> · <code>icl</code> · <code>t_icl</code> · <code>viva</code></td><td>파생</td><td>부제는 「스마일/스마일프로/ICL/VIVA 합산」이지만 식에는 T-ICL 도 들어감. 소수 1자리로 반올림한 점유율을 더하므로 끝자리가 누적될 수 있음</td></tr>
+        <tr><td>4</td><td>백내장 프리미엄 렌즈 비중</td><td>(<code>catMulti</code> + <code>catEdof</code>) ÷ (<code>catMulti</code> + <code>catMono</code> + <code>catEdof</code>)</td><td><code>cat_multi</code> · <code>cat_edof</code> · <code>cat_mono</code></td><td>눈 단위 파생</td><td>백내장이 0 이면 0.0%. 부제 「다초점·연속초점 렌즈 기준」</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 차트 항목 17개</h3>
+    <p>값이 0 인 유형은 숨기고 건수 내림차순으로 놓음.
+       막대 길이는 점유율, 라벨은 건수임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>라섹</td><td><code>lasek</code></td><td><code>lasek</code></td><td>시력교정 눈 시술명이 EYECLE · T-prk · EYE CLE · EYE+ · FLAP PRK · PtK · M-LE ← <code>OPERATIONDATA.OPERATIONR/L</code></td><td>환자×수술일 DISTINCT. 굴절교정 군</td></tr>
+        <tr><td>2</td><td>라식</td><td><code>lasik</code></td><td><code>lasik</code></td><td>FLAP LIFT · OPTI · iFS · VISU · fs200 · Micro+ · Hybrid</td><td>굴절교정 군</td></tr>
+        <tr><td>3</td><td>스마일</td><td><code>smile</code></td><td><code>smile</code></td><td>SMILE (SMILE Pro 는 먼저 걸러짐)</td><td>굴절교정 군</td></tr>
+        <tr><td>4</td><td>스마일프로</td><td><code>smilePro</code></td><td><code>smile_pro</code></td><td>SMILE Pro · SMILEpro · SMILE PRO</td><td>굴절교정 군</td></tr>
+        <tr><td>5</td><td>ICL</td><td><code>icl</code></td><td><code>icl</code></td><td>ICL · IPCL · ARF · ART · ARTIFLEX · GLAZE · ECHO (T- 계열 제외) — 환자당 대표유형(우안 우선) 1건</td><td>렌즈삽입/특수 군</td></tr>
+        <tr><td>6</td><td>T-ICL</td><td><code>tIcl</code></td><td><code>t_icl</code></td><td>T-ICL · T-IPCL · T-GLAZE · T-ECHO — 대표유형</td><td>렌즈삽입/특수 군</td></tr>
+        <tr><td>7</td><td>KPL</td><td><code>kpl</code></td><td><code>kpl</code></td><td>KPL (T-KPL 제외) — 대표유형</td><td>렌즈삽입/특수 군</td></tr>
+        <tr><td>8</td><td>T-KPL</td><td><code>tKpl</code></td><td><code>t_kpl</code></td><td>T-KPL — 대표유형</td><td>렌즈삽입/특수 군</td></tr>
+        <tr><td>9</td><td>VIVA</td><td><code>viva</code></td><td><code>viva</code></td><td>VIVA — 대표유형</td><td>렌즈삽입/특수 군</td></tr>
+        <tr><td>10</td><td>백내장(다초점)</td><td><code>catMulti</code></td><td><code>cat_multi</code></td><td>백내장 눈 시술명이 Clareon · Panoptix · RESTOR · Lara · LISA · CTR(M) · T-CTR · Precizon · LAL 등 ← <code>Cataract_Operationdata.OPERATIONR/L</code></td><td>눈 단위 COUNT. 백내장 군</td></tr>
+        <tr><td>11</td><td>백내장(단초점)</td><td><code>catMono</code></td><td><code>cat_mono</code></td><td>위 둘에 안 걸리는 백내장 눈(K-flex 포함)</td><td>눈 단위. 백내장 군</td></tr>
+        <tr><td>12</td><td>백내장(연속초점)</td><td><code>catEdof</code></td><td><code>cat_edof</code></td><td>EDOF · Vivity · Eyhance · PureSee · Isopure · Symfony — 가장 먼저 판정</td><td>눈 단위. 백내장 군. <a href="surgery-composition.html">수술별 비중</a> 표에서는 「프리미엄」</td></tr>
+        <tr><td>13</td><td>굴절교정 (포트폴리오 도넛)</td><td>1~4 합</td><td>—</td><td>파생</td><td>아래 % 목록의 분모는 12 유형 합</td></tr>
+        <tr><td>14</td><td>렌즈삽입/특수 (도넛)</td><td>5~9 합</td><td>—</td><td>파생</td><td>같음</td></tr>
+        <tr><td>15</td><td>백내장 (도넛)</td><td>10~12 합</td><td>—</td><td>파생</td><td>같음</td></tr>
+        <tr><td>16</td><td>렌즈 기반 수술 비중 (카드)</td><td>(<code>icl</code> + <code>tIcl</code> + <code>kpl</code> + <code>tKpl</code> + <code>viva</code>) ÷ 12 유형 합</td><td>—</td><td>파생</td><td>14번과 같은 값을 큰 숫자로 다시 보여 줌</td></tr>
+        <tr><td>17</td><td>상위 수술 월별 추이 — 시리즈 4</td><td>연간 합 상위 4 유형의 월별 값</td><td>같음</td><td>같음</td><td>월 선택과 무관하게 기준 연도 12개월. 상위 4 는 연간 합 기준(월 기준 아님). 시리즈 색은 유형 색</td></tr>
+      </tbody>
+    </table>
+    <p>응답의 <code>total</code> · <code>visionPatients</code> · <code>cataractPatients</code> · <code>presbyond</code> · <code>piolPatients</code> · 부가시술 · 재수술 컬럼은 이 화면에서 쓰지 않음. PRESBYOND 와 재수술은 12 유형에 없어 볼륨·점유율 어디에도 들어가지 않음.</p>
   
   </div>
 
@@ -499,6 +539,7 @@
       <tbody>
         <tr><td>마트 (Postgres)</td><td><code>list_surgery</code> · <code>mart_surgery_daily</code> · <code>mart_surgery_monthly</code> · <code>v_all_surgery_list</code></td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td><code>COSTPRICE</code> · <code>CUSTOM</code> · <code>Cataract_Operationdata</code> · <code>EMPLOYEE</code> · <code>OPERATIONDATA</code> · <code>RE_OPERATION</code></td></tr>
+        <tr><td>앱 테이블 (Postgres · JPA)</td><td><code>reoperation_decision</code></td></tr>
       </tbody>
     </table>
     <details class="sqlrefs">
@@ -550,6 +591,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

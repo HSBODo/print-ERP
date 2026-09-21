@@ -1,17 +1,19 @@
 # HOSPITAL_CFG
 
-> **DB**: SOFTCRM | **컬럼**: 16개 | **행 수**: 1 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 16개 | **행 수**: ~1 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-병원 설정 단일행 테이블. 병원명·대표자·사업자번호·연락처·주소 등 기본 정보와 `Hospital_Code`(주민번호 암호화 passphrase로 사용, [CUSTOM.md](./CUSTOM.md)의 `DECRYPTBYPASSPHRASE` 참조)를 보관한다.
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
-| PK | HOSPITAL_CD | char(1) | EMPLOYEE.HOSPITAL 등에서 참조 |
+| PK | HOSPITAL_CD | char(1) | |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 
@@ -33,12 +35,11 @@
 | Hospital_Serial | int | Y | |  |
 | Hsp080Number | varchar(50) | Y | |  |
 
-> 외 1개 컬럼: `Kakao` varchar(50) — `SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'HOSPITAL_CFG'` 으로 전체 조회
+> 외 1개 컬럼 — `SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'HOSPITAL_CFG'` 으로 전체 조회
 
 ## 함정 (Gotchas)
 
-- **`Hospital_Code`는 암호화 passphrase**: CUSTOM.JUMIN_NUM 복호화(`DECRYPTBYPASSPHRASE`)에 사용된다. 값 변경 시 기존 암호화 데이터 전체를 못 읽게 되므로 절대 임의 수정 금지.
-- **평문 자격증명 존재**: `HOSPITAL_Ytb_ID`/`HOSPITAL_Ytb_PW`(유튜브 계정)가 평문 저장 — 조회 결과를 로그·화면에 그대로 노출하지 말 것.
+<!-- TODO: 이 테이블의 알려진 함정 -->
 
 ## 사용처
 

@@ -1,19 +1,19 @@
 # Mh_Opdesk
 
-> **DB**: MCRM | **컬럼**: 14개 | **행 수**: ~143,489 (MCRM_WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (MCRM_WORK DB 실측 대조)
+> **DB**: MCRM | **컬럼**: 14개 | **행 수**: ~140,485 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-MCRM 수술 데스크 접수 테이블. 접수번호(`ReceNo`)·진료일(`MedDate`)·취소 여부(`Cancel`)·의사 확인(`Dr_confirm`/`Dr_confirmYN`/`Dr_confirm_time`)과 단계별 담당 직원(`overhaul`/`basic`/`recovery`/`receipt`)을 기록한다.
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
-| PK | (없음 — heap 테이블, 2026-08-10 실측 확인) | | `ReceNo` int NOT NULL이 있으나 PK 제약 미설정 |
-| JOIN | cust_num | char(13) | → SOFTCRM.CUSTOM.CUST_NUM (고객번호 체계 공유) |
-| JOIN | workid / Dr_confirm / overhaul / basic / recovery / receipt | char(6)/varchar(6) | → SOFTCRM.EMPLOYEE.EMP_NUM |
+| PK | (없음 — heap 테이블) | | |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 
@@ -36,9 +36,7 @@ MCRM 수술 데스크 접수 테이블. 접수번호(`ReceNo`)·진료일(`MedDa
 
 ## 함정 (Gotchas)
 
-- **별도 DB(MCRM)**: SOFTCRM 테이블과 JOIN하려면 크로스 DB 쿼리(`MCRM_WORK.dbo.Mh_Opdesk` 등) 필요.
-- **PK/유니크 제약 없음(heap)**: `ReceNo` 중복을 DB가 막지 않는다.
-- **`Cancel` 플래그**: 접수 취소 건 제외 시 `Cancel` 조건 확인 필수.
+<!-- TODO: 이 테이블의 알려진 함정 -->
 
 ## 사용처
 

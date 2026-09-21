@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">채널별 분석 — 기획서</div>
-    <div class="sub">마케팅 · <span class="mono">/stats/channel-analysis</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">마케팅 · <span class="mono">/stats/channel-analysis</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -513,6 +513,33 @@
       <p>조회가 없는 정적 문서인데도 미구현이 아님 — <b>수치가 본문에 박혀 있어 API 없이 완결</b>이기 때문임.
          구현 상태는 "화면이 제 역할을 하는가"를 뜻하지 "API 가 붙었는가"가 아님.</p>
     </div>
+
+    <h3>컬럼 정의 — 모두닥 문서 월별 퍼널 차트 시리즈 7개</h3>
+    <p>문서 10편은 정적이라 컬럼이 없고, 모두닥 문서의 월별 퍼널 차트만 조회함.
+       예약 퍼널 화면은 사람 수를, 이 차트는 <b>건수</b>를 써서 두 숫자가 다름.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>예약</td><td><code>reserved</code></td><td><code>reserved</code> (COUNT(*))</td><td><code>RESERVATION.InsertedDateTime</code> 이 그 달인 모두닥 채널 예약 건</td><td>모두닥 채널 = 내원동기(중)이 '모두닥'인 건</td></tr>
+        <tr><td>2</td><td>취소 제외</td><td><code>notCancel</code></td><td><code>not_cancel</code></td><td><code>RESERVE_STATE &lt;&gt; 'C'</code></td><td>—</td></tr>
+        <tr><td>3</td><td>접수</td><td><code>visited</code></td><td><code>visited</code></td><td><code>RESERVE_STATE IN ('I','H')</code></td><td>—</td></tr>
+        <tr><td>4</td><td>검사</td><td><code>examined</code></td><td><code>examined</code></td><td>그중 <code>EXAM.EXAM_DATE</code> 있음</td><td>—</td></tr>
+        <tr><td>5</td><td>중단 제외</td><td><code>notStop</code></td><td><code>not_stop</code></td><td>그중 <code>EXAM.STOP_YN ≠ 'Y'</code></td><td>—</td></tr>
+        <tr><td>6</td><td>수술등록</td><td><code>surgery</code></td><td><code>surgery</code></td><td>그중 수술예약(<code>RESERVE_FLAG='O'</code>) 등록일 있음</td><td>—</td></tr>
+        <tr><td>7</td><td>수술완료</td><td><code>surgeryDone</code></td><td><code>surgery_done</code></td><td>그중 실제 수술일(<code>OPERATIONDATA</code>) 있음</td><td>재수술(<code>reop</code>)은 이 차트에 없음</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 「단계별 월 건수」 표 3개</h3>
+    <p>차트 아래 표. 행 = 위 시리즈 7개, 열 = 1월~12월 + 합계.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>단계</td><td>— (시리즈 라벨)</td><td>—</td><td>—</td><td>색 칩 + 라벨. 순서는 퍼널 순서</td></tr>
+        <tr><td>2</td><td>1월 ~ 12월</td><td>월별 호출의 해당 시리즈 값</td><td>—</td><td>—</td><td>연도는 <code>MODOODOC_FUNNEL_YEAR</code>(2026) 고정. 도래하지 않은 달은 0</td></tr>
+        <tr><td>3</td><td>합계</td><td>— (프론트 합)</td><td>—</td><td>—</td><td>1~12월 전체 합. 건수 기준이라 사람 수 합계와 다름</td></tr>
+      </tbody>
+    </table>
   
   </div>
 
@@ -563,6 +590,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

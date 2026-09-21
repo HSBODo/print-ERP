@@ -121,6 +121,44 @@ export default {
          분자에 <code>RESERVE_DATE &gt;= 검사일</code> 조건을 넣었음.
          <b>전환율은 아직 안 넣었음</b> — 넣으면 값이 낮아지지만 의미는 정확해짐(10장).</p>
     </div>
+
+    <h3>컬럼 정의 — KPI·차트 시리즈 4개</h3>
+    <p>화면에 표는 없고, KPI 카드 4장과 차트 시리즈가 같은 4지표임.
+       연도 추이의 KPI 는 12개월 건수를 합산해 다시 나눈 값임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>전체 상담 전환율</td><td>— (프론트 파생)</td><td>—</td><td>(<code>visionSurgeryBooked</code> + <code>cataractSurgeryBooked</code>) ÷ (<code>visionExamCount</code> + <code>cataractExamCount</code>)</td><td>이름은 「상담」이지만 <b>분모는 검사수</b>(상담수 아님). 연도 추이에서 이 항목을 고르면 다른 지표는 해제됨</td></tr>
+        <tr><td>2</td><td>시력교정 상담 전환율</td><td><code>visionCounselRate</code></td><td><code>vision_counsel_rate</code></td><td><code>visionSurgeryBooked</code> ÷ <code>visionCounselCount</code> × 100 (배치 계산·1자리 반올림 저장)</td><td>레포트의 「시력교정 상담성공률(전체)」과 같은 값. 마트 read 시 재계산 없음</td></tr>
+        <tr><td>3</td><td>시력교정 수술 전환율</td><td><code>visionSurgeryRate</code></td><td><code>vision_surgery_rate</code></td><td><code>visionSurgeryBooked</code> ÷ <code>visionExamCount</code> × 100</td><td>분모가 검사수라 <a href="cataract-reservation-rate.html">예약률(시력교정)</a>과 뜻이 같아 보이지만 검사자 모집단과 분자 조건이 다름(아래 표 비고)</td></tr>
+        <tr><td>4</td><td>백내장 수술 전환율</td><td><code>cataractSurgeryRate</code></td><td><code>cataract_surgery_rate</code></td><td><code>cataractSurgeryBooked</code> ÷ <code>cataractExamCount</code> × 100</td><td>고객×월 단위</td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 응답 원시 필드 15개</h3>
+    <p>세 API 가 같은 응답을 돌려주며, 조회 경로는 마트 <code>mart_consultation_rate_monthly</code> 임.
+       2024·2025 와 2026-01~05 는 시드 값이라 배치가 덮지 않음.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>연도 (기간 칩)</td><td><code>year</code></td><td><code>yr</code></td><td>검사일 연도</td><td>요청 <code>years</code> 로 조회. 마트에 없는 달은 응답에 없고 프론트가 0 으로 채움</td></tr>
+        <tr><td>2</td><td>월 (X축·기간 칩)</td><td><code>month</code></td><td><code>mo</code></td><td>검사일 월</td><td>1~12</td></tr>
+        <tr><td>3</td><td>— (분모)</td><td><code>visionExamCount</code></td><td><code>vision_exam_count</code></td><td><code>list_exam</code> 세션 수(<code>cancel_code=''</code>) ← <code>EXAM.EXAM_DATE</code>, <code>EXAM.CANCEL_CD=''</code></td><td>세션(검사일×고객) 단위. 리스트 필터(테스트 이름·순수 외래 유입·백내장 중복 제외)가 이미 적용된 모집단이라 raw <code>EXAM</code> 집계보다 적음</td></tr>
+        <tr><td>4</td><td>— (상담수)</td><td><code>visionCounselCount</code></td><td><code>vision_counsel_count</code></td><td><code>list_exam.exam_stop &lt;&gt; 'Y'</code> AND (<code>recommended_r</code> 또는 <code>recommended_l</code> 비어있지 않음) ← <code>EXAM.STOP_YN</code>, <code>EXAM.OPERATIONR</code>/<code>OPERATIONL</code></td><td>「의사가 적절수술을 입력한 검사」. 위 플래그 표의 <code>counsel</code></td></tr>
+        <tr><td>5</td><td>— (수술예약)</td><td><code>visionSurgeryBooked</code></td><td><code>vision_surgery_booked</code></td><td>MSSQL 브릿지: <code>RESERVATION.RESERVE_FLAG='O'</code> AND <code>RESERVE_STATE &lt;&gt; 'C'</code> 가 1건이라도 존재(<code>maxOAny IS NOT NULL</code>)</td><td><b>기간 제한 없음</b> — 검사일 이전 예약 이력도 셈(위 함정 노트)</td></tr>
+        <tr><td>6</td><td>— (화면 미사용)</td><td><code>visionActualSurgery</code></td><td><code>vision_actual_surgery</code></td><td>MSSQL 브릿지: <code>OPERATIONDATA.OPERATION_DATE</code> 존재(전 기간)</td><td>화면 미사용. 위 플래그 표의 <code>actual</code></td></tr>
+        <tr><td>7</td><td>시력교정 수술 전환율</td><td><code>visionSurgeryRate</code></td><td><code>vision_surgery_rate</code></td><td>#5 ÷ #3 × 100</td><td>NUMERIC(6,1). 배치 <code>round1</code></td></tr>
+        <tr><td>8</td><td>시력교정 상담 전환율</td><td><code>visionCounselRate</code></td><td><code>vision_counsel_rate</code></td><td>#5 ÷ #4 × 100</td><td>분자가 「상담한 사람 중 예약」이 아니라 <b>검사자 전체의 예약수</b>임 — 상담 없이 예약한 건도 분자에 들어감. 확인 필요</td></tr>
+        <tr><td>9</td><td>— (화면 미사용)</td><td><code>visionCounselRateOneday</code></td><td><code>vision_counsel_rate_oneday</code></td><td>원데이(<code>list_exam.one_day='Y'</code> ← 당일 <code>RESERVATION M/5·M/7</code>, <code>STATE IN ('I','H')</code>) 세션 중 counsel=1 의 예약 비율</td><td>월간 레포트 「상담성공률(원데이)」용. Zod 스키마 optional</td></tr>
+        <tr><td>10</td><td>— (화면 미사용)</td><td><code>visionCounselRateGeneral</code></td><td><code>vision_counsel_rate_general</code></td><td>일반(<code>one_day='N'</code>) 세션 중 counsel=1 의 예약 비율</td><td>월간 레포트 「상담성공률(일반)」용</td></tr>
+        <tr><td>11</td><td>— (화면 미사용)</td><td><code>visionGeneralBookRate</code></td><td><code>vision_general_book_rate</code></td><td>일반 세션의 예약수 ÷ 일반 세션 수</td><td>월간 레포트 「일반 예약률」용. 분모가 검사수</td></tr>
+        <tr><td>12</td><td>— (분모)</td><td><code>cataractExamCount</code></td><td><code>cataract_exam_count</code></td><td><code>v_all_exam_list.exam_group='백내장'</code> 의 고객×월 DISTINCT ← <code>list_cataract_exam</code> ← <code>RESERVATION.RESERVE_FLAG='H'</code> 내원(<code>RESERVE_STATE NOT IN ('C','Y')</code>) + <code>CUSTOM</code> 담당자 배정</td><td>분류(백내장·중단·노안/FU·기타) 전부 포함. 원본 MSSQL 정의(미내원 포함)보다 월 20~30명 적음 — 리스트 정의를 정본으로 결정(2026-08-12)</td></tr>
+        <tr><td>13</td><td>— (수술예약)</td><td><code>cataractSurgeryBooked</code></td><td><code>cataract_surgery_booked</code></td><td>MSSQL 브릿지: <code>RESERVATION O</code> AND <code>RESERVE_JINRYO='4'</code> AND <code>STATE &lt;&gt; 'C'</code> 존재(<code>maxOCataract IS NOT NULL</code>)</td><td><b>기간 제한 없음</b>. 예약률(백내장)은 <code>&gt;= 첫 검사일</code> 조건이 있어 값이 다름</td></tr>
+        <tr><td>14</td><td>— (화면 미사용)</td><td><code>cataractStoppedCount</code></td><td><code>cataract_stopped_count</code></td><td><code>v_all_exam_list.cataract_class='중단'</code> ← <code>CUSTOM.MY_OPTOMETRIST</code> 가 <code>EMPLOYEE</code> 에 존재 AND <code>CUSTOM.MY_COUNSELOR='BS0808'</code></td><td>고객×월에 검사일이 여럿이면 하나라도 중단이면 1. <code>CUSTOM</code> 의 현재 담당자를 보므로 과거월이 소급 변동함</td></tr>
+        <tr><td>15</td><td>백내장 수술 전환율</td><td><code>cataractSurgeryRate</code></td><td><code>cataract_surgery_rate</code></td><td>#13 ÷ #12 × 100</td><td>NUMERIC(6,1)</td></tr>
+      </tbody>
+    </table>
+
   `,
 
   s10: `

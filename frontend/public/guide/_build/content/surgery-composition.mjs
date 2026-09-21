@@ -123,18 +123,7 @@ export default {
       </tbody>
     </table>
 
-    <h3>분모가 칼럼마다 다름</h3>
-    <table>
-      <thead><tr><th>칼럼</th><th>분모</th></tr></thead>
-      <tbody>
-        <tr><td>스마일 · 스마일프로 · PIOL 합계 · PRESBYOND · 라식계 · 라섹계 합계</td><td><b>시력교정 인원</b></td></tr>
-        <tr><td>라섹계 EX · 라섹계 Red</td><td><b>라섹계 합계</b></td></tr>
-        <tr><td>재수술 레이저 · 재수술 렌즈</td><td><b>재수술 합계</b></td></tr>
-        <tr><td>ICL · T-ICL · KPL · T-KPL · VIVA</td><td>비중을 내지 않음 — <b>건수만</b></td></tr>
-        <tr><td>엑스트라 · 퍼스널 · 콘트라 · 웨이브비전 · 모노비전</td><td>수술명에 붙는 <b>옵션 표기</b> — 유형과 별개 축이라 세로합이 100% 가 되지 않음</td></tr>
-      </tbody>
-    </table>
-    <p>같은 표 안에서도 % 의 뜻이 다르므로 <b>세로로 더해 100% 가 되는 묶음</b>이 무엇인지 확인해야 함.</p>
+    <p>같은 표 안에서도 % 의 뜻이 다르므로 <b>세로로 더해 100% 가 되는 묶음</b>이 무엇인지 확인해야 함 — 아래 컬럼 정의의 비고에 칼럼마다 분모를 적음. 값이 0 이면 '-', 아니면 「N (P%)」 꼴이고 % 는 정수 반올림임.</p>
 
     <div class="note bad">
       <div class="h">⚠️ PIOL 합계는 유형별 합산이 아님</div>
@@ -144,19 +133,43 @@ export default {
          표에서 렌즈 5종을 더해 PIOL 합계와 안 맞는 것은 <b>정상</b>임.</p>
     </div>
 
-    <h3>그룹 구성</h3>
+    <h3>컬럼 정의 — 28개</h3>
+    <p>조회 경로는 마트 <code>mart_surgery_daily</code> 임.
+       주 · 월 · 전체 행과 % 는 화면이 일별 값을 더해 계산함.</p>
     <table>
-      <thead><tr><th>밴드</th><th>칼럼</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>합계</td><td>전체 수술</td></tr>
-        <tr><td>시력교정(파랑)</td><td>시력교정 인원 · 스마일 · 스마일프로 · PIOL(합계 + ICL·T-ICL·KPL·T-KPL·VIVA) · 라식계 · 라섹계(합계 + EX · Red)</td></tr>
-        <tr><td>PRESBYOND(노랑)</td><td>노안 레이저 — PIOL 밖 독립</td></tr>
-        <tr><td><b>옵션</b></td><td>엑스트라 · 퍼스널 · 콘트라 · 웨이브비전 · 모노비전 — 시력교정 수술에 붙는 옵션 표기(<code>+X</code> · <code>P.E</code> 등)</td></tr>
-        <tr><td>백내장(보라)</td><td>다초점 · 프리미엄 · 단초점 · 합계</td></tr>
-        <tr><td>재수술</td><td>합계 · 레이저 · 렌즈</td></tr>
+        <tr><td>1</td><td>구분</td><td><code>date</code>(행 키)</td><td><code>dt</code></td><td>수술일 — <code>OPERATION_DATE</code> · <code>OPERATIONR/L_DATE</code> · <code>REOP_DATE</code></td><td>일별 = 「N일 (요일)」, 주별 = 「N주」(달력 주, 일요일 시작), 주차 = 「NN주차」 + 기간(ISO 8601, 월~일, 한 해 전체), 월별/전체 = 「N월」/「TOTAL」/「YYYY년」. 전부 0 인 행은 회색</td></tr>
+        <tr><td>2</td><td>합계</td><td><code>total</code></td><td><code>total</code></td><td>시력교정 인원 + 백내장 안수 + 재수술 포함건</td><td>건수만. 같은 사람·날이 수술과 재수술에 함께 잡히는 중복은 걸러내지 않음(레포트와 같은 기준)</td></tr>
+        <tr><td>3</td><td>시력교정</td><td><code>visionPatients</code></td><td><code>vision_patients</code></td><td><code>list_surgery</code> 시력교정 행의 사람×수술일 DISTINCT ← <code>OPERATIONDATA</code></td><td>건수만. <b>4 · 5 · 6 · 12 · 13 · 14 의 분모</b>. 주/월 값은 일별 DISTINCT 의 합</td></tr>
+        <tr><td>4</td><td>스마일</td><td><code>smile</code></td><td><code>smile</code></td><td>시력교정 눈 시술명 SMILE(<code>op_type='smile'</code>) 환자 DISTINCT</td><td>÷ 시력교정</td></tr>
+        <tr><td>5</td><td>스마일프로</td><td><code>smilePro</code></td><td><code>smile_pro</code></td><td>SMILE Pro · SMILEpro · SMILE PRO</td><td>÷ 시력교정</td></tr>
+        <tr><td>6</td><td>PIOL 합계</td><td><code>piolPatients</code></td><td><code>piol_patients</code></td><td><code>op_type</code> ∈ icl · tIcl · kpl · tKpl · viva 인 환자 DISTINCT</td><td>÷ 시력교정. 5종 합이 아니라 실인원(위 노트). 대표유형 규칙이라 현재는 7~11 의 합과 같음</td></tr>
+        <tr><td>7</td><td>ICL</td><td><code>icl</code></td><td><code>icl</code></td><td>ICL · IPCL · ARF · ART · ARTIFLEX · GLAZE · ECHO — 환자당 대표유형(우안 우선) 1건</td><td>건수만, % 없음</td></tr>
+        <tr><td>8</td><td>T-ICL</td><td><code>tIcl</code></td><td><code>t_icl</code></td><td>T-ICL · T-IPCL · T-GLAZE · T-ECHO — 대표유형</td><td>건수만</td></tr>
+        <tr><td>9</td><td>KPL</td><td><code>kpl</code></td><td><code>kpl</code></td><td>KPL (T-KPL 제외) — 대표유형</td><td>건수만</td></tr>
+        <tr><td>10</td><td>T-KPL</td><td><code>tKpl</code></td><td><code>t_kpl</code></td><td>T-KPL — 대표유형</td><td>건수만</td></tr>
+        <tr><td>11</td><td>VIVA</td><td><code>viva</code></td><td><code>viva</code></td><td>VIVA — 대표유형</td><td>건수만</td></tr>
+        <tr><td>12</td><td>PRESBYOND</td><td><code>presbyond</code></td><td><code>presbyond</code></td><td>PRESBYOND (판정 1순위 — Mono+PRESBYOND 도 여기) 환자 DISTINCT</td><td>÷ 시력교정. 노랑 밴드, PIOL 밖 독립. 월별 시드 2026-04 이전은 0(미백필)</td></tr>
+        <tr><td>13</td><td>라식계</td><td><code>lasik</code></td><td><code>lasik</code></td><td>FLAP LIFT · OPTI · iFS · VISU · fs200 · Micro+ · Hybrid</td><td>÷ 시력교정</td></tr>
+        <tr><td>14</td><td>라섹계 합계</td><td><code>lasekEx</code> + <code>lasekRed</code></td><td><code>lasek_ex</code> + <code>lasek_red</code></td><td>시술명에 EYECLE 이 있으면서 EX500 / RED 를 포함하는 환자</td><td>÷ 시력교정. 프론트 합산. <b>응답의 <code>lasek</code>(라섹계 유형)은 이 표에서 쓰지 않음</b> — EYECLE+EX500 · EYECLE+RED 조합만 셈</td></tr>
+        <tr><td>15</td><td>라섹계 EX</td><td><code>lasekEx</code></td><td><code>lasek_ex</code></td><td>EYECLE ∧ EX500</td><td>÷ 라섹계 합계</td></tr>
+        <tr><td>16</td><td>라섹계 Red</td><td><code>lasekRed</code></td><td><code>lasek_red</code></td><td>EYECLE ∧ RED</td><td>÷ 라섹계 합계</td></tr>
+        <tr><td>17</td><td>재수술 합계</td><td><code>reoperation</code></td><td><code>reoperation</code></td><td><code>list_reoperation</code> 의 포함 판정 건 ← <code>RE_OPERATION</code></td><td>건 단위(사람 아님). 저장 판정 우선 — 뷰가 조회 시점에 <code>reoperation_decision</code> 을 조인하고, 판정 저장 후 마트를 다시 적재함</td></tr>
+        <tr><td>18</td><td>재수술 레이저</td><td><code>reopLaser</code></td><td><code>reop_laser</code></td><td>포함건 중 <code>is_lens = false</code></td><td>÷ 재수술 합계</td></tr>
+        <tr><td>19</td><td>재수술 렌즈</td><td><code>reopLens</code></td><td><code>reop_lens</code></td><td>포함건 중 <code>is_lens = true</code> — 자바 <code>ReoperationOverlay</code> 패턴 remo · exch · icl · kpl · arf · art · evo · echo · glaze · precizon · lisa · gemetric · encla</td><td>÷ 재수술 합계. 수술자 리스트의 프론트 판정 목록에는 <code>kpl</code> 이 없어 KPL 재수술만큼 어긋날 수 있음 — 확인 필요</td></tr>
+        <tr><td>20</td><td>엑스트라</td><td><code>xtra</code></td><td><code>xtra</code></td><td>시술명에 <code>+X</code> 포함 환자 DISTINCT</td><td>건수만. 옵션 축 — 유형과 별개라 세로합이 100% 가 되지 않음</td></tr>
+        <tr><td>21</td><td>퍼스널</td><td><code>personal</code></td><td><code>personal</code></td><td><code>P.E</code></td><td>건수만. 옵션 축</td></tr>
+        <tr><td>22</td><td>콘트라</td><td><code>contra</code></td><td><code>contra</code></td><td><code>CONT</code></td><td>건수만. 옵션 축</td></tr>
+        <tr><td>23</td><td>웨이브비전</td><td><code>waveVision</code></td><td><code>wave_vision</code></td><td><code>W.V</code></td><td>건수만. 옵션 축</td></tr>
+        <tr><td>24</td><td>모노비전</td><td><code>monoVision</code></td><td><code>mono_vision</code></td><td><code>MONO</code> 로 시작</td><td>건수만. 옵션 축</td></tr>
+        <tr><td>25</td><td>백내장 수술수</td><td><code>cataractPatients</code></td><td><code>cataract_patients</code></td><td><code>list_surgery</code> 백내장 행의 눈 COUNT(*) ← <code>Cataract_Operationdata</code></td><td><b>안(眼) 단위</b>. 26~28 의 분모이고 다초점 + 프리미엄 + 단초점 = 수술수</td></tr>
+        <tr><td>26</td><td>다초점</td><td><code>catMulti</code></td><td><code>cat_multi</code></td><td>백내장 눈 시술명 Clareon · Panoptix · RESTOR · Lara · LISA · CTR(M) · T-CTR · Precizon · LAL 등</td><td>÷ 백내장 수술수</td></tr>
+        <tr><td>27</td><td>프리미엄</td><td><code>catEdof</code></td><td><code>cat_edof</code></td><td>EDOF · Vivity · Eyhance · PureSee · Isopure · Symfony — 먼저 판정</td><td>÷ 백내장 수술수. <a href="surgery-ratio.html">주요 수술별 비중</a> 라벨은 「백내장(연속초점)」</td></tr>
+        <tr><td>28</td><td>단초점</td><td><code>catMono</code></td><td><code>cat_mono</code></td><td>나머지 백내장 눈(K-flex 포함)</td><td>÷ 백내장 수술수</td></tr>
       </tbody>
     </table>
-    <p>유형 판정 규칙은 <a href="surgery-list.html">수술자 리스트 5장</a>과 같음.</p>
+    <p>유형 판정 규칙은 <a href="surgery-list.html">수술자 리스트 5장</a>과 같음(마트 함수 <code>surgery_op_type</code>, 대소문자 무시). 응답의 <code>lasek</code> 은 이 표에서 쓰지 않음.</p>
   `,
 
   s10: `

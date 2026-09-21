@@ -1,20 +1,19 @@
 # RFCARD_LIST
 
-> **DB**: SOFTCRM | **컬럼**: 10개 | **행 수**: ~317,471 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조 — 기존 ~82,819에서 대폭 증가)
+> **DB**: SOFTCRM | **컬럼**: 10개 | **행 수**: ~82,819 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-RF카드 체크(태그) 이력 테이블. 고객(`CUST_NUM`)이 리더기(`READER_CD`)에 태그한 일시(`CHECK_DATE`/`CHECK_TIME`)와 진료유형(`RESERVE_FLAG`)·담당의(`CHECK_DOC`)·담당 직원(`CHECK_EMP`)·유닛(`UNIT_CD`)을 기록한다.
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
 | PK | IDX | int | |
-| JOIN | CUST_NUM | char(13) | NOT NULL → CUSTOM.CUST_NUM |
-| JOIN | CHECK_DOC / CHECK_EMP | char(6) | → EMPLOYEE.EMP_NUM |
-| JOIN | RESERVE_FLAG | char(1) | NOT NULL → MEDICAL_TIME_CFG.RESERVE_FLAG |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 

@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">예약 퍼널 — 기획서</div>
-    <div class="sub">마케팅 · <span class="mono">/stats/reservation-channel</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">마케팅 · <span class="mono">/stats/reservation-channel</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -573,6 +573,39 @@
          원천이 2026-01 부터라 <b>최근 코호트일수록 0</b> 임(2026-01 코호트 3명, 07 코호트 0명).
          정상이며 데이터가 쌓일수록 채워짐.</p>
     </div>
+
+    <h3>컬럼 정의 — 퍼널 표 13개</h3>
+    <p>KPI 카드 · 퍼널 밴드 · 채널 표가 모두 같은 응답을 그림.
+       조회 경로는 마트 뷰 <code>v_reservation_channel</code> 이고 화면은 사람 수만 씀.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>채널</td><td><code>channel</code></td><td><code>v_reservation_channel.channel</code></td><td>① 내원동기(중)(<code>MOTIVE_NEW02</code>·TMDB·메모)가 모두닥·카페·크리에이트립·에이젼시(외국)·강남언니·바비톡 → ② <code>reservation_channel_staff</code> → ③ <code>RESERVE_PATH</code>(인콜·아웃콜·홈페이지·앱·네이버)</td><td>판정은 뷰가 함. 기간 유입 0 인 채널도 행으로 오고 회색으로 표시. 기본 정렬 예약 내림차순</td></tr>
+        <tr><td>2</td><td>예약</td><td><code>reservedPersons</code> (합계 <code>totalReservedPersons</code>)</td><td><code>reserved_persons</code></td><td><code>RESERVATION.InsertedDateTime</code>(<code>registered_at</code>)이 기간인 건의 DISTINCT <code>person</code></td><td><code>person</code> = 휴대폰(<code>CALL_NUM2</code> 9자리 이상·0 만 아님) › 이메일(<code>Email</code> 에 @) › 차트번호(더미 제외) › 이름. 각 칸 옆의 회색 % 는 앞 칸 대비 통과율(예약은 없음)</td></tr>
+        <tr><td>3</td><td>취소 제외</td><td><code>notCancelPersons</code></td><td><code>not_cancel_persons</code></td><td><code>RESERVE_STATE &lt;&gt; 'C'</code></td><td>통과율 70% 미만이면 빨강</td></tr>
+        <tr><td>4</td><td>접수</td><td><code>visitedPersons</code></td><td><code>visited_persons</code></td><td><code>RESERVE_STATE NOT IN ('C','Y')</code> = 접수(I)·퇴원(H)</td><td>—</td></tr>
+        <tr><td>5</td><td>검사</td><td><code>examinedPersons</code></td><td><code>examined_persons</code></td><td>그중 <code>EXAM.EXAM_DATE</code>(<code>exam_reg_date</code>) 있음</td><td>예약 이후 첫 검사만 붙음</td></tr>
+        <tr><td>6</td><td>중단 제외</td><td><code>notStopPersons</code></td><td><code>not_stop_persons</code></td><td>그중 <code>EXAM.STOP_YN</code>(<code>exam_stop</code>) ≠ 'Y'</td><td>—</td></tr>
+        <tr><td>7</td><td>수술등록</td><td><code>surgeryPersons</code></td><td><code>surgery_persons</code></td><td>그중 수술예약(<code>RESERVE_FLAG='O'</code>, 취소 제외) 등록일(<code>surgery_reg_date</code>) 있음</td><td>'최종' 전환의 분자. 통과율 빨강 판정은 여기까지</td></tr>
+        <tr><td>8</td><td>수술완료</td><td><code>surgeryDonePersons</code></td><td><code>surgery_done_persons</code></td><td>그중 실제 수술일(<code>surgery_date</code> — <code>OPERATIONDATA</code>·<code>Cataract_Operationdata</code> 의 첫 수술) 있음</td><td>클릭하면 수술 유형별 패널이 이 칸 기준으로 열림</td></tr>
+        <tr><td>9</td><td>수술대기</td><td>— (프론트 <code>surgeryPersons − surgeryDonePersons</code>)</td><td>—</td><td>—</td><td>파생 칸(노랑·점선). 퍼널 밴드에는 없음. 통과율 분모는 수술완료가 아니라 수술등록</td></tr>
+        <tr><td>10</td><td>재수술</td><td><code>reopPersons</code></td><td><code>reop_persons</code></td><td>수술완료 중 <code>list_reoperation</code>(<code>RE_OPERATION</code>: <code>REOP_DATE</code> ≥ 수술일, <code>AGAIN_R/L</code> 기준 자동판정 <code>auto_included=1</code>)에 차트번호가 있는 사람. 더미 차트번호 제외</td><td>코호트 기준. 통과율 분모는 수술완료. 빨강 판정 없음</td></tr>
+        <tr><td>11</td><td>최종</td><td>— (프론트 <code>surgeryPersons ÷ reservedPersons</code>)</td><td>—</td><td>—</td><td>수술등록 ÷ 예약, 소수 1자리 %. 유입 0 채널은 —</td></tr>
+        <tr><td>12</td><td>총매출</td><td><code>surgeryAmount</code> (합계 <code>totalSurgeryAmount</code>)</td><td><code>surgery_amount</code></td><td>수술등록 단계 건의 <code>surgery_payment</code> 합 = (고객, 수술일) <code>COSTPRICE</code> 합, <code>PayStt='A'</code> 제외</td><td>원 단위 정수. 수술 전이면 0 이라 인원보다 늦게 참</td></tr>
+        <tr><td>13</td><td>객단가</td><td>— (프론트 <code>surgeryAmount ÷ surgeryPaidPersons</code>)</td><td><code>surgery_paid_persons</code></td><td>수술등록 단계에서 <code>surgery_payment &gt; 0</code> 인 DISTINCT <code>person</code></td><td>분모가 수술등록 인원이 아님(수술 전 0원 제외). 합계행은 <code>totalSurgeryAmount ÷ totalSurgeryPaidPersons</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>컬럼 정의 — 수술 유형별 패널 3개</h3>
+    <p>수술완료 칸을 열면 나오는 패널. 채널을 고르지 않으면 전체 기준 행을 씀.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>유형(범례)</td><td><code>opType</code></td><td><code>op_type</code> (= <code>op_type_r</code> / <code>op_type_l</code>)</td><td><code>OPERATIONDATA</code>·<code>Cataract_Operationdata</code> 수술명을 <code>surgery_op_type()</code> 으로 분류(smilePro · smile · lasek · tIcl · icl · lasik · tKpl · kpl · presbyond · viva · cat* · other)</td><td>한글 라벨·색은 프론트 <code>TYPE_LABELS</code>. 제외 시술명은 NULL 이라 빠짐</td></tr>
+        <tr><td>2</td><td>인원</td><td><code>persons</code></td><td><code>persons</code></td><td>눈별로 펼친 뒤 유형별 DISTINCT <code>person</code></td><td>좌우 다른 시술이면 두 유형에 각각 1명, 같은 유형 양안은 1명</td></tr>
+        <tr><td>3</td><td>합계</td><td>— (프론트 합)</td><td>—</td><td>—</td><td>유형 인원의 합이라 실제 사람 수보다 클 수 있음. 수술 전인 사람은 유형이 없어 수술완료 인원보다 작은 것이 정상</td></tr>
+      </tbody>
+    </table>
   
   </div>
 
@@ -623,6 +656,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td>아니오</td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

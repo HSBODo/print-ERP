@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">데이터 배치 관리 — 기획서</div>
-    <div class="sub">관리자 · <span class="mono">/admin/batch</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">관리자 · <span class="mono">/admin/batch</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -520,14 +520,25 @@
       <p>List 마트만 삭제를 반영함 — 원천에서 사라진 행이 마트에 남지 않게 하기 위해서임.</p>
     </div>
 
-    <h3>실행 이력</h3>
+    <h3>실행 이력 — 최근 50건 · 자동 새로고침 3초</h3>
+    <p>마트 DB 의 <code>batch_run_log</code> 를 <code>id DESC</code> 로 읽음(<code>GET /api/admin/batch/run-logs?limit=</code> · 1~200). 배치 자체 기록이라 CRM 원천은 없음.
+       시작 시 RUNNING 으로 삽입되고 끝나면 같은 행이 SUCCESS / FAILED 로 갱신됨(append-only · 재실행마다 한 줄).</p>
+    <h3>컬럼 정의 — 12개</h3>
     <table>
-      <thead><tr><th>필드</th><th>내용</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>실행 유형</td><td><code>DAILY</code> · <code>MANUAL</code> · <code>MONTHLY_RECONCILE</code></td></tr>
-        <tr><td>잡 이름</td><td><code>orchestrator[도메인]</code> 형태로 구분함</td></tr>
-        <tr><td>대상 기간 · 상태 · 소요시간</td><td>—</td></tr>
-        <tr><td>오류</td><td>실패 시 사유. 행을 펼쳐 봄</td></tr>
+        <tr><td>1</td><td>(펼침)</td><td><code>tableStats</code> 유무</td><td><code>table_stats</code></td><td>—</td><td>통계가 있는 행만 ▸/▾ 아이콘. 행 클릭으로 12 번 행을 펼침</td></tr>
+        <tr><td>2</td><td>#</td><td><code>id</code></td><td><code>id</code> BIGSERIAL</td><td>—</td><td>이력 번호. 최근 것이 위</td></tr>
+        <tr><td>3</td><td>잡</td><td><code>jobName</code></td><td><code>job_name</code></td><td>—</td><td><code>orchestrator[ALL]</code> · <code>orchestrator[ALL_EXCEPT_SMS]</code> · <code>orchestrator[도메인,…]</code> · <code>reconcile-oneday-flag</code> · <code>sms-dispatch[시각]</code> · <code>sms-result-sync[시각]</code>. 고정폭 글꼴</td></tr>
+        <tr><td>4</td><td>타입</td><td><code>runType</code></td><td><code>run_type</code></td><td>—</td><td><code>DAILY</code> → 일간 · <code>MONTHLY_RECONCILE</code> → 월간 재계산 · <code>MANUAL</code> → 수동 · <code>POLLER</code> → 폴러. 배지, 마우스를 올리면 원문</td></tr>
+        <tr><td>5</td><td>기간</td><td><code>targetFrom</code> ~ <code>targetTo</code></td><td><code>target_from</code> · <code>target_to</code></td><td>—</td><td>대상 기간(수납일 · 등록일 등 도메인마다 기준이 다름). null 이면 <code>-</code>. SMS 폴러는 당일 ~ 당일</td></tr>
+        <tr><td>6</td><td>상태</td><td><code>status</code></td><td><code>status</code></td><td>—</td><td><code>RUNNING</code> · <code>SUCCESS</code> · <code>FAILED</code> 배지. 회계 잡은 진료 수납 적재만 실패해도 FAILED 로 남기되 통계는 보존함</td></tr>
+        <tr><td>7</td><td>행수</td><td><code>rowsUpserted</code></td><td><code>rows_upserted</code></td><td>—</td><td><code>table_stats</code> 값의 합(성공 · 실패 공통). RUNNING 은 0. 천 단위 구분</td></tr>
+        <tr><td>8</td><td>시작</td><td><code>startedAt</code></td><td><code>started_at</code></td><td>—</td><td><code>YYYY-MM-DD HH:MM:SS</code> — ISO 의 T 를 공백으로 바꿔 초까지</td></tr>
+        <tr><td>9</td><td>종료</td><td><code>finishedAt</code></td><td><code>finished_at</code></td><td>—</td><td>RUNNING 이면 null → <code>-</code></td></tr>
+        <tr><td>10</td><td>소요</td><td><code>durationMs</code></td><td><code>duration_ms</code></td><td>—</td><td>DB 가 <code>finished_at − started_at</code> 으로 계산. 1초 미만 ms · 1분 미만 s(소수 1자리) · 그 이상 m s. null 이면 <code>-</code></td></tr>
+        <tr><td>11</td><td>에러</td><td><code>errorMessage</code></td><td><code>error_message</code></td><td>—</td><td>실패 사유. 저장 시 4,000자로 자름. 화면은 한 줄로 줄이고 툴팁에 전문</td></tr>
+        <tr><td>12</td><td>테이블별 upsert 행수 (펼침 행)</td><td><code>tableStats</code></td><td><code>table_stats</code> JSONB</td><td>—</td><td>테이블명 → 행수. 진행중 · V17 이전 이력은 null. 회계 잡은 <code>vision_no_item</code> · <code>vision_ratio_adjusted</code> 같은 관측 통계 키도 같이 실림</td></tr>
       </tbody>
     </table>
     <p>이 이력은 다른 화면의 <b>"데이터 반영일"</b> 표시에도 쓰임 — 마지막 성공 시각이 그 값임.</p>
@@ -542,6 +553,7 @@
       <tbody>
         <tr><td>마트 (Postgres)</td><td><code>batch_run_log</code> · <code>list_accumulated_eyes</code> · <code>list_cataract_exam</code> · <code>list_exam</code> · <code>list_medical_receipt</code> · <code>list_outpatient</code> · <code>list_reoperation</code> · <code>list_reservation</code> · <code>list_reservation_all</code> · <code>list_surgery</code> · <code>list_vision_receipt</code> · <code>mart_b2b_revenue_monthly</code> · <code>mart_consultation_rate_monthly</code> · <code>mart_exam_count_by_class</code> · <code>mart_examination_monthly</code> · <code>mart_list_reservation_homepage</code> · <code>mart_outpatient_count_monthly</code> · <code>mart_overall_exam_monthly</code> · <code>mart_overall_exam_weekly</code> · <code>mart_procedure_exam_monthly</code> · <code>mart_reservation_monthly</code> · <code>mart_reservation_overall_monthly</code> · <code>mart_reservation_rate_monthly</code> · <code>mart_reservation_stats_cataract_daily</code> · <code>mart_reservation_stats_system_daily</code> · <code>mart_stop_reason_monthly</code> · <code>mart_surgery_daily</code> · <code>mart_surgery_monthly</code> · <code>reoperation_decision</code> · <code>reservation_stats_override</code> · <code>reservation_stats_period_lock</code> · <code>stat_user_inbound_bseye</code> · <code>v_all_exam_list</code> · <code>v_all_surgery_list</code></td></tr>
         <tr><td>CRM 원천 (MSSQL)</td><td><code>AssignList</code> · <code>CANCEL_CFG</code> · <code>CH_01</code> · <code>CH_07</code> · <code>CH_EXAM</code> · <code>CH_REJ</code> · <code>CH_RES</code> · <code>CH_TM</code> · <code>COSTPRICE</code> · <code>CSTPRCSUB</code> · <code>CUSTOM</code> · <code>Cataract_Exam</code> · <code>Cataract_Operationdata</code> · <code>CstPrcSub</code> · <code>CtiClg</code> · <code>CtiRptLst</code> · <code>DB_CUSTOM</code> · <code>DB_ReCounsel</code> · <code>EMPLOYEE</code> · <code>EXAM</code> · <code>EtcCfg</code> · <code>HappyTalk_Category01</code> · <code>HappyTalk_Category02</code> · <code>HappyTalk_Counsel_List</code> · <code>HappyTalk_Mapping</code> · <code>IPLUS.dbo</code> · <code>MEDICAL_SUB_CFG</code> · <code>MOTIVE_NEW01</code> · <code>MOTIVE_NEW02</code> · <code>NationCustom_CFG</code> · <code>OPENQUERY</code> · <code>OPERATIONDATA</code> · <code>OPERATION_ACCUMULATED_EYE_COUNT</code> · <code>PRCITMLST</code> · <code>PrcItmDtl</code> · <code>PrcItmLst</code> · <code>RESERVATION</code> · <code>RESERVATION_NAVER</code> · <code>RESERVE_HISTORY</code> · <code>RE_OPERATION</code></td></tr>
+        <tr><td>앱 테이블 (Postgres · JPA)</td><td><code>dreamlens_ledger</code> · <code>reoperation_decision</code> · <code>sms_dispatch_queue</code> · <code>sms_opt_out</code> · <code>sms_send_log</code> · <code>sms_target</code></td></tr>
       </tbody>
     </table>
     <details class="sqlrefs">
@@ -723,6 +735,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td><b>예</b></td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

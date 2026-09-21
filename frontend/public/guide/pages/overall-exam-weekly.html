@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">주간 검사자 종합지표 — 기획서</div>
-    <div class="sub">비앤빛 › 검사 · <span class="mono">/stats/overall-exam-weekly</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">비앤빛 › 검사 · <span class="mono">/stats/overall-exam-weekly</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -489,7 +489,7 @@
     <table>
       <thead><tr><th>연도</th><th>월별판</th><th>주간판</th></tr></thead>
       <tbody>
-        <tr><td>2024 · 2025</td><td>마트 시드 (레거시 확정값, 월 단위)</td><td rowspan="2"><b>운영 DB 라이브 집계</b> — 주 단위로 쪼개려면 원천을 직접 읽어야 함</td></tr>
+        <tr><td>2024 · 2025</td><td>마트 시드 (레거시 확정값, 월 단위)</td><td rowspan="2"><b>배치가 원천 리스트(<code>v_all_exam_list</code>)를 주 단위로 다시 센 마트</b>(<code>mart_overall_exam_weekly</code>) — 레거시 시드 없음. 현재 경로는 아래 참고</td></tr>
         <tr><td>2026 ~</td><td>배치 적재 마트</td></tr>
       </tbody>
     </table>
@@ -505,6 +505,64 @@
       <p>같은 규칙·같은 원천이므로 <b>그 달 주 합계 = 월별판 그 달 값</b>이 성립해야 함.
          안 맞으면 주 경계 처리나 배치 적재를 의심함.</p>
     </div>
+
+    <div class="note">
+      <div class="h">현재 코드의 실제 경로 — 마트를 읽음</div>
+      <p>화면은 <code>GET /api/stats/overall-exam/weekly</code> → <code>mart_overall_exam_weekly</code>(PK <code>yr, mo, wk</code>) 를 읽음.
+         마트는 월별판과 같은 <code>OverallMartJob</code> 이 Postgres 뷰 <code>v_all_exam_list</code> 를 일별 집계해 주(월~일, 월 경계 클립)로 묶어 적재함.
+         MSSQL 을 직접 읽는 <code>OverallExamWeeklyService</code>(<code>sql/softcrm/overall/*-daily.sql</code> 6종)는 대사(reconcile) 용으로만 남아 있음.
+         주간 적재에는 월별판의 min-year 가드가 없지만 <code>v_all_exam_list</code> 에 2026-01 이후 행만 있어 24·25 주간 행이 실제로 채워지는지는 <b>확인 필요</b>.</p>
+    </div>
+
+    <h3>컬럼 정의 — 39개</h3>
+    <p>조회 경로는 마트 <code>mart_overall_exam_weekly</code> 임.
+       비율 칼럼은 화면이 계산하므로 응답 필드와 마트 컬럼이 없음.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>연도</td><td><code>year</code></td><td><code>yr</code></td><td>—</td><td>행 키 (<code>yr</code>, <code>mo</code>, <code>wk</code>). 연도가 바뀌는 행에 굵은 구분선. 왼쪽 고정 열</td></tr>
+        <tr><td>2</td><td>월</td><td><code>month</code></td><td><code>mo</code></td><td>—</td><td>「N월」. 달이 바뀌는 행에 가는 구분선</td></tr>
+        <tr><td>3</td><td>주</td><td><code>week</code> · <code>partial</code></td><td><code>wk</code> · <code>partial</code></td><td>—</td><td>「N주」. 그 달 안의 주차(1부터). <code>partial=true</code> 면 「N주*」 — 2주 이후에서 7일이 안 되는 마지막 주만 해당(1주는 선행 구간을 합쳐 부분 주로 보지 않음)</td></tr>
+        <tr><td>4</td><td>기간</td><td><code>startDate</code> · <code>endDate</code></td><td><code>start_date</code> · <code>end_date</code></td><td>—</td><td>「MM.DD~MM.DD」. 월 경계에서 잘린 실제 구간. 1주 = 1일 ~ 첫 일요일</td></tr>
+        <tr><td>5</td><td>총검사자</td><td><code>totalExam</code></td><td><code>total_exam</code></td><td><code>EXAM</code> 행(시력교정·드림렌즈) + <code>RESERVATION</code>(<code>RESERVE_FLAG='H'</code>) 고객×<code>RESERVE_DATE</code>(백내장)</td><td><code>v_all_exam_list</code> 행 수를 검사일 기준으로 주에 귀속. 그 달 주 합계 = 월별판 그 달 값이어야 함</td></tr>
+        <tr><td>6</td><td>일반고객</td><td><code>introGeneral</code></td><td><code>intro_general</code></td><td><code>MOTIVE_NEW02.category01_name</code>(<code>Idx='1'</code> 최신) 이 소개고객·소개미확인·소개직원이 아닌 것</td><td>잔차 분류. 3분류 합 = 총검사자</td></tr>
+        <tr><td>7</td><td>고객소개</td><td><code>introCustomer</code></td><td><code>intro_customer</code></td><td><code>MOTIVE_NEW02.category01_name</code> ∈ {소개고객, 소개미확인}</td><td></td></tr>
+        <tr><td>8</td><td>직원소개</td><td><code>introStaff</code></td><td><code>intro_staff</code></td><td><code>MOTIVE_NEW02.category01_name</code> = 소개직원</td><td></td></tr>
+        <tr><td>9</td><td>직장인</td><td><code>jobOffice</code></td><td><code>job_office</code></td><td><code>CUSTOM.JOB</code> 롤업(<code>job_bucket</code>) — 교사·교수·강사·사무직 + 나머지 기본값</td><td>3분류 합 = 총검사자</td></tr>
+        <tr><td>10</td><td>학생</td><td><code>jobStudent</code></td><td><code>job_student</code></td><td><code>CUSTOM.JOB</code> 학생·수험생·초/중/고 N·대학 예정 등 패턴</td><td></td></tr>
+        <tr><td>11</td><td>기타</td><td><code>jobEtc</code></td><td><code>job_etc</code></td><td><code>CUSTOM.JOB</code> 공란·무직·주부·취업준비·군인·퇴직 등</td><td></td></tr>
+        <tr><td>12</td><td>예약 (시력교정 수술예약)</td><td><code>visionBooked</code></td><td><code>vision_booked</code></td><td>시력교정 행 중 <code>RESERVATION</code>(<code>RESERVE_FLAG='O'</code>, <code>RESERVE_STATE<>'C'</code>) 보유</td><td><code>surgery_reserve_date<>''</code>. 예약일이 검사일 이후인지는 보지 않음</td></tr>
+        <tr><td>13</td><td>예약률(중단포함)</td><td>—</td><td>—</td><td>—</td><td><code>visionBooked ÷ (visionExam + stopCount)</code>. <b>월별판(÷ visionExam)과 분모가 다름</b> — 확인 필요. 정수 %</td></tr>
+        <tr><td>14</td><td>전체(노안포함)</td><td><code>cataractTotal</code></td><td><code>cataract_total</code></td><td><code>RESERVATION</code>(<code>RESERVE_FLAG='H'</code>, <code>RESERVE_JINRYO<>'3'</code>, <code>RESERVE_SEQ<>3</code>, <code>RESERVE_STATE</code> ∉ {C, Y}) 고객×검사일</td><td><code>exam_group='백내장'</code> 행 수 = 백내장 리스트 전체(4분류). 화면 각주의 「Cataract_Exam 세션수」는 옛 정의임</td></tr>
+        <tr><td>15</td><td>백내장 만</td><td><code>cataractOnly</code></td><td><code>cataract_only</code></td><td><code>Cataract_Exam.OPERATIONR</code> / <code>OPERATIONL</code> 비공란 수(0~2)의 합 — 분류 백내장·중단 세션만</td><td><b>눈 수 단위</b>. 분류는 <code>CUSTOM.MY_OPTOMETRIST</code>·<code>MY_COUNSELOR</code> 배정 여부</td></tr>
+        <tr><td>16</td><td>중단제외</td><td>—</td><td>—</td><td>—</td><td>항상 공란. 마트에 원시값 없음</td></tr>
+        <tr><td>17</td><td>예약 (백내장)</td><td><code>cataractBooked</code></td><td><code>cataract_booked</code></td><td>백내장·중단 세션(눈 수 > 0) 중 <code>RESERVATION</code>(<code>RESERVE_FLAG='O'</code>, <code>RESERVE_JINRYO='4'</code>, <code>RESERVE_STATE<>'C'</code>) 보유</td><td><b>사람 단위</b></td></tr>
+        <tr><td>18</td><td>예약률 (백내장)</td><td>—</td><td>—</td><td>—</td><td><code>cataractBooked ÷ cataractOnly</code>. 정수 %</td></tr>
+        <tr><td>19</td><td>전환률</td><td>—</td><td>—</td><td>—</td><td><b>항상 공란</b>(정의 미확정). 월별판은 <code>cataractBooked ÷ cataractTotal</code> 로 채움</td></tr>
+        <tr><td>20</td><td>중단수</td><td><code>stopCount</code></td><td><code>stop_count</code></td><td><code>EXAM.STOP_YN='Y'</code> (시력교정 행만)</td><td></td></tr>
+        <tr><td>21</td><td>중단율</td><td>—</td><td>—</td><td>—</td><td><code>stopCount ÷ visionExam</code>. 소수점 1자리</td></tr>
+        <tr><td>22</td><td>시력교정 (검사 건수)</td><td><code>visionExam</code></td><td><code>vision_exam</code></td><td><code>EXAM</code> 행 중 그날 <code>RESERVATION</code> M 예약 내원 또는 수술 연계(O 예약·<code>OPERATIONDATA</code>) 보유. 그날 D 예약만 있으면 제외</td><td><code>exam_group='시력교정'</code>. 백내장 H 예약만으로 내원한 날의 EXAM 행·측정값 공란 + <code>Cataract_Exam</code> 있는 행·테스트 고객 제외</td></tr>
+        <tr><td>23</td><td>드림렌즈</td><td><code>dreamlens</code></td><td><code>dreamlens</code></td><td><code>EXAM</code> 행 중 그날 <code>RESERVATION</code> D 예약 있고 M 예약 없음</td><td><code>exam_group='드림렌즈'</code></td></tr>
+        <tr><td>24</td><td>백내장 (검사 건수)</td><td><code>cataractOnly</code></td><td><code>cataract_only</code></td><td>15 와 동일</td><td>「백내장 만」을 다시 표시</td></tr>
+        <tr><td>25</td><td>노안2</td><td>—</td><td>—</td><td>—</td><td><code>cataractTotal − cataractOnly</code></td></tr>
+        <tr><td>26</td><td>합계</td><td>—</td><td>—</td><td>—</td><td><code>visionExam + dreamlens + cataractOnly + 노안2</code> (= 시력교정 + 드림렌즈 + 백내장 전체)</td></tr>
+        <tr><td>27</td><td>시력교정 (검사 비율)</td><td>—</td><td>—</td><td>—</td><td><code>visionExam ÷ 합계</code>. 소수점 1자리</td></tr>
+        <tr><td>28</td><td>드림렌즈 (검사 비율)</td><td>—</td><td>—</td><td>—</td><td><code>dreamlens ÷ 합계</code>. 소수점 1자리</td></tr>
+        <tr><td>29</td><td>노안</td><td>—</td><td>—</td><td>—</td><td>고정 <code>0.0%</code></td></tr>
+        <tr><td>30</td><td>백내장 (검사 비율)</td><td>—</td><td>—</td><td>—</td><td><code>cataractOnly ÷ 합계</code>. 소수점 1자리</td></tr>
+        <tr><td>31</td><td>노안2+5대질환</td><td>—</td><td>—</td><td>—</td><td><code>노안2 ÷ 합계</code>. 소수점 1자리</td></tr>
+        <tr><td>32</td><td>시력교정 (원데이/일반검사)</td><td><code>visionExam</code></td><td><code>vision_exam</code></td><td>22 와 동일</td><td>「검사 건수 시력교정」을 다시 표시</td></tr>
+        <tr><td>33</td><td>원데이</td><td><code>oneDay</code></td><td><code>one_day</code></td><td>시력교정: 같은날 <code>RESERVATION</code> M 예약의 <code>RESERVE_JINRYO</code> ∈ {5, 7} / 백내장: 그날 H 예약의 <code>RESERVE_JINRYO</code> ∈ {7, 9}</td><td><code>exam_type='원데이'</code>. <b>백내장 원데이 포함</b>. 드림렌즈는 항상 일반</td></tr>
+        <tr><td>34</td><td>원데이예약</td><td><code>oneDayBooked</code></td><td><code>one_day_booked</code></td><td>원데이 행 중 <code>RESERVATION</code>(<code>RESERVE_FLAG='O'</code>, <code>RESERVE_STATE<>'C'</code>) 보유</td><td>O 예약 존재 기준. DTO 주석의 「7일 이내 수술」은 옛 정의임</td></tr>
+        <tr><td>35</td><td>일반검사</td><td>—</td><td>—</td><td>—</td><td><code>visionExam − oneDay</code>. <code>oneDay</code> 에 백내장 원데이가 섞여 있어 순수 시력교정 일반검사와 어긋날 수 있음 — 확인 필요</td></tr>
+        <tr><td>36</td><td>일반검사예약</td><td>—</td><td>—</td><td>—</td><td><code>visionBooked − oneDayBooked</code>. 35 와 같은 이유로 확인 필요</td></tr>
+        <tr><td>37</td><td>일반검사비율</td><td>—</td><td>—</td><td>—</td><td><code>일반검사 ÷ visionExam</code>. 정수 %</td></tr>
+        <tr><td>38</td><td>원데이성공률</td><td>—</td><td>—</td><td>—</td><td><code>oneDayBooked ÷ oneDay</code>. 정수 %</td></tr>
+        <tr><td>39</td><td>일반성공률</td><td>—</td><td>—</td><td>—</td><td><code>일반검사예약 ÷ 일반검사</code>. 정수 %</td></tr>
+      </tbody>
+    </table>
+    <p>비율은 분모가 0 이면 공란. 자릿수는 칼럼마다 다름 — 중단율·검사 비율 5종은 소수점 1자리, 나머지는 정수 %.
+       정수는 천 단위 구분. 정렬·CSV 내보내기 없음. 데이터가 있는 주만 행으로 나오고 빈 미래 주는 없음.</p>
   
   </div>
 
@@ -562,6 +620,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td><b>예</b></td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

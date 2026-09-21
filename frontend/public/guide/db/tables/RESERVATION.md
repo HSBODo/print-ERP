@@ -1,7 +1,7 @@
 # RESERVATION
 
-> **DB**: SOFTCRM | **컬럼**: 58개 | **행 수**: ~3,542,271 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 58개 | **행 수**: ~3,478,570 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20
 
 ## 역할
 
@@ -12,7 +12,7 @@
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
 | PK | RESERVE_NUM | char(22) | 예약번호 |
-| FK → CUSTOM | CUST_NUM | char(13) | 고객번호. `CUSTOM.CUST_NUM` 참조 |
+| FK → CUSTOM | CUST_NUM | char(13) | 고객번호. `CUSTOM.CustNum` 참조 |
 | FK → EMPLOYEE | SELECT_DOC | char(6) | 지정의사. `EMPLOYEE.EMP_NUM` 참조 |
 | FK → EMPLOYEE | RESERVE_DOC | char(6) | 예약의사. `EMPLOYEE.EMP_NUM` 참조 |
 | FK → EMPLOYEE | RESERVE_EMP | char(6) | 예약 등록 상담사. `EMPLOYEE.EMP_NUM` 참조 |
@@ -43,7 +43,7 @@
 | RESERVE_EMP | char(6) | Y | 예약 상담사 | EMPLOYEE FK |
 | REGISTER_EMP | char(6) | Y | 등록 직원 | EMPLOYEE FK |
 | HAPPYCALL_FLAG | char(1) | Y | 해피콜 상태 | |
-| CANCEL_CD | char(3) | Y | 취소 사유 코드 | RESERVE_STATE='C'일 때 사용 |
+| CANCEL_CD | char | Y | 취소 사유 코드 | RESERVE_STATE='C'일 때 사용 |
 | OLD_FLAG | char(1) | Y | 구환 여부 | |
 | TODAY_FLAG | char(1) | Y | 당일 예약 여부 | |
 | COMMENT | nvarchar(1000) | Y | 예약 메모 | |

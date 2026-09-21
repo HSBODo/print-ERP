@@ -1,18 +1,19 @@
 # DoctorMaster
 
-> **DB**: MCRM | **컬럼**: 9개 | **행 수**: 21 (MCRM_WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (MCRM_WORK DB 실측 대조)
+> **DB**: MCRM | **컬럼**: 9개 | **행 수**: ~21 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-MCRM 의사 마스터(설정) 테이블. 의사(`UserID`)별 사용 여부(`UseYN`)·정렬 순서(`SortNo`)·표시 색상(`ColorRgb`)을 관리하는 소규모 코드 테이블 (21행).
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
-| PK | (없음 — heap 테이블, 2026-08-10 실측 확인) | | `UserID` char(6) NOT NULL이 사실상 키 |
-| JOIN | UserID | char(6) | → SOFTCRM.EMPLOYEE.EMP_NUM |
+| PK | (없음 — heap 테이블) | | |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 
@@ -30,8 +31,7 @@ MCRM 의사 마스터(설정) 테이블. 의사(`UserID`)별 사용 여부(`UseY
 
 ## 함정 (Gotchas)
 
-- **별도 DB(MCRM)**: SOFTCRM 테이블과 JOIN하려면 크로스 DB 쿼리 필요.
-- **활성 의사만 볼 때 `UseYN` 필터 필수**.
+<!-- TODO: 이 테이블의 알려진 함정 -->
 
 ## 사용처
 

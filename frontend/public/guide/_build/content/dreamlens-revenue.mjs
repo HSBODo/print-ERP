@@ -141,7 +141,7 @@ export default {
         <tr><td>R 렌즈</td><td>렌즈명 · BOX · R렌즈 · 색상 · <b>반납&amp;반품날짜(R)</b></td><td rowspan="2">좌우가 완전히 대칭임</td></tr>
         <tr><td>L 렌즈</td><td>렌즈명 · BOX · L렌즈 · 색상 · <b>반납&amp;반품날짜(L)</b></td></tr>
         <tr><td>매출</td><td>D/L 신규 · D/L 재구매 · M 신규 · M FU 재구매 · H/L 신규 · H/L 재구매 · 보증금 · 피팅비 · 용품 · 진료비 · <b>렌즈 정가(참고)</b></td><td>합계는 파생</td></tr>
-        <tr><td>리콜 관리</td><td>다음예약 · 1차 리콜 · 1차 리콜예약 · 1차 부재문자 · 2차 리콜 · 2차 리콜예약 · 2차 부재문자</td><td>후속 관리 축</td></tr>
+        <tr><td>리콜 관리</td><td>다음예약 · 1차~3차 × (리콜 · 리콜예약 · 부재문자)</td><td>후속 관리 축</td></tr>
       </tbody>
     </table>
 
@@ -161,6 +161,55 @@ export default {
          드림렌즈 장부 화면이 B2B 매출 컴포넌트와 코드를 공유하기 때문임.
          <b>장부 자체는 <code>/api/dreamlens-ledger</code> 만 씀.</b></p>
     </div>
+
+    <h3>컬럼 정의 — 40개</h3>
+    <p>마트가 아니라 사용자 입력 테이블 <code>dreamlens_ledger</code> 임.
+       CRM 원천은 배치가 자동 초안 행을 채울 때만 해당하고, 수기 행은 덮지 않음.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>(선택)</td><td>—</td><td>—</td><td>—</td><td>체크박스. 헤더 체크는 <b>보이는 페이지만</b> 선택. 삭제 대상 지정용</td></tr>
+        <tr><td>2</td><td>구분</td><td><code>source</code></td><td><code>source</code></td><td>—</td><td>AUTO → 「자동」(호박색 배지 · 행 배경) · 그 외 「수기」. null(구버전 행)은 MANUAL 로 응답. 어느 셀이든 고치면 서버가 MANUAL 로 승격해 배지가 바뀜</td></tr>
+        <tr><td>3</td><td>날짜</td><td><code>entryDate</code></td><td><code>entry_date</code></td><td><code>RESERVATION.RESERVE_DATE</code> (<code>RESERVE_FLAG='D'</code>, <code>RESERVE_STATE IN ('I','H')</code>)</td><td><b>조회 기준</b>(일별·주차·월별). 기본 정렬 최신 날짜 위(같은 날짜면 나중 입력이 위). 좌측 고정. 새 행은 오늘(조회 구간 밖이면 종료일)</td></tr>
+        <tr><td>4</td><td>진료구분</td><td><code>visitType</code></td><td><code>visit_type</code></td><td><code>MEDICAL_SUB_CFG.SUB_NAME</code> → 신규 · 재구매 · FU · 하드 신규 · 하드 재구매 · MiSight 신규/재구매/FU (미지 유형은 원문)</td><td>제안 목록 신규·재진(강제 아님). ≤50자. 좌측 고정</td></tr>
+        <tr><td>5</td><td>고객번호</td><td><code>customerNo</code></td><td><code>customer_no</code></td><td><code>RESERVATION.CUST_NUM</code></td><td>초안 upsert 키(고객번호 + 날짜). CSV 텍스트 강제. 검색 대상. ≤50자. 좌측 고정</td></tr>
+        <tr><td>6</td><td>이름</td><td><code>customerName</code></td><td><code>customer_name</code></td><td><code>CUSTOM.CUST_NAME</code></td><td>CSV 만 마스킹. 검색 대상. ≤100자. 좌측 고정</td></tr>
+        <tr><td>7</td><td>검사자</td><td><code>examiner</code></td><td><code>examiner</code></td><td><code>EMPLOYEE.EMP_NAME</code> ← <code>AssignList.MRID1</code>(<code>custid</code>·<code>MedDate</code> 매칭)</td><td>제안 목록 21명. 검사자 필터·검색 대상. ≤100자</td></tr>
+        <tr><td>8</td><td>주소·구매구분</td><td><code>purchaseType</code></td><td><code>purchase_type</code></td><td>—</td><td>시트 「주소」 컬럼 — 구매구분 5종 제안값과 실제 배송 주소가 섞여 있음. CSV 는 5종 밖의 값(주소)만 마스킹. ≤200자</td></tr>
+        <tr><td>9</td><td>R 렌즈 · 렌즈명</td><td><code>rLensName</code></td><td><code>r_lens_name</code></td><td>—</td><td>제안 목록(CRT · Misight · T-CRT …), 자유 입력. ≤100자</td></tr>
+        <tr><td>10</td><td>R 렌즈 · BOX</td><td><code>rBox</code></td><td><code>r_box</code></td><td>—</td><td>≤50자</td></tr>
+        <tr><td>11</td><td>R 렌즈 · R렌즈</td><td><code>rLensSpec</code></td><td><code>r_lens_spec</code></td><td>—</td><td>렌즈 스펙 자유 입력. ≤100자</td></tr>
+        <tr><td>12</td><td>R 렌즈 · 색상</td><td><code>rColor</code></td><td><code>r_color</code></td><td>—</td><td>제안 G·R·V·Y·P·B. ≤50자</td></tr>
+        <tr><td>13</td><td>R 렌즈 · 반납&amp;반품날짜(R)</td><td><code>rReturnDate</code></td><td><code>r_return_date</code></td><td>—</td><td>날짜 입력. 빈 값 허용</td></tr>
+        <tr><td>14</td><td>L 렌즈 · 렌즈명</td><td><code>lLensName</code></td><td><code>l_lens_name</code></td><td>—</td><td>제안 목록(CRT · Misight · T-CRT …), 자유 입력. ≤100자</td></tr>
+        <tr><td>15</td><td>L 렌즈 · BOX</td><td><code>lBox</code></td><td><code>l_box</code></td><td>—</td><td>≤50자</td></tr>
+        <tr><td>16</td><td>L 렌즈 · L렌즈</td><td><code>lLensSpec</code></td><td><code>l_lens_spec</code></td><td>—</td><td>렌즈 스펙 자유 입력. ≤100자</td></tr>
+        <tr><td>17</td><td>L 렌즈 · 색상</td><td><code>lColor</code></td><td><code>l_color</code></td><td>—</td><td>제안 G·R·V·Y·P·B. ≤50자</td></tr>
+        <tr><td>18</td><td>L 렌즈 · 반납&amp;반품날짜(L)</td><td><code>lReturnDate</code></td><td><code>l_return_date</code></td><td>—</td><td>날짜 입력. 빈 값 허용</td></tr>
+        <tr><td>19</td><td>D/L 신규</td><td><code>dlNewRevenue</code></td><td><code>dl_new_revenue</code></td><td>진료구분이 D/L_신규 일 때 렌즈 실수납 합 — <code>COSTPRICE</code>+<code>PrcItmLst.PrcSumPrc</code>(<code>PrcCod IN ('F','I','17')</code>, <code>PayStt</code> 취소 제외, <code>COST_DATE</code> = 내원일)</td><td>원 단위. 0 은 빈칸. 합계행·행 합계 포함</td></tr>
+        <tr><td>20</td><td>D/L 재구매</td><td><code>dlRepurchaseRevenue</code></td><td><code>dl_repurchase_revenue</code></td><td>진료구분이 D/L_재구매 · D/L_FU · 그 외 미지 유형 일 때 렌즈 실수납 합 — <code>COSTPRICE</code>+<code>PrcItmLst.PrcSumPrc</code>(<code>PrcCod IN ('F','I','17')</code>, <code>PayStt</code> 취소 제외, <code>COST_DATE</code> = 내원일)</td><td>미지 유형은 초안이므로 검안사가 조정</td></tr>
+        <tr><td>21</td><td>M 신규</td><td><code>mNewRevenue</code></td><td><code>m_new_revenue</code></td><td>진료구분이 MiSight_신규 일 때 렌즈 실수납 합 — <code>COSTPRICE</code>+<code>PrcItmLst.PrcSumPrc</code>(<code>PrcCod IN ('F','I','17')</code>, <code>PayStt</code> 취소 제외, <code>COST_DATE</code> = 내원일)</td><td>진료구분이 D/L_신규인데 MiSight 를 산 경우는 CRM 으로 구분 불가 — 초안이 D/L 신규에 잡히므로 검안사가 옮김</td></tr>
+        <tr><td>22</td><td>M FU 재구매</td><td><code>mRepurchaseRevenue</code></td><td><code>m_repurchase_revenue</code></td><td>진료구분이 MiSight_재구매 · MiSight_FU 일 때 렌즈 실수납 합 — <code>COSTPRICE</code>+<code>PrcItmLst.PrcSumPrc</code>(<code>PrcCod IN ('F','I','17')</code>, <code>PayStt</code> 취소 제외, <code>COST_DATE</code> = 내원일)</td><td>—</td></tr>
+        <tr><td>23</td><td>H/L 신규</td><td><code>hlNewRevenue</code></td><td><code>hl_new_revenue</code></td><td>진료구분이 H/L_신규 일 때 렌즈 실수납 합 — <code>COSTPRICE</code>+<code>PrcItmLst.PrcSumPrc</code>(<code>PrcCod IN ('F','I','17')</code>, <code>PayStt</code> 취소 제외, <code>COST_DATE</code> = 내원일)</td><td>—</td></tr>
+        <tr><td>24</td><td>H/L 재구매</td><td><code>hlRepurchaseRevenue</code></td><td><code>hl_repurchase_revenue</code></td><td>진료구분이 H/L_재구매 일 때 렌즈 실수납 합 — <code>COSTPRICE</code>+<code>PrcItmLst.PrcSumPrc</code>(<code>PrcCod IN ('F','I','17')</code>, <code>PayStt</code> 취소 제외, <code>COST_DATE</code> = 내원일)</td><td>—</td></tr>
+        <tr><td>25</td><td>보증금</td><td><code>depositRevenue</code></td><td><code>deposit_revenue</code></td><td>—</td><td>초안 없음 — 수기 입력</td></tr>
+        <tr><td>26</td><td>피팅비</td><td><code>fittingRevenue</code></td><td><code>fitting_revenue</code></td><td>—</td><td>수기 입력</td></tr>
+        <tr><td>27</td><td>용품</td><td><code>supplyRevenue</code></td><td><code>supply_revenue</code></td><td>—</td><td>수기 입력</td></tr>
+        <tr><td>28</td><td>진료비</td><td><code>treatmentRevenue</code></td><td><code>treatment_revenue</code></td><td>링크드서버 <code>[220.85.109.240].IPLUS.dbo.PAOSUNAB.실수납액</code> 합 (<code>PTNTIDNO</code> = 고객번호, <code>수납일자</code> = 내원일)</td><td>링크드서버 장애 시 장부 초안 적재만 실패(B2B 매출 적재와 격리)</td></tr>
+        <tr><td>29</td><td>렌즈 정가(참고)</td><td><code>lensListPrice</code></td><td><code>lens_list_price</code></td><td><code>PrcItmLst.PrcItmQty × PrcItmPrc</code> 합 (위와 같은 조건)</td><td>합계행에는 나오지만 <b>행 합계(<code>totalRevenue</code>)에는 미포함</b>. 실수납과 다르면 할인·분납이 있었다는 뜻</td></tr>
+        <tr><td>30</td><td>다음예약</td><td><code>nextReservation</code></td><td><code>next_reservation</code></td><td>—</td><td>≤200자 자유 텍스트</td></tr>
+        <tr><td>31</td><td>1차 리콜</td><td><code>recall1</code></td><td><code>recall1</code></td><td>—</td><td>≤200자 자유 텍스트(날짜·메모 섞임)</td></tr>
+        <tr><td>32</td><td>1차 리콜예약</td><td><code>recall1Reservation</code></td><td><code>recall1_reservation</code></td><td>—</td><td>≤200자</td></tr>
+        <tr><td>33</td><td>1차 부재문자</td><td><code>recall1Absent</code></td><td><code>recall1_absent</code></td><td>—</td><td>≤200자</td></tr>
+        <tr><td>34</td><td>2차 리콜</td><td><code>recall2</code></td><td><code>recall2</code></td><td>—</td><td>≤200자 자유 텍스트(날짜·메모 섞임)</td></tr>
+        <tr><td>35</td><td>2차 리콜예약</td><td><code>recall2Reservation</code></td><td><code>recall2_reservation</code></td><td>—</td><td>≤200자</td></tr>
+        <tr><td>36</td><td>2차 부재문자</td><td><code>recall2Absent</code></td><td><code>recall2_absent</code></td><td>—</td><td>≤200자</td></tr>
+        <tr><td>37</td><td>3차 리콜</td><td><code>recall3</code></td><td><code>recall3</code></td><td>—</td><td>≤200자 자유 텍스트(날짜·메모 섞임)</td></tr>
+        <tr><td>38</td><td>3차 리콜예약</td><td><code>recall3Reservation</code></td><td><code>recall3_reservation</code></td><td>—</td><td>≤200자</td></tr>
+        <tr><td>39</td><td>3차 부재문자</td><td><code>recall3Absent</code></td><td><code>recall3_absent</code></td><td>—</td><td>≤200자. 시트 헤더는 3차 구간이 「2차」 로 잘못 복사돼 있었고 여기서 recall3 로 바로잡음</td></tr>
+        <tr><td>40</td><td>행 합계 (CSV 전용)</td><td><code>totalRevenue</code></td><td>— (저장 안 함)</td><td>—</td><td>매출 10종 합(렌즈 정가 제외) — 서버 계산. 화면에는 열이 없고 필터 결과 전체를 더한 하단 합계행만 있음</td></tr>
+      </tbody>
+    </table>
   `,
 
   s10: `

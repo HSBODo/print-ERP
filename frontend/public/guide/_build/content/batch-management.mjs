@@ -135,14 +135,25 @@ export default {
       <p>List 마트만 삭제를 반영함 — 원천에서 사라진 행이 마트에 남지 않게 하기 위해서임.</p>
     </div>
 
-    <h3>실행 이력</h3>
+    <h3>실행 이력 — 최근 50건 · 자동 새로고침 3초</h3>
+    <p>마트 DB 의 <code>batch_run_log</code> 를 <code>id DESC</code> 로 읽음(<code>GET /api/admin/batch/run-logs?limit=</code> · 1~200). 배치 자체 기록이라 CRM 원천은 없음.
+       시작 시 RUNNING 으로 삽입되고 끝나면 같은 행이 SUCCESS / FAILED 로 갱신됨(append-only · 재실행마다 한 줄).</p>
+    <h3>컬럼 정의 — 12개</h3>
     <table>
-      <thead><tr><th>필드</th><th>내용</th></tr></thead>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
       <tbody>
-        <tr><td>실행 유형</td><td><code>DAILY</code> · <code>MANUAL</code> · <code>MONTHLY_RECONCILE</code></td></tr>
-        <tr><td>잡 이름</td><td><code>orchestrator[도메인]</code> 형태로 구분함</td></tr>
-        <tr><td>대상 기간 · 상태 · 소요시간</td><td>—</td></tr>
-        <tr><td>오류</td><td>실패 시 사유. 행을 펼쳐 봄</td></tr>
+        <tr><td>1</td><td>(펼침)</td><td><code>tableStats</code> 유무</td><td><code>table_stats</code></td><td>—</td><td>통계가 있는 행만 ▸/▾ 아이콘. 행 클릭으로 12 번 행을 펼침</td></tr>
+        <tr><td>2</td><td>#</td><td><code>id</code></td><td><code>id</code> BIGSERIAL</td><td>—</td><td>이력 번호. 최근 것이 위</td></tr>
+        <tr><td>3</td><td>잡</td><td><code>jobName</code></td><td><code>job_name</code></td><td>—</td><td><code>orchestrator[ALL]</code> · <code>orchestrator[ALL_EXCEPT_SMS]</code> · <code>orchestrator[도메인,…]</code> · <code>reconcile-oneday-flag</code> · <code>sms-dispatch[시각]</code> · <code>sms-result-sync[시각]</code>. 고정폭 글꼴</td></tr>
+        <tr><td>4</td><td>타입</td><td><code>runType</code></td><td><code>run_type</code></td><td>—</td><td><code>DAILY</code> → 일간 · <code>MONTHLY_RECONCILE</code> → 월간 재계산 · <code>MANUAL</code> → 수동 · <code>POLLER</code> → 폴러. 배지, 마우스를 올리면 원문</td></tr>
+        <tr><td>5</td><td>기간</td><td><code>targetFrom</code> ~ <code>targetTo</code></td><td><code>target_from</code> · <code>target_to</code></td><td>—</td><td>대상 기간(수납일 · 등록일 등 도메인마다 기준이 다름). null 이면 <code>-</code>. SMS 폴러는 당일 ~ 당일</td></tr>
+        <tr><td>6</td><td>상태</td><td><code>status</code></td><td><code>status</code></td><td>—</td><td><code>RUNNING</code> · <code>SUCCESS</code> · <code>FAILED</code> 배지. 회계 잡은 진료 수납 적재만 실패해도 FAILED 로 남기되 통계는 보존함</td></tr>
+        <tr><td>7</td><td>행수</td><td><code>rowsUpserted</code></td><td><code>rows_upserted</code></td><td>—</td><td><code>table_stats</code> 값의 합(성공 · 실패 공통). RUNNING 은 0. 천 단위 구분</td></tr>
+        <tr><td>8</td><td>시작</td><td><code>startedAt</code></td><td><code>started_at</code></td><td>—</td><td><code>YYYY-MM-DD HH:MM:SS</code> — ISO 의 T 를 공백으로 바꿔 초까지</td></tr>
+        <tr><td>9</td><td>종료</td><td><code>finishedAt</code></td><td><code>finished_at</code></td><td>—</td><td>RUNNING 이면 null → <code>-</code></td></tr>
+        <tr><td>10</td><td>소요</td><td><code>durationMs</code></td><td><code>duration_ms</code></td><td>—</td><td>DB 가 <code>finished_at − started_at</code> 으로 계산. 1초 미만 ms · 1분 미만 s(소수 1자리) · 그 이상 m s. null 이면 <code>-</code></td></tr>
+        <tr><td>11</td><td>에러</td><td><code>errorMessage</code></td><td><code>error_message</code></td><td>—</td><td>실패 사유. 저장 시 4,000자로 자름. 화면은 한 줄로 줄이고 툴팁에 전문</td></tr>
+        <tr><td>12</td><td>테이블별 upsert 행수 (펼침 행)</td><td><code>tableStats</code></td><td><code>table_stats</code> JSONB</td><td>—</td><td>테이블명 → 행수. 진행중 · V17 이전 이력은 null. 회계 잡은 <code>vision_no_item</code> · <code>vision_ratio_adjusted</code> 같은 관측 통계 키도 같이 실림</td></tr>
       </tbody>
     </table>
     <p>이 이력은 다른 화면의 <b>"데이터 반영일"</b> 표시에도 쓰임 — 마지막 성공 시각이 그 값임.</p>

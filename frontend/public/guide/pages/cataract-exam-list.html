@@ -239,7 +239,7 @@
       <span class="sep">···</span>
       <a class="tab active" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -338,7 +338,7 @@
 <div class="content">
   <div class="topbar">
     <div class="title">백내장 검사자 리스트 — 기획서</div>
-    <div class="sub">비앤빛 › 검사 · <span class="mono">/stats/cataract-exam-list</span> · 뼈대 자동 생성 2026-09-16</div>
+    <div class="sub">비앤빛 › 검사 · <span class="mono">/stats/cataract-exam-list</span> · 뼈대 자동 생성 2026-09-17</div>
   </div>
 
   <div class="withtoc">
@@ -523,13 +523,66 @@
     <p>그 날 백내장검사 예약의 진료구분이 <b>C_원데이(7)·C_노안원데이(9)</b> 면 원데이임.
        시력교정의 원데이 판정(같은 날 검사OP 예약)과 규칙이 다름.</p>
 
-    <h3>컬럼</h3>
-    <p>검사 정보(검사일 · 분류 · 신구환 · 진료구분 · 검사시간) + 고객 정보 + 직원(상담사 · 상담의 · 검안사) +
-       <b>IOL 4칸</b>(적절 R/L · 수술 R/L) + 수술(수술예약일 · 수술일 · 집도의) +
-       금액(견적가 · <b>영업가율</b> · 수납금액) + 상태(수술불가 · 검사중단 · 취소사유 · 취소메모) +
-       유입(예약경로 · 섹션 · 내원동기 3단 · 동기메모) + 인적(직업 · 국적 · 보험사 · 주민번호 · 주소).</p>
-    <p>컬럼 ↔ DB 매핑은
-       <a href="../db/검사자리스트-컬럼정의.html">db/검사자리스트-컬럼정의.md</a> 의 <b>【백내장판】</b> 절이 정본임.</p>
+    <h3>컬럼 정의 — 51개</h3>
+    <p>화면 51열 = API 응답 49필드 + 화면 계산 2열(No · 만나이).
+       조회 경로는 마트 <code>list_cataract_exam</code> 이고, 엑셀 원본 열 대응은 <a href="../db/검사자리스트-컬럼정의.html">컬럼 정의 문서</a>의 【백내장판】 참조.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>No</td><td>—</td><td>—</td><td>—</td><td>행 번호(페이지 반영). 우측 정렬</td></tr>
+        <tr><td>2</td><td>검사일</td><td><code>examDate</code></td><td><code>exam_date</code></td><td><code>RESERVATION.RESERVE_DATE</code> — <code>FLAG='H'</code> · <code>JINRYO&lt;&gt;'3'</code> · <code>SEQ&lt;&gt;3</code> · <code>STATE NOT IN ('C','Y')</code></td><td><b>조회 기준 날짜</b>. 고객 × 검사일 1행. <code>Cataract_Exam.EXAM_DATE</code> 가 아님(레거시 원장과 동일)</td></tr>
+        <tr><td>3</td><td>분류</td><td><code>classification</code></td><td><code>classification</code></td><td><code>CUSTOM.MY_OPTOMETRIST</code>·<code>MY_COUNSELOR</code> 의 <code>EMPLOYEE</code> 존재 여부 + <code>BS0808</code> — 위 4종 표</td><td>배지 4색. 백내장·중단만 레포트 검사수. 담당자는 고객 마스터라 재배정 시 과거 달이 바뀜</td></tr>
+        <tr><td>4</td><td>신/구환</td><td><code>patientType</code></td><td><code>patient_type</code></td><td><code>CUSTOM.FIRST_DAY</code> 가 적재 범위(<code>:from~:to</code>) 안이면 신환</td><td><b>마트 적재 시점 값</b> — 화면 조회 기간이 아니라 배치 적재 범위 기준. 배지</td></tr>
+        <tr><td>5</td><td>진료구분</td><td><code>examType</code></td><td><code>exam_type</code></td><td><code>MEDICAL_SUB_CFG.SUB_NAME</code>(<code>RESERVE_FLAG='H'</code>, <code>SUB_FLAG=RESERVE_JINRYO</code>), 없으면 '백내장검사'</td><td>그날 최신 H 예약 기준. 배지. 원데이 판정(<code>JINRYO 7·9</code>)은 이 라벨이 아니라 코드로 함</td></tr>
+        <tr><td>6</td><td>검사시간</td><td><code>examTime</code></td><td><code>exam_time</code></td><td><code>RESERVATION.START_TIME</code>(그날 최신 H 예약)</td><td>—</td></tr>
+        <tr><td>7</td><td>차트번호</td><td><code>chartNo</code></td><td><code>chart_no</code></td><td><code>CUSTOM.CUST_NUM</code></td><td>CSV 텍스트 강제(앞 0 보존). <code>9999999999999</code>·테스트 고객은 적재 시 제외</td></tr>
+        <tr><td>8</td><td>고객명</td><td><code>name</code></td><td><code>name</code></td><td><code>CUSTOM.CUST_NAME</code></td><td>화면 원문, <b>CSV 만 마스킹</b>(홍*동)</td></tr>
+        <tr><td>9</td><td>고객명(영)</td><td><code>nameEng</code></td><td><code>name_eng</code></td><td><code>CUSTOM.CUST_ENAME</code></td><td>CSV 마스킹 같음</td></tr>
+        <tr><td>10</td><td>등급</td><td><code>grade</code></td><td><code>grade</code></td><td><code>CUSTOM.LEVEL</code></td><td>배지 R·A·B·C·G</td></tr>
+        <tr><td>11</td><td>생년월일</td><td><code>birth</code></td><td><code>birth</code></td><td><code>CUSTOM.BIRTH_DAY</code></td><td>—</td></tr>
+        <tr><td>12</td><td>만나이</td><td>—</td><td>—</td><td><code>birth</code> 화면 파생</td><td>형식이 아니면 대시. 정렬은 숫자. CSV 는 <b>내려받은 날 기준</b></td></tr>
+        <tr><td>13</td><td>양/음</td><td><code>lunar</code></td><td><code>lunar</code></td><td><code>CUSTOM.LUNAR_YN</code></td><td><code>'Y'</code> → 음, 그 외 양</td></tr>
+        <tr><td>14</td><td>휴대전화</td><td><code>phone2</code></td><td><code>phone2</code></td><td><code>CUSTOM.CALL_NUM2</code></td><td>CSV 마스킹(010-****-5678) + 텍스트 강제</td></tr>
+        <tr><td>15</td><td>집전화</td><td><code>phone1</code></td><td><code>phone1</code></td><td><code>CUSTOM.CALL_NUM1</code></td><td>같음</td></tr>
+        <tr><td>16</td><td>이메일</td><td><code>email</code></td><td><code>email</code></td><td><code>CUSTOM.EMAIL</code></td><td>한 줄로 자름</td></tr>
+        <tr><td>17</td><td>상담사</td><td><code>counselor</code></td><td><code>counselor</code></td><td><code>CUSTOM.MY_COUNSELOR</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>고객 담당자 기준(방문 아님)</td></tr>
+        <tr><td>18</td><td>상담의</td><td><code>doctor</code></td><td><code>doctor</code></td><td><code>CUSTOM.MY_DOCTOR</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>같음</td></tr>
+        <tr><td>19</td><td>검안사</td><td><code>optometrist</code></td><td><code>optometrist</code></td><td><code>CUSTOM.MY_OPTOMETRIST</code> → <code>EMPLOYEE.EMP_NAME</code></td><td>같음. 분류 판정 필드</td></tr>
+        <tr><td>20</td><td>적절IOL(R)</td><td><code>recommendedR</code></td><td><code>recommended_r</code></td><td><code>Cataract_Exam.OPERATIONR</code></td><td rowspan="2">기간 내 <code>Cataract_Exam</code> 중 검사일과 같은 날 우선, 없으면 가장 이른 행(TOP 1). 한 줄로 자름</td></tr>
+        <tr><td>21</td><td>적절IOL(L)</td><td><code>recommendedL</code></td><td><code>recommended_l</code></td><td><code>Cataract_Exam.OPERATIONL</code></td></tr>
+        <tr><td>22</td><td>수술예약일</td><td><code>surgeryReserveDate</code></td><td><code>surgery_reserve_date</code></td><td><code>RESERVATION.RESERVE_DATE</code> — <code>FLAG='O'</code> · <code>JINRYO='4'</code>(백내장 수술) · <code>STATE&lt;&gt;'C'</code>, 최신 <code>RESERVE_NUM</code></td><td>검사일과 무관하게 고객의 최신 백내장 수술예약. 빈 값 대시</td></tr>
+        <tr><td>23</td><td>수술일</td><td><code>surgeryDate</code></td><td><code>surgery_date</code></td><td><code>Cataract_Operationdata.OPERATIONR_DATE</code>, 없으면 <code>OPERATIONL_DATE</code></td><td>우안 우선. 고객 단위 LEFT JOIN 이라 수술 기록이 여럿이면 행이 늘 수 있음 — 확인 필요</td></tr>
+        <tr><td>24</td><td>수술IOL(R)</td><td><code>surgeryR</code></td><td><code>surgery_r</code></td><td><code>Cataract_Operationdata.OPERATIONR</code></td><td rowspan="2">한 줄로 자름</td></tr>
+        <tr><td>25</td><td>수술IOL(L)</td><td><code>surgeryL</code></td><td><code>surgery_l</code></td><td><code>Cataract_Operationdata.OPERATIONL</code></td></tr>
+        <tr><td>26</td><td>집도의</td><td><code>surgeon</code></td><td><code>surgeon</code></td><td><code>Cataract_Operationdata.OPERATIONR_DOC</code> → <code>EMPLOYEE.EMP_NAME</code>, 없으면 <code>OPERATIONL_DOC</code></td><td>우안 집도의 우선</td></tr>
+        <tr><td>27</td><td>견적가</td><td><code>estimate</code></td><td><code>estimate</code></td><td><code>Cataract_Exam.OP_ESTIMATE_R</code> / <code>OP_ESTIMATE_L</code></td><td>둘 다 있으면 'R x / L y', 한쪽만 있으면 그 값. 0·빈값은 없는 것으로 봄. 텍스트</td></tr>
+        <tr><td>28</td><td>영업가율</td><td><code>surgeryRate</code></td><td><code>surgery_rate</code></td><td><code>Cataract_Exam.ExamPercent</code></td><td>문자열 그대로</td></tr>
+        <tr><td>29</td><td>수납금액</td><td><code>payment</code></td><td><code>payment</code></td><td><code>COSTPRICE</code>·<code>CSTPRCSUB</code>·<code>PRCITMLST</code>·<code>PrcItmDtl</code> 결제 집계 <code>RECEIPT</code>(<code>COST_FLAG O/I/H</code>, <code>PayStt&lt;&gt;'A'</code>)</td><td><b>고객 누적 합계</b>(검사일 무관). 천단위 콤마 문자열, 0 이면 빈 값</td></tr>
+        <tr><td>30</td><td>수술불가</td><td><code>opImpossible</code></td><td><code>op_impossible</code></td><td><code>Cataract_Exam.Impossible</code></td><td><b>Y 만 빨갛게</b>, 그 외 대시. 시력교정의 <code>OP_POSSIBLE_YN</code> 과 컬럼명 다름</td></tr>
+        <tr><td>31</td><td>검사중단</td><td><code>examStop</code></td><td><code>exam_stop</code></td><td><code>Cataract_Exam.Stop_YN</code></td><td>Y 만 빨갛게</td></tr>
+        <tr><td>32</td><td>취소사유</td><td><code>cancelCode</code></td><td><code>cancel_code</code></td><td><code>Cataract_Exam.Cancel_CD</code></td><td>코드 그대로. 중단 사유 버킷은 백내장에 적용하지 않음(V56 뷰 주석)</td></tr>
+        <tr><td>33</td><td>취소메모</td><td><code>cancelMemo</code></td><td><code>cancel_memo</code></td><td><code>Cataract_Exam.Cancel_reason</code>, 없으면 <code>CANCEL_CFG.CANCEL_REASON</code></td><td>한 줄로 자름</td></tr>
+        <tr><td>34</td><td>예약경로</td><td><code>route</code></td><td><code>route</code></td><td><code>RESERVATION.RESERVE_PATH</code>(그날 최신 H 예약)</td><td>—</td></tr>
+        <tr><td>35</td><td>섹션</td><td><code>section</code></td><td><code>section</code></td><td><code>MOTIVE_NEW02.section</code>(<code>Idx='1'</code>, 최신 <code>pkey</code>)</td><td>—</td></tr>
+        <tr><td>36</td><td>내원동기(대)</td><td><code>motiveL</code></td><td><code>motive_l</code></td><td><code>MOTIVE_NEW02.category01_name</code></td><td rowspan="3">같은 행에서. 빈 값 대시</td></tr>
+        <tr><td>37</td><td>내원동기(중)</td><td><code>motiveM</code></td><td><code>motive_m</code></td><td><code>MOTIVE_NEW02.category02_name</code></td></tr>
+        <tr><td>38</td><td>내원동기(세)</td><td><code>motiveS</code></td><td><code>motive_s</code></td><td><code>MOTIVE_NEW02.category03_name</code></td></tr>
+        <tr><td>39</td><td>동기메모</td><td><code>motiveMemo</code></td><td><code>motive_memo</code></td><td><code>MOTIVE_NEW01.comments</code>, 없으면 <code>MOTIVE_NEW02.name</code></td><td>한 줄로 자름</td></tr>
+        <tr><td>40</td><td>직업</td><td><code>job</code></td><td><code>job</code></td><td><code>CUSTOM.JOB</code></td><td>원문 그대로</td></tr>
+        <tr><td>41</td><td>국적</td><td><code>nationality</code></td><td><code>nationality</code></td><td><code>NationCustom_CFG.Nation_CodeName</code>(← <code>CUSTOM.Nation_code</code>)</td><td>—</td></tr>
+        <tr><td>42</td><td>보험사</td><td><code>insurance</code></td><td><code>insurance</code></td><td><code>EtcCfg.EtcCodNam</code>(<code>EtcBseCod='InsuranceCfg'</code>, ← <code>CUSTOM.InsuranceCode</code>)</td><td>—</td></tr>
+        <tr><td>43</td><td>주민번호</td><td><code>jumin</code></td><td><code>jumin</code></td><td>—(적재 SQL 이 <code>''</code> 고정)</td><td><b>항상 빈 값</b>(PII). CSV 마스킹 함수는 있으나 값이 없음</td></tr>
+        <tr><td>44</td><td>우편번호</td><td><code>zip</code></td><td><code>zip</code></td><td><code>CUSTOM.ZIP_CODE</code></td><td>CSV 텍스트 강제</td></tr>
+        <tr><td>45</td><td>주소1</td><td><code>addr1</code></td><td><code>addr1</code></td><td><code>CUSTOM.ADDR1</code></td><td rowspan="2">한 줄로 자름. CSV 는 마스킹 없이 원문</td></tr>
+        <tr><td>46</td><td>주소2</td><td><code>addr2</code></td><td><code>addr2</code></td><td><code>CUSTOM.ADDR2</code></td></tr>
+        <tr><td>47</td><td>검사예약등록일</td><td><code>examRegDate</code></td><td><code>exam_reg_date</code></td><td>H 예약 <code>RESERVE_NUM</code> 앞 6자리(YYMMDD) → <code>YYYY-MM-DD</code></td><td>예약번호 규칙에서 역산. 6자리 미만이면 빈 값</td></tr>
+        <tr><td>48</td><td>수술예약등록일</td><td><code>surgeryRegDate</code></td><td><code>surgery_reg_date</code></td><td>O 예약(#22 와 같은 행) <code>RESERVE_NUM</code> 앞 6자리</td><td>같음</td></tr>
+        <tr><td>49</td><td>최근내원일</td><td><code>lastVisit</code></td><td><code>last_visit</code></td><td><code>CUSTOM.LAST_DAY</code></td><td>적재 시점 값</td></tr>
+        <tr><td>50</td><td>검사특이사항</td><td><code>examMemo</code></td><td><code>exam_memo</code></td><td><code>Cataract_Exam.EXAM_MEMO</code></td><td>한 줄로 자름</td></tr>
+        <tr><td>51</td><td>고객메모</td><td><code>memo</code></td><td><code>memo</code></td><td><code>CUSTOM.ETC</code></td><td>한 줄로 자름</td></tr>
+      </tbody>
+    </table>
+
   
   </div>
 
@@ -585,6 +638,7 @@
       <thead><tr><th>항목</th><th>설정</th><th>어디서 정하나</th></tr></thead>
       <tbody>
         <tr><td>ADMIN 전용</td><td><b>예</b></td><td><code>ADMIN_ONLY_PAGE_IDS</code> (navigation.ts)</td></tr>
+        <tr><td>임원(ADMIN · DIRECTOR) 전용</td><td>아니오</td><td><code>EXECUTIVE_ONLY_PAGE_IDS</code> (navigation.ts) · <code>SecurityConfig</code> <code>/api/accounting/**</code></td></tr>
         <tr><td>사이드바 숨김</td><td>아니오</td><td><code>HIDDEN_MENU_IDS</code> (navigation.ts)</td></tr>
         <tr><td>구현 상태</td><td><code>complete</code></td><td><code>MENU_STATUS</code> (navigation.ts)</td></tr>
         <tr><td>운영 빌드 차단</td><td>차단 없음</td><td><code>isRouteBlocked</code> (pageRegistry.ts)</td></tr>

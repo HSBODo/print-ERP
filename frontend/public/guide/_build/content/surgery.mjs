@@ -89,13 +89,30 @@ export default {
          지표 정의는 <a href="../지표정의/5-수술.md">지표정의/5-수술.md</a>.</p>
     </div>
 
-    <div class="note">
-      <div class="h">재수술은 별도 원천임</div>
-      <p><b>이 화면의 「전체 수술건수」에는 재수술이 들어가지 않음</b> — 유형 12종의 합이기 때문임.
-         <code>RE_OPERATION</code> 에 따로 있음. 총수술에 더할 때의 규칙은
-         <a href="surgery-list.html">수술자 리스트</a>의 「전체」 탭과 같음
-         (2026-07: 726 + 43 + 29 = 798).</p>
+    <div class="note warn">
+      <div class="h">「전체 수술건수」에 재수술이 들어감 — 연도에 따라 다름</div>
+      <p>KPI 「전체 수술건수」는 응답의 <code>total</code> 을 그대로 씀. 2026 이후(배치 적재 · V35 확정값)는
+         <b>시력교정 + 백내장 + 재수술</b>이고(2026-01: 1361 + 90 + 32 = 1483), 2024·2025 시드(V15)는
+         <b>재수술 미포함</b>(시력교정 + 백내장)임. 유형 12종의 합과도 다름 — 시력교정 인원은 유형별 중복을 걷어낸 DISTINCT 값이기 때문임.
+         재수술 원천은 <code>RE_OPERATION</code> 이고 가산 기준은 <a href="surgery-list.html">수술자 리스트</a> 「전체」 탭과 같음.</p>
     </div>
+
+    <h3>컬럼 정의 — KPI 4개 · 차트 시리즈 3개</h3>
+    <p>조회 경로는 마트 <code>mart_surgery_monthly</code> 하나이고 세 API 의 응답이 같음.
+       2026-05 이전은 시드 값임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>전체 수술건수 (KPI)</td><td><code>total</code></td><td><code>total</code></td><td>시력교정 인원 + 백내장 안수 + 재수술 포함건 (<code>OPERATIONDATA</code> · <code>Cataract_Operationdata</code> · <code>RE_OPERATION</code>)</td><td>기준 기간 값 + 비교 기간별 증감률(%). 연도 모드는 12개월 합. 2024·2025 는 재수술 미포함(위 노트)</td></tr>
+        <tr><td>2</td><td>시력교정 (KPI)</td><td><code>visionPatients</code></td><td><code>vision_patients</code></td><td><code>list_surgery</code> 시력교정 행의 사람×수술일 DISTINCT ← <code>OPERATIONDATA</code></td><td>월값 = 일별 DISTINCT 의 합(같은 달 다른 날 두 번이면 2). 유형 4종(라섹·라식·스마일·스마일프로)의 합이 아님</td></tr>
+        <tr><td>3</td><td>렌즈/각막 (KPI)</td><td><code>icl</code> + <code>tIcl</code> + <code>kpl</code> + <code>tKpl</code> + <code>viva</code></td><td><code>icl</code> · <code>t_icl</code> · <code>kpl</code> · <code>t_kpl</code> · <code>viva</code></td><td>시력교정 눈의 시술명이 ICL · T-ICL · KPL · T-KPL · VIVA 계열(<code>surgery_op_type</code>) — 환자당 대표유형(우안 우선) 1건</td><td>프론트 합산. 대표유형 규칙이라 5종 합 = <code>piol_patients</code>(PIOL 실인원)</td></tr>
+        <tr><td>4</td><td>백내장 (KPI)</td><td><code>cataractPatients</code></td><td><code>cataract_patients</code></td><td><code>list_surgery</code> 백내장 행의 눈 수 COUNT(*) ← <code>Cataract_Operationdata</code></td><td>이름은 Patients 지만 <b>안(眼) 단위</b>. 같은 날 양안 = 2</td></tr>
+        <tr><td>5</td><td>수술 유형별 비교 — 시리즈 <code>p0</code>~<code>p2</code> (월별 모드 막대)</td><td>1~4 와 같음</td><td>같음</td><td>같음</td><td>시리즈 = 선택한 기간(최대 3), X축 4항목 = KPI 1~4. 색은 <code>CHART_COLORS</code> 순</td></tr>
+        <tr><td>6</td><td>월별 추이 비교 — 시리즈 <code>y{연도}</code> (연도별 모드 선)</td><td>탭 그룹의 월값(1~4 중 하나)</td><td>같음</td><td>같음</td><td>시리즈 = 선택 연도 최근 3개(빨강 → 진회색 → 연하늘, 최신이 빨강). 탭(전체/시력교정/렌즈·각막/백내장)이 값을 고름. 미래 월은 빈 값이라 선이 끊김. 최신 연도만 값 라벨</td></tr>
+        <tr><td>7</td><td>월별 추이 표 — 1월~12월 · 합계</td><td>같음</td><td>같음</td><td>같음</td><td>차트와 같은 값. 합계 = 표시된 월의 합(미래 월 제외). 빈 값은 공란</td></tr>
+      </tbody>
+    </table>
+    <p>응답의 <code>presbyond</code> · <code>piolPatients</code> · 부가시술(<code>xtra</code> 등) · 라섹계 세부 · 재수술 세부는 이 화면에서 쓰지 않음(<a href="surgery-composition.html">수술별 비중</a>이 씀).</p>
   `,
 
   s10: `

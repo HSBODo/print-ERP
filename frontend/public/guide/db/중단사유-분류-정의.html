@@ -59,7 +59,7 @@ html,body{height:100%}body{display:flex;flex-direction:column}
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-menus">전메뉴 현황</a>
       <span class="sep">···</span>
-      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문 <span class="beta">베타</span></a>
+      <a class="tab" href="../prd.html#view-wireframe">화면 조회 쿼리문</a>
       <span class="sep">···</span>
       <a class="tab" href="../prd.html#view-goal">26.09월 목표</a>
       <span class="sep">···</span>
@@ -70,9 +70,11 @@ html,body{height:100%}body{display:flex;flex-direction:column}
     <aside class="sidenav">
       <div class="nav-title">DB 문서</div>
       <nav><a class="" href="검사자리스트-컬럼정의.html">검사자리스트-컬럼정의</a>
+<a class="" href="비앤빛대시보드-사용테이블목록.html">비앤빛대시보드-사용테이블목록</a>
 <a class="" href="예약통계_백내장-데이터소스-분석.html">예약통계_백내장-데이터소스-분석</a>
 <a class="active" href="중단사유-분류-정의.html">중단사유-분류-정의</a>
 <a class="" href="지표정의.html">지표정의</a>
+<a class="" href="list-migration-plan.html">list-migration-plan</a>
 <a class="" href="mart-inventory.html">mart-inventory</a></nav>
     </aside>
     <main class="main">
@@ -81,10 +83,10 @@ html,body{height:100%}body{display:flex;flex-direction:column}
         <div class="markdown"><h1 id="중단-사유-분류-정의-및-수정-가이드">중단 사유 분류 — 정의 및 수정 가이드</h1>
 <blockquote><p>대상 차트: <code>frontend/src/pages/report/MonthlyReportPage.tsx</code> (월간 레포트 #23) · <code>frontend/src/pages/consultation/StopReasonPage.tsx</code> (전용 페이지) 최종 갱신: 2026-07-15 · 기준 커밋: <code>fd54e30</code></p></blockquote>
 <h2 id="한-줄-요약">한 줄 요약</h2>
-<p>검사 중단(<code>EXAM.STOP_YN=&#39;Y&#39;</code>) 건을 <strong>상담사가 드롭다운에서 고른 정형 코드 <code>EXAM.CANCEL_CD</code></strong> 로 7개 사유 버킷에 분류한다. <strong>분류 규칙은 SQL 한 곳</strong>(<code>backend/src/main/resources/sql/consultation/find-stop-reason-monthly.sql</code>)에 있다.</p>
+<p>검사 중단(<code>EXAM.STOP_YN=&#39;Y&#39;</code>) 건을 <strong>상담사가 드롭다운에서 고른 정형 코드 <code>EXAM.CANCEL_CD</code></strong> 로 7개 사유 버킷에 분류한다. <strong>분류 규칙은 SQL 한 곳</strong>(<code>backend/src/main/resources/sql/softcrm/consultation/select-stop-reason-monthly.sql</code>)에 있다.</p>
 <h2 id="이력-왜-지금-방식인가">이력 — 왜 지금 방식인가</h2>
 <div class="table-scroll"><table><thead><tr><th style="text-align:left">시점</th><th style="text-align:left">방식</th><th style="text-align:left">결과</th></tr></thead><tbody><tr><td style="text-align:left">~2026-07-14</td><td style="text-align:left"><code>EXAM_MEMO</code> 자유텍스트 키워드 LIKE 추정</td><td style="text-align:left">❌ 수술권유X 과소·기타 과다로 골든과 어긋남 (4월: 레거시 수술권유X 45 ↔ 우리 recommendX 25 + other 25)</td></tr><tr><td style="text-align:left">2026-07-14~ (<code>fd54e30</code>)</td><td style="text-align:left"><code>EXAM.CANCEL_CD</code> 정형코드</td><td style="text-align:left">✅ 2026-06 골든과 <strong>전 항목 완전 일치</strong> (38 = 21·3·0·0·3·7·4)</td></tr><tr><td style="text-align:left">2026-07-15 (<code>2026-07-15</code> 브랜치)</td><td style="text-align:left">〃 를 이 브랜치에 적용</td><td style="text-align:left">✅ 2026-06 골든 <strong>재실측 일치</strong> (38 = 21·3·0·0·3·7·4) · prod 대조 완료</td></tr></tbody></table></div>
-<blockquote><p>📌 <strong><code>fd54e30</code> 은 이 리포에 없다.</strong> 2026-07-15 확인 결과 <code>2026-07-15</code> 브랜치의 <code>find-stop-reason-monthly.sql</code> 은 여전히 <strong>구 <code>EXAM_MEMO</code> LIKE 방식</strong>이었고, <code>StopReasonStatsRepository</code> javadoc 에도 &quot;사유 코드가 DB에 없다&quot;는 낡은 문장이 남아 있었다. (같은 리포의 <code>backend/src/main/resources/sql/exam/find-exam-list.sql</code> 은 이미 <code>CANCEL_CFG</code> 를 조인 중 — 코드는 분명히 존재한다.) 본 문서 §A 절차대로 SQL CASE + javadoc 을 <code>CANCEL_CD</code> 방식으로 교체하고, prod 실측으로 재검증했다.</p></blockquote>
+<blockquote><p>📌 <strong><code>fd54e30</code> 은 이 리포에 없다.</strong> 2026-07-15 확인 결과 <code>2026-07-15</code> 브랜치의 <code>select-stop-reason-monthly.sql</code> 은 여전히 <strong>구 <code>EXAM_MEMO</code> LIKE 방식</strong>이었고, <code>StopReasonStatsRepository</code> javadoc 에도 &quot;사유 코드가 DB에 없다&quot;는 낡은 문장이 남아 있었다. (같은 리포의 <code>backend/src/main/resources/sql/softcrm/exam/select-exam-list.sql</code> 은 이미 <code>CANCEL_CFG</code> 를 조인 중 — 코드는 분명히 존재한다.) 본 문서 §A 절차대로 SQL CASE + javadoc 을 <code>CANCEL_CD</code> 방식으로 교체하고, prod 실측으로 재검증했다.</p></blockquote>
 <p><strong>2026-07-15 prod 실측 (mssql-prod)</strong></p>
 <ul><li>2026-06 <code>CANCEL_CD</code> 분포 = <code>121</code>×21 · <code>111</code>×7 · <code>107</code>×4 · <code>114</code>×3 · <code>122</code>×3 → 합 38. 본 매핑 적용 시 <strong>21·3·0·0·3·7·4 = 38 로 골든과 전 항목 일치.</strong></li><li><code>CANCEL_CFG</code> 전수 <strong>83개 확보</strong> — 매핑표의 15개 코드를 라벨과 대조해 전부 확인.</li><li>그 달엔 빈 코드(<code>&#39;&#39;</code>)가 0건이라 <code>other</code> 4 는 전부 <code>107 전안부재검</code> 이다.</li></ul>
 <blockquote><p>⚠️ <strong>&quot;사유 코드가 DB에 없다&quot;는 옛 전제는 틀렸다.</strong> <code>EXAM.CANCEL_CD</code>(char(3)) + 마스터 <code>CANCEL_CFG</code>가 존재한다. 메모나 오래된 주석에 이 문장이 남아 있으면 그게 낡은 것이다 — <strong>SQL을 열어서 확인할 것.</strong></p></blockquote>
@@ -92,12 +94,10 @@ html,body{height:100%}body{display:flex;flex-direction:column}
 <pre><code>EXAM.CANCEL_CD (char(3), 상담사 드롭다운 선택)
    │  마스터: CANCEL_CFG (CANCEL_CD → CANCEL_REASON)
    ▼
-find-stop-reason-monthly.sql   ← ★ 분류 규칙은 여기 CASE 문 하나
+select-stop-reason-monthly.sql   ← ★ 분류 규칙은 여기 CASE 문 하나
    │  WHERE STOP_YN=&#39;Y&#39; AND EXAM_DATE BETWEEN :from AND :to
    ▼
 StopReasonStatsRepository → StopReasonStatsService (total 합산) → StopReasonMonthlyItem (DTO)
-   │
-   ├─ (mssql 프로파일) 그대로 API 로
    │
    └─ (postgres-mart 프로파일) ConsultationMartJob → upsert-stop-reason-monthly.sql
                                   → mart_stop_reason_monthly 테이블
@@ -121,11 +121,11 @@ MonthlyReportCharts.tsx (StopReasonBar) · StopReasonPage.tsx · monthlyReportCs
 <h2 id="수정하는-법">수정하는 법</h2>
 <h3 id="a-코드-버킷-재매핑-제일-흔함-sql-1곳">A. 코드 → 버킷 재매핑 (제일 흔함) — <strong>SQL 1곳</strong></h3>
 <p>새 <code>CANCEL_CD</code>가 생겼거나 어떤 코드의 소속을 바꿀 때.</p>
-<ol><li><code>backend/src/main/resources/sql/consultation/find-stop-reason-monthly.sql</code>의 <code>CASE</code> 문에 <code>WHEN &#39;&lt;코드&gt;&#39; THEN &#39;&lt;버킷&gt;&#39;</code> 추가/이동</li><li>같은 파일 상단 주석의 매핑 목록 갱신</li><li><code>backend/src/main/java/com/bviit/analytics/consultation/repository/StopReasonStatsRepository.java</code> javadoc 매핑 목록 갱신</li><li>본 문서 매핑표 갱신</li></ol>
+<ol><li><code>backend/src/main/resources/sql/softcrm/consultation/select-stop-reason-monthly.sql</code>의 <code>CASE</code> 문에 <code>WHEN &#39;&lt;코드&gt;&#39; THEN &#39;&lt;버킷&gt;&#39;</code> 추가/이동</li><li>같은 파일 상단 주석의 매핑 목록 갱신</li><li><code>backend/src/main/java/com/bviit/analytics/consultation/repository/StopReasonStatsRepository.java</code> javadoc 매핑 목록 갱신</li><li>본 문서 매핑표 갱신</li></ol>
 <blockquote><p>백엔드 재빌드만 하면 끝. <strong>DTO·프론트는 손댈 필요 없다.</strong></p></blockquote>
 <h3 id="b-사유-항목-추가삭제-8번째-버킷-등-7곳">B. 사유 항목 추가/삭제 (8번째 버킷 등) — <strong>7곳</strong></h3>
 <p>계약이 바뀌므로 전부 맞춰야 한다. 하나라도 빠지면 zod 파싱 실패 or 차트 누락.</p>
-<div class="table-scroll"><table><thead><tr><th style="text-align:center">#</th><th style="text-align:left">파일</th><th style="text-align:left">고칠 것</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td style="text-align:left"><code>backend/src/main/resources/sql/consultation/find-stop-reason-monthly.sql</code></td><td style="text-align:left"><code>CASE</code> 분기 + <code>SELECT SUM(...)</code> 컬럼</td></tr><tr><td style="text-align:center">2</td><td style="text-align:left"><code>backend/src/main/java/com/bviit/analytics/consultation/dto/StopReasonMonthlyItem.java</code></td><td style="text-align:left">필드</td></tr><tr><td style="text-align:center">3</td><td style="text-align:left"><code>backend/src/main/java/com/bviit/analytics/consultation/service/StopReasonStatsService.java</code></td><td style="text-align:left"><code>toInt</code> 추출 + <strong><code>total</code> 합산</strong> + builder</td></tr><tr><td style="text-align:center">4</td><td style="text-align:left"><code>frontend/src/api/consultation/index.ts</code></td><td style="text-align:left">zod 스키마</td></tr><tr><td style="text-align:center">5</td><td style="text-align:left"><code>frontend/src/pages/report/MonthlyReportCharts.tsx</code></td><td style="text-align:left"><code>REASONS</code> (월간 레포트 차트)</td></tr><tr><td style="text-align:center">6</td><td style="text-align:left"><code>frontend/src/pages/consultation/StopReasonPage.tsx</code></td><td style="text-align:left"><code>REASONS</code> (<strong><code>group</code> 필드 포함</strong>)</td></tr><tr><td style="text-align:center">7</td><td style="text-align:left"><code>frontend/src/pages/report/monthlyReportCsv.ts</code></td><td style="text-align:left"><code>STOP_REASONS</code> (CSV 라벨)</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th style="text-align:center">#</th><th style="text-align:left">파일</th><th style="text-align:left">고칠 것</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td style="text-align:left"><code>backend/src/main/resources/sql/softcrm/consultation/select-stop-reason-monthly.sql</code></td><td style="text-align:left"><code>CASE</code> 분기 + <code>SELECT SUM(...)</code> 컬럼</td></tr><tr><td style="text-align:center">2</td><td style="text-align:left"><code>backend/src/main/java/com/bviit/analytics/consultation/dto/StopReasonMonthlyItem.java</code></td><td style="text-align:left">필드</td></tr><tr><td style="text-align:center">3</td><td style="text-align:left"><code>backend/src/main/java/com/bviit/analytics/consultation/service/StopReasonStatsService.java</code></td><td style="text-align:left"><code>toInt</code> 추출 + <strong><code>total</code> 합산</strong> + builder</td></tr><tr><td style="text-align:center">4</td><td style="text-align:left"><code>frontend/src/api/consultation/index.ts</code></td><td style="text-align:left">zod 스키마</td></tr><tr><td style="text-align:center">5</td><td style="text-align:left"><code>frontend/src/pages/report/MonthlyReportCharts.tsx</code></td><td style="text-align:left"><code>REASONS</code> (월간 레포트 차트)</td></tr><tr><td style="text-align:center">6</td><td style="text-align:left"><code>frontend/src/pages/consultation/StopReasonPage.tsx</code></td><td style="text-align:left"><code>REASONS</code> (<strong><code>group</code> 필드 포함</strong>)</td></tr><tr><td style="text-align:center">7</td><td style="text-align:left"><code>frontend/src/pages/report/monthlyReportCsv.ts</code></td><td style="text-align:left"><code>STOP_REASONS</code> (CSV 라벨)</td></tr></tbody></table></div>
 <h3 id="c-라벨색상만-변경-프론트-3곳">C. 라벨·색상만 변경 — <strong>프론트 3곳</strong></h3>
 <p>위 표의 5·6·7. <code>REASONS</code>가 월간 레포트용과 전용 페이지용으로 <strong>두 벌 따로</strong> 있으니 같이 고칠 것(전용 페이지에만 <code>group</code> 필드가 있어 통합돼 있지 않다).</p>
 <h2 id="검증하는-법">검증하는 법</h2>

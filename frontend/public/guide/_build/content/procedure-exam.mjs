@@ -94,6 +94,20 @@ export default {
       <p><a href="../지표정의/2-검사.md">지표정의/2-검사.md</a> 가 정본임 — 원데이/일반 구분이 거기 있음.
          레거시 대조 기록은 <a href="../점검/원데이-레거시-비교_2026-07.md">점검/원데이-레거시-비교_2026-07.md</a>.</p>
     </div>
+    <h3>컬럼 정의 — 5개 (탭 지표 2 · 표 컬럼 3)</h3>
+    <p>연도별 선 차트와 연도 × 월 표 하나이며, 탭이 표시할 값을 고름.
+       조회 경로는 마트 <code>mart_procedure_exam_monthly</code> 이고 2026-05 이전은 시드 값임.</p>
+    <table>
+      <thead><tr><th>#</th><th>화면 라벨</th><th>응답 필드</th><th>마트 컬럼</th><th>CRM 원천</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>검사수(탭)</td><td><code>examCount</code></td><td><code>mart_procedure_exam_monthly.exam_count</code></td><td><code>v_all_exam_list</code> 행수 전체(<code>select-exam-daily-agg.sql</code> 의 <code>total</code>) — <code>list_exam</code>(<code>EXAM.EXAM_DATE</code>) + <code>list_cataract_exam</code>(<code>RESERVATION FLAG='H'</code> 내원)</td><td>백내장은 <b>분류 무관 모집단 전체(102)</b>가 들어감 — <a href="examination.html">시술별</a> 「전체 검사건수」(백내장 56 쪽)와 다름. 사람 단위(고객 × 검사일)</td></tr>
+        <tr><td>2</td><td>원데이 검사(탭)</td><td><code>oneDayExamCount</code></td><td><code>one_day_exam_count</code></td><td><code>exam_type='원데이'</code> 행수 — 시력교정: 같은 날 <code>RESERVATION M</code> + <code>JINRYO 5·7</code> + <code>STATE I/H</code> / 백내장: <code>RESERVE_JINRYO IN (7,9)</code></td><td>현재 코드는 백내장 원데이도 세고 중단·취소를 빼지 않음(2026-07-30·09-09 확정). 화면 탭 설명문("EXAM 기준 … 중단·취소 제외")은 구 정의 — <b>확인 필요</b></td></tr>
+        <tr><td>3</td><td>연도(시리즈 · 표 행)</td><td><code>year</code></td><td><code>yr</code></td><td>—</td><td>필터바 연도 선택(기본 최근 3개년). 최신 연도만 굵은 선 + 값 라벨. 색은 최신부터 빨강·진회색·연하늘·주황</td></tr>
+        <tr><td>4</td><td>1월~12월</td><td><code>month</code> + 탭 값</td><td><code>mo</code></td><td>—</td><td>없는 달은 0. <b>미래 월은 null</b> → 표 빈칸, 선은 마지막 데이터에서 끊김. 천단위 콤마</td></tr>
+        <tr><td>5</td><td>합계</td><td>—</td><td>—</td><td>화면 계산</td><td>그 연도 행에 표시된 월(미래 월 제외)의 합</td></tr>
+      </tbody>
+    </table>
+
   `,
 
   s10: `

@@ -10,6 +10,7 @@
       "apiDraftPath": "/api/report/weekly",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/report/WeeklyReportPage.tsx",
       "reachedFiles": 29,
@@ -219,6 +220,9 @@
         "RESERVATION",
         "RE_OPERATION"
       ],
+      "appTables": [
+        "reoperation_decision"
+      ],
       "source": "mixed"
     },
     {
@@ -231,6 +235,7 @@
       "apiDraftPath": "/api/report/monthly",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/report/MonthlyReportPage.tsx",
       "reachedFiles": 27,
@@ -433,6 +438,9 @@
         "RESERVATION",
         "RE_OPERATION"
       ],
+      "appTables": [
+        "reoperation_decision"
+      ],
       "source": "mixed"
     },
     {
@@ -445,6 +453,7 @@
       "apiDraftPath": "/api/stats/overall-exam",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/OverallExamPage.tsx",
       "reachedFiles": 5,
@@ -488,6 +497,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -500,6 +510,7 @@
       "apiDraftPath": "/api/stats/overall-exam/weekly",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/OverallExamWeeklyPage.tsx",
       "reachedFiles": 5,
@@ -543,6 +554,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -555,6 +567,7 @@
       "apiDraftPath": "/api/stats/reservation/monthly",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": "frontend/src/pages/reservation/ReservationPage.tsx",
       "reachedFiles": 16,
@@ -614,6 +627,7 @@
         "HappyTalk_Counsel_List",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -626,6 +640,7 @@
       "apiDraftPath": "/api/stats/reservation-overall",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/reservation/ReservationOverallPage.tsx",
       "reachedFiles": 10,
@@ -685,6 +700,7 @@
         "HappyTalk_Counsel_List",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -697,6 +713,7 @@
       "apiDraftPath": "/api/stats/reservation-stats-system",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/reservation/ReservationStatsSystemPage.tsx",
       "reachedFiles": 10,
@@ -760,6 +777,7 @@
         "RESERVATION_NAVER",
         "RESERVE_HISTORY"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -772,6 +790,7 @@
       "apiDraftPath": "/api/stats/reservation-stats-cataract",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/reservation/ReservationStatsCataractPage.tsx",
       "reachedFiles": 12,
@@ -835,6 +854,7 @@
         "RESERVATION",
         "RESERVE_HISTORY"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -847,6 +867,7 @@
       "apiDraftPath": "/api/reservation-list",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/reservation/ReservationListPage.tsx",
       "reachedFiles": 6,
@@ -891,6 +912,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -903,6 +925,7 @@
       "apiDraftPath": "/api/stats/reservation-channel",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/reservation/ReservationChannelPage.tsx",
       "reachedFiles": 7,
@@ -926,6 +949,7 @@
         "v_reservation_channel"
       ],
       "crmTables": [],
+      "appTables": [],
       "source": "mart"
     },
     {
@@ -938,29 +962,46 @@
       "apiDraftPath": "/api/stats/channel-profit",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/marketing/ChannelProfitPage.tsx",
       "reachedFiles": 9,
       "endpoints": [
+        "GET /api/stats/channel-profit/ad-spend",
+        "GET /api/stats/channel-profit/lens-cost",
+        "GET /api/stats/channel-profit/lens-price",
         "GET /api/stats/reservation-channel",
-        "GET /api/stats/reservation-channel/op-types"
+        "GET /api/stats/reservation-channel/op-types",
+        "PUT /api/stats/channel-profit/ad-spend",
+        "PUT /api/stats/channel-profit/lens-price"
       ],
       "controllers": [
+        "backend/src/main/java/com/bviit/analytics/marketing/controller/ChannelProfitController.java",
         "backend/src/main/java/com/bviit/analytics/reservation/controller/ReservationChannelController.java"
       ],
       "sqlRefs": [
+        "sql/mart/etc/select-ad-spend.sql",
+        "sql/mart/etc/select-channel-lens-cost.sql",
+        "sql/mart/etc/select-lens-price.sql",
+        "sql/mart/etc/update-lens-price.sql",
+        "sql/mart/etc/upsert-ad-spend.sql",
         "sql/mart/reservation/select-reservation-channel-funnel.sql",
         "sql/mart/reservation/select-reservation-channel-optype.sql"
       ],
       "tables": [
+        "ad_spend",
+        "lens_cost",
         "list_reoperation",
         "v_reservation_channel"
       ],
       "martTables": [
+        "ad_spend",
+        "lens_cost",
         "list_reoperation",
         "v_reservation_channel"
       ],
       "crmTables": [],
+      "appTables": [],
       "source": "mart"
     },
     {
@@ -973,6 +1014,7 @@
       "apiDraftPath": "(없음 — 정적 문서)",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/marketing/ChannelAnalysisPage.tsx",
       "reachedFiles": 15,
@@ -996,6 +1038,7 @@
         "v_reservation_channel"
       ],
       "crmTables": [],
+      "appTables": [],
       "source": "mart"
     },
     {
@@ -1008,6 +1051,7 @@
       "apiDraftPath": "/api/sms-management/targets",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/sms/SmsManagementPage.tsx",
       "reachedFiles": 19,
@@ -1065,6 +1109,13 @@
       "crmTables": [
         "CUSTOM"
       ],
+      "appTables": [
+        "sms_dispatch_queue",
+        "sms_offset_config",
+        "sms_opt_out",
+        "sms_send_log",
+        "sms_target"
+      ],
       "source": "mixed"
     },
     {
@@ -1077,6 +1128,7 @@
       "apiDraftPath": "/api/reservation-list-homepage",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/reservation/ReservationListHomepagePage.tsx",
       "reachedFiles": 6,
@@ -1099,6 +1151,7 @@
         "mart_list_reservation_homepage"
       ],
       "crmTables": [],
+      "appTables": [],
       "source": "mart"
     },
     {
@@ -1111,6 +1164,7 @@
       "apiDraftPath": "/api/reservation-change",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/reservation/ReservationChangePage.tsx",
       "reachedFiles": 10,
@@ -1133,6 +1187,7 @@
         "list_reservation_change"
       ],
       "crmTables": [],
+      "appTables": [],
       "source": "mart"
     },
     {
@@ -1145,6 +1200,7 @@
       "apiDraftPath": "/api/exam-list",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/ExamListPage.tsx",
       "reachedFiles": 6,
@@ -1212,6 +1268,7 @@
         "PrcItmDtl",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1224,6 +1281,7 @@
       "apiDraftPath": "/api/cataract-exam-list",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/CataractExamListPage.tsx",
       "reachedFiles": 6,
@@ -1289,6 +1347,7 @@
         "PrcItmDtl",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1301,6 +1360,7 @@
       "apiDraftPath": "/api/all-exam-list",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/AllExamListPage.tsx",
       "reachedFiles": 6,
@@ -1336,6 +1396,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1348,6 +1409,7 @@
       "apiDraftPath": "/api/eoeis-checkup",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/EoeisCheckupStatsPage.tsx",
       "reachedFiles": 5,
@@ -1370,6 +1432,7 @@
         "dbo.checkup_record"
       ],
       "crmTables": [],
+      "appTables": [],
       "source": "mart"
     },
     {
@@ -1382,6 +1445,7 @@
       "apiDraftPath": "/api/stats/examination",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/ExaminationPage.tsx",
       "reachedFiles": 10,
@@ -1441,6 +1505,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1453,6 +1518,7 @@
       "apiDraftPath": "/api/stats/procedure-exam",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/exam/ProcedureExamPage.tsx",
       "reachedFiles": 10,
@@ -1512,6 +1578,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1524,6 +1591,7 @@
       "apiDraftPath": "/api/stats/consultation-rate",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/consultation/ConsultationRatePage.tsx",
       "reachedFiles": 20,
@@ -1589,6 +1657,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1601,6 +1670,7 @@
       "apiDraftPath": "/api/stats/cataract-reservation-rate",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/consultation/CataractReservationRatePage.tsx",
       "reachedFiles": 10,
@@ -1666,6 +1736,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1678,6 +1749,7 @@
       "apiDraftPath": "/api/stats/overall-exam/weekly",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/consultation/StopRatePage.tsx",
       "reachedFiles": 10,
@@ -1721,6 +1793,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1733,6 +1806,7 @@
       "apiDraftPath": "/api/stats/stop-reason",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/consultation/StopReasonPage.tsx",
       "reachedFiles": 6,
@@ -1798,6 +1872,7 @@
         "OPERATIONDATA",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -1810,6 +1885,7 @@
       "apiDraftPath": "/api/surgery-list",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/surgery/SurgeryListPage.tsx",
       "reachedFiles": 11,
@@ -1882,6 +1958,9 @@
         "RESERVATION",
         "RE_OPERATION"
       ],
+      "appTables": [
+        "reoperation_decision"
+      ],
       "source": "mixed"
     },
     {
@@ -1894,6 +1973,7 @@
       "apiDraftPath": "/api/stats/surgery",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/surgery/SurgeryPage.tsx",
       "reachedFiles": 16,
@@ -1946,6 +2026,9 @@
         "OPERATIONDATA",
         "RE_OPERATION"
       ],
+      "appTables": [
+        "reoperation_decision"
+      ],
       "source": "mixed"
     },
     {
@@ -1958,6 +2041,7 @@
       "apiDraftPath": "/api/stats/surgery-ratio",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/surgery/SurgeryRatioPage.tsx",
       "reachedFiles": 12,
@@ -2010,6 +2094,9 @@
         "OPERATIONDATA",
         "RE_OPERATION"
       ],
+      "appTables": [
+        "reoperation_decision"
+      ],
       "source": "mixed"
     },
     {
@@ -2022,6 +2109,7 @@
       "apiDraftPath": "/api/stats/surgery-ratio",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/surgery/SurgeryCompositionPage.tsx",
       "reachedFiles": 6,
@@ -2074,6 +2162,9 @@
         "OPERATIONDATA",
         "RE_OPERATION"
       ],
+      "appTables": [
+        "reoperation_decision"
+      ],
       "source": "mixed"
     },
     {
@@ -2086,6 +2177,7 @@
       "apiDraftPath": "/api/accumulated-eyes",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/marketing/AccumulatedEyesPage.tsx",
       "reachedFiles": 5,
@@ -2106,6 +2198,7 @@
         "list_accumulated_eyes"
       ],
       "crmTables": [],
+      "appTables": [],
       "source": "mart"
     },
     {
@@ -2118,6 +2211,7 @@
       "apiDraftPath": "/api/outpatient-list",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/outpatient/OutpatientListPage.tsx",
       "reachedFiles": 6,
@@ -2155,6 +2249,7 @@
         "NationCustom_CFG",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -2167,6 +2262,7 @@
       "apiDraftPath": "/api/stats/outpatient-count",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/outpatient/OutpatientCountPage.tsx",
       "reachedFiles": 10,
@@ -2195,6 +2291,7 @@
         "CUSTOM",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -2207,6 +2304,7 @@
       "apiDraftPath": "/api/overseas-marketing/receptions",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/marketing/OverseasMarketingReceptionPage.tsx",
       "reachedFiles": 9,
@@ -2272,6 +2370,7 @@
         "PrcItmLst",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -2284,6 +2383,7 @@
       "apiDraftPath": "/api/overseas-marketing/statistics",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/marketing/OverseasPage.tsx",
       "reachedFiles": 5,
@@ -2349,6 +2449,7 @@
         "PrcItmLst",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -2361,6 +2462,7 @@
       "apiDraftPath": "/api/overseas-marketing/reservation-stats",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/marketing/OverseasReservationStatsPage.tsx",
       "reachedFiles": 5,
@@ -2426,6 +2528,7 @@
         "PrcItmLst",
         "RESERVATION"
       ],
+      "appTables": [],
       "source": "mixed"
     },
     {
@@ -2438,6 +2541,7 @@
       "apiDraftPath": "/api/stats/marketing",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": "frontend/src/pages/marketing/MarketingPage.tsx",
       "reachedFiles": 2,
@@ -2447,6 +2551,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2459,6 +2564,7 @@
       "apiDraftPath": "/api/stats/cancel-rate",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": "frontend/src/pages/cancel-noshow/CancelRatePage.tsx",
       "reachedFiles": 5,
@@ -2468,6 +2574,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2480,6 +2587,7 @@
       "apiDraftPath": "/api/stats/no-show-rate",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": "frontend/src/pages/cancel-noshow/NoShowRatePage.tsx",
       "reachedFiles": 1,
@@ -2489,6 +2597,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2501,6 +2610,7 @@
       "apiDraftPath": "/api/stats/unit-price",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": "frontend/src/pages/unit-price/UnitPricePage.tsx",
       "reachedFiles": 5,
@@ -2510,6 +2620,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2518,20 +2629,45 @@
       "path": "/accounting/medical-receipts",
       "sectionId": "accounting-section",
       "sectionLabel": "회계",
-      "description": "의사랑(IPLUS) 수납 내역과 보험·상태·미수·지원금별 합계를 조회하는 회계 화면입니다..",
+      "description": "의사랑(IPLUS) 수납 내역과 보험·상태·미수·지원금별 합계를 조회하는 회계 화면입니다.",
       "apiDraftPath": "/api/accounting/medical-receipts",
       "status": "complete",
-      "adminOnly": true,
+      "adminOnly": false,
+      "executiveOnly": true,
       "hidden": false,
       "component": "frontend/src/pages/accounting/MedicalReceiptsPage.tsx",
-      "reachedFiles": 6,
-      "endpoints": [],
-      "controllers": [],
-      "sqlRefs": [],
-      "tables": [],
-      "martTables": [],
+      "reachedFiles": 9,
+      "endpoints": [
+        "GET /api/accounting/medical-receipts",
+        "GET /api/accounting/medical-receipts/monthly",
+        "GET /api/accounting/status",
+        "GET /api/accounting/vision-receipts",
+        "GET /api/accounting/vision-receipts/monthly"
+      ],
+      "controllers": [
+        "backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java"
+      ],
+      "sqlRefs": [
+        "sql/mart/accounting/select-accounting-status.sql",
+        "sql/mart/accounting/select-list-medical-receipt.sql",
+        "sql/mart/accounting/select-list-vision-receipt.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly-from-list.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly.sql",
+        "sql/mart/accounting/select-vision-receipt-monthly.sql"
+      ],
+      "tables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
+      "martTables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
       "crmTables": [],
-      "source": "unknown"
+      "appTables": [],
+      "source": "mart"
     },
     {
       "id": "accounting-vision",
@@ -2539,20 +2675,45 @@
       "path": "/accounting/vision-revenue",
       "sectionId": "accounting-section",
       "sectionLabel": "회계",
-      "description": "SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면입니다..",
+      "description": "SOFTCRM 비급여 수납 내역과 진료구분·결제수단·매입사별 합계를 조회하는 회계 화면입니다.",
       "apiDraftPath": "/api/accounting/vision-receipts",
       "status": "complete",
-      "adminOnly": true,
+      "adminOnly": false,
+      "executiveOnly": true,
       "hidden": false,
       "component": "frontend/src/pages/accounting/VisionRevenuePage.tsx",
-      "reachedFiles": 6,
-      "endpoints": [],
-      "controllers": [],
-      "sqlRefs": [],
-      "tables": [],
-      "martTables": [],
+      "reachedFiles": 9,
+      "endpoints": [
+        "GET /api/accounting/medical-receipts",
+        "GET /api/accounting/medical-receipts/monthly",
+        "GET /api/accounting/status",
+        "GET /api/accounting/vision-receipts",
+        "GET /api/accounting/vision-receipts/monthly"
+      ],
+      "controllers": [
+        "backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java"
+      ],
+      "sqlRefs": [
+        "sql/mart/accounting/select-accounting-status.sql",
+        "sql/mart/accounting/select-list-medical-receipt.sql",
+        "sql/mart/accounting/select-list-vision-receipt.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly-from-list.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly.sql",
+        "sql/mart/accounting/select-vision-receipt-monthly.sql"
+      ],
+      "tables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
+      "martTables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
       "crmTables": [],
-      "source": "unknown"
+      "appTables": [],
+      "source": "mart"
     },
     {
       "id": "accounting-vision-summary",
@@ -2560,20 +2721,45 @@
       "path": "/accounting/vision-revenue-summary",
       "sectionId": "accounting-section",
       "sectionLabel": "회계",
-      "description": "SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면입니다..",
+      "description": "SOFTCRM 비급여 수납을 매입사와 진료 항목별로 교차 집계하고 면세·과세·공급가액·부가세를 확인하는 화면입니다.",
       "apiDraftPath": "/api/accounting/vision-receipts",
       "status": "complete",
-      "adminOnly": true,
+      "adminOnly": false,
+      "executiveOnly": true,
       "hidden": false,
       "component": "frontend/src/pages/accounting/VisionRevenueSummaryPage.tsx",
-      "reachedFiles": 6,
-      "endpoints": [],
-      "controllers": [],
-      "sqlRefs": [],
-      "tables": [],
-      "martTables": [],
+      "reachedFiles": 9,
+      "endpoints": [
+        "GET /api/accounting/medical-receipts",
+        "GET /api/accounting/medical-receipts/monthly",
+        "GET /api/accounting/status",
+        "GET /api/accounting/vision-receipts",
+        "GET /api/accounting/vision-receipts/monthly"
+      ],
+      "controllers": [
+        "backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java"
+      ],
+      "sqlRefs": [
+        "sql/mart/accounting/select-accounting-status.sql",
+        "sql/mart/accounting/select-list-medical-receipt.sql",
+        "sql/mart/accounting/select-list-vision-receipt.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly-from-list.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly.sql",
+        "sql/mart/accounting/select-vision-receipt-monthly.sql"
+      ],
+      "tables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
+      "martTables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
       "crmTables": [],
-      "source": "unknown"
+      "appTables": [],
+      "source": "mart"
     },
     {
       "id": "accounting-vision-chart",
@@ -2581,20 +2767,45 @@
       "path": "/accounting/vision-revenue-chart",
       "sectionId": "accounting-section",
       "sectionLabel": "회계",
-      "description": "SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프입니다..",
+      "description": "SOFTCRM 비급여 수납 순액과 건수를 월별·연도별로 비교하는 그래프입니다.",
       "apiDraftPath": "/api/accounting/vision-receipts/monthly",
       "status": "complete",
-      "adminOnly": true,
+      "adminOnly": false,
+      "executiveOnly": true,
       "hidden": false,
       "component": "frontend/src/pages/accounting/VisionRevenueChartPage.tsx",
-      "reachedFiles": 5,
-      "endpoints": [],
-      "controllers": [],
-      "sqlRefs": [],
-      "tables": [],
-      "martTables": [],
+      "reachedFiles": 8,
+      "endpoints": [
+        "GET /api/accounting/medical-receipts",
+        "GET /api/accounting/medical-receipts/monthly",
+        "GET /api/accounting/status",
+        "GET /api/accounting/vision-receipts",
+        "GET /api/accounting/vision-receipts/monthly"
+      ],
+      "controllers": [
+        "backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java"
+      ],
+      "sqlRefs": [
+        "sql/mart/accounting/select-accounting-status.sql",
+        "sql/mart/accounting/select-list-medical-receipt.sql",
+        "sql/mart/accounting/select-list-vision-receipt.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly-from-list.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly.sql",
+        "sql/mart/accounting/select-vision-receipt-monthly.sql"
+      ],
+      "tables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
+      "martTables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
       "crmTables": [],
-      "source": "unknown"
+      "appTables": [],
+      "source": "mart"
     },
     {
       "id": "accounting-medical-chart",
@@ -2602,20 +2813,45 @@
       "path": "/accounting/medical-revenue-chart",
       "sectionId": "accounting-section",
       "sectionLabel": "회계",
-      "description": "의사랑(IPLUS) 실수납·공단청구·급여·비급여를 월별·연도별로 비교하는 그래프입니다..",
+      "description": "의사랑(IPLUS) 실수납·공단청구·급여·비급여를 월별·연도별로 비교하는 그래프입니다.",
       "apiDraftPath": "/api/accounting/medical-receipts/monthly",
       "status": "complete",
-      "adminOnly": true,
+      "adminOnly": false,
+      "executiveOnly": true,
       "hidden": false,
       "component": "frontend/src/pages/accounting/MedicalRevenueChartPage.tsx",
-      "reachedFiles": 5,
-      "endpoints": [],
-      "controllers": [],
-      "sqlRefs": [],
-      "tables": [],
-      "martTables": [],
+      "reachedFiles": 8,
+      "endpoints": [
+        "GET /api/accounting/medical-receipts",
+        "GET /api/accounting/medical-receipts/monthly",
+        "GET /api/accounting/status",
+        "GET /api/accounting/vision-receipts",
+        "GET /api/accounting/vision-receipts/monthly"
+      ],
+      "controllers": [
+        "backend/src/main/java/com/bviit/analytics/accounting/controller/AccountingController.java"
+      ],
+      "sqlRefs": [
+        "sql/mart/accounting/select-accounting-status.sql",
+        "sql/mart/accounting/select-list-medical-receipt.sql",
+        "sql/mart/accounting/select-list-vision-receipt.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly-from-list.sql",
+        "sql/mart/accounting/select-medical-receipt-monthly.sql",
+        "sql/mart/accounting/select-vision-receipt-monthly.sql"
+      ],
+      "tables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
+      "martTables": [
+        "list_medical_receipt",
+        "list_vision_receipt",
+        "mart_medical_receipt_monthly"
+      ],
       "crmTables": [],
-      "source": "unknown"
+      "appTables": [],
+      "source": "mart"
     },
     {
       "id": "dreamlens-revenue",
@@ -2627,6 +2863,7 @@
       "apiDraftPath": "/api/dreamlens-ledger",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/etc/dreamlens-ledger/DreamlensLedgerPage.tsx",
       "reachedFiles": 6,
@@ -2676,6 +2913,9 @@
         "OPERATIONDATA",
         "PrcItmLst"
       ],
+      "appTables": [
+        "dreamlens_ledger"
+      ],
       "source": "mixed"
     },
     {
@@ -2688,6 +2928,7 @@
       "apiDraftPath": "/api/stats/b2b-revenue",
       "status": "complete",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": "frontend/src/pages/etc/B2BRevenuePage.tsx",
       "reachedFiles": 9,
@@ -2737,6 +2978,9 @@
         "OPERATIONDATA",
         "PrcItmLst"
       ],
+      "appTables": [
+        "dreamlens_ledger"
+      ],
       "source": "mixed"
     },
     {
@@ -2749,6 +2993,7 @@
       "apiDraftPath": "/api/stats/staff-point",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": null,
       "reachedFiles": 0,
@@ -2758,6 +3003,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2770,6 +3016,7 @@
       "apiDraftPath": "/api/stats/prp-rate",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": null,
       "reachedFiles": 0,
@@ -2779,6 +3026,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2791,6 +3039,7 @@
       "apiDraftPath": "/api/stats/reoperation-rate",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": null,
       "reachedFiles": 0,
@@ -2800,6 +3049,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2812,6 +3062,7 @@
       "apiDraftPath": "/api/stats/same-day-op",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": null,
       "reachedFiles": 0,
@@ -2821,6 +3072,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2833,6 +3085,7 @@
       "apiDraftPath": "/api/stats/designated-doctor",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": null,
       "reachedFiles": 0,
@@ -2842,6 +3095,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2854,6 +3108,7 @@
       "apiDraftPath": "/api/stats/visit-reason",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": null,
       "reachedFiles": 0,
@@ -2863,6 +3118,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2875,6 +3131,7 @@
       "apiDraftPath": "/api/stats/daily-reception",
       "status": "pending",
       "adminOnly": false,
+      "executiveOnly": false,
       "hidden": true,
       "component": null,
       "reachedFiles": 0,
@@ -2884,6 +3141,7 @@
       "tables": [],
       "martTables": [],
       "crmTables": [],
+      "appTables": [],
       "source": "unknown"
     },
     {
@@ -2896,6 +3154,7 @@
       "apiDraftPath": "/api/admin/batch/rerun",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/admin/BatchManagementPage.tsx",
       "reachedFiles": 5,
@@ -3206,6 +3465,14 @@
         "RESERVE_HISTORY",
         "RE_OPERATION"
       ],
+      "appTables": [
+        "dreamlens_ledger",
+        "reoperation_decision",
+        "sms_dispatch_queue",
+        "sms_opt_out",
+        "sms_send_log",
+        "sms_target"
+      ],
       "source": "mixed"
     },
     {
@@ -3218,16 +3485,28 @@
       "apiDraftPath": "/api/admin/users",
       "status": "complete",
       "adminOnly": true,
+      "executiveOnly": false,
       "hidden": false,
       "component": "frontend/src/pages/admin/AccountManagementPage.tsx",
       "reachedFiles": 7,
-      "endpoints": [],
-      "controllers": [],
+      "endpoints": [
+        "DELETE /api/admin/users/{id}",
+        "GET /api/admin/users",
+        "GET /api/admin/users/{id}",
+        "POST /api/admin/users",
+        "PUT /api/admin/users/{id}"
+      ],
+      "controllers": [
+        "backend/src/main/java/com/bviit/analytics/auth/controller/UserAdminController.java"
+      ],
       "sqlRefs": [],
       "tables": [],
       "martTables": [],
       "crmTables": [],
-      "source": "unknown"
+      "appTables": [
+        "users"
+      ],
+      "source": "app"
     }
   ],
   "tree": [

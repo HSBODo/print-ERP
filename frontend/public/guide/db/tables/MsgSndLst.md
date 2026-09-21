@@ -1,11 +1,11 @@
 # MsgSndLst
 
-> **DB**: SOFTCRM | **컬럼**: 15개 | **행 수**: ~6,813,564 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 15개 | **행 수**: ~6,730,927 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20
 
 ## 역할
 
-SMS/MMS/카카오 알림톡/친구톡 발송 이력 테이블. 수동발송과 자동발송 모두 포함하며 680만건+ 대용량 테이블.
+SMS/MMS/카카오 알림톡/친구톡 발송 이력 테이블. 수동발송과 자동발송 모두 포함하며 670만건+ 대용량 테이블.
 
 ## PK / FK / JOIN 키
 
@@ -73,7 +73,7 @@ SMS/MMS/카카오 알림톡/친구톡 발송 이력 테이블. 수동발송과 �
 
 - **⚠️ CRITICAL: CustNum='9999999999999' 자동발송 레코드** — 자동발송 시스템이 CustNum에 `'9999999999999'`를 넣는 경우가 있어 CustNum 단독 검색 시 자동발송 건이 누락됨. **반드시 Phone 필드를 병행 검색해야 함.** 예: 박경민(2225307) — CustNum 검색 4건, Phone 포함 검색 9건 (자동발송 5건 추가)
 - **⚠️ '명동\_문자이력' 테이블은 레거시 — 사용 금지** — 명동밝은세상안과 레거시 데이터(2010년대). 비앤빛 고객 데이터 없음. 2026-03-06에 MsgSndLst 기반으로 전환 완료
-- **680만건 대용량** — 풀스캔 쿼리 절대 금지. 반드시 인덱스 활용 (Phone+SendDateTime 또는 InsertedDateTime 범위)
+- **670만건 대용량** — 풀스캔 쿼리 절대 금지. 반드시 인덱스 활용 (Phone+SendDateTime 또는 InsertedDateTime 범위)
 - **MsgCategory NULL** — 2017년 이전 레거시 데이터는 MsgCategory가 NULL. 통계 집계 시 ISNULL 처리 필요
 - **분류 설정 테이블 4종** — ScaCfg(SMS), McaCfg(MMS), KCACFG(알림톡), KCACFG2(친구톡). KCACFG/KCACFG2는 softcrm-schema.sql에 누락되어 있으나 DB에 존재
 

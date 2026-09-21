@@ -1,18 +1,19 @@
 # Schedule
 
-> **DB**: SOFTCRM | **컬럼**: 13개 | **행 수**: ~10,073 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 13개 | **행 수**: ~8,922 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-직원 스케줄 테이블. 직원(`emp_num`/`emp_name`) 단위로 기간(`start_date`~`end_date`)과 스케줄 구분(`flag`), 예약유형 연계(`reserve_flag`/`reserve_name`)를 기록한다.
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
 | PK | IDX | int | |
-| JOIN | emp_num | nvarchar(20) | NOT NULL → EMPLOYEE.EMP_NUM. ⚠️ 타입 불일치 (char(6) vs nvarchar(20)) |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 
@@ -34,8 +35,7 @@
 
 ## 함정 (Gotchas)
 
-- **날짜가 nvarchar(12)**: `start_date`/`end_date` 범위 비교 시 문자열 형식 확인 필요.
-- **emp_num 타입 불일치**: nvarchar(20) — EMPLOYEE.EMP_NUM(char(6))과 JOIN 시 암시적 형변환 주의. 이름(`emp_name`)이 비정규화되어 있어 직원명 변경 시 불일치 가능.
+<!-- TODO: 이 테이블의 알려진 함정 -->
 
 ## 사용처
 

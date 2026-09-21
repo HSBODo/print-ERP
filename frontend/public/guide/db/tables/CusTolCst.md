@@ -1,18 +1,19 @@
 # CusTolCst
 
-> **DB**: SOFTCRM | **컬럼**: 15개 | **행 수**: 0 (WORK·PROD 모두, 2026-08-10 확인)
-> **최종 갱신**: 2026-08-10 (WORK·PROD DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 15개 | **행 수**: ~0 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20 (자동 생성)
 
 ## 역할
 
-고객 동의서(서명) 관리 테이블. 동의(`CusCstDte`/`CusCstEmp`)·회수(`CusRvc*`)·거부(`CusRfs*`) 일자와 담당 직원, 서명 이미지(`CusSigImg` image)를 담는 구조이나 **WORK·PROD 모두 0행 — 실사용 없음**.
+<!-- TODO: 한 줄 설명 -->
 
 ## PK / FK / JOIN 키
 
 | 키 | 컬럼 | 타입 | 설명 |
 |-----|------|------|------|
 | PK | idx | int | |
-| JOIN | CusNum | nvarchar(13) | NOT NULL → CUSTOM.CUST_NUM |
+
+<!-- TODO: FK, JOIN 키 추가 -->
 
 ## 핵심 컬럼
 
@@ -36,8 +37,7 @@
 
 ## 함정 (Gotchas)
 
-- **빈 테이블 (2026-08-10 기준 WORK·PROD 모두 0행)**: 조회 로직을 새로 붙이기 전에 실데이터 적재 여부부터 확인할 것.
-- `CusSigImg`는 레거시 `image` 타입 — 신규 코드에서 다룰 일이 생기면 varbinary(max) 캐스팅 주의.
+<!-- TODO: 이 테이블의 알려진 함정 -->
 
 ## 사용처
 

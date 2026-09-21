@@ -1,7 +1,7 @@
 # CUSTOM
 
-> **DB**: SOFTCRM | **컬럼**: 61개 | **행 수**: ~587,758 (WORK DB 기준)
-> **최종 갱신**: 2026-08-10 (WORK DB 실측 대조)
+> **DB**: SOFTCRM | **컬럼**: 61개 | **행 수**: ~583,429 (WORK DB 기준)
+> **최종 갱신**: 2026-04-20
 
 ## 역할
 
@@ -18,8 +18,8 @@
 | FK → | `MY_MEDICDOCTOR` | char(6) | → `EMPLOYEE.EMP_NUM` (지정의) |
 | FK → | `SelectDoc` | nvarchar(6) | → `EMPLOYEE.EMP_NUM` (상담의) |
 | FK → | `regemp_num` | nvarchar(6) | → `EMPLOYEE.EMP_NUM` (등록자) |
-| FK → | `NATION_CODE` | nvarchar(100) | → `NationCustom_CFG.Code` (국가코드) |
-| FK → | `VIP_CODE` | nvarchar(100) | → `VIPCustom_CFG.Code` (VIP 분류) |
+| FK → | `NATION_CODE` | nvarchar | → `NationCustom_CFG.Code` (국가코드) |
+| FK → | `VIP_CODE` | nvarchar | → `VIPCustom_CFG.Code` (VIP 분류) |
 | FK → | `InsuranceCode` | char(10) | 보험사 코드 (전용 CFG 테이블 없음, 프론트 하드코딩) |
 | ← FK | `CUSTOM_HISTORY` | — | 변경이력 (CUST_NUM 참조) |
 | ← FK | `CUSTOM_MEMO` | — | 메모 히스토리 (CUST_NUM 참조, RTF 형식) |
@@ -40,12 +40,12 @@
 | `CALL_NUM1` | varchar(30) | Y | 전화번호 | 하이픈 없이 저장, 프론트에서 `formatPhone()` |
 | `CALL_NUM2` | varchar(30) | Y | 핸드폰 | 동일. SMS 발송 기본 번호 |
 | `EMAIL` | varchar(50) | Y | 이메일 | 프론트에서 `@` 기준 split (local/domain) |
-| `VIP_CODE` | nvarchar(100) | Y | VIP 분류 코드 | → `VIPCustom_CFG.Code` 참조 |
+| `VIP_CODE` | nvarchar | Y | VIP 분류 코드 | → `VIPCustom_CFG.Code` 참조 |
 | `Level` | nvarchar(1) | Y | 고객 등급 | `V`=VIP, `G`=Gold, `S`=Silver, `R`=Normal (기본값 `R`) |
 | `MY_COUNSELOR` | char(6) | Y | 담당 상담사 | `E00XXX` 형식, EMPLOYEE.EMP_NUM FK |
 | `MY_DOCTOR` | char(6) | Y | 강제지정 의사 | `E00XXX` 또는 `KD0618` 등 |
 | `MY_optometrist` | nchar(6) | Y | 담당 검안사 | `E00XXX` 형식 |
-| `NATION_CODE` | nvarchar(100) | Y | 국가코드 | → `NationCustom_CFG.Code` (숫자코드) |
+| `NATION_CODE` | nvarchar | Y | 국가코드 | → `NationCustom_CFG.Code` (숫자코드) |
 
 ### 추가 주요 컬럼
 
@@ -63,8 +63,8 @@
 | `SelectDoc` | nvarchar(6) | Y | 상담의 | EMPLOYEE FK |
 | `regemp_num` | nvarchar(6) | Y | 등록자 | EMPLOYEE FK |
 | `ETC` | varchar(8000) | Y | 고객정보 메모 | 플레인텍스트 (RTF 메모는 CUSTOM_MEMO 테이블). 프론트 입력 상한은 Validation에서 별도 결정 |
-| `ADDR1` | nvarchar(100) | Y | 주소 | |
-| `ADDR2` | nvarchar(100) | Y | 상세주소 | |
+| `ADDR1` | nvarchar | Y | 주소 | |
+| `ADDR2` | nvarchar | Y | 상세주소 | |
 | `LevelLimit_Flag` | char(1) | Y | 등급연장 플래그 | 체크박스 |
 
 > 전체 61개 컬럼은 `SELECT COLUMN_NAME, DATA_TYPE FROM SOFTCRM_WORK.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'CUSTOM'` 으로 조회
@@ -75,7 +75,7 @@
 - **`CUST_NUM`은 char(13) 고정 길이**: 13자리 숫자 문자열로 저장되며 패딩 공백이 없음. JOIN 시 RTRIM은 불필요. 단, 타 테이블에서 char(23) 컬럼과 JOIN할 경우(예: 레거시 테이블) 상대편을 확인할 것.
 - **`SEX` 컬럼은 존재하지 않음**: CUSTOM 테이블에 별도 성별 컬럼이 없다. 성별이 필요하면 `JUMIN_NUM`을 `DECRYPTBYPASSPHRASE()`로 복호화한 뒤 7번째 자리(1/3=남, 2/4=여)로 파생해야 한다. 고비용이므로 필요할 때만.
 - **법정대리인 연락처는 `CALL_NUM3` 사용 (GdnContact 미사용)**: DB 스키마에 `GdnContact`, `GdnName`, `GdnRelation`, `GdnContactMsgSend` 컬럼이 존재하지만 운영 데이터 0건. 실제 시스템은 `CALL_NUM3`(48,252건 보유)을 법정대리인 연락처로 사용하며, SELECT 시 `CALL_NUM3 AS GdnContact` 별칭으로 노출. 신규 기능에서도 동일 컨벤션 유지. (2026-04-20 Lint에서 확인)
-- **6개 직원 필드 모두 `EMPLOYEE.EMP_NUM` 참조**: `MY_COUNSELOR`, `MY_DOCTOR`, `MY_optometrist`, `MY_MEDICDOCTOR`, `SelectDoc`, `regemp_num` — 모두 char(6), `E00XXX` 형식. 타입 혼재 주의 (char/nchar/nvarchar). 이 외에 `SelectDoc_Second`(nvarchar(6), 2차 상담의)도 EMP_NUM 값을 담는다.
+- **6개 직원 필드 모두 `EMPLOYEE.EMP_NUM` 참조**: `MY_COUNSELOR`, `MY_DOCTOR`, `MY_optometrist`, `MY_MEDICDOCTOR`, `SelectDoc`, `regemp_num` — 모두 char(6), `E00XXX` 형식. 타입 혼재 주의 (char/nchar/nvarchar).
 - **메모는 별도 테이블**: `CUSTOM.ETC`는 varchar(8000) 플레인텍스트 메모. 본격적인 메모 히스토리는 `CUSTOM_MEMO` 테이블이며 **RTF 형식**으로 저장됨. 프론트에서 표시 시 RTF → 플레인텍스트 변환 필요.
 - **`Level` 기본값**: NULL일 수 있으므로 `ISNULL(Level, 'R')` 처리 필요. 값: `V`/`G`/`S`/`R`.
 - **`InsuranceCode` CFG 없음**: 전용 설정 테이블이 존재하지 않아 프론트에서 하드코딩. 코드값 불일치(INS00X vs 0X) 주의.
