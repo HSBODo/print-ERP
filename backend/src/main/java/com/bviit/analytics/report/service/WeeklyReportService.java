@@ -348,13 +348,20 @@ public class WeeklyReportService implements WeeklyReportReader {
 
     /**
      * 홈페이지 소스 커버리지를 넘긴 날인가.
-     * 진행 중인 주는 관대하게 본다 — 아직 안 담긴 것이 정상이라 끊으면 오히려 최신 주가 늘 비어 보인다.
+     * 이번 주(진행 중) + 지난 주(방금 끝난 주) 는 관대하게 본다.
+     * 소스가 하루이틀 늦게 채워지는 경우가 잦아, 지난 주 마지막 하루만 부족해도
+     * 한 주 전체 online 이 NULL 이 되면 실측 6일치가 화면에서 통째로 사라진다
+     * (2026-09-22 W38 사례). 있는 값(6일 합) 이라도 확정으로 표시하고, 소스가
+     * 뒤늦게 채워지면 다음 배치가 upsert 로 정확한 값으로 갱신한다.
      */
     private static boolean beyondCoverage(LocalDate day, LocalDate ceiling) {
         if (ceiling == null || !day.isAfter(ceiling)) {
             return false;
         }
-        return !isSameIsoWeek(day, LocalDate.now());
+        LocalDate today = LocalDate.now();
+        if (isSameIsoWeek(day, today)) return false;
+        if (isSameIsoWeek(day, today.minusWeeks(1))) return false;
+        return true;
     }
 
     private static boolean isSameIsoWeek(LocalDate a, LocalDate b) {
