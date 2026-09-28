@@ -9,7 +9,7 @@ import { useStopReasonMonthly } from '#domain/core/consultation/hooks/useStopRea
 import { useOverallExamMonthly } from '#domain/core/overall/hooks/useOverallExamMonthly'
 import { useConsultationRateTrend } from '#domain/core/consultation/hooks/useConsultationRateTrend'
 import { useExamCountByClass } from '#domain/core/exam/hooks/useExamCountByClass'
-import { useBatchLastSuccess } from '@/hooks/batch/useBatchLastSuccess'
+import { useBatchLastSuccess } from '#domain/core/batch/hooks/useBatchLastSuccess'
 import { CURRENT_YEAR } from '#shared/constants/chart'
 import type { OverallExamMonthlyItem } from '#domain/core/overall/type/api'
 import { YEARS, isIncompleteMonth } from './monthlyReportUtils'

@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, Loader2, Play, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
 import { Button } from '#shared/ui/Button'
-import { useBatchReconcileOnedayFlag, useBatchRerun, useBatchRunLogs } from '@/hooks/admin/useBatchAdmin'
-import type { BatchDomain, BatchRunLog } from '@/api/admin/batchAdmin'
+import { useBatchReconcileOnedayFlag, useBatchRerun, useBatchRunLogs } from '../../hooks/useBatchAdmin'
+import type { BatchDomain, BatchRunLog } from '../../type/api'
 
 type BatchJobOption = {
   value: BatchDomain
