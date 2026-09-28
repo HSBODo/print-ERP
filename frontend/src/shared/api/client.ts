@@ -1,6 +1,17 @@
-import { readStoredAuthSession, clearStoredAuthSession } from '@/stores/auth-session'
-
 const BASE_URL = '/api'
+
+/** 인증 연동 — shared 는 auth 를 모르므로 앱 시작 시 auth 쪽이 주입한다. */
+interface AuthHandlers {
+  getToken: () => string | null
+  /** 로그인 요청이 아닌 401 응답 시 호출 (세션 정리·로그인 이동) */
+  onUnauthorized: () => void
+}
+
+let authHandlers: AuthHandlers = { getToken: () => null, onUnauthorized: () => {} }
+
+export const setAuthHandlers = (handlers: AuthHandlers) => {
+  authHandlers = handlers
+}
 
 const shouldHandleUnauthorized = (url: string) => !url.startsWith('/auth/login')
 
@@ -52,7 +63,7 @@ const parseResponseBody = async (response: Response): Promise<unknown> => {
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const { token } = readStoredAuthSession()
+  const token = authHandlers.getToken()
 
   const res = await fetch(`${BASE_URL}${url}`, {
     ...options,
@@ -66,10 +77,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const body = await parseResponseBody(res)
 
   if (res.status === 401 && shouldHandleUnauthorized(url)) {
-    clearStoredAuthSession()
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login'
-    }
+    authHandlers.onUnauthorized()
     throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.')
   }
 
