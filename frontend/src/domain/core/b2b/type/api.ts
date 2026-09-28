@@ -16,5 +16,3 @@ const b2bRevenueMonthlyItemSchema = z.object({
 })
 export type B2bRevenueMonthlyItem = z.infer<typeof b2bRevenueMonthlyItemSchema>
 export const b2bRevenueResponseSchema = apiResponseOf(z.array(b2bRevenueMonthlyItemSchema))
-
-/* ── 드림렌즈 장부 (직접 입력 테이블) ── */
