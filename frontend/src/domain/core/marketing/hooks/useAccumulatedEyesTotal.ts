@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { accumulatedEyesApi } from '@/api/marketing/accumulatedEyes'
+import { marketingApi } from '../api'
 
 /**
  * 총 누적 안수 (마트 max). 홈 대시보드 KPI 카드용.
@@ -8,7 +8,7 @@ import { accumulatedEyesApi } from '@/api/marketing/accumulatedEyes'
 export function useAccumulatedEyesTotal(enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['accumulated-eyes-total'],
-    queryFn: () => accumulatedEyesApi.getTotal(),
+    queryFn: () => marketingApi.getAccumulatedEyesTotal(),
     enabled,
   })
 

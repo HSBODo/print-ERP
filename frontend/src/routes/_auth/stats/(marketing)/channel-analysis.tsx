@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ChannelAnalysisPage } from '@/pages/marketing/ChannelAnalysisPage'
+import { ChannelAnalysisPage } from '#domain/core/marketing/ui/ChannelAnalysisPage'
 
 export const Route = createFileRoute('/_auth/stats/(marketing)/channel-analysis')({
   component: ChannelAnalysisPage,

@@ -1,5 +1,5 @@
-import type { ReservationChannelFunnelItem } from '@/api/reservation/reservationChannel'
-import type { AdSpend, ChannelLensCost } from '@/api/marketing/channelProfit'
+import type { ReservationChannelFunnelItem } from '../../type/api'
+import type { AdSpend, ChannelLensCost } from '../../type/api'
 
 /**
  * 채널별 수익성 계산 — 화면에서 떼어 둔다(단위 변환과 귀속 규칙이 대부분이라 테스트가 필요하다).

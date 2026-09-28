@@ -3,8 +3,8 @@ import { ChevronDown, ChevronsUpDown, ChevronUp, RotateCcw, Search, X } from 'lu
 import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useReservationChannel, useReservationChannelOpTypes } from '@/hooks/reservation/useReservationChannel'
-import type { ReservationChannelFunnelItem } from '@/api/reservation/reservationChannel'
+import { useReservationChannel, useReservationChannelOpTypes } from '../../hooks/useReservationChannel'
+import type { ReservationChannelFunnelItem } from '../../type/api'
 
 /**
  * 예약통계_채널별 — 예약자 리스트를 채널로 묶어 단계별로 좁혀 보는 화면.

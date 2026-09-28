@@ -1,16 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  channelProfitApi,
-  type AdSpend,
-  type ChannelLensCost,
-  type LensCost,
-} from '@/api/marketing/channelProfit'
+import { marketingApi } from '../api'
+import type { AdSpend, ChannelLensCost, LensCost } from '../type/api'
 
 /** 채널별 렌즈원가(안 단위). 조회 기간의 실제 수술명 기준이라 추정이 아니다. */
 export function useChannelLensCost(from: string, to: string, enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['channel-lens-cost', from, to],
-    queryFn: () => channelProfitApi.getChannelLensCost(from, to),
+    queryFn: () => marketingApi.getChannelLensCost(from, to),
     enabled: enabled && Boolean(from && to),
   })
   return { rows: (data ?? []) as ChannelLensCost[], isLoading, isError }
@@ -20,7 +16,7 @@ export function useChannelLensCost(from: string, to: string, enabled = true) {
 export function useAdSpend(ym: string, enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ad-spend', ym],
-    queryFn: () => channelProfitApi.getAdSpend(ym),
+    queryFn: () => marketingApi.getAdSpend(ym),
     enabled: enabled && Boolean(ym),
   })
   return { rows: (data ?? []) as AdSpend[], isLoading, isError }
@@ -30,7 +26,7 @@ export function useAdSpend(ym: string, enabled = true) {
 export function useLensPrices(enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['lens-price'],
-    queryFn: () => channelProfitApi.getLensPrices(),
+    queryFn: () => marketingApi.getLensPrices(),
     enabled,
   })
   return { rows: (data ?? []) as LensCost[], isLoading, isError }
@@ -43,7 +39,7 @@ export function useLensPrices(enabled = true) {
 export function useSaveAdSpend(ym: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (items: AdSpend[]) => channelProfitApi.saveAdSpend(items),
+    mutationFn: (items: AdSpend[]) => marketingApi.saveAdSpend(items),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['ad-spend', ym] })
     },
@@ -54,7 +50,7 @@ export function useSaveAdSpend(ym: string) {
 export function useSaveLensPrices() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (items: LensCost[]) => channelProfitApi.saveLensPrices(items),
+    mutationFn: (items: LensCost[]) => marketingApi.saveLensPrices(items),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['lens-price'] })
       void qc.invalidateQueries({ queryKey: ['channel-lens-cost'] })

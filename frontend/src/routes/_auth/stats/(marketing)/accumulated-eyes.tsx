@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { AccumulatedEyesPage } from '@/pages/marketing/AccumulatedEyesPage'
+import { AccumulatedEyesPage } from '#domain/core/marketing/ui/AccumulatedEyesPage'
 
 export const Route = createFileRoute('/_auth/stats/(marketing)/accumulated-eyes')({
   component: AccumulatedEyesPage,

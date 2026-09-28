@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { LoaderCircle, RefreshCw, TrendingUp } from 'lucide-react'
-import { reservationChannelApi } from '@/api/reservation/reservationChannel'
+import { marketingApi } from '../../../api'
 import {
   ChartContainer,
   ChartLegend,
@@ -15,7 +15,7 @@ import {
   findModoodocFunnel,
   MODOODOC_FUNNEL_YEAR,
   toModoodocMonthlyRow,
-} from './modoodocMonthlyFunnelModel'
+} from '../utils/modoodocMonthlyFunnelModel'
 import { Table } from './docParts'
 
 const MONTH_RANGES = buildYearMonthRanges(MODOODOC_FUNNEL_YEAR)
@@ -42,7 +42,7 @@ const BARS = [
 
 async function getMonthlyFunnel() {
   const monthlyResponses = await Promise.all(
-    MONTH_RANGES.map(({ from, to }) => reservationChannelApi.getFunnel(from, to)),
+    MONTH_RANGES.map(({ from, to }) => marketingApi.getReservationChannelFunnel(from, to)),
   )
 
   return monthlyResponses.map((rows, index) =>

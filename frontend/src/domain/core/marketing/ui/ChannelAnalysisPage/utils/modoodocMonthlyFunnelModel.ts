@@ -1,4 +1,4 @@
-import type { ReservationChannelFunnelItem } from '@/api/reservation/reservationChannel'
+import type { ReservationChannelFunnelItem } from '../../../type/api'
 
 export const MODOODOC_FUNNEL_YEAR = 2026
 

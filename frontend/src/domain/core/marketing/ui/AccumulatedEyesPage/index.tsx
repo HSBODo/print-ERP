@@ -5,8 +5,8 @@ import {
 } from 'lucide-react'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
-import { useAccumulatedEyes } from '@/hooks/marketing/useAccumulatedEyes'
-import type { AccumulatedEyeItem, AccumulatedEyesField } from '@/api/marketing/accumulatedEyes'
+import { useAccumulatedEyes } from '../../hooks/useAccumulatedEyes'
+import type { AccumulatedEyeItem, AccumulatedEyesField } from '../../type/api'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
 
 const FIELD_OPTIONS: { value: AccumulatedEyesField; label: string; placeholder: string }[] = [

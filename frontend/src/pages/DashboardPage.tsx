@@ -15,7 +15,7 @@ import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOv
 import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
 import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
 import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
-import { useAccumulatedEyesTotal } from '@/hooks/marketing/useAccumulatedEyesTotal'
+import { useAccumulatedEyesTotal } from '#domain/core/marketing/hooks/useAccumulatedEyesTotal'
 import { useReservationStatsSystem } from '@/hooks/reservation/useReservationStatsSystem'
 
 /**

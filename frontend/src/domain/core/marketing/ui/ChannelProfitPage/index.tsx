@@ -3,14 +3,14 @@ import { ChevronDown, ChevronsUpDown, ChevronUp, Info, Search } from 'lucide-rea
 import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useReservationChannel } from '@/hooks/reservation/useReservationChannel'
+import { useReservationChannel } from '../../hooks/useReservationChannel'
 import {
   useAdSpend,
   useChannelLensCost,
   useLensPrices,
   useSaveAdSpend,
   useSaveLensPrices,
-} from '@/hooks/marketing/useChannelProfit'
+} from '../../hooks/useChannelProfit'
 import {
   buildAdRows,
   buildChannelRows,

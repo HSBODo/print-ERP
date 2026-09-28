@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  accumulatedEyesApi,
-  type AccumulatedEyeItem,
-  type AccumulatedEyesField,
-} from '@/api/marketing/accumulatedEyes'
+import { marketingApi } from '../api'
+import type { AccumulatedEyeItem, AccumulatedEyesField } from '../type/api'
 
 /**
  * 누적 안수 리스트 조회 훅.
@@ -20,7 +17,7 @@ export function useAccumulatedEyes(
 ) {
   const { data, isLoading, isFetching, isError, error } = useQuery({
     queryKey: ['accumulated-eyes', from, to, query, field],
-    queryFn: () => accumulatedEyesApi.getAccumulatedEyes(from, to, query, field),
+    queryFn: () => marketingApi.getAccumulatedEyes(from, to, query, field),
     enabled: enabled && Boolean(from && to),
     // 400(범위 초과 등) 응답은 재시도해도 계속 400 이라 즉시 실패를 노출.
     retry: false,

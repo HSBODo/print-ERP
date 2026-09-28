@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { ReservationChannelFunnelItem } from '@/api/reservation/reservationChannel'
-import type { ChannelLensCost } from '@/api/marketing/channelProfit'
+import type { ReservationChannelFunnelItem } from '../../type/api'
+import type { ChannelLensCost } from '../../type/api'
 import { buildChannelRows, cohortMaturity, COHORT_DAYS } from './channelProfitModel'
 
 /** 퍼널 한 행 — 이 테스트가 보는 필드만 채우고 나머지는 0. */
