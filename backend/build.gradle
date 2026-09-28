@@ -155,3 +155,11 @@ afterEvaluate {
 		}
 	}
 }
+
+tasks.register('local', Task) {
+    doLast {
+        tasks.named('bootRun').configure {
+            systemProperty 'spring.profiles.active', 'local'
+        }
+    }
+}

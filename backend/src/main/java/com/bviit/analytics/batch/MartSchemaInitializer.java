@@ -48,6 +48,8 @@ import java.sql.SQLException;
  *
  * <h3>이력</h3>
  * <ul>
+ *   <li>2026-09-23 — 이벤트 도메인 신설: event/tables/V69(event_note · 차트 오버레이용 이벤트 노트, JPA 엔티티 EventNote ·
+ *                    화면 입력 원천 데이터라 배치 적재 없음 · 운영 ddl-auto: none 대비 DDL 선반영).</li>
  *   <li>2026-09-15 — V68: 진료 월 전체 행 적재 완료 표시(rows_complete), 기존 월은 재적재 전 FALSE.</li>
  *   <li>2026-09-15 — 회계 도메인 신설: accounting/tables/V67a(list_medical_receipt · 의사랑 수납 원장) ·
  *                    V67b(mart_medical_receipt_monthly · 진료 매출 월집계 2023~) · V67c(list_vision_receipt · SOFTCRM 비급여 수납 2023~).</li>
@@ -92,7 +94,7 @@ public class MartSchemaInitializer implements InitializingBean {
     }
 
     /**
-     * DDL 40개 파일 — 테이블 36 + 함수 1 + 뷰 3.
+     * DDL 49개 파일 — 테이블 45 + 함수 1 + 뷰 3.
      * 실행 순서: kind 우선(tables → functions → views · 의존성 방향), kind 내부는 V-번호 오름차순.
      * 파일 위치는 {domain}/{tables|functions|views}/ 로 도메인 하위에 분산됨.
      * 테이블 1개 = 파일 1개 원칙. 동일 V-번호 그룹은 접미사(a/b/c/d)로 구분.
@@ -143,6 +145,7 @@ public class MartSchemaInitializer implements InitializingBean {
         applyScript("sql/mart/accounting/tables/V67b__mart_medical_receipt_monthly.sql");
         applyScript("sql/mart/accounting/tables/V67c__list_vision_receipt.sql");
         applyScript("sql/mart/accounting/tables/V68__medical_receipt_month_coverage.sql");
+        applyScript("sql/mart/event/tables/V69__event_note.sql");
 
         // functions/ — 뷰에서 참조하므로 뷰 앞에 실행
         applyScript("sql/mart/surgery/functions/V47__surgery_op_type_fn.sql");
