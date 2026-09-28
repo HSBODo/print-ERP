@@ -1,11 +1,10 @@
-import { useState } from 'react'
-import { Outlet } from '@tanstack/react-router'
+import { useState, type ReactNode } from 'react'
 import { Menu, X } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
-export function AppLayout() {
+export function AppLayout({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile()
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -40,7 +39,7 @@ export function AppLayout() {
 
         {/* 컨텐츠 */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-3">
-          <Outlet />
+          {children}
         </main>
       </div>
     )
@@ -53,7 +52,7 @@ export function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
         <main className="flex-1 overflow-y-auto bg-gray-50 p-3">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>

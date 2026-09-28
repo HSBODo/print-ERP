@@ -51,7 +51,7 @@ describe('LoginPage', () => {
   })
 
   it('로그인 성공 시 세션을 저장하고 홈으로 이동한다', async () => {
-    const user = { id: 1, loginId: 'admin', email: 'admin@bviit.com', name: '관리자' }
+    const user = { id: 1, loginId: 'admin', email: 'admin@bviit.com', name: '관리자', role: 'ADMIN' as const, department: 'ALL' as const }
     loginApi.mockResolvedValue({ token: 'jwt-token', user })
 
     render(<LoginPage />)
@@ -75,7 +75,7 @@ describe('LoginPage', () => {
   })
 
   it('저장 체크 후 로그인 성공하면 아이디·비밀번호를 저장한다', async () => {
-    const user = { id: 1, loginId: 'admin', email: 'admin@bviit.com', name: '관리자' }
+    const user = { id: 1, loginId: 'admin', email: 'admin@bviit.com', name: '관리자', role: 'ADMIN' as const, department: 'ALL' as const }
     loginApi.mockResolvedValue({ token: 'jwt-token', user })
 
     render(<LoginPage />)
@@ -102,7 +102,7 @@ describe('LoginPage', () => {
 
   it('저장 해제 후 로그인 성공하면 기존 저장값을 삭제한다', async () => {
     localStorage.setItem('remembered-login', JSON.stringify({ loginId: 'saved', password: 'savedpw' }))
-    const user = { id: 1, loginId: 'admin', email: 'admin@bviit.com', name: '관리자' }
+    const user = { id: 1, loginId: 'admin', email: 'admin@bviit.com', name: '관리자', role: 'ADMIN' as const, department: 'ALL' as const }
     loginApi.mockResolvedValue({ token: 'jwt-token', user })
 
     render(<LoginPage />)

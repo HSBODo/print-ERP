@@ -1,13 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import path from 'path'
 
 const frontendPort = Number(process.env.VITE_FRONTEND_PORT ?? 15173)
 const backendUrl = process.env.VITE_BACKEND_URL ?? 'http://localhost:18080'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  // tanstackRouter 는 react() 보다 앞에 둬야 한다 (src/routes → routeTree.gen.ts 생성 + 라우트별 코드 스플리팅).
+  plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

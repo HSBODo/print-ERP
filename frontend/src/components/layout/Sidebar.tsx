@@ -1,46 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
-import {
-  menuItems,
-  pruneByDepartment,
-  pruneExecutiveOnly,
-  type MenuItem,
-  type MenuStatus,
-} from '@/config/navigation'
+import { buildMenu, MENU_TREE, type MenuItem, type PagePath } from '@/config/navigation'
+import type { MenuStatus } from '@/config/pageAccess'
 import { useAuthStore } from '@/stores/authStore'
 
 // 운영 빌드(PROD)에서는 pending(미완성) 메뉴를 숨긴다. 개발에서는 빨강으로 표시한다.
 const isProd = !import.meta.env.DEV
-
-/** 트리 어느 깊이든 재귀적으로 pending 링크를 제거하고, 자식이 모두 사라진 그룹도 정리한다(섹션은 유지). */
-const prunePending = (items: MenuItem[]): MenuItem[] =>
-  items
-    .map((item) => (item.children ? { ...item, children: prunePending(item.children) } : item))
-    .filter((item) => {
-      if (item.children === undefined) return item.status !== 'pending'
-      if (item.kind === 'section') return true
-      return item.children.length > 0
-    })
-
-const hidePendingForProd = (items: MenuItem[]): MenuItem[] => (isProd ? prunePending(items) : items)
-
-// 재귀적으로 adminOnly 항목을 제거하고, 자식이 모두 사라진 그룹도 정리한다(섹션은 유지).
-// 최상위 admin-section뿐 아니라 그룹 안 잎(예: 검사 > 월별/주간 검사자 종합지표)도 커버.
-const pruneAdmin = (items: MenuItem[]): MenuItem[] =>
-  items
-    .filter((item) => !item.adminOnly)
-    .map((item) => (item.children ? { ...item, children: pruneAdmin(item.children) } : item))
-    .filter((item) => {
-      if (item.children === undefined) return true
-      if (item.kind === 'section') return true
-      return item.children.length > 0
-    })
-
-const hideAdminForNonAdmin = (items: MenuItem[], isAdmin: boolean): MenuItem[] =>
-  isAdmin ? items : pruneAdmin(items)
-
-// pruneByDepartment 는 @/config/navigation 으로 이동됨 (react-refresh 규칙 · 유닛 테스트 편의).
 
 // 구현 상태별 텍스트 색상 (활성 상태가 아닐 때만 적용)
 const statusTextClass = (status?: MenuStatus): string => {
@@ -53,8 +19,8 @@ const statusTextClass = (status?: MenuStatus): string => {
 /**
  * ADMIN 롤 전용 항목 표시 배지.
  * - "관리자" (amber): admin-section — 진짜 관리자 도구 (예: 배치 관리)
- * - "개발중" (blue) : 그 외 adminOnly 페이지 — 개발/검증 미완성으로 관리자에게만 노출 중.
- *                     완성되면 ADMIN_ONLY_PAGE_IDS 에서 빼면 자동으로 배지 사라짐.
+ * - "개발중" (blue) : 그 외 ADMIN 전용 페이지 — 개발/검증 미완성으로 관리자에게만 노출 중.
+ *                     완성되면 그 라우트의 staticData.page.access 를 풀면 자동으로 배지 사라짐.
  */
 function AdminBadge() {
   return (
@@ -128,18 +94,12 @@ const flattenLeaves = (items: MenuItem[]): MenuItem[] =>
 
 export function Sidebar({ collapsed, onToggleSidebar, onNavigate }: { collapsed: boolean; onToggleSidebar: () => void; onNavigate?: () => void }) {
   const location = useLocation()
+  const router = useRouter()
   const user = useAuthStore((s) => s.user)
-  const role = user?.role
+  // 페이지 표시명·상태·권한은 각 라우트의 staticData.page 에서 읽는다 (메인 번들에 포함 — 페이지 청크 로드 없음).
   const visibleMenuItems = useMemo(
-    () =>
-      pruneByDepartment(
-        pruneExecutiveOnly(
-          hideAdminForNonAdmin(hidePendingForProd(menuItems), role === 'ADMIN'),
-          role,
-        ),
-        user,
-      ),
-    [role, user],
+    () => buildMenu(MENU_TREE, (path: PagePath) => router.routesByPath[path]?.options.staticData?.page, user, isProd),
+    [router, user],
   )
 
   const [openMenus, setOpenMenus] = useState<Set<string>>(() => {

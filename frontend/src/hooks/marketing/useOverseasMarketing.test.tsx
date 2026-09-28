@@ -21,7 +21,7 @@ vi.mock('@/api/marketing/overseasMarketing', () => ({
   },
 }))
 
-import { overseasMarketingApi } from '@/api/marketing/overseasMarketing'
+import { overseasMarketingApi, type OverseasMarketingReceptionParams } from '@/api/marketing/overseasMarketing'
 import {
   useOverseasMarketingCrmSync,
   useOverseasMarketingMatchConfirm,
@@ -60,7 +60,7 @@ describe('useOverseasMarketing', () => {
 
   it('접수 조회 캐시 키에 params 를 포함해 필터 변경 시 서로 다른 캐시로 저장한다', async () => {
     vi.mocked(overseasMarketingApi.getReceptions).mockResolvedValue([])
-    const paramsA = { from: '2026-01-01', to: '2026-01-31', dateType: 'reg_date', dateEnabled: true, status: '', source: 'all', unmatched: false }
+    const paramsA: OverseasMarketingReceptionParams = { from: '2026-01-01', to: '2026-01-31', dateType: 'reg_date', dateEnabled: true, status: '', source: 'all', unmatched: false }
     const paramsB = { ...paramsA, to: '2026-02-28' }
 
     renderHook(() => useOverseasMarketingReceptions(paramsA, true), { wrapper })

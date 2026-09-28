@@ -1,5 +1,5 @@
 import { DatabaseZap, LayoutTemplate, Route, Workflow } from 'lucide-react'
-import type { StatsPageDefinition } from '@/config/navigation'
+import type { PageMeta } from '@/config/pageAccess'
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-export function StatsPlaceholderPage({ page }: { page: StatsPageDefinition }) {
+export function StatsPlaceholderPage({ page, path }: { page: PageMeta; path: string }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -22,7 +22,7 @@ export function StatsPlaceholderPage({ page }: { page: StatsPageDefinition }) {
           </CardHeader>
           <CardContent>
             <p className="rounded-lg bg-gray-50 px-3 py-2 font-mono text-sm text-gray-700">
-              {page.path}
+              {path}
             </p>
           </CardContent>
         </Card>
@@ -37,7 +37,7 @@ export function StatsPlaceholderPage({ page }: { page: StatsPageDefinition }) {
           </CardHeader>
           <CardContent>
             <p className="rounded-lg bg-gray-50 px-3 py-2 font-mono text-sm text-gray-700">
-              {page.apiDraftPath}
+              {page.apiDraftPath ?? '-'}
             </p>
           </CardContent>
         </Card>

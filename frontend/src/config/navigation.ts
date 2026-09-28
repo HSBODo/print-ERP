@@ -1,24 +1,50 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Home, CalendarCheck, Microscope, Stethoscope, Syringe,
-  Hospital, Megaphone, Ban, BadgeDollarSign, MoreHorizontal, FileText, Wrench,
+  Hospital, Megaphone, MoreHorizontal, FileText, Wrench,
   Building2, MessageSquare, Landmark, Globe2, BookOpen,
 } from 'lucide-react'
 
-import { matchesDepartment, type AuthUser, type UserDepartment } from '@/stores/auth-session'
-import { getStatsPageById, statsPages } from './statsPages'
+import type { FileRouteTypes } from '@/routeTree.gen'
+import type { AuthUser } from '@/stores/auth-session'
+import { canAccess, type MenuStatus, type PageAccess, type PageMeta } from './pageAccess'
 
-export { getStatsPageById, statsPages, type StatsPageDefinition } from './statsPages'
+/** 라우트 트리에 실제로 존재하는 경로 — 메뉴에 없는 경로를 적으면 컴파일 에러. */
+export type PagePath = FileRouteTypes['fullPaths']
 
-const STATS_PAGE_ID_SET = new Set<string>(statsPages.map((page) => page.id))
-
-export type MenuStatus = 'complete' | 'frontend-only' | 'backend-only' | 'pending'
+/** 페이지가 아닌 링크 잎 (홈 · 새 탭으로 여는 정적 문서). */
+interface LinkNode {
+  id: string
+  label: string
+  href: string
+  icon?: LucideIcon
+  /** true 이면 SPA 라우팅이 아니라 새 탭으로 연다 (가이드 등 TanStack Router 밖의 정적 HTML). */
+  external?: boolean
+  access?: PageAccess
+}
 
 /**
- * 사이드바 트리의 단일 노드. 재귀적으로 children 을 가질 수 있어 다단(3단) 표현이 가능하다.
- *   - kind === 'section': 최상위 섹션(비앤빛·마케팅·해외마케팅·회계·관리자). 자식이 없어도 사이드바에서 제거되지 않는다.
- *   - kind === 'group'  : 확장 가능한 그룹(Report·예약·검사 등). 자식이 모두 숨겨져 비어버리면 자동 제거.
- *   - kind 미지정       : 잎(단일 링크, 예: HOME).
+ * 섹션·그룹 — 확장 가능한 컨테이너. 필터 후 자식이 비면 사이드바에서 제거된다.
+ *   badge 'admin'     — 관리자 섹션. 하위 잎의 ADMIN 전용 배지도 "개발중" 대신 "관리자" 로 표시
+ *   badge 'executive' — 임원 이상 섹션 (회계)
+ */
+interface ContainerNode {
+  id: string
+  label: string
+  icon: LucideIcon
+  kind: 'section' | 'group'
+  badge?: 'admin' | 'executive'
+  children: MenuNode[]
+}
+
+/** 메뉴 트리 노드 — 페이지 잎은 경로만 적고, 표시명·상태·권한은 그 라우트의 staticData.page 에서 가져온다. */
+type MenuNode = PagePath | LinkNode | ContainerNode
+
+/**
+ * 사이드바에 렌더되는 노드 (buildMenu 결과).
+ *   - kind === 'section': 최상위 섹션(비앤빛·마케팅·해외마케팅·회계·관리자)
+ *   - kind === 'group'  : 확장 가능한 그룹(Report·예약·검사 등)
+ *   - kind 미지정       : 잎(단일 링크)
  */
 export interface MenuItem {
   id: string
@@ -27,481 +53,193 @@ export interface MenuItem {
   icon?: LucideIcon
   children?: MenuItem[]
   status?: MenuStatus
-  /** true 이면 ADMIN 롤 사용자에게만 노출 (Sidebar 필터). */
+  /** ADMIN 롤 전용 — "개발중"(또는 관리자 섹션 안이면 "관리자") 배지 */
   adminOnly?: boolean
-  /**
-   * true 이면 ADMIN·DIRECTOR (임원 이상) 만 노출 (Sidebar 필터). MANAGER·STAFF 차단.
-   * 회계처럼 임원 열람이 필요한데 시스템 조작 권한과는 무관한 그룹에 쓴다.
-   * `adminOnly` 와 배타적 — 둘 다 true 이면 좁은 쪽(adminOnly) 이 우선한다.
-   */
+  /** ADMIN·DIRECTOR (임원 이상) 전용 — "임원↑" 배지 */
   executiveOnly?: boolean
-  /**
-   * true 이면 "관리자" 배지 대상(개발 완료된 관리자 전용 도구, amber).
-   * 미지정이면 "개발중" 배지(WIP, blue) — 완성 전이라 관리자만 검토용 노출 중.
-   * admin-section 트리 안 항목은 rawMenuItems 정의 이후 자동 마킹된다.
-   */
+  /** 관리자 섹션 안 항목 — ADMIN 전용 배지를 "개발중" 대신 "관리자" 로 표시 */
   adminReal?: boolean
-  /**
-   * true 이면 SPA 라우팅이 아니라 브라우저 새 탭으로 열림. 정적 HTML(가이드 등) 등
-   * TanStack Router 로 처리할 수 없는 링크에 사용.
-   */
   external?: boolean
   kind?: 'section' | 'group'
 }
 
-/** @deprecated MenuItem 로 통합됨. 하위호환 유지용 별칭. */
-export type MenuLink = MenuItem
-
 /**
- * 메뉴별 구현 상태 맵.
- *   complete     — 백엔드 API + 프론트 페이지 모두 연결 완료 (회색 기본)
- *   frontend-only — 프론트 UI만 구현, 목업 데이터로 운영 미리보기 가능 (파랑)
- *   backend-only — 백엔드 API만 완료, 프론트 페이지는 placeholder (주황)
- *   pending      — 백엔드·프론트 모두 미착수 (빨강)
+ * 사이드바에서 뺀 페이지 — 라우트는 유지되어 직접 URL 접근은 가능하다 (권한·pending 차단은 그대로 적용).
+ * 메뉴 트리에도 이 목록에도 없는 페이지 라우트는 테스트가 막는다 (메뉴 추가 누락 방지).
+ *   - 예약 건수: 예약자 리스트 → 예약 종합만 노출
+ *   - 마케팅 효율·취소&부도·객단가: 미완성(pending)
+ *   - B2B 매출: 기타 그룹은 드림렌즈 장부만 노출
  */
-const MENU_STATUS: Record<string, MenuStatus> = {
-  'weekly-report': 'complete',
-  'monthly-report': 'complete',
-  'overall-exam': 'complete',
-  'overall-exam-weekly': 'complete',
-  'reservation': 'complete',
-  'reservation-overall': 'complete',
-  'reservation-stats-system': 'complete',
-  'reservation-stats-cataract': 'complete',
-  'reservation-list': 'complete',
-  'reservation-channel': 'complete',
-  'channel-profit': 'complete',
-  // 조회가 없는 정적 분석 문서다. 수치가 본문에 박혀 있어 API 없이도 완결이라 'complete'.
-  'channel-analysis': 'complete',
-  'sms': 'complete',
-  // 소스(legacy.datasource.url) 미설정 환경에서는 503 — 다른 통계 페이지가 데이터소스 부재 시
-  // 503 을 주는 것과 동일한 패턴이라 'complete' 가 맞다(상태는 구현 완료 여부를 뜻한다).
-  'reservation-list-homepage': 'complete',
-  'reservation-change': 'complete',
-  'exam-list': 'complete',
-  'cataract-exam-list': 'complete',
-  'all-exam-list': 'complete',
-  'eoeis-checkup': 'complete',
-  'examination': 'complete',
-  'procedure-exam': 'complete',
-  'consultation-rate': 'complete',
-  'cataract-reservation-rate': 'complete',
-  'stop-rate': 'complete',
-  'stop-reason': 'complete',
-  'surgery-list': 'complete',
-  'surgery': 'complete',
-  'surgery-ratio': 'complete',
-  'surgery-composition': 'complete',
-  'accumulated-eyes': 'complete',
-  'outpatient-list': 'complete',
-  'outpatient-count': 'complete',
-  'overseas-marketing-receptions': 'complete',
-  'overseas-marketing-statistics': 'complete',
-  'overseas-reservation-stats': 'complete',
-  'marketing': 'pending',
-  'cancel-rate': 'pending',
-  'no-show-rate': 'pending',
-  'unit-price': 'pending',
-  'accounting-medical': 'complete',
-  'accounting-vision': 'complete',
-  'accounting-vision-summary': 'complete',
-  'accounting-vision-chart': 'complete',
-  'accounting-medical-chart': 'complete',
-  'dreamlens-revenue': 'complete',
-  'b2b-revenue': 'complete',
-  'staff-point': 'pending',
-  'prp-rate': 'pending',
-  'reoperation-rate': 'pending',
-  'same-day-op': 'pending',
-  'designated-doctor': 'pending',
-  'visit-reason': 'pending',
-  'daily-reception': 'pending',
-  'batch-management': 'complete',
-  'account-management': 'complete',
-}
-
-/** 메뉴 구현 상태 조회 (router의 운영 빌드 pending 라우트 차단 등에 사용). */
-export const getMenuStatus = (id: string): MenuStatus => MENU_STATUS[id] ?? 'pending'
-export const hasExplicitMenuStatus = (id: string): boolean =>
-  Object.prototype.hasOwnProperty.call(MENU_STATUS, id)
-export const getMenuStatusIds = (): string[] => Object.keys(MENU_STATUS)
-
-/**
- * ADMIN 롤 전용 페이지. 사이드바 숨김 + 직접 URL 접근도 placeholder 로 차단(pageRegistry.isRouteBlocked).
- * admin-group 아래의 페이지들 및 그 밖의 관리자 전용 통계와 항상 동기화.
- *
- * SMS 는 § SMS 5-2 완화 이후 STAFF 개방됐다 — 부서 gate 로만 판정 (MARKETING 전용).
- */
-const ADMIN_ONLY_PAGE_IDS = new Set<string>([
-  'batch-management',
-  'account-management',
-  'overall-exam',
-  'overall-exam-weekly',
-  'consultation-rate',
-  'exam-list',
-  'cataract-exam-list',
-  'eoeis-checkup',
-  'surgery',
-])
-export const isAdminOnlyPage = (id: string): boolean => ADMIN_ONLY_PAGE_IDS.has(id)
-
-/**
- * 임원 이상 (ADMIN·DIRECTOR) 전용 페이지.
- * MANAGER·STAFF 에게는 사이드바 숨김 + 직접 URL 접근도 placeholder 차단.
- *
- * 2026-09-17: 회계 5종을 여기로 이동. 백엔드 SecurityConfig `/api/accounting/**` 매처도
- * `hasAnyRole("ADMIN","DIRECTOR")` 로 함께 개방 (대칭 유지).
- */
-const EXECUTIVE_ONLY_PAGE_IDS = new Set<string>([
-  // 회계 5종 — 마트(list_medical_receipt·list_vision_receipt) + /api/accounting 연동 완료(2026-09-15).
-  'accounting-medical',
-  'accounting-vision',
-  'accounting-vision-summary',
-  'accounting-vision-chart',
-  'accounting-medical-chart',
-])
-export const isExecutiveOnlyPage = (id: string): boolean => EXECUTIVE_ONLY_PAGE_IDS.has(id)
-
-/**
- * 마케팅 부서 전용 페이지 (docs/auth/permissions.md § 4-1).
- * MANAGER·STAFF 가 department='MARKETING' 인 사용자만 접근. ADMIN·DIRECTOR (department='ALL') 는 항상 접근.
- * MEDICAL 부서 사용자에게는 사이드바에서 숨김 + 직접 URL 접근도 차단.
- *
- * 문서에 명시된 채널 페이지(channel-profit·marketing) 및 마케팅 섹션에서 함께 다루는 파생 페이지
- * (reservation-channel·channel-analysis·accumulated-eyes·sms) 를 포함한다.
- * SMS 는 § 5-2 완화 이후 MARKETING 부서만 접근한다 (사용자 결정 2026-09-03).
- * 편집·[지금 실행]·[실패 재실행] 은 ADMIN 만 (프론트 canSystemOp + 백엔드 hasRole('ADMIN')).
- *
- * <b>주의</b> — 해외마케팅 3종은 별도 SET(OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS) 로 관리.
- * 2026-09-17 부터 MARKETING 은 해외마케팅에서 배제됨 — OVERSEAS_MARKETING 전담 부서만 접근.
- */
-const MARKETING_ONLY_PAGE_IDS = new Set<string>([
-  'reservation-channel',
-  'channel-profit',
-  'channel-analysis',
-  'accumulated-eyes',
-  'marketing',
-  'sms',
-])
-export const isMarketingOnlyPage = (id: string): boolean => MARKETING_ONLY_PAGE_IDS.has(id)
-
-/**
- * 해외마케팅 3종 페이지 (2026-09-11 신설, 2026-09-17 MARKETING 배제) — OVERSEAS_MARKETING 전담 부서만 접근.
- * 국내 마케팅(MARKETING)과 해외 프로모션 스코프를 분리 — 두 팀 업무·데이터 분리 요구 반영.
- * 사이드바 노출·URL 접근 판정에서 OVERSEAS_MARKETING·ALL 만 통과.
- */
-const OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS = new Set<string>([
-  'overseas-marketing-receptions',
-  'overseas-marketing-statistics',
-  'overseas-reservation-stats',
-])
-export const isOverseasMarketingPage = (id: string): boolean =>
-  OVERSEAS_MARKETING_ACCESSIBLE_PAGE_IDS.has(id)
-
-/**
- * 페이지의 부서 스코프 (docs/auth/permissions.md § 3, § 4-1).
- *
- * 반환값이 undefined 이면 스코프 없음(홈 · 통계 페이지 밖) — matchesDepartment 가 모두 통과시킨다.
- * 그 외에는 해당 부서만 접근.
- *
- * 홈(`/`) 은 statsPages 정의에 없어 여기서 undefined 로 판정된다. 잊지 말 것 — 홈을 default MEDICAL 로
- * 판정하면 MARKETING STAFF 사이드바에서 홈이 사라지는 버그가 생긴다 (2026-09-03 F1 원인).
- */
-export const getPageDepartments = (id: string): UserDepartment[] | undefined => {
-  if (!STATS_PAGE_ID_SET.has(id)) return undefined
-  if (isOverseasMarketingPage(id)) return ['OVERSEAS_MARKETING']
-  if (isMarketingOnlyPage(id)) return ['MARKETING']
-  return ['MEDICAL']
-}
-
-/**
- * 사이드바에서 숨기는 메뉴(페이지·라우트는 유지 — 직접 URL 접근은 가능). 여기만 수정하면
- * 빈 그룹·숨김 단일 메뉴는 menuItems에서 자동 제거된다(kids() + 아래 filter).
- *   - 예약: 유입(검사예약)·예약 건수 숨김(예약자 리스트 → 예약 종합만 노출)
- *   - Report: 월간 레포트·주차 레포트 모두 노출
- *   - 외래 아래: 마케팅·취소&부도·객단가 전체 숨김
- *   - 기타: 드림렌즈 매출만 노출, 나머지는 숨김
- */
-const HIDDEN_MENU_IDS = new Set<string>([
-  'reservation',
-  'marketing',
-  'cancel-rate', 'no-show-rate',
-  'unit-price',
-  'b2b-revenue', 'staff-point', 'prp-rate',
-  'reoperation-rate', 'same-day-op', 'designated-doctor', 'visit-reason', 'daily-reception',
-])
-export const isMenuHidden = (id: string): boolean => HIDDEN_MENU_IDS.has(id)
-
-const findPage = (id: string) => getStatsPageById(id)
-
-const link = (id: string): MenuItem => {
-  const page = findPage(id)
-  const item: MenuItem = { id, label: page.label, href: page.path, status: getMenuStatus(id) }
-  if (isAdminOnlyPage(id)) item.adminOnly = true
-  if (isExecutiveOnlyPage(id)) item.executiveOnly = true
-  return item
-}
-
-/** 그룹 자식 링크 생성 — 숨김(HIDDEN_MENU_IDS) 대상은 제외. */
-const kids = (...ids: string[]): MenuItem[] => ids.filter((id) => !isMenuHidden(id)).map(link)
+export const HIDDEN_PAGE_PATHS: readonly PagePath[] = [
+  '/stats/reservation',
+  '/stats/marketing',
+  '/stats/cancel-rate',
+  '/stats/no-show-rate',
+  '/stats/unit-price',
+  '/stats/b2b-revenue',
+]
 
 /**
  * 사이드바 3단 구조.
  *   Lv1: HOME(잎) + 섹션 5종(비앤빛·마케팅·해외마케팅·회계·관리자)
- *   Lv2: 섹션 하위 그룹(Report·예약·검사 …) 또는 직접 잎(관리자→배치관리)
- *   Lv3: 그룹 하위 개별 페이지 링크
+ *   Lv2: 섹션 하위 그룹(Report·예약·검사 …) 또는 직접 잎
+ *   Lv3: 그룹 하위 개별 페이지
  */
-const rawMenuItems: MenuItem[] = [
+export const MENU_TREE: MenuNode[] = [
   { id: 'home', label: 'HOME', href: '/', icon: Home },
   {
     id: 'bnviit-section',
     label: '비앤빛',
-    href: '#',
     icon: Building2,
     kind: 'section',
     children: [
-      {
-        id: 'report-group',
-        label: 'Report',
-        href: '#',
-        icon: FileText,
-        kind: 'group',
-        children: kids('monthly-report', 'weekly-report'),
-      },
+      { id: 'report-group', label: 'Report', icon: FileText, kind: 'group', children: ['/report/monthly', '/report/weekly'] },
       {
         id: 'reservation-group',
         label: '예약',
-        href: '#',
         icon: CalendarCheck,
         kind: 'group',
-        // 예약 건수(reservation)는 숨김. 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 → 예약 변경이력 순.
-        children: kids(
-          'reservation-list', 'reservation-list-homepage', 'reservation-overall',
-          'reservation-stats-system', 'reservation-stats-cataract', 'reservation-change',
-        ),
+        // 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 → 예약 변경이력 순.
+        children: [
+          '/stats/reservation-list', '/stats/reservation-list-homepage', '/stats/reservation-overall',
+          '/stats/reservation-stats-system', '/stats/reservation-stats-cataract', '/stats/reservation-change',
+        ],
       },
       {
         id: 'exam-group',
         label: '검사',
-        href: '#',
         icon: Microscope,
         kind: 'group',
-        children: kids('overall-exam', 'overall-exam-weekly', 'exam-list', 'cataract-exam-list', 'all-exam-list', 'eoeis-checkup', 'examination', 'procedure-exam'),
+        children: [
+          '/stats/overall-exam', '/stats/overall-exam-weekly', '/stats/exam-list', '/stats/cataract-exam-list',
+          '/stats/all-exam-list', '/stats/eoeis-checkup', '/stats/examination', '/stats/procedure-exam',
+        ],
       },
       {
         id: 'consultation',
         label: '전환&성공률',
-        href: '#',
         icon: Stethoscope,
         kind: 'group',
-        children: kids('consultation-rate', 'cataract-reservation-rate', 'stop-rate', 'stop-reason'),
+        children: ['/stats/consultation-rate', '/stats/cataract-reservation-rate', '/stats/stop-rate', '/stats/stop-reason'],
       },
       {
         id: 'surgery-group',
         label: '수술',
-        href: '#',
         icon: Syringe,
         kind: 'group',
-        children: kids('surgery-list', 'surgery', 'surgery-ratio', 'surgery-composition'),
+        children: ['/stats/surgery-list', '/stats/surgery', '/stats/surgery-ratio', '/stats/surgery-composition'],
       },
-      {
-        id: 'outpatient',
-        label: '외래',
-        href: '#',
-        icon: Hospital,
-        kind: 'group',
-        children: kids('outpatient-list', 'outpatient-count'),
-      },
-      {
-        id: 'cancel-noshow',
-        label: '취소&부도',
-        href: '#',
-        icon: Ban,
-        kind: 'group',
-        children: kids('cancel-rate', 'no-show-rate'),
-      },
-      {
-        id: 'unit-price',
-        label: '객단가',
-        href: findPage('unit-price').path,
-        icon: BadgeDollarSign,
-        status: getMenuStatus('unit-price'),
-      },
-      {
-        id: 'etc',
-        label: '기타',
-        href: '#',
-        icon: MoreHorizontal,
-        kind: 'group',
-        children: kids(
-          'dreamlens-revenue', 'b2b-revenue', 'staff-point',
-          'prp-rate', 'reoperation-rate', 'same-day-op',
-          'designated-doctor', 'visit-reason', 'daily-reception',
-        ),
-      },
+      { id: 'outpatient', label: '외래', icon: Hospital, kind: 'group', children: ['/stats/outpatient-list', '/stats/outpatient-count'] },
+      { id: 'etc', label: '기타', icon: MoreHorizontal, kind: 'group', children: ['/stats/dreamlens-revenue'] },
     ],
   },
   {
     id: 'marketing-section',
     label: '마케팅',
-    href: '#',
     icon: Megaphone,
     kind: 'section',
     // 예약 퍼널은 유입 채널 효율을 보는 화면이라 예약보다 마케팅에 가깝다(2026-08-06 이동).
     // 채널별 수익성은 그 짝이다 — 퍼널이 '얼마나 오나'(전환 축), 이쪽이 '얼마 버나'(가치 축).
-    // 마케팅 효율(marketing)은 아직 pending 이라 HIDDEN 으로 빠져 있다.
     // 해외마케팅(접수리스트·통계·예약통계)은 아래 별도 최상위 섹션(overseas-marketing-section)이다.
-    // 문자 발송 관리는 향후 하위 페이지(이력·템플릿 등) 확장을 대비해 그룹으로 감쌈.
     children: [
-      ...kids('reservation-channel', 'channel-profit', 'channel-analysis', 'accumulated-eyes'),
-      {
-        // § SMS 5-2 완화 완료 (2026-09-03): STAFF 개방 · 편집·[지금 실행]·[실패 재실행] 만 ADMIN.
-        // 부서 gate: MARKETING 전용 (MARKETING_ONLY_PAGE_IDS 에 'sms' 포함). MEDICAL STAFF 는 안 보임.
-        // 백엔드 매처 분리:
-        //   · PUT /api/sms-management/offsets · POST /send · POST /sync · POST /targets/import → hasRole('ADMIN')
-        //   · 그 외 /api/sms-management/** → MARKETING 부서
-        //   · /api/admin/batch/sms/queue/** → hasRole('ADMIN') (그대로 유지)
-        id: 'sms-management',
-        label: '문자 발송 관리',
-        href: '#',
-        icon: MessageSquare,
-        kind: 'group',
-        children: kids('sms'),
-      },
+      '/stats/reservation-channel', '/stats/channel-profit', '/stats/channel-analysis', '/stats/accumulated-eyes',
+      // 문자 발송 관리는 향후 하위 페이지(이력·템플릿 등) 확장을 대비해 그룹으로 감쌈.
+      // 편집·[지금 실행]·[실패 재실행] 만 ADMIN (페이지 안 canSystemOp + 백엔드 hasRole('ADMIN')).
+      { id: 'sms-management', label: '문자 발송 관리', icon: MessageSquare, kind: 'group', children: ['/stats/sms'] },
     ],
   },
   {
     id: 'overseas-marketing-section',
     label: '해외마케팅',
-    href: '#',
     icon: Globe2,
     kind: 'section',
-    // 2026-09-09 2026-08-14 브랜치에서 이관. 접수리스트 → 통계 → 예약통계 순. 잎은 모두 MARKETING 부서 전용.
-    children: kids('overseas-marketing-receptions', 'overseas-marketing-statistics', 'overseas-reservation-stats'),
+    // 접수리스트 → 통계 → 예약통계 순. OVERSEAS_MARKETING 부서 전용 (2026-09-17 MARKETING 배제).
+    children: [
+      '/stats/overseas-marketing/receptions', '/stats/overseas-marketing/statistics', '/stats/overseas-marketing/reservation-stats',
+    ],
   },
   {
     id: 'accounting-section',
     label: '회계',
-    href: '#',
     icon: Landmark,
     kind: 'section',
-    // 회계 — 마트·API 연동 완료(2026-09-15). 임원(DIRECTOR) 이상 개방(2026-09-17).
-    // 백엔드 /api/accounting/** 매처가 hasAnyRole("ADMIN","DIRECTOR") 로 대칭 유지.
-    executiveOnly: true,
-    children: kids(
-      'accounting-medical', 'accounting-vision',
-      'accounting-vision-summary', 'accounting-vision-chart', 'accounting-medical-chart',
-    ),
+    // 임원(DIRECTOR) 이상 개방(2026-09-17). 백엔드 /api/accounting/** 매처가 hasAnyRole("ADMIN","DIRECTOR") 로 대칭.
+    badge: 'executive',
+    children: [
+      '/accounting/medical-receipts', '/accounting/vision-revenue', '/accounting/vision-revenue-summary',
+      '/accounting/vision-revenue-chart', '/accounting/medical-revenue-chart',
+    ],
   },
   {
     id: 'admin-section',
     label: '관리자',
-    href: '#',
     icon: Wrench,
     kind: 'section',
-    adminOnly: true,
+    badge: 'admin',
     children: [
-      ...kids('batch-management', 'account-management'),
+      '/admin/batch', '/admin/accounts',
       // 정적 기획서(frontend/public/guide) — 새 탭에서 열린다.
-      // adminOnly=true 를 명시해야 배지가 뜬다. adminReal 은 markAdminSectionSubtree 가 자동으로 붙여 준다.
-      {
-        id: 'guide',
-        label: '가이드',
-        href: '/guide/prd.html',
-        icon: BookOpen,
-        external: true,
-        adminOnly: true,
-      },
+      { id: 'guide', label: '가이드', href: '/guide/prd.html', icon: BookOpen, external: true, access: { role: 'ADMIN' } },
       // Swagger UI — backend static /docs/index.html. Vite dev 는 vite.config.ts 의 /docs 프록시 경유.
-      {
-        id: 'api-docs',
-        label: 'API 문서',
-        href: '/docs/',
-        icon: FileText,
-        external: true,
-        adminOnly: true,
-      },
+      { id: 'api-docs', label: 'API 문서', href: '/docs/', icon: FileText, external: true, access: { role: 'ADMIN' } },
     ],
   },
 ]
 
-/**
- * 숨김 반영: 숨김 대상 단일 메뉴와, 자식이 모두 숨겨져 비어버린 그룹을 제거.
- * 섹션(kind === 'section')은 자식이 없어도 유지한다(예: 마케팅).
- */
-const pruneItems = (items: MenuItem[]): MenuItem[] =>
-  items
-    .filter((item) => !isMenuHidden(item.id))
-    .map((item) => (item.children ? { ...item, children: pruneItems(item.children) } : item))
-    .filter(
-      (item) =>
-        item.kind === 'section' ||
-        item.children === undefined ||
-        item.children.length > 0,
-    )
+type MenuUser = Pick<AuthUser, 'role' | 'department'> | null | undefined
+
+/** 롤·부서 조건만 본다 (구현 상태 제외 — 상태는 노출 여부를 따로 판정). */
+const hasPermission = (access: PageAccess, user: MenuUser) =>
+  canAccess({ status: 'complete', access }, user, false) === 'ok'
+
+const roleFlags = (access: PageAccess | undefined) => ({
+  adminOnly: access !== undefined && 'role' in access && access.role === 'ADMIN' ? true : undefined,
+  executiveOnly: access !== undefined && 'role' in access && access.role === 'EXECUTIVE' ? true : undefined,
+})
 
 /**
- * admin-section 트리 안 항목에 adminReal=true 자동 부여.
- * 관리자 섹션은 "개발 완료된 관리자 전용 도구" 이므로 하위 잎도 "관리자" 배지 대상이다.
- * 여기서 자동 처리하면 admin-section 하위에 페이지를 추가해도 배지 마킹을 잊지 않는다.
+ * 메뉴 트리를 사용자·환경에 맞게 풀어낸다.
+ *   - 페이지 잎: getPage(경로) 의 staticData.page 로 표시명·상태·권한을 채운다.
+ *     권한이 없으면 제거, 운영(PROD)에서는 pending 도 제거 (개발에서는 빨강으로 표시).
+ *   - 링크 잎: access 가 있으면 권한 판정.
+ *   - 섹션·그룹: 필터 후 자식이 비면 제거 (예: MARKETING 사용자에게 비앤빛 섹션 자체가 안 보인다).
+ * 라우트 차단(RouteGate)과 같은 canAccess 규칙을 쓴다.
  */
-const markAdminSectionSubtree = (items: MenuItem[]): MenuItem[] => {
-  const markReal = (nodes: MenuItem[]): MenuItem[] =>
-    nodes.map((n) => ({
-      ...n,
-      adminReal: true,
-      children: n.children ? markReal(n.children) : undefined,
-    }))
-  return items.map((item) => {
-    if (item.id === 'admin-section' && item.children) {
-      return { ...item, adminReal: true, children: markReal(item.children) }
-    }
-    return item.children
-      ? { ...item, children: markAdminSectionSubtree(item.children) }
-      : item
-  })
-}
-
-export const menuItems: MenuItem[] = markAdminSectionSubtree(pruneItems(rawMenuItems))
-
-/**
- * 부서 gate — 잎(link)의 pageId 로 판정. 그룹·섹션은 자식이 모두 필터링돼 비어버리면 함께 제거된다
- * (문서 § 2-2 대칭 원칙: MARKETING 사용자에게 비앤빛 섹션 자체도 안 보인다).
- *
- * ADMIN·DIRECTOR (department='ALL') 는 모든 페이지가 통과 → items 원본과 동등한 결과.
- * Sidebar 렌더 파이프라인 안에서 hideAdminForNonAdmin 다음 단계로 적용되지만,
- * 순수 함수라 유닛 테스트에서 격리 검증도 가능하다.
- */
-export const pruneByDepartment = (
-  items: MenuItem[],
-  user: Pick<AuthUser, 'department'> | null,
+export const buildMenu = (
+  nodes: MenuNode[],
+  getPage: (path: PagePath) => PageMeta | undefined,
+  user: MenuUser,
+  isProd: boolean,
+  inAdminSection = false,
 ): MenuItem[] =>
-  items
-    .filter((item) => {
-      if (item.children !== undefined) return true
-      return matchesDepartment(user, getPageDepartments(item.id))
-    })
-    .map((item) => (item.children ? { ...item, children: pruneByDepartment(item.children, user) } : item))
-    .filter((item) => item.children === undefined || item.children.length > 0)
+  nodes.flatMap((node): MenuItem[] => {
+    const adminReal = inAdminSection || undefined
 
-/**
- * 임원 gate — `executiveOnly` 항목은 ADMIN·DIRECTOR 에게만 보이고 나머지 롤에는 제거된다.
- * 섹션 자체도 `executiveOnly=true` 인 경우 마찬가지로 사라진다(회계 섹션).
- *
- * Sidebar 렌더 파이프라인에서 `pruneAdmin` 과 나란히 적용된다. 순수 함수라 유닛 테스트에서 격리 검증 가능.
- */
-export const pruneExecutiveOnly = (
-  items: MenuItem[],
-  role: string | undefined,
-): MenuItem[] => {
-  const isExecutive = role === 'ADMIN' || role === 'DIRECTOR'
-  if (isExecutive) return items
-  return items
-    .filter((item) => !item.executiveOnly)
-    .map((item) => (item.children ? { ...item, children: pruneExecutiveOnly(item.children, role) } : item))
-    .filter((item) => {
-      if (item.children === undefined) return true
-      if (item.kind === 'section') return true
-      return item.children.length > 0
-    })
-}
+    if (typeof node === 'string') {
+      const page = getPage(node)
+      if (!page || !hasPermission(page.access, user)) return []
+      if (isProd && page.status === 'pending') return []
+      return [{ id: page.id, label: page.label, href: node, status: page.status, ...roleFlags(page.access), adminReal }]
+    }
+
+    if ('children' in node) {
+      const isAdminSection = inAdminSection || node.badge === 'admin'
+      const children = buildMenu(node.children, getPage, user, isProd, isAdminSection)
+      if (children.length === 0) return []
+      return [{
+        id: node.id,
+        label: node.label,
+        href: '#',
+        icon: node.icon,
+        kind: node.kind,
+        adminOnly: node.badge === 'admin' || undefined,
+        executiveOnly: node.badge === 'executive' || undefined,
+        adminReal: isAdminSection || undefined,
+        children,
+      }]
+    }
+
+    if (node.access && !hasPermission(node.access, user)) return []
+    const { access, ...link } = node
+    return [{ ...link, ...roleFlags(access), adminReal }]
+  })

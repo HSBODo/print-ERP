@@ -15,7 +15,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "^5.97.0",
-    "@tanstack/react-router": "^1.168.10",
+    "@tanstack/react-router": "^1.170.40",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.8.0",
@@ -35,6 +35,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@tanstack/react-router-devtools": "^1.166.11",
+    "@tanstack/router-plugin": "^1.168.41",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.12.2",
