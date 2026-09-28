@@ -60,22 +60,24 @@ project-root/
 ├── frontend/
 │   ├── src/
 │   │   ├── main.tsx                     # 진입점 (React 렌더)
-│   │   ├── App.tsx                      # QueryClientProvider + RouterProvider
-│   │   ├── router.tsx                   # TanStack Router (인증 가드 포함)
+│   │   ├── App.tsx                      # QueryClientProvider + createRouter(routeTree) + RouterProvider
+│   │   ├── routeTree.gen.ts             # @tanstack/router-plugin 이 src/routes 로부터 생성 (커밋 대상 · 직접 수정 금지)
+│   │   ├── routes/                      # TanStack 파일 기반 라우트 — 페이지 입구 + staticData.page(메타·권한)
+│   │   │   └── _auth/                   # 인증 레이아웃 — route.tsx(beforeLoad: 인증 + 접근 판정) · stats/(<domain>)/ · report/ · accounting/ · admin/
 │   │   ├── index.css                    # Tailwind 4 + OKLCH 테마 변수
 │   │   ├── api/
 │   │   │   ├── client.ts               # HTTP 클라이언트 (Bearer 토큰 자동 주입)
 │   │   │   └── auth.ts                 # 로그인 API
 │   │   ├── components/
 │   │   │   ├── layout/
-│   │   │   │   ├── AppLayout.tsx        # 인증 레이아웃 (Topbar + Sidebar + Outlet)
-│   │   │   │   ├── Sidebar.tsx          # 접이식 네비게이션 (navigation.ts 기반)
+│   │   │   │   ├── AppLayout.tsx        # 인증 레이아웃 (Topbar + Sidebar + children)
+│   │   │   │   ├── Sidebar.tsx          # 접이식 네비게이션 (navigation.ts MENU_TREE + 라우트 staticData)
 │   │   │   │   └── Topbar.tsx           # 상단 바 (유저명, 로그아웃)
 │   │   │   └── ui/                      # shadcn 컴포넌트 (button, card, chart)
 │   │   ├── config/
-│   │   │   ├── statsPages.ts            # 통계 페이지 정의
-│   │   │   └── navigation.ts            # 메뉴 구조 + 구현 상태 맵
-│   │   ├── pages/
+│   │   │   ├── pageAccess.ts            # PageMeta 타입(staticData.page) · canAccess(접근 판정 — 라우트·사이드바 공용)
+│   │   │   └── navigation.ts            # MENU_TREE(메뉴 구조·순서) · HIDDEN_PAGE_PATHS · buildMenu
+│   │   ├── pages/                       # 페이지 컴포넌트 (라우트 파일이 import)
 │   │   │   ├── accounting/              # 회계 5종 (진료 수납·시력교정 매출 내역·집계·그래프 2종 — /api/accounting 마트 조회 · ADMIN)
 │   │   │   ├── LoginPage.tsx            # 로그인 (react-hook-form + Zod)
 │   │   │   ├── DashboardPage.tsx        # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
@@ -116,11 +118,11 @@ project-root/
 
 ### 미구현 (플레이스홀더)
 
-일부 통계 페이지. 전체 페이지 목록의 기준은 `frontend/src/config/statsPages.ts`.
+통계 페이지 4종(마케팅 효율·예약취소율·부도율·객단가)이 pending. 페이지별 상태는 각 라우트 파일의 `staticData.page.status`.
 
 ## 대표 통계 페이지 목록
 
-실제 전체 목록(55종 · 완료 44 · pending 11)과 라우팅 기준은 `frontend/src/config/statsPages.ts`와 `frontend/src/pages/pageRegistry.ts`를 우선한다. 전체 표는 `CLAUDE.md` 「통계 페이지 목록」 참조.
+실제 전체 목록(48종 · 완료 44 · pending 4)의 기준은 `frontend/src/routes/_auth/` 라우트 파일(`staticData.page`)이고, 메뉴 구조는 `frontend/src/config/navigation.ts` `MENU_TREE` 다. 전체 표는 `CLAUDE.md` 「통계 페이지 목록」 참조.
 
 | ID | 이름 | 경로 | 섹션 | 상태 |
 |----|------|------|------|------|
@@ -205,10 +207,10 @@ GET    /api/stats/{pageId}/compare?compareTo=PREVIOUS_PERIOD
 
 ### 라우팅 패턴
 
-- 인증 필요 페이지는 `authLayout` 하위에 등록 (`router.tsx`)
-- 새 통계 페이지: `config/statsPages.ts`에 정의 → `config/navigation.ts` 상태/메뉴 반영 → 도메인 `routes.ts`에 전용 컴포넌트 등록
-- 미구현 페이지는 `StatsPlaceholderPage`로 자동 렌더링
-- 새 페이지 추가 시 `filter` 제거: `router.tsx`에서 해당 ID의 플레이스홀더를 전용 컴포넌트로 교체
+- TanStack Router **파일 기반 라우팅**. `src/routes` 파일 구조가 URL 이고, `@tanstack/router-plugin` 이 `routeTree.gen.ts` 를 생성한다(커밋 대상). 페이지마다 청크 분리(`autoCodeSplitting`).
+- 인증 필요 페이지는 `routes/_auth/` 아래. `_auth/route.tsx` 의 `beforeLoad` 가 인증과 접근 판정(`canAccess`)을 하고, `RouteGate` 가 페이지 / placeholder(미완성) / 접근 권한 없음을 렌더한다.
+- 파일명 규칙: `_xxx` = 경로 없는 레이아웃 · `(xxx)` = URL 에 안 붙는 폴더 묶음 · `-xxx` = 라우트 아님 · `$xxx` = 경로 파라미터.
+- 새 통계 페이지: `pages/<domain>/` 컴포넌트 → `routes/_auth/stats/(<domain>)/<id>.tsx` 라우트 파일(`component` + `staticData.page`) → `navigation.ts` `MENU_TREE` 에 경로 추가(숨기려면 `HIDDEN_PAGE_PATHS`)
 
 ### 차트 (Recharts)
 
@@ -316,7 +318,7 @@ cd frontend && npm run test              # Vitest
 
 ## Codex에게 요청할 때 참고사항
 
-- **새 통계 페이지**: `statsPages.ts`에 페이지 정의 → `navigation.ts` 상태/메뉴 + 롤·부서 게이트(`isAdminOnlyPage`·`isExecutiveOnlyPage`·`isMarketingOnlyPage`·`isOverseasMarketingPage`) 반영 → 전용 페이지 컴포넌트 작성 + 도메인 `routes.ts` 등록 + 백엔드 API + `SecurityConfig` 매처 대칭 유지
+- **새 통계 페이지**: 전용 페이지 컴포넌트 작성 → `routes/_auth/.../<id>.tsx` 라우트 파일 + `staticData.page`(롤·부서 권한은 `access`) → `navigation.ts` `MENU_TREE` 에 경로 추가 → 백엔드 API + `SecurityConfig` 매처 대칭 유지
 - **새 차트**: Recharts 기반, shadcn `ChartContainer` 사용, `CHART_PALETTE` 색상 적용
 - **새 UI 컴포넌트**: `npx shadcn@latest add <name>` (설정: `components.json`)
 - **API 연동**: `api/client.ts` HTTP 클라이언트 사용, TanStack Query `useQuery`로 캐싱

@@ -7,7 +7,7 @@
 > 📌 관련 문서
 > - SMS 관리자 권한 정책: `docs/sms/strategy.md` § 5-2
 > - 배치 관리자 API: `docs/databatch/strategy.md`
-> - 페이지 정의: `frontend/src/config/statsPages.ts` · `frontend/src/config/navigation.ts`
+> - 페이지 정의: 각 라우트 파일의 `staticData.page` (`frontend/src/routes/_auth/**`) · 판정 `frontend/src/config/pageAccess.ts` `canAccess` · 메뉴 `frontend/src/config/navigation.ts`
 > - 보안 매처: `backend/src/main/java/com/bviit/analytics/auth/config/SecurityConfig.java`
 
 ---
@@ -113,23 +113,23 @@
 
 ## 4. 페이지·API 매핑
 
-### 4-1. 페이지 부서 매핑 (`getPageDepartments`)
+### 4-1. 페이지 부서 매핑 (라우트 `staticData.page.access`)
 
-판정은 `navigation.ts` 의 `MARKETING_ONLY_PAGE_IDS` Set 하나로 갈린다. 마케팅 전용이 아닌 페이지는 모두 `MEDICAL` 기본값. ADMIN·DIRECTOR (`department='ALL'`) 는 부서 gate 를 우회한다.
+각 페이지의 접근 조건은 그 라우트 파일의 `staticData.page.access` 에 `{ role: 'ADMIN' }` · `{ role: 'EXECUTIVE' }` · `{ department }` 중 하나로 선언하고, `config/pageAccess.ts` 의 `canAccess` 하나로 판정한다(라우트 차단·사이드바 공용, 2026-09-28 파일 라우트 전환). ADMIN·DIRECTOR (`department='ALL'`) 는 부서 gate 를 우회한다.
 
 | 그룹 | 페이지 | department |
 |---|---|---|
 | — | 홈화면 `/` | 스코프 없음 (통계 페이지 아님) |
 | **마케팅** | reservation-channel · channel-profit · channel-analysis · accumulated-eyes · marketing · **sms** | **MARKETING** (MEDICAL 도 접근 X) |
-| **해외마케팅** | overseas-marketing-receptions · overseas-marketing-statistics · overseas-reservation-stats (2026-09-09 이관 · 별도 최상위 섹션) | **MARKETING · OVERSEAS_MARKETING** (2026-09-11 두 부서 개방 · MEDICAL 은 접근 X) |
+| **해외마케팅** | overseas-marketing-receptions · overseas-marketing-statistics · overseas-reservation-stats (2026-09-09 이관 · 별도 최상위 섹션) | **OVERSEAS_MARKETING** (2026-09-17 MARKETING 배제 · MEDICAL 도 접근 X) |
 | 예약 | reservation-list · reservation-overall · reservation-stats-system · reservation-stats-cataract · reservation-list-homepage · (reservation) | MEDICAL |
 | 검사 | overall-exam · overall-exam-weekly · exam-list · cataract-exam-list · all-exam-list · eoeis-checkup · examination · procedure-exam | MEDICAL |
 | 전환&성공률 | consultation-rate · cataract-reservation-rate · stop-rate · stop-reason | MEDICAL |
 | 수술 | surgery-list · surgery · surgery-ratio · surgery-composition | MEDICAL |
 | 외래 | outpatient-list · outpatient-count | MEDICAL |
 | Report | weekly-report · monthly-report | MEDICAL |
-| 기타 | dreamlens-revenue · b2b-revenue · (그 외 미구현 8종) | MEDICAL |
-| **회계** (2026-09-11 신설) | accounting-medical · accounting-vision · accounting-vision-summary · accounting-vision-chart · accounting-medical-chart | **임원 이상(ADMIN·DIRECTOR) 전용** — 매출·수납 민감 데이터 · MANAGER·STAFF 는 부서 무관 차단. 현재 상태 `frontend-only` (합성 목업 · 백엔드 미구현). |
+| 기타 | dreamlens-revenue · b2b-revenue | MEDICAL |
+| **회계** (2026-09-11 신설) | accounting-medical · accounting-vision · accounting-vision-summary · accounting-vision-chart · accounting-medical-chart | **임원 이상(ADMIN·DIRECTOR) 전용** — 매출·수납 민감 데이터 · MANAGER·STAFF 는 부서 무관 차단. 2026-09-15 마트·`/api/accounting` 연동 완료(`complete`). |
 | 관리자 | batch-management · **account-management** | ADMIN 전용 (부서 무관 · 개발자 전용) — DIRECTOR 도 진입 불가 |
 
 **SMS 는 § 5-2 완화 후 MARKETING 부서 전용**(2026-09-03 사용자 결정) — 조회·홀딩·수신거부·연락처 수정·수동 대상 추가는 MARKETING STAFF 가능. 편집·[지금 실행]·[실패 재실행]·실제 발송·대량 sync/import 는 여전히 ADMIN.
