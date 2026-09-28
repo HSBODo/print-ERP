@@ -3,4 +3,13 @@ import { VisionRevenueChartPage } from '@/pages/accounting/VisionRevenueChartPag
 
 export const Route = createFileRoute('/_auth/accounting/vision-revenue-chart')({
   component: VisionRevenueChartPage,
+  staticData: {
+    page: {
+      id: 'accounting-vision-chart',
+      label: '시력교정 매출 그래프',
+      section: '회계',
+      status: 'complete',
+      access: { role: 'EXECUTIVE' },
+    },
+  },
 })

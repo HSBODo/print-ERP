@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
-import { isMenuHidden, menuItems, statsPages, type MenuItem } from './navigation'
+import { matchesDepartment } from '@/stores/auth-session'
+import {
+  getMenuStatusIds,
+  getPageDepartments,
+  hasExplicitMenuStatus,
+  isMenuHidden,
+  menuItems,
+  statsPages,
+  type MenuItem,
+} from './navigation'
 
 /** 3단 트리를 재귀 탐색해 실제 링크(href !== '#')만 수집. */
 const collectPaths = (items: MenuItem[]): string[] =>
@@ -71,5 +80,19 @@ describe('navigation menu', () => {
     const linkedStatsPaths = menuPaths().filter((path) => path.startsWith('/stats') || path.startsWith('/report'))
 
     expect(linkedStatsPaths.filter((path) => !statsPagePaths.includes(path))).toEqual([])
+  })
+
+  it('statsPages와 MENU_STATUS id는 서로 누락 없이 맞아야 한다', () => {
+    const ids = statsPages.map((p) => p.id)
+    expect(ids.filter((id) => !hasExplicitMenuStatus(id))).toEqual([])
+    expect(getMenuStatusIds().filter((id) => !ids.includes(id))).toEqual([])
+  })
+
+  it('홈(home) · 통계 페이지 밖 id 는 스코프 없음(undefined) — 모든 부서 통과', () => {
+    // 사이드바 pruneByDepartment 가 잎 노드마다 getPageDepartments 를 조회하는데,
+    // 홈은 statsPages 에 없으므로 default 'MEDICAL' 로 잘못 판정되면 MARKETING STAFF 에게 홈이 사라진다.
+    expect(getPageDepartments('home')).toBeUndefined()
+    expect(getPageDepartments('some-unknown-id')).toBeUndefined()
+    expect(matchesDepartment({ department: 'MARKETING' }, getPageDepartments('home'))).toBe(true)
   })
 })

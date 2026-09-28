@@ -1,6 +1,5 @@
-import { Outlet, useLocation } from '@tanstack/react-router'
-import { statsPages } from '@/config/navigation'
-import { isRouteBlocked } from '@/config/routeAccess'
+import { Outlet, useLocation, useMatches } from '@tanstack/react-router'
+import { canAccess } from '@/config/pageAccess'
 import { StatsPlaceholderPage } from '@/pages/StatsPlaceholderPage'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -8,14 +7,14 @@ import { useAuthStore } from '@/stores/authStore'
 const isProd = !import.meta.env.DEV
 
 /**
- * 통계 페이지 접근 차단 — 차단 대상이면 페이지 대신 placeholder 를 렌더한다.
- * role · 부서 기반 차단이 실시간으로 반영되도록 렌더 시점에 isRouteBlocked 를 호출한다.
+ * 통계 페이지 접근 차단 — 현재 라우트의 staticData.page 로 판정해, 차단 대상이면 페이지 대신 placeholder 를 렌더한다.
+ * role · 부서 기반 차단이 실시간으로 반영되도록 렌더 시점에 판정한다.
  */
 export function RouteGate() {
+  const page = useMatches({ select: (matches) => matches.at(-1)?.staticData.page })
   const pathname = useLocation({ select: (location) => location.pathname })
   const user = useAuthStore((s) => s.user)
-  const page = statsPages.find((item) => item.path === pathname.replace(/\/+$/, ''))
 
-  if (page && isRouteBlocked(page.id, isProd, user)) return <StatsPlaceholderPage page={page} />
+  if (page && canAccess(page, user, isProd) !== 'ok') return <StatsPlaceholderPage page={page} path={pathname} />
   return <Outlet />
 }

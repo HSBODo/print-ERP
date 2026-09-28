@@ -37,6 +37,23 @@ describe('statsPages ↔ 파일 라우트 대조', () => {
     expect(orphan).toEqual([])
   })
 
+  it('통계 페이지 라우트는 모두 staticData.page 를 선언해야 한다', () => {
+    // RouteGate 는 staticData.page 가 없는 라우트를 판정 없이 통과시킨다 → 선언 누락 = 권한 우회.
+    const routes = Object.values(createRouter({ routeTree }).routesByPath)
+    const missing = routes
+      .filter((route) => !NON_STATS_PATHS.includes(route.fullPath) && !route.options.staticData?.page)
+      .map((route) => route.fullPath)
+    expect(missing).toEqual([])
+  })
+
+  it('staticData.page.id 는 같은 경로의 statsPages id 와 일치해야 한다', () => {
+    const mismatched = Object.values(createRouter({ routeTree }).routesByPath)
+      .filter((route) => route.options.staticData?.page)
+      .filter((route) => statsPages.find((page) => page.path === route.fullPath)?.id !== route.options.staticData?.page?.id)
+      .map((route) => route.fullPath)
+    expect(mismatched).toEqual([])
+  })
+
   it('statsPages path 는 중복이 없어야 한다', () => {
     expect(new Set(statsPaths).size).toBe(statsPaths.length)
   })

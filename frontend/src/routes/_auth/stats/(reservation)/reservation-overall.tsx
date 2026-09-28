@@ -3,4 +3,13 @@ import { ReservationOverallPage } from '@/pages/reservation/ReservationOverallPa
 
 export const Route = createFileRoute('/_auth/stats/(reservation)/reservation-overall')({
   component: ReservationOverallPage,
+  staticData: {
+    page: {
+      id: 'reservation-overall',
+      label: '예약 종합',
+      section: '예약',
+      status: 'complete',
+      access: { department: 'MEDICAL' },
+    },
+  },
 })
