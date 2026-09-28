@@ -10,7 +10,7 @@ import {
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useOutpatientCountTrend } from '@/hooks/outpatient/useOutpatientCountTrend'
+import { useOutpatientCountTrend } from '../../hooks/useOutpatientCountTrend'
 import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
 

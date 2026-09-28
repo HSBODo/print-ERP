@@ -4,8 +4,8 @@ import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
-import { useOutpatientList } from '@/hooks/outpatient/useOutpatientList'
-import type { OutpatientListItem } from '@/api/outpatient/outpatientList'
+import { useOutpatientList } from '../../hooks/useOutpatientList'
+import type { OutpatientListItem } from '../../type/api'
 import { COLUMNS, ALIGN, HEADER_ALIGN } from './outpatientListColumns'
 import {
   dash,

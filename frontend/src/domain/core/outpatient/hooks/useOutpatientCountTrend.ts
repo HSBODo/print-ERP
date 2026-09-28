@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { outpatientApi, type OutpatientCountMonthlyItem } from '@/api/outpatient'
+import { outpatientApi } from '../api'
+import type { OutpatientCountMonthlyItem } from '../type/api'
 
 interface MonthlyData {
   outpatientCount: number | null

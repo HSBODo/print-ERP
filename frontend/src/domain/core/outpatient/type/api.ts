@@ -1,6 +1,18 @@
 import { z } from 'zod'
-import { api } from '#shared/api/client'
-import { withQuery } from '#shared/api/utils'
+import { apiResponseOf } from '#shared/api/utils'
+
+/* ── Monthly (외래수 페이지용) ── */
+
+export const outpatientCountMonthlyItemSchema = z.object({
+  year: z.number(),
+  month: z.number(),
+  outpatientCount: z.number().nullable(),
+  total: z.number().nullable().optional(),
+})
+export type OutpatientCountMonthlyItem = z.infer<typeof outpatientCountMonthlyItemSchema>
+export const outpatientCountResponseSchema = apiResponseOf(z.array(outpatientCountMonthlyItemSchema))
+
+/* ── 외래수 리스트 ── */
 
 /**
  * 외래수 리스트 — RESERVATION 기준 외래(F) + 내원/퇴원(I/H) 행 목록.
@@ -8,7 +20,7 @@ import { withQuery } from '#shared/api/utils'
  * 행 1개 = RESERVE_NUM 1개. 리스트 합계 = 월별 외래수 지표(outpatient-count)와 정합.
  * 전 컬럼 문자열.
  */
-const outpatientListItemSchema = z.object({
+export const outpatientListItemSchema = z.object({
   reserveNum: z.string(),
   reserveDate: z.string(),
   reserveTime: z.string(),
@@ -52,15 +64,8 @@ const outpatientListItemSchema = z.object({
 
 export type OutpatientListItem = z.infer<typeof outpatientListItemSchema>
 
-const outpatientListResponseSchema = z.object({
+export const outpatientListResponseSchema = z.object({
   success: z.boolean(),
   data: z.array(outpatientListItemSchema),
   message: z.string().nullish(),
 })
-
-export const outpatientListApi = {
-  getOutpatientList: async (from: string, to: string): Promise<OutpatientListItem[]> => {
-    const res = await api.get<unknown>(withQuery('/outpatient-list', { from, to }))
-    return outpatientListResponseSchema.parse(res).data
-  },
-}

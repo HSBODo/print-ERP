@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
-import { useOutpatientCountTrend } from '@/hooks/outpatient/useOutpatientCountTrend'
+import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
 import { useProcedureExamTrend } from '@/hooks/exam/useProcedureExamTrend'
 import { useExaminationTrend } from '@/hooks/exam/useExaminationTrend'
 import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'

@@ -1,4 +1,4 @@
-import type { OutpatientListItem } from '@/api/outpatient/outpatientList'
+import type { OutpatientListItem } from '../../type/api'
 
 /**
  * OutpatientListPage 전용 순수 로직/상수 (렌더 무관).

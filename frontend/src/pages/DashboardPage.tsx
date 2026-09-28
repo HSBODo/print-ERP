@@ -14,7 +14,7 @@ import { formatAxisNumber } from '#shared/utils/stats'
 import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
 import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'
 import { useProcedureExamTrend } from '@/hooks/exam/useProcedureExamTrend'
-import { useOutpatientCountTrend } from '@/hooks/outpatient/useOutpatientCountTrend'
+import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
 import { useAccumulatedEyesTotal } from '@/hooks/marketing/useAccumulatedEyesTotal'
 import { useReservationStatsSystem } from '@/hooks/reservation/useReservationStatsSystem'
 

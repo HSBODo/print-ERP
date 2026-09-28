@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { outpatientListApi, type OutpatientListItem } from '@/api/outpatient/outpatientList'
+import { outpatientApi } from '../api'
+import type { OutpatientListItem } from '../type/api'
 
 /**
  * 외래수 리스트 조회 훅. 예약일 범위(from~to)로 서버 조회.
@@ -8,7 +9,7 @@ import { outpatientListApi, type OutpatientListItem } from '@/api/outpatient/out
 export function useOutpatientList(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['outpatient-list', from, to],
-    queryFn: () => outpatientListApi.getOutpatientList(from, to),
+    queryFn: () => outpatientApi.getOutpatientList(from, to),
     enabled: enabled && Boolean(from && to),
   })
 
