@@ -1,4 +1,5 @@
-import { matchesDepartment, type AuthUser, type UserDepartment } from '#domain/support/session/session'
+import type { AuthUser } from '#domain/support/session/session'
+import { hasAccess, type PageAccess } from '#domain/support/session/utils/access'
 
 /**
  * 메뉴별 구현 상태.
@@ -9,17 +10,6 @@ import { matchesDepartment, type AuthUser, type UserDepartment } from '#domain/s
  */
 export type MenuStatus = 'complete' | 'frontend-only' | 'backend-only' | 'pending'
 
-/**
- * 페이지 접근 조건 (docs/auth/permissions.md). 셋 중 하나만 지정한다.
- *   role 'ADMIN'     — ADMIN 롤 전용 (시스템 조작 · 관리자 통계)
- *   role 'EXECUTIVE' — ADMIN·DIRECTOR (임원 이상) 전용 (회계)
- *   department       — 해당 부서만. ADMIN·DIRECTOR (department='ALL') 는 항상 통과
- * 롤 조건이 붙은 페이지는 department='ALL' 인 사용자만 통과하므로 부서 조건을 따로 두지 않는다.
- */
-export type PageAccess =
-  | { role: 'ADMIN' }
-  | { role: 'EXECUTIVE' }
-  | { department: Exclude<UserDepartment, 'ALL'> }
 
 /** 통계 페이지 메타 — 각 라우트 파일의 staticData.page 로 선언한다. */
 export interface PageMeta {
@@ -55,11 +45,5 @@ export const canAccess = (
   if (page.status === 'backend-only') return 'unavailable'
   if (isProd && page.status === 'pending') return 'unavailable'
 
-  const { access } = page
-  if ('role' in access) {
-    if (access.role === 'ADMIN' && user?.role !== 'ADMIN') return 'forbidden'
-    if (access.role === 'EXECUTIVE' && user?.role !== 'ADMIN' && user?.role !== 'DIRECTOR') return 'forbidden'
-    return 'ok'
-  }
-  return matchesDepartment(user ?? null, [access.department]) ? 'ok' : 'forbidden'
+  return hasAccess(page.access, user) ? 'ok' : 'forbidden'
 }

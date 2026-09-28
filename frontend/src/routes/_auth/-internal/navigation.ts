@@ -7,7 +7,8 @@ import {
 
 import type { FileRouteTypes } from '@/routeTree.gen'
 import type { AuthUser } from '#domain/support/session/session'
-import { canAccess, type MenuStatus, type PageAccess, type PageMeta } from './pageAccess'
+import { hasAccess, type PageAccess } from '#domain/support/session/utils/access'
+import type { MenuStatus, PageMeta } from './pageAccess'
 
 /** 라우트 트리에 실제로 존재하는 경로 — 메뉴에 없는 경로를 적으면 컴파일 에러. */
 export type PagePath = FileRouteTypes['fullPaths']
@@ -188,9 +189,6 @@ export const MENU_TREE: MenuNode[] = [
 
 type MenuUser = Pick<AuthUser, 'role' | 'department'> | null | undefined
 
-/** 롤·부서 조건만 본다 (구현 상태 제외 — 상태는 노출 여부를 따로 판정). */
-const hasPermission = (access: PageAccess, user: MenuUser) =>
-  canAccess({ status: 'complete', access }, user, false) === 'ok'
 
 const roleFlags = (access: PageAccess | undefined) => ({
   adminOnly: access !== undefined && 'role' in access && access.role === 'ADMIN' ? true : undefined,
@@ -217,7 +215,7 @@ export const buildMenu = (
 
     if (typeof node === 'string') {
       const page = getPage(node)
-      if (!page || !hasPermission(page.access, user)) return []
+      if (!page || !hasAccess(page.access, user)) return []
       if (isProd && page.status === 'pending') return []
       return [{ id: page.id, label: page.label, href: node, status: page.status, ...roleFlags(page.access), adminReal }]
     }
@@ -239,7 +237,7 @@ export const buildMenu = (
       }]
     }
 
-    if (node.access && !hasPermission(node.access, user)) return []
+    if (node.access && !hasAccess(node.access, user)) return []
     const { access, ...link } = node
     return [{ ...link, ...roleFlags(access), adminReal }]
   })
