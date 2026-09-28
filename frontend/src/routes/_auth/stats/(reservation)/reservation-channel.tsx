@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ReservationChannelPage } from '@/pages/reservation/ReservationChannelPage'
+import { ReservationChannelPage } from '#domain/core/marketing/ui/ReservationChannelPage'
 
 export const Route = createFileRoute('/_auth/stats/(reservation)/reservation-channel')({
   component: ReservationChannelPage,

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SmsManagementPage } from '@/pages/sms/SmsManagementPage'
+import { SmsManagementPage } from '#domain/core/sms/ui/SmsManagementPage'
 
 export const Route = createFileRoute('/_auth/stats/(sms)/sms')({
   component: SmsManagementPage,

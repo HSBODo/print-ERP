@@ -1,5 +1,5 @@
 import { redirect } from '@tanstack/react-router'
-import { readStoredAuthSession } from '@/stores/auth-session'
+import { readStoredAuthSession } from '#domain/support/session/session'
 
 /**
  * 인증 가드 — 저장된 토큰이 없으면 /login으로 리다이렉트한다.

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ReservationStatsSystemPage } from '@/pages/reservation/ReservationStatsSystemPage'
+import { ReservationStatsSystemPage } from '#domain/core/reservationStats/ui/ReservationStatsSystemPage'
 
 export const Route = createFileRoute('/_auth/stats/(reservation)/reservation-stats-system')({
   component: ReservationStatsSystemPage,
