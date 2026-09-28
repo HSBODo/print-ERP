@@ -1,5 +1,5 @@
 import { getRouteApi, Outlet, useLocation, useMatches } from '@tanstack/react-router'
-import { StatsPlaceholderPage } from '@/pages/StatsPlaceholderPage'
+import { StatsPlaceholderPage } from './StatsPlaceholderPage'
 import { Forbidden } from './Forbidden'
 
 const authRoute = getRouteApi('/_auth')
