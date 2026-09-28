@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { DreamlensLedgerRow } from '@/api/etc'
+import type { DreamlensLedgerRow } from '../../type/api'
 import {
   csvColumnsOf,
   isoWeekNumbers,

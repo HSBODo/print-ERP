@@ -15,7 +15,8 @@ import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { MetricSection, type MetricDef } from '#shared/ui/MetricSection'
 import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
-import { b2bApi, type B2bRevenueMonthlyItem } from '@/api/etc'
+import { b2bApi } from '../../api'
+import type { B2bRevenueMonthlyItem } from '../../type/api'
 import { periodLabel } from '#shared/utils/stats'
 
 type MonthlyData = {

@@ -1,4 +1,4 @@
-import type { DreamlensLedgerRequest, DreamlensLedgerRow } from '@/api/etc'
+import type { DreamlensLedgerRequest, DreamlensLedgerRow } from '../../type/api'
 
 export type LedgerFieldKey = Exclude<keyof DreamlensLedgerRow, 'id' | 'totalRevenue' | 'source'>
 

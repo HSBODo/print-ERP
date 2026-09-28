@@ -6,7 +6,8 @@ import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
-import { dreamlensLedgerApi, type DreamlensLedgerRow } from '@/api/etc'
+import { dreamlensLedgerApi } from '../../api'
+import type { DreamlensLedgerRow } from '../../type/api'
 import { LedgerCell } from './LedgerCell'
 import {
   EXAMINERS,
