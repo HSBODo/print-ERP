@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
-import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
-import type { OverallExamMonthlyItem } from '@/api/overall'
+import { useOverallExamMonthly } from '../../hooks/useOverallExamMonthly'
+import type { OverallExamMonthlyItem } from '../../type/api'
 
 /**
  * 검사 > 월별 검사자 종합지표.

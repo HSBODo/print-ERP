@@ -10,7 +10,7 @@ import {
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
+import { useOverallExamMonthly } from '../../hooks/useOverallExamMonthly'
 import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 
 const RECENCY_COLORS = ['#E11D2E', '#4B5563', '#A8CEDF', '#F59E0B']

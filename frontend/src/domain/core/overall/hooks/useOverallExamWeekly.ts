@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { overallApi, type OverallExamWeeklyItem } from '@/api/overall'
+import { overallApi } from '../api'
+import type { OverallExamWeeklyItem } from '../type/api'
 
 /**
  * 주간 검사자 종합지표 — 연도별 주(월~일, 월 경계 클립) 운영 DB 라이브 집계.

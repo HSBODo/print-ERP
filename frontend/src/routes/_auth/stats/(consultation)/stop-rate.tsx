@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { StopRatePage } from '@/pages/consultation/StopRatePage'
+import { StopRatePage } from '#domain/core/overall/ui/StopRatePage'
 
 export const Route = createFileRoute('/_auth/stats/(consultation)/stop-rate')({
   component: StopRatePage,

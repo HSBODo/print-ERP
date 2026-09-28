@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
-import { useOverallExamWeekly } from '@/hooks/overall/useOverallExamWeekly'
+import { useOverallExamWeekly } from '../../hooks/useOverallExamWeekly'
 import { CURRENT_YEAR } from '#shared/constants/chart'
-import type { OverallExamWeeklyItem } from '@/api/overall'
+import type { OverallExamWeeklyItem } from '../../type/api'
 
 /**
  * 검사 > 주간 검사자 종합지표.

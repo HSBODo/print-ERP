@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { overallApi, type OverallExamMonthlyItem } from '@/api/overall'
+import { overallApi } from '../api'
+import type { OverallExamMonthlyItem } from '../type/api'
 
 /**
  * 월별 검사자 종합지표 — 연도별 월 단위 마트 집계 (24·25 SQL 시드 + 26+ 배치).
