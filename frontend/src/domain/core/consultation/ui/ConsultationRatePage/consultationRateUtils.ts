@@ -1,4 +1,4 @@
-import { type ConsultationRateItem } from '@/api/consultation'
+import { type ConsultationRateItem } from '../../type/api'
 
 export type MetricKey =
   | 'overallConsultation'

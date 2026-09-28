@@ -7,7 +7,7 @@ import {
   itemToData,
   toDataMap,
 } from './consultationRateUtils'
-import { type ConsultationRateItem } from '@/api/consultation'
+import { type ConsultationRateItem } from '../../type/api'
 
 const baseItem = (overrides: Partial<ConsultationRateItem> = {}): ConsultationRateItem => ({
   year: 2026,

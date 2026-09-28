@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { buildMonthlyReportCsv } from './monthlyReportCsv'
-import type { StopReasonMonthlyItem } from '@/api/consultation'
+import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
 
 const emptyStop: StopReasonMonthlyItem = {
   year: 2026,

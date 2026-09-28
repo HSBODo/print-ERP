@@ -8,7 +8,7 @@ import {
   type ChartConfig,
 } from '#shared/ui/Chart'
 import { Select } from '#shared/ui/Select'
-import type { StopReasonMonthlyItem } from '@/api/consultation'
+import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
 import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
 import { isIncompleteMonth } from './monthlyReportUtils'

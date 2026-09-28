@@ -1,13 +1,11 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { consultationApi, type ConsultationRateItem } from '@/api/consultation'
+import { consultationApi } from '../api'
+import type { ConsultationRateItem } from '../type/api'
 
 interface MonthlyData {
   overallConsultation: number
   visionConsultation: number
-  visionConsultationOneday: number
-  visionConsultationGeneral: number
-  visionGeneralBookRate: number
   visionSurgery: number
   cataractSurgery: number
   visionExamCount: number
@@ -18,9 +16,7 @@ interface MonthlyData {
 }
 
 const EMPTY_RATES: MonthlyData = {
-  overallConsultation: 0, visionConsultation: 0,
-  visionConsultationOneday: 0, visionConsultationGeneral: 0, visionGeneralBookRate: 0,
-  visionSurgery: 0, cataractSurgery: 0,
+  overallConsultation: 0, visionConsultation: 0, visionSurgery: 0, cataractSurgery: 0,
   visionExamCount: 0, visionCounselCount: 0, visionSurgeryBooked: 0,
   cataractExamCount: 0, cataractSurgeryBooked: 0,
 }
@@ -35,9 +31,6 @@ function itemToData(item: ConsultationRateItem): MonthlyData {
       item.visionExamCount + item.cataractExamCount,
     ),
     visionConsultation: item.visionCounselRate,
-    visionConsultationOneday: item.visionCounselRateOneday ?? 0,
-    visionConsultationGeneral: item.visionCounselRateGeneral ?? 0,
-    visionGeneralBookRate: item.visionGeneralBookRate ?? 0,
     visionSurgery: item.visionSurgeryRate,
     cataractSurgery: item.cataractSurgeryRate,
     visionExamCount: item.visionExamCount,
@@ -57,10 +50,10 @@ function toDataMap(items: ConsultationRateItem[]): Record<number, MonthlyData[]>
   return map
 }
 
-export function useConsultationRateTrend(years: number[]) {
+export function useConsultationRateComposition(years: number[]) {
   const { data: apiItems, isLoading, isError } = useQuery({
-    queryKey: ['consultation-rate-trend', years],
-    queryFn: () => consultationApi.getConsultationRateTrend(years),
+    queryKey: ['consultation-rate-composition', years],
+    queryFn: () => consultationApi.getConsultationRateComposition(years),
     enabled: years.length > 0,
   })
 

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { consultationApi, type StopReasonMonthlyItem } from '@/api/consultation'
+import { consultationApi } from '../api'
+import type { StopReasonMonthlyItem } from '../type/api'
 
 function toDataMap(items: StopReasonMonthlyItem[]): Record<number, (StopReasonMonthlyItem | null)[]> {
   const map: Record<number, (StopReasonMonthlyItem | null)[]> = {}

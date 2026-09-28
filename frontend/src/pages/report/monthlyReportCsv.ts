@@ -1,5 +1,5 @@
 import { MONTHS } from '#shared/constants/chart'
-import type { StopReasonMonthlyItem } from '@/api/consultation'
+import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
 
 /**
  * 월간 레포트 도표 데이터를 세로형 CSV로 직렬화 (수술 상세표 #27 제외).

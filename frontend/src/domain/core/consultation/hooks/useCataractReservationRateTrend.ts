@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { consultationApi, type CataractReservationRateItem } from '@/api/consultation'
+import { consultationApi } from '../api'
+import type { CataractReservationRateItem } from '../type/api'
 
 interface MonthlyData {
   examCount: number

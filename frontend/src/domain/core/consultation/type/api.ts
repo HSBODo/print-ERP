@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { api } from '#shared/api/client'
-import { apiResponseOf, withQuery } from '#shared/api/utils'
+import { apiResponseOf } from '#shared/api/utils'
 
 /* ── Monthly (검사 중단 사유 페이지용) ── */
 
@@ -17,7 +16,7 @@ const stopReasonMonthlyItemSchema = z.object({
   total: z.number(),
 })
 export type StopReasonMonthlyItem = z.infer<typeof stopReasonMonthlyItemSchema>
-const stopReasonResponseSchema = apiResponseOf(z.array(stopReasonMonthlyItemSchema))
+export const stopReasonResponseSchema = apiResponseOf(z.array(stopReasonMonthlyItemSchema))
 
 /* ── Monthly (백내장 예약률 페이지용) ── */
 
@@ -29,7 +28,7 @@ const cataractReservationRateItemSchema = z.object({
   reservationRate: z.number(),
 })
 export type CataractReservationRateItem = z.infer<typeof cataractReservationRateItemSchema>
-const cataractReservationRateResponseSchema = apiResponseOf(z.array(cataractReservationRateItemSchema))
+export const cataractReservationRateResponseSchema = apiResponseOf(z.array(cataractReservationRateItemSchema))
 
 /* ── 상담 전환율 페이지용 ── */
 
@@ -53,29 +52,9 @@ const consultationRateItemSchema = z.object({
   cataractSurgeryRate: z.number(),
 })
 
-const consultationRateResponseSchema = z.object({
+export const consultationRateResponseSchema = z.object({
   success: z.boolean(),
   data: z.array(consultationRateItemSchema),
 })
 
 export type ConsultationRateItem = z.infer<typeof consultationRateItemSchema>
-
-export const consultationApi = {
-  getConsultationRate: async (years: number[]) =>
-    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate', { years }))).data,
-
-  getStopReasonMonthly: async (years: number[]) =>
-    stopReasonResponseSchema.parse(await api.get<unknown>(withQuery('/stats/stop-reason/monthly', { years }))).data,
-
-  getCataractReservationRateTrend: async (years: number[], category: 'vision' | 'cataract' = 'cataract') =>
-    cataractReservationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/cataract-reservation-rate/trend', { years, category }))).data,
-
-  getConsultationRateKpi: async (years: number[]) =>
-    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/kpi', { years }))).data,
-
-  getConsultationRateTrend: async (years: number[]) =>
-    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/trend', { years }))).data,
-
-  getConsultationRateComposition: async (years: number[]) =>
-    consultationRateResponseSchema.parse(await api.get<unknown>(withQuery('/stats/consultation-rate/composition', { years }))).data,
-}

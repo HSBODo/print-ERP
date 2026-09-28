@@ -10,7 +10,7 @@ import {
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useCataractReservationRateTrend } from '@/hooks/consultation/useCataractReservationRateTrend'
+import { useCataractReservationRateTrend } from '../../hooks/useCataractReservationRateTrend'
 import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 
 const RECENCY_COLORS = ['#E11D2E', '#4B5563', '#A8CEDF', '#F59E0B']

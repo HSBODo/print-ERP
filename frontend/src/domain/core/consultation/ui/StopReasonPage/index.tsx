@@ -8,9 +8,9 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '#shared/ui/Chart'
-import { useStopReasonMonthly } from '@/hooks/consultation/useStopReasonMonthly'
+import { useStopReasonMonthly } from '../../hooks/useStopReasonMonthly'
 import { CURRENT_YEAR } from '#shared/constants/chart'
-import type { StopReasonMonthlyItem } from '@/api/consultation'
+import type { StopReasonMonthlyItem } from '../../type/api'
 
 const YEAR_OPTIONS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1)
