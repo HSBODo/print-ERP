@@ -1,6 +1,5 @@
 import { useAuthStore } from '../../stores/authStore'
-import { useNavigate, useLocation } from '@tanstack/react-router'
-import { statsPages } from '@/config/navigation'
+import { useMatches, useNavigate } from '@tanstack/react-router'
 import type { UserDepartment, UserRole } from '@/stores/auth-session'
 
 /** 화면 표기용 한글 라벨 — UserFormDialog 옵션 라벨과 일치시켰다. */
@@ -30,7 +29,8 @@ const SCOPE_BADGE_CLASS: Record<UserDepartment, string> = {
 export function Topbar() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
-  const location = useLocation()
+  // 현재 라우트의 staticData.page — 통계 페이지가 아니면(홈 등) undefined.
+  const currentPage = useMatches({ select: (matches) => matches.at(-1)?.staticData.page })
   const displayName = user?.name || user?.loginId || user?.email
   // 이름(ID) 부서-권한 — 헤더 우측 노출. loginId 가 없으면 () 를 아예 안 붙인다.
   const loginIdSuffix = user?.loginId && user.loginId !== user?.name ? `(${user.loginId})` : ''
@@ -44,13 +44,11 @@ export function Topbar() {
     navigate({ to: '/login' })
   }
 
-  const currentPage = statsPages.find((p) => p.path === location.pathname)
-
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center px-6 flex-shrink-0">
       {currentPage ? (
         <div className="flex items-center gap-2 text-sm font-medium">
-          <span className="text-gray-400">{currentPage.sectionLabel}</span>
+          <span className="text-gray-400">{currentPage.section}</span>
           <span className="text-gray-300">&gt;</span>
           <span className="text-gray-900 font-semibold">{currentPage.label}</span>
         </div>
