@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { api } from '#shared/api/client'
 import { apiResponseOf } from '#shared/api/utils'
-import type { UserDepartment, UserRole } from '@/stores/auth-session'
+import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
 const userRowSchema = z.object({
   id: z.number(),

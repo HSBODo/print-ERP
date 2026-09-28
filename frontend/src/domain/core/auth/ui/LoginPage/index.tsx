@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuthStore } from '../stores/authStore'
-import { authApi } from '../api/auth'
+import { useAuthStore } from '#domain/support/session/store'
+import { authApi } from '../../api'
 import { useNavigate } from '@tanstack/react-router'
-import { clearRememberedLogin, readRememberedLogin, saveRememberedLogin } from '../lib/rememberedLogin'
+import { clearRememberedLogin, readRememberedLogin, saveRememberedLogin } from '../../utils/rememberedLogin'
 
 const loginSchema = z.object({
   loginId: z.string().trim().min(1, '아이디를 입력해주세요'),

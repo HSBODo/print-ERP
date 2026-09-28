@@ -4,8 +4,8 @@ import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
 import { Card } from '#shared/ui/Card'
 import { useSmsOffsets, useUpdateSmsOffsets } from '@/hooks/sms/useSmsOffsets'
-import { useAuthStore } from '@/stores/authStore'
-import { canSystemOp } from '@/stores/auth-session'
+import { useAuthStore } from '#domain/support/session/store'
+import { canSystemOp } from '#domain/support/session/session'
 import type { SmsMessageKind, SmsOffsetRow } from '@/api/sms'
 
 /**

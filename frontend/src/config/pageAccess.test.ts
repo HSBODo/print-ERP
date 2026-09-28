@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { createRouter } from '@tanstack/react-router'
 import { routeTree } from '@/routeTree.gen'
 import { canAccess, type PageMeta } from './pageAccess'
-import type { UserRole } from '../stores/auth-session'
+import type { UserRole } from '#domain/support/session/session'
 
 // ADMIN·DIRECTOR 는 department='ALL' 이라 부서 gate 를 우회하므로 테스트에서 편의상 사용.
 const asAdmin = { role: 'ADMIN' as const, department: 'ALL' as const }

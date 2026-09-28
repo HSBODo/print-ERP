@@ -3,7 +3,7 @@ import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
 import { buildMenu, MENU_TREE, type MenuItem, type PagePath } from '@/config/navigation'
 import type { MenuStatus } from '@/config/pageAccess'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '#domain/support/session/store'
 
 // 운영 빌드(PROD)에서는 pending(미완성) 메뉴를 숨긴다. 개발에서는 빨강으로 표시한다.
 const isProd = !import.meta.env.DEV

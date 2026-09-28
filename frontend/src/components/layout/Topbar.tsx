@@ -1,6 +1,6 @@
-import { useAuthStore } from '../../stores/authStore'
+import { useAuthStore } from '#domain/support/session/store'
 import { useMatches, useNavigate } from '@tanstack/react-router'
-import type { UserDepartment, UserRole } from '@/stores/auth-session'
+import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
 /** 화면 표기용 한글 라벨 — UserFormDialog 옵션 라벨과 일치시켰다. */
 const ROLE_LABEL: Record<UserRole, string> = {

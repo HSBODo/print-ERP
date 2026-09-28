@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { StoredAuthSession } from '@/stores/auth-session'
+import type { StoredAuthSession } from '#domain/support/session/session'
 
-vi.mock('@/stores/auth-session', () => ({ readStoredAuthSession: vi.fn() }))
+vi.mock('#domain/support/session/session', () => ({ readStoredAuthSession: vi.fn() }))
 
 import { requireAuth } from './requireAuth'
-import { readStoredAuthSession } from '@/stores/auth-session'
+import { readStoredAuthSession } from '#domain/support/session/session'
 
 const session = vi.mocked(readStoredAuthSession)
 const sessionWith = (token: string | null): StoredAuthSession => ({

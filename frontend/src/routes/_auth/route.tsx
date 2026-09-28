@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { canAccess, type PageAccessResult } from '@/config/pageAccess'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '#domain/support/session/store'
 import { requireAuth } from './-internal/requireAuth'
 import { RouteGate } from './-internal/RouteGate'
 

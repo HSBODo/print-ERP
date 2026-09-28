@@ -5,7 +5,7 @@ import {
   persistAuthSession,
   readStoredAuthSession,
   type AuthUser,
-} from './auth-session'
+} from './session'
 
 const initialSession = readStoredAuthSession()
 

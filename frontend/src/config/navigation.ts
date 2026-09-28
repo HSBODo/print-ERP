@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 
 import type { FileRouteTypes } from '@/routeTree.gen'
-import type { AuthUser } from '@/stores/auth-session'
+import type { AuthUser } from '#domain/support/session/session'
 import { canAccess, type MenuStatus, type PageAccess, type PageMeta } from './pageAccess'
 
 /** 라우트 트리에 실제로 존재하는 경로 — 메뉴에 없는 경로를 적으면 컴파일 에러. */

@@ -8,13 +8,13 @@ const navigateMock = vi.fn()
 
 // 외부 의존성(라우터·스토어·API)은 목으로 대체해 LoginPage 자체 동작만 검증한다.
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigateMock }))
-vi.mock('@/stores/authStore', () => ({
+vi.mock('#domain/support/session/store', () => ({
   useAuthStore: (selector: (state: { login: typeof loginMock }) => unknown) => selector({ login: loginMock }),
 }))
-vi.mock('@/api/auth', () => ({ authApi: { login: vi.fn() } }))
+vi.mock('../../api', () => ({ authApi: { login: vi.fn() } }))
 
-import { LoginPage } from './LoginPage'
-import { authApi } from '@/api/auth'
+import { LoginPage } from '.'
+import { authApi } from '../../api'
 
 const loginApi = vi.mocked(authApi.login)
 

@@ -4,7 +4,7 @@ import {
   persistAuthSession,
   readStoredAuthSession,
   type AuthUser,
-} from './auth-session'
+} from './session'
 
 class MemoryStorage implements Storage {
   private store = new Map<string, string>()

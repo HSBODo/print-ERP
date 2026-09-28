@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
 import { useCreateUser, useUpdateUser } from '@/hooks/admin/useUsers'
 import type { UserRow } from '@/api/admin/users'
-import type { UserDepartment, UserRole } from '@/stores/auth-session'
+import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
 /**
  * ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING 조합 강제

@@ -1,4 +1,4 @@
-import { matchesDepartment, type AuthUser, type UserDepartment } from '../stores/auth-session'
+import { matchesDepartment, type AuthUser, type UserDepartment } from '#domain/support/session/session'
 
 /**
  * 메뉴별 구현 상태.

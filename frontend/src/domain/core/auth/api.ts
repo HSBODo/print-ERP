@@ -1,5 +1,5 @@
 import { api } from '#shared/api/client'
-import type { UserDepartment, UserRole } from '@/stores/auth-session'
+import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
 export interface LoginRequest {
   loginId: string
