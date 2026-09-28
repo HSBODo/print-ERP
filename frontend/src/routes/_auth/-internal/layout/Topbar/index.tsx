@@ -1,6 +1,6 @@
 import { useAuthStore } from '#domain/support/session/store'
 import { useMatches, useNavigate } from '@tanstack/react-router'
-import { DEPARTMENT_LABEL, ROLE_LABEL, SCOPE_BADGE_CLASS } from '#domain/support/session/utils/label'
+import { DEPARTMENT_LABEL, ROLE_LABEL, SCOPE_BADGE_CLASS } from './label'
 
 export function Topbar() {
   const { user, logout } = useAuthStore()

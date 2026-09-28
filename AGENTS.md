@@ -70,7 +70,7 @@ project-root/
 │   │   ├── composition/                 # 여러 core 도메인 조합 — report(월간·주차 레포트) · dashboard(메인 대시보드)
 │   │   ├── domain/
 │   │   │   ├── core/<domain>/           # api.ts(<domain>Api) · type/api.ts(zod 스키마+타입) · hooks/ · ui/<Screen>/ · utils/
-│   │   │   └── support/session/         # 세션·권한 — store · session · apiClientAuth · utils/access(hasAccess) · utils/label
+│   │   │   └── support/session/         # 세션·권한 — store · session · apiClientAuth · utils/access(hasAccess)
 │   │   ├── shared/                      # 도메인 무관 공용 — api/(client·utils) · ui/(shadcn 포함) · hooks/ · utils/ · constants/
 │   │   ├── index.css                    # Tailwind 4 + OKLCH 테마 변수
 │   │   └── test/

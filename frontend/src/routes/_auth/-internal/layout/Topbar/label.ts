@@ -1,4 +1,4 @@
-import type { UserDepartment, UserRole } from '../session'
+import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
 /** 화면 표기용 한글 라벨 — UserFormDialog 옵션 라벨과 일치시켰다. */
 export const ROLE_LABEL: Record<UserRole, string> = {
