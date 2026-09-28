@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Loader2, RefreshCw, X } from 'lucide-react'
-import { useSolapiTemplates } from '@/hooks/sms/useSmsManagement'
-import type { SmsSolapiTemplate } from '@/api/sms'
+import { useSolapiTemplates } from '../../../hooks/useSmsManagement'
+import type { SmsSolapiTemplate } from '../../../type/api'
 
 /**
  * 솔라피 알림톡 템플릿 조회 모달 — env 에 templateId 가 채워진 슬롯만 카카오에서

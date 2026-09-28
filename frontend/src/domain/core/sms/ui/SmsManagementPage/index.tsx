@@ -1,24 +1,24 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent } from '#shared/ui/Card'
-import { useSmsMutations, useSmsTargets, useSmsTemplates } from '@/hooks/sms/useSmsManagement'
-import { useSmsOffsets } from '@/hooks/sms/useSmsOffsets'
-import { TargetFormModal } from './TargetFormModal'
-import { SmsStatusFilterBar } from './SmsStatusFilterBar'
-import { SmsToolbar, type PeriodMode } from './SmsToolbar'
-import { SmsOffsetGrid } from './SmsOffsetGrid'
-import { SmsOpTypeHelp } from './SmsOpTypeHelp'
-import { SmsSolapiTemplateModal } from './SmsSolapiTemplateModal'
-import { SmsOptOutModal } from './SmsOptOutModal'
-import { SmsQueueStatusCard } from './SmsQueueStatusCard'
-import { SmsMessagePreview } from './SmsMessagePreview'
-import { SmsPagination } from './SmsPagination'
+import { useSmsMutations, useSmsTargets, useSmsTemplates } from '../../hooks/useSmsManagement'
+import { useSmsOffsets } from '../../hooks/useSmsOffsets'
+import { TargetFormModal } from './ui/TargetFormModal'
+import { SmsStatusFilterBar } from './ui/SmsStatusFilterBar'
+import { SmsToolbar, type PeriodMode } from './ui/SmsToolbar'
+import { SmsOffsetGrid } from './ui/SmsOffsetGrid'
+import { SmsOpTypeHelp } from './ui/SmsOpTypeHelp'
+import { SmsSolapiTemplateModal } from './ui/SmsSolapiTemplateModal'
+import { SmsOptOutModal } from './ui/SmsOptOutModal'
+import { SmsQueueStatusCard } from './ui/SmsQueueStatusCard'
+import { SmsMessagePreview } from './ui/SmsMessagePreview'
+import { SmsPagination } from './ui/SmsPagination'
 import { formatPhone } from '#shared/utils/phone'
 import {
   DELIVERY_GRACE_MINUTES, GROUP_META, OP_TYPE_META, isHeld,
   compareSortValue, getSortValue, groupHelpOf, groupOf, matchesStatusFilter, stampMinutesAgo, offsetOf, targetStateOf, tierCellOf, todayIso, toMonthEnd, toMonthStart, toMonthValue,
   type SortState, type StatusFilter,
-} from './smsTableModel'
+} from './utils/smsTableModel'
 
 /**
  * 오늘 하루 — 화면 로딩·리셋 시 리스트 조회 디폴트.
@@ -32,7 +32,7 @@ function todayRange(): { from: string; to: string } {
   const today = todayIso()
   return { from: today, to: today }
 }
-import type { SmsQueryBasis, SmsTarget, SmsTargetRequest } from '@/api/sms'
+import type { SmsQueryBasis, SmsTarget, SmsTargetRequest } from '../../type/api'
 
 /**
  * 문자 발송 관리 — 수술 후 안내 1~3차가 **잘 나갔는지 점검**하고, 보내면 안 되는 사람을 막는 화면.

@@ -1,4 +1,4 @@
-import type { SmsTarget, SmsTemplate, SmsTemplateGroup } from '@/api/sms'
+import type { SmsTarget, SmsTemplate, SmsTemplateGroup } from '../../../type/api'
 
 /**
  * 문자 발송 관리 표의 **읽는 규칙**만 모은 곳 — 화면 컴포넌트에서 분리했다.

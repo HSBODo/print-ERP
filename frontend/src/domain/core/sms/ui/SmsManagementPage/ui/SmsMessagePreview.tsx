@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { MessageSquareText } from 'lucide-react'
-import { OP_TYPE_META, groupOf, groupSlotOf, offsetOf, tierCellOf } from './smsTableModel'
-import { useSolapiTemplates } from '@/hooks/sms/useSmsManagement'
-import type { SmsSolapiTemplate, SmsTarget, SmsTemplate } from '@/api/sms'
+import { OP_TYPE_META, groupOf, groupSlotOf, offsetOf, tierCellOf } from '../utils/smsTableModel'
+import { useSolapiTemplates } from '../../../hooks/useSmsManagement'
+import type { SmsSolapiTemplate, SmsTarget, SmsTemplate } from '../../../type/api'
 
 /**
  * 오른쪽 문구 미리보기 — 고른 사람에게 **1·2·3차로 무엇이 나가는지**를 한 화면에 세워 보여준다.

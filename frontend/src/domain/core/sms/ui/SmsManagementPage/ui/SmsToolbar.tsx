@@ -1,8 +1,8 @@
 import { Ban, BellOff, ChevronDown, FileText, ListX, Plus, RefreshCw, RotateCcw, Search, Undo2 } from 'lucide-react'
 import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
-import { toMonthEnd, toMonthStart, toMonthValue } from './smsTableModel'
-import type { SmsQueryBasis, SmsTemplate } from '@/api/sms'
+import { toMonthEnd, toMonthStart, toMonthValue } from '../utils/smsTableModel'
+import type { SmsQueryBasis, SmsTemplate } from '../../../type/api'
 
 export type PeriodMode = 'daily' | 'monthly'
 export type DateRange = { from: string; to: string }

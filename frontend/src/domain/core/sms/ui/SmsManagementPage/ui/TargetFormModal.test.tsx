@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/vitest'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { TargetFormModal } from './TargetFormModal'
-import type { SmsLookup, SmsTargetRequest, SmsTemplate } from '@/api/sms'
+import type { SmsLookup, SmsTargetRequest, SmsTemplate } from '../../../type/api'
 
 /**
  * 대상 추가 팝업의 계약 — 여기서 어긋나면 **다른 환자 정보가 저장된다**.

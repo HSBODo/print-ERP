@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react'
 import { RefreshCw, RotateCcw, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
-import { useRetryQueueRows, useSmsQueueRows } from '@/hooks/sms/useSmsQueue'
+import { useRetryQueueRows, useSmsQueueRows } from '../../../hooks/useSmsQueue'
 import { formatPhone } from '#shared/utils/phone'
 import {
   CATEGORY_STYLE, categorize, groupByReason, type ReasonCategory,
-} from './smsFailReasonSummary'
+} from '../utils/smsFailReasonSummary'
 
 /**
  * 실패·취소 큐 재실행 모달.

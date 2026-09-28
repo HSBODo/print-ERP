@@ -3,10 +3,10 @@ import { ChevronDown, ChevronRight, Info, RotateCcw, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
 import { Card } from '#shared/ui/Card'
-import { useSmsOffsets, useUpdateSmsOffsets } from '@/hooks/sms/useSmsOffsets'
+import { useSmsOffsets, useUpdateSmsOffsets } from '../../../hooks/useSmsOffsets'
 import { useAuthStore } from '#domain/support/session/store'
 import { canSystemOp } from '#domain/support/session/session'
-import type { SmsMessageKind, SmsOffsetRow } from '@/api/sms'
+import type { SmsMessageKind, SmsOffsetRow } from '../../../type/api'
 
 /**
  * 문자 발송 1·2·3차 설정 카드 — 상단: tier-level(시각·종류), 하단: 4×3 오프셋 그리드.

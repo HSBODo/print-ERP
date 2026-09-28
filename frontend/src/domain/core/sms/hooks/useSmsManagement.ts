@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { smsApi, type SmsQueryBasis, type SmsTargetRequest } from '@/api/sms'
+import { smsApi } from '../api'
+import type { SmsQueryBasis, SmsTargetRequest } from '../type/api'
 
 const TARGETS_KEY = 'sms-management-targets'
 

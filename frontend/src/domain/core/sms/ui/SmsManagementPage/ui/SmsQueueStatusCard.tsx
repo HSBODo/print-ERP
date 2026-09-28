@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
-import { useRunQueueNow, useSmsQueueRows, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
+import { useRunQueueNow, useSmsQueueRows, useSmsQueueStatus, useSolapiBalance } from '../../../hooks/useSmsQueue'
 import { useAuthStore } from '#domain/support/session/store'
 import { canManagerOp, canSystemOp, matchesDepartment } from '#domain/support/session/session'
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
-import { CATEGORY_STYLE, groupByReason } from './smsFailReasonSummary'
-import type { SmsSolapiBalance } from '@/api/sms'
+import { CATEGORY_STYLE, groupByReason } from '../utils/smsFailReasonSummary'
+import type { SmsSolapiBalance } from '../../../type/api'
 
 /** yyyy-mm-dd 로컬 날짜 문자열 — Date.toISOString() 은 UTC 라 KST 새벽엔 하루 어긋난다. */
 function todayIso(): string {

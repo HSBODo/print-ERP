@@ -1,4 +1,4 @@
-import { groupHelpOf } from './smsTableModel'
+import { groupHelpOf } from '../utils/smsTableModel'
 
 /**
  * 수술 분류 도움말 — 표 헤더의 ? 로 연다.

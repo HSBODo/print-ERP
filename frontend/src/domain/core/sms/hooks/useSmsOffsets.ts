@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { smsApi, type SmsOffsetRow, type SmsOffsetUpdatePayload } from '@/api/sms'
+import { smsApi } from '../api'
+import type { SmsOffsetRow, SmsOffsetUpdatePayload } from '../type/api'
 
 const KEY = ['sms', 'offsets'] as const
 

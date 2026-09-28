@@ -1,4 +1,4 @@
-import type { SmsQueueRow } from '@/api/sms'
+import type { SmsQueueRow } from '../../../type/api'
 
 /**
  * FAILED/CANCELED 큐 행의 last_error 를 관리자용 카테고리로 축약한다.

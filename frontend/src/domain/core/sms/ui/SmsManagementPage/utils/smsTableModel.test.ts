@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildPaginationItems, groupOf, groupOptionsOf, matchesStatusFilter, targetStateOf, tierCellOf } from './smsTableModel'
-import type { SmsTarget, SmsTemplate } from '@/api/sms'
+import type { SmsTarget, SmsTemplate } from '../../../type/api'
 
 /**
  * 문자 발송 관리 표의 **판정 규칙**을 고정한다.

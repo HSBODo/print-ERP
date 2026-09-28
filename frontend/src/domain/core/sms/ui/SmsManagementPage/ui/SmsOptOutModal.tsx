@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { AlertTriangle, RefreshCw, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
-import { useReleaseSmsOptOut, useSmsOptOuts } from '@/hooks/sms/useSmsManagement'
-import type { SmsOptOutRow } from '@/api/sms'
+import { useReleaseSmsOptOut, useSmsOptOuts } from '../../../hooks/useSmsManagement'
+import type { SmsOptOutRow } from '../../../type/api'
 
 /**
  * 수신거부 관리 모달 — 목록 조회 + 해제.

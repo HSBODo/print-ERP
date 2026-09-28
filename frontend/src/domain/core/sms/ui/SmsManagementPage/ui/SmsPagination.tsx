@@ -1,6 +1,6 @@
 import { Button } from '#shared/ui/Button'
 import { StyledSelect } from './SmsToolbar'
-import { buildPaginationItems } from './smsTableModel'
+import { buildPaginationItems } from '../utils/smsTableModel'
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
 

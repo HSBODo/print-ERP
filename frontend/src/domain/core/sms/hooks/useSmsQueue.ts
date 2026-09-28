@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { smsApi, type SmsQueueStatus } from '@/api/sms'
+import { smsApi } from '../api'
+import type { SmsQueueStatus } from '../type/api'
 
 /**
  * 자동 발송 큐 상태 요약 — 문자 발송 페이지 상단 KPI 카드에 씀.
