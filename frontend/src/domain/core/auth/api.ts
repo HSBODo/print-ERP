@@ -1,31 +1,6 @@
 import { api } from '#shared/api/client'
-import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
-export interface LoginRequest {
-  loginId: string
-  password: string
-}
-
-export interface LoginUser {
-  id: number
-  loginId: string
-  email: string
-  name: string
-  role: UserRole
-  /** ADMIN·DIRECTOR 는 'ALL' (docs/auth/permissions.md § 2-3). */
-  department: UserDepartment
-}
-
-export interface LoginData {
-  token: string
-  user: LoginUser
-}
-
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  message?: string
-}
+import type { ApiResponse, LoginData, LoginRequest } from './type/api'
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginData> => {
