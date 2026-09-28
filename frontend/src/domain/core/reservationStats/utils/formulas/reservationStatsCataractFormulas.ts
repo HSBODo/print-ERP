@@ -1,5 +1,5 @@
-import type { CataractStatsDailyCounts } from '@/api/reservation/reservationStatsCataract'
-import { pctInt } from '../shared/reservationStatsCore'
+import type { CataractStatsDailyCounts } from '../../type/api'
+import { pctInt } from '../reservationStatsCore'
 
 export type CataractStatsCounts = Omit<CataractStatsDailyCounts, 'date'>
 

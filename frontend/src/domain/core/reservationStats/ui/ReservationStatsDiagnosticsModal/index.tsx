@@ -1,11 +1,6 @@
 import { Download, GitCompare, X } from 'lucide-react'
 import { Button } from '#shared/ui/Button'
-import type {
-  ReservationStatsDiff,
-  ReservationStatsDiffItem,
-  ReservationStatsDrillDown,
-  ReservationStatsParity,
-} from '@/api/reservation/reservationStatsDiagnostics'
+import type { ReservationStatsDiff, ReservationStatsDiffItem, ReservationStatsDrillDown, ReservationStatsParity } from '../../type/api'
 
 interface Props {
   title: string

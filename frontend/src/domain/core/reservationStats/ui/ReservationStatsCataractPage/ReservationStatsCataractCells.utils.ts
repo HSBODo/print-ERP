@@ -1,4 +1,4 @@
-import type { CataractStatsCellEdit } from '@/api/reservation/reservationStatsCataract'
+import type { CataractStatsCellEdit } from '../../type/api'
 
 /** 수기 보정 셀 툴팁 문자열(값·수정자·시각). */
 export const editMarkTitle = (edit: CataractStatsCellEdit): string =>

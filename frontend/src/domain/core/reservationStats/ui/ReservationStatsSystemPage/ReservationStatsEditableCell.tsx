@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { formatChannelValue } from './reservationStatsFormat'
-import { editMarkTitle, type StatsCellEdit } from './reservationStatsEditableCell.utils'
+import { formatChannelValue } from '../../utils/reservationStatsFormat'
+import { editMarkTitle, type StatsCellEdit } from '../../utils/reservationStatsEditableCell.utils'
 
 /** 수기 보정 표시 — 작은 빨강 점. title은 셀(td)에 둔다. */
 export function EditMark() {

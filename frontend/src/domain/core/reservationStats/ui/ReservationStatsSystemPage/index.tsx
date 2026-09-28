@@ -1,29 +1,22 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { withQuery } from '#shared/api/utils'
-import {
-  buildReservationStatsDiffCsv,
-  buildReservationStatsDrillDownCsv,
-  buildReservationStatsParityCsv,
-  type ReservationStatsDiff,
-  type ReservationStatsDiffItem,
-  type ReservationStatsDrillDown,
-  type ReservationStatsParity,
-} from '@/api/reservation/reservationStatsDiagnostics'
+import { buildReservationStatsDiffCsv, buildReservationStatsDrillDownCsv, buildReservationStatsParityCsv } from '../../utils/reservationStatsDiagnostics'
+import { type ReservationStatsDiff, type ReservationStatsDiffItem, type ReservationStatsDrillDown, type ReservationStatsParity } from '../../type/api'
 import {
   RESERVATION_STATS_EDITABLE_FIELDS,
   type ReservationStatsCellEdit,
   type ReservationStatsDailyCounts,
   type ReservationStatsEditableField,
-} from '@/api/reservation/reservationStatsSystem'
+} from '../../type/api'
 import { downloadCsv } from '#shared/utils/csv'
 import {
   useReservationStatsSystem,
   useReservationStatsSystemCellEdit,
   useReservationStatsSnapshots,
-} from '@/hooks/reservation/useReservationStatsSystem'
-import { ReservationStatsDiagnosticsModal } from './ReservationStatsDiagnosticsModal'
-import { ReservationStatsToolbar } from './ReservationStatsToolbar'
+} from '../../hooks/useReservationStatsSystem'
+import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
+import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
 import {
   CHANNEL_COLUMNS,
   DEFAULT_PERIOD,
@@ -36,25 +29,25 @@ import {
   type DisplayRow,
   type Granularity,
   type SummaryColumnMeta,
-} from './reservationStatsSystemData'
+} from '../../utils/reservationStatsSystemData'
 import {
   ReservationStatsTableHeader,
   type StatsHeaderModel,
   type StatsHeaderNode,
-} from './shared/ReservationStatsTableHeader'
+} from '../ReservationStatsTableHeader'
 import {
   isSingleMonthRange,
   periodRange,
   validateRange,
-} from './shared/reservationStatsDateRange'
+} from '../../utils/reservationStatsDateRange'
 import {
   formatChannelValue,
   formatNumber,
   formatSummaryValue,
-} from './shared/reservationStatsFormat'
-import { EditMark, EditableNumberCell } from './shared/reservationStatsEditableCell'
-import { editMarkTitle } from './shared/reservationStatsEditableCell.utils'
-import { columnSpan, splitColumnGroups } from './shared/reservationStatsTable'
+} from '../../utils/reservationStatsFormat'
+import { EditMark, EditableNumberCell } from './ReservationStatsEditableCell'
+import { editMarkTitle } from '../../utils/reservationStatsEditableCell.utils'
+import { columnSpan, splitColumnGroups } from '../../utils/reservationStatsTable'
 
 /**
  * 예약통계시스템 — 콜/온라인/채팅/취소 채널과 내원·부도·취소 종합을 한 줄(가로 스크롤) 표로 묶은 월간 종합표.

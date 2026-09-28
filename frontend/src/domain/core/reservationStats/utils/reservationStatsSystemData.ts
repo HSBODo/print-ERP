@@ -6,27 +6,27 @@
  * (퍼센트 값은 원본 산출식이 시점·분모가 달라 일부 100% 초과가 존재 — 원자료를 그대로 표기한다.)
  */
 
-import type { ReservationStatsDailyCounts } from '@/api/reservation/reservationStatsSystem'
+import type { ReservationStatsDailyCounts } from '../type/api'
 import {
   createCountHelpers,
   type Granularity,
   type RowTier,
-} from './shared/reservationStatsCore'
+} from './reservationStatsCore'
 import {
   computeSystemChannelRow,
   type ChannelRow,
   type SystemStatsCounts,
 } from './formulas/reservationStatsSystemFormulas'
-import { buildStatsCsv, type CsvColumnGroup } from './shared/reservationStatsCsv'
-import type { CellFormat } from './shared/reservationStatsFormat'
-import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './shared/reservationStatsRows'
-import { SUMMARY_COLUMNS, computeSummaryRow } from './shared/reservationStatsSummary'
+import { buildStatsCsv, type CsvColumnGroup } from './reservationStatsCsv'
+import type { CellFormat } from './reservationStatsFormat'
+import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './reservationStatsRows'
+import { SUMMARY_COLUMNS, computeSummaryRow } from './reservationStatsSummary'
 
-export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './shared/reservationStatsCore'
-export type { Granularity, RowTier } from './shared/reservationStatsCore'
-export { SUMMARY_COLUMNS } from './shared/reservationStatsSummary'
-export type { CellFormat, SummaryFormat } from './shared/reservationStatsFormat'
-export type { SummaryColumnMeta, SummaryRow } from './shared/reservationStatsSummary'
+export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './reservationStatsCore'
+export type { Granularity, RowTier } from './reservationStatsCore'
+export { SUMMARY_COLUMNS } from './reservationStatsSummary'
+export type { CellFormat, SummaryFormat } from './reservationStatsFormat'
+export type { SummaryColumnMeta, SummaryRow } from './reservationStatsSummary'
 export type { ChannelRow } from './formulas/reservationStatsSystemFormulas'
 
 /** 표 본문 컬럼 메타(총예약 이후). label은 헤더 3행에 그대로 노출. */

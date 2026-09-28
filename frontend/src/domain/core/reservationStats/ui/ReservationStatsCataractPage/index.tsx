@@ -6,24 +6,17 @@ import {
   type CataractEditableField,
   type CataractStatsCellEdit,
   type CataractStatsDailyCounts,
-} from '@/api/reservation/reservationStatsCataract'
-import {
-  buildReservationStatsDiffCsv,
-  buildReservationStatsDrillDownCsv,
-  buildReservationStatsParityCsv,
-  type ReservationStatsDiff,
-  type ReservationStatsDiffItem,
-  type ReservationStatsDrillDown,
-  type ReservationStatsParity,
-} from '@/api/reservation/reservationStatsDiagnostics'
+} from '../../type/api'
+import { buildReservationStatsDiffCsv, buildReservationStatsDrillDownCsv, buildReservationStatsParityCsv } from '../../utils/reservationStatsDiagnostics'
+import { type ReservationStatsDiff, type ReservationStatsDiffItem, type ReservationStatsDrillDown, type ReservationStatsParity } from '../../type/api'
 import { downloadCsv } from '#shared/utils/csv'
 import {
   useReservationStatsCataract,
   useReservationStatsCataractCellEdit,
   useReservationStatsCataractSnapshots,
-} from '@/hooks/reservation/useReservationStatsCataract'
-import { ReservationStatsDiagnosticsModal } from './ReservationStatsDiagnosticsModal'
-import { ReservationStatsToolbar } from './ReservationStatsToolbar'
+} from '../../hooks/useReservationStatsCataract'
+import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
+import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
 import {
   CATARACT_COLUMNS,
   DEFAULT_PERIOD,
@@ -35,25 +28,25 @@ import {
   type CataractColumnMeta,
   type CataractDisplayRow,
   type Granularity,
-} from './reservationStatsCataractData'
+} from '../../utils/reservationStatsCataractData'
 import {
   ReservationStatsTableHeader,
   type StatsHeaderModel,
   type StatsHeaderNode,
-} from './shared/ReservationStatsTableHeader'
+} from '../ReservationStatsTableHeader'
 import {
   isSingleMonthRange,
   periodRange,
   validateRange,
-} from './shared/reservationStatsDateRange'
+} from '../../utils/reservationStatsDateRange'
 import {
   formatChannelValue,
   formatSummaryValue,
-} from './shared/reservationStatsFormat'
+} from '../../utils/reservationStatsFormat'
 import { EditMark, EditableNumberCell } from './ReservationStatsCataractCells'
 import { editMarkTitle } from './ReservationStatsCataractCells.utils'
-import type { SummaryColumnMeta } from './shared/reservationStatsSummary'
-import { columnSpan, splitColumnGroups } from './shared/reservationStatsTable'
+import type { SummaryColumnMeta } from '../../utils/reservationStatsSummary'
+import { columnSpan, splitColumnGroups } from '../../utils/reservationStatsTable'
 
 /**
  * 예약통계_백내장 — 인바운드(컨택센터)/아웃바운드(TM)/채팅/온라인/취소 채널과 내원·부도·취소 종합을

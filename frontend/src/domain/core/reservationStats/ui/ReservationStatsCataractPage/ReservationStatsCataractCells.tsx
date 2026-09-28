@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { CataractStatsCellEdit } from '@/api/reservation/reservationStatsCataract'
-import { formatChannelValue } from './shared/reservationStatsFormat'
+import type { CataractStatsCellEdit } from '../../type/api'
+import { formatChannelValue } from '../../utils/reservationStatsFormat'
 import { editMarkTitle } from './ReservationStatsCataractCells.utils'
 
 /** 수기 보정 표시 — 작은 빨강 점. title은 셀(td)에 둔다. */

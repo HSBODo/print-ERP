@@ -1,7 +1,8 @@
 import { RotateCcw, Search, Download } from 'lucide-react'
 import { Button } from '#shared/ui/Button'
-import { reservationStatsSourceLabel, type ReservationStatsResponseMeta } from '@/api/reservation/reservationStatsMeta'
-import { GRANULARITIES, type Granularity } from './reservationStatsSystemData'
+import { reservationStatsSourceLabel } from '../../utils/reservationStatsMeta'
+import { type ReservationStatsResponseMeta } from '../../type/api'
+import { GRANULARITIES, type Granularity } from '../../utils/reservationStatsSystemData'
 
 /**
  * 예약통계시스템 전용 툴바 — 시작일/종료일(초안) + 조회 단위(즉시) + 초기화 / 조회 / CSV.

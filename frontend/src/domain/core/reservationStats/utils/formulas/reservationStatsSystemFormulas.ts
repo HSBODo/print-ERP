@@ -1,5 +1,5 @@
-import type { ReservationStatsDailyCounts } from '@/api/reservation/reservationStatsSystem'
-import { pctInt } from '../shared/reservationStatsCore'
+import type { ReservationStatsDailyCounts } from '../../type/api'
+import { pctInt } from '../reservationStatsCore'
 
 export type SystemStatsCounts = Omit<ReservationStatsDailyCounts, 'date'>
 

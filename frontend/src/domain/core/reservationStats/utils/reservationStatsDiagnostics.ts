@@ -1,77 +1,11 @@
-import { z } from 'zod'
 import { toCsv } from '#shared/utils/csv'
 
-export const reservationStatsDiffItemSchema = z.object({
-  date: z.string(),
-  field: z.string(),
-  label: z.string(),
-  snapshotValue: z.number().nullable(),
-  liveValue: z.number().nullable(),
-  delta: z.number().nullable(),
-})
-
-export const reservationStatsDiffSchema = z.object({
-  period: z.string(),
-  snapshotExists: z.boolean(),
-  liveFrom: z.string().nullable(),
-  liveTo: z.string().nullable(),
-  diffCount: z.number(),
-  diffs: z.array(reservationStatsDiffItemSchema),
-})
-
-export const reservationStatsDrillDownRowSchema = z.object({
-  date: z.string(),
-  field: z.string(),
-  source: z.string(),
-  gb: z.string(),
-  gb2: z.string(),
-  primaryKey: z.string().nullable(),
-  custNum: z.string().nullable().optional(),
-  reserveNum: z.string().nullable().optional(),
-  reserveState: z.string().nullable().optional(),
-  exclusionReasonCandidate: z.string().nullable().optional(),
-  contribution: z.number(),
-})
-
-export const reservationStatsDrillDownSchema = z.object({
-  period: z.string(),
-  date: z.string(),
-  field: z.string(),
-  label: z.string(),
-  snapshotExists: z.boolean(),
-  snapshotValue: z.number().nullable(),
-  liveValue: z.number().nullable(),
-  delta: z.number().nullable(),
-  rowCount: z.number(),
-  rows: z.array(reservationStatsDrillDownRowSchema),
-})
-
-export const reservationStatsParityItemSchema = z.object({
-  date: z.string(),
-  field: z.string(),
-  label: z.string(),
-  dailyValue: z.number(),
-  drillDownValue: z.number(),
-  delta: z.number(),
-  rowCount: z.number(),
-})
-
-export const reservationStatsParitySchema = z.object({
-  period: z.string(),
-  field: z.string(),
-  label: z.string(),
-  liveFrom: z.string(),
-  liveTo: z.string(),
-  mismatchCount: z.number(),
-  items: z.array(reservationStatsParityItemSchema),
-})
-
-export type ReservationStatsDiffItem = z.infer<typeof reservationStatsDiffItemSchema>
-export type ReservationStatsDiff = z.infer<typeof reservationStatsDiffSchema>
-export type ReservationStatsDrillDownRow = z.infer<typeof reservationStatsDrillDownRowSchema>
-export type ReservationStatsDrillDown = z.infer<typeof reservationStatsDrillDownSchema>
-export type ReservationStatsParityItem = z.infer<typeof reservationStatsParityItemSchema>
-export type ReservationStatsParity = z.infer<typeof reservationStatsParitySchema>
+import type {
+  ReservationStatsDiffItem,
+  ReservationStatsDiff,
+  ReservationStatsDrillDown,
+  ReservationStatsParity,
+} from '../type/api'
 
 type DrillDownPathBuilder = (item: ReservationStatsDiffItem) => string
 

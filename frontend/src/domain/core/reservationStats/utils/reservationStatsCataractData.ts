@@ -9,27 +9,27 @@
  * 비율·합계·총예약건은 카운트 합산 후 동일 공식으로 재계산한다.
  */
 
-import type { CataractStatsDailyCounts } from '@/api/reservation/reservationStatsCataract'
+import type { CataractStatsDailyCounts } from '../type/api'
 import {
   createCountHelpers,
   type Granularity,
   type RowTier,
-} from './shared/reservationStatsCore'
+} from './reservationStatsCore'
 import {
   computeCataractChannelRow,
   type CataractChannelRow,
   type CataractStatsCounts,
 } from './formulas/reservationStatsCataractFormulas'
-import { buildStatsCsv, type CsvColumnGroup } from './shared/reservationStatsCsv'
-import type { CellFormat } from './shared/reservationStatsFormat'
-import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './shared/reservationStatsRows'
-import { SUMMARY_COLUMNS, computeSummaryRow } from './shared/reservationStatsSummary'
+import { buildStatsCsv, type CsvColumnGroup } from './reservationStatsCsv'
+import type { CellFormat } from './reservationStatsFormat'
+import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './reservationStatsRows'
+import { SUMMARY_COLUMNS, computeSummaryRow } from './reservationStatsSummary'
 
-export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './shared/reservationStatsCore'
-export type { Granularity, RowTier } from './shared/reservationStatsCore'
-export { SUMMARY_COLUMNS } from './shared/reservationStatsSummary'
-export type { CellFormat, SummaryFormat } from './shared/reservationStatsFormat'
-export type { SummaryRow } from './shared/reservationStatsSummary'
+export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './reservationStatsCore'
+export type { Granularity, RowTier } from './reservationStatsCore'
+export { SUMMARY_COLUMNS } from './reservationStatsSummary'
+export type { CellFormat, SummaryFormat } from './reservationStatsFormat'
+export type { SummaryRow } from './reservationStatsSummary'
 export type { CataractChannelRow } from './formulas/reservationStatsCataractFormulas'
 
 /** 표 본문 컬럼 메타(25컬럼). emphasis는 빨강 강조. */

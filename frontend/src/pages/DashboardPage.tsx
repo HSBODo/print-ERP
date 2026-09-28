@@ -16,7 +16,7 @@ import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
 import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
 import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
 import { useAccumulatedEyesTotal } from '#domain/core/marketing/hooks/useAccumulatedEyesTotal'
-import { useReservationStatsSystem } from '@/hooks/reservation/useReservationStatsSystem'
+import { useReservationStatsSystem } from '#domain/core/reservationStats/hooks/useReservationStatsSystem'
 
 /**
  * 홈(대시보드) — 시스템 각 도메인 마트에서 이번달 요약을 조회.
