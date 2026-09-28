@@ -11,7 +11,7 @@ import {
 } from '#shared/ui/Chart'
 import { CURRENT_YEAR } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
-import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
+import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
 import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
 import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
 import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'

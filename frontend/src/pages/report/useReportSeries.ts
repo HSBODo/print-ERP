@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
+import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
 import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
 import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
 import { useExaminationTrend } from '#domain/core/exam/hooks/useExaminationTrend'
