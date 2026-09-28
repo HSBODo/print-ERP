@@ -5,8 +5,8 @@ import { z } from 'zod'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
-import { useCreateUser, useUpdateUser } from '@/hooks/admin/useUsers'
-import type { UserRow } from '@/api/admin/users'
+import { useCreateUser, useUpdateUser } from '../../hooks/useUsers'
+import type { UserRow } from '../../type/api'
 import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
 /**

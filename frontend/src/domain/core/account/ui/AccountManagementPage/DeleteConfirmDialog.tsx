@@ -1,6 +1,6 @@
 import { AlertTriangle, X } from 'lucide-react'
 import { Button } from '#shared/ui/Button'
-import type { UserRow } from '@/api/admin/users'
+import type { UserRow } from '../../type/api'
 
 interface Props {
   user: UserRow

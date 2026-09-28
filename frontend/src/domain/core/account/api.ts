@@ -1,42 +1,16 @@
-import { z } from 'zod'
 import { api } from '#shared/api/client'
-import { apiResponseOf } from '#shared/api/utils'
-import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
-const userRowSchema = z.object({
-  id: z.number(),
-  loginId: z.string(),
-  email: z.string(),
-  name: z.string(),
-  role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
-  department: z.enum(['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING'] as const),
-})
-export type UserRow = z.infer<typeof userRowSchema>
-
-const listResponseSchema = apiResponseOf(z.array(userRowSchema))
-const singleResponseSchema = apiResponseOf(userRowSchema)
-
-export interface UserCreatePayload {
-  loginId: string
-  email: string
-  name: string
-  password: string
-  role: UserRole
-  department: UserDepartment
-}
-
-export interface UserUpdatePayload {
-  email: string
-  name: string
-  role: UserRole
-  department: UserDepartment
-  /** null 이면 기존 비밀번호 유지. 값이 있으면 최소 12자 (백엔드 검증). */
-  password: string | null
-}
+import {
+  type UserRow,
+  listResponseSchema,
+  singleResponseSchema,
+  type UserCreatePayload,
+  type UserUpdatePayload,
+} from './type/api'
 
 const BASE = '/admin/users'
 
-export const usersApi = {
+export const accountApi = {
   list: async (): Promise<UserRow[]> => {
     const res = await api.get<unknown>(BASE)
     return listResponseSchema.parse(res).data
