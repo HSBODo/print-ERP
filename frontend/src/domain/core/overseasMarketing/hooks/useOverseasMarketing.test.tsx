@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // API 는 통째로 목으로 대체 — 훅의 캐시 키·무효화 스코프만 검증한다(HTTP 는 관심사 X).
-vi.mock('@/api/marketing/overseasMarketing', () => ({
+vi.mock('../api', () => ({
   overseasMarketingApi: {
     getReceptions: vi.fn(),
     getStatistics: vi.fn(),
@@ -21,7 +21,8 @@ vi.mock('@/api/marketing/overseasMarketing', () => ({
   },
 }))
 
-import { overseasMarketingApi, type OverseasMarketingReceptionParams } from '@/api/marketing/overseasMarketing'
+import { overseasMarketingApi } from '../api'
+import type { OverseasMarketingReceptionParams } from '../type/api'
 import {
   useOverseasMarketingCrmSync,
   useOverseasMarketingMatchConfirm,

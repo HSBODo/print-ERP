@@ -12,10 +12,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { OverseasMarketingGranularity } from '@/api/marketing/overseasMarketing'
+import type { OverseasMarketingGranularity } from '../../type/api'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
-import { useOverseasMarketingStatistics } from '@/hooks/marketing/useOverseasMarketing'
+import { useOverseasMarketingStatistics } from '../../hooks/useOverseasMarketing'
 import { formatAxisNumber } from '#shared/utils/stats'
 
 const CURRENT_YEAR = new Date().getFullYear()

@@ -1,8 +1,8 @@
 import { ChevronDown, ChevronUp, ChevronsUpDown, Pencil, Trash2 } from 'lucide-react'
-import type { OverseasMarketingReception } from '@/api/marketing/overseasMarketing'
+import type { OverseasMarketingReception } from '../../../type/api'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
-import { PAGE_SIZE_OPTIONS } from './receptionOptions'
+import { PAGE_SIZE_OPTIONS } from '../utils/receptionOptions'
 import {
   alignClass,
   COLUMNS,
@@ -10,7 +10,7 @@ import {
   STATUS_STYLE,
   type SortKey,
   type TableColumn,
-} from './receptionColumns'
+} from '../utils/receptionColumns'
 
 function Badge({ text, className }: { text: string; className: string }) {
   return text

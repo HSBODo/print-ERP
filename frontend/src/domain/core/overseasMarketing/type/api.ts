@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { api } from '#shared/api/client'
-import { apiResponseOf, withQuery } from '#shared/api/utils'
+import { apiResponseOf } from '#shared/api/utils'
 
 export const overseasMarketingReceptionSchema = z.object({
   rowId: z.string(),
@@ -135,11 +134,11 @@ export interface OverseasMarketingReceptionParams {
   unmatched: boolean
 }
 
-const receptionsResponseSchema = apiResponseOf(z.array(overseasMarketingReceptionSchema))
-const statisticsResponseSchema = apiResponseOf(statisticsSchema)
-const syncResponseSchema = apiResponseOf(syncResultSchema)
-const mutationResponseSchema = apiResponseOf(z.object({ rowNumber: z.number() }))
-const syncAvailabilityResponseSchema = apiResponseOf(z.object({ enabled: z.boolean() }))
+export const receptionsResponseSchema = apiResponseOf(z.array(overseasMarketingReceptionSchema))
+export const statisticsResponseSchema = apiResponseOf(statisticsSchema)
+export const syncResponseSchema = apiResponseOf(syncResultSchema)
+export const mutationResponseSchema = apiResponseOf(z.object({ rowNumber: z.number() }))
+export const syncAvailabilityResponseSchema = apiResponseOf(z.object({ enabled: z.boolean() }))
 // 동기화는 백그라운드 잡 — POST는 시작만 하고, 진행·결과는 status 폴링으로 받는다.
 const crmSyncStatusSchema = z.object({
   state: z.enum(['idle', 'running', 'done', 'error']),
@@ -152,7 +151,7 @@ const crmSyncStatusSchema = z.object({
   elapsedMillis: z.number().optional(),
   message: z.string().optional(),
 })
-const crmSyncStatusResponseSchema = apiResponseOf(crmSyncStatusSchema)
+export const crmSyncStatusResponseSchema = apiResponseOf(crmSyncStatusSchema)
 export type OverseasCrmSyncStatus = z.infer<typeof crmSyncStatusSchema>
 
 const crmCustomerSchema = z.object({
@@ -162,8 +161,8 @@ const crmCustomerSchema = z.object({
   contact: z.string(),
   email: z.string(),
 })
-const crmCustomerResponseSchema = apiResponseOf(crmCustomerSchema)
-const matchConfirmResponseSchema = apiResponseOf(z.object({
+export const crmCustomerResponseSchema = apiResponseOf(crmCustomerSchema)
+export const matchConfirmResponseSchema = apiResponseOf(z.object({
   rowNumber: z.number(),
   customerNo: z.string(),
   customerName: z.string(),
@@ -181,8 +180,8 @@ const reservationStatsSchema = z.object({
     values: z.record(z.string(), z.number()),
   })),
 })
-const reservationStatsResponseSchema = apiResponseOf(reservationStatsSchema)
-const reservationStatUpdateResponseSchema = apiResponseOf(z.object({
+export const reservationStatsResponseSchema = apiResponseOf(reservationStatsSchema)
+export const reservationStatUpdateResponseSchema = apiResponseOf(z.object({
   date: z.string(),
   groupKey: z.string(),
   metricKey: z.string(),
@@ -190,66 +189,3 @@ const reservationStatUpdateResponseSchema = apiResponseOf(z.object({
 }))
 
 export type OverseasReservationStats = z.infer<typeof reservationStatsSchema>
-
-export const overseasMarketingApi = {
-  getReceptions: async (params: OverseasMarketingReceptionParams) => {
-    const response = await api.get<unknown>(withQuery('/overseas-marketing/receptions', {
-      from: params.from,
-      to: params.to,
-      dateType: params.dateType,
-      dateEnabled: params.dateEnabled,
-      status: params.status,
-      source: params.source,
-      unmatched: params.unmatched,
-    }))
-    return receptionsResponseSchema.parse(response).data
-  },
-  getStatistics: async (year: number, granularity: OverseasMarketingGranularity) => {
-    const response = await api.get<unknown>(withQuery('/overseas-marketing/statistics', { year, granularity }))
-    return statisticsResponseSchema.parse(response).data
-  },
-  syncSheet: async () => {
-    const response = await api.post<unknown>('/overseas-marketing/sync-sheet', {})
-    return syncResponseSchema.parse(response).data
-  },
-  syncCrm: async () => {
-    const response = await api.post<unknown>('/overseas-marketing/sync-crm', {})
-    return crmSyncStatusResponseSchema.parse(response).data
-  },
-  getCrmSyncStatus: async () => {
-    const response = await api.get<unknown>('/overseas-marketing/sync-crm/status')
-    return crmSyncStatusResponseSchema.parse(response).data
-  },
-  getReservationStats: async (year: number, granularity: OverseasMarketingGranularity) => {
-    const response = await api.get<unknown>(withQuery('/overseas-marketing/reservation-stats', { year, granularity }))
-    return reservationStatsResponseSchema.parse(response).data
-  },
-  updateReservationStat: async (date: string, groupKey: string, metricKey: string, value: number) => {
-    const response = await api.put<unknown>(`/overseas-marketing/reservation-stats/${date}`, { groupKey, metricKey, value })
-    return reservationStatUpdateResponseSchema.parse(response).data
-  },
-  getCrmCustomer: async (customerNo: string) => {
-    const response = await api.get<unknown>(`/overseas-marketing/crm-customers/${encodeURIComponent(customerNo)}`)
-    return crmCustomerResponseSchema.parse(response).data
-  },
-  confirmMatch: async (rowNumber: number, customerNo: string) => {
-    const response = await api.put<unknown>(`/overseas-marketing/receptions/${rowNumber}/match`, { customerNo })
-    return matchConfirmResponseSchema.parse(response).data
-  },
-  getSyncAvailability: async () => {
-    const response = await api.get<unknown>('/overseas-marketing/sync-availability')
-    return syncAvailabilityResponseSchema.parse(response).data.enabled
-  },
-  createReception: async (input: OverseasMarketingReceptionInput) => {
-    const response = await api.post<unknown>('/overseas-marketing/receptions', input)
-    return mutationResponseSchema.parse(response).data
-  },
-  updateReception: async (rowNumber: number, input: OverseasMarketingReceptionInput) => {
-    const response = await api.put<unknown>(`/overseas-marketing/receptions/${rowNumber}`, input)
-    return mutationResponseSchema.parse(response).data
-  },
-  deleteReception: async (rowNumber: number) => {
-    const response = await api.delete<unknown>(`/overseas-marketing/receptions/${rowNumber}`)
-    return mutationResponseSchema.parse(response).data
-  },
-}

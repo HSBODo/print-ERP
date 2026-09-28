@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Search, X } from 'lucide-react'
-import {
-  overseasMarketingApi,
-  type OverseasMarketingCrmCustomer,
-  type OverseasMarketingReception,
-} from '@/api/marketing/overseasMarketing'
+import { overseasMarketingApi } from '../../../api'
+import type { OverseasMarketingCrmCustomer, OverseasMarketingReception } from '../../../type/api'
 import { Button } from '#shared/ui/Button'
 
 const INPUT_CLASS =

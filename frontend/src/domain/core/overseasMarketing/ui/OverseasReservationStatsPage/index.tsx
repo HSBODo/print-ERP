@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import {
   useOverseasReservationStats,
   useOverseasReservationStatUpdate,
-} from '@/hooks/marketing/useOverseasMarketing'
+} from '../../hooks/useOverseasMarketing'
 
 /** CSV(레거시 구글시트)와 동일한 그룹·채널 구성. 키는 백엔드 group_key/metric_key와 1:1. */
 interface StatColumn {

@@ -1,4 +1,4 @@
-import type { OverseasMarketingReception } from '@/api/marketing/overseasMarketing'
+import type { OverseasMarketingReception } from '../../../type/api'
 import type { CsvColumn } from '#shared/utils/csv'
 import { maskName } from '#shared/utils/mask'
 

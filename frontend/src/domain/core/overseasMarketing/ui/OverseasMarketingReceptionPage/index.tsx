@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import {
-  overseasMarketingApi,
-  type OverseasMarketingReception,
-  type OverseasMarketingReceptionInput,
-  type OverseasMarketingReceptionParams,
-} from '@/api/marketing/overseasMarketing'
+import { overseasMarketingApi } from '../../api'
+import type { OverseasMarketingReception, OverseasMarketingReceptionInput, OverseasMarketingReceptionParams } from '../../type/api'
 import {
   useOverseasMarketingCrmSync,
   useOverseasMarketingMatchConfirm,
@@ -15,20 +11,20 @@ import {
   useOverseasMarketingReceptionUpdate,
   useOverseasMarketingSheetSync,
   useOverseasMarketingSyncAvailability,
-} from '@/hooks/marketing/useOverseasMarketing'
-import { MatchConfirmDialog } from '@/pages/marketing/overseas-marketing/MatchConfirmDialog'
-import { ReceptionFilterBar } from '@/pages/marketing/overseas-marketing/ReceptionFilterBar'
-import { ReceptionFormDialog } from '@/pages/marketing/overseas-marketing/ReceptionFormDialog'
-import { ReceptionTable } from '@/pages/marketing/overseas-marketing/ReceptionTable'
-import { EMPTY_RECEPTION_INPUT, toReceptionInput } from '@/pages/marketing/overseas-marketing/receptionForm'
-import { createDefaultParams, type MatchFilter } from '@/pages/marketing/overseas-marketing/receptionOptions'
+} from '../../hooks/useOverseasMarketing'
+import { MatchConfirmDialog } from './ui/MatchConfirmDialog'
+import { ReceptionFilterBar } from './ui/ReceptionFilterBar'
+import { ReceptionFormDialog } from './ui/ReceptionFormDialog'
+import { ReceptionTable } from './ui/ReceptionTable'
+import { EMPTY_RECEPTION_INPUT, toReceptionInput } from './utils/receptionForm'
+import { createDefaultParams, type MatchFilter } from './utils/receptionOptions'
 import {
   CSV_COLUMNS,
   MATCH_ORDER,
   PLAIN_NUMBER,
   type SortKey,
   sortValue,
-} from '@/pages/marketing/overseas-marketing/receptionColumns'
+} from './utils/receptionColumns'
 import { canSystemOp } from '#domain/support/session/session'
 import { useAuthStore } from '#domain/support/session/store'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'

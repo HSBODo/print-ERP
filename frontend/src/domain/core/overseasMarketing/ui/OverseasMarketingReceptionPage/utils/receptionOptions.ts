@@ -1,4 +1,4 @@
-import type { OverseasMarketingDateType, OverseasMarketingReceptionParams } from '@/api/marketing/overseasMarketing'
+import type { OverseasMarketingDateType, OverseasMarketingReceptionParams } from '../../../type/api'
 
 const pad = (value: number) => String(value).padStart(2, '0')
 const toIso = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`

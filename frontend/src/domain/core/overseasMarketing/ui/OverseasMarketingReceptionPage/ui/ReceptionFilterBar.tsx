@@ -1,5 +1,5 @@
 import { ChevronDown, Download, Plus, RefreshCw, RotateCcw, Search } from 'lucide-react'
-import type { OverseasMarketingDateType, OverseasMarketingReceptionParams } from '@/api/marketing/overseasMarketing'
+import type { OverseasMarketingDateType, OverseasMarketingReceptionParams } from '../../../type/api'
 import { Button } from '#shared/ui/Button'
 import { DateRangePicker } from '#shared/ui/DateRangePicker'
 import {
@@ -8,7 +8,7 @@ import {
   MATCH_OPTIONS,
   type MatchFilter,
   STATUS_OPTIONS,
-} from './receptionOptions'
+} from '../utils/receptionOptions'
 
 /** 관리자 조작임을 표시하는 페이지 내부 배지 — 사이드바 amber 배지와 톤 통일. */
 function AdminBadge() {

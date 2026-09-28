@@ -1,7 +1,7 @@
 import type {
   OverseasMarketingReception,
   OverseasMarketingReceptionInput,
-} from '@/api/marketing/overseasMarketing'
+} from '../../../type/api'
 
 export const EMPTY_RECEPTION_INPUT: OverseasMarketingReceptionInput = {
   inquiryDate: '',

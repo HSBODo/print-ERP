@@ -1,10 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  overseasMarketingApi,
-  type OverseasMarketingGranularity,
-  type OverseasMarketingReceptionInput,
-  type OverseasMarketingReceptionParams,
-} from '@/api/marketing/overseasMarketing'
+import { overseasMarketingApi } from '../api'
+import type { OverseasMarketingGranularity, OverseasMarketingReceptionInput, OverseasMarketingReceptionParams } from '../type/api'
 
 export function useOverseasMarketingReceptions(
   params: OverseasMarketingReceptionParams,
