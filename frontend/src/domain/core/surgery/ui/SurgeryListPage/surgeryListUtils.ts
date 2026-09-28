@@ -1,4 +1,4 @@
-import type { SurgeryListItem } from '@/api/surgery/surgeryList'
+import type { SurgeryListItem } from '../../type/api'
 
 /** SurgeryListPage 전용 순수 로직/상수 (렌더 무관). 컬럼 설정은 surgeryListColumns.tsx. */
 

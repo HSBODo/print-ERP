@@ -1,4 +1,4 @@
-import { type SurgeryMonthlyItem } from '@/api/surgery'
+import { type SurgeryMonthlyItem } from '../../type/api'
 import { type ChartConfig } from '#shared/ui/Chart'
 
 export type SurgeryKey =

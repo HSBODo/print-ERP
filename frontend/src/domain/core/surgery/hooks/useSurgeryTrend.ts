@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { surgeryApi, type SurgeryMonthlyItem } from '@/api/surgery'
+import { surgeryApi } from '../api'
+import type { SurgeryMonthlyItem } from '../type/api'
 
 interface SurgeryData {
   lasek: number; lasik: number; smile: number; smilePro: number
@@ -42,10 +43,10 @@ function toDataMap(items: SurgeryMonthlyItem[]): Record<number, SurgeryData[]> {
   return map
 }
 
-export function useSurgeryComposition(years: number[]) {
+export function useSurgeryTrend(years: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
-    queryKey: ['surgery-composition', years],
-    queryFn: () => surgeryApi.getSurgeryComposition(years),
+    queryKey: ['surgery-trend', years],
+    queryFn: () => surgeryApi.getSurgeryTrend(years),
     enabled: years.length > 0,
   })
 

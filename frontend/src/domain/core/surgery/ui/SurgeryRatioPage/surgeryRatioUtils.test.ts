@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { EMPTY_DATA, toYearMap } from './surgeryRatioUtils'
-import { type SurgeryMonthlyItem } from '@/api/surgery'
+import { type SurgeryMonthlyItem } from '../../type/api'
 
 const item = (overrides: Partial<SurgeryMonthlyItem> = {}): SurgeryMonthlyItem => ({
   year: 2026,

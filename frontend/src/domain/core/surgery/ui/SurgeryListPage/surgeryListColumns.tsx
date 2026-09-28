@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { SurgeryListItem } from '@/api/surgery/surgeryList'
+import type { SurgeryListItem } from '../../type/api'
 import { calcAge, dash } from './surgeryListUtils'
 import { maskName, maskPhone } from '#shared/utils/mask'
 

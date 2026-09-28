@@ -3,7 +3,7 @@ import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOv
 import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
 import { useProcedureExamTrend } from '@/hooks/exam/useProcedureExamTrend'
 import { useExaminationTrend } from '@/hooks/exam/useExaminationTrend'
-import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'
+import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
 import { useCataractReservationRateTrend } from '#domain/core/consultation/hooks/useCataractReservationRateTrend'
 import { useStopReasonMonthly } from '#domain/core/consultation/hooks/useStopReasonMonthly'
 import { useOverallExamMonthly } from '#domain/core/overall/hooks/useOverallExamMonthly'

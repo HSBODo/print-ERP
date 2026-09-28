@@ -1,15 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  reoperationDecisionApi,
-  type ReoperationDecisionRow,
-  type ReoperationDecisionSaveItem,
-} from '@/api/surgery/reoperationDecision'
+import { surgeryApi } from '../api'
+import type { ReoperationDecisionRow, ReoperationDecisionSaveItem } from '../type/api'
 
 /** 기간 내 저장된 재수술 판정 조회. enabled=false 이면 요청하지 않는다(모달 열릴 때만). */
 export function useReoperationDecisions(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reoperation-decisions', from, to],
-    queryFn: () => reoperationDecisionApi.list(from, to),
+    queryFn: () => surgeryApi.getReoperationDecisions(from, to),
     enabled: enabled && Boolean(from && to),
   })
 
@@ -33,7 +30,7 @@ export function useSaveReoperationDecisions(from: string, to: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (decisions: ReoperationDecisionSaveItem[]) =>
-      reoperationDecisionApi.saveBatch(decisions),
+      surgeryApi.saveReoperationDecisions(decisions),
     onSuccess: () => {
       const affectedKeys = [
         ['reoperation-decisions', from, to],

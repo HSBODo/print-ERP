@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { surgeryApi, type SurgeryDailyItem, type SurgeryDailyMeta } from '@/api/surgery'
+import { surgeryApi } from '../api'
+import type { SurgeryDailyItem, SurgeryDailyMeta } from '../type/api'
 
 /** 수술별 비중 일별 셀 — 일자(date)는 dataMap 키로 분리하고 값은 지표만 보유. */
 export interface SurgeryDailyData {

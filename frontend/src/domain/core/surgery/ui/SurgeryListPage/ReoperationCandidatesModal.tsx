@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '#shared/ui/Button'
-import { useReoperationCandidates } from '@/hooks/surgery/useReoperationCandidates'
+import { useReoperationCandidates } from '../../hooks/useReoperationCandidates'
 import {
   useReoperationDecisions,
   useSaveReoperationDecisions,
-} from '@/hooks/surgery/useReoperationDecisions'
-import type { ReoperationCandidate } from '@/api/surgery/reoperationCandidates'
+} from '../../hooks/useReoperationDecisions'
+import type { ReoperationCandidate } from '../../type/api'
 
 /**
  * 재수술 검토 팝업 — 자동판정 후보를 체크박스로 검토하고 최종 판정을 저장한다.

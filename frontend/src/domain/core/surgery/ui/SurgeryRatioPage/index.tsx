@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Select } from '#shared/ui/Select'
 import { useIsMobile } from '#shared/hooks/useIsMobile'
-import { useSurgeryRatioComposition } from '@/hooks/surgery/useSurgeryRatioComposition'
-import { KpiCardsPanel } from './surgery-ratio/KpiCardsPanel'
-import { CompositionPanel } from './surgery-ratio/CompositionPanel'
-import { TrendPanel } from './surgery-ratio/TrendPanel'
-import { SURGERY_TYPES, EMPTY_DATA, toYearMap } from './surgery-ratio/surgeryRatioUtils'
+import { useSurgeryRatioComposition } from '../../hooks/useSurgeryRatioComposition'
+import { KpiCardsPanel } from './KpiCardsPanel'
+import { CompositionPanel } from './CompositionPanel'
+import { TrendPanel } from './TrendPanel'
+import { SURGERY_TYPES, EMPTY_DATA, toYearMap } from './surgeryRatioUtils'
 import { CURRENT_YEAR, MONTH_OPTIONS, YEAR_OPTIONS } from '#shared/constants/chart'
 
 /** 월 Select 의 "연간 전체" 센티널. Select 가 number 만 받으므로 0~11(월 index)과 겹치지 않는 -1을 쓴다. */

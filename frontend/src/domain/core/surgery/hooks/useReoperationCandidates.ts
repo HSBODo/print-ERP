@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { reoperationCandidatesApi, type ReoperationCandidate } from '@/api/surgery/reoperationCandidates'
+import { surgeryApi } from '../api'
+import type { ReoperationCandidate } from '../type/api'
 
 /**
  * 재수술 후보 조회 훅. 재수술일 범위(from~to)로 서버 조회.
@@ -8,7 +9,7 @@ import { reoperationCandidatesApi, type ReoperationCandidate } from '@/api/surge
 export function useReoperationCandidates(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reoperation-candidates', from, to],
-    queryFn: () => reoperationCandidatesApi.getReoperationCandidates(from, to),
+    queryFn: () => surgeryApi.getReoperationCandidates(from, to),
     enabled: enabled && Boolean(from && to),
   })
 
