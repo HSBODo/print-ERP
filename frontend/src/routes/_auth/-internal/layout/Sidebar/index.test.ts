@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import { createRouter } from '@tanstack/react-router'
 import { routeTree } from '@/routeTree.gen'
-import { buildMenu, MENU_TREE, type MenuItem, type PagePath } from '@/config/navigation'
+import { buildMenu, MENU_TREE, type MenuItem, type PagePath } from '../../navigation'
 import type { AuthUser } from '#domain/support/session/session'
 
 /**

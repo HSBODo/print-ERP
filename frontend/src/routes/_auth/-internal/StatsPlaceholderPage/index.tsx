@@ -1,5 +1,5 @@
 import { DatabaseZap, LayoutTemplate, Route, Workflow } from 'lucide-react'
-import type { PageMeta } from '@/config/pageAccess'
+import type { PageMeta } from '../pageAccess'
 import {
   Card,
   CardContent,

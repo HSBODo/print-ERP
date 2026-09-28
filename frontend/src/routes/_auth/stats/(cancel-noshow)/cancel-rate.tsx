@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { CancelRatePage } from '#page/_auth/-internal/graveyard/CancelRatePage'
+import { CancelRatePage } from '../../-internal/graveyard/CancelRatePage'
 
 export const Route = createFileRoute('/_auth/stats/(cancel-noshow)/cancel-rate')({
   component: CancelRatePage,

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Menu, X } from 'lucide-react'
-import { Sidebar } from './Sidebar'
-import { Topbar } from './Topbar'
+import { Sidebar } from '../Sidebar'
+import { Topbar } from '../Topbar'
 import { useIsMobile } from '#shared/hooks/useIsMobile'
 
 export function AppLayout({ children }: { children: ReactNode }) {
