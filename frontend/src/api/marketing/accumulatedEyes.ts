@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { withQuery } from '#shared/api/utils'
 
 /**
  * 누적 안수 리스트 — 원천 OPERATION_ACCUMULATED_EYE_COUNT 를 마트({@code list_accumulated_eyes})에서 조회.

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Download, Printer } from 'lucide-react'
 import { ReportLineChart } from '@/components/report/ReportLineChart'
-import { CURRENT_YEAR } from '@/constants/chart'
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import { YEARS } from './monthlyReportUtils'
 import { buildMonthlyReportCsv } from './monthlyReportCsv'
 import { useReportSeries } from './useReportSeries'

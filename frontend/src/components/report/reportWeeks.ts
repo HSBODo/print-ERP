@@ -1,9 +1,9 @@
-import { addDays, isoWeekMonday, isoWeeksInYear, toIsoDate } from '@/utils/isoWeek'
+import { addDays, isoWeekMonday, isoWeeksInYear, toIsoDate } from '#shared/utils/isoWeek'
 
 /**
  * 레포트 주차 축 — 주차 레포트가 쓰는 연간 주차 열거.
  *
- * 주차 규칙은 **ISO 8601**(`@/utils/isoWeek`)을 그대로 따른다 — 예약통계시스템·수술별 비중의
+ * 주차 규칙은 **ISO 8601**(`#shared/utils/isoWeek`)을 그대로 따른다 — 예약통계시스템·수술별 비중의
  * '주차' 탭과 같은 번호 체계라 화면 간 "31주차"가 항상 같은 주를 가리킨다.
  *   - 월요일 시작, 첫 목요일이 든 주가 1주차 (한 해 52 또는 53주)
  *   - 1주차는 전년 12월을, 마지막 주차는 다음 해 1월을 물 수 있다

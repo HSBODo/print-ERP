@@ -1,4 +1,4 @@
-import { CURRENT_YEAR } from '@/constants/chart'
+import { CURRENT_YEAR } from '#shared/constants/chart'
 
 /** 월간 레포트 공통 상수/로직 (렌더 무관). 차트 서브컴포넌트는 MonthlyReportCharts.tsx. */
 

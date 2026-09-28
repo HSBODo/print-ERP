@@ -1,6 +1,6 @@
 import { Ban, BellOff, ChevronDown, FileText, ListX, Plus, RefreshCw, RotateCcw, Search, Undo2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { MonthPicker } from '@/components/filters/MonthPicker'
+import { Button } from '#shared/ui/Button'
+import { MonthPicker } from '#shared/ui/MonthPicker'
 import { toMonthEnd, toMonthStart, toMonthValue } from './smsTableModel'
 import type { SmsQueryBasis, SmsTemplate } from '@/api/sms'
 

@@ -6,23 +6,23 @@ import {
 } from 'recharts'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { KpiCard } from '@/components/stats/KpiCard'
-import { PanelShell } from '@/components/PanelShell'
-import { FilterBar } from '@/components/filters/FilterBar'
-import { useFilterBar, type FilterBarControls } from '@/components/filters/useFilterBar'
-import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '@/constants/chart'
-import { changeRate, formatAxisNumber, formatAxisPercent, periodLabel } from '@/utils/stats'
-import { useIsMobile } from '@/hooks/useIsMobile'
+} from '#shared/ui/Chart'
+import { KpiCard } from '#shared/ui/KpiCard'
+import { PanelShell } from '#shared/ui/PanelShell'
+import { FilterBar } from '#shared/ui/FilterBar'
+import { useFilterBar, type FilterBarControls } from '#shared/ui/FilterBar/useFilterBar'
+import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
+import { changeRate, formatAxisNumber, formatAxisPercent, periodLabel } from '#shared/utils/stats'
+import { useIsMobile } from '#shared/hooks/useIsMobile'
 import { useReservationKpi } from '@/hooks/reservation/useReservationKpi'
 import { useReservationTrend } from '@/hooks/reservation/useReservationTrend'
 import { useReservationComposition } from '@/hooks/reservation/useReservationComposition'
-import { StatsGrid } from '@/components/layout/desktop/StatsGrid'
-import { StatsStack } from '@/components/layout/mobile/StatsStack'
+import { StatsGrid } from '#shared/ui/StatsGrid'
+import { StatsStack } from '#shared/ui/StatsStack'
 
 /* ── 상수 ── */
 type MetricKey = 'total' | 'surgery' | 'outpatient' | 'dreamlens'

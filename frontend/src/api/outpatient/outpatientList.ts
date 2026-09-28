@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { withQuery } from '#shared/api/utils'
 
 /**
  * 외래수 리스트 — RESERVATION 기준 외래(F) + 내원/퇴원(I/H) 행 목록.

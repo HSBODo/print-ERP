@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { withQuery } from '#shared/api/utils'
 
 /**
  * 검사자 리스트(상담사별) — 성민CRM 화면 소스(EXAM+CUSTOM+OPERATIONDATA+EMPLOYEE)의 행 목록.

@@ -6,11 +6,11 @@ import {
 } from 'recharts'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
+} from '#shared/ui/Chart'
 import {
   type CompareMode,
   formatAxisNumber,
@@ -20,7 +20,7 @@ import {
   getDefaultYears,
   periodLabel,
   type Period,
-} from '@/utils/stats'
+} from '#shared/utils/stats'
 
 /* ── 상수 ── */
 type NoShowKey = 'total' | 'outpatient' | 'exam' | 'cataractExam' | 'cataractOutpatient'

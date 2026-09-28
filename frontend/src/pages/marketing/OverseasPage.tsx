@@ -13,10 +13,10 @@ import {
   YAxis,
 } from 'recharts'
 import type { OverseasMarketingGranularity } from '@/api/marketing/overseasMarketing'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '#shared/ui/Button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
 import { useOverseasMarketingStatistics } from '@/hooks/marketing/useOverseasMarketing'
-import { formatAxisNumber } from '@/utils/stats'
+import { formatAxisNumber } from '#shared/utils/stats'
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = Array.from({ length: 7 }, (_, index) => CURRENT_YEAR - index)

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '#shared/ui/Button'
+import { Card, CardContent } from '#shared/ui/Card'
 import { useReservationChangeDaily } from '@/hooks/reservation/useReservationChange'
 import { ReservationChangeCalendar } from './ReservationChangeCalendar'
 import {

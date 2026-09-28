@@ -1,4 +1,4 @@
-import { MONTHS } from '@/constants/chart'
+import { MONTHS } from '#shared/constants/chart'
 import type { StopReasonMonthlyItem } from '@/api/consultation'
 
 /**

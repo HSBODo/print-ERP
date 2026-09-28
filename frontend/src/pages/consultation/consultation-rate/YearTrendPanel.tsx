@@ -5,10 +5,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { type ChartConfig } from '@/components/ui/chart'
-import { PanelShell } from '@/components/PanelShell'
-import { TrendLineChart, type TrendLine } from '@/components/stats/TrendLineChart'
+} from '#shared/ui/Card'
+import { type ChartConfig } from '#shared/ui/Chart'
+import { PanelShell } from '#shared/ui/PanelShell'
+import { TrendLineChart, type TrendLine } from '#shared/ui/TrendLineChart'
 import {
   METRICS,
   EMPTY,
@@ -18,8 +18,8 @@ import {
   type MonthlyData,
   formatRate,
 } from './consultationRateUtils'
-import { MONTHS, YEAR_STROKE_PATTERNS } from '@/constants/chart'
-import { formatAxisPercent } from '@/utils/stats'
+import { MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
+import { formatAxisPercent } from '#shared/utils/stats'
 
 interface YearTrendPanelProps {
   dataMap: Record<number, MonthlyData[]>

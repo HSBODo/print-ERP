@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { withQuery } from '#shared/api/utils'
 
 /**
  * 예약 변경이력 — 예약일이 1회 이상 바뀐 검사예약(시력교정·드림렌즈·백내장) 명단.

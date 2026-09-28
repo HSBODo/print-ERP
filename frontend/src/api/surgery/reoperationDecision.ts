@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { withQuery } from '#shared/api/utils'
 
 /**
  * 재수술 검토 판정 저장·조회 — (차트번호, 수술일) 유니크로 upsert.

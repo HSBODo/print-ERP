@@ -3,11 +3,11 @@ import {
   ChevronDown, ChevronRight, ChevronsUpDown, ChevronUp,
   Download, Info, RotateCcw, Search,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '#shared/ui/Button'
+import { Card, CardContent } from '#shared/ui/Card'
 import { useAccumulatedEyes } from '@/hooks/marketing/useAccumulatedEyes'
 import type { AccumulatedEyeItem, AccumulatedEyesField } from '@/api/marketing/accumulatedEyes'
-import { columnsToCsv, downloadCsv } from '@/utils/csv'
+import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
 
 const FIELD_OPTIONS: { value: AccumulatedEyesField; label: string; placeholder: string }[] = [
   { value: 'all',   label: '전체',   placeholder: '예: 조승우 · 2233873 · 0109669 · 627122' },

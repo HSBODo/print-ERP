@@ -1,5 +1,5 @@
-import { addDays, isoWeekMonday, isoWeeksInYear, isoYearRange, toIsoDate } from '@/utils/isoWeek'
-import { formatAxisNumber } from '@/utils/stats'
+import { addDays, isoWeekMonday, isoWeeksInYear, isoYearRange, toIsoDate } from '#shared/utils/isoWeek'
+import { formatAxisNumber } from '#shared/utils/stats'
 
 /**
  * 수술별 비중 — 순수 집계/표시 로직 (JSX 없음).

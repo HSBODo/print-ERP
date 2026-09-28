@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { withQuery } from '@/api/_shared'
+import { withQuery } from '#shared/api/utils'
 import {
   buildReservationStatsDiffCsv,
   buildReservationStatsDrillDownCsv,
@@ -16,7 +16,7 @@ import {
   type ReservationStatsDailyCounts,
   type ReservationStatsEditableField,
 } from '@/api/reservation/reservationStatsSystem'
-import { downloadCsv } from '@/utils/csv'
+import { downloadCsv } from '#shared/utils/csv'
 import {
   useReservationStatsSystem,
   useReservationStatsSystemCellEdit,

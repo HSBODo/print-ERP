@@ -5,12 +5,12 @@ import {
 } from 'recharts'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
-} from '@/components/ui/chart'
-import { CURRENT_YEAR } from '@/constants/chart'
-import { formatAxisNumber } from '@/utils/stats'
+} from '#shared/ui/Chart'
+import { CURRENT_YEAR } from '#shared/constants/chart'
+import { formatAxisNumber } from '#shared/utils/stats'
 import { useReservationOverallTrend } from '@/hooks/reservation/useReservationOverallTrend'
 import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'
 import { useProcedureExamTrend } from '@/hooks/exam/useProcedureExamTrend'

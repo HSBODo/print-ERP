@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { apiResponseOf } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf } from '#shared/api/utils'
 import type { UserDepartment, UserRole } from '@/stores/auth-session'
 
 const userRowSchema = z.object({

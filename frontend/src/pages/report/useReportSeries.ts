@@ -10,7 +10,7 @@ import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
 import { useConsultationRateTrend } from '@/hooks/consultation/useConsultationRateTrend'
 import { useExamCountByClass } from '@/hooks/exam/useExamCountByClass'
 import { useBatchLastSuccess } from '@/hooks/batch/useBatchLastSuccess'
-import { CURRENT_YEAR } from '@/constants/chart'
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import type { OverallExamMonthlyItem } from '@/api/overall'
 import { YEARS, isIncompleteMonth } from './monthlyReportUtils'
 

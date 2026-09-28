@@ -1,5 +1,5 @@
 import { RotateCcw, Search, Download } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import { reservationStatsSourceLabel, type ReservationStatsResponseMeta } from '@/api/reservation/reservationStatsMeta'
 import { GRANULARITIES, type Granularity } from './reservationStatsSystemData'
 

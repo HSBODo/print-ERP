@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { withQuery } from '@/api/_shared'
+import { withQuery } from '#shared/api/utils'
 import {
   CATARACT_EDITABLE_FIELDS,
   type CataractEditableField,
@@ -16,7 +16,7 @@ import {
   type ReservationStatsDrillDown,
   type ReservationStatsParity,
 } from '@/api/reservation/reservationStatsDiagnostics'
-import { downloadCsv } from '@/utils/csv'
+import { downloadCsv } from '#shared/utils/csv'
 import {
   useReservationStatsCataract,
   useReservationStatsCataractCellEdit,

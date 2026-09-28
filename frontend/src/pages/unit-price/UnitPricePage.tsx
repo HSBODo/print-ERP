@@ -6,15 +6,15 @@ import {
 } from 'recharts'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { FilterBar } from '@/components/filters/FilterBar'
-import { useFilterBar } from '@/components/filters/useFilterBar'
-import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '@/constants/chart'
-import { changeRate, formatAxisMan, periodLabel, type Period } from '@/utils/stats'
+} from '#shared/ui/Chart'
+import { FilterBar } from '#shared/ui/FilterBar'
+import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
+import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
+import { changeRate, formatAxisMan, periodLabel, type Period } from '#shared/utils/stats'
 
 /* ── 타입 ── */
 type GroupKey = 'total' | 'refractive' | 'lens' | 'cataract'

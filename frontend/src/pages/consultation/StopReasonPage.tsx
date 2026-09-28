@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select } from '@/components/filters/Select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
+import { Select } from '#shared/ui/Select'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
+} from '#shared/ui/Chart'
 import { useStopReasonMonthly } from '@/hooks/consultation/useStopReasonMonthly'
-import { CURRENT_YEAR } from '@/constants/chart'
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import type { StopReasonMonthlyItem } from '@/api/consultation'
 
 const YEAR_OPTIONS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]

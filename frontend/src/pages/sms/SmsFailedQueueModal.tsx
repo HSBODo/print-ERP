@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { RefreshCw, RotateCcw, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import { useRetryQueueRows, useSmsQueueRows } from '@/hooks/sms/useSmsQueue'
-import { formatPhone } from '@/utils/phone'
+import { formatPhone } from '#shared/utils/phone'
 import {
   CATEGORY_STYLE, categorize, groupByReason, type ReasonCategory,
 } from './smsFailReasonSummary'

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { AllExamListItem } from '@/api/exam/allExamList'
 import { calcAge, dash } from './examListUtils'
-import { maskName, maskPhone } from '@/utils/mask'
+import { maskName, maskPhone } from '#shared/utils/mask'
 
 /** AllExamListPage 컬럼/뱃지 렌더 설정 (순수 로직은 examListUtils.ts 재사용). */
 

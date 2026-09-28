@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CURRENT_YEAR } from '@/constants/chart'
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import {
   StopReasonBar,
   ReportSurgeryTable,

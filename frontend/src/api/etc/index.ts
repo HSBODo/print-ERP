@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { apiResponseOf, withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf, withQuery } from '#shared/api/utils'
 
 /* ── Monthly (B2B 매출 페이지용) ── */
 

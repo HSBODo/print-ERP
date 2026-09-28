@@ -12,22 +12,22 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { PanelShell } from '@/components/PanelShell'
+} from '#shared/ui/Chart'
+import { PanelShell } from '#shared/ui/PanelShell'
 import {
   METRICS,
   EMPTY,
   type MonthlyData,
   formatRate,
 } from './consultationRateUtils'
-import { CHART_COLORS } from '@/constants/chart'
-import { formatAxisPercent, periodLabel } from '@/utils/stats'
+import { CHART_COLORS } from '#shared/constants/chart'
+import { formatAxisPercent, periodLabel } from '#shared/utils/stats'
 
 interface MonthComparePanelProps {
   dataMap: Record<number, MonthlyData[]>

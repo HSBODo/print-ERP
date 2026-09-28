@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartLegend,
@@ -10,13 +10,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { FilterBar } from '@/components/filters/FilterBar'
-import { useFilterBar } from '@/components/filters/useFilterBar'
-import { MetricSection, type MetricDef } from '@/components/stats/MetricSection'
-import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '@/constants/chart'
+} from '#shared/ui/Chart'
+import { FilterBar } from '#shared/ui/FilterBar'
+import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
+import { MetricSection, type MetricDef } from '#shared/ui/MetricSection'
+import { CHART_COLORS, MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
 import { b2bApi, type B2bRevenueMonthlyItem } from '@/api/etc'
-import { periodLabel } from '@/utils/stats'
+import { periodLabel } from '#shared/utils/stats'
 
 type MonthlyData = {
   totalRevenue: number

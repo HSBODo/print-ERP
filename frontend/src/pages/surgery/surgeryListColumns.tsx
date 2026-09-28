@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { SurgeryListItem } from '@/api/surgery/surgeryList'
 import { calcAge, dash } from './surgeryListUtils'
-import { maskName, maskPhone } from '@/utils/mask'
+import { maskName, maskPhone } from '#shared/utils/mask'
 
 /** SurgeryListPage 컬럼/뱃지 렌더 설정 (순수 로직은 surgeryListUtils.ts). */
 

@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { apiResponseOf, withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf, withQuery } from '#shared/api/utils'
 
 /* ── Monthly (검사 중단 사유 페이지용) ── */
 

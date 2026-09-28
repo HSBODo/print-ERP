@@ -1,16 +1,16 @@
 import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { Select } from '@/components/filters/Select'
+} from '#shared/ui/Chart'
+import { Select } from '#shared/ui/Select'
 import type { StopReasonMonthlyItem } from '@/api/consultation'
-import { CURRENT_YEAR, MONTHS } from '@/constants/chart'
-import { formatAxisNumber } from '@/utils/stats'
+import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
+import { formatAxisNumber } from '#shared/utils/stats'
 import { isIncompleteMonth } from './monthlyReportUtils'
 
 const MONTH_SELECT_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `${i + 1}월` }))

@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '../client'
-import { apiResponseOf } from '../_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf } from '#shared/api/utils'
 
 /**
  * 예약통계_채널별 — 예약자 리스트를 채널로 묶은 퍼널.

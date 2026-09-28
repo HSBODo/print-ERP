@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AlertTriangle, RefreshCw, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import { useReleaseSmsOptOut, useSmsOptOuts } from '@/hooks/sms/useSmsManagement'
 import type { SmsOptOutRow } from '@/api/sms'
 

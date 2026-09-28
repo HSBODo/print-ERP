@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import { useRunQueueNow, useSmsQueueRows, useSmsQueueStatus, useSolapiBalance } from '@/hooks/sms/useSmsQueue'
 import { useAuthStore } from '@/stores/authStore'
 import { canManagerOp, canSystemOp, matchesDepartment } from '@/stores/auth-session'

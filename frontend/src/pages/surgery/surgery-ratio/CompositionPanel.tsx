@@ -16,13 +16,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/ui/chart'
-import { PanelShell } from '@/components/PanelShell'
+} from '#shared/ui/Chart'
+import { PanelShell } from '#shared/ui/PanelShell'
 import {
   SURGERY_TYPES,
   FAMILY_META,
@@ -31,7 +31,7 @@ import {
   type FamilyKey,
   type MonthlyData,
 } from './surgeryRatioUtils'
-import { formatAxisNumber, formatAxisPercent } from '@/utils/stats'
+import { formatAxisNumber, formatAxisPercent } from '#shared/utils/stats'
 
 interface CompositionPanelProps {
   selectedData: MonthlyData

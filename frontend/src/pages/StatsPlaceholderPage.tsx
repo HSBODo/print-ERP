@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 
 export function StatsPlaceholderPage({ page, path }: { page: PageMeta; path: string }) {
   return (

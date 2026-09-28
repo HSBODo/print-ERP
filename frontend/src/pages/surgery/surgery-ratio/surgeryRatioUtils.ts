@@ -1,5 +1,5 @@
 import { type SurgeryMonthlyItem } from '@/api/surgery'
-import { type ChartConfig } from '@/components/ui/chart'
+import { type ChartConfig } from '#shared/ui/Chart'
 
 export type SurgeryKey =
   | 'lasek'

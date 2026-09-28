@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '../client'
-import { apiResponseOf } from '../_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf } from '#shared/api/utils'
 
 /**
  * 채널별 수익성 — 화면이 쓰는 값 중 **퍼널 API 에 없던 것**만 담당한다.

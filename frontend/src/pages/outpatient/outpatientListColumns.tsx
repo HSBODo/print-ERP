@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { OutpatientListItem } from '@/api/outpatient/outpatientList'
-import { maskName, maskPhone } from '@/utils/mask'
+import { maskName, maskPhone } from '#shared/utils/mask'
 import { calcAge, dash } from './outpatientListUtils'
 
 /**

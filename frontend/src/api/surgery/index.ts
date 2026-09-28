@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { apiResponseOf, withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf, withQuery } from '#shared/api/utils'
 
 /* ── Monthly (수술 건수 페이지용) ── */
 

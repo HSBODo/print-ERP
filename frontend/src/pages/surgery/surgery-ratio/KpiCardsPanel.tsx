@@ -4,8 +4,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { PanelShell } from '@/components/PanelShell'
+} from '#shared/ui/Card'
+import { PanelShell } from '#shared/ui/PanelShell'
 import {
   SURGERY_TYPES,
   type MonthlyData,

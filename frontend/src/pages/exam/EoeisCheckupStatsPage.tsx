@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { CalendarRange, ChevronDown, Download, MonitorCog, Search, Settings2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import type { EoeisCheckupRow } from '@/api/exam/eoeisCheckup'
 import { useEoeisCheckup } from '@/hooks/exam/useEoeisCheckup'
-import { downloadCsv, toCsv } from '@/utils/csv'
+import { downloadCsv, toCsv } from '#shared/utils/csv'
 import { buildPaginationItems, PAGE_SIZE_OPTIONS, type SortState } from './examListUtils'
 
 type ViewMode = 'count' | 'score'

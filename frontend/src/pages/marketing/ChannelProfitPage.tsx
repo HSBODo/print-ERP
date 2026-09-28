@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronsUpDown, ChevronUp, Info, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { MonthPicker } from '@/components/filters/MonthPicker'
-import { PanelShell } from '@/components/PanelShell'
+import { Button } from '#shared/ui/Button'
+import { MonthPicker } from '#shared/ui/MonthPicker'
+import { PanelShell } from '#shared/ui/PanelShell'
 import { useReservationChannel } from '@/hooks/reservation/useReservationChannel'
 import {
   useAdSpend,

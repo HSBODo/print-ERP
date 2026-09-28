@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp, ChevronsUpDown, Pencil, Trash2 } from 'lucide-react'
 import type { OverseasMarketingReception } from '@/api/marketing/overseasMarketing'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '#shared/ui/Button'
+import { Card, CardContent } from '#shared/ui/Card'
 import { PAGE_SIZE_OPTIONS } from './receptionOptions'
 import {
   alignClass,

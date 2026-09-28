@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { OverseasMarketingReceptionInput } from '@/api/marketing/overseasMarketing'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 
 type FieldKey = keyof OverseasMarketingReceptionInput
 type Field = {

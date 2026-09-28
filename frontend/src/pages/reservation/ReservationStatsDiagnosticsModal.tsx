@@ -1,5 +1,5 @@
 import { Download, GitCompare, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import type {
   ReservationStatsDiff,
   ReservationStatsDiffItem,

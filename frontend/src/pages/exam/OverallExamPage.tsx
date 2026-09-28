@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import { useOverallExamMonthly } from '@/hooks/overall/useOverallExamMonthly'
 import type { OverallExamMonthlyItem } from '@/api/overall'
 

@@ -5,17 +5,17 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { type ChartConfig } from '@/components/ui/chart'
-import { PanelShell } from '@/components/PanelShell'
-import { TrendLineChart, type TrendLine } from '@/components/stats/TrendLineChart'
+} from '#shared/ui/Card'
+import { type ChartConfig } from '#shared/ui/Chart'
+import { PanelShell } from '#shared/ui/PanelShell'
+import { TrendLineChart, type TrendLine } from '#shared/ui/TrendLineChart'
 import {
   SURGERY_TYPES,
   EMPTY_DATA,
   type MonthlyData,
 } from './surgeryRatioUtils'
-import { MONTHS } from '@/constants/chart'
-import { formatAxisNumber } from '@/utils/stats'
+import { MONTHS } from '#shared/constants/chart'
+import { formatAxisNumber } from '#shared/utils/stats'
 
 interface TrendPanelProps {
   trendYear: number

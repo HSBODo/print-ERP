@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Search, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import { GROUP_META } from './smsTableModel'
 import type { SmsLookup, SmsTargetRequest, SmsTemplate } from '@/api/sms'
 

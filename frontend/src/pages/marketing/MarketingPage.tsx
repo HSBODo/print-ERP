@@ -17,7 +17,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartLegend,
@@ -25,13 +25,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
+} from '#shared/ui/Chart'
 import {
   StatsSelect,
   TrendChip,
-} from '@/components/stats/StatsPrimitives'
-import { changePoint, changeRate, formatDelta } from '@/components/stats/stats-utils'
-import { formatAxisNumber, formatAxisPercent, getCurrentPeriod } from '@/utils/stats'
+} from '#shared/ui/StatsPrimitives'
+import { changePoint, changeRate, formatDelta } from '#shared/utils/statsUtils'
+import { formatAxisNumber, formatAxisPercent, getCurrentPeriod } from '#shared/utils/stats'
 
 type ChannelKey = 'search' | 'meta' | 'content' | 'referral'
 

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { toCsv } from '@/utils/csv'
+import { toCsv } from '#shared/utils/csv'
 
 export const reservationStatsDiffItemSchema = z.object({
   date: z.string(),

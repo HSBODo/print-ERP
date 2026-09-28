@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, LabelList, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '#shared/ui/Chart'
 import { formatWonCompact } from './accountingModel'
 import { MONTH_LABELS, rowTotal, type MonthlyChartView } from './accountingChartModel'
 

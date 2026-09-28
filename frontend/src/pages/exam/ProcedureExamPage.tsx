@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { FilterBar } from '@/components/filters/FilterBar'
-import { useFilterBar } from '@/components/filters/useFilterBar'
-import { PanelShell } from '@/components/PanelShell'
+} from '#shared/ui/Chart'
+import { FilterBar } from '#shared/ui/FilterBar'
+import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
+import { PanelShell } from '#shared/ui/PanelShell'
 import { useProcedureExamTrend } from '@/hooks/exam/useProcedureExamTrend'
-import { CURRENT_YEAR, MONTHS } from '@/constants/chart'
-import { formatAxisNumber } from '@/utils/stats'
+import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
+import { formatAxisNumber } from '#shared/utils/stats'
 
 type ProcedureTabKey = 'examCount' | 'oneDayExamCount'
 

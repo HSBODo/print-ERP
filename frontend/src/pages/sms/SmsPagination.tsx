@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { Button } from '#shared/ui/Button'
 import { StyledSelect } from './SmsToolbar'
 import { buildPaginationItems } from './smsTableModel'
 

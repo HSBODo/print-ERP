@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '@/api/client'
-import { apiResponseOf, withQuery } from '@/api/_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf, withQuery } from '#shared/api/utils'
 
 /* ── 주차 레포트 (ISO 8601 연간 주차) ── */
 

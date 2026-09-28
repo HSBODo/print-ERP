@@ -1,6 +1,6 @@
 import type { OverseasMarketingReception } from '@/api/marketing/overseasMarketing'
-import type { CsvColumn } from '@/utils/csv'
-import { maskName } from '@/utils/mask'
+import type { CsvColumn } from '#shared/utils/csv'
+import { maskName } from '#shared/utils/mask'
 
 export type SortKey = keyof OverseasMarketingReception
 

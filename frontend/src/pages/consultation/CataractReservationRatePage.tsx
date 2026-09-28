@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { FilterBar } from '@/components/filters/FilterBar'
-import { useFilterBar } from '@/components/filters/useFilterBar'
-import { PanelShell } from '@/components/PanelShell'
+} from '#shared/ui/Chart'
+import { FilterBar } from '#shared/ui/FilterBar'
+import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
+import { PanelShell } from '#shared/ui/PanelShell'
 import { useCataractReservationRateTrend } from '@/hooks/consultation/useCataractReservationRateTrend'
-import { CURRENT_YEAR, MONTHS } from '@/constants/chart'
+import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 
 const RECENCY_COLORS = ['#E11D2E', '#4B5563', '#A8CEDF', '#F59E0B']
 

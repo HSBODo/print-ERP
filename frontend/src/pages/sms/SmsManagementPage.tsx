@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '#shared/ui/Card'
 import { useSmsMutations, useSmsTargets, useSmsTemplates } from '@/hooks/sms/useSmsManagement'
 import { useSmsOffsets } from '@/hooks/sms/useSmsOffsets'
 import { TargetFormModal } from './TargetFormModal'
@@ -13,7 +13,7 @@ import { SmsOptOutModal } from './SmsOptOutModal'
 import { SmsQueueStatusCard } from './SmsQueueStatusCard'
 import { SmsMessagePreview } from './SmsMessagePreview'
 import { SmsPagination } from './SmsPagination'
-import { formatPhone } from '@/utils/phone'
+import { formatPhone } from '#shared/utils/phone'
 import {
   DELIVERY_GRACE_MINUTES, GROUP_META, OP_TYPE_META, isHeld,
   compareSortValue, getSortValue, groupHelpOf, groupOf, matchesStatusFilter, stampMinutesAgo, offsetOf, targetStateOf, tierCellOf, todayIso, toMonthEnd, toMonthStart, toMonthValue,

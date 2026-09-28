@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MonthPicker } from '@/components/filters/MonthPicker'
+import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
+import { MonthPicker } from '#shared/ui/MonthPicker'
 import { useSurgeryDaily } from '@/hooks/surgery/useSurgeryDaily'
 import {
   COLS,

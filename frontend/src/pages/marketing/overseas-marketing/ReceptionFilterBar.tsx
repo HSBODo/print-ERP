@@ -1,7 +1,7 @@
 import { ChevronDown, Download, Plus, RefreshCw, RotateCcw, Search } from 'lucide-react'
 import type { OverseasMarketingDateType, OverseasMarketingReceptionParams } from '@/api/marketing/overseasMarketing'
-import { Button } from '@/components/ui/button'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { Button } from '#shared/ui/Button'
+import { DateRangePicker } from '#shared/ui/DateRangePicker'
 import {
   createDefaultParams,
   DATE_TYPES,

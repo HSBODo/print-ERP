@@ -13,7 +13,7 @@ vi.mock('recharts', () => ({
   YAxis: () => null,
 }))
 
-vi.mock('@/components/ui/chart', () => ({
+vi.mock('#shared/ui/Chart', () => ({
   ChartContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ChartTooltip: () => null,
   ChartTooltipContent: () => null,

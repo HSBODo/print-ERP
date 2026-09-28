@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { apiResponseOf, withQuery } from '@/api/_shared'
-import { api } from '@/api/client'
+import { apiResponseOf, withQuery } from '#shared/api/utils'
+import { api } from '#shared/api/client'
 import type {
   AccountingStatus,
   MedicalCategory,

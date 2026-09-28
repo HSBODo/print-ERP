@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { api } from '../client'
-import { apiResponseOf, withQuery } from '../_shared'
+import { api } from '#shared/api/client'
+import { apiResponseOf, withQuery } from '#shared/api/utils'
 
 /**
  * 문자 발송 관리 API — /api/sms-management (ADMIN 전용).

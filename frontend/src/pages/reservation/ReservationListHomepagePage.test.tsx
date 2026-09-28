@@ -72,7 +72,7 @@ afterEach(cleanup)
 describe('CSV 출력', () => {
   it('No 는 화면과 동일하게 총건수에서 1씩 감소한다', async () => {
     const { csvColumnsOf } = await import('./reservationListHomepageColumns')
-    const { columnsToCsv } = await import('@/utils/csv')
+    const { columnsToCsv } = await import('#shared/utils/csv')
     const rows = [row({ legacyNo: '3' }), row({ legacyNo: '2' }), row({ legacyNo: '1' })]
 
     const lines = columnsToCsv(csvColumnsOf(rows.length), rows).split('\r\n')
@@ -85,7 +85,7 @@ describe('CSV 출력', () => {
 
   it('코드가 아니라 화면 라벨로 나가고, 휴대폰번호는 엑셀 텍스트로 강제한다', async () => {
     const { csvColumnsOf } = await import('./reservationListHomepageColumns')
-    const { columnsToCsv } = await import('@/utils/csv')
+    const { columnsToCsv } = await import('#shared/utils/csv')
 
     const csv = columnsToCsv(csvColumnsOf(1), [row()])
 
@@ -101,7 +101,7 @@ describe('CSV 출력', () => {
 
   it('개인정보는 CSV 로 나갈 때만 마스킹된다', async () => {
     const { csvColumnsOf } = await import('./reservationListHomepageColumns')
-    const { columnsToCsv } = await import('@/utils/csv')
+    const { columnsToCsv } = await import('#shared/utils/csv')
 
     const csv = columnsToCsv(csvColumnsOf(1), [row()])
 

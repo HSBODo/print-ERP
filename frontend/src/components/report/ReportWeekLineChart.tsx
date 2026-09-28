@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { formatAxisNumber } from '@/utils/stats'
+} from '#shared/ui/Chart'
+import { formatAxisNumber } from '#shared/utils/stats'
 import { niceAxisFor, tightAxis } from './niceAxis'
 import { colorOf } from './reportYearColors'
 import type { ReportWeek } from './reportWeeks'

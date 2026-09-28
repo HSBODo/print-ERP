@@ -33,8 +33,8 @@ export const weekdayKo = (weekdayIndex: number): string => WEEKDAY_KO[weekdayInd
 /** 0-based calendar week within a month. */
 export const weekOf = (day: number, firstWeekday: number): number => Math.floor((day - 1 + firstWeekday) / 7)
 
-/** ISO 8601 주차 (1~53) — 구현은 공용 유틸(@/utils/isoWeek)에 있다. */
-export { isoWeek } from '@/utils/isoWeek'
+/** ISO 8601 주차 (1~53) — 구현은 공용 유틸(#shared/utils/isoWeek)에 있다. */
+export { isoWeek } from '#shared/utils/isoWeek'
 
 export const pctInt = (a: number, b: number): number => (b === 0 ? 0 : Math.round((a * 100) / b))
 

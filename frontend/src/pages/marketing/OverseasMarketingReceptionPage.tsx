@@ -31,7 +31,7 @@ import {
 } from '@/pages/marketing/overseas-marketing/receptionColumns'
 import { canSystemOp } from '@/stores/auth-session'
 import { useAuthStore } from '@/stores/authStore'
-import { columnsToCsv, downloadCsv } from '@/utils/csv'
+import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
 
 // CRM [동기화] 버튼 스위치 — 잠시 꺼야 할 때 false 로 바꾸고 재배포.
 const CRM_SYNC_ENABLED = true

@@ -14,25 +14,25 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { FilterBar } from '@/components/filters/FilterBar'
-import { useFilterBar } from '@/components/filters/useFilterBar'
-import { KpiCard } from '@/components/stats/KpiCard'
-import { PanelShell } from '@/components/PanelShell'
-import { StatsGrid } from '@/components/layout/desktop/StatsGrid'
-import { StatsStack } from '@/components/layout/mobile/StatsStack'
-import { useIsMobile } from '@/hooks/useIsMobile'
+} from '#shared/ui/Chart'
+import { FilterBar } from '#shared/ui/FilterBar'
+import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
+import { KpiCard } from '#shared/ui/KpiCard'
+import { PanelShell } from '#shared/ui/PanelShell'
+import { StatsGrid } from '#shared/ui/StatsGrid'
+import { StatsStack } from '#shared/ui/StatsStack'
+import { useIsMobile } from '#shared/hooks/useIsMobile'
 import { useSurgeryKpi } from '@/hooks/surgery/useSurgeryKpi'
 import { useSurgeryTrend } from '@/hooks/surgery/useSurgeryTrend'
 import { useSurgeryComposition } from '@/hooks/surgery/useSurgeryComposition'
-import { CHART_COLORS, CURRENT_YEAR, MONTHS } from '@/constants/chart'
-import { formatAxisNumber, periodLabel } from '@/utils/stats'
+import { CHART_COLORS, CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
+import { formatAxisNumber, periodLabel } from '#shared/utils/stats'
 
 /* ── 타입 ── */
 type GroupKey = 'total' | 'refractive' | 'lens' | 'cataract'

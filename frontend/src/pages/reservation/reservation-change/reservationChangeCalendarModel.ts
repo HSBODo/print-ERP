@@ -1,5 +1,5 @@
 import type { ReservationChangeDailyCount } from '@/api/reservation/reservationChange'
-import { addDays, isoWeek, toIsoDate } from '@/utils/isoWeek'
+import { addDays, isoWeek, toIsoDate } from '#shared/utils/isoWeek'
 import { holidayDayLabel, holidayLabel } from './reservationChangeModel'
 
 /**

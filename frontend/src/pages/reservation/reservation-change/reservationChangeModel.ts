@@ -1,5 +1,5 @@
 import type { ReservationChangeItem } from '@/api/reservation/reservationChange'
-import { addDays, isoWeek, toIsoDate } from '@/utils/isoWeek'
+import { addDays, isoWeek, toIsoDate } from '#shared/utils/isoWeek'
 
 /**
  * 예약 변경이력 화면 모델 — 체인 문자열 해석 · 기준일(시점) 조회 · 필터/정렬 · 표기 규칙.
