@@ -1,6 +1,6 @@
-import type { PeriodMode } from './accountingModel'
-import { monthRange, weeksOfMonth } from './accountingPeriod'
-import { Segment, SelectBox } from './VisionRevenueControls'
+import type { PeriodMode } from '../../utils/accountingModel'
+import { monthRange, weeksOfMonth } from '../../utils/accountingPeriod'
+import { Segment, SelectBox } from '../VisionRevenueControls'
 
 export interface VisionSummaryFilter {
   mode: PeriodMode

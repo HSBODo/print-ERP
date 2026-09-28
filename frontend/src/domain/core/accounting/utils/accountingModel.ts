@@ -1,4 +1,4 @@
-import type { MedicalReceipt } from '@/api/accounting'
+import type { MedicalReceipt } from '../type/accounting'
 
 export type PeriodMode = 'daily' | 'weekly' | 'monthly'
 

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { accountingApi, type MedicalCategory } from '@/api/accounting'
+import { accountingApi } from '../api'
+import type { MedicalCategory } from '../type/accounting'
 
 export interface DateRange {
   from: string

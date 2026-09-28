@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { MedicalReceipt } from '@/api/accounting'
-import { useAccountingStatus, useMedicalReceipts } from '@/hooks/accounting/useAccounting'
-import type { AccountingFilterState } from './accountingTypes'
+import type { MedicalReceipt } from '../../type/accounting'
+import { useAccountingStatus, useMedicalReceipts } from '../../hooks/useAccounting'
+import type { AccountingFilterState } from '../../type/filter'
 import {
   MedicalReceiptFilters,
   MedicalReceiptToolbar,
   type MedicalExtraFilters,
 } from './MedicalReceiptControls'
 import { MedicalReceiptTable } from './MedicalReceiptTable'
-import { dataStamp, matchesKeyword } from './accountingModel'
-import { currentMonthRange } from './accountingPeriod'
+import { dataStamp, matchesKeyword } from '../../utils/accountingModel'
+import { currentMonthRange } from '../../utils/accountingPeriod'
 import { downloadMedicalCsv } from './medicalReceiptCsv'
 
 const DEFAULT_FILTER: AccountingFilterState = {

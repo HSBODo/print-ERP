@@ -1,4 +1,4 @@
-import { VISION_ITEM_KEYS, type VisionItemKey, type VisionReceipt } from '@/api/accounting'
+import { VISION_ITEM_KEYS, type VisionItemKey, type VisionReceipt } from '../../type/accounting'
 
 type DirectKey = Exclude<keyof VisionReceipt, 'itemAmounts'>
 export type VisionColumnKey = DirectKey | '__no' | `item:${VisionItemKey}`

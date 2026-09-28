@@ -1,4 +1,4 @@
-import type { MedicalMonthlyMetric, VisionMonthlyMetric } from '@/api/accounting'
+import type { MedicalMonthlyMetric, VisionMonthlyMetric } from '../type/accounting'
 
 export const MONTH_LABELS = Array.from({ length: 12 }, (_, index) => `${index + 1}월`)
 const YEAR_COLORS = ['#A8CEDF', '#94A3B8', '#4B5563', '#E11D2E']

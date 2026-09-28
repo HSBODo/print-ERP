@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { VisionRevenueSummaryPage } from '@/pages/accounting/VisionRevenueSummaryPage'
+import { VisionRevenueSummaryPage } from '#domain/core/accounting/ui/VisionRevenueSummaryPage'
 
 export const Route = createFileRoute('/_auth/accounting/vision-revenue-summary')({
   component: VisionRevenueSummaryPage,

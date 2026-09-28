@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { VisionReceipt } from '@/api/accounting'
+import type { VisionReceipt } from '../../type/accounting'
 import {
   buildVisionRevenueSummary,
   summaryCardTotal,

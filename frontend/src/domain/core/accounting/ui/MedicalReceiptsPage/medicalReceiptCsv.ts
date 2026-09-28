@@ -1,5 +1,5 @@
-import type { MedicalReceipt } from '@/api/accounting'
-import { medicalNetRevenue } from './accountingModel'
+import type { MedicalReceipt } from '../../type/accounting'
+import { medicalNetRevenue } from '../../utils/accountingModel'
 
 const CSV_COLUMNS = [
   ['No', (_row: MedicalReceipt, index: number) => index + 1],

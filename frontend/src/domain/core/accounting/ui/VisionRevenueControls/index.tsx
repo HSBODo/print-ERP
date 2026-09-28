@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react'
-import type { AccountingFilterState } from './accountingTypes'
-import { monthRange, weeksOfMonth } from './accountingPeriod'
+import type { AccountingFilterState } from '../../type/filter'
+import { monthRange, weeksOfMonth } from '../../utils/accountingPeriod'
 
 export interface VisionExtraFilters {
   category: string

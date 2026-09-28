@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import type { VisionReceipt } from '@/api/accounting'
-import type { VisionExtraFilters } from './VisionRevenueControls'
-import { AccountingPagination } from './AccountingPagination'
+import type { VisionReceipt } from '../../type/accounting'
+import type { VisionExtraFilters } from '../VisionRevenueControls'
+import { AccountingPagination } from '../AccountingPagination'
 import {
   VISION_COLUMNS,
   visionCellValue,

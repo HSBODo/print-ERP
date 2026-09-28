@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { MedicalReceipt } from '@/api/accounting'
+import type { MedicalReceipt } from '../type/accounting'
 import { dataStamp, medicalNetRevenue } from './accountingModel'
 import { buildMedicalChart, buildVisionChart, chartYears } from './accountingChartModel'
 

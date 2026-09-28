@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react'
-import type { AccountingFilterState } from './accountingTypes'
+import type { AccountingFilterState } from '../../type/filter'
 
 export interface MedicalExtraFilters {
   insurance: string

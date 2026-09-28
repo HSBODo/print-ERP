@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import type { MedicalCategory } from '@/api/accounting'
-import { useAccountingStatus, useMedicalMonthly } from '@/hooks/accounting/useAccounting'
-import { AccountingMonthlyChart } from './AccountingMonthlyChart'
-import { ChartSegment } from './AccountingChartControls'
-import { downloadAccountingChartCsv } from './accountingChartCsv'
-import { buildMedicalChart, chartYears } from './accountingChartModel'
-import { dataStamp } from './accountingModel'
+import type { MedicalCategory } from '../../type/accounting'
+import { useAccountingStatus, useMedicalMonthly } from '../../hooks/useAccounting'
+import { AccountingMonthlyChart } from '../AccountingMonthlyChart'
+import { ChartSegment } from '../AccountingChartControls'
+import { downloadAccountingChartCsv } from '../../utils/accountingChartCsv'
+import { buildMedicalChart, chartYears } from '../../utils/accountingChartModel'
+import { dataStamp } from '../../utils/accountingModel'
 
 const CATEGORIES: readonly MedicalCategory[] = ['전체', '외래', '입원', '백내장'] as const
 

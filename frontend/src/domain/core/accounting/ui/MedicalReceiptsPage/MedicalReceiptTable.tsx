@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import type { MedicalReceipt } from '@/api/accounting'
-import { medicalNetRevenue } from './accountingModel'
-import { AccountingPagination } from './AccountingPagination'
+import type { MedicalReceipt } from '../../type/accounting'
+import { medicalNetRevenue } from '../../utils/accountingModel'
+import { AccountingPagination } from '../AccountingPagination'
 
 type ColumnKey = keyof MedicalReceipt | '__no' | '__net' | '__card' | '__cash' | '__transfer'
 type ColumnKind = 'text' | 'number' | 'center' | 'receiptType' | 'status' | 'closed' | 'no'

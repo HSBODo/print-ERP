@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, LabelList, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '#shared/ui/Chart'
-import { formatWonCompact } from './accountingModel'
-import { MONTH_LABELS, rowTotal, type MonthlyChartView } from './accountingChartModel'
+import { formatWonCompact } from '../../utils/accountingModel'
+import { MONTH_LABELS, rowTotal, type MonthlyChartView } from '../../utils/accountingChartModel'
 
 const fullNumber = (value: number) => Math.round(value).toLocaleString('ko-KR')
 

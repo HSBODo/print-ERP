@@ -1,4 +1,4 @@
-import type { VisionReceipt } from '@/api/accounting'
+import type { VisionReceipt } from '../../type/accounting'
 
 export const VISION_SUMMARY_ACQUIRERS = [
   '국민', '농협', '롯데', '비씨', '삼성', '신한', '우리', '하나(구외환)',

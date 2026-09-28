@@ -1,4 +1,4 @@
-import type { PeriodMode } from './accountingModel'
+import type { PeriodMode } from '../utils/accountingModel'
 
 export interface AccountingFilterState {
   mode: PeriodMode

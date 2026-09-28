@@ -1,4 +1,4 @@
-import type { VisionReceipt } from '@/api/accounting'
+import type { VisionReceipt } from '../../type/accounting'
 import { VISION_COLUMNS, visionCellValue } from './visionRevenueColumns'
 
 const escapeCsv = (value: unknown) => `"${String(value).replace(/"/g, '""')}"`

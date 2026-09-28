@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/vitest'
 import { useState } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { AccountingPagination } from './AccountingPagination'
+import { AccountingPagination } from '.'
 
 afterEach(cleanup)
 
