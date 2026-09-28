@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { reportApi, type WeeklyReportItem } from '@/api/report'
+import { reportApi } from '../api'
+import type { WeeklyReportItem } from '../type/api'
 
 /**
  * 주차 레포트 — 연도별 ISO 주차 원시 집계(운영 DB 라이브).

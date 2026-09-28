@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { api } from '#shared/api/client'
-import { apiResponseOf, withQuery } from '#shared/api/utils'
+import { apiResponseOf } from '#shared/api/utils'
 
 /* ── 주차 레포트 (ISO 8601 연간 주차) ── */
 
@@ -58,13 +57,4 @@ const weeklyReportItemSchema = z.object({
 
 export type WeeklyReportItem = z.infer<typeof weeklyReportItemSchema>
 
-const weeklyReportResponseSchema = apiResponseOf(z.array(weeklyReportItemSchema))
-
-export const reportApi = {
-  /**
-   * 연도별 주차 레포트 원시 집계 — 데이터가 있는 주만 내려온다.
-   * 파생 지표(예약률·비율·중단율)는 화면에서 이 원시 값으로 계산한다.
-   */
-  getWeeklyReport: async (years: number[]) =>
-    weeklyReportResponseSchema.parse(await api.get<unknown>(withQuery('/report/weekly', { years }))).data,
-}
+export const weeklyReportResponseSchema = apiResponseOf(z.array(weeklyReportItemSchema))

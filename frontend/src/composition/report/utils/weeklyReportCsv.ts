@@ -1,4 +1,4 @@
-import type { ReportWeek } from '@/components/report/reportWeeks'
+import type { ReportWeek } from './reportWeeks'
 import type { WeeklySeries } from './weeklyReportSeries'
 
 /**

@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/vitest'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, within } from '@testing-library/react'
-import { weeksOfYear } from './reportWeeks'
+import { weeksOfYear } from '../../utils/reportWeeks'
 
 vi.mock('recharts', () => ({
   CartesianGrid: () => null,
@@ -19,7 +19,7 @@ vi.mock('#shared/ui/Chart', () => ({
   ChartTooltipContent: () => null,
 }))
 
-import { ReportWeekLineChart } from './ReportWeekLineChart'
+import { ReportWeekLineChart } from '.'
 
 afterEach(cleanup)
 

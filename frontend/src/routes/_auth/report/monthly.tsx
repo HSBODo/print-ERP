@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { MonthlyReportPage } from '@/pages/report/MonthlyReportPage'
+import { MonthlyReportPage } from '#composition/report/ui/MonthlyReportPage'
 
 export const Route = createFileRoute('/_auth/report/monthly')({
   component: MonthlyReportPage,

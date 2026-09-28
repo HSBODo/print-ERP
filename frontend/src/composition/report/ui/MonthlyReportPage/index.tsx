@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Download, Printer } from 'lucide-react'
-import { ReportLineChart } from '@/components/report/ReportLineChart'
+import { ReportLineChart } from '../ReportLineChart'
 import { CURRENT_YEAR } from '#shared/constants/chart'
-import { YEARS } from './monthlyReportUtils'
-import { buildMonthlyReportCsv } from './monthlyReportCsv'
-import { useReportSeries } from './useReportSeries'
-import { buildReportItems } from './reportItems'
-import { ReportShell, type ShellReportItem } from './ReportShell'
+import { YEARS } from '../../utils/monthlyReportUtils'
+import { buildMonthlyReportCsv } from '../../utils/monthlyReportCsv'
+import { useReportSeries } from '../../hooks/useReportSeries'
+import { buildReportItems } from '../../utils/reportItems'
+import { ReportShell, type ShellReportItem } from '../ReportShell'
 
 export function MonthlyReportPage() {
   const series = useReportSeries()

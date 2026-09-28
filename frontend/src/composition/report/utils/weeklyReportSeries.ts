@@ -1,6 +1,6 @@
-import type { WeeklyReportItem } from '@/api/report'
-import type { ReportWeek } from '@/components/report/reportWeeks'
-import type { ReportSeriesKey } from './useReportSeries'
+import type { WeeklyReportItem } from '#domain/core/report/type/api'
+import type { ReportWeek } from './reportWeeks'
+import type { ReportSeriesKey } from '../hooks/useReportSeries'
 
 /**
  * 주차 레포트 원시 집계 → 도표 시리즈.

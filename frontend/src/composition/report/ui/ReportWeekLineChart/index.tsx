@@ -8,9 +8,9 @@ import {
   type ChartConfig,
 } from '#shared/ui/Chart'
 import { formatAxisNumber } from '#shared/utils/stats'
-import { niceAxisFor, tightAxis } from './niceAxis'
-import { colorOf } from './reportYearColors'
-import type { ReportWeek } from './reportWeeks'
+import { niceAxisFor, tightAxis } from '../../utils/niceAxis'
+import { colorOf } from '../../utils/reportYearColors'
+import type { ReportWeek } from '../../utils/reportWeeks'
 
 /**
  * 주차축 레포트 라인차트 — `ReportLineChart`(월축)의 주차 버전.

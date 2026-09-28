@@ -9,8 +9,8 @@ import {
 } from '#shared/ui/Chart'
 import { MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
-import { niceAxis, niceAxisFor } from './niceAxis'
-import { colorOf } from './reportYearColors'
+import { niceAxis, niceAxisFor } from '../../utils/niceAxis'
+import { colorOf } from '../../utils/reportYearColors'
 
 export interface ReportLineChartProps {
   title: string

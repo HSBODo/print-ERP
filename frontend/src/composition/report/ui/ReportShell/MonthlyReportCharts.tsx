@@ -11,7 +11,7 @@ import { Select } from '#shared/ui/Select'
 import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
 import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
-import { isIncompleteMonth } from './monthlyReportUtils'
+import { isIncompleteMonth } from '../../utils/monthlyReportUtils'
 
 const MONTH_SELECT_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `${i + 1}월` }))
 

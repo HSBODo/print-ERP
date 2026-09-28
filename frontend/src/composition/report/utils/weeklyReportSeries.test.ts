@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import type { WeeklyReportItem } from '@/api/report'
-import { weeksOfYear, weeksOfMonth } from '@/components/report/reportWeeks'
+import type { WeeklyReportItem } from '#domain/core/report/type/api'
+import { weeksOfYear, weeksOfMonth } from './reportWeeks'
 import { buildWeeklySeries } from './weeklyReportSeries'
 
 const week = (over: Partial<WeeklyReportItem>): WeeklyReportItem => ({

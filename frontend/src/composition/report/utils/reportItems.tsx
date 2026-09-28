@@ -5,9 +5,9 @@ import {
   ReportSurgeryTable,
   ReportSuccessRateChart,
   ReportExamByClassChart,
-} from './MonthlyReportCharts'
+} from '../ui/ReportShell/MonthlyReportCharts'
 import { MONTHLY_CHART_LABELS } from './monthlyReportUtils'
-import type { ReportSeriesKey, ReportSeriesResult } from './useReportSeries'
+import type { ReportSeriesKey, ReportSeriesResult } from '../hooks/useReportSeries'
 
 /**
  * 레포트 도표 목차(월간보고 순서) — 월간 레포트·주차 레포트가 같은 목록을 쓴다.

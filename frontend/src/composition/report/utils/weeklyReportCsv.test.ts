@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { weeksOfYear, weeksOfMonth } from '@/components/report/reportWeeks'
+import { weeksOfYear, weeksOfMonth } from './reportWeeks'
 import { buildWeeklyReportCsv, type WeeklyCsvRowSpec } from './weeklyReportCsv'
 
 const ROWS: WeeklyCsvRowSpec[] = [

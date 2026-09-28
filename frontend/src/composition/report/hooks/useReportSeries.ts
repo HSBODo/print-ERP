@@ -12,7 +12,7 @@ import { useExamCountByClass } from '#domain/core/exam/hooks/useExamCountByClass
 import { useBatchLastSuccess } from '#domain/core/batch/hooks/useBatchLastSuccess'
 import { CURRENT_YEAR } from '#shared/constants/chart'
 import type { OverallExamMonthlyItem } from '#domain/core/overall/type/api'
-import { YEARS, isIncompleteMonth } from './monthlyReportUtils'
+import { YEARS, isIncompleteMonth } from '../utils/monthlyReportUtils'
 
 /**
  * 레포트 공통 월별 시리즈 — 마트 + 레거시 확정값.
