@@ -270,6 +270,7 @@ cd frontend && npm run dev               # Frontend (Vite dev server)
 cd frontend && npm run build             # 프로덕션 빌드
 cd frontend && npm run lint              # ESLint
 cd frontend && npm run test              # Vitest
+cd frontend && npm run storybook         # Storybook (http://localhost:6006 · 스토리는 컴포넌트 옆 index.stories.tsx)
 ```
 
 ## 공통 규칙
