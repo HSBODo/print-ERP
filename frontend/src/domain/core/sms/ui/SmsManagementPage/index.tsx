@@ -172,6 +172,7 @@ export function SmsManagementPage() {
   }, [filtered, sortState, templates, today])
 
   const handleSort = (key: string) => {
+    pagination.resetPage()
     setSelected(new Set())   // 정렬하면 보이는 행이 바뀐다 — 선택을 들고 가면 엉뚱한 행이 홀딩된다
     setSortState((prev) => (
       prev?.key === key
@@ -181,7 +182,6 @@ export function SmsManagementPage() {
   }
 
   const pagination = usePagination(sortedRows, {
-    resetKey: [range, queryBasis, keyword, statusFilter, groupFilter, sortState],
     // 페이지를 옮기면 보이는 행이 바뀐다 — 선택을 들고 가면 엉뚱한 행이 홀딩된다
     onPageChange: () => setSelected(new Set()),
   })
@@ -222,6 +222,7 @@ export function SmsManagementPage() {
     setQueryBasis({ basis, tier: tierFilter })
     setHasSearched(true)
     setSelected(new Set())
+    pagination.resetPage()
     return next
   }
 
@@ -346,7 +347,7 @@ export function SmsManagementPage() {
         draft={draft}
         onDraftChange={setDraft}
         keyword={keyword}
-        onKeywordChange={(v) => { setKeyword(v); setSelected(new Set()) }}
+        onKeywordChange={(v) => { setKeyword(v); setSelected(new Set()); pagination.resetPage() }}
         resultCount={filtered.length}
         isRefreshing={isRefreshing}
         holdPending={changeStatusBulk.isPending}
@@ -362,10 +363,10 @@ export function SmsManagementPage() {
       <SmsStatusFilterBar
         templates={templates}
         statusFilter={statusFilter}
-        onChange={(v) => { setStatusFilter(v); setSelected(new Set()) }}
+        onChange={(v) => { setStatusFilter(v); setSelected(new Set()); pagination.resetPage() }}
         selectedCount={selected.size}
         groupFilter={groupFilter}
-        onGroupChange={(v) => { setGroupFilter(v); setSelected(new Set()) }}
+        onGroupChange={(v) => { setGroupFilter(v); setSelected(new Set()); pagination.resetPage() }}
       />
       {/* ── 본문: 좌 8(대상 표) : 우 2(문구 미리보기) ──
           미리보기는 항상 자리를 차지한다 — 나타났다 사라지면 표 폭이 흔들려 읽기 어렵다.

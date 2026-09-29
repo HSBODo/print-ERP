@@ -97,14 +97,12 @@ export function ReservationListHomepagePage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pagination = usePagination(sortedRows, {
-    initialPageSize: INITIAL_PAGE_SIZE,
-    resetKey: [queryFrom, queryTo, device, reserve, keyword, sortState],
-  })
+  const pagination = usePagination(sortedRows, { initialPageSize: INITIAL_PAGE_SIZE })
 
   /** 조회 = 등록일 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
   const handleSearch = () => {
     setHasSearched(true)
+    pagination.resetPage()
     setQueryFrom(draftFrom)
     setQueryTo(draftTo)
   }
@@ -145,6 +143,7 @@ export function ReservationListHomepagePage() {
   }
 
   const handleSort = (key: string) => {
+    pagination.resetPage()
     setSortState((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -211,7 +210,7 @@ export function ReservationListHomepagePage() {
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
               }`}
-              onClick={() => setDevice(option.value)}
+              onClick={() => { setDevice(option.value); pagination.resetPage() }}
             >
               {option.label}
             </button>
@@ -221,7 +220,7 @@ export function ReservationListHomepagePage() {
           <select
             aria-label="예약구분"
             value={reserve}
-            onChange={(e) => setReserve(e.target.value)}
+            onChange={(e) => { setReserve(e.target.value); pagination.resetPage() }}
             className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             {RESERVE_FILTER_OPTIONS.map((option) => (
@@ -236,7 +235,7 @@ export function ReservationListHomepagePage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
             placeholder="이름 · 휴대폰번호"
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />

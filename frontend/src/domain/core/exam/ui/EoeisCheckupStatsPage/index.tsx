@@ -316,7 +316,7 @@ export function EoeisCheckupStatsPage() {
       })
       .map(({ row }) => row)
   }, [rows, sortState])
-  const pagination = usePagination(sortedRows, { resetKey: [queryPeriod, sortState, tab, granularity] })
+  const pagination = usePagination(sortedRows)
 
   const handleQuery = () => {
     const from = draftFrom < MIN_QUERY_DATE ? MIN_QUERY_DATE : draftFrom
@@ -324,10 +324,12 @@ export function EoeisCheckupStatsPage() {
     setDraftFrom(from)
     setDraftTo(to)
     setQueryPeriod({ from, to })
+    pagination.resetPage()
     setStatus(`실데이터 조회 중 · ${from} ~ ${to}`)
   }
 
   const handleSort = (key: string) => {
+    pagination.resetPage()
     setSortState((current) => current?.key === key
       ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
       : { key, direction: 'asc' })
@@ -336,11 +338,13 @@ export function EoeisCheckupStatsPage() {
   const handleTabChange = (nextTab: PivotTab) => {
     setTab(nextTab)
     setSortState(null)
+    pagination.resetPage()
   }
 
   const handleGranularityChange = (nextGranularity: Granularity) => {
     setGranularity(nextGranularity)
     setSortState(null)
+    pagination.resetPage()
   }
 
   const handleApplyScores = () => {

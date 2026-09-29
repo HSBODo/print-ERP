@@ -44,7 +44,7 @@ export function DetailTab() {
   const loading = isLoading || isFetching
   const views = useMemo(() => buildViews(rows, applied), [rows, applied])
   const maxChanges = useMemo(() => changeColumnCount(views), [views])
-  const pagination = usePagination(views, { resetKey: [applied] })
+  const pagination = usePagination(views)
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }))
   const apply = () => {
@@ -52,8 +52,9 @@ export function DetailTab() {
     const next = draft.asOf && draft.sort === 'date' ? { ...draft, sort: 'asof' as ChangeSort } : draft
     setDraft(next)
     setApplied(next)
+    pagination.resetPage()
   }
-  const reset = () => { setDraft(DEFAULT_DRAFT); setApplied(DEFAULT_DRAFT) }
+  const reset = () => { setDraft(DEFAULT_DRAFT); setApplied(DEFAULT_DRAFT); pagination.resetPage() }
   const csv = () => downloadReservationChangeCsv(
     `예약변경이력_${applied.year || '전체'}${applied.month ? `-${applied.month}` : ''}.csv`, views, applied.asOf,
   )

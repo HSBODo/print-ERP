@@ -83,13 +83,12 @@ export function CataractExamListPage() {
       .map(({ row }) => row)
   }, [tableRows, sortState])
 
-  const pagination = usePagination(sortedRows, {
-    resetKey: [queryFrom, queryTo, queryType, queryKeyword, sortState],
-  })
+  const pagination = usePagination(sortedRows)
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
     setHasSearched(true)
+    pagination.resetPage()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryType(draftType)
@@ -134,6 +133,7 @@ export function CataractExamListPage() {
   }
 
   const handleSort = (key: string) => {
+    pagination.resetPage()
     setSortState((prev) => (
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }

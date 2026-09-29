@@ -157,7 +157,7 @@ export function SurgeryListPage() {
           key={opt}
           type="button"
           aria-pressed={value === opt}
-          onClick={() => onChange(opt)}
+          onClick={() => { onChange(opt); pagination.resetPage() }}
           className={`border-l border-border/70 px-2.5 text-xs font-medium whitespace-nowrap transition-colors first:border-l-0 ${
             value === opt ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
           }`}
@@ -190,16 +190,12 @@ export function SurgeryListPage() {
       .map(({ row }) => row)
   }, [tableRows, sortState])
 
-  const pagination = usePagination(sortedRows, {
-    resetKey: [
-      queryFrom, queryTo, queryCategory, queryKeyword,
-      typeFilter, optionFilter, cataractFilter, reopFilter, sortState,
-    ],
-  })
+  const pagination = usePagination(sortedRows)
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
     setHasSearched(true)
+    pagination.resetPage()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryCategory(draftCategory)
@@ -231,6 +227,7 @@ export function SurgeryListPage() {
   }
 
   const handleSort = (key: string) => {
+    pagination.resetPage()
     setSortState((prev) => (
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -355,7 +352,10 @@ export function SurgeryListPage() {
               onClick={() => {
                 setDraftCategory(category)
                 // 카테고리는 클라이언트 필터(이미 조회된 rows 를 걸러냄)라 조회 버튼 없이 즉시 반영.
-                if (hasSearched) setQueryCategory(category)
+                if (hasSearched) {
+                  setQueryCategory(category)
+                  pagination.resetPage()
+                }
               }}
             >
               {category}

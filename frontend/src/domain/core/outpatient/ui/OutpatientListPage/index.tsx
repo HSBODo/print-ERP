@@ -87,13 +87,12 @@ export function OutpatientListPage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pagination = usePagination(sortedRows, {
-    resetKey: [queryFrom, queryTo, queryState, queryPatientType, queryType, queryKeyword, sortState],
-  })
+  const pagination = usePagination(sortedRows)
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
     setHasSearched(true)
+    pagination.resetPage()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryState(draftState)
@@ -126,6 +125,7 @@ export function OutpatientListPage() {
   }
 
   const handleSort = (key: string) => {
+    pagination.resetPage()
     setSortState((prev) => (
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }

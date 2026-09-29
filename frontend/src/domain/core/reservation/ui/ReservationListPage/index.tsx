@@ -161,12 +161,13 @@ export function ReservationListPage() {
     )
   }, [detail, sort])
 
-  const pagination = usePagination(sorted, { resetKey: [queryMonth, queryKeyword, channel, subChannel, sort] })
+  const pagination = usePagination(sorted)
 
   const handleSearch = () => {
     setHasSearched(true)
     setQueryMonth(draftMonth)
     setQueryKeyword(draftKeyword)
+    pagination.resetPage()
   }
 
   const handleReset = () => {
@@ -192,6 +193,7 @@ export function ReservationListPage() {
       if (!prev || prev.key !== key) return { key, dir: 'asc' }
       return prev.dir === 'asc' ? { key, dir: 'desc' } : null
     })
+    pagination.resetPage()
   }
 
   return (
@@ -205,7 +207,7 @@ export function ReservationListPage() {
               key={c}
               type="button"
               aria-pressed={channel === c}
-              onClick={() => { setChannel(c); setSubChannel(null) }}
+              onClick={() => { setChannel(c); setSubChannel(null); pagination.resetPage() }}
               className={`min-w-[3.5rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
                 channel === c ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
               }`}
@@ -223,7 +225,7 @@ export function ReservationListPage() {
                   key={sc}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => setSubChannel(sc === '전체' ? null : sc)}
+                  onClick={() => { setSubChannel(sc === '전체' ? null : sc); pagination.resetPage() }}
                   className={`h-6 rounded px-2 text-[11px] font-medium transition-colors ${
                     active ? 'bg-blue-600 text-white' : 'text-blue-700 hover:bg-blue-100'
                   }`}

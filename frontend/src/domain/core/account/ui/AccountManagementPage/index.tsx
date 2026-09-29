@@ -76,15 +76,13 @@ export function AccountManagementPage() {
   const total = filtered.length
   const grandTotal = users?.length ?? 0
   const isFiltered = keyword.length > 0 || roleFilter !== '' || deptFilter !== ''
-  const pagination = usePagination(filtered, {
-    initialPageSize: INITIAL_PAGE_SIZE,
-    resetKey: [keyword, roleFilter, deptFilter],
-  })
+  const pagination = usePagination(filtered, { initialPageSize: INITIAL_PAGE_SIZE })
 
   const resetFilters = () => {
     setKeyword('')
     setRoleFilter('')
     setDeptFilter('')
+    pagination.resetPage()
   }
 
   const handleDelete = async () => {
@@ -131,14 +129,14 @@ export function AccountManagementPage() {
           <input
             type="search"
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
             placeholder="아이디·이름·이메일 검색"
             className="w-full rounded-md border border-gray-300 py-1.5 pl-8 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           />
           {keyword && (
             <button
               type="button"
-              onClick={() => setKeyword('')}
+              onClick={() => { setKeyword(''); pagination.resetPage() }}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               aria-label="검색어 지우기"
             >
@@ -149,7 +147,7 @@ export function AccountManagementPage() {
         <div className="flex items-center gap-1.5">
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value as '' | UserRole)}
+            onChange={(e) => { setRoleFilter(e.target.value as '' | UserRole); pagination.resetPage() }}
             className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             aria-label="권한 필터"
           >
@@ -160,7 +158,7 @@ export function AccountManagementPage() {
           </select>
           <select
             value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value as '' | UserDepartment)}
+            onChange={(e) => { setDeptFilter(e.target.value as '' | UserDepartment); pagination.resetPage() }}
             className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             aria-label="부서 필터"
           >

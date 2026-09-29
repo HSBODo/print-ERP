@@ -99,9 +99,7 @@ export function AllExamListPage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pagination = usePagination(sorted, {
-    resetKey: [queryFrom, queryTo, examGroup, oneDayFilter, introType, jobBucket, patientType, keyword, sortState],
-  })
+  const pagination = usePagination(sorted)
 
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
@@ -109,6 +107,7 @@ export function AllExamListPage() {
     setHasSearched(true)
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
+    pagination.resetPage()
   }
 
   const handlePeriodModeChange = (mode: PeriodMode) => {
@@ -155,6 +154,7 @@ export function AllExamListPage() {
   }
 
   const handleSort = (key: string) => {
+    pagination.resetPage()
     setSortState((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -181,7 +181,7 @@ export function AllExamListPage() {
             key={opt}
             type="button"
             aria-pressed={value === opt}
-            onClick={() => onChange(opt)}
+            onClick={() => { onChange(opt); pagination.resetPage() }}
             className={`min-w-[3rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
               value === opt ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
             }`}
@@ -260,7 +260,7 @@ export function AllExamListPage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
             placeholder="고객명 · 차트번호 · 연락처"
             className="h-full w-[12rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />

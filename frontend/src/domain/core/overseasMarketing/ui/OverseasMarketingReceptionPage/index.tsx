@@ -99,11 +99,12 @@ export function OverseasMarketingReceptionPage() {
     })
   }, [filtered, sort])
 
-  const pagination = usePagination(sorted, { resetKey: [query, appliedKeyword, matchFilter, sort] })
+  const pagination = usePagination(sorted)
 
   const search = () => {
     setQuery({ ...draft })
     setAppliedKeyword(keyword)
+    pagination.resetPage()
   }
 
   useEffect(() => {
@@ -215,6 +216,7 @@ export function OverseasMarketingReceptionPage() {
       if (!current || current.key !== key) return { key, dir: 'asc' }
       return current.dir === 'asc' ? { key, dir: 'desc' } : null
     })
+    pagination.resetPage()
   }
 
   const downloadResults = () => downloadCsv(
@@ -229,9 +231,9 @@ export function OverseasMarketingReceptionPage() {
         onDraftChange={setDraft}
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onKeywordApply={() => setAppliedKeyword(keyword)}
+        onKeywordApply={() => { setAppliedKeyword(keyword); pagination.resetPage() }}
         matchFilter={matchFilter}
-        onMatchFilterChange={setMatchFilter}
+        onMatchFilterChange={(value) => { setMatchFilter(value); pagination.resetPage() }}
         filteredCount={filtered.length}
         sortedCount={sorted.length}
         onSearch={search}

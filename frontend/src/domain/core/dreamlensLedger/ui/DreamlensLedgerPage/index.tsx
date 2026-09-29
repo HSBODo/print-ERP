@@ -107,7 +107,7 @@ export function DreamlensLedgerPage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pagination = usePagination(sorted, { resetKey: [queryFrom, queryTo, examiner, keyword, sortState] })
+  const pagination = usePagination(sorted)
 
   const setRows = (updater: (old: DreamlensLedgerRow[]) => DreamlensLedgerRow[]) =>
     queryClient.setQueryData<DreamlensLedgerRow[]>(queryKey, (old) => updater(old ?? []))
@@ -152,7 +152,7 @@ export function DreamlensLedgerPage() {
     },
     onSuccess: (saved) => {
       setRows((old) => [saved, ...old])
-      pagination.setPage(1) // 새 행은 맨 위 = 1페이지. 다른 페이지에 있었으면 따라간다.
+      pagination.resetPage() // 새 행은 맨 위 = 1페이지. 다른 페이지에 있었으면 따라간다.
       toast.success('행을 추가했습니다. 맨 위에 있습니다.')
     },
     onError: () => toast.error('행을 추가하지 못했습니다.'),
@@ -200,6 +200,7 @@ export function DreamlensLedgerPage() {
   /** 조회 = 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
   const handleSearch = () => {
     setSelected(new Set())
+    pagination.resetPage()
     setQueryFrom(draftFrom)
     setQueryTo(draftTo)
   }
@@ -255,6 +256,7 @@ export function DreamlensLedgerPage() {
 
   /** 같은 컬럼을 다시 누르면 오름↔내림 토글, 다른 컬럼이면 오름차순부터. */
   const handleSort = (key: LedgerFieldKey) => {
+    pagination.resetPage()
     setSortState((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -371,7 +373,7 @@ export function DreamlensLedgerPage() {
           <select
             aria-label="검사자"
             value={examiner}
-            onChange={(e) => setExaminer(e.target.value)}
+            onChange={(e) => { setExaminer(e.target.value); pagination.resetPage() }}
             className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             <option value="전체">검사자 전체</option>
@@ -385,7 +387,7 @@ export function DreamlensLedgerPage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
             placeholder="이름 · 고객번호 · 검사자"
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
