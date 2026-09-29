@@ -191,7 +191,7 @@ export function SurgeryListPage() {
   }, [tableRows, sortState])
 
   const pagination = usePagination(sortedRows, {
-    resetDeps: [
+    resetKey: [
       queryFrom, queryTo, queryCategory, queryKeyword,
       typeFilter, optionFilter, cataractFilter, reopFilter, sortState,
     ],

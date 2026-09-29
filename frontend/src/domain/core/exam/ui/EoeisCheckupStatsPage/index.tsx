@@ -316,7 +316,7 @@ export function EoeisCheckupStatsPage() {
       })
       .map(({ row }) => row)
   }, [rows, sortState])
-  const pagination = usePagination(sortedRows, { resetDeps: [queryPeriod, sortState, tab, granularity] })
+  const pagination = usePagination(sortedRows, { resetKey: [queryPeriod, sortState, tab, granularity] })
 
   const handleQuery = () => {
     const from = draftFrom < MIN_QUERY_DATE ? MIN_QUERY_DATE : draftFrom

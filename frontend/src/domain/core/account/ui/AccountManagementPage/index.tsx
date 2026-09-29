@@ -78,7 +78,7 @@ export function AccountManagementPage() {
   const isFiltered = keyword.length > 0 || roleFilter !== '' || deptFilter !== ''
   const pagination = usePagination(filtered, {
     initialPageSize: INITIAL_PAGE_SIZE,
-    resetDeps: [keyword, roleFilter, deptFilter],
+    resetKey: [keyword, roleFilter, deptFilter],
   })
 
   const resetFilters = () => {

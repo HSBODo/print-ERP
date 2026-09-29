@@ -99,7 +99,7 @@ export function ReservationListHomepagePage() {
 
   const pagination = usePagination(sortedRows, {
     initialPageSize: INITIAL_PAGE_SIZE,
-    resetDeps: [queryFrom, queryTo, device, reserve, keyword, sortState],
+    resetKey: [queryFrom, queryTo, device, reserve, keyword, sortState],
   })
 
   /** 조회 = 등록일 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */

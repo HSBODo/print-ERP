@@ -44,7 +44,7 @@ export function DetailTab() {
   const loading = isLoading || isFetching
   const views = useMemo(() => buildViews(rows, applied), [rows, applied])
   const maxChanges = useMemo(() => changeColumnCount(views), [views])
-  const pagination = usePagination(views, { resetDeps: [applied] })
+  const pagination = usePagination(views, { resetKey: [applied] })
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }))
   const apply = () => {

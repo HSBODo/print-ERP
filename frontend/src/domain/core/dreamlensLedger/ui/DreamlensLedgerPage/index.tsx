@@ -107,7 +107,7 @@ export function DreamlensLedgerPage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pagination = usePagination(sorted, { resetDeps: [queryFrom, queryTo, examiner, keyword, sortState] })
+  const pagination = usePagination(sorted, { resetKey: [queryFrom, queryTo, examiner, keyword, sortState] })
 
   const setRows = (updater: (old: DreamlensLedgerRow[]) => DreamlensLedgerRow[]) =>
     queryClient.setQueryData<DreamlensLedgerRow[]>(queryKey, (old) => updater(old ?? []))

@@ -88,7 +88,7 @@ export function OutpatientListPage() {
   }, [filtered, sortState])
 
   const pagination = usePagination(sortedRows, {
-    resetDeps: [queryFrom, queryTo, queryState, queryPatientType, queryType, queryKeyword, sortState],
+    resetKey: [queryFrom, queryTo, queryState, queryPatientType, queryType, queryKeyword, sortState],
   })
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 

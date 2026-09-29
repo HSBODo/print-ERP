@@ -181,7 +181,7 @@ export function SmsManagementPage() {
   }
 
   const pagination = usePagination(sortedRows, {
-    resetDeps: [range, queryBasis, keyword, statusFilter, groupFilter, sortState],
+    resetKey: [range, queryBasis, keyword, statusFilter, groupFilter, sortState],
     // 페이지를 옮기면 보이는 행이 바뀐다 — 선택을 들고 가면 엉뚱한 행이 홀딩된다
     onPageChange: () => setSelected(new Set()),
   })

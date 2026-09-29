@@ -44,9 +44,9 @@ describe('usePagination', () => {
     expect(result.current).toMatchObject({ page: 1, pageSize: 100, pageMax: 5 })
   })
 
-  it('resetDeps 값이 바뀌면 1페이지로 돌아가고, 새 배열이어도 값이 같으면 유지한다', () => {
+  it('resetKey 값이 바뀌면 1페이지로 돌아가고, 새 배열이어도 값이 같으면 유지한다', () => {
     const rows = rowsOf(500)
-    const { result, rerender } = renderHook(({ keyword }) => usePagination(rows, { resetDeps: [keyword] }), {
+    const { result, rerender } = renderHook(({ keyword }) => usePagination(rows, { resetKey: [keyword] }), {
       initialProps: { keyword: '' },
     })
     act(() => result.current.setPage(4))
@@ -58,10 +58,24 @@ describe('usePagination', () => {
     expect(result.current.page).toBe(1)
   })
 
-  it('onPageChange 는 페이지·행 수를 바꿀 때만 부르고 resetDeps 초기화 때는 부르지 않는다', () => {
+  it('resetKey 의 객체는 queryKey 처럼 내용으로 비교한다 (키 순서 무관)', () => {
+    const rows = rowsOf(500)
+    const { result, rerender } = renderHook(({ period }) => usePagination(rows, { resetKey: [period] }), {
+      initialProps: { period: { from: '2026-08-01', to: '2026-08-31' } as Record<string, string> },
+    })
+    act(() => result.current.setPage(4))
+
+    rerender({ period: { to: '2026-08-31', from: '2026-08-01' } })
+    expect(result.current.page).toBe(4)
+
+    rerender({ period: { from: '2026-09-01', to: '2026-09-30' } })
+    expect(result.current.page).toBe(1)
+  })
+
+  it('onPageChange 는 페이지·행 수를 바꿀 때만 부르고 resetKey 초기화 때는 부르지 않는다', () => {
     const onPageChange = vi.fn()
     const rows = rowsOf(500)
-    const { result, rerender } = renderHook(({ keyword }) => usePagination(rows, { resetDeps: [keyword], onPageChange }), {
+    const { result, rerender } = renderHook(({ keyword }) => usePagination(rows, { resetKey: [keyword], onPageChange }), {
       initialProps: { keyword: '' },
     })
     act(() => result.current.setPage(2))

@@ -89,7 +89,7 @@ export function ExamListPage() {
   }, [tableRows, sortState])
 
   const pagination = usePagination(sortedRows, {
-    resetDeps: [queryFrom, queryTo, queryExamCategory, queryType, queryKeyword, sortState],
+    resetKey: [queryFrom, queryTo, queryExamCategory, queryType, queryKeyword, sortState],
   })
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 

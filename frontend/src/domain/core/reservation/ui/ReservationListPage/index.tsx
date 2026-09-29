@@ -161,7 +161,7 @@ export function ReservationListPage() {
     )
   }, [detail, sort])
 
-  const pagination = usePagination(sorted, { resetDeps: [queryMonth, queryKeyword, channel, subChannel, sort] })
+  const pagination = usePagination(sorted, { resetKey: [queryMonth, queryKeyword, channel, subChannel, sort] })
 
   const handleSearch = () => {
     setHasSearched(true)

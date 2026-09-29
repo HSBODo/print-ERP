@@ -53,7 +53,7 @@ const subtotalGroups = (rows: VisionReceipt[], breakdown: VisionExtraFilters['br
 export function VisionRevenueTable({ rows, breakdown, emptyMessage = '조회 결과가 없습니다.' }: { rows: VisionReceipt[]; breakdown: VisionExtraFilters['breakdown']; emptyMessage?: string }) {
   const [sort, setSort] = useState<{ key: VisionColumnKey; direction: 'asc' | 'desc' } | null>(null)
   const sorted = useMemo(() => sort ? [...rows].sort((a, b) => String(visionCellValue(a, sort.key)).localeCompare(String(visionCellValue(b, sort.key)), 'ko', { numeric: true }) * (sort.direction === 'asc' ? 1 : -1)) : rows, [rows, sort])
-  const pagination = usePagination(sorted, { resetDeps: [sort] })
+  const pagination = usePagination(sorted, { resetKey: [sort] })
   const totals = breakdown === '전체' ? [{ label: '', rows, tone: undefined }] : [{ label: '전체', rows, tone: 'grand' as const }, ...subtotalGroups(rows, breakdown).map((group) => ({ ...group, tone: 'sub' as const }))]
   const toggleSort = (key: VisionColumnKey) => { if (key === '__no') return; setSort((previous) => previous?.key === key ? { key, direction: previous.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' }) }
 

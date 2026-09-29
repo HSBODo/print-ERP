@@ -84,7 +84,7 @@ export function CataractExamListPage() {
   }, [tableRows, sortState])
 
   const pagination = usePagination(sortedRows, {
-    resetDeps: [queryFrom, queryTo, queryType, queryKeyword, sortState],
+    resetKey: [queryFrom, queryTo, queryType, queryKeyword, sortState],
   })
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 

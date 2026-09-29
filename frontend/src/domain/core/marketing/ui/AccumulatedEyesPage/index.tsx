@@ -395,7 +395,7 @@ export function AccumulatedEyesPage() {
   }, [rows, sortKey, sortDir])
 
   const pagination = usePagination(sortedRows, {
-    resetDeps: [queryFrom, queryTo, queryKeyword, queryField, sortKey, sortDir],
+    resetKey: [queryFrom, queryTo, queryKeyword, queryField, sortKey, sortDir],
   })
 
   const runSearch = () => {

@@ -100,7 +100,7 @@ export function AllExamListPage() {
   }, [filtered, sortState])
 
   const pagination = usePagination(sorted, {
-    resetDeps: [queryFrom, queryTo, examGroup, oneDayFilter, introType, jobBucket, patientType, keyword, sortState],
+    resetKey: [queryFrom, queryTo, examGroup, oneDayFilter, introType, jobBucket, patientType, keyword, sortState],
   })
 
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []

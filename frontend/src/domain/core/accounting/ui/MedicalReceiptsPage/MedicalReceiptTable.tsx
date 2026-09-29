@@ -89,7 +89,7 @@ const requestedTotals = (rows: MedicalReceipt[]) => [
 export function MedicalReceiptTable({ rows, breakdown, emptyMessage = '조회 결과가 없습니다.' }: { rows: MedicalReceipt[]; breakdown: '전체' | '요청건'; emptyMessage?: string }) {
   const [sort, setSort] = useState<{ key: ColumnKey; direction: 'asc' | 'desc' } | null>(null)
   const sorted = useMemo(() => sort ? [...rows].sort((a, b) => String(sortValue(a, sort.key)).localeCompare(String(sortValue(b, sort.key)), 'ko', { numeric: true }) * (sort.direction === 'asc' ? 1 : -1)) : rows, [rows, sort])
-  const pagination = usePagination(sorted, { resetDeps: [sort] })
+  const pagination = usePagination(sorted, { resetKey: [sort] })
   const totals = breakdown === '요청건' ? requestedTotals(rows) : [{ label: '', rows, tone: undefined }]
   const toggleSort = (key: ColumnKey) => { if (key === '__no') return; setSort((prev) => prev?.key === key ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' }) }
 

@@ -99,7 +99,7 @@ export function OverseasMarketingReceptionPage() {
     })
   }, [filtered, sort])
 
-  const pagination = usePagination(sorted, { resetDeps: [query, appliedKeyword, matchFilter, sort] })
+  const pagination = usePagination(sorted, { resetKey: [query, appliedKeyword, matchFilter, sort] })
 
   const search = () => {
     setQuery({ ...draft })
