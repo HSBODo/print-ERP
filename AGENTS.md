@@ -9,6 +9,7 @@
 - **프론트엔드**: React 19 / TypeScript / Vite 8
 - **UI**: Tailwind CSS 4 + shadcn/ui (base-nova 테마) + Recharts
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
+- **HTTP**: axios (`shared/api/client.ts` 인스턴스 1개)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
 - **DB**: H2 (개발, 기본) / PostgreSQL 마트 (`application-postgres-mart.yml`, 배치 시점에 CRM MSSQL 을 읽어 적재)
@@ -307,7 +308,7 @@ cd frontend && npm run test              # Vitest
 - **새 통계 페이지**: 전용 페이지 컴포넌트 작성 → `routes/_auth/.../<id>.tsx` 라우트 파일 + `staticData.page`(롤·부서 권한은 `access`) → `navigation.ts` `MENU_TREE` 에 경로 추가 → 백엔드 API + `SecurityConfig` 매처 대칭 유지
 - **새 차트**: Recharts 기반, shadcn `ChartContainer` 사용, `CHART_PALETTE` 색상 적용
 - **새 UI 컴포넌트**: `npx shadcn@latest add <name>` (설정: `components.json`)
-- **API 연동**: `shared/api/client.ts` HTTP 클라이언트 사용(토큰은 `support/session` 이 주입), 도메인 `hooks/` 에서 TanStack Query `useQuery`로 캐싱
+- **API 연동**: `shared/api/client.ts` 의 axios 인스턴스 `api` 사용 — interceptor(토큰 부착·401 세션 만료·에러 메시지)는 `support/session/initApiClient` 가 앱 시작 시 등록한다. 쿼리는 `api.get(path, { params })`(배열은 `years=2025,2026` 콤마 직렬화, nullish 제외), 응답은 `const { data } = await api.get(...)` 후 zod 로 파싱. 조회 메서드는 마지막 인자로 `signal?: AbortSignal` 을 받아 넘기고, 도메인 `hooks/` 에서 TanStack Query `useQuery`(`queryFn: ({ signal }) => xxxApi.method(..., signal)`)로 캐싱
 - **DashboardPage 데이터는 하드코딩 목업**이며, `ReservationPage`는 API 연동 상태다.
 - **프론트 구조 규칙**: 레이어·import 규칙은 `.claude/docs/ARCHITECTURE.md`, 네이밍·파일 규칙은 `.claude/docs/CONVENTION.md` 를 따른다 (core 끼리 import 금지 — 여러 도메인 조합은 composition).
 - **화면 규칙·컬럼·함정 참조**: 메뉴별 기획서는 `backend/new_대쉬보드_v4/pages/<id>.html` (원문 `_build/content/<id>.mjs`) · 지표는 `지표정의/*.md` · DB는 `db/tables/`. 코드 자동 생성 구간(1·6·7·8·9장)과 사람이 쓴 구간(2·3·4·5·10장)이 나뉜다.
