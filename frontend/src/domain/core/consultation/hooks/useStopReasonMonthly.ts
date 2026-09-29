@@ -15,7 +15,7 @@ function toDataMap(items: StopReasonMonthlyItem[]): Record<number, (StopReasonMo
 export function useStopReasonMonthly(years: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['stop-reason-monthly', years],
-    queryFn: () => consultationApi.getStopReasonMonthly(years),
+    queryFn: ({ signal }) => consultationApi.getStopReasonMonthly(years, signal),
     enabled: years.length > 0,
   })
 

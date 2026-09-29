@@ -14,7 +14,7 @@ export function useSmsTargets(
 ) {
   return useQuery({
     queryKey: [TARGETS_KEY, from, to, basis, templateCode ?? ''],
-    queryFn: () => smsApi.getTargets(from, to, basis, templateCode),
+    queryFn: ({ signal }) => smsApi.getTargets(from, to, basis, templateCode, signal),
     enabled,
     staleTime: 60 * 1000,
     // 창을 다시 클릭할 때마다 다시 부르지 않는다 — 조회는 [조회] 버튼이 정한다.
@@ -26,7 +26,7 @@ export function useSmsTargets(
 export function useSmsTemplates() {
   return useQuery({
     queryKey: ['sms-management-templates'],
-    queryFn: () => smsApi.getTemplates(),
+    queryFn: ({ signal }) => smsApi.getTemplates(signal),
     staleTime: 10 * 60 * 1000,
   })
 }
@@ -38,7 +38,7 @@ export function useSmsTemplates() {
 export function useSolapiTemplates(enabled: boolean) {
   return useQuery({
     queryKey: ['sms-management-solapi-templates'],
-    queryFn: () => smsApi.getSolapiTemplates(),
+    queryFn: ({ signal }) => smsApi.getSolapiTemplates(signal),
     enabled,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -105,7 +105,7 @@ const OPT_OUTS_KEY = ['sms', 'opt-outs'] as const
 export function useSmsOptOuts(enabled = true) {
   return useQuery({
     queryKey: OPT_OUTS_KEY,
-    queryFn: () => smsApi.getOptOuts(),
+    queryFn: ({ signal }) => smsApi.getOptOuts(signal),
     enabled,
     staleTime: 30 * 1000,
   })

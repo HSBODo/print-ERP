@@ -78,7 +78,7 @@ export function DreamlensLedgerPage() {
 
   const { data, error, isLoading, isFetching, isError } = useQuery({
     queryKey,
-    queryFn: () => dreamlensLedgerApi.list(queryFrom, queryTo),
+    queryFn: ({ signal }) => dreamlensLedgerApi.list(queryFrom, queryTo, signal),
     enabled: Boolean(queryFrom && queryTo) && queryFrom <= queryTo,
   })
 

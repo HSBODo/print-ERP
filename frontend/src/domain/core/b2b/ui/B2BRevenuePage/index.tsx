@@ -175,7 +175,7 @@ export function B2BRevenuePage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['b2b-revenue-monthly', queryYears],
-    queryFn: () => b2bApi.getB2bRevenueMonthly(queryYears),
+    queryFn: ({ signal }) => b2bApi.getB2bRevenueMonthly(queryYears, signal),
     enabled: queryYears.length > 0,
   })
 

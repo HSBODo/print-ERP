@@ -18,7 +18,7 @@ function toDataMap(items: ReservationMonthlyItem[]): Record<number, MonthlyData[
 export function useReservationTrend(queryYears: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['reservation-trend', queryYears],
-    queryFn: () => reservationApi.getReservationTrend(queryYears),
+    queryFn: ({ signal }) => reservationApi.getReservationTrend(queryYears, signal),
   })
 
   const dataMap = useMemo(() => apiData ? toDataMap(apiData) : {}, [apiData])

@@ -9,7 +9,7 @@ import type { WeeklyReportItem } from '../type/api'
 export function useWeeklyReport(years: number[]) {
   const { data, isLoading, isError } = useQuery<WeeklyReportItem[]>({
     queryKey: ['weekly-report', years],
-    queryFn: () => reportApi.getWeeklyReport(years),
+    queryFn: ({ signal }) => reportApi.getWeeklyReport(years, signal),
     enabled: years.length > 0,
   })
 

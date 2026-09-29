@@ -37,13 +37,13 @@ export const smsApi = {
     return apiResponseOf(lookupSchema).parse(data).data
   },
 
-  async getTargets(from: string, to: string, basis: SmsQueryBasis = 'SURGERY', templateCode?: string): Promise<SmsTarget[]> {
-    const { data } = await api.get('/sms-management/targets', { params: { from, to, basis, templateCode } })
+  async getTargets(from: string, to: string, basis: SmsQueryBasis = 'SURGERY', templateCode?: string, signal?: AbortSignal): Promise<SmsTarget[]> {
+    const { data } = await api.get('/sms-management/targets', { params: { from, to, basis, templateCode }, signal })
     return apiResponseOf(z.array(targetSchema)).parse(data).data
   },
 
-  async getTemplates(): Promise<SmsTemplate[]> {
-    const { data } = await api.get('/sms-management/templates')
+  async getTemplates(signal?: AbortSignal): Promise<SmsTemplate[]> {
+    const { data } = await api.get('/sms-management/templates', { signal })
     return apiResponseOf(z.array(templateSchema)).parse(data).data
   },
 
@@ -51,8 +51,8 @@ export const smsApi = {
    * 솔라피 알림톡 템플릿 조회 — 우리 env 에 templateId 가 채워진 슬롯만 카카오 승인
    * 상태·본문과 함께 돌려준다. API 키 미설정 시 빈 배열. 관리자 "템플릿" 모달용.
    */
-  async getSolapiTemplates(): Promise<SmsSolapiTemplate[]> {
-    const { data } = await api.get('/sms-management/solapi-templates')
+  async getSolapiTemplates(signal?: AbortSignal): Promise<SmsSolapiTemplate[]> {
+    const { data } = await api.get('/sms-management/solapi-templates', { signal })
     return apiResponseOf(z.array(solapiTemplateSchema)).parse(data).data
   },
 
@@ -60,8 +60,8 @@ export const smsApi = {
    * 솔라피 계정 잔액 조회 — 자동 발송 큐 카드에 노출.
    * API 키 미설정이면 configured=false 로 반환(500 안 던짐).
    */
-  async getSolapiBalance(): Promise<SmsSolapiBalance> {
-    const { data } = await api.get('/sms-management/solapi-balance')
+  async getSolapiBalance(signal?: AbortSignal): Promise<SmsSolapiBalance> {
+    const { data } = await api.get('/sms-management/solapi-balance', { signal })
     return apiResponseOf(solapiBalanceSchema).parse(data).data
   },
 
@@ -115,8 +115,8 @@ export const smsApi = {
   },
 
   /** 수신거부 목록 조회 — 관리 모달에서 씀. */
-  async getOptOuts(): Promise<SmsOptOutRow[]> {
-    const { data } = await api.get('/sms-management/opt-outs')
+  async getOptOuts(signal?: AbortSignal): Promise<SmsOptOutRow[]> {
+    const { data } = await api.get('/sms-management/opt-outs', { signal })
     return apiResponseOf(z.array(optOutRowSchema)).parse(data).data
   },
 
@@ -132,8 +132,8 @@ export const smsApi = {
   },
 
   /** 오프셋 그리드 조회 — 4행(SMILE·LASIK·LASEK·ICL). */
-  async getOffsets(): Promise<SmsOffsetRow[]> {
-    const { data } = await api.get('/sms-management/offsets')
+  async getOffsets(signal?: AbortSignal): Promise<SmsOffsetRow[]> {
+    const { data } = await api.get('/sms-management/offsets', { signal })
     return apiResponseOf(z.array(offsetRowSchema)).parse(data).data
   },
 
@@ -155,8 +155,8 @@ export const smsApi = {
    * 비우면 "최신 사이클" 카운트를 돌려준다(하위 호환). done_today 필드는 range 모드에서는
    * 그 범위의 완료량으로 재해석된다.
    */
-  async getQueueStatus(range: { from?: string; to?: string } = {}): Promise<SmsQueueStatusResponse> {
-    const { data } = await api.get('/admin/batch/sms/queue/status', { params: range })
+  async getQueueStatus(range: { from?: string; to?: string } = {}, signal?: AbortSignal): Promise<SmsQueueStatusResponse> {
+    const { data } = await api.get('/admin/batch/sms/queue/status', { params: range, signal })
     return apiResponseOf(queueStatusResponseSchema).parse(data).data
   },
 
@@ -168,8 +168,9 @@ export const smsApi = {
     status: SmsQueueStatus = 'FAILED',
     limit = 100,
     range: { from?: string; to?: string } = {},
+    signal?: AbortSignal,
   ): Promise<SmsQueueRow[]> {
-    const { data } = await api.get('/admin/batch/sms/queue/rows', { params: { status, limit, ...range } })
+    const { data } = await api.get('/admin/batch/sms/queue/rows', { params: { status, limit, ...range }, signal })
     return apiResponseOf(z.array(queueRowSchema)).parse(data).data
   },
 

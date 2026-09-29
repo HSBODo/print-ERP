@@ -10,7 +10,7 @@ import type { CataractEditableField } from '../type/api'
 export function useReservationStatsCataract(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-stats-cataract', from, to],
-    queryFn: () => reservationStatsApi.getCataractDailyCounts(from, to),
+    queryFn: ({ signal }) => reservationStatsApi.getCataractDailyCounts(from, to, signal),
     enabled: enabled && Boolean(from && to),
     retry: false, // 503(미연결)은 재시도해도 동일 → 즉시 오류 상태
   })

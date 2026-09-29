@@ -10,7 +10,7 @@ import type { ReservationChangeDailyResult, ReservationChangeItem } from '../typ
 export function useReservationChange(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reservation-change', from, to],
-    queryFn: () => reservationApi.getReservationChanges(from, to),
+    queryFn: ({ signal }) => reservationApi.getReservationChanges(from, to, signal),
     enabled: enabled && Boolean(from && to),
     staleTime: 5 * 60 * 1000,
   })
@@ -29,7 +29,7 @@ const EMPTY_DAILY: ReservationChangeDailyResult = { byRegistered: [], byReserveD
 export function useReservationChangeDaily(from: string, to: string) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reservation-change-daily', from, to],
-    queryFn: () => reservationApi.getReservationChangeDailyCounts(from, to),
+    queryFn: ({ signal }) => reservationApi.getReservationChangeDailyCounts(from, to, signal),
     enabled: Boolean(from && to),
     staleTime: 5 * 60 * 1000,
   })

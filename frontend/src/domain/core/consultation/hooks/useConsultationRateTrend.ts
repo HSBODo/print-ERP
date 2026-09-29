@@ -61,7 +61,7 @@ function toDataMap(items: ConsultationRateItem[]): Record<number, MonthlyData[]>
 export function useConsultationRateTrend(years: number[]) {
   const { data: apiItems, isLoading, isError } = useQuery({
     queryKey: ['consultation-rate-trend', years],
-    queryFn: () => consultationApi.getConsultationRateTrend(years),
+    queryFn: ({ signal }) => consultationApi.getConsultationRateTrend(years, signal),
     enabled: years.length > 0,
   })
 

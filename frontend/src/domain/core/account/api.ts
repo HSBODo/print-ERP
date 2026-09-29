@@ -11,8 +11,8 @@ import {
 const BASE = '/admin/users'
 
 export const accountApi = {
-  list: async (): Promise<UserRow[]> => {
-    const { data } = await api.get(BASE)
+  list: async (signal?: AbortSignal): Promise<UserRow[]> => {
+    const { data } = await api.get(BASE, { signal })
     return listResponseSchema.parse(data).data
   },
   get: async (id: number): Promise<UserRow> => {

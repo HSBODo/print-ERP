@@ -6,7 +6,7 @@ import type { AdSpend, ChannelLensCost, LensCost } from '../type/api'
 export function useChannelLensCost(from: string, to: string, enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['channel-lens-cost', from, to],
-    queryFn: () => marketingApi.getChannelLensCost(from, to),
+    queryFn: ({ signal }) => marketingApi.getChannelLensCost(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
   return { rows: (data ?? []) as ChannelLensCost[], isLoading, isError }
@@ -16,7 +16,7 @@ export function useChannelLensCost(from: string, to: string, enabled = true) {
 export function useAdSpend(ym: string, enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ad-spend', ym],
-    queryFn: () => marketingApi.getAdSpend(ym),
+    queryFn: ({ signal }) => marketingApi.getAdSpend(ym, signal),
     enabled: enabled && Boolean(ym),
   })
   return { rows: (data ?? []) as AdSpend[], isLoading, isError }
@@ -26,7 +26,7 @@ export function useAdSpend(ym: string, enabled = true) {
 export function useLensPrices(enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['lens-price'],
-    queryFn: () => marketingApi.getLensPrices(),
+    queryFn: ({ signal }) => marketingApi.getLensPrices(signal),
     enabled,
   })
   return { rows: (data ?? []) as LensCost[], isLoading, isError }

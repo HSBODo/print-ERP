@@ -12,7 +12,7 @@ import type { SmsQueueStatus } from '../type/api'
 export function useSmsQueueStatus(range: { from?: string; to?: string } = {}) {
   return useQuery({
     queryKey: ['sms', 'queue', 'status', range.from ?? null, range.to ?? null] as const,
-    queryFn: () => smsApi.getQueueStatus(range),
+    queryFn: ({ signal }) => smsApi.getQueueStatus(range, signal),
     refetchInterval: 30_000,
     staleTime: 15_000,
   })
@@ -25,7 +25,7 @@ export function useSmsQueueStatus(range: { from?: string; to?: string } = {}) {
 export function useSolapiBalance() {
   return useQuery({
     queryKey: ['sms', 'solapi', 'balance'] as const,
-    queryFn: () => smsApi.getSolapiBalance(),
+    queryFn: ({ signal }) => smsApi.getSolapiBalance(signal),
     refetchInterval: 5 * 60_000,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -36,7 +36,7 @@ export function useSolapiBalance() {
 export function useSmsQueueRows(status: SmsQueueStatus, limit = 100, enabled = true) {
   return useQuery({
     queryKey: ['sms', 'queue', 'rows', status, limit] as const,
-    queryFn: () => smsApi.getQueueRows(status, limit),
+    queryFn: ({ signal }) => smsApi.getQueueRows(status, limit, {}, signal),
     enabled,
     staleTime: 15_000,
   })

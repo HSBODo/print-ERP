@@ -23,8 +23,8 @@ import {
 } from './type/api'
 
 export const reservationStatsApi = {
-  getSystemDailyCounts: async (from: string, to: string): Promise<ReservationStatsDailyCountsResult> => {
-    const { data } = await api.get('/stats/reservation-stats-system', { params: { from, to } })
+  getSystemDailyCounts: async (from: string, to: string, signal?: AbortSignal): Promise<ReservationStatsDailyCountsResult> => {
+    const { data } = await api.get('/stats/reservation-stats-system', { params: { from, to }, signal })
     const parsed = systemResponseSchema.parse(data)
     return { data: parsed.data, meta: parsed.meta }
   },
@@ -60,8 +60,8 @@ export const reservationStatsApi = {
     const { data } = await api.get('/stats/reservation-stats-system/diagnostics/parity', { params: { period, field } })
     return systemParityResponseSchema.parse(data).data
   },
-  getCataractDailyCounts: async (from: string, to: string): Promise<CataractStatsDailyCountsResult> => {
-    const { data } = await api.get('/stats/reservation-stats-cataract', { params: { from, to } })
+  getCataractDailyCounts: async (from: string, to: string, signal?: AbortSignal): Promise<CataractStatsDailyCountsResult> => {
+    const { data } = await api.get('/stats/reservation-stats-cataract', { params: { from, to }, signal })
     const parsed = cataractResponseSchema.parse(data)
     return { data: parsed.data, meta: parsed.meta }
   },

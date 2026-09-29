@@ -12,28 +12,28 @@ export const consultationApi = {
     return consultationRateResponseSchema.parse(data).data
   },
 
-  getStopReasonMonthly: async (years: number[]) => {
-    const { data } = await api.get('/stats/stop-reason/monthly', { params: { years } })
+  getStopReasonMonthly: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/stop-reason/monthly', { params: { years }, signal })
     return stopReasonResponseSchema.parse(data).data
   },
 
-  getCataractReservationRateTrend: async (years: number[], category: 'vision' | 'cataract' = 'cataract') => {
-    const { data } = await api.get('/stats/cataract-reservation-rate/trend', { params: { years, category } })
+  getCataractReservationRateTrend: async (years: number[], category: 'vision' | 'cataract', signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/cataract-reservation-rate/trend', { params: { years, category }, signal })
     return cataractReservationRateResponseSchema.parse(data).data
   },
 
-  getConsultationRateKpi: async (years: number[]) => {
-    const { data } = await api.get('/stats/consultation-rate/kpi', { params: { years } })
+  getConsultationRateKpi: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/consultation-rate/kpi', { params: { years }, signal })
     return consultationRateResponseSchema.parse(data).data
   },
 
-  getConsultationRateTrend: async (years: number[]) => {
-    const { data } = await api.get('/stats/consultation-rate/trend', { params: { years } })
+  getConsultationRateTrend: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/consultation-rate/trend', { params: { years }, signal })
     return consultationRateResponseSchema.parse(data).data
   },
 
-  getConsultationRateComposition: async (years: number[]) => {
-    const { data } = await api.get('/stats/consultation-rate/composition', { params: { years } })
+  getConsultationRateComposition: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/consultation-rate/composition', { params: { years }, signal })
     return consultationRateResponseSchema.parse(data).data
   },
 }

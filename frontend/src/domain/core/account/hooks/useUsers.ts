@@ -7,7 +7,7 @@ const USERS_KEY = ['admin', 'users'] as const
 export const useUsers = () =>
   useQuery({
     queryKey: USERS_KEY,
-    queryFn: () => accountApi.list(),
+    queryFn: ({ signal }) => accountApi.list(signal),
   })
 
 export const useCreateUser = () => {

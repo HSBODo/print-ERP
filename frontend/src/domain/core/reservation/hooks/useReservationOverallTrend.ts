@@ -31,7 +31,7 @@ function toDataMap(items: ReservationOverallMonthlyItem[]): Record<number, Month
 export function useReservationOverallTrend(years: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['reservation-overall-trend', years],
-    queryFn: () => reservationApi.getReservationOverallMonthly(years),
+    queryFn: ({ signal }) => reservationApi.getReservationOverallMonthly(years, signal),
     enabled: years.length > 0,
   })
 

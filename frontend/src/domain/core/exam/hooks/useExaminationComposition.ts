@@ -35,7 +35,7 @@ function toDataMap(items: ExaminationMonthlyItem[]): Record<number, MonthlyData[
 export function useExaminationComposition(years: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['examination-composition', years],
-    queryFn: () => examApi.getExaminationComposition(years),
+    queryFn: ({ signal }) => examApi.getExaminationComposition(years, signal),
     enabled: years.length > 0,
   })
 

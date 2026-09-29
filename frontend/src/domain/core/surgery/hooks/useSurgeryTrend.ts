@@ -46,7 +46,7 @@ function toDataMap(items: SurgeryMonthlyItem[]): Record<number, SurgeryData[]> {
 export function useSurgeryTrend(years: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['surgery-trend', years],
-    queryFn: () => surgeryApi.getSurgeryTrend(years),
+    queryFn: ({ signal }) => surgeryApi.getSurgeryTrend(years, signal),
     enabled: years.length > 0,
   })
 

@@ -16,8 +16,8 @@ const toRequest = (row: DreamlensLedgerRow | DreamlensLedgerRequest): DreamlensL
 }
 
 export const dreamlensLedgerApi = {
-  list: async (from: string, to: string) => {
-    const { data } = await api.get('/dreamlens-ledger', { params: { from, to } })
+  list: async (from: string, to: string, signal?: AbortSignal) => {
+    const { data } = await api.get('/dreamlens-ledger', { params: { from, to }, signal })
     return ledgerListSchema.parse(data).data
   },
 

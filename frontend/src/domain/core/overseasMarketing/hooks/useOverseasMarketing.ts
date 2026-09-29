@@ -8,7 +8,7 @@ export function useOverseasMarketingReceptions(
 ) {
   return useQuery({
     queryKey: ['overseas-marketing', 'receptions', params],
-    queryFn: () => overseasMarketingApi.getReceptions(params),
+    queryFn: ({ signal }) => overseasMarketingApi.getReceptions(params, signal),
     enabled,
   })
 }
@@ -20,7 +20,7 @@ export function useOverseasMarketingStatistics(
 ) {
   return useQuery({
     queryKey: ['overseas-marketing', 'statistics', year, granularity],
-    queryFn: () => overseasMarketingApi.getStatistics(year, granularity),
+    queryFn: ({ signal }) => overseasMarketingApi.getStatistics(year, granularity, signal),
     enabled,
   })
 }
@@ -44,7 +44,7 @@ export function useOverseasMarketingCrmSync() {
 export function useOverseasReservationStats(year: number, granularity: OverseasMarketingGranularity) {
   return useQuery({
     queryKey: ['overseas-marketing', 'reservation-stats', year, granularity],
-    queryFn: () => overseasMarketingApi.getReservationStats(year, granularity),
+    queryFn: ({ signal }) => overseasMarketingApi.getReservationStats(year, granularity, signal),
   })
 }
 
@@ -69,7 +69,7 @@ export function useOverseasMarketingMatchConfirm() {
 export function useOverseasMarketingSyncAvailability() {
   return useQuery({
     queryKey: ['overseas-marketing', 'sync-availability'],
-    queryFn: overseasMarketingApi.getSyncAvailability,
+    queryFn: ({ signal }) => overseasMarketingApi.getSyncAvailability(signal),
     staleTime: Infinity,
   })
 }

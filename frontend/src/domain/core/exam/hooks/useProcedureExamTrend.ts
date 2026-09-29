@@ -28,7 +28,7 @@ function toDataMap(items: ProcedureExamMonthlyItem[]): Record<number, MonthlyDat
 export function useProcedureExamTrend(years: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['procedure-exam-trend', years],
-    queryFn: () => examApi.getProcedureExamMonthly(years),
+    queryFn: ({ signal }) => examApi.getProcedureExamMonthly(years, signal),
     enabled: years.length > 0,
   })
 

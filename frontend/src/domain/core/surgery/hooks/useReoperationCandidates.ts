@@ -9,7 +9,7 @@ import type { ReoperationCandidate } from '../type/api'
 export function useReoperationCandidates(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reoperation-candidates', from, to],
-    queryFn: () => surgeryApi.getReoperationCandidates(from, to),
+    queryFn: ({ signal }) => surgeryApi.getReoperationCandidates(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

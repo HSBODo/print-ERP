@@ -5,7 +5,7 @@ import { batchApi } from '../api'
 export function useBatchLastSuccess() {
   return useQuery({
     queryKey: ['batch', 'last-success'],
-    queryFn: batchApi.lastSuccess,
+    queryFn: ({ signal }) => batchApi.lastSuccess(signal),
     staleTime: 60_000,
   })
 }

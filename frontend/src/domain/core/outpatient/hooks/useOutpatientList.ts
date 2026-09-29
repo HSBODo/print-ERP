@@ -9,7 +9,7 @@ import type { OutpatientListItem } from '../type/api'
 export function useOutpatientList(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['outpatient-list', from, to],
-    queryFn: () => outpatientApi.getOutpatientList(from, to),
+    queryFn: ({ signal }) => outpatientApi.getOutpatientList(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

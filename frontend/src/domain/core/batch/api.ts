@@ -10,12 +10,12 @@ import {
 } from './type/api'
 
 export const batchApi = {
-  lastSuccess: async (): Promise<BatchLastSuccess | null> => {
-    const { data } = await api.get('/batch/last-success')
+  lastSuccess: async (signal?: AbortSignal): Promise<BatchLastSuccess | null> => {
+    const { data } = await api.get('/batch/last-success', { signal })
     return lastSuccessResponseSchema.parse(data).data
   },
-  listRunLogs: async (limit = 50): Promise<BatchRunLog[]> => {
-    const { data } = await api.get('/admin/batch/run-logs', { params: { limit } })
+  listRunLogs: async (limit = 50, signal?: AbortSignal): Promise<BatchRunLog[]> => {
+    const { data } = await api.get('/admin/batch/run-logs', { params: { limit }, signal })
     return runLogsResponseSchema.parse(data)
   },
 

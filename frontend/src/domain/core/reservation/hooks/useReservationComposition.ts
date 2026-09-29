@@ -18,7 +18,7 @@ function toDataMap(items: ReservationMonthlyItem[]): Record<number, MonthlyData[
 export function useReservationComposition(queryYears: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['reservation-composition', queryYears],
-    queryFn: () => reservationApi.getReservationComposition(queryYears),
+    queryFn: ({ signal }) => reservationApi.getReservationComposition(queryYears, signal),
   })
 
   const dataMap = useMemo(() => apiData ? toDataMap(apiData) : {}, [apiData])

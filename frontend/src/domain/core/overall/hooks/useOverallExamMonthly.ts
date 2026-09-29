@@ -9,7 +9,7 @@ import type { OverallExamMonthlyItem } from '../type/api'
 export function useOverallExamMonthly(years: number[]) {
   const { data, isLoading, isError } = useQuery<OverallExamMonthlyItem[]>({
     queryKey: ['overall-exam-monthly', years],
-    queryFn: () => overallApi.getOverallExamMonthly(years),
+    queryFn: ({ signal }) => overallApi.getOverallExamMonthly(years, signal),
     enabled: years.length > 0,
   })
 
