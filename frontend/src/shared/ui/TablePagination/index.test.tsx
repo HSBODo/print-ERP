@@ -22,7 +22,7 @@ describe('표 페이지 이동', () => {
   it('첫 페이지에서는 건수 · 현재/전체 페이지를 보여주고 처음·이전 버튼을 비활성화한다', () => {
     render(<Harness />)
     expect(screen.getByText('925건 중 1-50')).toBeInTheDocument()
-    expect(screen.getByText('1 / 19 페이지')).toBeInTheDocument()
+    expect(screen.getByText('1 / 19')).toBeInTheDocument()
     expect(button('처음 페이지')).toBeDisabled()
     expect(button('이전 페이지')).toBeDisabled()
     expect(button('다음 페이지')).toBeEnabled()
@@ -33,35 +33,35 @@ describe('표 페이지 이동', () => {
     render(<Harness />)
     fireEvent.click(button('다음 페이지'))
     fireEvent.click(button('다음 페이지'))
-    expect(screen.getByText('3 / 19 페이지')).toBeInTheDocument()
+    expect(screen.getByText('3 / 19')).toBeInTheDocument()
     expect(screen.getByText('925건 중 101-150')).toBeInTheDocument()
     fireEvent.click(button('이전 페이지'))
-    expect(screen.getByText('2 / 19 페이지')).toBeInTheDocument()
+    expect(screen.getByText('2 / 19')).toBeInTheDocument()
   })
 
   it('마지막 · 처음 페이지로 바로 이동하며 끝에서는 해당 방향 버튼을 비활성화한다', () => {
     render(<Harness />)
     fireEvent.click(button('마지막 페이지'))
-    expect(screen.getByText('19 / 19 페이지')).toBeInTheDocument()
+    expect(screen.getByText('19 / 19')).toBeInTheDocument()
     expect(screen.getByText('925건 중 901-925')).toBeInTheDocument()
     expect(button('다음 페이지')).toBeDisabled()
     expect(button('마지막 페이지')).toBeDisabled()
     fireEvent.click(button('처음 페이지'))
-    expect(screen.getByText('1 / 19 페이지')).toBeInTheDocument()
+    expect(screen.getByText('1 / 19')).toBeInTheDocument()
   })
 
   it('행 수를 변경하면 첫 페이지로 돌아가고 페이지 수와 범위를 갱신한다', () => {
     render(<Harness pageSizeOptions={[50, 100, 200, 500]} />)
     fireEvent.click(button('마지막 페이지'))
     fireEvent.change(pageSizeSelect(), { target: { value: '500' } })
-    expect(screen.getByText('1 / 2 페이지')).toBeInTheDocument()
+    expect(screen.getByText('1 / 2')).toBeInTheDocument()
     expect(screen.getByText('925건 중 1-500')).toBeInTheDocument()
   })
 
-  it('빈 결과는 0-0 · 1 / 1 페이지를 표시하고 이동을 모두 비활성화한다', () => {
+  it('빈 결과는 0-0 · 1 / 1 을 표시하고 이동을 모두 비활성화한다', () => {
     render(<Harness total={0} />)
     expect(screen.getByText('0건 중 0-0')).toBeInTheDocument()
-    expect(screen.getByText('1 / 1 페이지')).toBeInTheDocument()
+    expect(screen.getByText('1 / 1')).toBeInTheDocument()
     for (const name of ['처음 페이지', '이전 페이지', '다음 페이지', '마지막 페이지']) {
       expect(button(name)).toBeDisabled()
     }
@@ -77,6 +77,6 @@ describe('표 페이지 이동', () => {
   it('큰 숫자는 천 단위 구분 기호를 붙인다', () => {
     render(<Harness total={500_000} />)
     expect(screen.getByText('500,000건 중 1-50')).toBeInTheDocument()
-    expect(screen.getByText('1 / 10,000 페이지')).toBeInTheDocument()
+    expect(screen.getByText('1 / 10,000')).toBeInTheDocument()
   })
 })
