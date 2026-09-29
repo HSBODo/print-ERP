@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { overseasMarketingApi } from '../../api'
-import type { OverseasMarketingReception, OverseasMarketingReceptionInput, OverseasMarketingReceptionParams } from '../../type/api'
+import type { OverseasMarketingReception, OverseasMarketingReceptionInput } from '../../type/api'
 import {
   useOverseasMarketingCrmSync,
   useOverseasMarketingMatchConfirm,
@@ -35,7 +35,7 @@ const CRM_SYNC_ENABLED = true
 
 export function OverseasMarketingReceptionPage() {
   const [draft, setDraft] = useState(createDefaultParams)
-  const [query, setQuery] = useState<OverseasMarketingReceptionParams | null>(null)
+  const [query, setQuery] = useState(createDefaultParams)
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
@@ -52,7 +52,7 @@ export function OverseasMarketingReceptionPage() {
   // 백엔드 SecurityConfig 는 아직 MARKETING 부서 전체에 열려 있으니 방어 정책 강화가 필요하면 별도 조치.
   const isAdmin = canSystemOp(user)
 
-  const receptions = useOverseasMarketingReceptions(query ?? draft, query !== null)
+  const receptions = useOverseasMarketingReceptions(query, true)
   const sheetSync = useOverseasMarketingSheetSync()
   const crmSync = useOverseasMarketingCrmSync()
   const syncAvailability = useOverseasMarketingSyncAvailability()
@@ -121,7 +121,7 @@ export function OverseasMarketingReceptionPage() {
 
   const reset = () => {
     setDraft(createDefaultParams())
-    setQuery(null)
+    setQuery(createDefaultParams())
     setKeyword('')
     setAppliedKeyword('')
     setMatchFilter('all')
@@ -134,7 +134,7 @@ export function OverseasMarketingReceptionPage() {
     try {
       const result = await sheetSync.mutateAsync()
       toast.success(result.message)
-      if (query) await receptions.refetch()
+      await receptions.refetch()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Google Sheet 동기화에 실패했습니다.')
     }
@@ -156,7 +156,7 @@ export function OverseasMarketingReceptionPage() {
       }
       if (status.state === 'done') {
         toast.success(status.message ?? 'CRM 동기화 완료')
-        if (query) await receptions.refetch()
+        await receptions.refetch()
       } else if (status.state === 'error') {
         toast.error(status.message ?? 'CRM 동기화에 실패했습니다.')
       } else {
@@ -181,7 +181,7 @@ export function OverseasMarketingReceptionPage() {
         toast.success('접수 행을 추가했습니다.')
       }
       setEditor(null)
-      if (query) await receptions.refetch()
+      await receptions.refetch()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '저장에 실패했습니다.')
     }
@@ -193,7 +193,7 @@ export function OverseasMarketingReceptionPage() {
     try {
       await deleteReception.mutateAsync(row.seq)
       toast.success('접수 행을 삭제했습니다.')
-      if (query) await receptions.refetch()
+      await receptions.refetch()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '삭제에 실패했습니다.')
     }
@@ -205,7 +205,7 @@ export function OverseasMarketingReceptionPage() {
       const result = await confirmMatch.mutateAsync({ rowNumber: matchTarget.seq, customerNo })
       toast.success(`'${matchTarget.name}' → CRM ${result.customerNo}(${result.customerName}) 매칭 완료`)
       setMatchTarget(null)
-      if (query) await receptions.refetch()
+      await receptions.refetch()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '매칭 저장에 실패했습니다.')
     }
@@ -220,7 +220,7 @@ export function OverseasMarketingReceptionPage() {
   }
 
   const downloadResults = () => downloadCsv(
-    `해외마케팅_접수리스트_${query?.from ?? draft.from}_${query?.to ?? draft.to}.csv`,
+    `해외마케팅_접수리스트_${query.from}_${query.to}.csv`,
     columnsToCsv(CSV_COLUMNS, sorted),
   )
 
@@ -261,7 +261,6 @@ export function OverseasMarketingReceptionPage() {
         deletePending={deleteReception.isPending}
         fetching={receptions.isFetching}
         isError={receptions.isError}
-        hasQuery={query !== null}
       />
 
       {matchTarget && (

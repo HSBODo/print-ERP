@@ -59,13 +59,12 @@ export function ReservationListHomepagePage() {
   const [reserve, setReserve] = useState('전체')
   const [keyword, setKeyword] = useState('')
   const [sortState, setSortState] = useState<SortState>(null)
-  const [hasSearched, setHasSearched] = useState(false)
 
   const { rows, lastRegDate, live, isLoading, isFetching, isError } =
-    useReservationListHomepage(queryFrom, queryTo, hasSearched)
-  const showSkeleton = hasSearched && (isLoading || isFetching)
+    useReservationListHomepage(queryFrom, queryTo)
+  const showSkeleton = isLoading || isFetching
 
-  const sourceReady = hasSearched && !showSkeleton && !isError
+  const sourceReady = !showSkeleton && !isError
   // 조회 구간이 스냅샷 범위를 넘으면 건수가 조용히 모자라게 나온다 — 명시적으로 경고.
   // 실시간 소스에는 이 천장이 없다. 그때 같은 비교를 하면 미래 날짜 조회마다 거짓 경고가 뜬다.
   const beyondSnapshot =
@@ -101,7 +100,6 @@ export function ReservationListHomepagePage() {
 
   /** 조회 = 등록일 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
   const handleSearch = () => {
-    setHasSearched(true)
     pagination.resetPage()
     setQueryFrom(draftFrom)
     setQueryTo(draftTo)
@@ -131,7 +129,6 @@ export function ReservationListHomepagePage() {
     setKeyword('')
     pagination.setPageSize(INITIAL_PAGE_SIZE)
     setSortState(null)
-    setHasSearched(false)
   }
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
@@ -262,7 +259,7 @@ export function ReservationListHomepagePage() {
           <Button
             type="button"
             size="sm"
-            disabled={!hasSearched || sortedRows.length === 0}
+            disabled={sortedRows.length === 0}
             className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
             onClick={handleDownloadCsv}
             title="조회 결과 전체를 CSV로 내려받기"
@@ -373,7 +370,7 @@ export function ReservationListHomepagePage() {
                   {!showSkeleton && filtered.length === 0 && (
                     <tr>
                       <td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">
-                        {hasSearched ? '검색 결과가 없습니다.' : '조회 조건을 선택한 뒤 조회 버튼을 눌러주세요.'}
+                        검색 결과가 없습니다.
                       </td>
                     </tr>
                   )}

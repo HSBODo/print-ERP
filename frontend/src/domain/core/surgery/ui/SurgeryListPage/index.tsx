@@ -52,7 +52,6 @@ export function SurgeryListPage() {
   const [queryCategory, setQueryCategory] = useState('전체')
   const [queryKeyword, setQueryKeyword] = useState('')
   const [sortState, setSortState] = useState<SortState>(null)
-  const [hasSearched, setHasSearched] = useState(false)
   // 수술 유형 필터 — 이미 조회된 rows 를 걸러내는 클라이언트 필터라 조회 버튼 없이 즉시 반영한다.
   const [typeFilter, setTypeFilter] = useState('전체')
   const [optionFilter, setOptionFilter] = useState('전체')
@@ -64,11 +63,11 @@ export function SurgeryListPage() {
   const isReopTab = queryCategory === '재수술'
   const isAllTab = queryCategory === '전체'
   const isCataractTab = queryCategory === '백내장'
-  const { rows, isLoading, isFetching, isError } = useSurgeryList(queryFrom, queryTo, hasSearched && !isReopTab)
+  const { rows, isLoading, isFetching, isError } = useSurgeryList(queryFrom, queryTo, !isReopTab)
 
   // 재수술은 RE_OPERATION 별도 테이블이라 수술자 리스트(OPERATIONDATA·Cataract_Operationdata)에 들어있지 않다.
   // 자동 포함분(레포트 반영분)만 리스트 행으로 변환하며, '재수술' 탭과 '전체' 탭에서 조회한다.
-  const reopEnabled = hasSearched && (isReopTab || isAllTab)
+  const reopEnabled = isReopTab || isAllTab
   const { candidates: reopCandidates, isLoading: reopLoading, isFetching: reopFetching, isError: reopError } =
     useReoperationCandidates(queryFrom, queryTo, reopEnabled)
   // 저장된 재수술 판정 — 자동판정보다 우선. 저장 없음 = 자동판정 그대로.
@@ -94,11 +93,9 @@ export function SurgeryListPage() {
   )
 
   const activeError = isReopTab ? reopError : (isAllTab ? (isError || reopError) : isError)
-  const showSkeleton = hasSearched && (
-    isReopTab
-      ? (reopLoading || reopFetching)
-      : (isLoading || isFetching || (isAllTab && (reopLoading || reopFetching)))
-  )
+  const showSkeleton = isReopTab
+    ? (reopLoading || reopFetching)
+    : (isLoading || isFetching || (isAllTab && (reopLoading || reopFetching)))
 
   const filtered = useMemo(() => {
     const q = queryKeyword.trim().toLowerCase()
@@ -194,7 +191,6 @@ export function SurgeryListPage() {
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
-    setHasSearched(true)
     pagination.resetPage()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
@@ -218,7 +214,6 @@ export function SurgeryListPage() {
     setCataractFilter('전체')
     setReopFilter('전체')
     pagination.setPageSize(DEFAULT_PAGE_SIZE)
-    setHasSearched(false)
   }
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
@@ -260,14 +255,9 @@ export function SurgeryListPage() {
     setDraftTo(to)
   }
 
-  // 재수술 검토 팝업 — 조회한 기간(미조회 시 선택 월) 기준. 툴바 카운트와 동일 범위라 값이 일치.
+  // 재수술 검토 팝업 — 조회한 기간 기준. 툴바 카운트와 동일 범위라 값이 일치.
   const openReoperation = () => {
-    if (hasSearched) {
-      setReopRange({ from: queryFrom, to: queryTo })
-    } else {
-      const month = toMonthValue(draftFrom)
-      setReopRange({ from: toMonthStart(month), to: toMonthEnd(month) })
-    }
+    setReopRange({ from: queryFrom, to: queryTo })
     setReopOpen(true)
   }
 
@@ -352,10 +342,8 @@ export function SurgeryListPage() {
               onClick={() => {
                 setDraftCategory(category)
                 // 카테고리는 클라이언트 필터(이미 조회된 rows 를 걸러냄)라 조회 버튼 없이 즉시 반영.
-                if (hasSearched) {
-                  setQueryCategory(category)
-                  pagination.resetPage()
-                }
+                setQueryCategory(category)
+                pagination.resetPage()
               }}
             >
               {category}
@@ -381,7 +369,7 @@ export function SurgeryListPage() {
           <span className="text-muted-foreground">조회건수</span>
           <strong className="tabular-nums text-gray-900">{formatCount(tableRows.length)}건</strong>
         </div>
-        {isCataractTab && hasSearched && (
+        {isCataractTab && (
           <div
             className="flex h-8 items-center gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 text-xs"
             aria-live="polite"
@@ -419,7 +407,7 @@ export function SurgeryListPage() {
           <Button
             type="button"
             size="sm"
-            disabled={!hasSearched || sortedRows.length === 0}
+            disabled={sortedRows.length === 0}
             className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
             onClick={handleDownloadCsv}
             title="조회 결과 전체를 CSV로 내려받기"
@@ -507,7 +495,7 @@ export function SurgeryListPage() {
                   {!showSkeleton && tableRows.length === 0 && (
                     <tr>
                       <td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">
-                        {hasSearched ? '검색 결과가 없습니다.' : '조회 조건을 선택한 뒤 조회 버튼을 눌러주세요.'}
+                        검색 결과가 없습니다.
                       </td>
                     </tr>
                   )}

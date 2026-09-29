@@ -369,7 +369,6 @@ export function AccumulatedEyesPage() {
   const [queryTo, setQueryTo] = useState(today())
   const [queryKeyword, setQueryKeyword] = useState('')
   const [queryField, setQueryField] = useState<AccumulatedEyesField>('all')
-  const [hasSearched, setHasSearched] = useState(false)
   // 정렬 상태 — 기본은 누적 안수 내림차순 (최고 누적치 위로).
   //   헤더 다시 클릭 시 토글: desc → asc → 없음(서버 기본: operation_date DESC).
   const [sortKey, setSortKey] = useState<SortKey | null>('accumulatedEyeCount')
@@ -383,7 +382,7 @@ export function AccumulatedEyesPage() {
   }
 
   const { rows, isLoading, isFetching, isError, errorMessage } = useAccumulatedEyes(
-    queryFrom, queryTo, queryKeyword, queryField, hasSearched,
+    queryFrom, queryTo, queryKeyword, queryField,
   )
 
   const currentPlaceholder = FIELD_OPTIONS.find((o) => o.value === draftField)?.placeholder ?? ''
@@ -402,7 +401,6 @@ export function AccumulatedEyesPage() {
     setQueryKeyword(draftKeyword.trim())
     setQueryField(draftField)
     pagination.resetPage()
-    setHasSearched(true)
   }
   const reset = () => {
     setDraftFrom(daysAgo(30))
@@ -487,13 +485,11 @@ export function AccumulatedEyesPage() {
       <Card className="border-border/70 shadow-sm">
         <CardContent className="p-0">
           <div className="px-4 py-2 text-xs text-gray-500">
-            {hasSearched
-              ? isLoading
-                ? '불러오는 중…'
-                : isError
-                  ? <span className="text-red-600">{errorMessage ?? '데이터를 불러오지 못했습니다.'}</span>
-                  : <>총 <b className="text-gray-900">{rows.length}</b>행 · {isFetching && <span className="ml-1 text-blue-600">갱신 중</span>}</>
-              : '기간을 선택한 뒤 조회 버튼을 눌러주세요.'}
+            {isLoading
+              ? '불러오는 중…'
+              : isError
+                ? <span className="text-red-600">{errorMessage ?? '데이터를 불러오지 못했습니다.'}</span>
+                : <>총 <b className="text-gray-900">{rows.length}</b>행 · {isFetching && <span className="ml-1 text-blue-600">갱신 중</span>}</>}
           </div>
 
           <div className="overflow-auto">
@@ -556,7 +552,7 @@ export function AccumulatedEyesPage() {
                     </tr>
                   )
                 })}
-                {hasSearched && !isLoading && !isError && rows.length === 0 && (
+                {!isLoading && !isError && rows.length === 0 && (
                   <tr>
                     <td colSpan={COLUMNS.length} className="px-4 py-16 text-center text-sm text-gray-500">
                       조건에 맞는 누적 안수 이력이 없습니다.

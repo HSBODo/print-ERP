@@ -18,8 +18,7 @@ import type { ReservationListHomepageItem } from '../../type/api'
 
 const mockHook = vi.fn()
 vi.mock('../../hooks/useReservationListHomepage', () => ({
-  useReservationListHomepage: (from: string, to: string, enabled: boolean) =>
-    mockHook(from, to, enabled),
+  useReservationListHomepage: (from: string, to: string) => mockHook(from, to),
 }))
 
 const row = (over: Partial<ReservationListHomepageItem> = {}): ReservationListHomepageItem => ({
@@ -145,7 +144,7 @@ describe('ReservationListHomepagePage', () => {
     fireEvent.click(screen.getByLabelText('등록 기준 월'))
     fireEvent.click(screen.getByRole('button', { name: '5' }))
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
-    expect(mockHook).toHaveBeenLastCalledWith('2026-05-01', '2026-05-31', true)
+    expect(mockHook).toHaveBeenLastCalledWith('2026-05-01', '2026-05-31')
   })
 
   it('진행 중인 달은 말일이 아니라 오늘까지만 조회한다 (미래 구간 요청 방지)', async () => {
@@ -159,16 +158,15 @@ describe('ReservationListHomepagePage', () => {
     fireEvent.click(screen.getByRole('button', { name: '이번 달' }))
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
 
-    expect(mockHook).toHaveBeenLastCalledWith(monthStartOf(todayIso()), todayIso(), true)
+    expect(mockHook).toHaveBeenLastCalledWith(monthStartOf(todayIso()), todayIso())
   })
 
-  it('조회 전에는 안내문을 보여주고 서버를 호출하지 않는다', async () => {
+  it('진입하자마자 기본 기간(이번 달 1일~오늘)으로 조회한다', async () => {
     const { ReservationListHomepagePage } = await import('.')
+    const { defaultFrom, defaultTo } = await import('./reservationListHomepageUtils')
     render(<ReservationListHomepagePage />)
 
-    expect(screen.getByText(/조회 조건을 선택한 뒤/)).toBeInTheDocument()
-    // 3번째 인자(enabled)가 false — 첫 진입에 대용량 조회가 나가면 안 된다.
-    expect(mockHook).toHaveBeenCalledWith(expect.any(String), expect.any(String), false)
+    expect(mockHook).toHaveBeenCalledWith(defaultFrom(), defaultTo())
   })
 
   it('No 는 총건수에서 1씩 감소한다 (레거시 표시용 행번호)', async () => {

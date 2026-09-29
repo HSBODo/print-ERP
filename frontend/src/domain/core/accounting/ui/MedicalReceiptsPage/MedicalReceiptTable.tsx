@@ -86,7 +86,7 @@ const requestedTotals = (rows: MedicalReceipt[]) => [
   { label: '기타외래', rows: rows.filter((row) => row.revenueType === '기타외래'), tone: 'sub' as const },
 ]
 
-export function MedicalReceiptTable({ rows, breakdown, emptyMessage = '조회 결과가 없습니다.' }: { rows: MedicalReceipt[]; breakdown: '전체' | '요청건'; emptyMessage?: string }) {
+export function MedicalReceiptTable({ rows, breakdown }: { rows: MedicalReceipt[]; breakdown: '전체' | '요청건' }) {
   const [sort, setSort] = useState<{ key: ColumnKey; direction: 'asc' | 'desc' } | null>(null)
   const sorted = useMemo(() => sort ? [...rows].sort((a, b) => String(sortValue(a, sort.key)).localeCompare(String(sortValue(b, sort.key)), 'ko', { numeric: true }) * (sort.direction === 'asc' ? 1 : -1)) : rows, [rows, sort])
   const pagination = usePagination(sorted)
@@ -97,7 +97,7 @@ export function MedicalReceiptTable({ rows, breakdown, emptyMessage = '조회 �
     <div className="flex min-h-[420px] min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="min-h-0 flex-1 overflow-auto border-b border-gray-200">
         <table className="min-w-full border-collapse text-[11px]"><thead><tr>{COLUMNS.map((column) => { const direction = sort?.key === column.key ? sort.direction : null; return <th key={column.key} onClick={() => toggleSort(column.key)} className={`sticky top-0 z-10 cursor-pointer whitespace-nowrap border-b border-gray-200 px-2.5 py-1.5 font-semibold text-gray-700 ${columnWidth(column.kind)} ${column.kind === 'number' ? 'bg-amber-50 text-right' : 'bg-gray-50 text-center'}`}><span className="inline-flex items-center gap-1"><span>{column.label}</span>{column.kind !== 'no' && <span className="flex flex-col gap-px"><i className={`h-0 w-0 border-x-[3px] border-b-[4px] border-x-transparent ${direction === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'}`} /><i className={`h-0 w-0 border-x-[3px] border-t-[4px] border-x-transparent ${direction === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'}`} /></span>}</span></th> })}</tr>{totals.map((item, index) => <TotalRow key={`${item.label}-${index}`} rows={item.rows} label={item.label} tone={item.tone} top={29 + index * 25} />)}</thead>
-          <tbody>{pagination.pageRows.map((row, rowIndex) => <tr key={row.id} className="border-b border-gray-100 hover:bg-blue-50/50">{COLUMNS.map((column) => <RowCell key={column.key} column={column} row={row} no={pagination.rangeStart + rowIndex} />)}</tr>)}{pagination.pageRows.length === 0 && <tr><td colSpan={COLUMNS.length} className="py-12 text-center text-sm text-gray-500">{emptyMessage}</td></tr>}</tbody>
+          <tbody>{pagination.pageRows.map((row, rowIndex) => <tr key={row.id} className="border-b border-gray-100 hover:bg-blue-50/50">{COLUMNS.map((column) => <RowCell key={column.key} column={column} row={row} no={pagination.rangeStart + rowIndex} />)}</tr>)}{pagination.pageRows.length === 0 && <tr><td colSpan={COLUMNS.length} className="py-12 text-center text-sm text-gray-500">조회 결과가 없습니다.</td></tr>}</tbody>
         </table>
       </div>
       <TablePagination pagination={pagination} pageSizeOptions={ACCOUNTING_PAGE_SIZE_OPTIONS} />
