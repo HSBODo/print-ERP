@@ -35,29 +35,6 @@ export const compareSortValue = (a: string | number | null, b: string | number |
 
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
 
-/* ── 페이지네이션 (수술자·검사자 리스트와 동일 규약) ── */
-
-export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
-export const DEFAULT_PAGE_SIZE = 50
-
-/**
- * 표시할 페이지 번호 목록. 7페이지 이하는 전부, 그보다 많으면 1·현재±1·마지막만 두고
- * 끊긴 구간에 ellipsis 를 넣는다. (다른 리스트 화면의 동일 구현을 따른다)
- */
-export const buildPaginationItems = (currentPage: number, pageMax: number): Array<number | string> => {
-  if (pageMax <= 7) return Array.from({ length: pageMax }, (_, index) => index + 1)
-
-  const pages = new Set([1, pageMax, currentPage - 1, currentPage, currentPage + 1])
-  const normalized = [...pages].filter((page) => page >= 1 && page <= pageMax).sort((a, b) => a - b)
-
-  return normalized.reduce<Array<number | string>>((items, page, index) => {
-    const prev = normalized[index - 1]
-    if (prev && page - prev > 1) items.push(`ellipsis-${prev}-${page}`)
-    items.push(page)
-    return items
-  }, [])
-}
-
 /** 기본 조회 구간 — 지난달 1일 ~ 오늘(장부는 최근 것을 주로 본다). */
 export const defaultFrom = () => {
   const now = new Date()

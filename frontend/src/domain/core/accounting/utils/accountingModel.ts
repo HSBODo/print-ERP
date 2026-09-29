@@ -2,6 +2,9 @@ import type { MedicalReceipt } from '../type/accounting'
 
 export type PeriodMode = 'daily' | 'weekly' | 'monthly'
 
+/** 회계 리스트 표 행 수 — 한 달 행이 많아 500행까지 한 번에 본다. */
+export const ACCOUNTING_PAGE_SIZE_OPTIONS = [50, 100, 200, 500]
+
 export const formatWonCompact = (value: number | string): string => {
   const amount = Number(value)
   if (Math.abs(amount) >= 100_000_000) return `${(amount / 100_000_000).toFixed(1)}억`

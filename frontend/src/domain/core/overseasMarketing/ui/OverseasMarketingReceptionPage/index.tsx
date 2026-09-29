@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { overseasMarketingApi } from '../../api'
 import type { OverseasMarketingReception, OverseasMarketingReceptionInput, OverseasMarketingReceptionParams } from '../../type/api'
 import {
@@ -37,8 +38,6 @@ export function OverseasMarketingReceptionPage() {
   const [query, setQuery] = useState<OverseasMarketingReceptionParams | null>(null)
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
 
   const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; row: OverseasMarketingReception } | null>(null)
@@ -100,14 +99,11 @@ export function OverseasMarketingReceptionPage() {
     })
   }, [filtered, sort])
 
-  const maxPage = Math.max(1, Math.ceil(sorted.length / pageSize))
-  const safePage = Math.min(page, maxPage)
-  const visible = sorted.slice((safePage - 1) * pageSize, safePage * pageSize)
+  const pagination = usePagination(sorted, { resetDeps: [query, appliedKeyword, matchFilter, sort] })
 
   const search = () => {
     setQuery({ ...draft })
     setAppliedKeyword(keyword)
-    setPage(1)
   }
 
   useEffect(() => {
@@ -128,8 +124,7 @@ export function OverseasMarketingReceptionPage() {
     setKeyword('')
     setAppliedKeyword('')
     setMatchFilter('all')
-    setPage(1)
-    setPageSize(50)
+    pagination.setPageSize(DEFAULT_PAGE_SIZE)
     setSort(null)
   }
 
@@ -220,7 +215,6 @@ export function OverseasMarketingReceptionPage() {
       if (!current || current.key !== key) return { key, dir: 'asc' }
       return current.dir === 'asc' ? { key, dir: 'desc' } : null
     })
-    setPage(1)
   }
 
   const downloadResults = () => downloadCsv(
@@ -235,9 +229,9 @@ export function OverseasMarketingReceptionPage() {
         onDraftChange={setDraft}
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onKeywordApply={() => { setAppliedKeyword(keyword); setPage(1) }}
+        onKeywordApply={() => setAppliedKeyword(keyword)}
         matchFilter={matchFilter}
-        onMatchFilterChange={(value) => { setMatchFilter(value); setPage(1) }}
+        onMatchFilterChange={setMatchFilter}
         filteredCount={filtered.length}
         sortedCount={sorted.length}
         onSearch={search}
@@ -256,15 +250,9 @@ export function OverseasMarketingReceptionPage() {
       />
 
       <ReceptionTable
-        visible={visible}
-        totalCount={sorted.length}
-        page={safePage}
-        pageSize={pageSize}
-        maxPage={maxPage}
+        pagination={pagination}
         sort={sort}
         onToggleSort={toggleSort}
-        onPageChange={setPage}
-        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
         onEdit={(row) => setEditor({ mode: 'edit', row })}
         onDelete={removeReception}
         onOpenMatch={setMatchTarget}

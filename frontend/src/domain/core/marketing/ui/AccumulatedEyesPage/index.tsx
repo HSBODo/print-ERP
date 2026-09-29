@@ -3,8 +3,10 @@ import {
   ChevronDown, ChevronRight, ChevronsUpDown, ChevronUp,
   Download, Info, RotateCcw, Search,
 } from 'lucide-react'
+import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { useAccumulatedEyes } from '../../hooks/useAccumulatedEyes'
 import type { AccumulatedEyeItem, AccumulatedEyesField } from '../../type/api'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
@@ -86,8 +88,6 @@ const daysAgo = (n: number) => {
   d.setDate(d.getDate() - n)
   return d.toISOString().slice(0, 10)
 }
-
-const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
 
 type SortKey = keyof AccumulatedEyeItem
 type SortDir = 'asc' | 'desc'
@@ -370,8 +370,6 @@ export function AccumulatedEyesPage() {
   const [queryKeyword, setQueryKeyword] = useState('')
   const [queryField, setQueryField] = useState<AccumulatedEyesField>('all')
   const [hasSearched, setHasSearched] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(50)
   // 정렬 상태 — 기본은 누적 안수 내림차순 (최고 누적치 위로).
   //   헤더 다시 클릭 시 토글: desc → asc → 없음(서버 기본: operation_date DESC).
   const [sortKey, setSortKey] = useState<SortKey | null>('accumulatedEyeCount')
@@ -396,19 +394,15 @@ export function AccumulatedEyesPage() {
     return sortDir === 'desc' ? sorted.reverse() : sorted
   }, [rows, sortKey, sortDir])
 
-  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
-  const clampedPage = Math.min(currentPage, totalPages)
-  const pageRows = useMemo(
-    () => sortedRows.slice((clampedPage - 1) * pageSize, clampedPage * pageSize),
-    [sortedRows, clampedPage, pageSize],
-  )
+  const pagination = usePagination(sortedRows, {
+    resetDeps: [queryFrom, queryTo, queryKeyword, queryField, sortKey, sortDir],
+  })
 
   const runSearch = () => {
     setQueryFrom(draftFrom)
     setQueryTo(draftTo)
     setQueryKeyword(draftKeyword.trim())
     setQueryField(draftField)
-    setCurrentPage(1)
     setHasSearched(true)
   }
   const reset = () => {
@@ -493,26 +487,14 @@ export function AccumulatedEyesPage() {
 
       <Card className="border-border/70 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex items-center justify-between px-4 py-2 text-xs text-gray-500">
-            <div>
-              {hasSearched
-                ? isLoading
-                  ? '불러오는 중…'
-                  : isError
-                    ? <span className="text-red-600">{errorMessage ?? '데이터를 불러오지 못했습니다.'}</span>
-                    : <>총 <b className="text-gray-900">{rows.length}</b>행 · {isFetching && <span className="ml-1 text-blue-600">갱신 중</span>}</>
-                : '기간을 선택한 뒤 조회 버튼을 눌러주세요.'}
-            </div>
-            <div className="flex items-center gap-1">
-              <span>행 수</span>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number]); setCurrentPage(1) }}
-                className="rounded border border-gray-200 px-1"
-              >
-                {PAGE_SIZE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </div>
+          <div className="px-4 py-2 text-xs text-gray-500">
+            {hasSearched
+              ? isLoading
+                ? '불러오는 중…'
+                : isError
+                  ? <span className="text-red-600">{errorMessage ?? '데이터를 불러오지 못했습니다.'}</span>
+                  : <>총 <b className="text-gray-900">{rows.length}</b>행 · {isFetching && <span className="ml-1 text-blue-600">갱신 중</span>}</>
+              : '기간을 선택한 뒤 조회 버튼을 눌러주세요.'}
           </div>
 
           <div className="overflow-auto">
@@ -555,8 +537,8 @@ export function AccumulatedEyesPage() {
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((row, i) => {
-                  const idx = (clampedPage - 1) * pageSize + i
+                {pagination.pageRows.map((row, i) => {
+                  const idx = pagination.rangeStart - 1 + i
                   return (
                     <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
                       {COLUMNS.map((c) => (
@@ -586,21 +568,7 @@ export function AccumulatedEyesPage() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 px-4 py-3 text-xs">
-              <Button
-                variant="outline" size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={clampedPage <= 1}
-              >이전</Button>
-              <span className="px-2 text-gray-600">{clampedPage} / {totalPages}</span>
-              <Button
-                variant="outline" size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={clampedPage >= totalPages}
-              >다음</Button>
-            </div>
-          )}
+          <TablePagination pagination={pagination} className="border-t border-gray-100" />
         </CardContent>
       </Card>
     </div>

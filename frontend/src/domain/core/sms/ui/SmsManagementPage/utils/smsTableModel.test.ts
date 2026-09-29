@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildPaginationItems, groupOf, groupOptionsOf, matchesStatusFilter, targetStateOf, tierCellOf } from './smsTableModel'
+import { groupOf, groupOptionsOf, matchesStatusFilter, targetStateOf, tierCellOf } from './smsTableModel'
 import type { SmsTarget, SmsTemplate } from '../../../type/api'
 
 /**
@@ -287,15 +287,5 @@ describe('상태 필터', () => {
 
   it('전체는 무엇이든 통과시킨다', () => {
     expect(matchesStatusFilter(stateOf(target()), '전체')).toBe(true)
-  })
-})
-
-describe('페이지 번호 접기', () => {
-  it('7페이지 이하는 전부 보여준다', () => {
-    expect(buildPaginationItems(1, 5)).toEqual([1, 2, 3, 4, 5])
-  })
-
-  it('많으면 현재 주변만 남기고 접는다', () => {
-    expect(buildPaginationItems(5, 20)).toEqual([1, '…left', 4, 5, 6, '…right', 20])
   })
 })

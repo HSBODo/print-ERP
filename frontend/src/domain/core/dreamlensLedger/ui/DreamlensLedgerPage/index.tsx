@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, Download, Loader2, Plus, RotateCcw, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
@@ -21,9 +23,6 @@ import {
   type LedgerFieldKey,
 } from './ledgerColumns'
 import {
-  DEFAULT_PAGE_SIZE,
-  PAGE_SIZE_OPTIONS,
-  buildPaginationItems,
   compareSortValue,
   csvColumnsOf,
   defaultFrom,
@@ -69,8 +68,6 @@ export function DreamlensLedgerPage() {
   const [examiner, setExaminer] = useState('전체')
   const [keyword, setKeyword] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [sortState, setSortState] = useState<SortState>(null)
 
   const queryClient = useQueryClient()
@@ -110,24 +107,7 @@ export function DreamlensLedgerPage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  // 필터로 페이지 수가 줄어도 상태 변경 없이 렌더 시점에 범위로 보정한다.
-  const pageMax = Math.max(1, Math.ceil(sorted.length / pageSize))
-  const safePage = Math.min(currentPage, pageMax)
-  const paginationItems = useMemo(() => buildPaginationItems(safePage, pageMax), [safePage, pageMax])
-  const visibleRows = useMemo(
-    () => sorted.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [sorted, safePage, pageSize],
-  )
-  const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1
-  const rangeEnd = Math.min(safePage * pageSize, filtered.length)
-
-  const handlePageChange = (page: number) => setCurrentPage(Math.min(Math.max(page, 1), pageMax))
-
-  /** 클라이언트 필터 변경 — 즉시 반영하고 1페이지로(3페이지에서 걸러 0건이 보이는 걸 막는다). */
-  const changeFilter = (apply: () => void) => {
-    apply()
-    setCurrentPage(1)
-  }
+  const pagination = usePagination(sorted, { resetDeps: [queryFrom, queryTo, examiner, keyword, sortState] })
 
   const setRows = (updater: (old: DreamlensLedgerRow[]) => DreamlensLedgerRow[]) =>
     queryClient.setQueryData<DreamlensLedgerRow[]>(queryKey, (old) => updater(old ?? []))
@@ -172,7 +152,7 @@ export function DreamlensLedgerPage() {
     },
     onSuccess: (saved) => {
       setRows((old) => [saved, ...old])
-      setCurrentPage(1) // 새 행은 맨 위 = 1페이지. 다른 페이지에 있었으면 따라간다.
+      pagination.setPage(1) // 새 행은 맨 위 = 1페이지. 다른 페이지에 있었으면 따라간다.
       toast.success('행을 추가했습니다. 맨 위에 있습니다.')
     },
     onError: () => toast.error('행을 추가하지 못했습니다.'),
@@ -220,7 +200,6 @@ export function DreamlensLedgerPage() {
   /** 조회 = 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
   const handleSearch = () => {
     setSelected(new Set())
-    setCurrentPage(1)
     setQueryFrom(draftFrom)
     setQueryTo(draftTo)
   }
@@ -258,8 +237,7 @@ export function DreamlensLedgerPage() {
     setExaminer('전체')
     setKeyword('')
     setSelected(new Set())
-    setPageSize(DEFAULT_PAGE_SIZE)
-    setCurrentPage(1)
+    pagination.setPageSize(DEFAULT_PAGE_SIZE)
     setSortState(null)
   }
 
@@ -277,7 +255,6 @@ export function DreamlensLedgerPage() {
 
   /** 같은 컬럼을 다시 누르면 오름↔내림 토글, 다른 컬럼이면 오름차순부터. */
   const handleSort = (key: LedgerFieldKey) => {
-    setCurrentPage(1)
     setSortState((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -286,11 +263,11 @@ export function DreamlensLedgerPage() {
   }
 
   // 헤더 체크박스는 "보이는 페이지" 기준 — 안 보이는 페이지까지 한 번에 지우는 사고를 막는다.
-  const allChecked = visibleRows.length > 0 && visibleRows.every((row) => selected.has(row.id))
+  const allChecked = pagination.pageRows.length > 0 && pagination.pageRows.every((row) => selected.has(row.id))
   const toggleAll = () => {
     setSelected((prev) => {
       const next = new Set(prev)
-      for (const row of visibleRows) {
+      for (const row of pagination.pageRows) {
         if (allChecked) next.delete(row.id)
         else next.add(row.id)
       }
@@ -394,7 +371,7 @@ export function DreamlensLedgerPage() {
           <select
             aria-label="검사자"
             value={examiner}
-            onChange={(e) => changeFilter(() => setExaminer(e.target.value))}
+            onChange={(e) => setExaminer(e.target.value)}
             className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             <option value="전체">검사자 전체</option>
@@ -408,7 +385,7 @@ export function DreamlensLedgerPage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => changeFilter(() => setKeyword(e.target.value))}
+            onChange={(e) => setKeyword(e.target.value)}
             placeholder="이름 · 고객번호 · 검사자"
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
@@ -587,7 +564,7 @@ export function DreamlensLedgerPage() {
                       </td>
                     </tr>
                   )}
-                  {!busy && visibleRows.map((row) => {
+                  {!busy && pagination.pageRows.map((row) => {
                     const isSelected = selected.has(row.id)
                     // 배치 초안(AUTO) 행 — CRM 내원·수납으로 자동 생성됨. 렌즈 정보 보완 필요.
                     // 어느 셀이든 수정하면 서버가 MANUAL 로 승격해 뱃지가 사라진다.
@@ -685,69 +662,7 @@ export function DreamlensLedgerPage() {
               </table>
             </div>
           )}
-          {/* 페이지네이션 — 수술자·검사자 리스트와 동일 구성 */}
-          <div className="flex flex-wrap items-center gap-2 rounded-b-lg bg-white px-2 py-1.5 text-xs">
-            <span className="min-w-[8rem] font-semibold text-gray-800" aria-live="polite">
-              {formatCount(filtered.length)}건 {filtered.length > 0 && `· ${formatCount(rangeStart)}-${formatCount(rangeEnd)}`}
-              {selected.size > 0 && <span className="ml-2 text-rose-600">· {formatCount(selected.size)}건 선택</span>}
-            </span>
-            <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                disabled={safePage <= 1}
-                onClick={() => handlePageChange(safePage - 1)}
-              >
-                이전
-              </Button>
-              {paginationItems.map((item) => (
-                typeof item === 'number' ? (
-                  <Button
-                    key={item}
-                    type="button"
-                    variant={item === safePage ? 'default' : 'outline'}
-                    size="icon-sm"
-                    className="text-xs"
-                    aria-current={item === safePage ? 'page' : undefined}
-                    onClick={() => handlePageChange(item)}
-                  >
-                    {item}
-                  </Button>
-                ) : (
-                  <span key={item} className="px-1 text-muted-foreground">...</span>
-                )
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                disabled={safePage >= pageMax}
-                onClick={() => handlePageChange(safePage + 1)}
-              >
-                다음
-              </Button>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-gray-700">
-                매출 합계 <strong className="tabular-nums">{totals.totalRevenue.toLocaleString('ko-KR')}원</strong>
-              </span>
-              <label htmlFor="dreamlens-ledger-page-size" className="text-muted-foreground">행 수</label>
-              <div className="relative">
-                <select
-                  id="dreamlens-ledger-page-size"
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1) }}
-                  className="h-8 w-16 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                >
-                  {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              </div>
-            </div>
-          </div>
+          <TablePagination pagination={pagination} className="rounded-b-lg" />
         </CardContent>
       </Card>
 

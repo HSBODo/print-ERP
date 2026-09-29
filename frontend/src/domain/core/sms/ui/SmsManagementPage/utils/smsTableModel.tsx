@@ -423,18 +423,6 @@ export const tierCellOf = (
   }
 }
 
-/** 현재 페이지 주변만 번호로, 나머지는 '…' 으로 접는다(수술자 리스트와 같은 모양). */
-export function buildPaginationItems(current: number, max: number): (number | string)[] {
-  if (max <= 7) return Array.from({ length: max }, (_, i) => i + 1)
-  const items: (number | string)[] = [1]
-  const start = Math.max(2, current - 1)
-  const end = Math.min(max - 1, current + 1)
-  if (start > 2) items.push('…left')
-  for (let i = start; i <= end; i += 1) items.push(i)
-  if (end < max - 1) items.push('…right')
-  items.push(max)
-  return items
-}
 
 
 /* ── 정렬 ── 수술자 리스트와 같은 규칙: 머리글을 누르면 오름차순, 다시 누르면 내림차순. */

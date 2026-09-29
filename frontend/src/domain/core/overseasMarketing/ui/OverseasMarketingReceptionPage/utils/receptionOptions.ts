@@ -42,4 +42,3 @@ export const MATCH_OPTIONS: { value: MatchFilter; label: string }[] = [
   { value: 'review', label: '확인필요' },
 ]
 
-export const PAGE_SIZE_OPTIONS = [50, 100, 200]

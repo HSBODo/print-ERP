@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { RotateCcw, Search, ChevronDown, ChevronUp, ChevronsUpDown, Download } from 'lucide-react'
+import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
 import { columnsToCsv, downloadCsv, type CsvColumn } from '#shared/utils/csv'
@@ -67,7 +69,6 @@ const SUB_CHANNELS: Record<Exclude<Channel, '전체'>, string[]> = {
   콜: ['인콜', '아웃콜'],
   온라인: ['홈페이지', '앱', '네이버', '카카오'], // 카카오는 해피톡 소스라 RESERVATION 미반영 → 보통 0건
 }
-const PAGE_SIZE_OPTIONS = [50, 100, 200]
 
 /**
  * 상세 테이블 칼럼 — key가 있으면 헤더 클릭 정렬 가능('No'는 행 번호라 정렬 제외). 순서는 tbody 셀 순서와 일치.
@@ -130,8 +131,6 @@ export function ReservationListPage() {
   const [subChannel, setSubChannel] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
 
   const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
@@ -162,18 +161,12 @@ export function ReservationListPage() {
     )
   }, [detail, sort])
 
-  const pageMax = Math.max(1, Math.ceil(detail.length / pageSize))
-  const safePage = Math.min(page, pageMax)
-  const visible = useMemo(
-    () => sorted.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [sorted, safePage, pageSize],
-  )
+  const pagination = usePagination(sorted, { resetDeps: [queryMonth, queryKeyword, channel, subChannel, sort] })
 
   const handleSearch = () => {
     setHasSearched(true)
     setQueryMonth(draftMonth)
     setQueryKeyword(draftKeyword)
-    setPage(1)
   }
 
   const handleReset = () => {
@@ -183,8 +176,7 @@ export function ReservationListPage() {
     setQueryKeyword('')
     setChannel('전체')
     setSubChannel(null)
-    setPage(1)
-    setPageSize(50)
+    pagination.setPageSize(DEFAULT_PAGE_SIZE)
     setSort(null)
     setHasSearched(false)
   }
@@ -200,7 +192,6 @@ export function ReservationListPage() {
       if (!prev || prev.key !== key) return { key, dir: 'asc' }
       return prev.dir === 'asc' ? { key, dir: 'desc' } : null
     })
-    setPage(1)
   }
 
   return (
@@ -214,7 +205,7 @@ export function ReservationListPage() {
               key={c}
               type="button"
               aria-pressed={channel === c}
-              onClick={() => { setChannel(c); setSubChannel(null); setPage(1) }}
+              onClick={() => { setChannel(c); setSubChannel(null) }}
               className={`min-w-[3.5rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
                 channel === c ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
               }`}
@@ -232,7 +223,7 @@ export function ReservationListPage() {
                   key={sc}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => { setSubChannel(sc === '전체' ? null : sc); setPage(1) }}
+                  onClick={() => setSubChannel(sc === '전체' ? null : sc)}
                   className={`h-6 rounded px-2 text-[11px] font-medium transition-colors ${
                     active ? 'bg-blue-600 text-white' : 'text-blue-700 hover:bg-blue-100'
                   }`}
@@ -328,11 +319,11 @@ export function ReservationListPage() {
                   {showLoading && (
                     <tr><td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
-                  {!showLoading && visible.map((r: ReservationListItem, i) => {
+                  {!showLoading && pagination.pageRows.map((r: ReservationListItem, i) => {
                     const st = STATE_STYLE[r.reserveState.trim()]
                     return (
                       <tr key={`${r.chartNo}-${r.registeredAt}-${r.registeredTime}-${i}`} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
-                        <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-500">{formatCount((safePage - 1) * pageSize + i + 1)}</td>
+                        <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-500">{formatCount(pagination.rangeStart + i)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.registeredAt)}</td>
                         <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">{dash(r.registeredTime)}</td>
                         {/* 아래 3칸은 COLUMNS 의 tight 칼럼 — 헤더와 같은 px-1 을 써야 폭이 맞는다. */}
@@ -397,33 +388,7 @@ export function ReservationListPage() {
               </table>
             </div>
           )}
-          {/* 페이지네이션 */}
-          <div className="flex flex-wrap items-center gap-2 rounded-b-lg bg-white px-2 py-1.5 text-xs">
-            <span className="min-w-[8rem] font-semibold text-gray-800">
-              {formatCount(detail.length)}건 {detail.length > 0 && `· ${formatCount((safePage - 1) * pageSize + 1)}-${formatCount(Math.min(safePage * pageSize, detail.length))}`}
-            </span>
-            <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>이전</Button>
-              <span className="px-2 tabular-nums text-gray-700">{safePage} / {pageMax}</span>
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage >= pageMax} onClick={() => setPage(safePage + 1)}>다음</Button>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <label htmlFor="reservation-page-size" className="text-muted-foreground">행 수</label>
-              <div className="relative">
-                <select
-                  id="reservation-page-size"
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
-                  className="h-8 w-[4.5rem] appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                >
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}건</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              </div>
-            </div>
-          </div>
+          <TablePagination pagination={pagination} className="rounded-b-lg" />
         </CardContent>
       </Card>
     </div>

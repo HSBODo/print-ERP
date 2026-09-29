@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 // 예약 변경이력 화면 전용 폼 primitive — 필터 바에서 반복 사용.
 // 프로젝트 공용 셀렉트 컴포넌트가 아직 없어 이 도메인 안에서만 유지.
 
-export const SELECT_CLASS =
+const SELECT_CLASS =
   'h-8 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs text-gray-700 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
 
 export function SelectBox<T extends string | number>({ label, value, options, onChange, width = 'w-[7.5rem]' }: {

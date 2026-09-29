@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { usePagination } from '#shared/hooks/usePagination'
 
@@ -56,6 +56,20 @@ describe('usePagination', () => {
 
     rerender({ keyword: '홍' })
     expect(result.current.page).toBe(1)
+  })
+
+  it('onPageChange 는 페이지·행 수를 바꿀 때만 부르고 resetDeps 초기화 때는 부르지 않는다', () => {
+    const onPageChange = vi.fn()
+    const rows = rowsOf(500)
+    const { result, rerender } = renderHook(({ keyword }) => usePagination(rows, { resetDeps: [keyword], onPageChange }), {
+      initialProps: { keyword: '' },
+    })
+    act(() => result.current.setPage(2))
+    act(() => result.current.setPageSize(100))
+    expect(onPageChange).toHaveBeenCalledTimes(2)
+
+    rerender({ keyword: '홍' })
+    expect(onPageChange).toHaveBeenCalledTimes(2)
   })
 
   it('빈 결과는 1페이지 · 0-0 이다', () => {
