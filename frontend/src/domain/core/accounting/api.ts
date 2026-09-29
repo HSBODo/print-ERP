@@ -1,4 +1,3 @@
-import { withQuery } from '#shared/api/utils'
 import { api } from '#shared/api/client'
 import type { AccountingStatus, MedicalCategory, MedicalMonthlyMetric, MedicalReceipt, VisionMonthlyMetric, VisionReceipt } from './type/accounting'
 
@@ -16,25 +15,23 @@ import {
  */
 export const accountingApi = {
   getMedicalReceipts: async (from: string, to: string): Promise<MedicalReceipt[]> => {
-    const response = await api.get<unknown>(withQuery('/accounting/medical-receipts', { from, to }))
-    return medicalResponseSchema.parse(response).data
+    const { data } = await api.get('/accounting/medical-receipts', { params: { from, to } })
+    return medicalResponseSchema.parse(data).data
   },
   getVisionReceipts: async (from: string, to: string): Promise<VisionReceipt[]> => {
-    const response = await api.get<unknown>(withQuery('/accounting/vision-receipts', { from, to }))
-    return visionResponseSchema.parse(response).data
+    const { data } = await api.get('/accounting/vision-receipts', { params: { from, to } })
+    return visionResponseSchema.parse(data).data
   },
   getMedicalMonthly: async (years: number[], category: MedicalCategory = '전체'): Promise<MedicalMonthlyMetric[]> => {
-    const response = await api.get<unknown>(
-      withQuery('/accounting/medical-receipts/monthly', { years: years.join(','), category }),
-    )
-    return medicalMonthlyResponseSchema.parse(response).data
+    const { data } = await api.get('/accounting/medical-receipts/monthly', { params: { years, category } })
+    return medicalMonthlyResponseSchema.parse(data).data
   },
   getVisionMonthly: async (years: number[]): Promise<VisionMonthlyMetric[]> => {
-    const response = await api.get<unknown>(withQuery('/accounting/vision-receipts/monthly', { years: years.join(',') }))
-    return visionMonthlyResponseSchema.parse(response).data
+    const { data } = await api.get('/accounting/vision-receipts/monthly', { params: { years } })
+    return visionMonthlyResponseSchema.parse(data).data
   },
   getStatus: async (): Promise<AccountingStatus> => {
-    const response = await api.get<unknown>('/accounting/status')
-    return statusResponseSchema.parse(response).data
+    const { data } = await api.get('/accounting/status')
+    return statusResponseSchema.parse(data).data
   },
 }

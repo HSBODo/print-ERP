@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { api } from '#shared/api/client'
-import { apiResponseOf, withQuery } from '#shared/api/utils'
+import { apiResponseOf } from '#shared/api/utils'
 
 import {
   targetSchema,
@@ -33,18 +33,18 @@ import {
 
 export const smsApi = {
   async lookup(chartNo: string): Promise<SmsLookup> {
-    const res = await api.get(withQuery('/sms-management/lookup', { chartNo }))
-    return apiResponseOf(lookupSchema).parse(res).data
+    const { data } = await api.get('/sms-management/lookup', { params: { chartNo } })
+    return apiResponseOf(lookupSchema).parse(data).data
   },
 
   async getTargets(from: string, to: string, basis: SmsQueryBasis = 'SURGERY', templateCode?: string): Promise<SmsTarget[]> {
-    const res = await api.get(withQuery('/sms-management/targets', { from, to, basis, templateCode }))
-    return apiResponseOf(z.array(targetSchema)).parse(res).data
+    const { data } = await api.get('/sms-management/targets', { params: { from, to, basis, templateCode } })
+    return apiResponseOf(z.array(targetSchema)).parse(data).data
   },
 
   async getTemplates(): Promise<SmsTemplate[]> {
-    const res = await api.get('/sms-management/templates')
-    return apiResponseOf(z.array(templateSchema)).parse(res).data
+    const { data } = await api.get('/sms-management/templates')
+    return apiResponseOf(z.array(templateSchema)).parse(data).data
   },
 
   /**
@@ -52,8 +52,8 @@ export const smsApi = {
    * 상태·본문과 함께 돌려준다. API 키 미설정 시 빈 배열. 관리자 "템플릿" 모달용.
    */
   async getSolapiTemplates(): Promise<SmsSolapiTemplate[]> {
-    const res = await api.get('/sms-management/solapi-templates')
-    return apiResponseOf(z.array(solapiTemplateSchema)).parse(res).data
+    const { data } = await api.get('/sms-management/solapi-templates')
+    return apiResponseOf(z.array(solapiTemplateSchema)).parse(data).data
   },
 
   /**
@@ -61,23 +61,23 @@ export const smsApi = {
    * API 키 미설정이면 configured=false 로 반환(500 안 던짐).
    */
   async getSolapiBalance(): Promise<SmsSolapiBalance> {
-    const res = await api.get('/sms-management/solapi-balance')
-    return apiResponseOf(solapiBalanceSchema).parse(res).data
+    const { data } = await api.get('/sms-management/solapi-balance')
+    return apiResponseOf(solapiBalanceSchema).parse(data).data
   },
 
   async createTarget(request: SmsTargetRequest): Promise<SmsTarget> {
-    const res = await api.post('/sms-management/targets', request)
-    return apiResponseOf(targetSchema).parse(res).data
+    const { data } = await api.post('/sms-management/targets', request)
+    return apiResponseOf(targetSchema).parse(data).data
   },
 
   async updateTarget(id: number, request: SmsTargetRequest): Promise<SmsTarget> {
-    const res = await api.put(`/sms-management/targets/${id}`, request)
-    return apiResponseOf(targetSchema).parse(res).data
+    const { data } = await api.put(`/sms-management/targets/${id}`, request)
+    return apiResponseOf(targetSchema).parse(data).data
   },
 
   async changeStatus(id: number, value: 'SENDABLE' | 'HOLD'): Promise<SmsTarget> {
-    const res = await api.put(withQuery(`/sms-management/targets/${id}/status`, { value }), {})
-    return apiResponseOf(targetSchema).parse(res).data
+    const { data } = await api.put(`/sms-management/targets/${id}/status`, {}, { params: { value } })
+    return apiResponseOf(targetSchema).parse(data).data
   },
 
   /**
@@ -85,14 +85,14 @@ export const smsApi = {
    * 새로 등록된 사람 수를 돌려준다(이미 목록에 있던 번호는 세지 않는다).
    */
   async registerOptOut(targetIds: number[]): Promise<number> {
-    const res = await api.post('/sms-management/opt-outs', { targetIds, value: 'HOLD' })
-    return apiResponseOf(z.number()).parse(res).data
+    const { data } = await api.post('/sms-management/opt-outs', { targetIds, value: 'HOLD' })
+    return apiResponseOf(z.number()).parse(data).data
   },
 
   /** 선택 대상 일괄 홀딩/해제 — 바뀐 건수를 돌려준다. */
   async changeStatusBulk(targetIds: number[], value: 'SENDABLE' | 'HOLD'): Promise<number> {
-    const res = await api.put('/sms-management/targets/status', { targetIds, value })
-    return apiResponseOf(z.number()).parse(res).data
+    const { data } = await api.put('/sms-management/targets/status', { targetIds, value })
+    return apiResponseOf(z.number()).parse(data).data
   },
 
   /**
@@ -100,24 +100,24 @@ export const smsApi = {
    * ⚠️ 기간은 **발송 시각** 기준이다(수술일 범위가 아니다). 비우면 최근 7일.
    */
   async syncResults(sentFrom?: string, sentTo?: string): Promise<number> {
-    const res = await api.post(withQuery('/sms-management/sync', { sentFrom, sentTo }), {})
-    return apiResponseOf(z.number()).parse(res).data
+    const { data } = await api.post('/sms-management/sync', {}, { params: { sentFrom, sentTo } })
+    return apiResponseOf(z.number()).parse(data).data
   },
 
   async importTargets(from: string, to: string): Promise<SmsImportResult> {
-    const res = await api.post(withQuery('/sms-management/targets/import', { from, to }), {})
-    return apiResponseOf(importResultSchema).parse(res).data
+    const { data } = await api.post('/sms-management/targets/import', {}, { params: { from, to } })
+    return apiResponseOf(importResultSchema).parse(data).data
   },
 
   async send(targetIds: number[], templateCode: string, channel: 'ALIMTALK' | 'SMS'): Promise<SmsSendResult> {
-    const res = await api.post('/sms-management/send', { targetIds, templateCode, channel })
-    return apiResponseOf(sendResultSchema).parse(res).data
+    const { data } = await api.post('/sms-management/send', { targetIds, templateCode, channel })
+    return apiResponseOf(sendResultSchema).parse(data).data
   },
 
   /** 수신거부 목록 조회 — 관리 모달에서 씀. */
   async getOptOuts(): Promise<SmsOptOutRow[]> {
-    const res = await api.get('/sms-management/opt-outs')
-    return apiResponseOf(z.array(optOutRowSchema)).parse(res).data
+    const { data } = await api.get('/sms-management/opt-outs')
+    return apiResponseOf(z.array(optOutRowSchema)).parse(data).data
   },
 
   /**
@@ -127,20 +127,20 @@ export const smsApi = {
    * true 반환: 실제 삭제됨 · false: 이미 없었음.
    */
   async releaseOptOut(id: number): Promise<boolean> {
-    const res = await api.delete(`/sms-management/opt-outs/${id}`)
-    return apiResponseOf(z.boolean()).parse(res).data
+    const { data } = await api.delete(`/sms-management/opt-outs/${id}`)
+    return apiResponseOf(z.boolean()).parse(data).data
   },
 
   /** 오프셋 그리드 조회 — 4행(SMILE·LASIK·LASEK·ICL). */
   async getOffsets(): Promise<SmsOffsetRow[]> {
-    const res = await api.get('/sms-management/offsets')
-    return apiResponseOf(z.array(offsetRowSchema)).parse(res).data
+    const { data } = await api.get('/sms-management/offsets')
+    return apiResponseOf(z.array(offsetRowSchema)).parse(data).data
   },
 
   /** 오프셋 원자적 갱신 — 4행 전부를 함께 보낸다(부분 갱신 미지원). */
   async updateOffsets(payload: SmsOffsetUpdatePayload): Promise<SmsOffsetRow[]> {
-    const res = await api.put('/sms-management/offsets', payload)
-    return apiResponseOf(z.array(offsetRowSchema)).parse(res).data
+    const { data } = await api.put('/sms-management/offsets', payload)
+    return apiResponseOf(z.array(offsetRowSchema)).parse(data).data
   },
 
   /* ── 자동 발송 큐 (Phase 2) ────────────────────────────────
@@ -156,10 +156,8 @@ export const smsApi = {
    * 그 범위의 완료량으로 재해석된다.
    */
   async getQueueStatus(range: { from?: string; to?: string } = {}): Promise<SmsQueueStatusResponse> {
-    const res = await api.get(withQuery('/admin/batch/sms/queue/status', {
-      from: range.from, to: range.to,
-    }))
-    return apiResponseOf(queueStatusResponseSchema).parse(res).data
+    const { data } = await api.get('/admin/batch/sms/queue/status', { params: range })
+    return apiResponseOf(queueStatusResponseSchema).parse(data).data
   },
 
   /**
@@ -171,22 +169,20 @@ export const smsApi = {
     limit = 100,
     range: { from?: string; to?: string } = {},
   ): Promise<SmsQueueRow[]> {
-    const res = await api.get(withQuery('/admin/batch/sms/queue/rows', {
-      status, limit, from: range.from, to: range.to,
-    }))
-    return apiResponseOf(z.array(queueRowSchema)).parse(res).data
+    const { data } = await api.get('/admin/batch/sms/queue/rows', { params: { status, limit, ...range } })
+    return apiResponseOf(z.array(queueRowSchema)).parse(data).data
   },
 
   /** 실패·취소 재실행 — attempt_count 리셋 후 PENDING 으로. 리셋된 건수 반환. */
   async retryQueueRows(ids: number[]): Promise<number> {
     if (ids.length === 0) return 0
-    const res = await api.post(withQuery('/admin/batch/sms/queue/retry', { ids: ids.join(',') }), {})
-    return apiResponseOf(z.number()).parse(res).data
+    const { data } = await api.post('/admin/batch/sms/queue/retry', {}, { params: { ids } })
+    return apiResponseOf(z.number()).parse(data).data
   },
 
   /** 5분 폴러 즉시 실행 — 개발·긴급용. 처리 통계 반환. */
   async runQueueNow(): Promise<Record<string, number>> {
-    const res = await api.post('/admin/batch/sms/queue/run', {})
-    return apiResponseOf(z.record(z.string(), z.number())).parse(res).data
+    const { data } = await api.post('/admin/batch/sms/queue/run', {})
+    return apiResponseOf(z.record(z.string(), z.number())).parse(data).data
   },
 }

@@ -71,7 +71,7 @@ project-root/
 │   │   │   ├── core/<domain>/           # api.ts(<domain>Api 1개) · type/api.ts(zod 스키마 + 타입) · hooks/ · ui/<Screen>/ · utils/
 │   │   │   │                            #   reservation · reservationStats · exam · overall · consultation · surgery · outpatient · report
 │   │   │   │                            #   marketing(예약 퍼널 포함) · overseasMarketing · sms · accounting · b2b · dreamlensLedger · account · batch · auth(로그인)
-│   │   │   └── support/session/         # 세션·권한 — store(Zustand) · session(토큰·AuthUser) · apiClientAuth · utils/access(hasAccess)
+│   │   │   └── support/session/         # 세션·권한 — store(Zustand) · session(토큰·AuthUser) · initApiClient · utils/access(hasAccess)
 │   │   ├── shared/                      # 도메인 무관 공용 — api/(client·utils) · ui/(shadcn 포함, PascalCase/index.tsx) · hooks/ · utils/ · constants/
 │   │   ├── index.css                    # Tailwind 4 + OKLCH 테마 변수
 │   │   └── test/                        # Vitest + @testing-library/jest-dom

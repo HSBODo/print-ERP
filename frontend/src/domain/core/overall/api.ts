@@ -1,5 +1,4 @@
 import { api } from '#shared/api/client'
-import { withQuery } from '#shared/api/utils'
 
 import {
   overallExamWeeklyResponseSchema,
@@ -7,8 +6,12 @@ import {
 } from './type/api'
 
 export const overallApi = {
-  getOverallExamWeekly: async (years: number[]) =>
-    overallExamWeeklyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/overall-exam/weekly', { years }))).data,
-  getOverallExamMonthly: async (years: number[]) =>
-    overallExamMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/overall-exam/monthly', { years }))).data,
+  getOverallExamWeekly: async (years: number[]) => {
+    const { data } = await api.get('/stats/overall-exam/weekly', { params: { years } })
+    return overallExamWeeklyResponseSchema.parse(data).data
+  },
+  getOverallExamMonthly: async (years: number[]) => {
+    const { data } = await api.get('/stats/overall-exam/monthly', { params: { years } })
+    return overallExamMonthlyResponseSchema.parse(data).data
+  },
 }

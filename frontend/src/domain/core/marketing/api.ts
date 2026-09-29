@@ -1,5 +1,4 @@
 import { api } from '#shared/api/client'
-import { withQuery } from '#shared/api/utils'
 
 import {
   type AccumulatedEyeItem,
@@ -20,8 +19,6 @@ import {
 } from './type/api'
 
 const CHANNEL_PROFIT_BASE = '/stats/channel-profit'
-const range = (from: string, to: string) =>
-  `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
 
 export const marketingApi = {
   getAccumulatedEyes: async (
@@ -30,51 +27,45 @@ export const marketingApi = {
     query: string,
     field: AccumulatedEyesField = 'all',
   ): Promise<AccumulatedEyeItem[]> => {
-    const res = await api.get<unknown>(
-      withQuery('/accumulated-eyes', { from, to, query, field }),
-    )
-    return accumulatedEyeResponseSchema.parse(res).data
+    const { data } = await api.get('/accumulated-eyes', { params: { from, to, query, field } })
+    return accumulatedEyeResponseSchema.parse(data).data
   },
   /** 총 누적 안수 (마트 max). 홈 대시보드 KPI. */
   getAccumulatedEyesTotal: async (): Promise<number> => {
-    const res = await api.get<unknown>('/accumulated-eyes/total')
-    return accumulatedEyeTotalSchema.parse(res).data.total
+    const { data } = await api.get('/accumulated-eyes/total')
+    return accumulatedEyeTotalSchema.parse(data).data.total
   },
   getChannelLensCost: async (from: string, to: string): Promise<ChannelLensCost[]> => {
-    const res = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/lens-cost?${range(from, to)}`)
-    return lensCostListRes.parse(res).data
+    const { data } = await api.get(`${CHANNEL_PROFIT_BASE}/lens-cost`, { params: { from, to } })
+    return lensCostListRes.parse(data).data
   },
 
   getAdSpend: async (ym: string): Promise<AdSpend[]> => {
-    const res = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/ad-spend?ym=${encodeURIComponent(ym)}`)
-    return adSpendListRes.parse(res).data
+    const { data } = await api.get(`${CHANNEL_PROFIT_BASE}/ad-spend`, { params: { ym } })
+    return adSpendListRes.parse(data).data
   },
 
   saveAdSpend: async (items: AdSpend[]): Promise<number> => {
-    const res = await api.put<unknown>(`${CHANNEL_PROFIT_BASE}/ad-spend`, items)
-    return savedRes.parse(res).data.saved
+    const { data } = await api.put(`${CHANNEL_PROFIT_BASE}/ad-spend`, items)
+    return savedRes.parse(data).data.saved
   },
 
   getLensPrices: async (): Promise<LensCost[]> => {
-    const res = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/lens-price`)
-    return lensPriceListRes.parse(res).data
+    const { data } = await api.get(`${CHANNEL_PROFIT_BASE}/lens-price`)
+    return lensPriceListRes.parse(data).data
   },
 
   saveLensPrices: async (items: LensCost[]): Promise<number> => {
-    const res = await api.put<unknown>(`${CHANNEL_PROFIT_BASE}/lens-price`, items)
-    return savedRes.parse(res).data.saved
+    const { data } = await api.put(`${CHANNEL_PROFIT_BASE}/lens-price`, items)
+    return savedRes.parse(data).data.saved
   },
   getReservationChannelFunnel: async (from: string, to: string): Promise<ReservationChannelFunnelItem[]> => {
-    const res = await api.get<unknown>(
-      `/stats/reservation-channel?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
-    )
-    return reservationChannelFunnelResponseSchema.parse(res).data
+    const { data } = await api.get('/stats/reservation-channel', { params: { from, to } })
+    return reservationChannelFunnelResponseSchema.parse(data).data
   },
 
   getReservationChannelOpTypes: async (from: string, to: string): Promise<ReservationChannelOpType[]> => {
-    const res = await api.get<unknown>(
-      `/stats/reservation-channel/op-types?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
-    )
-    return opTypeResponseSchema.parse(res).data
+    const { data } = await api.get('/stats/reservation-channel/op-types', { params: { from, to } })
+    return opTypeResponseSchema.parse(data).data
   },
 }
