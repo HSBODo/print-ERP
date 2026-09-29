@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { useAuthStore } from '#domain/support/session/store'
 import { authApi } from '../../api'
 import { useNavigate } from '@tanstack/react-router'
-import { clearRememberedLogin, readRememberedLogin, saveRememberedLogin } from '../../utils/rememberedLogin'
 
 const loginSchema = z.object({
   loginId: z.string().trim().min(1, '아이디를 입력해주세요'),
@@ -18,8 +17,6 @@ export function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [remembered] = useState(() => readRememberedLogin())
-  const [remember, setRemember] = useState(Boolean(remembered))
 
   const {
     register,
@@ -27,10 +24,7 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      loginId: remembered?.loginId ?? '',
-      password: remembered?.password ?? '',
-    },
+    defaultValues: { loginId: '', password: '' },
   })
 
   const onSubmit = async (data: LoginForm) => {
@@ -38,12 +32,6 @@ export function LoginPage() {
 
     try {
       const res = await authApi.login(data)
-      // 로그인 성공 시에만 저장(잘못된 자격증명 저장 방지). 체크 해제 상태면 기존 저장값 삭제.
-      if (remember) {
-        saveRememberedLogin({ loginId: data.loginId, password: data.password })
-      } else {
-        clearRememberedLogin()
-      }
       login(res.token, res.user)
       navigate({ to: '/' })
     } catch (error) {
@@ -112,22 +100,13 @@ export function LoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">비밀번호</label>
               <input
                 type="password"
+                autoComplete="current-password"
                 {...register('password')}
                 placeholder="비밀번호 입력"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
             </div>
-
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-              />
-              아이디·비밀번호 저장
-            </label>
 
             <button
               type="submit"
