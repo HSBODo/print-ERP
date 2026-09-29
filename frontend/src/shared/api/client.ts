@@ -1,23 +1,23 @@
-const BASE_URL = '/api'
+import axios, { type AxiosRequestConfig } from 'axios'
 
-/** 인증 연동 — shared 는 auth 를 모르므로 앱 시작 시 auth 쪽이 주입한다. */
-interface AuthHandlers {
-  getToken: () => string | null
-  /** 로그인 요청이 아닌 401 응답 시 호출 (세션 정리·로그인 이동) */
-  onUnauthorized: () => void
-}
+/** 앱 공용 axios 인스턴스. 인증(토큰·401)은 shared 가 모르므로 앱 시작 시 support/session 이 interceptor 로 붙인다. */
+export const apiClient = axios.create({ baseURL: '/api' })
 
-let authHandlers: AuthHandlers = { getToken: () => null, onUnauthorized: () => {} }
+const isBlank = (data: unknown) => data === undefined || data === null || (typeof data === 'string' && !data.trim())
 
-export const setAuthHandlers = (handlers: AuthHandlers) => {
-  authHandlers = handlers
-}
+const toError = (error: unknown) => {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error : new Error(String(error))
+  }
 
-const shouldHandleUnauthorized = (url: string) => !url.startsWith('/auth/login')
+  const response = error.response
+  if (!response) {
+    return new Error(error.message)
+  }
 
-const getErrorMessage = (body: unknown, response: Response) => {
+  const body: unknown = response.data
   if (typeof body === 'string' && body.trim()) {
-    return body
+    return new Error(body)
   }
 
   if (
@@ -27,72 +27,25 @@ const getErrorMessage = (body: unknown, response: Response) => {
     typeof body.message === 'string' &&
     body.message.trim()
   ) {
-    return body.message
+    return new Error(body.message)
   }
 
-  return response.statusText || `HTTP ${response.status}`
+  return new Error(response.statusText || `HTTP ${response.status}`)
 }
 
-const parseResponseBody = async (response: Response): Promise<unknown> => {
-  if (response.status === 204 || response.status === 205) {
-    return undefined
+/** interceptor 를 모두 거친 뒤 body 만 돌려주고, 실패는 화면이 `e.message` 로 쓰는 서버 메시지 Error 로 바꾼다. */
+async function request<T>(config: AxiosRequestConfig): Promise<T> {
+  try {
+    const { data } = await apiClient.request<unknown>(config)
+    return (isBlank(data) ? undefined : data) as T
+  } catch (error) {
+    throw toError(error)
   }
-
-  const contentLength = response.headers.get('content-length')
-
-  if (contentLength === '0') {
-    return undefined
-  }
-
-  const contentType = response.headers.get('content-type') ?? ''
-  const text = await response.text()
-
-  if (!text.trim()) {
-    return undefined
-  }
-
-  if (contentType.includes('application/json')) {
-    try {
-      return JSON.parse(text) as unknown
-    } catch {
-      return undefined
-    }
-  }
-
-  return text
-}
-
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const token = authHandlers.getToken()
-
-  const res = await fetch(`${BASE_URL}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
-  })
-
-  const body = await parseResponseBody(res)
-
-  if (res.status === 401 && shouldHandleUnauthorized(url)) {
-    authHandlers.onUnauthorized()
-    throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.')
-  }
-
-  if (!res.ok) {
-    throw new Error(getErrorMessage(body, res))
-  }
-
-  return body as T
 }
 
 export const api = {
-  get: <T>(url: string) => request<T>(url),
-  post: <T>(url: string, body: unknown) =>
-    request<T>(url, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T>(url: string, body: unknown) =>
-    request<T>(url, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T>(url: string) => request<T>(url, { method: 'DELETE' }),
+  get: <T>(url: string) => request<T>({ method: 'GET', url }),
+  post: <T>(url: string, body: unknown) => request<T>({ method: 'POST', url, data: body }),
+  put: <T>(url: string, body: unknown) => request<T>({ method: 'PUT', url, data: body }),
+  delete: <T>(url: string) => request<T>({ method: 'DELETE', url }),
 }
