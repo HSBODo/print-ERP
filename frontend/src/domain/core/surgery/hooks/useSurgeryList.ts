@@ -8,7 +8,7 @@ import type { SurgeryListItem } from '../type/api'
 export function useSurgeryList(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['surgery-list', from, to],
-    queryFn: () => surgeryApi.getSurgeryList(from, to),
+    queryFn: ({ signal }) => surgeryApi.getSurgeryList(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

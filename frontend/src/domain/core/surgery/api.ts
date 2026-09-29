@@ -1,5 +1,4 @@
 import { api } from '#shared/api/client'
-import { withQuery } from '#shared/api/utils'
 
 import {
   surgeryMonthlyResponseSchema,
@@ -15,41 +14,52 @@ import {
 } from './type/api'
 
 export const surgeryApi = {
-  getSurgeryMonthly: async (years: number[]) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/monthly', { years }))).data,
+  getSurgeryMonthly: async (years: number[]) => {
+    const { data } = await api.get('/stats/surgery/monthly', { params: { years } })
+    return surgeryMonthlyResponseSchema.parse(data).data
+  },
 
-  getSurgeryRatio: async (years: number[]) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery-ratio', { years }))).data,
+  getSurgeryRatio: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/surgery-ratio', { params: { years }, signal })
+    return surgeryMonthlyResponseSchema.parse(data).data
+  },
 
-  getSurgeryKpi: async (years: number[]) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/kpi', { years }))).data,
+  getSurgeryKpi: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/surgery/kpi', { params: { years }, signal })
+    return surgeryMonthlyResponseSchema.parse(data).data
+  },
 
-  getSurgeryTrend: async (years: number[]) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/trend', { years }))).data,
+  getSurgeryTrend: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/surgery/panel/trend', { params: { years }, signal })
+    return surgeryMonthlyResponseSchema.parse(data).data
+  },
 
-  getSurgeryComposition: async (years: number[]) =>
-    surgeryMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/panel/composition', { years }))).data,
+  getSurgeryComposition: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/surgery/panel/composition', { params: { years }, signal })
+    return surgeryMonthlyResponseSchema.parse(data).data
+  },
 
   /** 수술별 비중 일별 — mart_surgery_daily 조회. data+meta 반환(마트 미적재 시 라이브 폴백). */
-  getSurgeryDaily: async (from: string, to: string) => {
-    const res = surgeryDailyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/surgery/daily', { from, to })))
+  getSurgeryDaily: async (from: string, to: string, signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/surgery/daily', { params: { from, to }, signal })
+    const res = surgeryDailyResponseSchema.parse(data)
     return { data: res.data, meta: res.meta }
   },
-  getSurgeryList: async (from: string, to: string): Promise<SurgeryListItem[]> => {
-    const res = await api.get<unknown>(withQuery('/surgery-list', { from, to }))
-    return surgeryListResponseSchema.parse(res).data
+  getSurgeryList: async (from: string, to: string, signal?: AbortSignal): Promise<SurgeryListItem[]> => {
+    const { data } = await api.get('/surgery-list', { params: { from, to }, signal })
+    return surgeryListResponseSchema.parse(data).data
   },
-  getReoperationCandidates: async (from: string, to: string): Promise<ReoperationCandidate[]> => {
-    const res = await api.get<unknown>(withQuery('/stats/surgery/reoperation-candidates', { from, to }))
-    return reoperationCandidatesResponseSchema.parse(res).data
+  getReoperationCandidates: async (from: string, to: string, signal?: AbortSignal): Promise<ReoperationCandidate[]> => {
+    const { data } = await api.get('/stats/surgery/reoperation-candidates', { params: { from, to }, signal })
+    return reoperationCandidatesResponseSchema.parse(data).data
   },
-  getReoperationDecisions: async (from: string, to: string): Promise<ReoperationDecisionRow[]> => {
-    const res = await api.get<unknown>(withQuery('/reoperation-decisions', { from, to }))
-    return reoperationDecisionListResponseSchema.parse(res).data
+  getReoperationDecisions: async (from: string, to: string, signal?: AbortSignal): Promise<ReoperationDecisionRow[]> => {
+    const { data } = await api.get('/reoperation-decisions', { params: { from, to }, signal })
+    return reoperationDecisionListResponseSchema.parse(data).data
   },
 
   saveReoperationDecisions: async (decisions: ReoperationDecisionSaveItem[]): Promise<ReoperationDecisionRow[]> => {
-    const res = await api.put<unknown>('/reoperation-decisions', { decisions })
-    return reoperationDecisionSaveResponseSchema.parse(res).data
+    const { data } = await api.put('/reoperation-decisions', { decisions })
+    return reoperationDecisionSaveResponseSchema.parse(data).data
   },
 }

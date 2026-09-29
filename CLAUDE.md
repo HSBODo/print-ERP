@@ -9,6 +9,7 @@
 - **프론트엔드**: React 19 / TypeScript / Vite 8
 - **UI**: Tailwind CSS 4 + shadcn/ui (base-nova 테마) + Recharts
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
+- **HTTP**: axios (`shared/api/client.ts` 인스턴스 1개)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
 - **DB**: H2 (개발, 기본) / PostgreSQL 마트 (운영, `application-postgres-mart.yml`)
@@ -71,7 +72,7 @@ project-root/
 │   │   │   ├── core/<domain>/           # api.ts(<domain>Api 1개) · type/api.ts(zod 스키마 + 타입) · hooks/ · ui/<Screen>/ · utils/
 │   │   │   │                            #   reservation · reservationStats · exam · overall · consultation · surgery · outpatient · report
 │   │   │   │                            #   marketing(예약 퍼널 포함) · overseasMarketing · sms · accounting · b2b · dreamlensLedger · account · batch · auth(로그인)
-│   │   │   └── support/session/         # 세션·권한 — store(Zustand) · session(토큰·AuthUser) · apiClientAuth · utils/access(hasAccess)
+│   │   │   └── support/session/         # 세션·권한 — store(Zustand) · session(토큰·AuthUser) · initApiClient · utils/access(hasAccess)
 │   │   ├── shared/                      # 도메인 무관 공용 — api/(client·utils) · ui/(shadcn 포함, PascalCase/index.tsx) · hooks/ · utils/ · constants/
 │   │   ├── index.css                    # Tailwind 4 + OKLCH 테마 변수
 │   │   └── test/                        # Vitest + @testing-library/jest-dom
@@ -471,7 +472,7 @@ cd frontend && npm run test              # Vitest
 - **새 통계 페이지**: 전용 페이지 컴포넌트 작성 → `routes/_auth/.../<id>.tsx` 라우트 파일 + `staticData.page`(롤·부서 권한은 `access`) → `navigation.ts` `MENU_TREE` 에 경로 추가 → 백엔드 API + `SecurityConfig` 매처 대칭 유지 (`routeTree.gen.ts` 직접 수정 금지)
 - **새 차트**: Recharts 기반, shadcn `ChartContainer` 사용, `CHART_PALETTE` 색상 적용
 - **새 UI 컴포넌트**: `npx shadcn@latest add <name>` (설정: `components.json`)
-- **API 연동**: `shared/api/client.ts` HTTP 클라이언트 사용(토큰은 `support/session` 이 주입), 도메인 `hooks/` 에서 TanStack Query `useQuery`로 캐싱
+- **API 연동**: `shared/api/client.ts` 의 axios 인스턴스 `api` 사용 — interceptor(토큰 부착·401 세션 만료·에러 메시지)는 `support/session/initApiClient` 가 앱 시작 시 등록한다. 쿼리는 `api.get(path, { params })`(배열은 `years=2025,2026` 콤마 직렬화, nullish 제외), 응답은 `const { data } = await api.get(...)` 후 zod 로 파싱. 조회 메서드는 마지막 인자로 `signal?: AbortSignal` 을 받아 넘기고, 도메인 `hooks/` 에서 TanStack Query `useQuery`(`queryFn: ({ signal }) => xxxApi.method(..., signal)`)로 캐싱
 - **DashboardPage 데이터는 하드코딩 목업** — API 연동 시 교체 필요
 - **기획서 참조**: 메뉴별 화면 규칙·컬럼 정의·함정은 `backend/new_대쉬보드_v4/pages/<id>.html` (원문은 `_build/content/<id>.mjs`) · `prd.html` 「전메뉴 현황」 탭 · 지표 정의는 `지표정의/*.md` · DB 테이블은 `db/tables/`. 코드에서 자동 생성되는 1·6·7·8·9장(개요·데이터 소스·API·권한·연관 문서)은 `_build/scan.mjs → gen.mjs`, 2·3·4·5·10장은 사람이 쓴 본문.
 

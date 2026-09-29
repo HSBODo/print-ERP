@@ -11,7 +11,7 @@ import type { ReservationListItem } from '../type/api'
 export function useReservationList(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reservation-list', from, to],
-    queryFn: () => reservationApi.getReservationList(from, to),
+    queryFn: ({ signal }) => reservationApi.getReservationList(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

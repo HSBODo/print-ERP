@@ -4,7 +4,7 @@ import { surgeryApi } from '../api'
 export function useSurgeryKpi(years: number[]) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['surgery-kpi', years],
-    queryFn: () => surgeryApi.getSurgeryKpi(years),
+    queryFn: ({ signal }) => surgeryApi.getSurgeryKpi(years, signal),
     enabled: years.length > 0,
   })
 

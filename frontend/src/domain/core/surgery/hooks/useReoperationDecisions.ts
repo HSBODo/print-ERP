@@ -6,7 +6,7 @@ import type { ReoperationDecisionRow, ReoperationDecisionSaveItem } from '../typ
 export function useReoperationDecisions(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reoperation-decisions', from, to],
-    queryFn: () => surgeryApi.getReoperationDecisions(from, to),
+    queryFn: ({ signal }) => surgeryApi.getReoperationDecisions(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

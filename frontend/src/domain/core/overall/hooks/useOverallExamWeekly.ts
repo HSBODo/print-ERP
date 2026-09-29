@@ -9,7 +9,7 @@ import type { OverallExamWeeklyItem } from '../type/api'
 export function useOverallExamWeekly(years: number[]) {
   const { data, isLoading, isError } = useQuery<OverallExamWeeklyItem[]>({
     queryKey: ['overall-exam-weekly', years],
-    queryFn: () => overallApi.getOverallExamWeekly(years),
+    queryFn: ({ signal }) => overallApi.getOverallExamWeekly(years, signal),
     enabled: years.length > 0,
   })
 

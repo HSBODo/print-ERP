@@ -9,7 +9,7 @@ import type { ReservationChannelFunnelItem, ReservationChannelOpType } from '../
 export function useReservationChannel(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reservation-channel', from, to],
-    queryFn: () => marketingApi.getReservationChannelFunnel(from, to),
+    queryFn: ({ signal }) => marketingApi.getReservationChannelFunnel(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 
@@ -25,7 +25,7 @@ export function useReservationChannel(from: string, to: string, enabled = true) 
 export function useReservationChannelOpTypes(from: string, to: string, enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['reservation-channel-op-types', from, to],
-    queryFn: () => marketingApi.getReservationChannelOpTypes(from, to),
+    queryFn: ({ signal }) => marketingApi.getReservationChannelOpTypes(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
   return { rows: (data ?? []) as ReservationChannelOpType[], isLoading, isError }

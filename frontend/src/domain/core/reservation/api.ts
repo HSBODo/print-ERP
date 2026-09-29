@@ -1,5 +1,4 @@
 import { api } from '#shared/api/client'
-import { withQuery } from '#shared/api/utils'
 
 import {
   reservationKpiResponseSchema,
@@ -16,37 +15,48 @@ import {
 } from './type/api'
 
 export const reservationApi = {
-  getReservationMonthly: async (years: number[]) =>
-    reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/monthly', { years }))).data,
-
-  getReservationKpi: async (years: number[]) =>
-    reservationKpiResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/kpi', { years }))).data,
-
-  getReservationTrend: async (years: number[]) =>
-    reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/trend', { years }))).data,
-
-  getReservationComposition: async (years: number[]) =>
-    reservationMonthlyResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation/composition', { years }))).data,
-
-  getReservationOverallMonthly: async (years: number[]) =>
-    reservationOverallResponseSchema.parse(await api.get<unknown>(withQuery('/stats/reservation-overall/monthly', { years }))).data,
-  getReservationChanges: async (from: string, to: string): Promise<ReservationChangeResult> => {
-    const res = await api.get<unknown>(withQuery('/reservation-change', { from, to }))
-    return reservationChangeResponseSchema.parse(res).data
+  getReservationMonthly: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/reservation/monthly', { params: { years }, signal })
+    return reservationMonthlyResponseSchema.parse(data).data
   },
-  getReservationChangeDailyCounts: async (from: string, to: string): Promise<ReservationChangeDailyResult> => {
-    const res = await api.get<unknown>(withQuery('/reservation-change/daily', { from, to }))
-    return reservationChangeDailyResponseSchema.parse(res).data
+
+  getReservationKpi: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/reservation/kpi', { params: { years }, signal })
+    return reservationKpiResponseSchema.parse(data).data
   },
-  getReservationList: async (from: string, to: string): Promise<ReservationListResult> => {
-    const res = await api.get<unknown>(withQuery('/reservation-list', { from, to }))
-    return reservationListResponseSchema.parse(res).data
+
+  getReservationTrend: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/reservation/trend', { params: { years }, signal })
+    return reservationMonthlyResponseSchema.parse(data).data
+  },
+
+  getReservationComposition: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/reservation/composition', { params: { years }, signal })
+    return reservationMonthlyResponseSchema.parse(data).data
+  },
+
+  getReservationOverallMonthly: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/reservation-overall/monthly', { params: { years }, signal })
+    return reservationOverallResponseSchema.parse(data).data
+  },
+  getReservationChanges: async (from: string, to: string, signal?: AbortSignal): Promise<ReservationChangeResult> => {
+    const { data } = await api.get('/reservation-change', { params: { from, to }, signal })
+    return reservationChangeResponseSchema.parse(data).data
+  },
+  getReservationChangeDailyCounts: async (from: string, to: string, signal?: AbortSignal): Promise<ReservationChangeDailyResult> => {
+    const { data } = await api.get('/reservation-change/daily', { params: { from, to }, signal })
+    return reservationChangeDailyResponseSchema.parse(data).data
+  },
+  getReservationList: async (from: string, to: string, signal?: AbortSignal): Promise<ReservationListResult> => {
+    const { data } = await api.get('/reservation-list', { params: { from, to }, signal })
+    return reservationListResponseSchema.parse(data).data
   },
   getReservationListHomepage: async (
     from: string,
     to: string,
+    signal?: AbortSignal,
   ): Promise<ReservationListHomepageResult> => {
-    const res = await api.get<unknown>(withQuery('/reservation-list-homepage', { from, to }))
-    return reservationListHomepageResponseSchema.parse(res).data
+    const { data } = await api.get('/reservation-list-homepage', { params: { from, to }, signal })
+    return reservationListHomepageResponseSchema.parse(data).data
   },
 }

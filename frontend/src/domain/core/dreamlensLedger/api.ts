@@ -1,5 +1,4 @@
 import { api } from '#shared/api/client'
-import { withQuery } from '#shared/api/utils'
 
 import {
   type DreamlensLedgerRow,
@@ -17,16 +16,22 @@ const toRequest = (row: DreamlensLedgerRow | DreamlensLedgerRequest): DreamlensL
 }
 
 export const dreamlensLedgerApi = {
-  list: async (from: string, to: string) =>
-    ledgerListSchema.parse(await api.get<unknown>(withQuery('/dreamlens-ledger', { from, to }))).data,
+  list: async (from: string, to: string, signal?: AbortSignal) => {
+    const { data } = await api.get('/dreamlens-ledger', { params: { from, to }, signal })
+    return ledgerListSchema.parse(data).data
+  },
 
-  create: async (row: DreamlensLedgerRequest) =>
-    ledgerRowSchema.parse(await api.post<unknown>('/dreamlens-ledger', toRequest(row))).data,
+  create: async (row: DreamlensLedgerRequest) => {
+    const { data } = await api.post('/dreamlens-ledger', toRequest(row))
+    return ledgerRowSchema.parse(data).data
+  },
 
-  update: async (id: number, row: DreamlensLedgerRow | DreamlensLedgerRequest) =>
-    ledgerRowSchema.parse(await api.put<unknown>(`/dreamlens-ledger/${id}`, toRequest(row))).data,
+  update: async (id: number, row: DreamlensLedgerRow | DreamlensLedgerRequest) => {
+    const { data } = await api.put(`/dreamlens-ledger/${id}`, toRequest(row))
+    return ledgerRowSchema.parse(data).data
+  },
 
   remove: async (id: number) => {
-    await api.delete<unknown>(`/dreamlens-ledger/${id}`)
+    await api.delete(`/dreamlens-ledger/${id}`)
   },
 }

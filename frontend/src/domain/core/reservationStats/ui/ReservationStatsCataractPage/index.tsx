@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { withQuery } from '#shared/api/utils'
+import { api } from '#shared/api/client'
 import {
   CATARACT_EDITABLE_FIELDS,
   type CataractEditableField,
@@ -356,10 +356,9 @@ export function ReservationStatsCataractPage() {
     }
   }
   const drillDownPathFor = (diff: ReservationStatsDiff, item: ReservationStatsDiffItem) =>
-    withQuery('/api/stats/reservation-stats-cataract/diagnostics/drill-down', {
-      period: diff.period,
-      date: item.date,
-      field: item.field,
+    api.getUri({
+      url: '/stats/reservation-stats-cataract/diagnostics/drill-down',
+      params: { period: diff.period, date: item.date, field: item.field },
     })
   const handleSelectDiagnosticDiff = async (item: ReservationStatsDiffItem) => {
     if (!diagnosticDiff) return

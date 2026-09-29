@@ -40,9 +40,9 @@ const BARS = [
   { key: 'surgeryDone', color: 'var(--color-surgeryDone)' },
 ] as const
 
-async function getMonthlyFunnel() {
+async function getMonthlyFunnel(signal?: AbortSignal) {
   const monthlyResponses = await Promise.all(
-    MONTH_RANGES.map(({ from, to }) => marketingApi.getReservationChannelFunnel(from, to)),
+    MONTH_RANGES.map(({ from, to }) => marketingApi.getReservationChannelFunnel(from, to, signal)),
   )
 
   return monthlyResponses.map((rows, index) =>
@@ -53,7 +53,7 @@ async function getMonthlyFunnel() {
 export function ModoodocMonthlyFunnelChart() {
   const { data = [], isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-channel', 'modoodoc-monthly', MODOODOC_FUNNEL_YEAR],
-    queryFn: getMonthlyFunnel,
+    queryFn: ({ signal }) => getMonthlyFunnel(signal),
     staleTime: 5 * 60 * 1000,
   })
 

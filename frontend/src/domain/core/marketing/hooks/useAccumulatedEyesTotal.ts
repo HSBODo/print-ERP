@@ -8,7 +8,7 @@ import { marketingApi } from '../api'
 export function useAccumulatedEyesTotal(enabled = true) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['accumulated-eyes-total'],
-    queryFn: () => marketingApi.getAccumulatedEyesTotal(),
+    queryFn: ({ signal }) => marketingApi.getAccumulatedEyesTotal(signal),
     enabled,
   })
 

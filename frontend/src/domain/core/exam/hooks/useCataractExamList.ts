@@ -9,7 +9,7 @@ import type { CataractExamListItem } from '../type/api'
 export function useCataractExamList(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['cataract-exam-list', from, to],
-    queryFn: () => examApi.getCataractExamList(from, to),
+    queryFn: ({ signal }) => examApi.getCataractExamList(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

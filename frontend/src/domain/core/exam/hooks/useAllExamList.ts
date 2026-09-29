@@ -10,7 +10,7 @@ import type { AllExamListItem } from '../type/api'
 export function useAllExamList(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['all-exam-list', from, to],
-    queryFn: () => examApi.getAllExamList(from, to),
+    queryFn: ({ signal }) => examApi.getAllExamList(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

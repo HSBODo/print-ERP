@@ -21,21 +21,3 @@ export function apiResponseOf<T extends z.ZodTypeAny, M extends z.ZodTypeAny>(it
     meta: (metaSchema ?? z.unknown()).optional(),
   })
 }
-
-type QueryValue = string | number | boolean | Array<string | number | boolean> | null | undefined
-
-export const buildQuery = (params: Record<string, QueryValue>): string => {
-  const searchParams = new URLSearchParams()
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === null) return
-    searchParams.set(key, Array.isArray(value) ? value.join(',') : String(value))
-  })
-
-  return searchParams.toString()
-}
-
-export const withQuery = (path: string, params: Record<string, QueryValue>) => {
-  const query = buildQuery(params)
-  return query ? `${path}?${query}` : path
-}

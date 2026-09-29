@@ -4,7 +4,7 @@ import { examApi } from '../api'
 export function useEoeisCheckup(from: string, to: string) {
   const query = useQuery({
     queryKey: ['eoeis-checkup', from, to],
-    queryFn: () => examApi.getEoeisCheckupStats(from, to),
+    queryFn: ({ signal }) => examApi.getEoeisCheckupStats(from, to, signal),
     enabled: Boolean(from && to),
   })
 

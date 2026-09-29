@@ -9,7 +9,7 @@ import type { ExamCountByClassRow } from '../type/api'
 export function useExamCountByClass(year: number) {
   const { data, isLoading, isError } = useQuery<ExamCountByClassRow[]>({
     queryKey: ['exam-count-by-class', year],
-    queryFn: () => examApi.getExamCountByClass(year),
+    queryFn: ({ signal }) => examApi.getExamCountByClass(year, signal),
     enabled: Number.isFinite(year),
   })
 

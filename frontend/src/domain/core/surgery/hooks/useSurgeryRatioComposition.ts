@@ -4,7 +4,7 @@ import { surgeryApi } from '../api'
 export function useSurgeryRatioComposition(years: number[]) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['surgery-ratio-composition', years],
-    queryFn: () => surgeryApi.getSurgeryRatio(years),
+    queryFn: ({ signal }) => surgeryApi.getSurgeryRatio(years, signal),
     enabled: years.length > 0,
   })
 

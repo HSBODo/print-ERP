@@ -7,7 +7,7 @@ const RUN_LOGS_KEY = ['admin', 'batch', 'run-logs'] as const
 export const useBatchRunLogs = (limit = 50, autoRefresh = false) =>
   useQuery({
     queryKey: [...RUN_LOGS_KEY, limit],
-    queryFn: () => batchApi.listRunLogs(limit),
+    queryFn: ({ signal }) => batchApi.listRunLogs(limit, signal),
     refetchInterval: autoRefresh ? 3000 : false,
   })
 

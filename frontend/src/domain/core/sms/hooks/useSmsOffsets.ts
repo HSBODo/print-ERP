@@ -11,7 +11,7 @@ const KEY = ['sms', 'offsets'] as const
 export function useSmsOffsets() {
   return useQuery({
     queryKey: KEY,
-    queryFn: () => smsApi.getOffsets(),
+    queryFn: ({ signal }) => smsApi.getOffsets(signal),
     staleTime: 60_000, // 편집 후 mutation 이 즉시 invalidate 하므로 stale-while-revalidate 충분
   })
 }

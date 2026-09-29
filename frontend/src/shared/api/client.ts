@@ -1,98 +1,18 @@
-const BASE_URL = '/api'
+import axios from 'axios'
 
-/** 인증 연동 — shared 는 auth 를 모르므로 앱 시작 시 auth 쪽이 주입한다. */
-interface AuthHandlers {
-  getToken: () => string | null
-  /** 로그인 요청이 아닌 401 응답 시 호출 (세션 정리·로그인 이동) */
-  onUnauthorized: () => void
-}
+type QueryValue = string | number | boolean | Array<string | number | boolean> | null | undefined
 
-let authHandlers: AuthHandlers = { getToken: () => null, onUnauthorized: () => {} }
+/** 배열은 콤마로 잇고(years=2025,2026) nullish 는 뺀다 — 백엔드가 이 형식을 받는다. */
+const serializeParams = (params: Record<string, QueryValue>) => {
+  const searchParams = new URLSearchParams()
 
-export const setAuthHandlers = (handlers: AuthHandlers) => {
-  authHandlers = handlers
-}
-
-const shouldHandleUnauthorized = (url: string) => !url.startsWith('/auth/login')
-
-const getErrorMessage = (body: unknown, response: Response) => {
-  if (typeof body === 'string' && body.trim()) {
-    return body
-  }
-
-  if (
-    body &&
-    typeof body === 'object' &&
-    'message' in body &&
-    typeof body.message === 'string' &&
-    body.message.trim()
-  ) {
-    return body.message
-  }
-
-  return response.statusText || `HTTP ${response.status}`
-}
-
-const parseResponseBody = async (response: Response): Promise<unknown> => {
-  if (response.status === 204 || response.status === 205) {
-    return undefined
-  }
-
-  const contentLength = response.headers.get('content-length')
-
-  if (contentLength === '0') {
-    return undefined
-  }
-
-  const contentType = response.headers.get('content-type') ?? ''
-  const text = await response.text()
-
-  if (!text.trim()) {
-    return undefined
-  }
-
-  if (contentType.includes('application/json')) {
-    try {
-      return JSON.parse(text) as unknown
-    } catch {
-      return undefined
-    }
-  }
-
-  return text
-}
-
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const token = authHandlers.getToken()
-
-  const res = await fetch(`${BASE_URL}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    searchParams.set(key, Array.isArray(value) ? value.join(',') : String(value))
   })
 
-  const body = await parseResponseBody(res)
-
-  if (res.status === 401 && shouldHandleUnauthorized(url)) {
-    authHandlers.onUnauthorized()
-    throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.')
-  }
-
-  if (!res.ok) {
-    throw new Error(getErrorMessage(body, res))
-  }
-
-  return body as T
+  return searchParams.toString()
 }
 
-export const api = {
-  get: <T>(url: string) => request<T>(url),
-  post: <T>(url: string, body: unknown) =>
-    request<T>(url, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T>(url: string, body: unknown) =>
-    request<T>(url, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T>(url: string) => request<T>(url, { method: 'DELETE' }),
-}
+/** 앱 공용 axios 인스턴스. interceptor(토큰·401·에러 메시지)는 shared 가 세션을 모르므로 support/session 의 initApiClient 가 붙인다. */
+export const api = axios.create({ baseURL: '/api', paramsSerializer: { serialize: serializeParams } })

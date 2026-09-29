@@ -9,7 +9,7 @@ import type { ReservationListHomepageItem } from '../type/api'
 export function useReservationListHomepage(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ['reservation-list-homepage', from, to],
-    queryFn: () => reservationApi.getReservationListHomepage(from, to),
+    queryFn: ({ signal }) => reservationApi.getReservationListHomepage(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
 

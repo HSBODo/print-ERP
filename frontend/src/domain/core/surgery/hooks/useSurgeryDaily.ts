@@ -46,7 +46,7 @@ function toDataMap(items: SurgeryDailyItem[]): Record<string, SurgeryDailyData> 
 export function useSurgeryDaily(from: string, to: string, enabled: boolean) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['surgery-daily', from, to],
-    queryFn: () => surgeryApi.getSurgeryDaily(from, to),
+    queryFn: ({ signal }) => surgeryApi.getSurgeryDaily(from, to, signal),
     enabled: enabled && Boolean(from) && Boolean(to),
   })
 

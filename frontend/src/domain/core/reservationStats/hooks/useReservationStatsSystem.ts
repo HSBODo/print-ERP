@@ -10,7 +10,7 @@ import type { ReservationStatsEditableField } from '../type/api'
 export function useReservationStatsSystem(from: string, to: string, enabled = true) {
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-stats-system', from, to],
-    queryFn: () => reservationStatsApi.getSystemDailyCounts(from, to),
+    queryFn: ({ signal }) => reservationStatsApi.getSystemDailyCounts(from, to, signal),
     enabled: enabled && Boolean(from && to),
     retry: false, // 503(미연결)은 재시도해도 동일 → 즉시 오류 상태
   })

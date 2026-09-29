@@ -25,7 +25,7 @@ function toDataMap(items: OutpatientCountMonthlyItem[]): Record<number, MonthlyD
 export function useOutpatientCountTrend(years: number[]) {
   const { data: apiData, isLoading, isError } = useQuery({
     queryKey: ['outpatient-count-trend', years],
-    queryFn: () => outpatientApi.getOutpatientCountMonthly(years),
+    queryFn: ({ signal }) => outpatientApi.getOutpatientCountMonthly(years, signal),
     enabled: years.length > 0,
   })
 

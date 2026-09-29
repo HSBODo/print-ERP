@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { withQuery } from '#shared/api/utils'
+import { api } from '#shared/api/client'
 import { buildReservationStatsDiffCsv, buildReservationStatsDrillDownCsv, buildReservationStatsParityCsv } from '../../utils/reservationStatsDiagnostics'
 import { type ReservationStatsDiff, type ReservationStatsDiffItem, type ReservationStatsDrillDown, type ReservationStatsParity } from '../../type/api'
 import {
@@ -364,10 +364,9 @@ export function ReservationStatsSystemPage() {
     }
   }
   const drillDownPathFor = (diff: ReservationStatsDiff, item: ReservationStatsDiffItem) =>
-    withQuery('/api/stats/reservation-stats-system/diagnostics/drill-down', {
-      period: diff.period,
-      date: item.date,
-      field: item.field,
+    api.getUri({
+      url: '/stats/reservation-stats-system/diagnostics/drill-down',
+      params: { period: diff.period, date: item.date, field: item.field },
     })
   const handleSelectDiagnosticDiff = async (item: ReservationStatsDiffItem) => {
     if (!diagnosticDiff) return

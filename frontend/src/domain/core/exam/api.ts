@@ -1,5 +1,5 @@
 import { api } from '#shared/api/client'
-import { apiResponseOf, withQuery } from '#shared/api/utils'
+import { apiResponseOf } from '#shared/api/utils'
 
 import {
   examinationResponseSchema,
@@ -17,38 +17,48 @@ import {
 } from './type/api'
 
 export const examApi = {
-  getExaminationMonthly: async (years: number[]) =>
-    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/monthly', { years }))).data,
-
-  getProcedureExamMonthly: async (years: number[]) =>
-    procedureExamResponseSchema.parse(await api.get<unknown>(withQuery('/stats/procedure-exam/monthly', { years }))).data,
-
-  getExaminationKpi: async (years: number[]) =>
-    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/kpi', { years }))).data,
-
-  getExaminationTrend: async (years: number[]) =>
-    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/trend', { years }))).data,
-
-  getExaminationComposition: async (years: number[]) =>
-    examinationResponseSchema.parse(await api.get<unknown>(withQuery('/stats/examination/composition', { years }))).data,
-  getAllExamList: async (from: string, to: string): Promise<AllExamListItem[]> => {
-    const res = await api.get<unknown>(withQuery('/all-exam-list', { from, to }))
-    return allExamListResponseSchema.parse(res).data
+  getExaminationMonthly: async (years: number[]) => {
+    const { data } = await api.get('/stats/examination/monthly', { params: { years } })
+    return examinationResponseSchema.parse(data).data
   },
-  getCataractExamList: async (from: string, to: string): Promise<CataractExamListItem[]> => {
-    const res = await api.get<unknown>(withQuery('/cataract-exam-list', { from, to }))
-    return cataractExamListResponseSchema.parse(res).data
+
+  getProcedureExamMonthly: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/procedure-exam/monthly', { params: { years }, signal })
+    return procedureExamResponseSchema.parse(data).data
   },
-  getEoeisCheckupStats: async (from: string, to: string): Promise<EoeisCheckupResult> => {
-    const response = await api.get<unknown>(withQuery('/eoeis-checkup', { from, to }))
-    return apiResponseOf(eoeisCheckupResultSchema).parse(response).data
+
+  getExaminationKpi: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/examination/kpi', { params: { years }, signal })
+    return examinationResponseSchema.parse(data).data
   },
-  getExamCountByClass: async (year: number): Promise<ExamCountByClassRow[]> => {
-    const res = await api.get<unknown>(withQuery('/stats/exam-count/by-class', { year }))
-    return examCountByClassResponseSchema.parse(res).data
+
+  getExaminationTrend: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/examination/trend', { params: { years }, signal })
+    return examinationResponseSchema.parse(data).data
   },
-  getExamList: async (from: string, to: string): Promise<ExamListItem[]> => {
-    const res = await api.get<unknown>(withQuery('/exam-list', { from, to }))
-    return examListResponseSchema.parse(res).data
+
+  getExaminationComposition: async (years: number[], signal?: AbortSignal) => {
+    const { data } = await api.get('/stats/examination/composition', { params: { years }, signal })
+    return examinationResponseSchema.parse(data).data
+  },
+  getAllExamList: async (from: string, to: string, signal?: AbortSignal): Promise<AllExamListItem[]> => {
+    const { data } = await api.get('/all-exam-list', { params: { from, to }, signal })
+    return allExamListResponseSchema.parse(data).data
+  },
+  getCataractExamList: async (from: string, to: string, signal?: AbortSignal): Promise<CataractExamListItem[]> => {
+    const { data } = await api.get('/cataract-exam-list', { params: { from, to }, signal })
+    return cataractExamListResponseSchema.parse(data).data
+  },
+  getEoeisCheckupStats: async (from: string, to: string, signal?: AbortSignal): Promise<EoeisCheckupResult> => {
+    const { data } = await api.get('/eoeis-checkup', { params: { from, to }, signal })
+    return apiResponseOf(eoeisCheckupResultSchema).parse(data).data
+  },
+  getExamCountByClass: async (year: number, signal?: AbortSignal): Promise<ExamCountByClassRow[]> => {
+    const { data } = await api.get('/stats/exam-count/by-class', { params: { year }, signal })
+    return examCountByClassResponseSchema.parse(data).data
+  },
+  getExamList: async (from: string, to: string, signal?: AbortSignal): Promise<ExamListItem[]> => {
+    const { data } = await api.get('/exam-list', { params: { from, to }, signal })
+    return examListResponseSchema.parse(data).data
   },
 }
