@@ -9,6 +9,7 @@
 - **프론트엔드**: React 19 / TypeScript / Vite 8
 - **UI**: Tailwind CSS 4 + shadcn/ui (base-nova 테마) + Recharts
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
+- **HTTP**: axios (`shared/api/client.ts` 인스턴스 1개)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
 - **DB**: H2 (개발, 기본) / PostgreSQL 마트 (운영, `application-postgres-mart.yml`)
@@ -54,65 +55,26 @@ project-root/
 ├── frontend/
 │   ├── src/
 │   │   ├── main.tsx                     # 진입점 (React 렌더)
-│   │   ├── App.tsx                      # QueryClientProvider + RouterProvider
-│   │   ├── router.tsx                   # TanStack Router (인증 가드 + statsPages 기반 자동 라우트)
+│   │   ├── App.tsx                      # QueryClientProvider + createRouter(routeTree) + RouterProvider
+│   │   ├── routeTree.gen.ts             # @tanstack/router-plugin 이 src/routes 로부터 생성 (커밋 대상 · 직접 수정 금지)
+│   │   │                                # 레이어 구조 — 정본은 .claude/docs/ARCHITECTURE.md · CONVENTION.md (경계는 eslint no-restricted-imports 가 강제)
+│   │   ├── routes/                      # [page 레이어] TanStack 파일 기반 라우트 — 페이지 입구 + staticData.page(메타·권한)
+│   │   │   ├── __root.tsx · login.tsx   # 루트(NotFound) · 로그인
+│   │   │   ├── -internal/               # 라우트 아닌 파일(`-` 접두사) — NotFound · routeTree.test
+│   │   │   └── _auth/                   # 경로 없는 인증 레이아웃 — route.tsx(beforeLoad: 인증 + 접근 판정) · index.tsx(대시보드)
+│   │   │       ├── -internal/           # 앱 셸: layout/(AppLayout·Sidebar·Topbar) · navigation.ts(MENU_TREE·HIDDEN_PAGE_PATHS·buildMenu)
+│   │   │       │                        #   · pageAccess.ts(PageMeta·canAccess) · requireAuth · RouteGate · Forbidden · StatsPlaceholderPage
+│   │   │       │                        #   · graveyard/(미구현 목업 4종 — 참고·확장 금지, 구현 시 도메인으로 옮긴다)
+│   │   │       ├── stats/(<group>)/     # 통계 페이지 — (그룹)은 URL 에 안 붙는 폴더 묶음 (예: stats/(exam)/exam-list.tsx → /stats/exam-list)
+│   │   │       └── report/ · accounting/ · admin/
+│   │   ├── composition/                 # 여러 core 도메인 조합 — report(월간·주차 레포트 화면) · dashboard(메인 대시보드)
+│   │   ├── domain/
+│   │   │   ├── core/<domain>/           # api.ts(<domain>Api 1개) · type/api.ts(zod 스키마 + 타입) · hooks/ · ui/<Screen>/ · utils/
+│   │   │   │                            #   reservation · reservationStats · exam · overall · consultation · surgery · outpatient · report
+│   │   │   │                            #   marketing(예약 퍼널 포함) · overseasMarketing · sms · accounting · b2b · dreamlensLedger · account · batch · auth(로그인)
+│   │   │   └── support/session/         # 세션·권한 — store(Zustand) · session(토큰·AuthUser) · initApiClient · utils/access(hasAccess)
+│   │   ├── shared/                      # 도메인 무관 공용 — api/(client·utils) · ui/(shadcn 포함, PascalCase/index.tsx) · hooks/ · utils/ · constants/
 │   │   ├── index.css                    # Tailwind 4 + OKLCH 테마 변수
-│   │   ├── api/                         # 도메인별 API 폴더 (각 index.ts가 도메인 객체 export)
-│   │   │   ├── client.ts               # HTTP 클라이언트 (Bearer 토큰 자동 주입) — 공용
-│   │   │   ├── _shared.ts              # apiResponseOf() 등 공통 응답 래퍼 — 공용
-│   │   │   ├── auth.ts                 # 로그인 API — 공용
-│   │   │   ├── reservation/            # index.ts(reservationApi) + reservationList.ts
-│   │   │   ├── exam/                   # index.ts(examApi) + examList.ts · cataractExamList.ts
-│   │   │   ├── surgery/                # index.ts(surgeryApi) + surgeryList.ts
-│   │   │   ├── consultation/           # index.ts(consultationApi)
-│   │   │   ├── outpatient/             # index.ts(outpatientApi)
-│   │   │   ├── overall/                # index.ts(overallApi)
-│   │   │   ├── report/                 # index.ts(reportApi · 주차 레포트)
-│   │   │   ├── marketing/              # channelProfit.ts · accumulatedEyes.ts · overseasMarketing.ts(해외마케팅 접수리스트·통계·예약통계)
-│   │   │   ├── sms/                    # index.ts — 대상·오프셋·홀딩·발송·Solapi 템플릿·수신동의
-│   │   │   ├── admin/                  # users.ts (계정 CRUD /api/admin/users) · batchAdmin.ts (수동 실행·재실행)
-│   │   │   ├── batch/                  # index.ts (배치 상태·이력 조회)
-│   │   │   └── etc/                    # index.ts(b2bApi · B2B 매출)
-│   │   ├── hooks/                       # 도메인별 TanStack Query 훅
-│   │   │   ├── reservation/            # useReservationKpi/Trend/Composition/List/OverallTrend …
-│   │   │   ├── exam/                   # useExamination*·useProcedureExamTrend·useExamList·useCataractExamList
-│   │   │   ├── consultation/           # useConsultationRate*·useCataractReservationRateTrend·useStopReasonMonthly
-│   │   │   ├── surgery/                # useSurgery*·useSurgeryRatio*
-│   │   │   ├── overall/                # useOverallExamWeekly
-│   │   │   ├── report/                 # useWeeklyReport
-│   │   │   ├── marketing/              # useChannelProfit·useAccumulatedEyes*·useOverseasMarketing(접수/통계/예약통계 + 동기화·매칭 mutation)·useReservationChannel(퍼널·op-types)
-│   │   │   ├── sms/                    # useSms* (targets·offsets·send·failed-retry·opt-out·templates)
-│   │   │   ├── admin/                  # useUsers*·useBatchAdmin (계정 CRUD·수동 실행)
-│   │   │   ├── batch/                  # useBatchStatus (상태·이력)
-│   │   │   ├── outpatient/             # useOutpatientCountTrend
-│   │   │   └── useIsMobile.ts          # (공용) 반응형 분기
-│   │   ├── components/
-│   │   │   ├── layout/                  # AppLayout·Sidebar·Topbar + desktop/·mobile/
-│   │   │   ├── filters/                 # FilterBar·PeriodChip·Select
-│   │   │   ├── stats/                   # KpiCard·StatsPrimitives (공용)
-│   │   │   ├── report/                  # ReportLineChart·ReportWeekLineChart·reportWeeks(ISO 주차)
-│   │   │   └── ui/                      # shadcn 컴포넌트 (button, card, chart)
-│   │   ├── config/
-│   │   │   ├── statsPages.ts            # 통계 페이지 정의 (id/path/section/apiDraftPath)
-│   │   │   └── navigation.ts            # 메뉴 구조 + 구현 상태 맵
-│   │   ├── pages/                       # 도메인별 폴더 (Login·Dashboard·StatsPlaceholder·pageRegistry만 root)
-│   │   │   ├── pageRegistry.ts          # 도메인 routes.ts 통합 + PROD pending 라우트 차단 정책
-│   │   │   ├── pageRegistry.test.ts     # 라우트 정책 불변식 테스트
-│   │   │   ├── reservation/            # Reservation·ReservationOverall·ReservationList·ReservationChange(+reservation-change/)
-│   │   │   ├── exam/                   # ExamList·CataractExamList·Examination(±Vision/Dreamlens)·ProcedureExam
-│   │   │   ├── consultation/           # ConsultationRate(+consultation-rate/)·CataractReservationRate·StopReason
-│   │   │   ├── surgery/                # SurgeryList·Surgery·SurgeryRatio(+surgery-ratio/)·SurgeryComposition
-│   │   │   ├── report/                 # MonthlyReportPage(월간)·WeeklyReportPage(주차) + 공용 ReportShell·useReportSeries·reportItems
-│   │   │   ├── reservation/            # …·ReservationChannelPage(예약 퍼널 — 사이드바는 마케팅 섹션)
-│   │   │   ├── marketing/              # ChannelProfit·ChannelAnalysis(+channel-analysis/ 채널별 정적 문서)·AccumulatedEyes·Overseas* 3종
-│   │   │   ├── sms/                    # SmsManagementPage + 하위 컴포넌트(오프셋 그리드·발송 대기열·실패 재실행 모달·수신동의·Solapi 템플릿 등)
-│   │   │   ├── admin/                  # BatchManagementPage·AccountManagementPage(+UserFormDialog·DeleteConfirmDialog)
-│   │   │   ├── overall/ · outpatient/ · accounting/ · cancel-noshow/ · unit-price/ · etc/
-│   │   │   ├── LoginPage.tsx           # 로그인 (react-hook-form + Zod)
-│   │   │   ├── DashboardPage.tsx       # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
-│   │   │   └── StatsPlaceholderPage.tsx # 미구현 통계 페이지 템플릿
-│   │   ├── stores/                      # authStore (Zustand: token+user, localStorage 연동)
-│   │   ├── constants/ · data/ · lib/ · utils/   # chart 상수·레거시 데이터·목 픽스처·cn()·stats 포맷터
 │   │   └── test/                        # Vitest + @testing-library/jest-dom
 │   ├── components.json                  # shadcn CLI 설정
 │   ├── vite.config.ts                   # 프록시: /api → localhost:8080
@@ -125,17 +87,18 @@ project-root/
 └── CLAUDE.md
 ```
 
-### 도메인별 코드 구성 (백엔드=도메인 중심 / 프론트=레이어 우선)
-
-도메인 = `statsPages.ts`의 메뉴 그룹(`sectionId`): `reservation-group`(예약) / `exam-group`(검사) / `surgery`·`surgery-ratio`(수술) / `consultation`(전환&성공률) / `report-group` / `outpatient`(외래) / `marketing-section`(마케팅 — 채널·SMS·누적안수) / `overseas-marketing-section`(해외마케팅) / `accounting-section`(회계) / `admin`(관리자) / `marketing`·`cancel-noshow`·`unit-price`·`etc`(미구현/개별 잎).
+### 도메인별 코드 구성
 
 > 🧭 **화면 섹션과 백엔드 도메인은 항상 같지 않다.** 예약 퍼널(`reservation-channel`)은 백엔드에서 `reservation/` 도메인(마트 뷰 `v_reservation_channel`)에 있지만 사이드바는 마케팅 섹션에 노출한다. 누적 안수(`accumulated-eyes`)도 `surgery/` 도메인이지만 마케팅 섹션이다. 판단 기준: **데이터 출처가 있는 곳**에 백엔드 코드를 두고 사이드바만 옮긴다.
 
 - **백엔드(도메인 중심)**: `<domain>/{controller,service,repository,dto}` (예: `reservation/controller`, `reservation/service`). 인증은 `auth/`, 공통 응답·예외·유틸·통계 helper(`StatsPanelSupport`·`StatsRequestValidator`·`StatsResponseMeta`)는 `common/`(특히 `common/stats/`)에 둔다. `Mock*Repository`는 해당 도메인 `repository/`에 둔다.
-- **프론트**: `api/<domain>/index.ts`(도메인 API 객체 + 타입) · `hooks/<domain>/` · `pages/<domain>/`. 리스트 전용 API는 `api/<domain>/xxxList.ts`에 둔다. 여러 도메인이 공유하는 것만 root(`api/_shared.ts`, `api/client.ts`, `api/auth.ts`, `hooks/useIsMobile.ts`, `pages/{Login,Dashboard,StatsPlaceholder}Page.tsx`, `pages/pageRegistry.ts`)에 둔다. 페이지 전용 하위 컴포넌트는 페이지 폴더 안에(`pages/consultation/consultation-rate/`, `pages/surgery/surgery-ratio/`).
-- **신규 추가**: 새 통계 기능은 해당 도메인 폴더/패키지에 파일을 추가한다(새 레이어 루트에 흩뿌리지 말 것). 도메인이 없으면 메뉴 그룹 기준으로 새 폴더를 만든다.
+- **프론트(레이어 구조)**: page(`src/routes`) → composition → domain/core → domain/support → entity → shared. 정본은 [`.claude/docs/ARCHITECTURE.md`](.claude/docs/ARCHITECTURE.md)(레이어·import 규칙) · [`CONVENTION.md`](.claude/docs/CONVENTION.md)(네이밍·파일 규칙). core 끼리 import 금지 — 여러 도메인을 모으는 화면은 composition 으로.
+  - 프론트 도메인은 **백엔드 패키지와 1:1 이 아니다** — 쓰는 쪽 기준 (예: 예약 퍼널 api 는 `domain/core/marketing`, 종합지표를 쓰는 중단률은 `domain/core/overall`).
+  - 도메인 내부: `api.ts`(`<domain>Api` 객체 1개) · `type/api.ts`(zod 스키마 + `z.infer` 타입, 필요하면 `type/<model>.ts`) · `hooks/`(파일당 훅 1개) · `ui/<Screen>/index.tsx`(화면 전용 하위 파일은 그 폴더 안 — 적으면 평평하게, 많으면 `ui/`·`utils/`) · `utils/`(도메인 안 여러 화면 공용).
+  - import: 다른 레이어는 `#page/`·`#composition/`·`#domain/`·`#entity/`·`#shared/` 별칭, 같은 도메인·composition·page 레이어 안은 상대경로.
+- **신규 추가**: 새 통계 기능은 해당 도메인 폴더/패키지에 파일을 추가한다. 도메인이 없으면 업무 컨텍스트 기준으로 새 도메인(camelCase 폴더)을 만든다.
 
-> ✅ **이관 완료**: 백엔드는 **도메인 중심 패키지**(`<domain>/{controller,service,repository,dto}` + `auth`·`common`)로, 프론트(api·hooks·pages·pageRegistry)는 레이어 우선 + 도메인 하위 분할로 정리 완료. 공용 통계 유틸은 `common/stats/`. 검증 기준: frontend lint/build/test green, backend test green.
+> ✅ **이관 완료**: 백엔드는 **도메인 중심 패키지**로, 프론트는 사내 레이어 아키텍처(2026-09-28 `ID-41-refactor-architecture`)로 정리 완료. 검증 기준: frontend lint(레이어 경계 포함)/build/test green, backend test green.
 
 ## 현재 구현 상태
 
@@ -146,9 +109,9 @@ project-root/
 - DashboardPage (KPI 카드 4개 + 차트 5개, 하드코딩 목업)
 - ReservationPage (월별/연도별 비교, TanStack Query 기반 API 연동)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
-- 통계 전용 페이지 44종 + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
-- 도메인별 `routes.ts` + `pageRegistry.ts` 기반 라우트 자동 생성
-- PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책
+- 통계 전용 페이지 44종(+ 미완성 목업 4종) + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
+- TanStack 파일 기반 라우트(`src/routes`, 2026-09-28 전환) + 페이지 메타·권한은 라우트 `staticData.page` 에 선언
+- PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책 · 권한 없는 페이지는 "접근 권한이 없습니다" 화면
 - 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` 연동 · 배치 도메인 `ACCOUNTING` · 임원(ADMIN·DIRECTOR) 이상 · 2026-09-17)
 - 회계 정합성: 진료 행·집계는 월 전체를 함께 교체하고 `rows_complete`로 월별 조회 경로를 선택한다. 회계만 매월 2023년부터 과거 이력을 재검산하며, 진료 부분 실패는 성공 데이터 보존 + FAILED 이력으로 처리한다 (`docs/accounting/mart-and-api.md`).
 - 해외마케팅 3종 (접수리스트·통계·예약통계 — 2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 + 수기 입력 · CRM 매칭 · `/api/overseas-marketing` · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제)
@@ -157,11 +120,12 @@ project-root/
 
 ### 미구현 (플레이스홀더)
 
-통계 페이지 11종은 아직 `pending` 상태. 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
+통계 페이지 4종(마케팅 효율·예약취소율·부도율·객단가)은 아직 `pending` 상태(목업 UI만 있음). 개발(DEV)에서는 WIP 페이지 미리보기를 허용하고, 운영(PROD)에서는 사이드바에서 숨기며 직접 URL 접근도 `StatsPlaceholderPage`로 차단한다.
 
 ## 통계 페이지 목록
 
-`statsPages.ts`에 55개 정의하고, `navigation.ts`의 상태 맵으로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API 또는 정적 문서) 44개 / **미구현(pending)** 11개.
+라우트 파일 48개(각 `staticData.page.status`)로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API 또는 정적 문서) 44개 / **미구현(pending)** 4개.
+(라우트 없이 정의만 있던 기타 그룹 미구현 7종 — 직원 포인트·PRP 시술율·재수술율·당일OP 비율·지정의 수술 비율·내원동기별 비중·일일 접수/응대 건수 — 은 2026-09-28 파일 라우트 전환 때 삭제. 구현할 때 라우트 파일과 함께 다시 만든다.)
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
 | ID | 메뉴명 | 경로 | 그룹 | 상태 |
@@ -212,21 +176,14 @@ project-root/
 | accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 완료 (**임원 이상** · 행 연도(2026~)는 `list_medical_receipt` 재집계+구분 필터 · 그 전은 `mart_medical_receipt_monthly` 레거시 순액) |
 | dreamlens-revenue | 드림렌즈 장부 | /stats/dreamlens-revenue | 기타 | 완료 (**직접 입력 테이블** · `dreamlens_ledger` JPA CRUD · `/api/dreamlens-ledger`) |
 | b2b-revenue | B2B 매출 | /stats/b2b-revenue | 기타 | 완료 |
-| staff-point | 직원 포인트 | /stats/staff-point | 기타 | 미구현 |
-| prp-rate | PRP 시술율 | /stats/prp-rate | 기타 | 미구현 |
-| reoperation-rate | 재수술율 | /stats/reoperation-rate | 기타 | 미구현 |
-| same-day-op | 당일OP 비율 | /stats/same-day-op | 기타 | 미구현 |
-| designated-doctor | 지정의 수술 비율 | /stats/designated-doctor | 기타 | 미구현 |
-| visit-reason | 내원동기별 비중 | /stats/visit-reason | 기타 | 미구현 |
-| daily-reception | 일일 접수/응대 건수 | /stats/daily-reception | 기타 | 미구현 |
 | batch-management | 데이터 배치 관리 | /admin/batch | 관리자 | 완료 (**ADMIN 전용** · 마트 재적재/실행 이력) |
 | account-management | 계정 관리 | /admin/accounts | 관리자 | 완료 (**ADMIN 전용** · 2026-09-16 신규 · `/api/admin/users` CRUD · 롤×부서 조합은 화면 Zod + DB CHECK 이중 검증 · 자기 자신 롤·부서 변경/삭제 400 · 마지막 ADMIN 삭제 400 · BCrypt) |
-| guide | 가이드 | /guide/prd.html | 관리자 | 완료 (**ADMIN 전용** · `external=true` 새 탭 · `frontend/public/guide/` 정적 사이트 · 대시보드 기획서 · statsPages 정의에 없음, `navigation.ts` link 항목) |
+| guide | 가이드 | /guide/prd.html | 관리자 | 완료 (**ADMIN 전용** · `external=true` 새 탭 · `frontend/public/guide/` 정적 사이트 · 대시보드 기획서 · 라우트 아님, `navigation.ts` `MENU_TREE` 의 링크 항목) |
 | api-docs | API 문서 | /docs/ | 관리자 | 완료 (**ADMIN 전용** · Swagger UI 새 탭 · backend static `/docs/index.html` · Vite dev 는 `vite.config.ts` `/docs` 프록시) |
 
 > ⚠️ **메뉴명 주의**: `검사건수` 메뉴 = `procedure-exam`(전체 검사수 = EXAM 행 + Cataract_Exam 세션), `시술별` 메뉴 = `examination`(시력교정/드림렌즈/백내장 탭). id·경로와 라벨이 어긋나니 혼동 주의.
 
-> 🙈 **메뉴 숨김(`navigation.ts`의 `HIDDEN_MENU_IDS`)**: 사이드바에서만 숨기고 페이지·라우트는 유지(직접 URL 접근 가능). 현재 숨김 — `reservation`(예약), **마케팅·취소&부도·객단가 그룹 전체**(marketing·cancel-rate·no-show-rate·unit-price), 그리고 **기타 그룹 중 드림렌즈 매출을 뺀 전부**(b2b-revenue·staff-point·prp-rate·reoperation-rate·same-day-op·designated-doctor·visit-reason·daily-reception). 즉 `기타` 그룹은 **드림렌즈 매출 하나만 노출**된다. 자식이 모두 숨겨진 그룹은 menuItems에서 자동 제거. 재노출·재숨김은 `HIDDEN_MENU_IDS`에서 빼거나 넣으면 됨.
+> 🙈 **메뉴 숨김**: 메뉴는 `navigation.ts` 의 `MENU_TREE` 에 적힌 페이지만 보인다. 라우트는 있지만 메뉴에서 뺀 페이지는 `HIDDEN_PAGE_PATHS` 에 명시한다(직접 URL 접근은 가능 · 권한·pending 차단은 그대로). 현재 숨김 — `/stats/reservation`(예약 건수), `/stats/marketing`·`/stats/cancel-rate`·`/stats/no-show-rate`·`/stats/unit-price`(pending), `/stats/b2b-revenue`. 즉 `기타` 그룹은 **드림렌즈 장부 하나만 노출**된다. 재노출은 `HIDDEN_PAGE_PATHS` 에서 빼고 `MENU_TREE` 에 넣으면 됨. 메뉴에도 숨김 목록에도 없는 페이지 라우트는 `navigation.test.ts` 가 막는다.
 
 > 📖 **관리자 > 가이드 (`/guide/prd.html`)** — 사이드바 "가이드"를 누르면 새 탭에서 열리는 **대시보드 기획서 정적 사이트**. 정본은 `backend/new_대쉬보드_v4/`, 배포용 복사본은 `frontend/public/guide/` (Vite 가 `/guide/**` 로 그대로 서빙). 구성:
 >
@@ -252,7 +209,7 @@ project-root/
 > | **MANAGER** | 🚫 | ✅ 실장·본부장 | ✅ 마케팅 팀장 | ✅ 해외마케팅 팀장 |
 > | **STAFF** | 🚫 | ✅ 상담·간호·원장 | ✅ 마케팅 실무 | ✅ 해외마케팅 실무 |
 >
-> 게이팅 지점: `navigation.ts` `isAdminOnlyPage` / `isExecutiveOnlyPage` / `isMarketingOnlyPage` / `isOverseasMarketingPage` · `getPageDepartments` · `pruneByDepartment` · `pruneExecutiveOnly` · `pageRegistry.isRouteBlocked`. 백엔드는 `SecurityConfig` 매처가 대칭 유지 — 예: `/api/accounting/**` = `hasAnyRole("ADMIN","DIRECTOR")`, `/api/admin/**` = `hasRole("ADMIN")`, `/api/overseas-marketing/**` 은 OVERSEAS_MARKETING 부서.
+> 게이팅 지점: 각 라우트 `staticData.page.access` (`{ role: 'ADMIN' }` · `{ role: 'EXECUTIVE' }` · `{ department }` 중 하나) → 롤·부서 판정은 `domain/support/session/utils/access.ts` `hasAccess` 하나, 구현 상태까지 합친 페이지 판정은 `routes/_auth/-internal/pageAccess.ts` `canAccess`. 라우트 차단(`routes/_auth/route.tsx` beforeLoad)과 사이드바(`navigation.ts` `buildMenu`)가 같은 규칙을 쓴다. 백엔드는 `SecurityConfig` 매처가 대칭 유지 — 예: `/api/accounting/**` = `hasAnyRole("ADMIN","DIRECTOR")`, `/api/admin/**` = `hasRole("ADMIN")`, `/api/overseas-marketing/**` 은 OVERSEAS_MARKETING 부서.
 
 ## 백엔드 컨벤션
 
@@ -349,7 +306,7 @@ DELETE /api/admin/users/{id}                # 삭제 (본인·마지막 ADMIN 40
 > `common/util/OpenQuerySql` 이 주석 제거·8,000자 검증·`__OQ_FROM__/__OQ_TO__` 치환·따옴표 이스케이프 후 감싼다. 원격 장애 대비 REQUIRES_NEW 로 격리한다(`accounting`·`etc` 참조).
 
 > 📅 **주차 개념 3종 주의** — 이름이 비슷하지만 버킷 규칙이 다르다.
-> - **ISO 연간 주차**(`utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.
+> - **ISO 연간 주차**(`shared/utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.
 > - **그 달의 주차**(`OverallExamWeeklyService`): 월 경계에서 잘라 각 달에 귀속 → 월 합계 = 그 달 주 합계. 주간 검사자 종합지표가 쓴다(백엔드 산정).
 > - **월별**: 마트 확정값(2024·2025 레거시 시드 포함).
 
@@ -391,24 +348,24 @@ DELETE /api/admin/users/{id}                # 삭제 (본인·마지막 ADMIN 40
 2. Repository 작성 (`<domain>/repository`, 인라인 대신 `resources/sql/<domain>/`의 .sql 리소스 사용)
 3. Service 비즈니스 로직 (`<domain>/service`)
 4. Controller 엔드포인트 (`<domain>/controller`)
-5. 프론트 API 함수(`api/<domain>/index.ts`, 필요 시 `api/<domain>/xxxList.ts`) + 훅(`hooks/<domain>/`) + 페이지(`pages/<domain>/`) 연결
+5. 프론트 `domain/core/<domain>/` 에 스키마·타입(`type/api.ts`) + API 메서드(`api.ts` 의 `<domain>Api`) + 훅(`hooks/`) + 화면(`ui/<Screen>/`) 연결
 
 ## 프론트엔드 컨벤션
 
 ### 라우팅 패턴
 
-- 인증 필요 페이지는 `authLayout` 하위에 등록 (`router.tsx`)
-- 라우트는 `router.tsx`가 `statsPages.ts`의 `statsPages`와 `pages/pageRegistry.ts`의 `PAGE_COMPONENTS`를 합쳐 **자동 생성**한다. `pageRegistry.ts`는 각 도메인 레지스트리(`pages/<domain>/routes.ts`, `pageId → 컴포넌트`)를 통합한다.
-- 레지스트리에 컴포넌트가 있고 운영 차단 대상이 아니면 전용 페이지, 없거나 PROD pending이면 `StatsPlaceholderPage`로 렌더한다(하드코딩 목록 없음).
-- 새 통계 페이지 연결: `statsPages.ts`에 페이지 정의 → `navigation.ts` 상태 맵/메뉴 추가 → `pages/<domain>/`에 컴포넌트 작성 → `pages/<domain>/routes.ts`에 `'<id>': Component` 한 줄 추가 (**`router.tsx` 수정 불필요**)
-- 훅은 `@/hooks/<domain>/useXxx`, API는 `@/api/<domain>`(리스트는 `@/api/<domain>/xxxList`)에서 import
-- **pending(미완성) 메뉴 정책**: 운영 빌드(PROD)에서는 사이드바에서 **숨김** + 라우트 **차단**(직접 URL도 `StatsPlaceholderPage`). 개발 빌드에서는 미리보기 가능(사이드바 빨강 표시). 상태는 `MENU_STATUS`, 조회는 `getMenuStatus()`, 라우트 차단은 `pageRegistry.isRouteBlocked()`가 담당한다. `pageRegistry.test.ts`가 이 정책을 보호한다.
+- TanStack Router **파일 기반 라우팅**. `src/routes` 파일 구조가 URL 이고, `@tanstack/router-plugin`(vite)이 `routeTree.gen.ts` 를 생성한다(커밋 대상 — `tsc -b` 가 vite 보다 먼저 돌기 때문). `autoCodeSplitting` 으로 페이지마다 청크가 나뉜다.
+- 인증 필요 페이지는 `routes/_auth/` 아래에 둔다. `_auth/route.tsx` 의 `beforeLoad` 가 인증(`requireAuth`)과 페이지 접근 판정(`canAccess`)을 하고, `RouteGate` 가 결과에 따라 페이지 / placeholder(미완성) / 접근 권한 없음을 렌더한다.
+- 파일명 규칙: `_xxx` = 경로 없는 레이아웃 · `(xxx)` = URL 에 안 붙는 폴더 묶음 · `-xxx` = 라우트 아님(라우트 전용 하위 컴포넌트·유틸·테스트) · `$xxx` = 경로 파라미터.
+- **새 통계 페이지 연결**: ① `domain/core/<domain>/ui/<Screen>/index.tsx` 에 화면 작성(여러 도메인을 모으면 `composition/`) → ② `routes/_auth/stats/(<domain>)/<id>.tsx` 에 라우트 파일 추가(`component` + `staticData.page` 의 id·label·section·status·access, 미완성이면 apiDraftPath) → ③ `routes/_auth/-internal/navigation.ts` `MENU_TREE` 에 경로 추가(숨길 거면 `HIDDEN_PAGE_PATHS`). 경로는 타입이 있어 없는 경로를 적으면 컴파일 에러.
+- 라우트 파일은 화면을 `#domain/core/<domain>/ui/<Screen>`(또는 `#composition/...`)에서 import 한다. 훅·API 는 화면이 같은 도메인 안에서 상대경로로 쓴다.
+- **pending(미완성) 메뉴 정책**: 운영 빌드(PROD)에서는 사이드바에서 **숨김** + 라우트 **차단**(직접 URL도 `StatsPlaceholderPage`). 개발 빌드에서는 미리보기 가능(사이드바 빨강 표시). 판정은 `canAccess`, 정책 불변식은 `routes/_auth/-internal/pageAccess.test.ts`, 메타 선언 누락은 `routes/-internal/routeTree.test.ts` 가 보호한다.
 
 ### 차트 (Recharts)
 
 - 모든 차트는 shadcn `ChartContainer` + `ChartTooltip`으로 감싸서 테마 통일
 - 차트 설정은 `chartConfig` 객체로 정의 (색상, 라벨)
-- 참고 구현: `DashboardPage.tsx`, `ReservationPage.tsx`
+- 참고 구현: `composition/dashboard/ui/DashboardPage`, `domain/core/reservation/ui/ReservationPage`
 
 ### 색상 체계
 
@@ -445,7 +402,7 @@ const CHART_PALETTE = [
 ### 상태관리
 
 ```
-authStore (Zustand)     — 인증: token, user, login/logout (localStorage 연동)
+session store (Zustand) — 인증: token, user, login/logout (localStorage 연동) · domain/support/session/store.ts
 filterStore (Zustand)   — 글로벌 필터: 기간, 부서, 카테고리 (구현 예정)
 TanStack Query          — 서버 데이터 캐싱/갱신
 ```
@@ -512,10 +469,10 @@ cd frontend && npm run test              # Vitest
 
 ## Claude에게 요청할 때 참고사항
 
-- **새 통계 페이지**: `statsPages.ts`에 정의 → `navigation.ts` 상태/메뉴 + 롤·부서 게이트(`isAdminOnlyPage`·`isExecutiveOnlyPage`·`isMarketingOnlyPage`·`isOverseasMarketingPage`) 반영 → 전용 페이지 컴포넌트 작성 → `pages/<domain>/routes.ts`에 등록 → 백엔드 API + `SecurityConfig` 매처 대칭 유지 (`router.tsx` 직접 수정 금지)
+- **새 통계 페이지**: 전용 페이지 컴포넌트 작성 → `routes/_auth/.../<id>.tsx` 라우트 파일 + `staticData.page`(롤·부서 권한은 `access`) → `navigation.ts` `MENU_TREE` 에 경로 추가 → 백엔드 API + `SecurityConfig` 매처 대칭 유지 (`routeTree.gen.ts` 직접 수정 금지)
 - **새 차트**: Recharts 기반, shadcn `ChartContainer` 사용, `CHART_PALETTE` 색상 적용
 - **새 UI 컴포넌트**: `npx shadcn@latest add <name>` (설정: `components.json`)
-- **API 연동**: `api/client.ts` HTTP 클라이언트 사용, TanStack Query `useQuery`로 캐싱
+- **API 연동**: `shared/api/client.ts` 의 axios 인스턴스 `api` 사용 — interceptor(토큰 부착·401 세션 만료·에러 메시지)는 `support/session/initApiClient` 가 앱 시작 시 등록한다. 쿼리는 `api.get(path, { params })`(배열은 `years=2025,2026` 콤마 직렬화, nullish 제외), 응답은 `const { data } = await api.get(...)` 후 zod 로 파싱. 조회 메서드는 마지막 인자로 `signal?: AbortSignal` 을 받아 넘기고, 도메인 `hooks/` 에서 TanStack Query `useQuery`(`queryFn: ({ signal }) => xxxApi.method(..., signal)`)로 캐싱
 - **DashboardPage 데이터는 하드코딩 목업** — API 연동 시 교체 필요
 - **기획서 참조**: 메뉴별 화면 규칙·컬럼 정의·함정은 `backend/new_대쉬보드_v4/pages/<id>.html` (원문은 `_build/content/<id>.mjs`) · `prd.html` 「전메뉴 현황」 탭 · 지표 정의는 `지표정의/*.md` · DB 테이블은 `db/tables/`. 코드에서 자동 생성되는 1·6·7·8·9장(개요·데이터 소스·API·권한·연관 문서)은 `_build/scan.mjs → gen.mjs`, 2·3·4·5·10장은 사람이 쓴 본문.
 

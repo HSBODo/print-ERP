@@ -1,6 +1,6 @@
 # API 문서화 전략 — REST Docs + Swagger UI
 
-작성일: 2026-09-15 · 최신화: 2026-09-17 · 상태: **✅ 전체 완료 — 136 endpoints 문서화 (Phase 0~6, 초기 계획 127 대비 107%)**
+작성일: 2026-09-15 · 최신화: 2026-09-23 · 상태: **✅ 전체 완료 — 143 endpoints 문서화 (Phase 0~7, 초기 계획 127 대비 113%)**
 
 ## 1. 목적
 
@@ -104,7 +104,7 @@ stage('Docker Build') {
 
 ## 9. 확장 계획 · 진행 현황
 
-전체 계획 127 endpoints / 13 도메인. 2026-09-17 완료 **137 endpoints / 22 태그** (계획 대비 +10 — 실제 컨트롤러 스캔 + 감사 조치에서 추가 발견분 반영).
+전체 계획 127 endpoints / 13 도메인. 2026-09-17 완료 **137 endpoints / 22 태그** → 2026-09-23 EventNote 추가로 **143 endpoints / 23 태그** (계획 대비 +10 — 실제 컨트롤러 스캔 + 감사 조치에서 추가 발견분 반영).
 
 | Phase | 도메인 · 태그 | Endpoints | 상태 | 완료일 | 테스트 파일 |
 |-------|--------------|-----------|------|-------|------------|
@@ -115,6 +115,7 @@ stage('Docker Build') {
 | **4** | **Reservation (Monthly 5 + List 2 + Change 2 + Channel 2 + StatsSystem 6 + CataractStatsSystem 6)** | 23 | ✅ 완료 | 2026-09-17 | `ReservationMonthlyDocsTest`, `ReservationListDocsTest`, `ReservationChangeDocsTest`, `ReservationChannelDocsTest`, `ReservationStatsSystemDocsTest`, `CataractStatsSystemDocsTest` |
 | **5** | **SMS (Management 18 + QueueAdmin 5 + Webhook 1)** | 24 | ✅ 완료 | 2026-09-17 | `SmsManagementDocsTest`, `SmsQueueAdminDocsTest`, `SmsWebhookDocsTest` |
 | **6** | **Surgery(12) + Exam(10) + Consultation(6) + Outpatient(2) + Overall(2) + Etc(5)** | 37 | ✅ 완료 | 2026-09-17 | `SurgeryDocsTest`, `ExamDocsTest`, `ConsultationDocsTest`, `OutpatientDocsTest`, `OverallExamDocsTest`, `EtcDocsTest` |
+| **7** | **EventNote (페이징 목록·차트 전체·단건·등록·수정·삭제)** | 6 | ✅ 완료 | 2026-09-23 | `EventNoteDocsTest` |
 
 > **초기 계획 대비 편차 (+9)**:
 > - Phase 4 +4 — 예약통계·백내장통계의 진단 서브루트(diff/drill-down/parity/health) 각 2개
@@ -140,6 +141,7 @@ stage('Docker Build') {
 | SmsQueueAdmin | 5 | 5 |
 | UserAdmin | 5 | 1 |
 | Outpatient | 2 | 6 |
+| EventNote | 6 | 7 |
 | Overall | 2 | 6 |
 | ReservationChannel | 2 | 4 |
 | Auth | 1 | 0 |

@@ -179,6 +179,12 @@ public class SecurityConfig {
                 // 회계(진료 수납·시력교정 매출) — 임원(DIRECTOR) 이상 개방(2026-09-17).
                 // 프런트 navigation.ts 의 EXECUTIVE_ONLY_PAGE_IDS 와 대칭. MANAGER·STAFF 는 차단.
                 auth.requestMatchers("/api/accounting/**").hasAnyRole("ADMIN", "DIRECTOR");
+                // 이벤트 노트(2026-09-23) — 조회는 차트 오버레이용이라 로그인 사용자 전원,
+                // 등록·수정·삭제는 ADMIN + MEDICAL·MARKETING 부서. DIRECTOR(DEPT_ALL)는 "임원 열람·조작 X" 원칙대로 제외.
+                // GET 매처가 반드시 먼저 와야 한다 — 순서가 바뀌면 조회까지 쓰기 권한으로 막힌다.
+                auth.requestMatchers(HttpMethod.GET, "/api/event/**").authenticated();
+                auth.requestMatchers("/api/event/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "DEPT_MEDICAL", "DEPT_MARKETING");
 
                 auth.anyRequest().authenticated();
             })

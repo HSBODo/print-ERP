@@ -578,7 +578,7 @@ Postgres 마트 테이블 (계산된 최종 숫자만 저장)
 5. **BatchOrchestrator 배선**: `runDaily`·`runMonthlyReconcile` 에 도메인 추가
 6. **앱 조회 경로**: `<Domain>MartRepository` (@Primary in postgres-mart) + Service + Controller
 7. **잠금/워터마크**: 필요 시 `reservation_stats_period_lock` 유사 패턴 참고
-8. **화면 등록**: `statsPages.ts` + `navigation.ts` + `pages/<domain>/routes.ts`
+8. **화면 등록**: `pages/<domain>/` 컴포넌트 + `routes/_auth/stats/(<domain>)/<id>.tsx` 라우트 파일(`staticData.page`) + `navigation.ts` `MENU_TREE`
 
 패턴 참고: 예약통계_시력교정(V11 mart + V19 seed + `ReservationStatsDailyMartJob`).
 

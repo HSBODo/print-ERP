@@ -9,6 +9,7 @@
 - **프론트엔드**: React 19 / TypeScript / Vite 8
 - **UI**: Tailwind CSS 4 + shadcn/ui (base-nova 테마) + Recharts
 - **상태관리**: Zustand (인증) + TanStack Query (서버 상태)
+- **HTTP**: axios (`shared/api/client.ts` 인스턴스 1개)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
 - **DB**: H2 (개발, 기본) / PostgreSQL 마트 (`application-postgres-mart.yml`, 배치 시점에 CRM MSSQL 을 읽어 적재)
@@ -60,31 +61,19 @@ project-root/
 ├── frontend/
 │   ├── src/
 │   │   ├── main.tsx                     # 진입점 (React 렌더)
-│   │   ├── App.tsx                      # QueryClientProvider + RouterProvider
-│   │   ├── router.tsx                   # TanStack Router (인증 가드 포함)
+│   │   ├── App.tsx                      # QueryClientProvider + createRouter(routeTree) + RouterProvider
+│   │   ├── routeTree.gen.ts             # @tanstack/router-plugin 이 src/routes 로부터 생성 (커밋 대상 · 직접 수정 금지)
+│   │   │                                # 레이어 구조 — 정본은 .claude/docs/ARCHITECTURE.md · CONVENTION.md (경계는 eslint no-restricted-imports 가 강제)
+│   │   ├── routes/                      # [page 레이어] TanStack 파일 기반 라우트 — 페이지 입구 + staticData.page(메타·권한)
+│   │   │   └── _auth/                   # 인증 레이아웃 — route.tsx(beforeLoad: 인증 + 접근 판정) · stats/(<group>)/ · report/ · accounting/ · admin/
+│   │   │       └── -internal/           # 앱 셸: layout/(AppLayout·Sidebar·Topbar) · navigation.ts(MENU_TREE·HIDDEN_PAGE_PATHS·buildMenu)
+│   │   │                                #   · pageAccess.ts(PageMeta·canAccess) · RouteGate · StatsPlaceholderPage · graveyard/(미구현 목업)
+│   │   ├── composition/                 # 여러 core 도메인 조합 — report(월간·주차 레포트) · dashboard(메인 대시보드)
+│   │   ├── domain/
+│   │   │   ├── core/<domain>/           # api.ts(<domain>Api) · type/api.ts(zod 스키마+타입) · hooks/ · ui/<Screen>/ · utils/
+│   │   │   └── support/session/         # 세션·권한 — store · session · initApiClient · utils/access(hasAccess)
+│   │   ├── shared/                      # 도메인 무관 공용 — api/(client·utils) · ui/(shadcn 포함) · hooks/ · utils/ · constants/
 │   │   ├── index.css                    # Tailwind 4 + OKLCH 테마 변수
-│   │   ├── api/
-│   │   │   ├── client.ts               # HTTP 클라이언트 (Bearer 토큰 자동 주입)
-│   │   │   └── auth.ts                 # 로그인 API
-│   │   ├── components/
-│   │   │   ├── layout/
-│   │   │   │   ├── AppLayout.tsx        # 인증 레이아웃 (Topbar + Sidebar + Outlet)
-│   │   │   │   ├── Sidebar.tsx          # 접이식 네비게이션 (navigation.ts 기반)
-│   │   │   │   └── Topbar.tsx           # 상단 바 (유저명, 로그아웃)
-│   │   │   └── ui/                      # shadcn 컴포넌트 (button, card, chart)
-│   │   ├── config/
-│   │   │   ├── statsPages.ts            # 통계 페이지 정의
-│   │   │   └── navigation.ts            # 메뉴 구조 + 구현 상태 맵
-│   │   ├── pages/
-│   │   │   ├── accounting/              # 회계 5종 (진료 수납·시력교정 매출 내역·집계·그래프 2종 — /api/accounting 마트 조회 · ADMIN)
-│   │   │   ├── LoginPage.tsx            # 로그인 (react-hook-form + Zod)
-│   │   │   ├── DashboardPage.tsx        # 메인 대시보드 (KPI 카드 + 차트, 목업 데이터)
-│   │   │   ├── ReservationPage.tsx      # 예약 비교 (TanStack Query API 연동)
-│   │   │   └── StatsPlaceholderPage.tsx # 미구현/보류 통계 페이지 템플릿
-│   │   ├── stores/
-│   │   │   └── authStore.ts             # Zustand 인증 (token + user, localStorage 연동)
-│   │   ├── lib/
-│   │   │   └── utils.ts                # cn() (clsx + tailwind-merge)
 │   │   └── test/
 │   │       └── setup.ts                # Vitest + @testing-library/jest-dom
 │   ├── components.json                  # shadcn CLI 설정
@@ -116,11 +105,11 @@ project-root/
 
 ### 미구현 (플레이스홀더)
 
-일부 통계 페이지. 전체 페이지 목록의 기준은 `frontend/src/config/statsPages.ts`.
+통계 페이지 4종(마케팅 효율·예약취소율·부도율·객단가)이 pending. 페이지별 상태는 각 라우트 파일의 `staticData.page.status`.
 
 ## 대표 통계 페이지 목록
 
-실제 전체 목록(55종 · 완료 44 · pending 11)과 라우팅 기준은 `frontend/src/config/statsPages.ts`와 `frontend/src/pages/pageRegistry.ts`를 우선한다. 전체 표는 `CLAUDE.md` 「통계 페이지 목록」 참조.
+실제 전체 목록(48종 · 완료 44 · pending 4)의 기준은 `frontend/src/routes/_auth/` 라우트 파일(`staticData.page`)이고, 메뉴 구조는 `frontend/src/routes/_auth/-internal/navigation.ts` `MENU_TREE` 다. 전체 표는 `CLAUDE.md` 「통계 페이지 목록」 참조.
 
 | ID | 이름 | 경로 | 섹션 | 상태 |
 |----|------|------|------|------|
@@ -205,16 +194,16 @@ GET    /api/stats/{pageId}/compare?compareTo=PREVIOUS_PERIOD
 
 ### 라우팅 패턴
 
-- 인증 필요 페이지는 `authLayout` 하위에 등록 (`router.tsx`)
-- 새 통계 페이지: `config/statsPages.ts`에 정의 → `config/navigation.ts` 상태/메뉴 반영 → 도메인 `routes.ts`에 전용 컴포넌트 등록
-- 미구현 페이지는 `StatsPlaceholderPage`로 자동 렌더링
-- 새 페이지 추가 시 `filter` 제거: `router.tsx`에서 해당 ID의 플레이스홀더를 전용 컴포넌트로 교체
+- TanStack Router **파일 기반 라우팅**. `src/routes` 파일 구조가 URL 이고, `@tanstack/router-plugin` 이 `routeTree.gen.ts` 를 생성한다(커밋 대상). 페이지마다 청크 분리(`autoCodeSplitting`).
+- 인증 필요 페이지는 `routes/_auth/` 아래. `_auth/route.tsx` 의 `beforeLoad` 가 인증과 접근 판정(`canAccess`)을 하고, `RouteGate` 가 페이지 / placeholder(미완성) / 접근 권한 없음을 렌더한다.
+- 파일명 규칙: `_xxx` = 경로 없는 레이아웃 · `(xxx)` = URL 에 안 붙는 폴더 묶음 · `-xxx` = 라우트 아님 · `$xxx` = 경로 파라미터.
+- 새 통계 페이지: `domain/core/<domain>/ui/<Screen>/` 화면(여러 도메인 조합이면 `composition/`) → `routes/_auth/stats/(<domain>)/<id>.tsx` 라우트 파일(`component` + `staticData.page`) → `navigation.ts` `MENU_TREE` 에 경로 추가(숨기려면 `HIDDEN_PAGE_PATHS`)
 
 ### 차트 (Recharts)
 
 - 모든 차트는 shadcn `ChartContainer` + `ChartTooltip`으로 감싸서 테마 통일
 - 차트 설정은 `chartConfig` 객체로 정의 (색상, 라벨)
-- 참고 구현: `DashboardPage.tsx`, `ReservationPage.tsx`
+- 참고 구현: `composition/dashboard/ui/DashboardPage`, `domain/core/reservation/ui/ReservationPage`
 
 ### 색상 체계
 
@@ -251,7 +240,7 @@ const CHART_PALETTE = [
 ### 상태관리
 
 ```
-authStore (Zustand)     — 인증: token, user, login/logout (localStorage 연동)
+session store (Zustand) — 인증: token, user, login/logout (localStorage 연동) · domain/support/session/store.ts
 filterStore (Zustand)   — 글로벌 필터: 기간, 부서, 카테고리 (구현 예정)
 TanStack Query          — 서버 데이터 캐싱/갱신
 ```
@@ -316,10 +305,11 @@ cd frontend && npm run test              # Vitest
 
 ## Codex에게 요청할 때 참고사항
 
-- **새 통계 페이지**: `statsPages.ts`에 페이지 정의 → `navigation.ts` 상태/메뉴 + 롤·부서 게이트(`isAdminOnlyPage`·`isExecutiveOnlyPage`·`isMarketingOnlyPage`·`isOverseasMarketingPage`) 반영 → 전용 페이지 컴포넌트 작성 + 도메인 `routes.ts` 등록 + 백엔드 API + `SecurityConfig` 매처 대칭 유지
+- **새 통계 페이지**: 전용 페이지 컴포넌트 작성 → `routes/_auth/.../<id>.tsx` 라우트 파일 + `staticData.page`(롤·부서 권한은 `access`) → `navigation.ts` `MENU_TREE` 에 경로 추가 → 백엔드 API + `SecurityConfig` 매처 대칭 유지
 - **새 차트**: Recharts 기반, shadcn `ChartContainer` 사용, `CHART_PALETTE` 색상 적용
 - **새 UI 컴포넌트**: `npx shadcn@latest add <name>` (설정: `components.json`)
-- **API 연동**: `api/client.ts` HTTP 클라이언트 사용, TanStack Query `useQuery`로 캐싱
+- **API 연동**: `shared/api/client.ts` 의 axios 인스턴스 `api` 사용 — interceptor(토큰 부착·401 세션 만료·에러 메시지)는 `support/session/initApiClient` 가 앱 시작 시 등록한다. 쿼리는 `api.get(path, { params })`(배열은 `years=2025,2026` 콤마 직렬화, nullish 제외), 응답은 `const { data } = await api.get(...)` 후 zod 로 파싱. 조회 메서드는 마지막 인자로 `signal?: AbortSignal` 을 받아 넘기고, 도메인 `hooks/` 에서 TanStack Query `useQuery`(`queryFn: ({ signal }) => xxxApi.method(..., signal)`)로 캐싱
 - **DashboardPage 데이터는 하드코딩 목업**이며, `ReservationPage`는 API 연동 상태다.
+- **프론트 구조 규칙**: 레이어·import 규칙은 `.claude/docs/ARCHITECTURE.md`, 네이밍·파일 규칙은 `.claude/docs/CONVENTION.md` 를 따른다 (core 끼리 import 금지 — 여러 도메인 조합은 composition).
 - **화면 규칙·컬럼·함정 참조**: 메뉴별 기획서는 `backend/new_대쉬보드_v4/pages/<id>.html` (원문 `_build/content/<id>.mjs`) · 지표는 `지표정의/*.md` · DB는 `db/tables/`. 코드 자동 생성 구간(1·6·7·8·9장)과 사람이 쓴 구간(2·3·4·5·10장)이 나뉜다.
 - **권한 정본**: 롤 × 부서 조합·게이팅 지점은 `docs/auth/permissions.md`. 계정은 `/admin/accounts` 화면(ADMIN)이 유일 입구.

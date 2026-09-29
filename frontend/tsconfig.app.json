@@ -24,7 +24,12 @@
 
     /* Path alias */
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "#composition/*": ["./src/composition/*"],
+      "#domain/*": ["./src/domain/*"],
+      "#entity/*": ["./src/entity/*"],
+      "#page/*": ["./src/routes/*"],
+      "#shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src"],
