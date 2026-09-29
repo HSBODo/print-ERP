@@ -376,7 +376,6 @@ export function AccumulatedEyesPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const toggleSort = (key: SortKey) => {
-    pagination.resetPage()
     // 다른 컬럼을 처음 누르면 asc 부터 시작. 누적 안수만 첫 진입 상태가 desc 라 반대 순서.
     if (sortKey !== key) { setSortKey(key); setSortDir('asc'); return }
     if (sortDir === 'asc') { setSortDir('desc'); return }

@@ -664,7 +664,13 @@ export function DreamlensLedgerPage() {
               </table>
             </div>
           )}
-          <TablePagination pagination={pagination} className="rounded-b-lg" />
+          <div className="flex items-center gap-2 rounded-b-lg bg-white pr-2 text-xs">
+            <TablePagination pagination={pagination} className="flex-1" />
+            {selected.size > 0 && <span className="text-rose-600">{formatCount(selected.size)}건 선택</span>}
+            <span className="whitespace-nowrap text-gray-700">
+              매출 합계 <strong className="tabular-nums">{totals.totalRevenue.toLocaleString('ko-KR')}원</strong>
+            </span>
+          </div>
         </CardContent>
       </Card>
 

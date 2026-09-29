@@ -424,7 +424,6 @@ export const tierCellOf = (
 }
 
 
-
 /* ── 정렬 ── 수술자 리스트와 같은 규칙: 머리글을 누르면 오름차순, 다시 누르면 내림차순. */
 export type SortDirection = 'asc' | 'desc'
 export type SortState = { key: string; direction: SortDirection } | null

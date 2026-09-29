@@ -124,7 +124,6 @@ export const matchesSearch = (row: ReservationListHomepageItem, keyword: string)
   return row.name.toLowerCase().includes(q) || phoneHit
 }
 
-
 export const getSortValue = (
   row: ReservationListHomepageItem,
   key: string,

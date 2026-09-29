@@ -260,7 +260,7 @@ export function AllExamListPage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
+            onChange={(e) => setKeyword(e.target.value)}
             placeholder="고객명 · 차트번호 · 연락처"
             className="h-full w-[12rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />

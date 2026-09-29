@@ -41,4 +41,3 @@ export const MATCH_OPTIONS: { value: MatchFilter; label: string }[] = [
   { value: 'matched', label: '매칭' },
   { value: 'review', label: '확인필요' },
 ]
-

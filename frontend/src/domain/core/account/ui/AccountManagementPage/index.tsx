@@ -24,7 +24,7 @@ import { DeleteConfirmDialog } from './DeleteConfirmDialog'
  *   <li>아이디·이름·이메일 부분일치 검색 + 권한·부서 필터 + 페이지네이션</li>
  * </ul>
  */
-/** 계정 수가 적어 다른 리스트보다 한 단계 작게 시작한다. */
+/** 예전 기본 20행에 가장 가까운 공통 선택지. */
 const INITIAL_PAGE_SIZE = 25
 const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF']
 const DEPARTMENT_OPTIONS: UserDepartment[] = ['ALL', 'MEDICAL', 'MARKETING']
