@@ -77,11 +77,13 @@ describe('EoeisCheckupStatsPage', () => {
   it('전체 검사자 리스트 방식으로 페이지를 이동하고 컬럼을 양방향 정렬한다', () => {
     render(<EoeisCheckupStatsPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: '다음' }))
+    // 기본 50행이면 36명이 한 페이지라 25행으로 줄여 두 페이지를 만든다.
+    fireEvent.change(screen.getByRole('combobox', { name: '행 수' }), { target: { value: '25' } })
+    fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
     expect(screen.getByText('검사자 32')).toBeInTheDocument()
-    expect(screen.getByText('36명 · 26-36')).toBeInTheDocument()
+    expect(screen.getByText('36명 중 26-36')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: '이전' }))
+    fireEvent.click(screen.getByRole('button', { name: '이전 페이지' }))
     const totalSortButton = screen.getByRole('button', { name: '합계 정렬' })
     const totalHeader = totalSortButton.closest('th')
     if (!totalHeader) throw new Error('합계 정렬 헤더를 찾을 수 없습니다.')

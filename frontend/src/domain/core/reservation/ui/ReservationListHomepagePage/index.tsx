@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, Radio, RotateCcw, Search, TriangleAlert } from 'lucide-react'
+import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
@@ -10,15 +12,12 @@ import {
   formatCount,
   isRangeBeyondSnapshot,
   matchesSearch,
-  buildPaginationItems,
   getSortValue,
   compareSortValue,
   defaultFrom,
   defaultTo,
   DEVICE_FILTER_OPTIONS,
   RESERVE_FILTER_OPTIONS,
-  PAGE_SIZE_OPTIONS,
-  DEFAULT_PAGE_SIZE,
   SKELETON_ROWS,
   toMonthValue,
   toMonthStart,
@@ -26,6 +25,9 @@ import {
   type PeriodMode,
   type SortState,
 } from './reservationListHomepageUtils'
+
+/** 레거시 nPageSize 기본값(20)에 가장 가까운 공통 선택지. */
+const INITIAL_PAGE_SIZE = 25
 
 /**
  * 예약자 리스트_홈페이지 — 레거시 관리자 화면 `counsel/online_list.php`(SCR-39) 재현.
@@ -56,8 +58,6 @@ export function ReservationListHomepagePage() {
   const [device, setDevice] = useState('전체')
   const [reserve, setReserve] = useState('전체')
   const [keyword, setKeyword] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [sortState, setSortState] = useState<SortState>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
@@ -97,21 +97,12 @@ export function ReservationListHomepagePage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pageMax = Math.max(1, Math.ceil(filtered.length / pageSize))
-  // 필터 변경 등으로 페이지 수가 줄어도 상태 변경 없이 렌더 시점에 범위로 보정
-  const safePage = Math.min(currentPage, pageMax)
-  const paginationItems = useMemo(() => buildPaginationItems(safePage, pageMax), [safePage, pageMax])
-  const visibleRows = useMemo(() => {
-    const start = (safePage - 1) * pageSize
-    return sortedRows.slice(start, start + pageSize)
-  }, [safePage, sortedRows, pageSize])
-  const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1
-  const rangeEnd = Math.min(safePage * pageSize, filtered.length)
+  const pagination = usePagination(sortedRows, { initialPageSize: INITIAL_PAGE_SIZE })
 
   /** 조회 = 등록일 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
   const handleSearch = () => {
     setHasSearched(true)
-    setCurrentPage(1)
+    pagination.resetPage()
     setQueryFrom(draftFrom)
     setQueryTo(draftTo)
   }
@@ -138,20 +129,9 @@ export function ReservationListHomepagePage() {
     setDevice('전체')
     setReserve('전체')
     setKeyword('')
-    setPageSize(DEFAULT_PAGE_SIZE)
-    setCurrentPage(1)
+    pagination.setPageSize(INITIAL_PAGE_SIZE)
     setSortState(null)
     setHasSearched(false)
-  }
-
-  /** 클라이언트 필터 변경 — 즉시 반영하고 1페이지로 되돌린다(3페이지에서 걸러 0건이 보이는 걸 막는다). */
-  const changeFilter = (apply: () => void) => {
-    apply()
-    setCurrentPage(1)
-  }
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(Math.min(Math.max(page, 1), pageMax))
   }
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
@@ -163,7 +143,7 @@ export function ReservationListHomepagePage() {
   }
 
   const handleSort = (key: string) => {
-    setCurrentPage(1)
+    pagination.resetPage()
     setSortState((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -230,7 +210,7 @@ export function ReservationListHomepagePage() {
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
               }`}
-              onClick={() => changeFilter(() => setDevice(option.value))}
+              onClick={() => { setDevice(option.value); pagination.resetPage() }}
             >
               {option.label}
             </button>
@@ -240,7 +220,7 @@ export function ReservationListHomepagePage() {
           <select
             aria-label="예약구분"
             value={reserve}
-            onChange={(e) => changeFilter(() => setReserve(e.target.value))}
+            onChange={(e) => { setReserve(e.target.value); pagination.resetPage() }}
             className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             {RESERVE_FILTER_OPTIONS.map((option) => (
@@ -255,7 +235,7 @@ export function ReservationListHomepagePage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => changeFilter(() => setKeyword(e.target.value))}
+            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
             placeholder="이름 · 휴대폰번호"
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
@@ -363,7 +343,7 @@ export function ReservationListHomepagePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {showSkeleton && Array.from({ length: Math.max(pageSize, SKELETON_ROWS) }, (_, rowIndex) => (
+                  {showSkeleton && Array.from({ length: Math.max(pagination.pageSize, SKELETON_ROWS) }, (_, rowIndex) => (
                     <tr key={`reservation-list-homepage-skeleton-${rowIndex}`} className="border-b border-border/40">
                       {COLUMNS.map((col) => (
                         <td key={col.key} className="whitespace-nowrap px-2.5 py-1" style={{ minWidth: col.min }}>
@@ -372,9 +352,9 @@ export function ReservationListHomepagePage() {
                       ))}
                     </tr>
                   ))}
-                  {!showSkeleton && visibleRows.map((row, i) => {
+                  {!showSkeleton && pagination.pageRows.map((row, i) => {
                     // 레거시 재현 — No 는 총건수에서 1씩 감소하는 표시용 번호다.
-                    const rowNumber = filtered.length - ((safePage - 1) * pageSize + i)
+                    const rowNumber = filtered.length - (pagination.rangeStart - 1 + i)
 
                     return (
                       <tr key={row.legacyNo} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
@@ -401,66 +381,7 @@ export function ReservationListHomepagePage() {
               </table>
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-2 rounded-b-lg bg-white px-2 py-1.5 text-xs">
-            <span className="min-w-[8rem] font-semibold text-gray-800" aria-live="polite">
-              {formatCount(filtered.length)}건 중 {formatCount(rangeStart)}-{formatCount(rangeEnd)}
-            </span>
-            <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                disabled={safePage <= 1}
-                onClick={() => handlePageChange(safePage - 1)}
-              >
-                이전
-              </Button>
-              {paginationItems.map((item) => (
-                typeof item === 'number' ? (
-                  <Button
-                    key={item}
-                    type="button"
-                    variant={item === safePage ? 'default' : 'outline'}
-                    size="icon-sm"
-                    className="text-xs"
-                    aria-current={item === safePage ? 'page' : undefined}
-                    onClick={() => handlePageChange(item)}
-                  >
-                    {item}
-                  </Button>
-                ) : (
-                  <span key={item} className="px-1 text-muted-foreground">...</span>
-                )
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                disabled={safePage >= pageMax}
-                onClick={() => handlePageChange(safePage + 1)}
-              >
-                다음
-              </Button>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <label htmlFor="reservation-list-homepage-page-size" className="text-muted-foreground">행 수</label>
-              <div className="relative">
-                <select
-                  id="reservation-list-homepage-page-size"
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1) }}
-                  className="h-8 w-16 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                >
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              </div>
-            </div>
-          </div>
+          <TablePagination pagination={pagination} className="rounded-b-lg" />
         </CardContent>
       </Card>
     </div>

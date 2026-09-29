@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { CalendarRange, ChevronDown, Download, MonitorCog, Search, Settings2 } from 'lucide-react'
+import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
+import { TablePagination } from '#shared/ui/TablePagination'
 import type { EoeisCheckupRow } from '../../type/api'
 import { useEoeisCheckup } from '../../hooks/useEoeisCheckup'
 import { downloadCsv, toCsv } from '#shared/utils/csv'
-import { buildPaginationItems, PAGE_SIZE_OPTIONS, type SortState } from '../../utils/examListUtils'
+import type { SortState } from '../../utils/examListUtils'
 
 type ViewMode = 'count' | 'score'
 type PivotTab = 'device' | 'date'
@@ -266,8 +268,6 @@ export function EoeisCheckupStatsPage() {
   const [selectedName, setSelectedName] = useState<string | null>(null)
   const [status, setStatus] = useState('실데이터를 조회하고 있습니다.')
   const [sortState, setSortState] = useState<SortState>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0])
 
   const { data, isLoading, isFetching, isError } = useEoeisCheckup(queryPeriod.from, queryPeriod.to)
   const records = useMemo(() => data?.rows ?? [], [data])
@@ -316,15 +316,7 @@ export function EoeisCheckupStatsPage() {
       })
       .map(({ row }) => row)
   }, [rows, sortState])
-  const pageMax = Math.max(1, Math.ceil(sortedRows.length / pageSize))
-  const safePage = Math.min(currentPage, pageMax)
-  const paginationItems = useMemo(() => buildPaginationItems(safePage, pageMax), [safePage, pageMax])
-  const visibleRows = useMemo(
-    () => sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [sortedRows, safePage, pageSize],
-  )
-  const rangeStart = sortedRows.length === 0 ? 0 : ((safePage - 1) * pageSize) + 1
-  const rangeEnd = Math.min(safePage * pageSize, sortedRows.length)
+  const pagination = usePagination(sortedRows)
 
   const handleQuery = () => {
     const from = draftFrom < MIN_QUERY_DATE ? MIN_QUERY_DATE : draftFrom
@@ -332,12 +324,12 @@ export function EoeisCheckupStatsPage() {
     setDraftFrom(from)
     setDraftTo(to)
     setQueryPeriod({ from, to })
-    setCurrentPage(1)
+    pagination.resetPage()
     setStatus(`실데이터 조회 중 · ${from} ~ ${to}`)
   }
 
   const handleSort = (key: string) => {
-    setCurrentPage(1)
+    pagination.resetPage()
     setSortState((current) => current?.key === key
       ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
       : { key, direction: 'asc' })
@@ -346,13 +338,13 @@ export function EoeisCheckupStatsPage() {
   const handleTabChange = (nextTab: PivotTab) => {
     setTab(nextTab)
     setSortState(null)
-    setCurrentPage(1)
+    pagination.resetPage()
   }
 
   const handleGranularityChange = (nextGranularity: Granularity) => {
     setGranularity(nextGranularity)
     setSortState(null)
-    setCurrentPage(1)
+    pagination.resetPage()
   }
 
   const handleApplyScores = () => {
@@ -427,28 +419,12 @@ export function EoeisCheckupStatsPage() {
             ) : isError ? (
               <div className="flex h-full items-center justify-center text-sm text-red-600">아이리더 데이터 연결을 확인해주세요.</div>
             ) : (
-              <StatsTable columns={columns} rows={visibleRows} summaryRows={rows} sortState={sortState} onSort={handleSort} selectedName={selectedName} onSelect={(name) => setSelectedName((current) => current === name ? null : name)} />
+              <StatsTable columns={columns} rows={pagination.pageRows} summaryRows={rows} sortState={sortState} onSort={handleSort} selectedName={selectedName} onSelect={(name) => setSelectedName((current) => current === name ? null : name)} />
             )}
           </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border/60 bg-white px-2 py-1.5 text-xs">
-            <span className="min-w-[11rem] font-semibold text-gray-800">{formatNumber(sortedRows.length)}명 · {formatNumber(rangeStart)}-{formatNumber(rangeEnd)}</span>
-            <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>이전</Button>
-              {paginationItems.map((item) => typeof item === 'number' ? (
-                <Button key={item} type="button" variant={item === safePage ? 'default' : 'outline'} size="icon-sm" className="text-xs" onClick={() => setCurrentPage(item)}>{item}</Button>
-              ) : <span key={item} className="px-1 text-muted-foreground">...</span>)}
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage >= pageMax} onClick={() => setCurrentPage(safePage + 1)}>다음</Button>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="hidden text-[11px] text-muted-foreground xl:inline" title={status}>조회 기간 {queryPeriod.from} ~ {queryPeriod.to}</span>
-              <label htmlFor="eoeis-page-size" className="text-muted-foreground">행 수</label>
-              <div className="relative">
-                <select id="eoeis-page-size" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setCurrentPage(1) }} className="h-8 w-16 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
-                  {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              </div>
-            </div>
+          <div className="flex shrink-0 items-center gap-2 border-t border-border/60 bg-white pr-2">
+            <TablePagination pagination={pagination} unit="명" className="flex-1" />
+            <span className="hidden text-[11px] text-muted-foreground xl:inline" title={status}>조회 기간 {queryPeriod.from} ~ {queryPeriod.to}</span>
           </div>
       </div>
     </div>

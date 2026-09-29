@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Card, CardContent } from '#shared/ui/Card'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { useSmsMutations, useSmsTargets, useSmsTemplates } from '../../hooks/useSmsManagement'
 import { useSmsOffsets } from '../../hooks/useSmsOffsets'
 import { TargetFormModal } from './ui/TargetFormModal'
@@ -12,7 +14,6 @@ import { SmsSolapiTemplateModal } from './ui/SmsSolapiTemplateModal'
 import { SmsOptOutModal } from './ui/SmsOptOutModal'
 import { SmsQueueStatusCard } from './ui/SmsQueueStatusCard'
 import { SmsMessagePreview } from './ui/SmsMessagePreview'
-import { SmsPagination } from './ui/SmsPagination'
 import { formatPhone } from '#shared/utils/phone'
 import {
   DELIVERY_GRACE_MINUTES, GROUP_META, OP_TYPE_META, isHeld,
@@ -105,8 +106,6 @@ export function SmsManagementPage() {
   const [groupFilter, setGroupFilter] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [modal, setModal] = useState<{ mode: 'create' } | { mode: 'edit'; target: SmsTarget } | null>(null)
-  const [pageSize, setPageSize] = useState(50)
-  const [currentPage, setCurrentPage] = useState(1)
   // 분류 도움말 위치 — 표가 overflow-auto 라 안쪽에 붙이면 잘린다. 화면 좌표로 띄운다.
   const [groupHelp, setGroupHelp] = useState<{ top: number; left: number } | null>(null)
   const [templateGuideOpen, setTemplateGuideOpen] = useState(false)
@@ -173,7 +172,7 @@ export function SmsManagementPage() {
   }, [filtered, sortState, templates, today])
 
   const handleSort = (key: string) => {
-    setCurrentPage(1)
+    pagination.resetPage()
     setSelected(new Set())   // 정렬하면 보이는 행이 바뀐다 — 선택을 들고 가면 엉뚱한 행이 홀딩된다
     setSortState((prev) => (
       prev?.key === key
@@ -182,21 +181,17 @@ export function SmsManagementPage() {
     ))
   }
 
-  const pageMax = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const safePage = Math.min(currentPage, pageMax)
-  const visibleRows = useMemo(
-    () => sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [sortedRows, safePage, pageSize],
-  )
-  const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1
-  const rangeEnd = Math.min(safePage * pageSize, filtered.length)
+  const pagination = usePagination(sortedRows, {
+    // 페이지를 옮기면 보이는 행이 바뀐다 — 선택을 들고 가면 엉뚱한 행이 홀딩된다
+    onPageChange: () => setSelected(new Set()),
+  })
 
   /**
    * 선택은 **화면에 보이는 행**에만 걸린다.
    * 필터·검색·페이지를 바꾸면 선택을 비운다 — 안 보이는 행이 딸려 홀딩되는 사고를 막는다.
    * 홀딩된 사람도 선택할 수 있어야 한다(해제 대상이라서).
    */
-  const selectable = visibleRows
+  const selectable = pagination.pageRows
   const allSelected = selectable.length > 0 && selectable.every((t) => selected.has(t.id))
 
   const toggleAll = () =>
@@ -227,7 +222,7 @@ export function SmsManagementPage() {
     setQueryBasis({ basis, tier: tierFilter })
     setHasSearched(true)
     setSelected(new Set())
-    setCurrentPage(1)
+    pagination.resetPage()
     return next
   }
 
@@ -255,13 +250,7 @@ export function SmsManagementPage() {
     setStatusFilter('전체')
     setGroupFilter('')
     setSelected(new Set())
-    setPageSize(50)
-    setCurrentPage(1)
-  }
-
-  const goToPage = (page: number) => {
-    setCurrentPage(page)
-    setSelected(new Set())
+    pagination.setPageSize(DEFAULT_PAGE_SIZE)
   }
 
   /**
@@ -269,7 +258,7 @@ export function SmsManagementPage() {
    * 그만큼 되돌리기 번거로운 조작이라 한 번 확인받는다.
    */
   const handleOptOut = () => {
-    const visibleIds = new Set(visibleRows.map((t) => t.id))
+    const visibleIds = new Set(pagination.pageRows.map((t) => t.id))
     const ids = [...selected].filter((id) => visibleIds.has(id))
     if (ids.length === 0) {
       toast.error('수신거부로 등록할 대상을 선택하세요.')
@@ -288,7 +277,7 @@ export function SmsManagementPage() {
 
   const handleHold = (value: 'HOLD' | 'SENDABLE') => {
     // 보이는 행만 대상으로 삼는다 — 필터·페이지를 바꾸면 선택이 비워지지만, 한 번 더 확인한다.
-    const visibleIds = new Set(visibleRows.map((t) => t.id))
+    const visibleIds = new Set(pagination.pageRows.map((t) => t.id))
     const ids = [...selected].filter((id) => visibleIds.has(id))
     if (ids.length === 0) {
       toast.error(value === 'HOLD' ? '발송을 중지할 대상을 선택하세요.' : '홀딩을 해제할 대상을 선택하세요.')
@@ -358,7 +347,7 @@ export function SmsManagementPage() {
         draft={draft}
         onDraftChange={setDraft}
         keyword={keyword}
-        onKeywordChange={(v) => { setKeyword(v); setCurrentPage(1); setSelected(new Set()) }}
+        onKeywordChange={(v) => { setKeyword(v); setSelected(new Set()); pagination.resetPage() }}
         resultCount={filtered.length}
         isRefreshing={isRefreshing}
         holdPending={changeStatusBulk.isPending}
@@ -374,10 +363,10 @@ export function SmsManagementPage() {
       <SmsStatusFilterBar
         templates={templates}
         statusFilter={statusFilter}
-        onChange={(v) => { setStatusFilter(v); setCurrentPage(1); setSelected(new Set()) }}
+        onChange={(v) => { setStatusFilter(v); setSelected(new Set()); pagination.resetPage() }}
         selectedCount={selected.size}
         groupFilter={groupFilter}
-        onGroupChange={(v) => { setGroupFilter(v); setCurrentPage(1); setSelected(new Set()) }}
+        onGroupChange={(v) => { setGroupFilter(v); setSelected(new Set()); pagination.resetPage() }}
       />
       {/* ── 본문: 좌 8(대상 표) : 우 2(문구 미리보기) ──
           미리보기는 항상 자리를 차지한다 — 나타났다 사라지면 표 폭이 흔들려 읽기 어렵다.
@@ -474,7 +463,7 @@ export function SmsManagementPage() {
                       </td>
                     </tr>
                   )}
-                  {!showLoading && visibleRows.map((t, i) => {
+                  {!showLoading && pagination.pageRows.map((t, i) => {
                     const state = targetStateOf(t, templates, today, graceFrom)
                     const held = isHeld(t)
                     return (
@@ -487,7 +476,7 @@ export function SmsManagementPage() {
                             onChange={() => toggleOne(t.id)}
                           />
                         </td>
-                        <td className={`${TD} whitespace-nowrap tabular-nums text-gray-500`}>{(safePage - 1) * pageSize + i + 1}</td>
+                        <td className={`${TD} whitespace-nowrap tabular-nums text-gray-500`}>{pagination.rangeStart + i}</td>
                         <td className={`${TD} whitespace-nowrap tabular-nums`}
                           title={t.rebased ? `수술일 ${t.surgeryDate} · 예정일은 ${t.scheduleBase} 기준으로 다시 깔림(연락처 수정·홀딩 해제)` : t.surgeryDate}>
                           {t.surgeryDate}
@@ -600,16 +589,8 @@ export function SmsManagementPage() {
             </div>
           )}
 
-          <SmsPagination
-            total={filtered.length}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
-            page={safePage}
-            pageMax={pageMax}
-            pageSize={pageSize}
-            onPage={goToPage}
-            onPageSize={(size) => { setPageSize(size); goToPage(1) }}
-          />        </CardContent>
+          <TablePagination pagination={pagination} unit="명" className="rounded-b-lg" />
+        </CardContent>
       </Card>
 
       {/* 문구 칸은 너무 좁아지면 문장이 세로로 길어져 못 읽는다 — 최소 폭을 지킨다. */}

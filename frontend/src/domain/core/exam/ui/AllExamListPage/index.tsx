@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
+import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
@@ -10,11 +12,9 @@ import { COLUMNS, ALIGN, HEADER_ALIGN } from './allExamListColumns'
 import {
   calcAge,
   compareSortValue,
-  buildPaginationItems,
   formatCount,
   GROUP_FILTERS,
   matchesExamGroup,
-  PAGE_SIZE_OPTIONS,
   QUICK_RANGES,
   previousMonthValue,
   toMonthValue,
@@ -67,8 +67,6 @@ export function AllExamListPage() {
   const [patientType, setPatientType] = useState<string>('전체')
   const [keyword, setKeyword] = useState('')
 
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
   const [sortState, setSortState] = useState<SortState>(null)
 
   const { rows, isLoading, isFetching, isError } = useAllExamList(queryFrom, queryTo, hasSearched)
@@ -101,15 +99,7 @@ export function AllExamListPage() {
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pageMax = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const safePage = Math.min(currentPage, pageMax)
-  const paginationItems = useMemo(() => buildPaginationItems(safePage, pageMax), [safePage, pageMax])
-  const visible = useMemo(
-    () => sorted.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [sorted, safePage, pageSize],
-  )
-  const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1
-  const rangeEnd = Math.min(safePage * pageSize, filtered.length)
+  const pagination = usePagination(sorted)
 
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
@@ -117,7 +107,7 @@ export function AllExamListPage() {
     setHasSearched(true)
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
-    setCurrentPage(1)
+    pagination.resetPage()
   }
 
   const handlePeriodModeChange = (mode: PeriodMode) => {
@@ -158,14 +148,13 @@ export function AllExamListPage() {
     setJobBucket('전체')
     setPatientType('전체')
     setKeyword('')
-    setCurrentPage(1)
-    setPageSize(50)
+    pagination.setPageSize(DEFAULT_PAGE_SIZE)
     setSortState(null)
     setHasSearched(false)
   }
 
   const handleSort = (key: string) => {
-    setCurrentPage(1)
+    pagination.resetPage()
     setSortState((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -192,7 +181,7 @@ export function AllExamListPage() {
             key={opt}
             type="button"
             aria-pressed={value === opt}
-            onClick={() => { onChange(opt); setCurrentPage(1) }}
+            onClick={() => { onChange(opt); pagination.resetPage() }}
             className={`min-w-[3rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
               value === opt ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
             }`}
@@ -356,8 +345,8 @@ export function AllExamListPage() {
                   {showLoading && (
                     <tr><td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
                   )}
-                  {!showLoading && visible.map((row, i) => {
-                    const rowNumber = (safePage - 1) * pageSize + i + 1
+                  {!showLoading && pagination.pageRows.map((row, i) => {
+                    const rowNumber = pagination.rangeStart + i
                     return (
                       <tr key={`${row.chartNo}-${row.examGroup}-${row.examDate}-${i}`} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
                         {COLUMNS.map((col) => (
@@ -379,37 +368,7 @@ export function AllExamListPage() {
               </table>
             </div>
           )}
-          {/* 페이지네이션 */}
-          <div className="flex flex-wrap items-center gap-2 rounded-b-lg bg-white px-2 py-1.5 text-xs">
-            <span className="min-w-[8rem] font-semibold text-gray-800">
-              {formatCount(filtered.length)}건 {filtered.length > 0 && `· ${formatCount(rangeStart)}-${formatCount(rangeEnd)}`}
-            </span>
-            <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>이전</Button>
-              {paginationItems.map((item) =>
-                typeof item === 'number' ? (
-                  <Button key={item} type="button" variant={item === safePage ? 'default' : 'outline'} size="icon-sm" className="text-xs" onClick={() => setCurrentPage(item)}>{item}</Button>
-                ) : (
-                  <span key={item} className="px-1 text-muted-foreground">...</span>
-                ),
-              )}
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage >= pageMax} onClick={() => setCurrentPage(safePage + 1)}>다음</Button>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <label htmlFor="all-exam-page-size" className="text-muted-foreground">행 수</label>
-              <div className="relative">
-                <select
-                  id="all-exam-page-size"
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1) }}
-                  className="h-8 w-16 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                >
-                  {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              </div>
-            </div>
-          </div>
+          <TablePagination pagination={pagination} className="rounded-b-lg" />
         </CardContent>
       </Card>
     </div>

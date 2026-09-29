@@ -61,9 +61,6 @@ export const RESERVE_FILTER_OPTIONS = [
   { value: 'N', label: '취소' },
 ]
 
-export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200]
-/** 레거시 nPageSize 기본값과 동일. */
-export const DEFAULT_PAGE_SIZE = 20
 export const SKELETON_ROWS = 20
 
 /* ── 기간 ── */
@@ -125,24 +122,6 @@ export const matchesSearch = (row: ReservationListHomepageItem, keyword: string)
   const phoneHit = digits(q).length > 0 && digits(row.phone).includes(digits(q))
 
   return row.name.toLowerCase().includes(q) || phoneHit
-}
-
-export const buildPaginationItems = (currentPage: number, pageMax: number): Array<number | string> => {
-  if (pageMax <= 7) {
-    return Array.from({ length: pageMax }, (_, index) => index + 1)
-  }
-
-  const pages = new Set([1, pageMax, currentPage - 1, currentPage, currentPage + 1])
-  const normalized = [...pages]
-    .filter((page) => page >= 1 && page <= pageMax)
-    .sort((a, b) => a - b)
-
-  return normalized.reduce<Array<number | string>>((items, page, index) => {
-    const prev = normalized[index - 1]
-    if (prev && page - prev > 1) items.push(`ellipsis-${prev}-${page}`)
-    items.push(page)
-    return items
-  }, [])
 }
 
 export const getSortValue = (

@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Pencil, Plus, Search, Trash2, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card } from '#shared/ui/Card'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { useAuthStore } from '#domain/support/session/store'
 import { useDeleteUser, useUsers } from '../../hooks/useUsers'
 import type { UserRow } from '../../type/api'
@@ -22,7 +24,8 @@ import { DeleteConfirmDialog } from './DeleteConfirmDialog'
  *   <li>아이디·이름·이메일 부분일치 검색 + 권한·부서 필터 + 페이지네이션</li>
  * </ul>
  */
-const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
+/** 예전 기본 20행에 가장 가까운 공통 선택지. */
+const INITIAL_PAGE_SIZE = 25
 const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF']
 const DEPARTMENT_OPTIONS: UserDepartment[] = ['ALL', 'MEDICAL', 'MARKETING']
 
@@ -55,8 +58,6 @@ export function AccountManagementPage() {
   const [keyword, setKeyword] = useState('')
   const [roleFilter, setRoleFilter] = useState<'' | UserRole>('')
   const [deptFilter, setDeptFilter] = useState<'' | UserDepartment>('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
 
   const filtered = useMemo(() => {
     if (!users) return []
@@ -75,18 +76,13 @@ export function AccountManagementPage() {
   const total = filtered.length
   const grandTotal = users?.length ?? 0
   const isFiltered = keyword.length > 0 || roleFilter !== '' || deptFilter !== ''
-  const pageMax = Math.max(1, Math.ceil(total / pageSize))
-  const effectivePage = Math.min(page, pageMax)
-  const rangeStart = total === 0 ? 0 : (effectivePage - 1) * pageSize + 1
-  const rangeEnd = Math.min(effectivePage * pageSize, total)
-  const pageRows = filtered.slice((effectivePage - 1) * pageSize, effectivePage * pageSize)
-  const pageItems = buildPageItems(effectivePage, pageMax)
+  const pagination = usePagination(filtered, { initialPageSize: INITIAL_PAGE_SIZE })
 
   const resetFilters = () => {
     setKeyword('')
     setRoleFilter('')
     setDeptFilter('')
-    setPage(1)
+    pagination.resetPage()
   }
 
   const handleDelete = async () => {
@@ -133,14 +129,14 @@ export function AccountManagementPage() {
           <input
             type="search"
             value={keyword}
-            onChange={(e) => { setKeyword(e.target.value); setPage(1) }}
+            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
             placeholder="아이디·이름·이메일 검색"
             className="w-full rounded-md border border-gray-300 py-1.5 pl-8 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           />
           {keyword && (
             <button
               type="button"
-              onClick={() => { setKeyword(''); setPage(1) }}
+              onClick={() => { setKeyword(''); pagination.resetPage() }}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               aria-label="검색어 지우기"
             >
@@ -151,7 +147,7 @@ export function AccountManagementPage() {
         <div className="flex items-center gap-1.5">
           <select
             value={roleFilter}
-            onChange={(e) => { setRoleFilter(e.target.value as '' | UserRole); setPage(1) }}
+            onChange={(e) => { setRoleFilter(e.target.value as '' | UserRole); pagination.resetPage() }}
             className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             aria-label="권한 필터"
           >
@@ -162,7 +158,7 @@ export function AccountManagementPage() {
           </select>
           <select
             value={deptFilter}
-            onChange={(e) => { setDeptFilter(e.target.value as '' | UserDepartment); setPage(1) }}
+            onChange={(e) => { setDeptFilter(e.target.value as '' | UserDepartment); pagination.resetPage() }}
             className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             aria-label="부서 필터"
           >
@@ -208,9 +204,9 @@ export function AccountManagementPage() {
                   </td>
                 </tr>
               )}
-              {pageRows.map((u, i) => {
+              {pagination.pageRows.map((u, i) => {
                 const isSelf = currentLoginId != null && u.loginId.toLowerCase() === currentLoginId.toLowerCase()
-                const seq = (effectivePage - 1) * pageSize + i + 1
+                const seq = pagination.rangeStart + i
                 return (
                   <tr
                     key={u.id}
@@ -271,7 +267,7 @@ export function AccountManagementPage() {
                   </tr>
                 )
               })}
-              {!isLoading && !isError && pageRows.length === 0 && (
+              {!isLoading && !isError && pagination.pageRows.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
                     {grandTotal === 0 ? '등록된 사용자가 없습니다.' : '검색 조건에 맞는 사용자가 없습니다.'}
@@ -282,63 +278,7 @@ export function AccountManagementPage() {
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 bg-gray-50/50 px-3 py-2 text-xs">
-          <span className="min-w-[9rem] font-semibold text-gray-800" aria-live="polite">
-            {total.toLocaleString('ko-KR')}명 중 {rangeStart.toLocaleString('ko-KR')}-{rangeEnd.toLocaleString('ko-KR')}
-          </span>
-          <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              disabled={effectivePage <= 1}
-              onClick={() => setPage(effectivePage - 1)}
-            >
-              이전
-            </Button>
-            {pageItems.map((item, i) =>
-              typeof item === 'number' ? (
-                <Button
-                  key={item}
-                  type="button"
-                  variant={item === effectivePage ? 'default' : 'outline'}
-                  size="icon-sm"
-                  className="text-xs"
-                  aria-current={item === effectivePage ? 'page' : undefined}
-                  onClick={() => setPage(item)}
-                >
-                  {item}
-                </Button>
-              ) : (
-                <span key={`gap-${i}`} className="px-1 text-muted-foreground">…</span>
-              ),
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              disabled={effectivePage >= pageMax}
-              onClick={() => setPage(effectivePage + 1)}
-            >
-              다음
-            </Button>
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-muted-foreground">행 수</span>
-            <select
-              value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
-              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-              aria-label="행 수"
-            >
-              {PAGE_SIZE_OPTIONS.map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <TablePagination pagination={pagination} unit="명" className="border-t border-gray-100 bg-gray-50/50 px-3 py-2" />
       </Card>
 
       {formTarget && (
@@ -364,17 +304,4 @@ export function AccountManagementPage() {
       )}
     </div>
   )
-}
-
-/** 현재 페이지 주변만 번호로, 나머지는 '…' 으로 접는다 (SMS 리스트와 같은 모양). */
-function buildPageItems(current: number, max: number): (number | string)[] {
-  if (max <= 7) return Array.from({ length: max }, (_, i) => i + 1)
-  const items: (number | string)[] = [1]
-  const start = Math.max(2, current - 1)
-  const end = Math.min(max - 1, current + 1)
-  if (start > 2) items.push('…left')
-  for (let i = start; i <= end; i += 1) items.push(i)
-  if (end < max - 1) items.push('…right')
-  items.push(max)
-  return items
 }

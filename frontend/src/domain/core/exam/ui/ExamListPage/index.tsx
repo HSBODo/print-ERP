@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
+import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
@@ -13,7 +15,6 @@ import {
   formatCount,
   defaultFrom,
   defaultTo,
-  PAGE_SIZE_OPTIONS,
   SKELETON_ROWS,
   QUICK_RANGES,
   EXAM_CATEGORY_OPTIONS,
@@ -21,7 +22,6 @@ import {
   toMonthStart,
   toMonthEnd,
   toMonthWeekRange,
-  buildPaginationItems,
   getSortValue,
   compareSortValue,
   type PeriodMode,
@@ -49,8 +49,6 @@ export function ExamListPage() {
   const [queryExamCategory, setQueryExamCategory] = useState('전체')
   const [queryType, setQueryType] = useState('전체')
   const [queryKeyword, setQueryKeyword] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
   const [sortState, setSortState] = useState<SortState>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
@@ -90,24 +88,12 @@ export function ExamListPage() {
       .map(({ row }) => row)
   }, [tableRows, sortState])
 
-  const pageMax = Math.max(1, Math.ceil(tableRows.length / pageSize))
-  // 필터 변경 등으로 페이지 수가 줄어도 상태 변경 없이 렌더 시점에 범위로 보정
-  const safePage = Math.min(currentPage, pageMax)
-  const paginationItems = useMemo(
-    () => buildPaginationItems(safePage, pageMax),
-    [safePage, pageMax],
-  )
-  const visibleRows = useMemo(() => {
-    const start = (safePage - 1) * pageSize
-    return sortedRows.slice(start, start + pageSize)
-  }, [safePage, sortedRows, pageSize])
-  const rangeStart = tableRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1
-  const rangeEnd = Math.min(safePage * pageSize, tableRows.length)
+  const pagination = usePagination(sortedRows)
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
     setHasSearched(true)
-    setCurrentPage(1)
+    pagination.resetPage()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     setQueryExamCategory(draftExamCategory)
@@ -128,13 +114,8 @@ export function ExamListPage() {
     setQueryExamCategory('전체')
     setQueryType('전체')
     setQueryKeyword('')
-    setPageSize(50)
-    setCurrentPage(1)
+    pagination.setPageSize(DEFAULT_PAGE_SIZE)
     setHasSearched(false)
-  }
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(Math.min(Math.max(page, 1), pageMax))
   }
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
@@ -143,7 +124,7 @@ export function ExamListPage() {
   }
 
   const handleSort = (key: string) => {
-    setCurrentPage(1)
+    pagination.resetPage()
     setSortState((prev) => (
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -368,7 +349,7 @@ export function ExamListPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {showSkeleton && Array.from({ length: Math.max(pageSize, SKELETON_ROWS) }, (_, rowIndex) => (
+                  {showSkeleton && Array.from({ length: Math.max(pagination.pageSize, SKELETON_ROWS) }, (_, rowIndex) => (
                     <tr key={`exam-list-skeleton-${rowIndex}`} className="border-b border-border/40">
                       {COLUMNS.map((col) => (
                         <td
@@ -381,8 +362,8 @@ export function ExamListPage() {
                       ))}
                     </tr>
                   ))}
-                  {!showSkeleton && visibleRows.map((row, i) => {
-                    const rowNumber = (safePage - 1) * pageSize + i + 1
+                  {!showSkeleton && pagination.pageRows.map((row, i) => {
+                    const rowNumber = pagination.rangeStart + i
 
                     return (
                     <tr key={`${row.chartNo}-${i}`} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
@@ -407,66 +388,7 @@ export function ExamListPage() {
               </table>
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-2 rounded-b-lg bg-white px-2 py-1.5 text-xs">
-            <span className="min-w-[8rem] font-semibold text-gray-800" aria-live="polite">
-              {formatCount(tableRows.length)}건 중 {formatCount(rangeStart)}-{formatCount(rangeEnd)}
-            </span>
-            <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                disabled={safePage <= 1}
-                onClick={() => handlePageChange(safePage - 1)}
-              >
-                이전
-              </Button>
-              {paginationItems.map((item) => (
-                typeof item === 'number' ? (
-                  <Button
-                    key={item}
-                    type="button"
-                    variant={item === safePage ? 'default' : 'outline'}
-                    size="icon-sm"
-                    className="text-xs"
-                    aria-current={item === safePage ? 'page' : undefined}
-                    onClick={() => handlePageChange(item)}
-                  >
-                    {item}
-                  </Button>
-                ) : (
-                  <span key={item} className="px-1 text-muted-foreground">...</span>
-                )
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                disabled={safePage >= pageMax}
-                onClick={() => handlePageChange(safePage + 1)}
-              >
-                다음
-              </Button>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <label htmlFor="exam-list-page-size" className="text-muted-foreground">행 수</label>
-              <div className="relative">
-                <select
-                  id="exam-list-page-size"
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1) }}
-                  className="h-8 w-16 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                >
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              </div>
-            </div>
-          </div>
+          <TablePagination pagination={pagination} className="rounded-b-lg" />
         </CardContent>
       </Card>
     </div>

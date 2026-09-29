@@ -1,17 +1,18 @@
 import { useMemo, useState } from 'react'
-import { Download, RotateCcw, Search, ChevronDown } from 'lucide-react'
+import { Download, RotateCcw, Search } from 'lucide-react'
+import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { useReservationChange } from '../../../hooks/useReservationChange'
 import { ReservationChangeDetailTable } from './ReservationChangeDetailTable'
 import { downloadReservationChangeCsv } from '../utils/reservationChangeCsv'
 import { buildViews, changeColumnCount, type ChangeFilters, type ChangeSort } from '../utils/reservationChangeModel'
-import { SELECT_CLASS, SelectBox } from './FilterControls'
+import { SelectBox } from './FilterControls'
 
 interface Draft extends ChangeFilters { year: string }
 
 const DATA_FROM_YEAR = 2022
-const PAGE_SIZE_OPTIONS = [50, 100, 200]
 const pad = (n: number) => String(n).padStart(2, '0')
 const todayIso = () => {
   const d = new Date()
@@ -37,17 +38,13 @@ const rangeOf = (year: string) => {
 export function DetailTab() {
   const [draft, setDraft] = useState<Draft>(DEFAULT_DRAFT)
   const [applied, setApplied] = useState<Draft>(DEFAULT_DRAFT)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(100)
 
   const { from, to } = useMemo(() => rangeOf(applied.year), [applied.year])
   const { rows, isLoading, isFetching, isError } = useReservationChange(from, to)
   const loading = isLoading || isFetching
   const views = useMemo(() => buildViews(rows, applied), [rows, applied])
   const maxChanges = useMemo(() => changeColumnCount(views), [views])
-  const pageMax = Math.max(1, Math.ceil(views.length / pageSize))
-  const safePage = Math.min(page, pageMax)
-  const visible = useMemo(() => views.slice((safePage - 1) * pageSize, safePage * pageSize), [views, safePage, pageSize])
+  const pagination = usePagination(views)
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }))
   const apply = () => {
@@ -55,9 +52,9 @@ export function DetailTab() {
     const next = draft.asOf && draft.sort === 'date' ? { ...draft, sort: 'asof' as ChangeSort } : draft
     setDraft(next)
     setApplied(next)
-    setPage(1)
+    pagination.resetPage()
   }
-  const reset = () => { setDraft(DEFAULT_DRAFT); setApplied(DEFAULT_DRAFT); setPage(1) }
+  const reset = () => { setDraft(DEFAULT_DRAFT); setApplied(DEFAULT_DRAFT); pagination.resetPage() }
   const csv = () => downloadReservationChangeCsv(
     `예약변경이력_${applied.year || '전체'}${applied.month ? `-${applied.month}` : ''}.csv`, views, applied.asOf,
   )
@@ -101,29 +98,11 @@ export function DetailTab() {
             <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">예약 변경이력을 불러오지 못했습니다.</div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
-              <ReservationChangeDetailTable views={visible} maxChanges={maxChanges} asOf={applied.asOf} loading={loading}
+              <ReservationChangeDetailTable views={pagination.pageRows} maxChanges={maxChanges} asOf={applied.asOf} loading={loading}
                 emptyText={rows.length === 0 ? '조회 범위에 변경된 예약이 없습니다. 마트 적재(관리자 배치 · 예약 변경이력만) 여부를 확인해 주세요.' : '조건에 맞는 예약이 없습니다.'} />
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-2 rounded-b-lg bg-white px-2 py-1.5 text-xs">
-            <span className="min-w-[8rem] font-semibold text-gray-800">
-              {views.length.toLocaleString('ko-KR')}건 {views.length > 0 && `· ${((safePage - 1) * pageSize + 1).toLocaleString('ko-KR')}-${Math.min(safePage * pageSize, views.length).toLocaleString('ko-KR')}`}
-            </span>
-            <nav className="flex flex-1 items-center justify-center gap-1" aria-label="페이지 네비게이션">
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>이전</Button>
-              <span className="px-2 tabular-nums text-gray-700">{safePage} / {pageMax}</span>
-              <Button type="button" variant="outline" size="sm" className="text-xs" disabled={safePage >= pageMax} onClick={() => setPage(safePage + 1)}>다음</Button>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <label htmlFor="reservation-change-page-size" className="text-muted-foreground">행 수</label>
-              <div className="relative">
-                <select id="reservation-change-page-size" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }} className={`${SELECT_CLASS} w-[4.5rem]`}>
-                  {PAGE_SIZE_OPTIONS.map((o) => <option key={o} value={o}>{o}건</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              </div>
-            </div>
-          </div>
+          <TablePagination pagination={pagination} className="rounded-b-lg" />
         </CardContent>
       </Card>
     </>

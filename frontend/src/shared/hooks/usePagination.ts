@@ -6,11 +6,8 @@ export const DEFAULT_PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const
 interface PaginationOptions {
   /** 처음 보여줄 행 수 */
   initialPageSize?: number
-  /**
-   * 값이 하나라도 바뀌면 1페이지로 돌아간다 (필터·정렬 값 등).
-   * 원소끼리 Object.is 로 비교하므로 매 렌더 새 배열을 넘겨도 값이 같으면 유지된다.
-   */
-  resetDeps?: readonly unknown[]
+  /** 사용자가 페이지나 행 수를 바꿨을 때 (resetPage 로 돌아갈 때는 부르지 않는다) — 예: 선택 해제 */
+  onPageChange?: () => void
 }
 
 export interface PaginationState {
@@ -25,24 +22,20 @@ export interface PaginationState {
   setPage: (page: number) => void
   /** 행 수를 바꾸면 1페이지로 돌아간다 */
   setPageSize: (pageSize: number) => void
+  /** 1페이지로 — 필터·정렬을 바꾼 쪽이 부른다 */
+  resetPage: () => void
 }
 
-const sameDeps = (a: readonly unknown[], b: readonly unknown[]) =>
-  a.length === b.length && a.every((value, index) => Object.is(value, b[index]))
+/** usePagination 결과 — 현재 페이지 행까지 하위 컴포넌트에 통째로 넘길 때 쓴다. */
+export type Pagination<T> = PaginationState & { pageRows: T[] }
 
 /** 받아온 행 전체를 화면에서 잘라 보여주는 페이지네이션. */
 export function usePagination<T>(
   rows: readonly T[],
-  { initialPageSize = DEFAULT_PAGE_SIZE, resetDeps = [] }: PaginationOptions = {},
-): PaginationState & { pageRows: T[] } {
+  { initialPageSize = DEFAULT_PAGE_SIZE, onPageChange }: PaginationOptions = {},
+): Pagination<T> {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSizeState] = useState(initialPageSize)
-  const [prevResetDeps, setPrevResetDeps] = useState(resetDeps)
-
-  if (!sameDeps(prevResetDeps, resetDeps)) {
-    setPrevResetDeps(resetDeps)
-    setPage(1)
-  }
 
   const total = rows.length
   const pageMax = Math.max(1, Math.ceil(total / pageSize))
@@ -58,10 +51,15 @@ export function usePagination<T>(
     rangeStart: total === 0 ? 0 : start + 1,
     rangeEnd: Math.min(start + pageSize, total),
     pageRows,
-    setPage: (next) => setPage(Math.min(Math.max(1, next), pageMax)),
+    setPage: (next) => {
+      setPage(Math.min(Math.max(1, next), pageMax))
+      onPageChange?.()
+    },
     setPageSize: (size) => {
       setPageSizeState(size)
       setPage(1)
+      onPageChange?.()
     },
+    resetPage: () => setPage(1),
   }
 }

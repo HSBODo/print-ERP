@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { usePagination } from '#shared/hooks/usePagination'
 
@@ -44,18 +44,17 @@ describe('usePagination', () => {
     expect(result.current).toMatchObject({ page: 1, pageSize: 100, pageMax: 5 })
   })
 
-  it('resetDeps 값이 바뀌면 1페이지로 돌아가고, 새 배열이어도 값이 같으면 유지한다', () => {
-    const rows = rowsOf(500)
-    const { result, rerender } = renderHook(({ keyword }) => usePagination(rows, { resetDeps: [keyword] }), {
-      initialProps: { keyword: '' },
-    })
+  it('resetPage 는 1페이지로 돌리고 onPageChange 는 부르지 않는다', () => {
+    const onPageChange = vi.fn()
+    const { result } = renderHook(() => usePagination(rowsOf(500), { onPageChange }))
     act(() => result.current.setPage(4))
+    act(() => result.current.setPageSize(100))
+    expect(onPageChange).toHaveBeenCalledTimes(2)
 
-    rerender({ keyword: '' })
-    expect(result.current.page).toBe(4)
-
-    rerender({ keyword: '홍' })
+    act(() => result.current.setPage(3))
+    act(() => result.current.resetPage())
     expect(result.current.page).toBe(1)
+    expect(onPageChange).toHaveBeenCalledTimes(3)
   })
 
   it('빈 결과는 1페이지 · 0-0 이다', () => {
