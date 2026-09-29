@@ -99,11 +99,7 @@ const surgeryListItemSchema = z.object({
 
 export type SurgeryListItem = z.infer<typeof surgeryListItemSchema>
 
-export const surgeryListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(surgeryListItemSchema),
-  message: z.string().nullish(),
-})
+export const surgeryListResponseSchema = apiResponseOf(z.array(surgeryListItemSchema))
 
 /**
  * 재수술 후보 — RE_OPERATION 원본 행 + 자동판정(포함/제외)·제외사유.
@@ -129,11 +125,7 @@ const reoperationCandidateSchema = z.object({
 
 export type ReoperationCandidate = z.infer<typeof reoperationCandidateSchema>
 
-export const reoperationCandidatesResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(reoperationCandidateSchema),
-  message: z.string().nullish(),
-})
+export const reoperationCandidatesResponseSchema = apiResponseOf(z.array(reoperationCandidateSchema))
 
 /**
  * 재수술 검토 판정 저장·조회 — (차트번호, 수술일) 유니크로 upsert.
@@ -153,17 +145,9 @@ const reoperationDecisionRowSchema = z.object({
 
 export type ReoperationDecisionRow = z.infer<typeof reoperationDecisionRowSchema>
 
-export const reoperationDecisionListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(reoperationDecisionRowSchema),
-  message: z.string().nullish(),
-})
+export const reoperationDecisionListResponseSchema = apiResponseOf(z.array(reoperationDecisionRowSchema))
 
-export const reoperationDecisionSaveResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(reoperationDecisionRowSchema),
-  message: z.string().nullish(),
-})
+export const reoperationDecisionSaveResponseSchema = apiResponseOf(z.array(reoperationDecisionRowSchema))
 
 export interface ReoperationDecisionSaveItem {
   chartNo: string

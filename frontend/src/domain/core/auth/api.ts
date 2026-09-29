@@ -1,10 +1,10 @@
 import { api } from '#shared/api/client'
 
-import type { ApiResponse, LoginData, LoginRequest } from './type/api'
+import { type LoginData, type LoginRequest, loginResponseSchema } from './type/api'
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginData> => {
-    const res = await api.post<ApiResponse<LoginData>>('/auth/login', data)
-    return res.data.data
+    const res = await api.post('/auth/login', data)
+    return loginResponseSchema.parse(res.data).data
   },
 }

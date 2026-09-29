@@ -62,11 +62,7 @@ const allExamListItemSchema = z.object({
 
 export type AllExamListItem = z.infer<typeof allExamListItemSchema>
 
-export const allExamListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(allExamListItemSchema),
-  message: z.string().nullish(),
-})
+export const allExamListResponseSchema = apiResponseOf(z.array(allExamListItemSchema))
 
 /**
  * 백내장 검사자 리스트 — 성민CRM "백내장 검사자 리스트"(FrmCataract_ExamList).
@@ -136,11 +132,7 @@ const cataractExamListItemSchema = z.object({
 
 export type CataractExamListItem = z.infer<typeof cataractExamListItemSchema>
 
-export const cataractExamListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(cataractExamListItemSchema),
-  message: z.string().nullish(),
-})
+export const cataractExamListResponseSchema = apiResponseOf(z.array(cataractExamListItemSchema))
 
 const eoeisCheckupRowSchema = z.object({
   operatorName: z.string(),
@@ -171,11 +163,7 @@ const examCountByClassRowSchema = z.object({
 
 export type ExamCountByClassRow = z.infer<typeof examCountByClassRowSchema>
 
-export const examCountByClassResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(examCountByClassRowSchema),
-  message: z.string().nullish(),
-})
+export const examCountByClassResponseSchema = apiResponseOf(z.array(examCountByClassRowSchema))
 
 /**
  * 검사자 리스트(상담사별) — 성민CRM 화면 소스(EXAM+CUSTOM+OPERATIONDATA+EMPLOYEE)의 행 목록.
@@ -236,8 +224,4 @@ const examListItemSchema = z.object({
 
 export type ExamListItem = z.infer<typeof examListItemSchema>
 
-export const examListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(examListItemSchema),
-  message: z.string().nullish(),
-})
+export const examListResponseSchema = apiResponseOf(z.array(examListItemSchema))

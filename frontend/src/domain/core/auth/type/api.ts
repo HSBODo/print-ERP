@@ -1,27 +1,28 @@
-import type { UserDepartment, UserRole } from '#domain/support/session/session'
+import { z } from 'zod'
+import { apiResponseOf } from '#shared/api/utils'
 
 export interface LoginRequest {
   loginId: string
   password: string
 }
 
-export interface LoginUser {
-  id: number
-  loginId: string
-  email: string
-  name: string
-  role: UserRole
+const loginUserSchema = z.object({
+  id: z.number(),
+  loginId: z.string(),
+  email: z.string(),
+  name: z.string(),
+  role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
   /** ADMIN·DIRECTOR 는 'ALL' (docs/auth/permissions.md § 2-3). */
-  department: UserDepartment
-}
+  department: z.enum(['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING'] as const),
+})
 
-export interface LoginData {
-  token: string
-  user: LoginUser
-}
+export type LoginUser = z.infer<typeof loginUserSchema>
 
-export interface ApiResponse<T> {
-  success: boolean
-  data: T
-  message?: string
-}
+const loginDataSchema = z.object({
+  token: z.string(),
+  user: loginUserSchema,
+})
+
+export type LoginData = z.infer<typeof loginDataSchema>
+
+export const loginResponseSchema = apiResponseOf(loginDataSchema)
