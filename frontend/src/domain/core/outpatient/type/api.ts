@@ -64,8 +64,4 @@ export const outpatientListItemSchema = z.object({
 
 export type OutpatientListItem = z.infer<typeof outpatientListItemSchema>
 
-export const outpatientListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(outpatientListItemSchema),
-  message: z.string().nullish(),
-})
+export const outpatientListResponseSchema = apiResponseOf(z.array(outpatientListItemSchema))

@@ -52,9 +52,6 @@ const consultationRateItemSchema = z.object({
   cataractSurgeryRate: z.number(),
 })
 
-export const consultationRateResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(consultationRateItemSchema),
-})
+export const consultationRateResponseSchema = apiResponseOf(z.array(consultationRateItemSchema))
 
 export type ConsultationRateItem = z.infer<typeof consultationRateItemSchema>

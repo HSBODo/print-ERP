@@ -58,13 +58,9 @@ const reservationChangeItemSchema = z.object({
 
 export type ReservationChangeItem = z.infer<typeof reservationChangeItemSchema>
 
-export const reservationChangeResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.object({
-    rows: z.array(reservationChangeItemSchema),
-  }),
-  message: z.string().nullish(),
-})
+export const reservationChangeResponseSchema = apiResponseOf(z.object({
+  rows: z.array(reservationChangeItemSchema),
+}))
 
 export interface ReservationChangeResult {
   rows: ReservationChangeItem[]
@@ -85,14 +81,10 @@ const dailyCountSchema = z.object({
 
 export type ReservationChangeDailyCount = z.infer<typeof dailyCountSchema>
 
-export const reservationChangeDailyResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.object({
-    byRegistered: z.array(dailyCountSchema),
-    byReserveDate: z.array(dailyCountSchema),
-  }),
-  message: z.string().nullish(),
-})
+export const reservationChangeDailyResponseSchema = apiResponseOf(z.object({
+  byRegistered: z.array(dailyCountSchema),
+  byReserveDate: z.array(dailyCountSchema),
+}))
 
 export interface ReservationChangeDailyResult {
   byRegistered: ReservationChangeDailyCount[]
@@ -141,13 +133,9 @@ const reservationListItemSchema = z.object({
 
 export type ReservationListItem = z.infer<typeof reservationListItemSchema>
 
-export const reservationListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.object({
-    rows: z.array(reservationListItemSchema),
-  }),
-  message: z.string().nullish(),
-})
+export const reservationListResponseSchema = apiResponseOf(z.object({
+  rows: z.array(reservationListItemSchema),
+}))
 
 export interface ReservationListResult {
   rows: ReservationListItem[]
