@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 
 /**
  * 공용 월 선택기 — `<input type="month">` 전면 교체용.
@@ -49,14 +54,17 @@ export function MonthPicker({
   className,
 }: MonthPickerProps) {
   const [open, setOpen] = useState(false)
-  const [viewYear, setViewYear] = useState(() => Number(value.slice(0, 4)) || new Date().getFullYear())
+  const [viewYear, setViewYear] = useState(
+    () => Number(value.slice(0, 4)) || new Date().getFullYear(),
+  )
   const rootRef = useRef<HTMLDivElement>(null)
 
   // 바깥 클릭·Esc 로 닫는다. 열려 있을 때만 리스너를 단다.
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
+      if (rootRef.current && !rootRef.current.contains(e.target as Node))
+        setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
@@ -71,7 +79,8 @@ export function MonthPicker({
 
   const toggle = () => {
     // 열 때마다 선택된 값의 연도로 되돌린다 — 지난번에 넘겨 둔 연도가 남아 있으면 혼란스럽다.
-    if (!open) setViewYear(Number(value.slice(0, 4)) || new Date().getFullYear())
+    if (!open)
+      setViewYear(Number(value.slice(0, 4)) || new Date().getFullYear())
     setOpen((o) => !o)
   }
 
@@ -101,7 +110,9 @@ export function MonthPicker({
       >
         <CalendarDays className="h-3.5 w-3.5 text-slate-500" />
         <span className="font-medium tabular-nums">{label}</span>
-        <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`h-3 w-3 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {open && (
@@ -117,7 +128,9 @@ export function MonthPicker({
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-[13px] font-bold tabular-nums text-slate-900">{viewYear}</span>
+            <span className="text-[13px] font-bold tabular-nums text-slate-900">
+              {viewYear}
+            </span>
             <button
               type="button"
               aria-label="다음 연도"

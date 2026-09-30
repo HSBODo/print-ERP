@@ -56,14 +56,19 @@ export function buildDisplayRowsFromCounts<
 ): TRow[] {
   const year = Number(period.slice(0, 4))
   const month = Number(period.slice(5, 7))
-  const byDate = new Map<string, TCounts>(dailies.map((daily) => [daily.date, daily as unknown as TCounts]))
+  const byDate = new Map<string, TCounts>(
+    dailies.map((daily) => [daily.date, daily as unknown as TCounts]),
+  )
   const firstWeekday = new Date(year, month - 1, 1).getDay()
 
   const dayRows: TRow[] = []
   // 월 주(주별) 버킷.
   const monthWeekBuckets = new Map<number, TCounts[]>()
   // ISO 주차(주차) 버킷 — 정렬은 (year, week) 순서 유지용 order 사용.
-  const isoWeekBuckets = new Map<string, { counts: TCounts[]; label: string; order: number }>()
+  const isoWeekBuckets = new Map<
+    string,
+    { counts: TCounts[]; label: string; order: number }
+  >()
   const allCounts: TCounts[] = []
   let isoOrder = 0
 
@@ -74,12 +79,19 @@ export function buildDisplayRowsFromCounts<
     allCounts.push(counts)
 
     const monthWeek = weekOf(day, firstWeekday)
-    monthWeekBuckets.set(monthWeek, [...(monthWeekBuckets.get(monthWeek) ?? []), counts])
+    monthWeekBuckets.set(monthWeek, [
+      ...(monthWeekBuckets.get(monthWeek) ?? []),
+      counts,
+    ])
 
     const iso = isoWeek(new Date(year, month - 1, day))
     const isoKey = `${iso.year}-${iso.week}`
     if (!isoWeekBuckets.has(isoKey)) {
-      isoWeekBuckets.set(isoKey, { counts: [], label: `${iso.week}주차`, order: isoOrder++ })
+      isoWeekBuckets.set(isoKey, {
+        counts: [],
+        label: `${iso.week}주차`,
+        order: isoOrder++,
+      })
     }
     isoWeekBuckets.get(isoKey)!.counts.push(counts)
 
@@ -102,14 +114,22 @@ export function buildDisplayRowsFromCounts<
 
   const monthWeekRows = [...monthWeekBuckets.keys()]
     .sort((a, b) => a - b)
-    .map((week) => deps.buildRow(deps.sumCounts(monthWeekBuckets.get(week) ?? []), `${week + 1}주`, 'week'))
+    .map((week) =>
+      deps.buildRow(
+        deps.sumCounts(monthWeekBuckets.get(week) ?? []),
+        `${week + 1}주`,
+        'week',
+      ),
+    )
 
   if (granularity === 'week') return [totalRow, ...monthWeekRows]
 
   if (granularity === 'yearWeek') {
     const rows = [...isoWeekBuckets.values()]
       .sort((a, b) => a.order - b.order)
-      .map(({ counts, label }) => deps.buildRow(deps.sumCounts(counts), label, 'week'))
+      .map(({ counts, label }) =>
+        deps.buildRow(deps.sumCounts(counts), label, 'week'),
+      )
     return [totalRow, ...rows]
   }
 
@@ -139,14 +159,22 @@ export function buildRangeDisplayRowsFromCounts<
   toDate: string,
   deps: BuildDisplayRowsDeps<TCounts, TRow>,
 ): TRow[] {
-  const byDate = new Map<string, TCounts>(dailies.map((d) => [d.date, d as unknown as TCounts]))
+  const byDate = new Map<string, TCounts>(
+    dailies.map((d) => [d.date, d as unknown as TCounts]),
+  )
   const singleMonth = isSingleMonthRange(fromDate, toDate)
 
   const dayRows: TRow[] = []
   // 월 주(주별) 버킷 — 키 'YYYY-M-W'. label 은 단일 월이면 'N주', 여러 달이면 'M월 N주'.
-  const monthWeekBuckets = new Map<string, { counts: TCounts[]; label: string; order: number }>()
+  const monthWeekBuckets = new Map<
+    string,
+    { counts: TCounts[]; label: string; order: number }
+  >()
   // ISO 주차(주차) 버킷 — 키 'YYYY-W'. label 은 단일 해면 'N주', 여러 해면 'YYYY-N주'.
-  const isoWeekBuckets = new Map<string, { counts: TCounts[]; label: string; order: number }>()
+  const isoWeekBuckets = new Map<
+    string,
+    { counts: TCounts[]; label: string; order: number }
+  >()
   const allCounts: TCounts[] = []
 
   const start = new Date(`${fromDate}T00:00:00`)
@@ -183,16 +211,26 @@ export function buildRangeDisplayRowsFromCounts<
     const mKey = `${y}-${mo}-${mWeek}`
     const mLabel = singleMonth ? `${mWeek + 1}주` : `${mo}월 ${mWeek + 1}주`
     if (!monthWeekBuckets.has(mKey)) {
-      monthWeekBuckets.set(mKey, { counts: [], label: mLabel, order: monthWeekOrder++ })
+      monthWeekBuckets.set(mKey, {
+        counts: [],
+        label: mLabel,
+        order: monthWeekOrder++,
+      })
     }
     monthWeekBuckets.get(mKey)!.counts.push(counts)
 
     // ISO 주차 버킷. 라벨은 단일 연도면 'N주차', 여러 해 걸치면 'YYYY-N주차'.
     const iso = isoWeek(cur)
     const isoKey = `${iso.year}-${iso.week}`
-    const isoLabel = multiYear ? `${iso.year}-${iso.week}주차` : `${iso.week}주차`
+    const isoLabel = multiYear
+      ? `${iso.year}-${iso.week}주차`
+      : `${iso.week}주차`
     if (!isoWeekBuckets.has(isoKey)) {
-      isoWeekBuckets.set(isoKey, { counts: [], label: isoLabel, order: isoOrder++ })
+      isoWeekBuckets.set(isoKey, {
+        counts: [],
+        label: isoLabel,
+        order: isoOrder++,
+      })
     }
     isoWeekBuckets.get(isoKey)!.counts.push(counts)
 
@@ -219,14 +257,18 @@ export function buildRangeDisplayRowsFromCounts<
 
   const monthWeekRows = [...monthWeekBuckets.values()]
     .sort((a, b) => a.order - b.order)
-    .map(({ counts, label }) => deps.buildRow(deps.sumCounts(counts), label, 'week'))
+    .map(({ counts, label }) =>
+      deps.buildRow(deps.sumCounts(counts), label, 'week'),
+    )
 
   if (granularity === 'week') return [totalRow, ...monthWeekRows]
 
   if (granularity === 'yearWeek') {
     const rows = [...isoWeekBuckets.values()]
       .sort((a, b) => a.order - b.order)
-      .map(({ counts, label }) => deps.buildRow(deps.sumCounts(counts), label, 'week'))
+      .map(({ counts, label }) =>
+        deps.buildRow(deps.sumCounts(counts), label, 'week'),
+      )
     return [totalRow, ...rows]
   }
 

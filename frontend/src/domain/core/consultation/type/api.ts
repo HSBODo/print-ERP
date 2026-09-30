@@ -16,7 +16,9 @@ const stopReasonMonthlyItemSchema = z.object({
   total: z.number(),
 })
 export type StopReasonMonthlyItem = z.infer<typeof stopReasonMonthlyItemSchema>
-export const stopReasonResponseSchema = apiResponseOf(z.array(stopReasonMonthlyItemSchema))
+export const stopReasonResponseSchema = apiResponseOf(
+  z.array(stopReasonMonthlyItemSchema),
+)
 
 /* ── Monthly (백내장 예약률 페이지용) ── */
 
@@ -27,8 +29,12 @@ const cataractReservationRateItemSchema = z.object({
   surgeryBookedCount: z.number(),
   reservationRate: z.number(),
 })
-export type CataractReservationRateItem = z.infer<typeof cataractReservationRateItemSchema>
-export const cataractReservationRateResponseSchema = apiResponseOf(z.array(cataractReservationRateItemSchema))
+export type CataractReservationRateItem = z.infer<
+  typeof cataractReservationRateItemSchema
+>
+export const cataractReservationRateResponseSchema = apiResponseOf(
+  z.array(cataractReservationRateItemSchema),
+)
 
 /* ── 상담 전환율 페이지용 ── */
 
@@ -52,6 +58,8 @@ const consultationRateItemSchema = z.object({
   cataractSurgeryRate: z.number(),
 })
 
-export const consultationRateResponseSchema = apiResponseOf(z.array(consultationRateItemSchema))
+export const consultationRateResponseSchema = apiResponseOf(
+  z.array(consultationRateItemSchema),
+)
 
 export type ConsultationRateItem = z.infer<typeof consultationRateItemSchema>

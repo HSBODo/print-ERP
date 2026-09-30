@@ -25,25 +25,56 @@ export const SURGERY_TYPES: {
   family: FamilyKey
   color: string
 }[] = [
-  { key: 'lasek', label: '라섹', family: 'refractive', color: 'var(--chart-1)' },
+  {
+    key: 'lasek',
+    label: '라섹',
+    family: 'refractive',
+    color: 'var(--chart-1)',
+  },
   { key: 'lasik', label: '라식', family: 'refractive', color: '#3b82f6' },
-  { key: 'smile', label: '스마일', family: 'refractive', color: 'var(--chart-3)' },
-  { key: 'smilePro', label: '스마일프로', family: 'refractive', color: '#fb7185' },
+  {
+    key: 'smile',
+    label: '스마일',
+    family: 'refractive',
+    color: 'var(--chart-3)',
+  },
+  {
+    key: 'smilePro',
+    label: '스마일프로',
+    family: 'refractive',
+    color: '#fb7185',
+  },
   { key: 'icl', label: 'ICL', family: 'implant', color: 'var(--chart-4)' },
   { key: 'tIcl', label: 'T-ICL', family: 'implant', color: '#f59e0b' },
   { key: 'kpl', label: 'KPL', family: 'implant', color: '#10b981' },
   { key: 'tKpl', label: 'T-KPL', family: 'implant', color: '#14b8a6' },
   { key: 'viva', label: 'VIVA', family: 'implant', color: '#8b5cf6' },
-  { key: 'catMulti', label: '백내장(다초점)', family: 'cataract', color: '#f97316' },
-  { key: 'catMono', label: '백내장(단초점)', family: 'cataract', color: '#64748b' },
-  { key: 'catEdof', label: '백내장(연속초점)', family: 'cataract', color: '#ef4444' },
+  {
+    key: 'catMulti',
+    label: '백내장(다초점)',
+    family: 'cataract',
+    color: '#f97316',
+  },
+  {
+    key: 'catMono',
+    label: '백내장(단초점)',
+    family: 'cataract',
+    color: '#64748b',
+  },
+  {
+    key: 'catEdof',
+    label: '백내장(연속초점)',
+    family: 'cataract',
+    color: '#ef4444',
+  },
 ]
 
-export const FAMILY_META: Record<FamilyKey, { label: string; color: string }> = {
-  refractive: { label: '굴절교정', color: 'var(--chart-1)' },
-  implant: { label: '렌즈삽입/특수', color: 'var(--chart-4)' },
-  cataract: { label: '백내장', color: '#f97316' },
-}
+export const FAMILY_META: Record<FamilyKey, { label: string; color: string }> =
+  {
+    refractive: { label: '굴절교정', color: 'var(--chart-1)' },
+    implant: { label: '렌즈삽입/특수', color: 'var(--chart-4)' },
+    cataract: { label: '백내장', color: '#f97316' },
+  }
 
 export const barConfig = Object.fromEntries(
   SURGERY_TYPES.map((type) => [
@@ -80,7 +111,9 @@ export const EMPTY_DATA: MonthlyData = {
   catEdof: 0,
 }
 
-export function toYearMap(items: SurgeryMonthlyItem[]): Record<number, MonthlyData[]> {
+export function toYearMap(
+  items: SurgeryMonthlyItem[],
+): Record<number, MonthlyData[]> {
   const result: Record<number, MonthlyData[]> = {}
   for (const item of items) {
     if (!result[item.year]) {

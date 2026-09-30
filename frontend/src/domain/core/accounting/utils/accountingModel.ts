@@ -7,8 +7,10 @@ export const ACCOUNTING_PAGE_SIZE_OPTIONS = [50, 100, 200, 500]
 
 export const formatWonCompact = (value: number | string): string => {
   const amount = Number(value)
-  if (Math.abs(amount) >= 100_000_000) return `${(amount / 100_000_000).toFixed(1)}억`
-  if (Math.abs(amount) >= 10_000) return `${Math.round(amount / 10_000).toLocaleString('ko-KR')}만`
+  if (Math.abs(amount) >= 100_000_000)
+    return `${(amount / 100_000_000).toFixed(1)}억`
+  if (Math.abs(amount) >= 10_000)
+    return `${Math.round(amount / 10_000).toLocaleString('ko-KR')}만`
   return amount.toLocaleString('ko-KR')
 }
 
@@ -22,11 +24,17 @@ export const matchesKeyword = (
 ): boolean => {
   const normalized = keyword.trim().toLowerCase()
   if (!normalized) return true
-  return values.some((value) => String(value).toLowerCase().includes(normalized))
+  return values.some((value) =>
+    String(value).toLowerCase().includes(normalized),
+  )
 }
 
 /** "데이터 기준 YYYY-MM-DD · from~to" — 적재 전이면 미상. */
-export const dataStamp = (loadedAt: string | null | undefined, from?: string | null, to?: string | null) => {
+export const dataStamp = (
+  loadedAt: string | null | undefined,
+  from?: string | null,
+  to?: string | null,
+) => {
   if (!loadedAt) return { date: '미상', range: '' }
   return { date: loadedAt, range: from && to ? `${from}~${to}` : '' }
 }

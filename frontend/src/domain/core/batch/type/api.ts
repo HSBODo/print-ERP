@@ -2,11 +2,13 @@ import { z } from 'zod'
 import { apiResponseOf } from '#shared/api/utils'
 
 const lastSuccessSchema = z.object({
-  targetDate: z.string(),  // YYYY-MM-DD
-  finishedAt: z.string(),  // ISO datetime
+  targetDate: z.string(), // YYYY-MM-DD
+  finishedAt: z.string(), // ISO datetime
 })
 
-export const lastSuccessResponseSchema = apiResponseOf(lastSuccessSchema.nullable())
+export const lastSuccessResponseSchema = apiResponseOf(
+  lastSuccessSchema.nullable(),
+)
 
 export type BatchLastSuccess = z.infer<typeof lastSuccessSchema>
 

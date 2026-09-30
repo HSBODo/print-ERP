@@ -9,8 +9,12 @@ export const outpatientCountMonthlyItemSchema = z.object({
   outpatientCount: z.number().nullable(),
   total: z.number().nullable().optional(),
 })
-export type OutpatientCountMonthlyItem = z.infer<typeof outpatientCountMonthlyItemSchema>
-export const outpatientCountResponseSchema = apiResponseOf(z.array(outpatientCountMonthlyItemSchema))
+export type OutpatientCountMonthlyItem = z.infer<
+  typeof outpatientCountMonthlyItemSchema
+>
+export const outpatientCountResponseSchema = apiResponseOf(
+  z.array(outpatientCountMonthlyItemSchema),
+)
 
 /* ── 외래수 리스트 ── */
 
@@ -25,11 +29,11 @@ export const outpatientListItemSchema = z.object({
   reserveDate: z.string(),
   reserveTime: z.string(),
   endTime: z.string(),
-  state: z.string(),           // '내원' | '퇴원'
-  stateCode: z.string(),       // 'I' | 'H'
-  reserveType: z.string(),     // 진료 세부유형 (MEDICAL_SUB_CFG.SUB_NAME)
+  state: z.string(), // '내원' | '퇴원'
+  stateCode: z.string(), // 'I' | 'H'
+  reserveType: z.string(), // 진료 세부유형 (MEDICAL_SUB_CFG.SUB_NAME)
   reserveJinryoCode: z.string(),
-  patientType: z.string(),     // '신환' | '구환'
+  patientType: z.string(), // '신환' | '구환'
   oldFlag: z.string(),
   todayFlag: z.string(),
   happyCall: z.string(),
@@ -64,4 +68,6 @@ export const outpatientListItemSchema = z.object({
 
 export type OutpatientListItem = z.infer<typeof outpatientListItemSchema>
 
-export const outpatientListResponseSchema = apiResponseOf(z.array(outpatientListItemSchema))
+export const outpatientListResponseSchema = apiResponseOf(
+  z.array(outpatientListItemSchema),
+)

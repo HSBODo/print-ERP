@@ -51,56 +51,72 @@ export function TrendLineChart({
   // 값 라벨(월간 레포트 ReportLineChart와 동일 방식):
   //  ① 정점(이웃 평균보다 큼)은 점 위, 골은 점 아래 → 라벨이 선 바깥으로 빠져 겹침이 줄어든다
   //  ② 흰색 헤일로(stroke + paint-order)로 다른 선 위에 겹쳐도 숫자가 또렷하게 보인다
-  const makeLabelRenderer = (lineKey: string) => (props: {
-    x?: number | string
-    y?: number | string
-    value?: unknown
-    index?: number
-  }) => {
-    const { value, index } = props
-    const x = Number(props.x)
-    const y = Number(props.y)
-    if (
-      typeof value !== 'number' ||
-      typeof index !== 'number' ||
-      !Number.isFinite(x) ||
-      !Number.isFinite(y)
-    ) {
-      return <g />
+  const makeLabelRenderer =
+    (lineKey: string) =>
+    (props: {
+      x?: number | string
+      y?: number | string
+      value?: unknown
+      index?: number
+    }) => {
+      const { value, index } = props
+      const x = Number(props.x)
+      const y = Number(props.y)
+      if (
+        typeof value !== 'number' ||
+        typeof index !== 'number' ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
+      ) {
+        return <g />
+      }
+      const series = data.map((row) => row[lineKey])
+      const neighbors = [series[index - 1], series[index + 1]].filter(
+        (v): v is number => typeof v === 'number',
+      )
+      const avg = neighbors.length
+        ? neighbors.reduce((a, b) => a + b, 0) / neighbors.length
+        : value
+      const above = value >= avg
+      return (
+        <text
+          x={x}
+          y={y + (above ? -10 : 17)}
+          textAnchor="middle"
+          fontSize={11}
+          fontWeight={700}
+          fill={`var(--color-${lineKey})`}
+          stroke="#ffffff"
+          strokeWidth={3}
+          strokeLinejoin="round"
+          style={{ paintOrder: 'stroke' }}
+        >
+          {yTickFormatter(value)}
+        </text>
+      )
     }
-    const series = data.map((row) => row[lineKey])
-    const neighbors = [series[index - 1], series[index + 1]].filter(
-      (v): v is number => typeof v === 'number',
-    )
-    const avg = neighbors.length ? neighbors.reduce((a, b) => a + b, 0) / neighbors.length : value
-    const above = value >= avg
-    return (
-      <text
-        x={x}
-        y={y + (above ? -10 : 17)}
-        textAnchor="middle"
-        fontSize={11}
-        fontWeight={700}
-        fill={`var(--color-${lineKey})`}
-        stroke="#ffffff"
-        strokeWidth={3}
-        strokeLinejoin="round"
-        style={{ paintOrder: 'stroke' }}
-      >
-        {yTickFormatter(value)}
-      </text>
-    )
-  }
 
   return (
     <ChartContainer config={config} className={className}>
       {/* 라벨 표시 시 상단 라벨이 잘리지 않도록 위쪽 여백 확보 */}
       <LineChart data={data} margin={showValueLabels ? { top: 20 } : undefined}>
         <CartesianGrid vertical={false} />
-        <XAxis dataKey={xKey} tickLine={false} axisLine={false} tickMargin={8} />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={yTickFormatter} />
+        <XAxis
+          dataKey={xKey}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+        />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tickFormatter={yTickFormatter}
+        />
         <ChartLegend content={<ChartLegendContent />} />
-        <ChartTooltip content={<ChartTooltipContent formatter={tooltipFormatter} />} />
+        <ChartTooltip
+          content={<ChartTooltipContent formatter={tooltipFormatter} />}
+        />
         {lines.map((line) => (
           <Line
             key={line.key}

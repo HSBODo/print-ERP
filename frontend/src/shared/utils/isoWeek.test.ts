@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { addDays, isoWeek, isoWeekMonday, isoWeeksInYear, isoYearRange, toIsoDate } from '#shared/utils/isoWeek'
+import {
+  addDays,
+  isoWeek,
+  isoWeekMonday,
+  isoWeeksInYear,
+  isoYearRange,
+  toIsoDate,
+} from '#shared/utils/isoWeek'
 
 describe('isoWeek', () => {
   it('첫 목요일이 든 주가 1주차 — 2026-01-01(목)은 2026년 1주차', () => {
@@ -39,13 +46,25 @@ describe('isoWeekMonday', () => {
 
 describe('isoYearRange', () => {
   it('1주차 월요일 ~ 마지막 주차 일요일 (연·월 경계를 넘는다)', () => {
-    expect(isoYearRange(2026)).toEqual({ from: '2025-12-29', to: '2027-01-03', weeks: 53 })
-    expect(isoYearRange(2025)).toEqual({ from: '2024-12-30', to: '2025-12-28', weeks: 52 })
+    expect(isoYearRange(2026)).toEqual({
+      from: '2025-12-29',
+      to: '2027-01-03',
+      weeks: 53,
+    })
+    expect(isoYearRange(2025)).toEqual({
+      from: '2024-12-30',
+      to: '2025-12-28',
+      weeks: 52,
+    })
   })
 
   it('범위 일수 = 주차 수 x 7 (백엔드 최대 조회 기간 371일 이내)', () => {
     const { from, to, weeks } = isoYearRange(2026)
-    const days = (new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 86_400_000 + 1
+    const days =
+      (new Date(`${to}T00:00:00`).getTime() -
+        new Date(`${from}T00:00:00`).getTime()) /
+        86_400_000 +
+      1
     expect(days).toBe(weeks * 7)
     expect(days).toBeLessThanOrEqual(371)
   })

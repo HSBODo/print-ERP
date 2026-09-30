@@ -71,14 +71,18 @@ const statisticsSchema = z.object({
   year: z.number(),
   granularity: z.enum(['month', 'week', 'day']),
   buckets: z.array(bucketSchema),
-  topCountries: z.array(z.object({
-    nationality: z.string(),
-    surgeries: z.number(),
-  })),
+  topCountries: z.array(
+    z.object({
+      nationality: z.string(),
+      surgeries: z.number(),
+    }),
+  ),
 })
 
 export type OverseasMarketingGranularity = 'month' | 'week' | 'day'
-export type OverseasMarketingReception = z.infer<typeof overseasMarketingReceptionSchema>
+export type OverseasMarketingReception = z.infer<
+  typeof overseasMarketingReceptionSchema
+>
 export type OverseasMarketingBucket = z.infer<typeof bucketSchema>
 export type OverseasMarketingStatistics = z.infer<typeof statisticsSchema>
 
@@ -134,11 +138,17 @@ export interface OverseasMarketingReceptionParams {
   unmatched: boolean
 }
 
-export const receptionsResponseSchema = apiResponseOf(z.array(overseasMarketingReceptionSchema))
+export const receptionsResponseSchema = apiResponseOf(
+  z.array(overseasMarketingReceptionSchema),
+)
 export const statisticsResponseSchema = apiResponseOf(statisticsSchema)
 export const syncResponseSchema = apiResponseOf(syncResultSchema)
-export const mutationResponseSchema = apiResponseOf(z.object({ rowNumber: z.number() }))
-export const syncAvailabilityResponseSchema = apiResponseOf(z.object({ enabled: z.boolean() }))
+export const mutationResponseSchema = apiResponseOf(
+  z.object({ rowNumber: z.number() }),
+)
+export const syncAvailabilityResponseSchema = apiResponseOf(
+  z.object({ enabled: z.boolean() }),
+)
 // 동기화는 백그라운드 잡 — POST는 시작만 하고, 진행·결과는 status 폴링으로 받는다.
 const crmSyncStatusSchema = z.object({
   state: z.enum(['idle', 'running', 'done', 'error']),
@@ -162,12 +172,14 @@ const crmCustomerSchema = z.object({
   email: z.string(),
 })
 export const crmCustomerResponseSchema = apiResponseOf(crmCustomerSchema)
-export const matchConfirmResponseSchema = apiResponseOf(z.object({
-  rowNumber: z.number(),
-  customerNo: z.string(),
-  customerName: z.string(),
-  matchedBy: z.string(),
-}))
+export const matchConfirmResponseSchema = apiResponseOf(
+  z.object({
+    rowNumber: z.number(),
+    customerNo: z.string(),
+    customerName: z.string(),
+    matchedBy: z.string(),
+  }),
+)
 
 export type OverseasMarketingCrmCustomer = z.infer<typeof crmCustomerSchema>
 
@@ -175,17 +187,23 @@ const reservationStatsSchema = z.object({
   year: z.number(),
   granularity: z.enum(['month', 'week', 'day']),
   cutover: z.string(),
-  buckets: z.array(z.object({
-    bucket: z.string(),
-    values: z.record(z.string(), z.number()),
-  })),
+  buckets: z.array(
+    z.object({
+      bucket: z.string(),
+      values: z.record(z.string(), z.number()),
+    }),
+  ),
 })
-export const reservationStatsResponseSchema = apiResponseOf(reservationStatsSchema)
-export const reservationStatUpdateResponseSchema = apiResponseOf(z.object({
-  date: z.string(),
-  groupKey: z.string(),
-  metricKey: z.string(),
-  value: z.number(),
-}))
+export const reservationStatsResponseSchema = apiResponseOf(
+  reservationStatsSchema,
+)
+export const reservationStatUpdateResponseSchema = apiResponseOf(
+  z.object({
+    date: z.string(),
+    groupKey: z.string(),
+    metricKey: z.string(),
+    value: z.number(),
+  }),
+)
 
 export type OverseasReservationStats = z.infer<typeof reservationStatsSchema>

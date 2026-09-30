@@ -74,7 +74,10 @@ describe('weeksOfMonth', () => {
 
   it('선택한 달의 모든 날짜가 반환된 주차에 덮인다 (2026 기준)', () => {
     for (let m = 1; m <= 12; m++) {
-      const covered = weeksOfMonth(weeks, m).reduce((sum, w) => sum + (w.daysByMonth[m] ?? 0), 0)
+      const covered = weeksOfMonth(weeks, m).reduce(
+        (sum, w) => sum + (w.daysByMonth[m] ?? 0),
+        0,
+      )
       expect(covered).toBe(new Date(Date.UTC(2026, m, 0)).getUTCDate())
     }
   })

@@ -14,8 +14,15 @@ export const useBatchRunLogs = (limit = 50, autoRefresh = false) =>
 export const useBatchRerun = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ from, to, domain }: { from: string; to: string; domain: BatchDomain }) =>
-      batchApi.rerun(from, to, domain),
+    mutationFn: ({
+      from,
+      to,
+      domain,
+    }: {
+      from: string
+      to: string
+      domain: BatchDomain
+    }) => batchApi.rerun(from, to, domain),
     onSettled: () => queryClient.invalidateQueries({ queryKey: RUN_LOGS_KEY }),
   })
 }

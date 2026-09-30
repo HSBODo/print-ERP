@@ -17,7 +17,8 @@ export function useAccumulatedEyes(
 ) {
   const { data, isLoading, isFetching, isError, error } = useQuery({
     queryKey: ['accumulated-eyes', from, to, query, field],
-    queryFn: ({ signal }) => marketingApi.getAccumulatedEyes(from, to, query, field, signal),
+    queryFn: ({ signal }) =>
+      marketingApi.getAccumulatedEyes(from, to, query, field, signal),
     enabled: enabled && Boolean(from && to),
     // 400(범위 초과 등) 응답은 재시도해도 계속 400 이라 즉시 실패를 노출.
     retry: false,

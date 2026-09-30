@@ -1,5 +1,8 @@
 import type { AuthUser } from '#domain/support/session/session'
-import { hasAccess, type PageAccess } from '#domain/support/session/utils/access'
+import {
+  hasAccess,
+  type PageAccess,
+} from '#domain/support/session/utils/access'
 
 /**
  * 메뉴별 구현 상태.
@@ -8,8 +11,8 @@ import { hasAccess, type PageAccess } from '#domain/support/session/utils/access
  *   backend-only  — 백엔드 API만 완료, 프론트 페이지는 placeholder (주황)
  *   pending       — 미완성. 개발(DEV)에서만 미리보기, 운영(PROD)에서는 차단 (빨강)
  */
-export type MenuStatus = 'complete' | 'frontend-only' | 'backend-only' | 'pending'
-
+export type MenuStatus =
+  'complete' | 'frontend-only' | 'backend-only' | 'pending'
 
 /** 통계 페이지 메타 — 각 라우트 파일의 staticData.page 로 선언한다. */
 export interface PageMeta {

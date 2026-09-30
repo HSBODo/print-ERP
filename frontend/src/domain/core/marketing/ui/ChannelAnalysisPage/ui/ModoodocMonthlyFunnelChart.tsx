@@ -42,7 +42,9 @@ const BARS = [
 
 async function getMonthlyFunnel(signal?: AbortSignal) {
   const monthlyResponses = await Promise.all(
-    MONTH_RANGES.map(({ from, to }) => marketingApi.getReservationChannelFunnel(from, to, signal)),
+    MONTH_RANGES.map(({ from, to }) =>
+      marketingApi.getReservationChannelFunnel(from, to, signal),
+    ),
   )
 
   return monthlyResponses.map((rows, index) =>
@@ -51,7 +53,13 @@ async function getMonthlyFunnel(signal?: AbortSignal) {
 }
 
 export function ModoodocMonthlyFunnelChart() {
-  const { data = [], isLoading, isFetching, isError, refetch } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['reservation-channel', 'modoodoc-monthly', MODOODOC_FUNNEL_YEAR],
     queryFn: ({ signal }) => getMonthlyFunnel(signal),
     staleTime: 5 * 60 * 1000,
@@ -88,7 +96,9 @@ export function ModoodocMonthlyFunnelChart() {
         </div>
       ) : isError ? (
         <div className="flex h-[260px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-red-200 bg-red-50/40 text-center">
-          <p className="text-[13px] font-semibold text-red-700">월별 데이터를 불러오지 못했습니다.</p>
+          <p className="text-[13px] font-semibold text-red-700">
+            월별 데이터를 불러오지 못했습니다.
+          </p>
           <button
             type="button"
             onClick={() => void refetch()}
@@ -106,7 +116,11 @@ export function ModoodocMonthlyFunnelChart() {
               className="h-[410px] min-w-[1040px] w-full aspect-auto"
               initialDimension={{ width: 1040, height: 410 }}
             >
-              <BarChart data={data} margin={{ top: 12, right: 12, left: 0, bottom: 8 }} barCategoryGap="18%">
+              <BarChart
+                data={data}
+                margin={{ top: 12, right: 12, left: 0, bottom: 8 }}
+                barCategoryGap="18%"
+              >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
                   dataKey="month"
@@ -123,14 +137,22 @@ export function ModoodocMonthlyFunnelChart() {
                 />
                 <ChartTooltip
                   cursor={{ fill: '#F1F5F9', opacity: 0.7 }}
-                  content={(
+                  content={
                     <ChartTooltipContent
-                      labelFormatter={(label) => `${MODOODOC_FUNNEL_YEAR}년 ${String(label)}`}
-                      valueFormatter={(value) => `${Number(value).toLocaleString()}건`}
+                      labelFormatter={(label) =>
+                        `${MODOODOC_FUNNEL_YEAR}년 ${String(label)}`
+                      }
+                      valueFormatter={(value) =>
+                        `${Number(value).toLocaleString()}건`
+                      }
                     />
-                  )}
+                  }
                 />
-                <ChartLegend content={<ChartLegendContent className="flex-wrap gap-x-4 gap-y-1" />} />
+                <ChartLegend
+                  content={
+                    <ChartLegendContent className="flex-wrap gap-x-4 gap-y-1" />
+                  }
+                />
                 {BARS.map(({ key, color }) => (
                   <Bar
                     key={key}
@@ -144,23 +166,34 @@ export function ModoodocMonthlyFunnelChart() {
             </ChartContainer>
           </div>
           <div className="mt-4">
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">단계별 월 건수</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              단계별 월 건수
+            </p>
             <Table
               head={['단계', ...data.map((row) => row.month), '합계']}
               rows={BARS.map(({ key }) => [
-                <span key={key} className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="h-2 w-2 flex-none rounded-[3px]" style={{ background: chartConfig[key].color }} />
+                <span
+                  key={key}
+                  className="flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  <span
+                    className="h-2 w-2 flex-none rounded-[3px]"
+                    style={{ background: chartConfig[key].color }}
+                  />
                   {chartConfig[key].label}
                 </span>,
                 ...data.map((row) => row[key].toLocaleString()),
                 <b key="total" className="font-semibold">
-                  {data.reduce((sum, row) => sum + row[key], 0).toLocaleString()}
+                  {data
+                    .reduce((sum, row) => sum + row[key], 0)
+                    .toLocaleString()}
                 </b>,
               ])}
             />
           </div>
           <p className="mt-2 text-[11.5px] leading-relaxed text-slate-400">
-            아직 데이터가 없거나 도래하지 않은 월은 0건으로 표시됩니다. 표의 합계는 1~12월 전체 합입니다.
+            아직 데이터가 없거나 도래하지 않은 월은 0건으로 표시됩니다. 표의
+            합계는 1~12월 전체 합입니다.
           </p>
         </>
       )}

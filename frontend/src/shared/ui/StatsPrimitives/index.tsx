@@ -37,13 +37,24 @@ export function StatsSelect({
         viewBox="0 0 24 24"
         stroke="currentColor"
       >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 9l-7 7-7-7"
+        />
       </svg>
     </div>
   )
 }
 
-export function TrendChip({ value, suffix }: { value: number; suffix: string }) {
+export function TrendChip({
+  value,
+  suffix,
+}: {
+  value: number
+  suffix: string
+}) {
   const positive = value > 0
   const neutral = value === 0
   const TrendIcon = neutral ? Minus : positive ? TrendingUp : TrendingDown

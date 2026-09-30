@@ -1,5 +1,12 @@
 import { useMemo, useState } from 'react'
-import { RotateCcw, Search, ChevronDown, ChevronUp, ChevronsUpDown, Download } from 'lucide-react'
+import {
+  RotateCcw,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  ChevronsUpDown,
+  Download,
+} from 'lucide-react'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { TablePagination } from '#shared/ui/TablePagination'
@@ -20,7 +27,8 @@ import type { ReservationListItem } from '../../type/api'
 const dash = (v: string | undefined) => (v && v.trim() ? v : '—')
 const formatCount = (n: number) => n.toLocaleString('ko-KR')
 /** 수술 수납액. 아직 수술 전이면 0 으로 오는데 '0원'으로 보이면 무료로 오해하므로 대시로 둔다. */
-const formatPayment = (v?: number) => (v ? v.toLocaleString('ko-KR') : <span className="text-gray-300">—</span>)
+const formatPayment = (v?: number) =>
+  v ? v.toLocaleString('ko-KR') : <span className="text-gray-300">—</span>
 
 const CHANNEL_STYLE: Record<string, string> = {
   인콜: 'bg-blue-50 text-blue-700',
@@ -39,7 +47,11 @@ const STATE_STYLE: Record<string, { label: string; className: string }> = {
 
 const Badge = ({ text, className }: { text: string; className?: string }) =>
   text ? (
-    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-medium ${className ?? 'bg-gray-100 text-gray-600'}`}>{text}</span>
+    <span
+      className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-medium ${className ?? 'bg-gray-100 text-gray-600'}`}
+    >
+      {text}
+    </span>
   ) : (
     <span className="text-gray-300">—</span>
   )
@@ -111,14 +123,22 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
   { key: 'channel', label: '채널' },
   { key: 'motiveL', label: '내원동기(대)' },
   { key: 'motiveM', label: '내원동기(중)' },
-  { key: 'reserveState', label: '상태', csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState },
+  {
+    key: 'reserveState',
+    label: '상태',
+    csv: (r) => STATE_STYLE[r.reserveState.trim()]?.label ?? r.reserveState,
+  },
   { key: 'examRegDate', label: '검사등록일' },
   { key: 'examStop', label: '검사중단' },
   { key: 'surgeryRegDate', label: '수술등록일' },
   { key: 'surgeryR', label: '수술명(우)' },
   { key: 'surgeryL', label: '수술명(좌)' },
   // 금액은 숫자 그대로 내보낸다 — 엑셀에서 합계·평균을 바로 낼 수 있어야 한다.
-  { key: 'surgeryPayment', label: '수술금액', csv: (r) => (r.surgeryPayment ? String(r.surgeryPayment) : '') },
+  {
+    key: 'surgeryPayment',
+    label: '수술금액',
+    csv: (r) => (r.surgeryPayment ? String(r.surgeryPayment) : ''),
+  },
   { key: 'comment', label: '메모' },
 ]
 
@@ -130,7 +150,10 @@ export function ReservationListPage() {
   const [channel, setChannel] = useState<Channel>('전체')
   const [subChannel, setSubChannel] = useState<string | null>(null)
 
-  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
+  const [sort, setSort] = useState<{
+    key: SortKey
+    dir: 'asc' | 'desc'
+  } | null>(null)
 
   const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
   const { rows, isLoading, isFetching, isError } = useReservationList(from, to)
@@ -138,7 +161,8 @@ export function ReservationListPage() {
 
   // 채널 + 세부채널 필터(즉시 반영)
   const channelFiltered = useMemo(() => {
-    let base = channel === '전체' ? rows : rows.filter((r) => r.channelGroup === channel)
+    let base =
+      channel === '전체' ? rows : rows.filter((r) => r.channelGroup === channel)
     if (subChannel) base = base.filter((r) => r.channel === subChannel)
     return base
   }, [rows, channel, subChannel])
@@ -147,7 +171,9 @@ export function ReservationListPage() {
   const detail = useMemo(() => {
     const q = queryKeyword.trim().toLowerCase()
     if (!q) return channelFiltered
-    return channelFiltered.filter((r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q))
+    return channelFiltered.filter(
+      (r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q),
+    )
   }, [channelFiltered, queryKeyword])
 
   // 정렬 (헤더 클릭) — 한글·숫자 자연 정렬. 필터 결과 길이는 그대로라 건수·페이지 표시는 불변.
@@ -156,7 +182,10 @@ export function ReservationListPage() {
     const { key, dir } = sort
     const factor = dir === 'asc' ? 1 : -1
     return [...detail].sort(
-      (a, b) => String(a[key] ?? '').localeCompare(String(b[key] ?? ''), 'ko', { numeric: true }) * factor,
+      (a, b) =>
+        String(a[key] ?? '').localeCompare(String(b[key] ?? ''), 'ko', {
+          numeric: true,
+        }) * factor,
     )
   }, [detail, sort])
 
@@ -181,7 +210,10 @@ export function ReservationListPage() {
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
   const handleDownloadCsv = () => {
-    downloadCsv(`예약자리스트_${queryMonth}.csv`, columnsToCsv(CSV_COLUMNS, sorted))
+    downloadCsv(
+      `예약자리스트_${queryMonth}.csv`,
+      columnsToCsv(CSV_COLUMNS, sorted),
+    )
   }
 
   // 헤더 클릭: 오름차순 → 내림차순 → 해제 순환. 다른 칼럼 클릭 시 오름차순부터.
@@ -197,16 +229,27 @@ export function ReservationListPage() {
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
       {/* 필터 바 */}
       <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
-        <MonthPicker ariaLabel="기준 월" value={draftMonth} onChange={setDraftMonth} defaultValue={currentMonth()} />
+        <MonthPicker
+          ariaLabel="기준 월"
+          value={draftMonth}
+          onChange={setDraftMonth}
+          defaultValue={currentMonth()}
+        />
         <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
           {CHANNELS.map((c) => (
             <button
               key={c}
               type="button"
               aria-pressed={channel === c}
-              onClick={() => { setChannel(c); setSubChannel(null); pagination.resetPage() }}
+              onClick={() => {
+                setChannel(c)
+                setSubChannel(null)
+                pagination.resetPage()
+              }}
               className={`min-w-[3.5rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
-                channel === c ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+                channel === c
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
               {c}
@@ -216,15 +259,21 @@ export function ReservationListPage() {
         {channel !== '전체' && (
           <div className="flex h-8 items-center gap-1 rounded-md border border-blue-200 bg-blue-50/60 px-1">
             {['전체', ...SUB_CHANNELS[channel]].map((sc) => {
-              const active = sc === '전체' ? subChannel === null : subChannel === sc
+              const active =
+                sc === '전체' ? subChannel === null : subChannel === sc
               return (
                 <button
                   key={sc}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => { setSubChannel(sc === '전체' ? null : sc); pagination.resetPage() }}
+                  onClick={() => {
+                    setSubChannel(sc === '전체' ? null : sc)
+                    pagination.resetPage()
+                  }}
                   className={`h-6 rounded px-2 text-[11px] font-medium transition-colors ${
-                    active ? 'bg-blue-600 text-white' : 'text-blue-700 hover:bg-blue-100'
+                    active
+                      ? 'bg-blue-600 text-white'
+                      : 'text-blue-700 hover:bg-blue-100'
                   }`}
                 >
                   {sc}
@@ -242,12 +291,23 @@ export function ReservationListPage() {
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
         </div>
-        <div className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs" aria-live="polite">
+        <div
+          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
+          aria-live="polite"
+        >
           <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">{formatCount(detail.length)}건</strong>
+          <strong className="tabular-nums text-gray-900">
+            {formatCount(detail.length)}건
+          </strong>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={handleReset}
+          >
             <RotateCcw className="h-3.5 w-3.5" />
             초기화
           </Button>
@@ -279,7 +339,9 @@ export function ReservationListPage() {
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
           {isError ? (
-            <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">데이터를 불러오지 못했습니다.</div>
+            <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">
+              데이터를 불러오지 못했습니다.
+            </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
               <table className="w-full border-collapse text-[12px]">
@@ -301,7 +363,11 @@ export function ReservationListPage() {
                             >
                               <span>{col.label}</span>
                               {active ? (
-                                sort?.dir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                                sort?.dir === 'asc' ? (
+                                  <ChevronUp className="h-3 w-3" />
+                                ) : (
+                                  <ChevronDown className="h-3 w-3" />
+                                )
                               ) : (
                                 <ChevronsUpDown className="h-3 w-3 text-gray-300" />
                               )}
@@ -316,69 +382,132 @@ export function ReservationListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr>
+                      <td
+                        colSpan={15}
+                        className="px-3 py-12 text-center text-sm text-muted-foreground"
+                      >
+                        불러오는 중…
+                      </td>
+                    </tr>
                   )}
-                  {!showLoading && pagination.pageRows.map((r: ReservationListItem, i) => {
-                    const st = STATE_STYLE[r.reserveState.trim()]
-                    return (
-                      <tr key={`${r.chartNo}-${r.registeredAt}-${r.registeredTime}-${i}`} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
-                        <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-500">{formatCount(pagination.rangeStart + i)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">{dash(r.registeredAt)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">{dash(r.registeredTime)}</td>
-                        {/* 아래 3칸은 COLUMNS 의 tight 칼럼 — 헤더와 같은 px-1 을 써야 폭이 맞는다. */}
-                        <td className="whitespace-nowrap px-1 py-1 text-center">{dash(r.chartNo)}</td>
-                        <td className="whitespace-nowrap px-1 py-1 text-center font-medium text-gray-900">{dash(r.name)}</td>
-                        <td className="whitespace-nowrap px-1 py-1 text-center"><Badge text={r.channel} className={CHANNEL_STYLE[r.channel]} /></td>
-                        {/* 내원동기 대/중 — 같은 출처의 짝이라 메모 추출분(amber)·TM 배정 DB 확인분(sky)은 둘 다 색으로 구분. */}
-                        <td
-                          className={`whitespace-nowrap px-2.5 py-1 text-center ${
-                            r.motiveMSource === 'MEMO' ? 'text-amber-700'
-                              : r.motiveMSource === 'TMDB' ? 'text-sky-700'
-                              : 'text-gray-700'
-                          }`}
+                  {!showLoading &&
+                    pagination.pageRows.map((r: ReservationListItem, i) => {
+                      const st = STATE_STYLE[r.reserveState.trim()]
+                      return (
+                        <tr
+                          key={`${r.chartNo}-${r.registeredAt}-${r.registeredTime}-${i}`}
+                          className="border-b border-border/40 transition-colors hover:bg-blue-50/40"
                         >
-                          {dash(r.motiveL)}
-                        </td>
-                        {/* CRM 등록값이 아닌 출처는 색 + 마커로 구분한다 — 섞어 세면 안 된다. */}
-                        <td
-                          className={`whitespace-nowrap px-2.5 py-1 text-center ${
-                            r.motiveMSource === 'MEMO' ? 'text-amber-700'
-                              : r.motiveMSource === 'TMDB' ? 'text-sky-700'
-                              : 'text-gray-700'
-                          }`}
-                          title={r.motiveMSource === 'MEMO'
-                            ? 'CRM 내원동기가 비어 있어 메모의 TM고객(대/중) 문구에서 가져온 값입니다.'
-                            : r.motiveMSource === 'TMDB'
-                              ? '텔레매니저 TM 배정 DB(모두닥 이벤트 리드)에서 확인된 유입입니다. CRM 내원동기보다 우선합니다.'
-                              : undefined}
-                        >
-                          {dash(r.motiveM)}
-                          {r.motiveMSource === 'MEMO' && <span className="ml-0.5 text-[10px]">*</span>}
-                          {r.motiveMSource === 'TMDB' && <span className="ml-0.5 text-[10px]">†</span>}
-                        </td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center"><Badge text={st?.label ?? r.reserveState} className={st?.className} /></td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.examRegDate)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center">
-                          {r.examStop === 'Y'
-                            ? <span className="rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">Y</span>
-                            : r.examStop === 'N'
-                              ? <span className="text-gray-500">N</span>
-                              : <span className="text-gray-300">—</span>}
-                        </td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">{dash(r.surgeryRegDate)}</td>
-                        {/* 수술명 우/좌 — 수술자 리스트와 같은 원천이라 표기가 그대로 일치한다. */}
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryR)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">{dash(r.surgeryL)}</td>
-                        <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-800">{formatPayment(r.surgeryPayment)}</td>
-                        <td className="w-full max-w-0 px-2.5 py-1 text-left">
-                          <span className="block truncate text-gray-700" title={r.comment}>{dash(r.comment)}</span>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                          <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-500">
+                            {formatCount(pagination.rangeStart + i)}
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center">
+                            {dash(r.registeredAt)}
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center tabular-nums text-gray-600">
+                            {dash(r.registeredTime)}
+                          </td>
+                          {/* 아래 3칸은 COLUMNS 의 tight 칼럼 — 헤더와 같은 px-1 을 써야 폭이 맞는다. */}
+                          <td className="whitespace-nowrap px-1 py-1 text-center">
+                            {dash(r.chartNo)}
+                          </td>
+                          <td className="whitespace-nowrap px-1 py-1 text-center font-medium text-gray-900">
+                            {dash(r.name)}
+                          </td>
+                          <td className="whitespace-nowrap px-1 py-1 text-center">
+                            <Badge
+                              text={r.channel}
+                              className={CHANNEL_STYLE[r.channel]}
+                            />
+                          </td>
+                          {/* 내원동기 대/중 — 같은 출처의 짝이라 메모 추출분(amber)·TM 배정 DB 확인분(sky)은 둘 다 색으로 구분. */}
+                          <td
+                            className={`whitespace-nowrap px-2.5 py-1 text-center ${
+                              r.motiveMSource === 'MEMO'
+                                ? 'text-amber-700'
+                                : r.motiveMSource === 'TMDB'
+                                  ? 'text-sky-700'
+                                  : 'text-gray-700'
+                            }`}
+                          >
+                            {dash(r.motiveL)}
+                          </td>
+                          {/* CRM 등록값이 아닌 출처는 색 + 마커로 구분한다 — 섞어 세면 안 된다. */}
+                          <td
+                            className={`whitespace-nowrap px-2.5 py-1 text-center ${
+                              r.motiveMSource === 'MEMO'
+                                ? 'text-amber-700'
+                                : r.motiveMSource === 'TMDB'
+                                  ? 'text-sky-700'
+                                  : 'text-gray-700'
+                            }`}
+                            title={
+                              r.motiveMSource === 'MEMO'
+                                ? 'CRM 내원동기가 비어 있어 메모의 TM고객(대/중) 문구에서 가져온 값입니다.'
+                                : r.motiveMSource === 'TMDB'
+                                  ? '텔레매니저 TM 배정 DB(모두닥 이벤트 리드)에서 확인된 유입입니다. CRM 내원동기보다 우선합니다.'
+                                  : undefined
+                            }
+                          >
+                            {dash(r.motiveM)}
+                            {r.motiveMSource === 'MEMO' && (
+                              <span className="ml-0.5 text-[10px]">*</span>
+                            )}
+                            {r.motiveMSource === 'TMDB' && (
+                              <span className="ml-0.5 text-[10px]">†</span>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center">
+                            <Badge
+                              text={st?.label ?? r.reserveState}
+                              className={st?.className}
+                            />
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">
+                            {dash(r.examRegDate)}
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center">
+                            {r.examStop === 'Y' ? (
+                              <span className="rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">
+                                Y
+                              </span>
+                            ) : r.examStop === 'N' ? (
+                              <span className="text-gray-500">N</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-600">
+                            {dash(r.surgeryRegDate)}
+                          </td>
+                          {/* 수술명 우/좌 — 수술자 리스트와 같은 원천이라 표기가 그대로 일치한다. */}
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">
+                            {dash(r.surgeryR)}
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-center text-gray-700">
+                            {dash(r.surgeryL)}
+                          </td>
+                          <td className="whitespace-nowrap px-2.5 py-1 text-right tabular-nums text-gray-800">
+                            {formatPayment(r.surgeryPayment)}
+                          </td>
+                          <td className="w-full max-w-0 px-2.5 py-1 text-left">
+                            <span
+                              className="block truncate text-gray-700"
+                              title={r.comment}
+                            >
+                              {dash(r.comment)}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   {!showLoading && detail.length === 0 && (
                     <tr>
-                      <td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td
+                        colSpan={15}
+                        className="px-3 py-12 text-center text-sm text-muted-foreground"
+                      >
                         조회 결과가 없습니다.
                       </td>
                     </tr>

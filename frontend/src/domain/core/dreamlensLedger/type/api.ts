@@ -15,14 +15,27 @@ const dreamlensLedgerRowSchema = z.object({
   examiner: text,
   purchaseType: text,
 
-  rLensName: text, rBox: text, rLensSpec: text, rColor: text, rReturnDate: text,
-  lLensName: text, lBox: text, lLensSpec: text, lColor: text, lReturnDate: text,
+  rLensName: text,
+  rBox: text,
+  rLensSpec: text,
+  rColor: text,
+  rReturnDate: text,
+  lLensName: text,
+  lBox: text,
+  lLensSpec: text,
+  lColor: text,
+  lReturnDate: text,
 
-  dlNewRevenue: money, dlRepurchaseRevenue: money,
-  mNewRevenue: money, mRepurchaseRevenue: money,
-  hlNewRevenue: money, hlRepurchaseRevenue: money,
-  depositRevenue: money, fittingRevenue: money,
-  supplyRevenue: money, treatmentRevenue: money,
+  dlNewRevenue: money,
+  dlRepurchaseRevenue: money,
+  mNewRevenue: money,
+  mRepurchaseRevenue: money,
+  hlNewRevenue: money,
+  hlRepurchaseRevenue: money,
+  depositRevenue: money,
+  fittingRevenue: money,
+  supplyRevenue: money,
+  treatmentRevenue: money,
   /** 렌즈 정가(참고) — 매출 버킷은 실수납이라 할인·분납 시 둘이 다르다. 행 합계 미포함. */
   lensListPrice: money.catch(0),
   totalRevenue: money,
@@ -31,14 +44,23 @@ const dreamlensLedgerRowSchema = z.object({
   source: z.string().catch('MANUAL'),
 
   nextReservation: text,
-  recall1: text, recall1Reservation: text, recall1Absent: text,
-  recall2: text, recall2Reservation: text, recall2Absent: text,
-  recall3: text, recall3Reservation: text, recall3Absent: text,
+  recall1: text,
+  recall1Reservation: text,
+  recall1Absent: text,
+  recall2: text,
+  recall2Reservation: text,
+  recall2Absent: text,
+  recall3: text,
+  recall3Reservation: text,
+  recall3Absent: text,
 })
 export type DreamlensLedgerRow = z.infer<typeof dreamlensLedgerRowSchema>
 
 /** 서버가 계산·관리하는 값(id·합계·source)이라 저장 요청에서는 제외한다. */
-export type DreamlensLedgerRequest = Omit<DreamlensLedgerRow, 'id' | 'totalRevenue' | 'source'>
+export type DreamlensLedgerRequest = Omit<
+  DreamlensLedgerRow,
+  'id' | 'totalRevenue' | 'source'
+>
 
 export const ledgerListSchema = apiResponseOf(z.array(dreamlensLedgerRowSchema))
 export const ledgerRowSchema = apiResponseOf(dreamlensLedgerRowSchema)

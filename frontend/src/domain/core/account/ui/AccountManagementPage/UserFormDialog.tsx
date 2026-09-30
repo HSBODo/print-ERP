@@ -15,14 +15,23 @@ import type { UserDepartment, UserRole } from '#domain/support/session/session'
  */
 const isValidCombination = (role: UserRole, department: UserDepartment) => {
   if (role === 'ADMIN' || role === 'DIRECTOR') return department === 'ALL'
-  return department === 'MEDICAL' || department === 'MARKETING' || department === 'OVERSEAS_MARKETING'
+  return (
+    department === 'MEDICAL' ||
+    department === 'MARKETING' ||
+    department === 'OVERSEAS_MARKETING'
+  )
 }
 
 const baseFields = {
   email: z.string().trim().email('이메일 형식이 올바르지 않습니다'),
   name: z.string().trim().min(1, '이름을 입력하세요').max(100),
   role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
-  department: z.enum(['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING'] as const),
+  department: z.enum([
+    'ALL',
+    'MEDICAL',
+    'MARKETING',
+    'OVERSEAS_MARKETING',
+  ] as const),
 }
 
 const createSchema = z
@@ -38,7 +47,8 @@ const createSchema = z
     password: z.string().min(8, '비밀번호는 8자 이상'),
   })
   .refine((v) => isValidCombination(v.role, v.department), {
-    message: '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING)',
+    message:
+      '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING)',
     path: ['department'],
   })
 
@@ -48,7 +58,10 @@ const updateSchema = z
     password: z
       .string()
       .min(0)
-      .refine((v) => v === '' || v.length >= 8, '비밀번호는 8자 이상 (빈 값이면 유지)'),
+      .refine(
+        (v) => v === '' || v.length >= 8,
+        '비밀번호는 8자 이상 (빈 값이면 유지)',
+      ),
   })
   .refine((v) => isValidCombination(v.role, v.department), {
     message: '권한·부서 조합이 유효하지 않습니다',
@@ -74,7 +87,13 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
     resolver: zodResolver(mode === 'create' ? createSchema : updateSchema),
     defaultValues:
       mode === 'edit' && user
-        ? { email: user.email, name: user.name, role: user.role, department: user.department, password: '' }
+        ? {
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            department: user.department,
+            password: '',
+          }
         : {
             loginId: '',
             email: '',
@@ -151,10 +170,15 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4 text-sm">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="p-5 space-y-4 text-sm"
+        >
           {mode === 'create' && (
             <div>
-              <label className="block text-gray-700 font-medium mb-1">아이디</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                아이디
+              </label>
               <input
                 type="text"
                 autoComplete="off"
@@ -163,13 +187,17 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
                 placeholder="영문 소문자·숫자"
               />
               {'loginId' in formState.errors && (
-                <p className="text-red-500 text-xs mt-1">{formState.errors.loginId?.message as string}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {formState.errors.loginId?.message as string}
+                </p>
               )}
             </div>
           )}
 
           <div>
-            <label className="block text-gray-700 font-medium mb-1">이메일</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              이메일
+            </label>
             <input
               type="email"
               autoComplete="off"
@@ -177,7 +205,9 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
             {formState.errors.email && (
-              <p className="text-red-500 text-xs mt-1">{formState.errors.email.message as string}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {formState.errors.email.message as string}
+              </p>
             )}
           </div>
 
@@ -190,7 +220,9 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
             {formState.errors.name && (
-              <p className="text-red-500 text-xs mt-1">{formState.errors.name.message as string}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {formState.errors.name.message as string}
+              </p>
             )}
           </div>
 
@@ -199,7 +231,9 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               <label className="block text-gray-700 font-medium mb-1">
                 권한
                 {roleFieldDisabled && (
-                  <span className="ml-1 text-xs text-gray-400 font-normal">(자기 자신 변경 불가)</span>
+                  <span className="ml-1 text-xs text-gray-400 font-normal">
+                    (자기 자신 변경 불가)
+                  </span>
                 )}
               </label>
               <select
@@ -214,24 +248,34 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">부서</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                부서
+              </label>
               <select
                 {...register('department')}
-                disabled={roleFieldDisabled || currentRole === 'ADMIN' || currentRole === 'DIRECTOR'}
+                disabled={
+                  roleFieldDisabled ||
+                  currentRole === 'ADMIN' ||
+                  currentRole === 'DIRECTOR'
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
               >
-                {(currentRole === 'ADMIN' || currentRole === 'DIRECTOR') ? (
+                {currentRole === 'ADMIN' || currentRole === 'DIRECTOR' ? (
                   <option value="ALL">ALL</option>
                 ) : (
                   <>
                     <option value="MEDICAL">MEDICAL</option>
                     <option value="MARKETING">MARKETING</option>
-                    <option value="OVERSEAS_MARKETING">OVERSEAS_MARKETING (해외마케팅 전담)</option>
+                    <option value="OVERSEAS_MARKETING">
+                      OVERSEAS_MARKETING (해외마케팅 전담)
+                    </option>
                   </>
                 )}
               </select>
               {formState.errors.department && (
-                <p className="text-red-500 text-xs mt-1">{formState.errors.department.message as string}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {formState.errors.department.message as string}
+                </p>
               )}
             </div>
           </div>
@@ -240,7 +284,9 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
             <label className="block text-gray-700 font-medium mb-1">
               비밀번호
               {mode === 'edit' && (
-                <span className="ml-1 text-xs text-gray-400 font-normal">(비워두면 기존 값 유지)</span>
+                <span className="ml-1 text-xs text-gray-400 font-normal">
+                  (비워두면 기존 값 유지)
+                </span>
               )}
             </label>
             <input
@@ -251,7 +297,9 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               placeholder="8자 이상"
             />
             {formState.errors.password && (
-              <p className="text-red-500 text-xs mt-1">{formState.errors.password.message as string}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {formState.errors.password.message as string}
+              </p>
             )}
           </div>
 

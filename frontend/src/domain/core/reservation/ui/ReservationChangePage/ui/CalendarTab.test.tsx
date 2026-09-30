@@ -43,7 +43,9 @@ describe('CalendarTab · 예약 변경이력 추이 달력 탭', () => {
       isError: true,
     })
     render(<CalendarTab />)
-    expect(screen.getByText(/추이 달력 데이터를 불러오지 못했습니다/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/추이 달력 데이터를 불러오지 못했습니다/),
+    ).toBeInTheDocument()
   })
 
   it('빈 결과 시 두 달 각각 마트 적재 안내가 나온다 (선택 월 + 다음 달)', () => {

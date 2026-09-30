@@ -14,7 +14,7 @@ export function useOutpatientList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? (data ?? []) as OutpatientListItem[] : [],
+    rows: enabled ? ((data ?? []) as OutpatientListItem[]) : [],
     isLoading,
     isFetching,
     isError,

@@ -32,7 +32,9 @@ function ticksBetween(bottom: number, top: number, step: number): number[] {
 
 /** 값 배열에서 [하한, 상한] 도메인과 눈금 배열을 만든다. 값이 없으면 [0,1]. */
 export function niceAxis(values: Array<number | null | undefined>): Axis {
-  const nums = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  const nums = values.filter(
+    (v): v is number => typeof v === 'number' && Number.isFinite(v),
+  )
   if (!nums.length) return { domain: [0, 1], ticks: [0, 1] }
 
   const min = Math.min(...nums)
@@ -43,7 +45,8 @@ export function niceAxis(values: Array<number | null | undefined>): Axis {
 
   const top = Math.ceil((max + pad) / step) * step
   // 데이터가 0에 충분히 가까우면 0부터, 높고 촘촘하면(min ≥ max·0.6) 여백만큼 내린 nice floor. 음수 금지.
-  const bottom = min < max * 0.6 ? 0 : Math.max(0, Math.floor((min - pad) / step) * step)
+  const bottom =
+    min < max * 0.6 ? 0 : Math.max(0, Math.floor((min - pad) / step) * step)
 
   return { domain: [bottom, top], ticks: ticksBetween(bottom, top, step) }
 }
@@ -66,7 +69,8 @@ function niceStepFor(range: number, divisions: number): number {
   const rough = range / divisions
   const mag = Math.pow(10, Math.floor(Math.log10(rough)))
   const norm = rough / mag
-  const factor = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10
+  const factor =
+    norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10
   return factor * mag
 }
 
@@ -82,7 +86,9 @@ function niceStepFor(range: number, divisions: number): number {
  * 음수 하한은 여전히 금지(카운트·비율 모두 ≥0).
  */
 export function tightAxis(values: Array<number | null | undefined>): Axis {
-  const nums = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  const nums = values.filter(
+    (v): v is number => typeof v === 'number' && Number.isFinite(v),
+  )
   if (!nums.length) return { domain: [0, 1], ticks: [0, 1] }
 
   const min = Math.min(...nums)
@@ -95,7 +101,8 @@ export function tightAxis(values: Array<number | null | undefined>): Axis {
   // 데이터 하단이 한 눈금 이내로 0 에 가까우면 0 기준선이 의미 있으니 0 부터,
   // 아니면 데이터에 붙여 잘라낸다.
   const padded = min - pad
-  const bottom = padded <= step ? 0 : Math.max(0, Math.floor(padded / step) * step)
+  const bottom =
+    padded <= step ? 0 : Math.max(0, Math.floor(padded / step) * step)
 
   return { domain: [bottom, top], ticks: ticksBetween(bottom, top, step) }
 }

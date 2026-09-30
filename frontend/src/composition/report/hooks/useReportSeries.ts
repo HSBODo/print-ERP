@@ -35,28 +35,51 @@ import { YEARS, isIncompleteMonth } from '../utils/monthlyReportUtils'
  *
  * 세부 수술방법별 CSV 를 담당자에게 별도 제공받으면 이 override 를 제거하고 마트로 이관 가능.
  */
-const SURGERY_GOLDEN: Record<number, Record<number, { cataract: number; vision: number; total: number }>> = {
+const SURGERY_GOLDEN: Record<
+  number,
+  Record<number, { cataract: number; vision: number; total: number }>
+> = {
   2026: {
     1: { cataract: 90, vision: 1361, total: 1483 },
     2: { cataract: 67, vision: 1388, total: 1488 },
-    3: { cataract: 69, vision:  657, total:  745 },
-    4: { cataract: 42, vision:  568, total:  629 },
-    5: { cataract: 61, vision:  722, total:  806 },
+    3: { cataract: 69, vision: 657, total: 745 },
+    4: { cataract: 42, vision: 568, total: 629 },
+    5: { cataract: 61, vision: 722, total: 806 },
   },
 }
 
 export type ReportSeriesKey =
-  | 'reservations' | 'call' | 'online'
-  | 'cataractExam' | 'visionExam' | 'examCount' | 'oneDayExam'
-  | 'cataractRate' | 'visionRate'
-  | 'cataractSurgery' | 'visionSurgery' | 'totalSurgery' | 'reoperation'
+  | 'reservations'
+  | 'call'
+  | 'online'
+  | 'cataractExam'
+  | 'visionExam'
+  | 'examCount'
+  | 'oneDayExam'
+  | 'cataractRate'
+  | 'visionRate'
+  | 'cataractSurgery'
+  | 'visionSurgery'
+  | 'totalSurgery'
+  | 'reoperation'
   | 'outpatient'
-  | 'successAll' | 'successOneday' | 'successGeneral'
-  | 'examGeneralCustomer' | 'examReferralCustomer' | 'examReferralStaff'
-  | 'examWorker' | 'examStudent' | 'examEtc' | 'examGeneral'
-  | 'ratioGeneral' | 'rateVisionGeneral' | 'rateOneday' | 'stopRate'
+  | 'successAll'
+  | 'successOneday'
+  | 'successGeneral'
+  | 'examGeneralCustomer'
+  | 'examReferralCustomer'
+  | 'examReferralStaff'
+  | 'examWorker'
+  | 'examStudent'
+  | 'examEtc'
+  | 'examGeneral'
+  | 'ratioGeneral'
+  | 'rateVisionGeneral'
+  | 'rateOneday'
+  | 'stopRate'
   // 주차 전용 — 외래센터 주간보고 확정값이라 월간 대응 계열이 없다(월간에서는 항상 빈 값).
-  | 'dreamlensNew' | 'dreamlensFu'
+  | 'dreamlensNew'
+  | 'dreamlensFu'
 
 /** year → 12개월 값 배열 (없는 달은 null) */
 export type MonthlySeries = Record<number, (number | null)[]>
@@ -103,7 +126,9 @@ export function useReportSeries(): ReportSeriesResult {
 
   const charts = useMemo<ReportSeries>(() => {
     // 연도별 12개월 배열 빌더 — 미래월/미완성월은 null(선 끊김)
-    const build = (pick: (year: number, i: number) => number | null | undefined): MonthlySeries => {
+    const build = (
+      pick: (year: number, i: number) => number | null | undefined,
+    ): MonthlySeries => {
       const out: MonthlySeries = {}
       YEARS.forEach((y) => {
         out[y] = Array.from({ length: 12 }, (_, i) => {
@@ -116,7 +141,9 @@ export function useReportSeries(): ReportSeriesResult {
     }
 
     // 검사자 종합지표(overall) 기반 지표: 마트 값이 있으면 pick, 없으면 null
-    const buildFromOverall = (pick: (s: OverallExamMonthlyItem) => number | null): MonthlySeries =>
+    const buildFromOverall = (
+      pick: (s: OverallExamMonthlyItem) => number | null,
+    ): MonthlySeries =>
       build((y, i) => {
         const s = overallByYear[y]?.[i + 1]
         return s ? pick(s) : null
@@ -124,7 +151,10 @@ export function useReportSeries(): ReportSeriesResult {
 
     // 예약률: 마트 응답의 reservationRate 를 정수로 반올림 (examCount 는 유효성 체크만)
     const rateSeries = (
-      rateData: Record<number, { examCount: number; reservationRate: number }[]>,
+      rateData: Record<
+        number,
+        { examCount: number; reservationRate: number }[]
+      >,
     ): MonthlySeries =>
       build((y, i) => {
         const it = rateData[y]?.[i]
@@ -142,9 +172,20 @@ export function useReportSeries(): ReportSeriesResult {
       cataractRate: rateSeries(cataractRate.dataMap),
       visionRate: rateSeries(visionRate.dataMap),
       // 수술 3종은 SURGERY_GOLDEN 이 있으면 골든값, 없으면 마트 산출값 (파일 상단 상수 참고).
-      cataractSurgery: build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.cataract ?? surgery.dataMap[y]?.[i]?.cataractPatients),
-      visionSurgery:   build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.vision   ?? surgery.dataMap[y]?.[i]?.visionPatients),
-      totalSurgery:    build((y, i) => SURGERY_GOLDEN[y]?.[i + 1]?.total    ?? surgery.dataMap[y]?.[i]?.total),
+      cataractSurgery: build(
+        (y, i) =>
+          SURGERY_GOLDEN[y]?.[i + 1]?.cataract ??
+          surgery.dataMap[y]?.[i]?.cataractPatients,
+      ),
+      visionSurgery: build(
+        (y, i) =>
+          SURGERY_GOLDEN[y]?.[i + 1]?.vision ??
+          surgery.dataMap[y]?.[i]?.visionPatients,
+      ),
+      totalSurgery: build(
+        (y, i) =>
+          SURGERY_GOLDEN[y]?.[i + 1]?.total ?? surgery.dataMap[y]?.[i]?.total,
+      ),
       // 재수술 — 건 단위(레이저+렌즈). 주차 레포트도 같은 정의로 그린다.
       reoperation: build((y, i) => surgery.dataMap[y]?.[i]?.reoperation),
       outpatient: build((y, i) => outpatient.dataMap[y]?.[i]?.outpatientCount),
@@ -161,11 +202,15 @@ export function useReportSeries(): ReportSeriesResult {
       }),
       successOneday: build((y, i) => {
         const it = consult.dataMap[y]?.[i]
-        return it && it.visionCounselCount > 0 ? it.visionConsultationOneday : null
+        return it && it.visionCounselCount > 0
+          ? it.visionConsultationOneday
+          : null
       }),
       successGeneral: build((y, i) => {
         const it = consult.dataMap[y]?.[i]
-        return it && it.visionCounselCount > 0 ? it.visionConsultationGeneral : null
+        return it && it.visionCounselCount > 0
+          ? it.visionConsultationGeneral
+          : null
       }),
       // 검사자 종합지표 파생 — 마트에서 직접
       examGeneralCustomer: buildFromOverall((s) => s.introGeneral),
@@ -188,7 +233,9 @@ export function useReportSeries(): ReportSeriesResult {
           ? ((it.examCount - it.oneDayExamCount) / it.examCount) * 100
           : null
       }),
-      rateVisionGeneral: build((y, i) => consult.dataMap[y]?.[i]?.visionGeneralBookRate),
+      rateVisionGeneral: build(
+        (y, i) => consult.dataMap[y]?.[i]?.visionGeneralBookRate,
+      ),
       rateOneday: buildFromOverall((s) =>
         s.oneDay > 0 ? (s.oneDayBooked / s.oneDay) * 100 : null,
       ),
@@ -196,7 +243,17 @@ export function useReportSeries(): ReportSeriesResult {
         s.visionExam > 0 ? (s.stopCount / s.visionExam) * 100 : null,
       ),
     }
-  }, [resv.dataMap, outpatient.dataMap, procedure.dataMap, exam.dataMap, surgery.dataMap, visionRate.dataMap, cataractRate.dataMap, consult.dataMap, overallByYear])
+  }, [
+    resv.dataMap,
+    outpatient.dataMap,
+    procedure.dataMap,
+    exam.dataMap,
+    surgery.dataMap,
+    visionRate.dataMap,
+    cataractRate.dataMap,
+    consult.dataMap,
+    overallByYear,
+  ])
 
   // 최신(데이터 있는) 월 — 리포트 기준월
   const latestMonthIdx = useMemo(() => {
@@ -212,8 +269,14 @@ export function useReportSeries(): ReportSeriesResult {
   return {
     charts,
     isLoading:
-      resv.isLoading || outpatient.isLoading || procedure.isLoading || exam.isLoading ||
-      surgery.isLoading || stopReason.isLoading || overall.isLoading || consult.isLoading ||
+      resv.isLoading ||
+      outpatient.isLoading ||
+      procedure.isLoading ||
+      exam.isLoading ||
+      surgery.isLoading ||
+      stopReason.isLoading ||
+      overall.isLoading ||
+      consult.isLoading ||
       examByClass.isLoading,
     latestMonthIdx,
     stopRateYears,

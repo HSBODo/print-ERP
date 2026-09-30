@@ -1,10 +1,26 @@
 import { useMemo, useState } from 'react'
-import { AlertCircle, ChevronDown, ChevronUp, Play, RefreshCw, Wallet } from 'lucide-react'
+import {
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Play,
+  RefreshCw,
+  Wallet,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#shared/ui/Button'
-import { useRunQueueNow, useSmsQueueRows, useSmsQueueStatus, useSolapiBalance } from '../../../hooks/useSmsQueue'
+import {
+  useRunQueueNow,
+  useSmsQueueRows,
+  useSmsQueueStatus,
+  useSolapiBalance,
+} from '../../../hooks/useSmsQueue'
 import { useAuthStore } from '#domain/support/session/store'
-import { canManagerOp, canSystemOp, matchesDepartment } from '#domain/support/session/session'
+import {
+  canManagerOp,
+  canSystemOp,
+  matchesDepartment,
+} from '#domain/support/session/session'
 import { SmsFailedQueueModal } from './SmsFailedQueueModal'
 import { CATEGORY_STYLE, groupByReason } from '../utils/smsFailReasonSummary'
 import type { SmsSolapiBalance } from '../../../type/api'
@@ -57,12 +73,16 @@ export function SmsQueueStatusCard() {
   // 로딩 시 오늘 하루가 디폴트. 관리자가 화면에서 다른 범위를 고르면 그 값으로 재조회.
   const [fromDate, setFromDate] = useState(todayIso)
   const [toDate, setToDate] = useState(todayIso)
-  const range = useMemo(() => ({
-    from: fromDate,
-    // 백엔드 to 는 exclusive → toDate 가 나타내는 날의 끝까지 포함시키려면 하루 밀어 보낸다.
-    to: addOneDayIso(toDate),
-  }), [fromDate, toDate])
-  const { data, isLoading, isError, refetch, isFetching } = useSmsQueueStatus(range)
+  const range = useMemo(
+    () => ({
+      from: fromDate,
+      // 백엔드 to 는 exclusive → toDate 가 나타내는 날의 끝까지 포함시키려면 하루 밀어 보낸다.
+      to: addOneDayIso(toDate),
+    }),
+    [fromDate, toDate],
+  )
+  const { data, isLoading, isError, refetch, isFetching } =
+    useSmsQueueStatus(range)
   const balanceQuery = useSolapiBalance()
   const runNow = useRunQueueNow()
   const user = useAuthStore((s) => s.user)
@@ -75,7 +95,12 @@ export function SmsQueueStatusCard() {
   // 방어적으로 조건을 명시해 두면 페이지 게이팅이 바뀌어도 카드가 오작동하지 않는다.
   const canRerun = canManagerOp(user) && matchesDepartment(user, ['MARKETING'])
 
-  const counts = (data?.counts ?? {}) as Partial<Record<'PENDING' | 'PROCESSING' | 'RECEIVED' | 'DONE' | 'FAILED' | 'CANCELED', number>>
+  const counts = (data?.counts ?? {}) as Partial<
+    Record<
+      'PENDING' | 'PROCESSING' | 'RECEIVED' | 'DONE' | 'FAILED' | 'CANCELED',
+      number
+    >
+  >
   const pending = counts.PENDING ?? 0
   const processing = counts.PROCESSING ?? 0
   const received = counts.RECEIVED ?? 0
@@ -97,7 +122,7 @@ export function SmsQueueStatusCard() {
     runNow.mutate(undefined, {
       onSuccess: (stats) => {
         toast.success(
-          `큐 실행됨 — 성공 ${stats.sent ?? 0} · 실패 ${stats.failed ?? 0} · 대기 ${stats.skipped ?? 0}`
+          `큐 실행됨 — 성공 ${stats.sent ?? 0} · 실패 ${stats.failed ?? 0} · 대기 ${stats.skipped ?? 0}`,
         )
       },
       onError: (err) => toast.error(`큐 실행 실패: ${(err as Error).message}`),
@@ -113,10 +138,13 @@ export function SmsQueueStatusCard() {
         aria-expanded={!collapsed}
       >
         <span className="flex flex-wrap items-center gap-1.5">
-          <span className="text-sm font-semibold text-gray-900">자동 발송 큐</span>
+          <span className="text-sm font-semibold text-gray-900">
+            자동 발송 큐
+          </span>
           {failed > 0 && (
             <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700">
-              <AlertCircle className="h-3 w-3" />실패 {failed}
+              <AlertCircle className="h-3 w-3" />
+              실패 {failed}
             </span>
           )}
           {/* 사유 Top 3 — 관측용이라 클릭 이벤트 없음. 실패 세부는 [실패·취소 재실행] 모달에서. */}
@@ -134,10 +162,15 @@ export function SmsQueueStatusCard() {
             </span>
           )}
           <span className="text-[11px] font-normal text-gray-500">
-            대기 {pending} · 처리중 {processing} · 접수 {received} · 완료 {doneToday}
+            대기 {pending} · 처리중 {processing} · 접수 {received} · 완료{' '}
+            {doneToday}
           </span>
         </span>
-        {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+        {collapsed ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronUp className="h-4 w-4" />
+        )}
       </button>
 
       {!collapsed && (
@@ -164,35 +197,80 @@ export function SmsQueueStatusCard() {
             />
             <button
               type="button"
-              onClick={() => { const t = todayIso(); setFromDate(t); setToDate(t) }}
+              onClick={() => {
+                const t = todayIso()
+                setFromDate(t)
+                setToDate(t)
+              }}
               className="rounded border border-gray-200 bg-white px-2 py-0.5 hover:bg-gray-50"
             >
               오늘
             </button>
             <span className="text-gray-400">· 발송예정일 기준</span>
           </div>
-          {isLoading && <p className="py-4 text-center text-xs text-gray-500">불러오는 중…</p>}
-          {isError && <p className="py-4 text-center text-xs text-red-600">큐 상태를 불러오지 못했습니다.</p>}
+          {isLoading && (
+            <p className="py-4 text-center text-xs text-gray-500">
+              불러오는 중…
+            </p>
+          )}
+          {isError && (
+            <p className="py-4 text-center text-xs text-red-600">
+              큐 상태를 불러오지 못했습니다.
+            </p>
+          )}
           {!isLoading && !isError && (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="grid grid-cols-6 gap-2 text-center">
-                <StatusChip label="대기" value={pending} color="text-blue-700 bg-blue-50" />
-                <StatusChip label="처리중" value={processing} color="text-amber-700 bg-amber-50" />
+                <StatusChip
+                  label="대기"
+                  value={pending}
+                  color="text-blue-700 bg-blue-50"
+                />
+                <StatusChip
+                  label="처리중"
+                  value={processing}
+                  color="text-amber-700 bg-amber-50"
+                />
                 <StatusChip
                   label="접수"
                   value={received}
                   color="text-amber-700 bg-amber-50"
                   title="솔라피 접수 성공 · 웹훅으로 도달 확인 대기 중. 정상 흐름에서는 몇 분 안에 완료로 굳는다."
                 />
-                <StatusChip label="완료" value={done} color="text-emerald-700 bg-emerald-50" />
-                <StatusChip label="실패" value={failed} color="text-red-700 bg-red-50" />
-                <StatusChip label="취소" value={canceled} color="text-gray-600 bg-gray-100" />
+                <StatusChip
+                  label="완료"
+                  value={done}
+                  color="text-emerald-700 bg-emerald-50"
+                />
+                <StatusChip
+                  label="실패"
+                  value={failed}
+                  color="text-red-700 bg-red-50"
+                />
+                <StatusChip
+                  label="취소"
+                  value={canceled}
+                  color="text-gray-600 bg-gray-100"
+                />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-gray-500">기간 완료 {doneToday}</span>
-                <SolapiBalancePanel balance={balanceQuery.data} isLoading={balanceQuery.isLoading} isError={balanceQuery.isError} />
-                <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-                  <RefreshCw className={`mr-1 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+                <span className="text-[11px] text-gray-500">
+                  기간 완료 {doneToday}
+                </span>
+                <SolapiBalancePanel
+                  balance={balanceQuery.data}
+                  isLoading={balanceQuery.isLoading}
+                  isError={balanceQuery.isError}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                >
+                  <RefreshCw
+                    className={`mr-1 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`}
+                  />
                   새로고침
                 </Button>
                 {canRerun && (
@@ -251,7 +329,17 @@ export function SmsQueueStatusCard() {
   )
 }
 
-function StatusChip({ label, value, color, title }: { label: string; value: number; color: string; title?: string }) {
+function StatusChip({
+  label,
+  value,
+  color,
+  title,
+}: {
+  label: string
+  value: number
+  color: string
+  title?: string
+}) {
   return (
     <div className={`min-w-[64px] rounded-md px-2 py-1 ${color}`} title={title}>
       <div className="text-[10px] font-medium">{label}</div>
@@ -266,7 +354,9 @@ function StatusChip({ label, value, color, title }: { label: string; value: numb
  * "왜 안 보이지?" 로 헷갈리지 않도록.
  */
 function SolapiBalancePanel({
-  balance, isLoading, isError,
+  balance,
+  isLoading,
+  isError,
 }: {
   balance: SmsSolapiBalance | undefined
   isLoading: boolean
@@ -294,13 +384,25 @@ function balanceStateOf(
   isError: boolean,
 ): { text: string; className: string; title: string } {
   if (isLoading) {
-    return { text: '조회 중…', className: 'border-gray-200 bg-white text-gray-500', title: '솔라피 잔액 조회 중' }
+    return {
+      text: '조회 중…',
+      className: 'border-gray-200 bg-white text-gray-500',
+      title: '솔라피 잔액 조회 중',
+    }
   }
   if (isError || !balance) {
-    return { text: '조회 실패', className: 'border-red-200 bg-red-50 text-red-700', title: '솔라피 잔액을 불러오지 못했습니다.' }
+    return {
+      text: '조회 실패',
+      className: 'border-red-200 bg-red-50 text-red-700',
+      title: '솔라피 잔액을 불러오지 못했습니다.',
+    }
   }
   if (!balance.configured) {
-    return { text: '미설정', className: 'border-gray-200 bg-gray-50 text-gray-500', title: 'SOLAPI_API_KEY·SECRET 미설정' }
+    return {
+      text: '미설정',
+      className: 'border-gray-200 bg-gray-50 text-gray-500',
+      title: 'SOLAPI_API_KEY·SECRET 미설정',
+    }
   }
   if (balance.errorMessage) {
     return {
@@ -316,6 +418,7 @@ function balanceStateOf(
   return {
     text: `잔액 ${KRW.format(deposit)}원 · 포인트 ${KRW.format(point)}원`,
     className: 'border-blue-100 bg-blue-50 text-blue-700',
-    title: '솔라피 콘솔의 잔액과 동일(예치금 기준). 포인트는 발송에 우선 소진됨.',
+    title:
+      '솔라피 콘솔의 잔액과 동일(예치금 기준). 포인트는 발송에 우선 소진됨.',
   }
 }

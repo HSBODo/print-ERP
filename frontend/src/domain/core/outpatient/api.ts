@@ -8,11 +8,21 @@ import {
 
 export const outpatientApi = {
   getOutpatientCountMonthly: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/outpatient-count/monthly', { params: { years }, signal })
+    const { data } = await api.get('/stats/outpatient-count/monthly', {
+      params: { years },
+      signal,
+    })
     return outpatientCountResponseSchema.parse(data).data
   },
-  getOutpatientList: async (from: string, to: string, signal?: AbortSignal): Promise<OutpatientListItem[]> => {
-    const { data } = await api.get('/outpatient-list', { params: { from, to }, signal })
+  getOutpatientList: async (
+    from: string,
+    to: string,
+    signal?: AbortSignal,
+  ): Promise<OutpatientListItem[]> => {
+    const { data } = await api.get('/outpatient-list', {
+      params: { from, to },
+      signal,
+    })
     return outpatientListResponseSchema.parse(data).data
   },
 }

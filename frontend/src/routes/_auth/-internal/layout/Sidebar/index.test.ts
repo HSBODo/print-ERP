@@ -2,7 +2,12 @@
 import { describe, it, expect } from 'vitest'
 import { createRouter } from '@tanstack/react-router'
 import { routeTree } from '@/routeTree.gen'
-import { buildMenu, MENU_TREE, type MenuItem, type PagePath } from '../../navigation'
+import {
+  buildMenu,
+  MENU_TREE,
+  type MenuItem,
+  type PagePath,
+} from '../../navigation'
 import type { AuthUser } from '#domain/support/session/session'
 
 /**
@@ -13,13 +18,18 @@ import type { AuthUser } from '#domain/support/session/session'
 type MenuUser = Pick<AuthUser, 'role' | 'department'>
 const asMedicalStaff: MenuUser = { role: 'STAFF', department: 'MEDICAL' }
 const asMarketingStaff: MenuUser = { role: 'STAFF', department: 'MARKETING' }
-const asOverseasMarketingStaff: MenuUser = { role: 'STAFF', department: 'OVERSEAS_MARKETING' }
+const asOverseasMarketingStaff: MenuUser = {
+  role: 'STAFF',
+  department: 'OVERSEAS_MARKETING',
+}
 const asAdmin: MenuUser = { role: 'ADMIN', department: 'ALL' }
 const asDirector: MenuUser = { role: 'DIRECTOR', department: 'ALL' }
 
 const router = createRouter({ routeTree })
-const getPage = (path: PagePath) => router.routesByPath[path]?.options.staticData?.page
-const menuFor = (user: MenuUser | null, isProd = false) => buildMenu(MENU_TREE, getPage, user, isProd)
+const getPage = (path: PagePath) =>
+  router.routesByPath[path]?.options.staticData?.page
+const menuFor = (user: MenuUser | null, isProd = false) =>
+  buildMenu(MENU_TREE, getPage, user, isProd)
 
 // 트리에서 특정 id 를 재귀로 찾는다.
 const findById = (items: MenuItem[], id: string): MenuItem | undefined => {
@@ -35,11 +45,16 @@ const findById = (items: MenuItem[], id: string): MenuItem | undefined => {
 
 // 트리의 모든 잎 id 를 flat 하게 뽑는다.
 const collectLeafIds = (items: MenuItem[]): string[] =>
-  items.flatMap((item) => (item.children ? collectLeafIds(item.children) : [item.id]))
+  items.flatMap((item) =>
+    item.children ? collectLeafIds(item.children) : [item.id],
+  )
 
 const ACCOUNTING_IDS = [
-  'accounting-medical', 'accounting-vision', 'accounting-vision-summary',
-  'accounting-vision-chart', 'accounting-medical-chart',
+  'accounting-medical',
+  'accounting-vision',
+  'accounting-vision-summary',
+  'accounting-vision-chart',
+  'accounting-medical-chart',
 ]
 
 describe('buildMenu · 사이드바 권한·부서 gate', () => {
@@ -145,9 +160,9 @@ describe('buildMenu · 사이드바 권한·부서 gate', () => {
 
   it('관리자 섹션은 ADMIN 에게만 보이고, 하위 잎은 "관리자" 배지(adminReal) 대상이다', () => {
     const adminMenu = menuFor(asAdmin)
-    expect(collectLeafIds(findById(adminMenu, 'admin-section')?.children ?? [])).toEqual([
-      'batch-management', 'account-management', 'guide', 'api-docs',
-    ])
+    expect(
+      collectLeafIds(findById(adminMenu, 'admin-section')?.children ?? []),
+    ).toEqual(['batch-management', 'account-management', 'guide', 'api-docs'])
     expect(findById(adminMenu, 'batch-management')?.adminReal).toBe(true)
     expect(findById(adminMenu, 'guide')?.adminReal).toBe(true)
     // 관리자 섹션 밖의 ADMIN 전용 페이지는 "개발중" 배지 (adminReal 아님)
@@ -158,10 +173,18 @@ describe('buildMenu · 사이드바 권한·부서 gate', () => {
   })
 
   it('운영(PROD)에서는 pending 페이지가 메뉴에서 빠지고, 개발에서는 남는다', () => {
-    const pendingPage = { id: 'wip', label: 'WIP', section: '테스트', status: 'pending' as const, access: { department: 'MEDICAL' as const } }
+    const pendingPage = {
+      id: 'wip',
+      label: 'WIP',
+      section: '테스트',
+      status: 'pending' as const,
+      access: { department: 'MEDICAL' as const },
+    }
     const tree = ['/stats/marketing' as const]
     expect(buildMenu(tree, () => pendingPage, asAdmin, true)).toEqual([])
-    expect(buildMenu(tree, () => pendingPage, asAdmin, false).map((i) => i.status)).toEqual(['pending'])
+    expect(
+      buildMenu(tree, () => pendingPage, asAdmin, false).map((i) => i.status),
+    ).toEqual(['pending'])
   })
 
   it('user=null (미인증) 시 권한 조건 없는 노드(홈) 만 통과', () => {

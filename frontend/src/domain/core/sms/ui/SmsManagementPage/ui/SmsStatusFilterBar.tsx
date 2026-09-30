@@ -1,4 +1,8 @@
-import { STATUS_FILTERS, groupOptionsOf, type StatusFilter } from '../utils/smsTableModel'
+import {
+  STATUS_FILTERS,
+  groupOptionsOf,
+  type StatusFilter,
+} from '../utils/smsTableModel'
 import type { SmsTemplate } from '../../../type/api'
 
 /**
@@ -10,7 +14,12 @@ import type { SmsTemplate } from '../../../type/api'
  * 뺀다. 지금 보이는 건수는 툴바의 결과 수가 말해준다.
  */
 export function SmsStatusFilterBar({
-  templates, statusFilter, onChange, selectedCount, groupFilter, onGroupChange,
+  templates,
+  statusFilter,
+  onChange,
+  selectedCount,
+  groupFilter,
+  onGroupChange,
 }: {
   templates: SmsTemplate[]
   statusFilter: StatusFilter
@@ -42,7 +51,11 @@ export function SmsStatusFilterBar({
               key={option}
               type="button"
               aria-pressed={statusFilter === option}
-              title={alert ? '실패·미발송·미도달 — 사람이 손봐야 하는 행만 모아 봅니다' : undefined}
+              title={
+                alert
+                  ? '실패·미발송·미도달 — 사람이 손봐야 하는 행만 모아 봅니다'
+                  : undefined
+              }
               onClick={() => onChange(option)}
               className={`${chip(statusFilter === option)} ${alert && statusFilter !== option ? 'text-red-600 hover:bg-red-50' : ''}`}
             >
@@ -75,10 +88,10 @@ export function SmsStatusFilterBar({
       {/* 선택 건수 — 홀딩/해제 대상이 몇 명인지. 고른 게 없으면 자리도 차지하지 않는다. */}
       {selectedCount > 0 && (
         <span className="font-semibold text-gray-800">
-          선택 <span className="tabular-nums text-blue-700">{selectedCount}</span>명
+          선택{' '}
+          <span className="tabular-nums text-blue-700">{selectedCount}</span>명
         </span>
       )}
-
     </div>
   )
 }

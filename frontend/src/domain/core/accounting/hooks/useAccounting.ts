@@ -20,7 +20,8 @@ export function useAccountingStatus() {
 export function useMedicalReceipts(range: DateRange | null) {
   return useQuery({
     queryKey: ['accounting-medical-receipts', range?.from, range?.to],
-    queryFn: ({ signal }) => accountingApi.getMedicalReceipts(range!.from, range!.to, signal),
+    queryFn: ({ signal }) =>
+      accountingApi.getMedicalReceipts(range!.from, range!.to, signal),
     enabled: range !== null,
   })
 }
@@ -28,7 +29,8 @@ export function useMedicalReceipts(range: DateRange | null) {
 export function useVisionReceipts(range: DateRange | null) {
   return useQuery({
     queryKey: ['accounting-vision-receipts', range?.from, range?.to],
-    queryFn: ({ signal }) => accountingApi.getVisionReceipts(range!.from, range!.to, signal),
+    queryFn: ({ signal }) =>
+      accountingApi.getVisionReceipts(range!.from, range!.to, signal),
     enabled: range !== null,
   })
 }
@@ -36,7 +38,8 @@ export function useVisionReceipts(range: DateRange | null) {
 export function useMedicalMonthly(years: number[], category: MedicalCategory) {
   return useQuery({
     queryKey: ['accounting-medical-monthly', years, category],
-    queryFn: ({ signal }) => accountingApi.getMedicalMonthly(years, category, signal),
+    queryFn: ({ signal }) =>
+      accountingApi.getMedicalMonthly(years, category, signal),
     enabled: years.length > 0,
   })
 }

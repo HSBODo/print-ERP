@@ -1,7 +1,10 @@
 import { useState, type CSSProperties } from 'react'
 import { suggestionListId, type LedgerColumn } from './ledgerColumns'
 
-const displayValue = (column: LedgerColumn, value: string | number | null | undefined) => {
+const displayValue = (
+  column: LedgerColumn,
+  value: string | number | null | undefined,
+) => {
   if (column.type === 'number') {
     const amount = Number(value ?? 0)
     // 시트와 동일하게 0 원은 빈 칸으로 둔다 — 40컬럼이라 0 이 깔리면 읽기 어렵다.
@@ -39,7 +42,13 @@ export function LedgerCell({
 
   const start = () => {
     if (busy) return
-    setDraft(column.type === 'number' ? String(Number(value ?? 0)) : value == null ? '' : String(value))
+    setDraft(
+      column.type === 'number'
+        ? String(Number(value ?? 0))
+        : value == null
+          ? ''
+          : String(value),
+    )
     setEditing(true)
   }
 
@@ -59,19 +68,21 @@ export function LedgerCell({
   }
 
   // 숫자만 우측(자릿수 비교), 나머지는 중앙 정렬.
-  const align = column.type === 'number' ? 'text-right tabular-nums' : 'text-center'
+  const align =
+    column.type === 'number' ? 'text-right tabular-nums' : 'text-center'
 
   // border-collapse 표에서는 고정 셀의 테두리가 스크롤 중 사라질 수 있어
   // 고정 구간 경계는 box-shadow 로 그린다(항상 보인다).
-  const sticky: { className: string; style?: CSSProperties } = stickyLeft === undefined
-    ? { className: '' }
-    : {
-        className: `sticky z-10 ${stickyBgClass}`,
-        style: {
-          left: stickyLeft,
-          boxShadow: frozenEdge ? '1px 0 0 0 #cbd5e1' : undefined,
-        },
-      }
+  const sticky: { className: string; style?: CSSProperties } =
+    stickyLeft === undefined
+      ? { className: '' }
+      : {
+          className: `sticky z-10 ${stickyBgClass}`,
+          style: {
+            left: stickyLeft,
+            boxShadow: frozenEdge ? '1px 0 0 0 #cbd5e1' : undefined,
+          },
+        }
 
   if (editing) {
     return (
@@ -80,7 +91,13 @@ export function LedgerCell({
         style={sticky.style}
       >
         <input
-          type={column.type === 'number' ? 'number' : column.type === 'date' ? 'date' : 'text'}
+          type={
+            column.type === 'number'
+              ? 'number'
+              : column.type === 'date'
+                ? 'date'
+                : 'text'
+          }
           min={column.type === 'number' ? 0 : undefined}
           // 백엔드 @Size 와 같은 상한 — 여기서 막아야 길게 붙여넣어도 저장 실패로 끝나지 않는다.
           maxLength={column.maxLength}
@@ -113,13 +130,20 @@ export function LedgerCell({
       onClick={start}
       // 값이 있으면 전체 값을 툴팁으로 — 폭을 넘겨 말줄임된 값도 확인할 수 있게.
       title={text ? `${text}\n(클릭하여 수정)` : '클릭하여 수정'}
-      style={{ width: column.width, minWidth: column.width, maxWidth: column.width, ...sticky.style }}
+      style={{
+        width: column.width,
+        minWidth: column.width,
+        maxWidth: column.width,
+        ...sticky.style,
+      }}
       className={`cursor-pointer border border-border/60 px-1.5 py-1 text-xs hover:bg-amber-50 ${
         busy ? 'opacity-50' : ''
       } ${sticky.className}`}
     >
       {/* 컬럼 폭을 넘는 값이 옆 칸을 밀지 않도록 말줄임 처리한다(표가 어긋나는 걸 막는다). */}
-      <div className={`truncate ${align}`}>{text || <span className="text-transparent">-</span>}</div>
+      <div className={`truncate ${align}`}>
+        {text || <span className="text-transparent">-</span>}
+      </div>
     </td>
   )
 }

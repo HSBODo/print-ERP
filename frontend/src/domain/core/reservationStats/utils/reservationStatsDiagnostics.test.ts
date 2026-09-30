@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { buildReservationStatsDiffCsv, buildReservationStatsDrillDownCsv, buildReservationStatsParityCsv } from './reservationStatsDiagnostics'
-import type { ReservationStatsDiff, ReservationStatsDrillDown, ReservationStatsParity } from '../type/api'
+import {
+  buildReservationStatsDiffCsv,
+  buildReservationStatsDrillDownCsv,
+  buildReservationStatsParityCsv,
+} from './reservationStatsDiagnostics'
+import type {
+  ReservationStatsDiff,
+  ReservationStatsDrillDown,
+  ReservationStatsParity,
+} from '../type/api'
 
 describe('reservation stats diagnostics csv', () => {
   it('diff CSV에 상세조회 경로를 포함한다', () => {
@@ -24,7 +32,8 @@ describe('reservation stats diagnostics csv', () => {
 
     const csv = buildReservationStatsDiffCsv(
       diff,
-      (item) => `/api/stats/reservation-stats-system/diagnostics/drill-down?date=${item.date}&field=${item.field}`,
+      (item) =>
+        `/api/stats/reservation-stats-system/diagnostics/drill-down?date=${item.date}&field=${item.field}`,
     )
 
     expect(csv.split('\r\n')).toEqual([

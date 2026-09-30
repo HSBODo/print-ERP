@@ -1,4 +1,12 @@
-import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
+import {
+  Callout,
+  DocHeader,
+  Hi,
+  Section,
+  Sources,
+  Summary,
+  Table,
+} from './docParts'
 
 /**
  * 크리에이트립 채널 분석 문서 (2026-01~08 실측).
@@ -15,20 +23,43 @@ const PERIOD = '2026-01-01 ~ 2026-08-31 (등록일 기준)'
 export function CreatripDoc() {
   return (
     <div className="flex flex-col gap-4">
-      <DocHeader title="크리에이트립" badges={[PERIOD, '예약 38명 · 수술 34명', '⚠️ 소표본 · 대만 74%']} />
+      <DocHeader
+        title="크리에이트립"
+        badges={[PERIOD, '예약 38명 · 수술 34명', '⚠️ 소표본 · 대만 74%']}
+      />
 
       <Summary headline="전 채널 최고 전환율 89.5%. 다만 왜 좋은지는 아직 설명되지 않았다.">
-        예약 38명 중 <b className="font-semibold text-white">34명이 수술</b>했다.
-        취소 0 · 미내원 0 · 검사중단 2명뿐이다. 대만 환자가 74%이고 평균 34.5세로 전 채널 최고령이다.
-        <b className="font-semibold text-white"> 표본이 34명이라 한 명이 3%p를 움직인다</b> —
-        이 숫자를 채널 역량의 증거로 쓰기 전에 아래 5번의 의심을 먼저 읽을 것.
+        예약 38명 중 <b className="font-semibold text-white">34명이 수술</b>
+        했다. 취소 0 · 미내원 0 · 검사중단 2명뿐이다. 대만 환자가 74%이고 평균
+        34.5세로 전 채널 최고령이다.
+        <b className="font-semibold text-white">
+          {' '}
+          표본이 34명이라 한 명이 3%p를 움직인다
+        </b>{' '}
+        — 이 숫자를 채널 역량의 증거로 쓰기 전에 아래 5번의 의심을 먼저 읽을 것.
       </Summary>
 
       <Section no="1" title="퍼널 — 거의 새지 않는다">
         <Table
-          head={['채널', '예약', '취소제외', '접수', '검사(중단제외)', '수술완료', '최종전환']}
+          head={[
+            '채널',
+            '예약',
+            '취소제외',
+            '접수',
+            '검사(중단제외)',
+            '수술완료',
+            '최종전환',
+          ]}
           rows={[
-            [<Hi>크리에이트립</Hi>, '38', '38', '38', '36', <Hi>34</Hi>, <Hi>89.5%</Hi>],
+            [
+              <Hi>크리에이트립</Hi>,
+              '38',
+              '38',
+              '38',
+              '36',
+              <Hi>34</Hi>,
+              <Hi>89.5%</Hi>,
+            ],
             ['자사해외', '23', '23', '23', '21', '17', '73.9%'],
             ['아웃콜', '1,096', '999', '845', '783', '622', '56.8%'],
             ['해외에이전시', '27', '27', '27', '18', '11', '40.7%'],
@@ -37,13 +68,18 @@ export function CreatripDoc() {
         />
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <Callout tone="good" title="취소 0 · 미내원 0">
-            해외 3채널(크리에이트립·해외에이전시·자사해외) 공통 특징이다.
-            같은 해외라도 <b>앱은 취소 20.9% · 미내원 34.8%</b>인데,
-            앱은 방한 전에 잡는 예약이고 이쪽은 이미 여정이 확정된 뒤이기 때문으로 보인다.
+            해외 3채널(크리에이트립·해외에이전시·자사해외) 공통 특징이다. 같은
+            해외라도 <b>앱은 취소 20.9% · 미내원 34.8%</b>인데, 앱은 방한 전에
+            잡는 예약이고 이쪽은 이미 여정이 확정된 뒤이기 때문으로 보인다.
           </Callout>
-          <Callout tone="good" title="검사 부적합도 거의 없다 — 해외에이전시와 정반대">
-            검사에서 빠진 건 <b>2명(5.3%)</b>뿐이다. 해외에이전시는 같은 지점에서
-            <b> 27명 중 16명(59%)</b>이 빠졌다. 같은 해외 유치인데 결과가 정반대다.
+          <Callout
+            tone="good"
+            title="검사 부적합도 거의 없다 — 해외에이전시와 정반대"
+          >
+            검사에서 빠진 건 <b>2명(5.3%)</b>뿐이다. 해외에이전시는 같은
+            지점에서
+            <b> 27명 중 16명(59%)</b>이 빠졌다. 같은 해외 유치인데 결과가
+            정반대다.
           </Callout>
         </div>
       </Section>
@@ -51,7 +87,9 @@ export function CreatripDoc() {
       <Section no="2" title="누가 오는가 — 대만 중심, 전 채널 최고령">
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">국적 (외국인 100%)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              국적 (외국인 100%)
+            </p>
             <Table
               head={['국적', '인원']}
               rows={[
@@ -64,11 +102,14 @@ export function CreatripDoc() {
               ]}
             />
             <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-              크리에이트립은 대만·홍콩 대상 한국여행 플랫폼이다. 국적 분포가 그 성격과 일치한다.
+              크리에이트립은 대만·홍콩 대상 한국여행 플랫폼이다. 국적 분포가 그
+              성격과 일치한다.
             </p>
           </div>
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">연령 (평균 34.5세 — 전 채널 최고)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              연령 (평균 34.5세 — 전 채널 최고)
+            </p>
             <Table
               head={['연령대', '크리에이트립', '전체평균']}
               rows={[
@@ -85,8 +126,8 @@ export function CreatripDoc() {
           </div>
         </div>
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
-          직업은 직장인 50.0%이고, 신환율 97.1%로 사실상 전원 신규다.
-          리드타임은 검사·수술 모두 <Hi>13일</Hi>로 같다 — 방한 일정에 맞춰 미리 잡고 온다.
+          직업은 직장인 50.0%이고, 신환율 97.1%로 사실상 전원 신규다. 리드타임은
+          검사·수술 모두 <Hi>13일</Hi>로 같다 — 방한 일정에 맞춰 미리 잡고 온다.
         </p>
       </Section>
 
@@ -105,10 +146,13 @@ export function CreatripDoc() {
           ]}
         />
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
-          <Hi>정가 469만으로 전 채널 최고</Hi>다. ICL 계열 20.6%(전체 13.0%)와 라섹 2.9%(전체 9.6%)가 이유다 —
-          앱과 같은 이유로 <b>회복 기간이 긴 라섹은 해외 환자에게 선택지가 아니다</b>.
+          <Hi>정가 469만으로 전 채널 최고</Hi>다. ICL 계열 20.6%(전체 13.0%)와
+          라섹 2.9%(전체 9.6%)가 이유다 — 앱과 같은 이유로{' '}
+          <b>회복 기간이 긴 라섹은 해외 환자에게 선택지가 아니다</b>.
         </p>
-        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">할인 항목 — 플랫폼 할인이 76.4%</p>
+        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">
+          할인 항목 — 플랫폼 할인이 76.4%
+        </p>
         <Table
           head={['할인 항목', '크리에이트립', '모두닥', '카페']}
           rows={[
@@ -119,7 +163,8 @@ export function CreatripDoc() {
           ]}
         />
         <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-          정가는 가장 높은데 할인율은 12.9%로 낮아, 결과적으로 객단가는 336만으로 평균이다.
+          정가는 가장 높은데 할인율은 12.9%로 낮아, 결과적으로 객단가는
+          336만으로 평균이다.
           <b>플랫폼 할인이 붙는 채널 중에서는 가장 덜 깎인다.</b>
         </p>
       </Section>
@@ -137,9 +182,17 @@ export function CreatripDoc() {
           </Callout>
           <Callout tone="warn" title="확인되지 않은 것">
             <ul className="ml-4 list-disc space-y-1">
-              <li><b>표본 34명.</b> 취소 0건은 "한 건도 없었다"는 사실이지, 취소율이 0%라는 뜻은 아니다.</li>
-              <li><b>플랫폼 수수료가 CRM 에 없다.</b> 해외에이전시와 같은 문제 — 실질 마진을 모른다.</li>
-              <li>부적합률이 왜 낮은지(사전 스크리닝? 환자 특성?) 확인하지 못했다.</li>
+              <li>
+                <b>표본 34명.</b> 취소 0건은 "한 건도 없었다"는 사실이지,
+                취소율이 0%라는 뜻은 아니다.
+              </li>
+              <li>
+                <b>플랫폼 수수료가 CRM 에 없다.</b> 해외에이전시와 같은 문제 —
+                실질 마진을 모른다.
+              </li>
+              <li>
+                부적합률이 왜 낮은지(사전 스크리닝? 환자 특성?) 확인하지 못했다.
+              </li>
             </ul>
           </Callout>
         </div>
@@ -147,26 +200,42 @@ export function CreatripDoc() {
 
       <Section no="5" title="그래서 무엇을 판단해야 하나">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <p className="text-[15px] font-bold text-slate-900">배울 게 있다면 여기가 아니라 해외에이전시 쪽이다</p>
+          <p className="text-[15px] font-bold text-slate-900">
+            배울 게 있다면 여기가 아니라 해외에이전시 쪽이다
+          </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
-            같은 해외 유치인데 검사 부적합이 <b>5.3% 대 59%</b>다. 크리에이트립은 왜 안 걸리는지 알아내면
-            그대로 해외에이전시에 적용할 기준이 된다. 표본이 작아 <b>이 채널을 키우자</b>는 결론은
-            아직 이르지만, <b>이 채널이 어떻게 거르는지 물어보는 것</b>은 지금 할 수 있다.
+            같은 해외 유치인데 검사 부적합이 <b>5.3% 대 59%</b>다.
+            크리에이트립은 왜 안 걸리는지 알아내면 그대로 해외에이전시에 적용할
+            기준이 된다. 표본이 작아 <b>이 채널을 키우자</b>는 결론은 아직
+            이르지만, <b>이 채널이 어떻게 거르는지 물어보는 것</b>은 지금 할 수
+            있다.
           </p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
             수익성 판단은 <Hi>플랫폼 수수료를 알기 전에는 불가능</Hi>하다.
-            객단가 336만은 평균 수준이고 여기서 수수료가 빠지면 순위가 바뀔 수 있다.
+            객단가 336만은 평균 수준이고 여기서 수수료가 빠지면 순위가 바뀔 수
+            있다.
           </p>
         </div>
       </Section>
 
       <Sources
         items={[
-          <>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한 사람(<b>예약 퍼널</b>과 같은 정의).</>,
-          <><b>표본 34명.</b> 한 명이 약 3%p 를 움직인다. 0/100 으로 갈리는 사실만 결론으로 썼다.</>,
+          <>
+            기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한
+            사람(<b>예약 퍼널</b>과 같은 정의).
+          </>,
+          <>
+            <b>표본 34명.</b> 한 명이 약 3%p 를 움직인다. 0/100 으로 갈리는
+            사실만 결론으로 썼다.
+          </>,
           <>채널 판정은 내원동기(중)='크리에이트립'이다.</>,
-          <><b>플랫폼 수수료는 CRM 에 없다.</b> 공헌이익 비교는 수수료가 입력돼야 가능하다.</>,
-          <>정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.</>,
+          <>
+            <b>플랫폼 수수료는 CRM 에 없다.</b> 공헌이익 비교는 수수료가
+            입력돼야 가능하다.
+          </>,
+          <>
+            정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.
+          </>,
         ]}
       />
     </div>

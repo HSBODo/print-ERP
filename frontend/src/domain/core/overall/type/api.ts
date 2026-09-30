@@ -28,7 +28,9 @@ const overallExamWeeklyItemSchema = z.object({
   oneDayBooked: z.number(),
 })
 export type OverallExamWeeklyItem = z.infer<typeof overallExamWeeklyItemSchema>
-export const overallExamWeeklyResponseSchema = apiResponseOf(z.array(overallExamWeeklyItemSchema))
+export const overallExamWeeklyResponseSchema = apiResponseOf(
+  z.array(overallExamWeeklyItemSchema),
+)
 
 /* ── Monthly (월별 검사자 종합지표 페이지용, 전 연도 마트 반환) ── */
 
@@ -53,5 +55,9 @@ const overallExamMonthlyItemSchema = z.object({
   oneDay: z.number(),
   oneDayBooked: z.number(),
 })
-export type OverallExamMonthlyItem = z.infer<typeof overallExamMonthlyItemSchema>
-export const overallExamMonthlyResponseSchema = apiResponseOf(z.array(overallExamMonthlyItemSchema))
+export type OverallExamMonthlyItem = z.infer<
+  typeof overallExamMonthlyItemSchema
+>
+export const overallExamMonthlyResponseSchema = apiResponseOf(
+  z.array(overallExamMonthlyItemSchema),
+)

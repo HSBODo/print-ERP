@@ -7,10 +7,10 @@ type ColumnGroups<T, Specs extends readonly ColumnGroupSpec<string>[]> = {
   [Spec in Specs[number] as Spec['key']]: T[]
 }
 
-export function splitColumnGroups<T, const Specs extends readonly ColumnGroupSpec<string>[]>(
-  columns: readonly T[],
-  specs: Specs,
-): ColumnGroups<T, Specs> {
+export function splitColumnGroups<
+  T,
+  const Specs extends readonly ColumnGroupSpec<string>[],
+>(columns: readonly T[], specs: Specs): ColumnGroups<T, Specs> {
   let offset = 0
   const groups: Record<string, T[]> = {}
 
@@ -20,7 +20,9 @@ export function splitColumnGroups<T, const Specs extends readonly ColumnGroupSpe
   }
 
   if (offset !== columns.length) {
-    throw new Error(`Column group spans (${offset}) do not match column count (${columns.length}).`)
+    throw new Error(
+      `Column group spans (${offset}) do not match column count (${columns.length}).`,
+    )
   }
 
   return groups as ColumnGroups<T, Specs>

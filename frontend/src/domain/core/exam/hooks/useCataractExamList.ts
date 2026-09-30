@@ -14,7 +14,7 @@ export function useCataractExamList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? (data ?? []) as CataractExamListItem[] : [],
+    rows: enabled ? ((data ?? []) as CataractExamListItem[]) : [],
     isLoading,
     isFetching,
     isError,

@@ -1,7 +1,11 @@
-import type { OverseasMarketingDateType, OverseasMarketingReceptionParams } from '../../../type/api'
+import type {
+  OverseasMarketingDateType,
+  OverseasMarketingReceptionParams,
+} from '../../../type/api'
 
 const pad = (value: number) => String(value).padStart(2, '0')
-const toIso = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+const toIso = (date: Date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 
 // 기본 조회: 문의일 기준 당월 1일 ~ 말일.
 export const createDefaultParams = (): OverseasMarketingReceptionParams => {
@@ -17,14 +21,15 @@ export const createDefaultParams = (): OverseasMarketingReceptionParams => {
   }
 }
 
-export const DATE_TYPES: { value: OverseasMarketingDateType; label: string }[] = [
-  { value: 'reg_date', label: '등록일' },
-  { value: 'matched_date', label: '매칭일' },
-  { value: 'inquiry_date', label: '문의일' },
-  { value: 'departure_schedule', label: '출국예정' },
-  { value: 'exam_date', label: '검사일' },
-  { value: 'surgery_date', label: '수술일' },
-]
+export const DATE_TYPES: { value: OverseasMarketingDateType; label: string }[] =
+  [
+    { value: 'reg_date', label: '등록일' },
+    { value: 'matched_date', label: '매칭일' },
+    { value: 'inquiry_date', label: '문의일' },
+    { value: 'departure_schedule', label: '출국예정' },
+    { value: 'exam_date', label: '검사일' },
+    { value: 'surgery_date', label: '수술일' },
+  ]
 
 export const STATUS_OPTIONS = [
   { value: '', label: '전체' },

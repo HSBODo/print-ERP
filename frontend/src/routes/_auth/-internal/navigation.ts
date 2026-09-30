@@ -1,13 +1,28 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  Home, CalendarCheck, Microscope, Stethoscope, Syringe,
-  Hospital, Megaphone, MoreHorizontal, FileText, Wrench,
-  Building2, MessageSquare, Landmark, Globe2, BookOpen,
+  Home,
+  CalendarCheck,
+  Microscope,
+  Stethoscope,
+  Syringe,
+  Hospital,
+  Megaphone,
+  MoreHorizontal,
+  FileText,
+  Wrench,
+  Building2,
+  MessageSquare,
+  Landmark,
+  Globe2,
+  BookOpen,
 } from 'lucide-react'
 
 import type { FileRouteTypes } from '@/routeTree.gen'
 import type { AuthUser } from '#domain/support/session/session'
-import { hasAccess, type PageAccess } from '#domain/support/session/utils/access'
+import {
+  hasAccess,
+  type PageAccess,
+} from '#domain/support/session/utils/access'
 import type { MenuStatus, PageMeta } from './pageAccess'
 
 /** 라우트 트리에 실제로 존재하는 경로 — 메뉴에 없는 경로를 적으면 컴파일 에러. */
@@ -94,7 +109,13 @@ export const MENU_TREE: MenuNode[] = [
     icon: Building2,
     kind: 'section',
     children: [
-      { id: 'report-group', label: 'Report', icon: FileText, kind: 'group', children: ['/report/monthly', '/report/weekly'] },
+      {
+        id: 'report-group',
+        label: 'Report',
+        icon: FileText,
+        kind: 'group',
+        children: ['/report/monthly', '/report/weekly'],
+      },
       {
         id: 'reservation-group',
         label: '예약',
@@ -102,8 +123,12 @@ export const MENU_TREE: MenuNode[] = [
         kind: 'group',
         // 예약자 리스트 → 예약자 리스트_홈페이지 → 예약 종합 → 예약통계_시력교정 → 예약통계_백내장 → 예약 변경이력 순.
         children: [
-          '/stats/reservation-list', '/stats/reservation-list-homepage', '/stats/reservation-overall',
-          '/stats/reservation-stats-system', '/stats/reservation-stats-cataract', '/stats/reservation-change',
+          '/stats/reservation-list',
+          '/stats/reservation-list-homepage',
+          '/stats/reservation-overall',
+          '/stats/reservation-stats-system',
+          '/stats/reservation-stats-cataract',
+          '/stats/reservation-change',
         ],
       },
       {
@@ -112,8 +137,14 @@ export const MENU_TREE: MenuNode[] = [
         icon: Microscope,
         kind: 'group',
         children: [
-          '/stats/overall-exam', '/stats/overall-exam-weekly', '/stats/exam-list', '/stats/cataract-exam-list',
-          '/stats/all-exam-list', '/stats/eoeis-checkup', '/stats/examination', '/stats/procedure-exam',
+          '/stats/overall-exam',
+          '/stats/overall-exam-weekly',
+          '/stats/exam-list',
+          '/stats/cataract-exam-list',
+          '/stats/all-exam-list',
+          '/stats/eoeis-checkup',
+          '/stats/examination',
+          '/stats/procedure-exam',
         ],
       },
       {
@@ -121,17 +152,39 @@ export const MENU_TREE: MenuNode[] = [
         label: '전환&성공률',
         icon: Stethoscope,
         kind: 'group',
-        children: ['/stats/consultation-rate', '/stats/cataract-reservation-rate', '/stats/stop-rate', '/stats/stop-reason'],
+        children: [
+          '/stats/consultation-rate',
+          '/stats/cataract-reservation-rate',
+          '/stats/stop-rate',
+          '/stats/stop-reason',
+        ],
       },
       {
         id: 'surgery-group',
         label: '수술',
         icon: Syringe,
         kind: 'group',
-        children: ['/stats/surgery-list', '/stats/surgery', '/stats/surgery-ratio', '/stats/surgery-composition'],
+        children: [
+          '/stats/surgery-list',
+          '/stats/surgery',
+          '/stats/surgery-ratio',
+          '/stats/surgery-composition',
+        ],
       },
-      { id: 'outpatient', label: '외래', icon: Hospital, kind: 'group', children: ['/stats/outpatient-list', '/stats/outpatient-count'] },
-      { id: 'etc', label: '기타', icon: MoreHorizontal, kind: 'group', children: ['/stats/dreamlens-revenue'] },
+      {
+        id: 'outpatient',
+        label: '외래',
+        icon: Hospital,
+        kind: 'group',
+        children: ['/stats/outpatient-list', '/stats/outpatient-count'],
+      },
+      {
+        id: 'etc',
+        label: '기타',
+        icon: MoreHorizontal,
+        kind: 'group',
+        children: ['/stats/dreamlens-revenue'],
+      },
     ],
   },
   {
@@ -143,10 +196,19 @@ export const MENU_TREE: MenuNode[] = [
     // 채널별 수익성은 그 짝이다 — 퍼널이 '얼마나 오나'(전환 축), 이쪽이 '얼마 버나'(가치 축).
     // 해외마케팅(접수리스트·통계·예약통계)은 아래 별도 최상위 섹션(overseas-marketing-section)이다.
     children: [
-      '/stats/reservation-channel', '/stats/channel-profit', '/stats/channel-analysis', '/stats/accumulated-eyes',
+      '/stats/reservation-channel',
+      '/stats/channel-profit',
+      '/stats/channel-analysis',
+      '/stats/accumulated-eyes',
       // 문자 발송 관리는 향후 하위 페이지(이력·템플릿 등) 확장을 대비해 그룹으로 감쌈.
       // 편집·[지금 실행]·[실패 재실행] 만 ADMIN (페이지 안 canSystemOp + 백엔드 hasRole('ADMIN')).
-      { id: 'sms-management', label: '문자 발송 관리', icon: MessageSquare, kind: 'group', children: ['/stats/sms'] },
+      {
+        id: 'sms-management',
+        label: '문자 발송 관리',
+        icon: MessageSquare,
+        kind: 'group',
+        children: ['/stats/sms'],
+      },
     ],
   },
   {
@@ -156,7 +218,9 @@ export const MENU_TREE: MenuNode[] = [
     kind: 'section',
     // 접수리스트 → 통계 → 예약통계 순. OVERSEAS_MARKETING 부서 전용 (2026-09-17 MARKETING 배제).
     children: [
-      '/stats/overseas-marketing/receptions', '/stats/overseas-marketing/statistics', '/stats/overseas-marketing/reservation-stats',
+      '/stats/overseas-marketing/receptions',
+      '/stats/overseas-marketing/statistics',
+      '/stats/overseas-marketing/reservation-stats',
     ],
   },
   {
@@ -167,8 +231,11 @@ export const MENU_TREE: MenuNode[] = [
     // 임원(DIRECTOR) 이상 개방(2026-09-17). 백엔드 /api/accounting/** 매처가 hasAnyRole("ADMIN","DIRECTOR") 로 대칭.
     badge: 'executive',
     children: [
-      '/accounting/medical-receipts', '/accounting/vision-revenue', '/accounting/vision-revenue-summary',
-      '/accounting/vision-revenue-chart', '/accounting/medical-revenue-chart',
+      '/accounting/medical-receipts',
+      '/accounting/vision-revenue',
+      '/accounting/vision-revenue-summary',
+      '/accounting/vision-revenue-chart',
+      '/accounting/medical-revenue-chart',
     ],
   },
   {
@@ -178,21 +245,41 @@ export const MENU_TREE: MenuNode[] = [
     kind: 'section',
     badge: 'admin',
     children: [
-      '/admin/batch', '/admin/accounts',
+      '/admin/batch',
+      '/admin/accounts',
       // 정적 기획서(frontend/public/guide) — 새 탭에서 열린다.
-      { id: 'guide', label: '가이드', href: '/guide/prd.html', icon: BookOpen, external: true, access: { role: 'ADMIN' } },
+      {
+        id: 'guide',
+        label: '가이드',
+        href: '/guide/prd.html',
+        icon: BookOpen,
+        external: true,
+        access: { role: 'ADMIN' },
+      },
       // Swagger UI — backend static /docs/index.html. Vite dev 는 vite.config.ts 의 /docs 프록시 경유.
-      { id: 'api-docs', label: 'API 문서', href: '/docs/', icon: FileText, external: true, access: { role: 'ADMIN' } },
+      {
+        id: 'api-docs',
+        label: 'API 문서',
+        href: '/docs/',
+        icon: FileText,
+        external: true,
+        access: { role: 'ADMIN' },
+      },
     ],
   },
 ]
 
 type MenuUser = Pick<AuthUser, 'role' | 'department'> | null | undefined
 
-
 const roleFlags = (access: PageAccess | undefined) => ({
-  adminOnly: access !== undefined && 'role' in access && access.role === 'ADMIN' ? true : undefined,
-  executiveOnly: access !== undefined && 'role' in access && access.role === 'EXECUTIVE' ? true : undefined,
+  adminOnly:
+    access !== undefined && 'role' in access && access.role === 'ADMIN'
+      ? true
+      : undefined,
+  executiveOnly:
+    access !== undefined && 'role' in access && access.role === 'EXECUTIVE'
+      ? true
+      : undefined,
 })
 
 /**
@@ -217,24 +304,41 @@ export const buildMenu = (
       const page = getPage(node)
       if (!page || !hasAccess(page.access, user)) return []
       if (isProd && page.status === 'pending') return []
-      return [{ id: page.id, label: page.label, href: node, status: page.status, ...roleFlags(page.access), adminReal }]
+      return [
+        {
+          id: page.id,
+          label: page.label,
+          href: node,
+          status: page.status,
+          ...roleFlags(page.access),
+          adminReal,
+        },
+      ]
     }
 
     if ('children' in node) {
       const isAdminSection = inAdminSection || node.badge === 'admin'
-      const children = buildMenu(node.children, getPage, user, isProd, isAdminSection)
+      const children = buildMenu(
+        node.children,
+        getPage,
+        user,
+        isProd,
+        isAdminSection,
+      )
       if (children.length === 0) return []
-      return [{
-        id: node.id,
-        label: node.label,
-        href: '#',
-        icon: node.icon,
-        kind: node.kind,
-        adminOnly: node.badge === 'admin' || undefined,
-        executiveOnly: node.badge === 'executive' || undefined,
-        adminReal: isAdminSection || undefined,
-        children,
-      }]
+      return [
+        {
+          id: node.id,
+          label: node.label,
+          href: '#',
+          icon: node.icon,
+          kind: node.kind,
+          adminOnly: node.badge === 'admin' || undefined,
+          executiveOnly: node.badge === 'executive' || undefined,
+          adminReal: isAdminSection || undefined,
+          children,
+        },
+      ]
     }
 
     if (node.access && !hasAccess(node.access, user)) return []

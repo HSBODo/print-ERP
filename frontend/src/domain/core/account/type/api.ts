@@ -8,7 +8,12 @@ const userRowSchema = z.object({
   email: z.string(),
   name: z.string(),
   role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
-  department: z.enum(['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING'] as const),
+  department: z.enum([
+    'ALL',
+    'MEDICAL',
+    'MARKETING',
+    'OVERSEAS_MARKETING',
+  ] as const),
 })
 export type UserRow = z.infer<typeof userRowSchema>
 
@@ -32,4 +37,3 @@ export interface UserUpdatePayload {
   /** null 이면 기존 비밀번호 유지. 값이 있으면 최소 12자 (백엔드 검증). */
   password: string | null
 }
-

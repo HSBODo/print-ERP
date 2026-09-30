@@ -23,7 +23,8 @@ export function useSmsOffsets() {
 export function useUpdateSmsOffsets() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: SmsOffsetUpdatePayload) => smsApi.updateOffsets(payload),
+    mutationFn: (payload: SmsOffsetUpdatePayload) =>
+      smsApi.updateOffsets(payload),
     onSuccess: (rows: SmsOffsetRow[]) => {
       qc.setQueryData(KEY, rows)
       qc.invalidateQueries({ queryKey: ['sms', 'targets'] })

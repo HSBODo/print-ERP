@@ -1,4 +1,15 @@
-import { Ban, BellOff, ChevronDown, FileText, ListX, Plus, RefreshCw, RotateCcw, Search, Undo2 } from 'lucide-react'
+import {
+  Ban,
+  BellOff,
+  ChevronDown,
+  FileText,
+  ListX,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  Undo2,
+} from 'lucide-react'
 import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { toMonthEnd, toMonthStart, toMonthValue } from '../utils/smsTableModel'
@@ -11,7 +22,13 @@ const INPUT_CLS =
   'h-8 rounded-md border border-border/80 bg-white px-2 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
 
 /** 수술자 리스트와 같은 셀렉트 스타일 — 기본 화살표를 숨기고 ChevronDown 을 얹는다. */
-export function StyledSelect({ ariaLabel, value, onChange, children, className = '' }: {
+export function StyledSelect({
+  ariaLabel,
+  value,
+  onChange,
+  children,
+  className = '',
+}: {
   ariaLabel: string
   value: string
   onChange: (value: string) => void
@@ -38,10 +55,28 @@ export function StyledSelect({ ariaLabel, value, onChange, children, className =
  * 발송·대상 적재 버튼은 없다(자동화가 맡는다). 남은 동작은 조회·홀딩·해제·수동 추가뿐이다.
  */
 export function SmsToolbar({
-  basis, onBasisChange, tierFilter, onTierFilterChange, templates,
-  periodMode, onPeriodModeChange, draft, onDraftChange,
-  keyword, onKeywordChange, resultCount, isRefreshing, holdPending,
-  onSearch, onRefresh, onReset, onHold, onOptOut, onAdd, onOpenTemplates, onOpenOptOuts,
+  basis,
+  onBasisChange,
+  tierFilter,
+  onTierFilterChange,
+  templates,
+  periodMode,
+  onPeriodModeChange,
+  draft,
+  onDraftChange,
+  keyword,
+  onKeywordChange,
+  resultCount,
+  isRefreshing,
+  holdPending,
+  onSearch,
+  onRefresh,
+  onReset,
+  onHold,
+  onOptOut,
+  onAdd,
+  onOpenTemplates,
+  onOpenOptOuts,
 }: {
   basis: SmsQueryBasis
   onBasisChange: (v: SmsQueryBasis) => void
@@ -74,20 +109,37 @@ export function SmsToolbar({
       <div className="flex flex-wrap items-center gap-1 text-xs text-gray-700">
         {/* 조회 기준 — 같은 기간이라도 묻는 게 다르다.
             수술일: 그날 수술한 사람 · 발송예정일: 그날 나갈 사람(점검) · 실제발송일: 그날 나간 사람 */}
-        <StyledSelect ariaLabel="조회 기준" value={basis} onChange={(v) => onBasisChange(v as SmsQueryBasis)} className="w-[6.6rem]">
+        <StyledSelect
+          ariaLabel="조회 기준"
+          value={basis}
+          onChange={(v) => onBasisChange(v as SmsQueryBasis)}
+          className="w-[6.6rem]"
+        >
           <option value="SURGERY">수술일</option>
           <option value="SCHEDULED">발송예정일</option>
           <option value="SENT">실제발송일</option>
         </StyledSelect>
         {basis !== 'SURGERY' && (
-          <StyledSelect ariaLabel="차수" value={tierFilter} onChange={onTierFilterChange} className="w-[5.6rem]">
+          <StyledSelect
+            ariaLabel="차수"
+            value={tierFilter}
+            onChange={onTierFilterChange}
+            className="w-[5.6rem]"
+          >
             <option value="">전체 차수</option>
             {templates.map((t) => (
-              <option key={t.code} value={t.code}>{t.label.replace('수술 후 안내 ', '')}</option>
+              <option key={t.code} value={t.code}>
+                {t.label.replace('수술 후 안내 ', '')}
+              </option>
             ))}
           </StyledSelect>
         )}
-        <StyledSelect ariaLabel="기간 단위" value={periodMode} onChange={(v) => onPeriodModeChange(v as PeriodMode)} className="w-20">
+        <StyledSelect
+          ariaLabel="기간 단위"
+          value={periodMode}
+          onChange={(v) => onPeriodModeChange(v as PeriodMode)}
+          className="w-20"
+        >
           <option value="daily">일별</option>
           <option value="monthly">월별</option>
         </StyledSelect>
@@ -95,7 +147,9 @@ export function SmsToolbar({
           <MonthPicker
             ariaLabel="수술 기준 월"
             value={toMonthValue(draft.from)}
-            onChange={(v) => onDraftChange({ from: toMonthStart(v), to: toMonthEnd(v) })}
+            onChange={(v) =>
+              onDraftChange({ from: toMonthStart(v), to: toMonthEnd(v) })
+            }
           />
         ) : (
           <>
@@ -103,7 +157,9 @@ export function SmsToolbar({
               aria-label="수술 시작일"
               type="date"
               value={draft.from}
-              onChange={(e) => onDraftChange({ ...draft, from: e.target.value })}
+              onChange={(e) =>
+                onDraftChange({ ...draft, from: e.target.value })
+              }
               className={`${INPUT_CLS} w-[8.2rem]`}
             />
             <span className="text-gray-400">~</span>
@@ -127,9 +183,14 @@ export function SmsToolbar({
           className="h-full w-[12rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
         />
       </div>
-      <div className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs" aria-live="polite">
+      <div
+        className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
+        aria-live="polite"
+      >
         <span className="text-muted-foreground">대상</span>
-        <strong className="tabular-nums text-gray-900">{resultCount.toLocaleString('ko-KR')}명</strong>
+        <strong className="tabular-nums text-gray-900">
+          {resultCount.toLocaleString('ko-KR')}명
+        </strong>
       </div>
       {isRefreshing && (
         <span className="flex h-8 items-center gap-1.5 rounded-md bg-blue-50 px-2.5 text-[11px] font-semibold text-blue-600">
@@ -148,14 +209,27 @@ export function SmsToolbar({
           disabled={isRefreshing}
           title="현재 조회 조건 그대로 다시 서버에서 당겨옵니다 (큐 재실행·홀딩 해제 후 즉시 반영)"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`}
+          />
           새로고침
         </Button>
-        <Button type="button" variant="outline" size="sm" className="text-xs" onClick={onReset}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={onReset}
+        >
           <RotateCcw className="h-3.5 w-3.5" />
           초기화
         </Button>
-        <Button type="button" size="sm" className="bg-blue-600 text-xs text-white hover:bg-blue-700" onClick={onSearch}>
+        <Button
+          type="button"
+          size="sm"
+          className="bg-blue-600 text-xs text-white hover:bg-blue-700"
+          onClick={onSearch}
+        >
           <Search className="h-3.5 w-3.5" />
           조회
         </Button>
@@ -183,7 +257,12 @@ export function SmsToolbar({
           <Undo2 className="h-3.5 w-3.5" />
           발송중지 해제
         </Button>
-        <Button type="button" size="sm" className="bg-emerald-600 text-xs text-white hover:bg-emerald-700" onClick={onAdd}>
+        <Button
+          type="button"
+          size="sm"
+          className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+          onClick={onAdd}
+        >
           <Plus className="h-3.5 w-3.5" />
           대상 추가
         </Button>

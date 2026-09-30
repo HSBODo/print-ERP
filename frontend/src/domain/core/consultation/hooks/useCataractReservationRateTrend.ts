@@ -15,10 +15,13 @@ const EMPTY: MonthlyData = {
   reservationRate: 0,
 }
 
-function toDataMap(items: CataractReservationRateItem[]): Record<number, MonthlyData[]> {
+function toDataMap(
+  items: CataractReservationRateItem[],
+): Record<number, MonthlyData[]> {
   const map: Record<number, MonthlyData[]> = {}
   for (const item of items) {
-    if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
+    if (!map[item.year])
+      map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
     map[item.year][item.month - 1] = {
       examCount: item.examCount,
       surgeryBookedCount: item.surgeryBookedCount,
@@ -28,10 +31,18 @@ function toDataMap(items: CataractReservationRateItem[]): Record<number, Monthly
   return map
 }
 
-export function useCataractReservationRateTrend(years: number[], category: 'vision' | 'cataract' = 'cataract') {
-  const { data: apiData, isLoading, isError } = useQuery({
+export function useCataractReservationRateTrend(
+  years: number[],
+  category: 'vision' | 'cataract' = 'cataract',
+) {
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['cataract-reservation-rate-trend', years, category],
-    queryFn: ({ signal }) => consultationApi.getCataractReservationRateTrend(years, category, signal),
+    queryFn: ({ signal }) =>
+      consultationApi.getCataractReservationRateTrend(years, category, signal),
     enabled: years.length > 0,
   })
 

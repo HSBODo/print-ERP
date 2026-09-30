@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import { COLS, EMPTY, buildSurgeryRows, monthRange, queryRange, type Cell } from './surgeryCompositionUtils'
+import {
+  COLS,
+  EMPTY,
+  buildSurgeryRows,
+  monthRange,
+  queryRange,
+  type Cell,
+} from './surgeryCompositionUtils'
 
-const cell = (overrides: Partial<Cell> = {}): Cell => ({ ...EMPTY, ...overrides })
+const cell = (overrides: Partial<Cell> = {}): Cell => ({
+  ...EMPTY,
+  ...overrides,
+})
 
 // 2026-06: 1일=월요일. firstWeekday(6/1)=1 → 1주=1~6일, 2주=7~13일 …
 const PERIOD = '2026-06'
@@ -16,7 +26,11 @@ const dataMap: Record<string, Cell> = {
 
 describe('monthRange', () => {
   it('해당 월의 1일~말일과 lastDay를 반환한다', () => {
-    expect(monthRange('2026-06')).toEqual({ from: '2026-06-01', to: '2026-06-30', lastDay: 30 })
+    expect(monthRange('2026-06')).toEqual({
+      from: '2026-06-01',
+      to: '2026-06-30',
+      lastDay: 30,
+    })
     expect(monthRange('2026-02').lastDay).toBe(28)
   })
 })
@@ -72,7 +86,11 @@ describe('COLS — PIOL 합계와 프레스비욘드', () => {
     // 유형별은 환자당 대표유형 1건만 세므로 정상적으로는 합계와 일치한다(41+68+16+22+1=148).
     // 여기서는 화면이 자체 합산을 하지 않는다는 것 자체를 고정한다 — 일부러 어긋나게 준 값.
     const d = cell({
-      icl: 44, tIcl: 76, kpl: 19, tKpl: 28, viva: 1,
+      icl: 44,
+      tIcl: 76,
+      kpl: 19,
+      tKpl: 28,
+      viva: 1,
       piolPatients: 148,
       visionPatients: 296,
     })
@@ -83,7 +101,11 @@ describe('COLS — PIOL 합계와 프레스비욘드', () => {
 
   it('대표유형 기준에서는 유형별 합이 PIOL 합계와 일치한다 (2026-07 실측)', () => {
     const d = cell({
-      icl: 41, tIcl: 68, kpl: 16, tKpl: 22, viva: 1,
+      icl: 41,
+      tIcl: 68,
+      kpl: 16,
+      tKpl: 22,
+      viva: 1,
       piolPatients: 148,
       visionPatients: 784,
     })
@@ -108,9 +130,18 @@ describe('COLS — PIOL 합계와 프레스비욘드', () => {
 
 describe('queryRange', () => {
   it('주차는 그 해 전체(1주차 월요일~마지막 주차 일요일), 나머지는 선택한 달', () => {
-    expect(queryRange('yearWeek', '2026-06')).toEqual({ from: '2025-12-29', to: '2027-01-03' })
-    expect(queryRange('week', '2026-06')).toEqual({ from: '2026-06-01', to: '2026-06-30' })
-    expect(queryRange('day', '2026-06')).toEqual({ from: '2026-06-01', to: '2026-06-30' })
+    expect(queryRange('yearWeek', '2026-06')).toEqual({
+      from: '2025-12-29',
+      to: '2027-01-03',
+    })
+    expect(queryRange('week', '2026-06')).toEqual({
+      from: '2026-06-01',
+      to: '2026-06-30',
+    })
+    expect(queryRange('day', '2026-06')).toEqual({
+      from: '2026-06-01',
+      to: '2026-06-30',
+    })
   })
 })
 

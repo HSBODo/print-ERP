@@ -33,7 +33,8 @@ export const EXAM_TYPE_LABELS: Record<string, string> = {
   '7': '검사OP(Re)',
 }
 
-export const formatExamType = (value: string) => EXAM_TYPE_LABELS[value.trim()] ?? value
+export const formatExamType = (value: string) =>
+  EXAM_TYPE_LABELS[value.trim()] ?? value
 
 export const EXAM_CATEGORY_OPTIONS = ['전체', '시력교정', '드림렌즈']
 
@@ -75,7 +76,7 @@ export const previousMonthValue = () => {
 }
 
 export const toMonthWeekRange = (month: string, week: number) => {
-  const startDay = ((week - 1) * 7) + 1
+  const startDay = (week - 1) * 7 + 1
   const monthEnd = toMonthEnd(month)
   const lastDay = Number(monthEnd.slice(-2))
   const endDay = week === 4 ? lastDay : Math.min(startDay + 6, lastDay)
@@ -86,7 +87,11 @@ export const toMonthWeekRange = (month: string, week: number) => {
   }
 }
 
-export const getSortValue = (row: ExamListItem, key: string, originalIndex: number) => {
+export const getSortValue = (
+  row: ExamListItem,
+  key: string,
+  originalIndex: number,
+) => {
   if (key === 'rowNo') return originalIndex
   if (key === 'age') {
     const age = Number(calcAge(row.birth))
@@ -97,7 +102,10 @@ export const getSortValue = (row: ExamListItem, key: string, originalIndex: numb
   return String(row[key as keyof ExamListItem] ?? '').trim()
 }
 
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0
@@ -121,7 +129,13 @@ export const compareSortValue = (a: string | number | null, b: string | number |
  * 분류 정의는 sql/exam/find-cataract-exam-list.sql 참조.
  */
 export const CATARACT_REST_GROUP = '노안/FU/기타'
-export const GROUP_FILTERS = ['전체', '시력교정', '드림렌즈', '백내장', CATARACT_REST_GROUP] as const
+export const GROUP_FILTERS = [
+  '전체',
+  '시력교정',
+  '드림렌즈',
+  '백내장',
+  CATARACT_REST_GROUP,
+] as const
 
 export const matchesExamGroup = (
   row: { examGroup: string; cataractClass: string },
@@ -130,10 +144,16 @@ export const matchesExamGroup = (
   if (selected === '전체') return true
   // '백내장' 은 레포트 검사수와 같은 집합만. cataractExamListUtils.EXAM_COUNT_CLASSES 와 같은 기준.
   if (selected === '백내장') {
-    return row.examGroup === '백내장' && EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    return (
+      row.examGroup === '백내장' &&
+      EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    )
   }
   if (selected === CATARACT_REST_GROUP) {
-    return row.examGroup === '백내장' && !EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    return (
+      row.examGroup === '백내장' &&
+      !EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    )
   }
   return row.examGroup === selected
 }

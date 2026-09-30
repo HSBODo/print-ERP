@@ -1,4 +1,12 @@
-import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
+import {
+  Callout,
+  DocHeader,
+  Hi,
+  Section,
+  Sources,
+  Summary,
+  Table,
+} from './docParts'
 
 /**
  * 카페 채널 분석 문서 (2026-01~08 실측).
@@ -14,19 +22,25 @@ const PERIOD = '2026-01-01 ~ 2026-08-31 (등록일 기준)'
 export function CafeDoc() {
   return (
     <div className="flex flex-col gap-4">
-      <DocHeader title="카페" badges={[PERIOD, '예약 189명 · 수술 99명', '30~34세 67.7%']} />
+      <DocHeader
+        title="카페"
+        badges={[PERIOD, '예약 189명 · 수술 99명', '30~34세 67.7%']}
+      />
 
       <Summary headline="30대 초반 직장인 하나로 이루어진 채널이다.">
-        수술 99명 중 <b className="font-semibold text-white">30~34세가 67.7%</b>,
-        직장인이 <b className="font-semibold text-white">65.7%</b>다. 두 수치 모두 전 채널 1위이고,
-        2위와의 격차가 세 배 가까이 난다. 20~24세는 <b className="font-semibold text-white">1명(1.0%)</b>뿐이다.
-        대신 스마일 편중(52.5%)으로 객단가는 296만으로 낮은 축이다.
+        수술 99명 중 <b className="font-semibold text-white">30~34세가 67.7%</b>
+        , 직장인이 <b className="font-semibold text-white">65.7%</b>다. 두 수치
+        모두 전 채널 1위이고, 2위와의 격차가 세 배 가까이 난다. 20~24세는{' '}
+        <b className="font-semibold text-white">1명(1.0%)</b>뿐이다. 대신 스마일
+        편중(52.5%)으로 객단가는 296만으로 낮은 축이다.
       </Summary>
 
       <Section no="1" title="인구 구성 — 이 정도 쏠림은 다른 데 없다">
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">연령 (평균 31.1세)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              연령 (평균 31.1세)
+            </p>
             <Table
               head={['연령대', '카페', '전체평균', '모두닥']}
               rows={[
@@ -40,7 +54,9 @@ export function CafeDoc() {
             />
           </div>
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">직업</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              직업
+            </p>
             <Table
               head={['직업', '카페', '네이버', '인콜']}
               rows={[
@@ -56,8 +72,8 @@ export function CafeDoc() {
         </div>
         <Callout tone="good" title="학생이 사실상 0명이다">
           대학생 1.0% · 학생 1.0% · 군인 0% · 10대 0%.
-          <b> 학생층이 통째로 비어 있는 유일한 채널</b>이다. 수험생 할인 적용률도 0%다.
-          외국인은 1.0%로 국내 채널이다.
+          <b> 학생층이 통째로 비어 있는 유일한 채널</b>이다. 수험생 할인
+          적용률도 0%다. 외국인은 1.0%로 국내 채널이다.
         </Callout>
       </Section>
 
@@ -74,12 +90,14 @@ export function CafeDoc() {
         />
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
           접수율 75.7%로 네이버와 같은 수준이고, 홈페이지·인콜보다 13%p 높다.
-          리드타임은 검사까지 7일 · 수술까지 11일로 모두닥과 같아 <Hi>국내 채널 중 빠른 편</Hi>이다.
+          리드타임은 검사까지 7일 · 수술까지 11일로 모두닥과 같아{' '}
+          <Hi>국내 채널 중 빠른 편</Hi>이다.
         </p>
         <Callout tone="warn" title="예약경로는 대부분 '전화'다">
-          카페 채널 189명 중 <b>163명(86%)이 예약경로가 인콜</b>이고, 네이버 17명 · 홈페이지 8명이다.
-          즉 <b>카페 글을 보고 전화를 건 사람</b>이며, 카페 자체가 예약 창구는 아니다.
-          내원동기(중)에 '카페'가 적혀 있어 이 채널로 분류된다.
+          카페 채널 189명 중 <b>163명(86%)이 예약경로가 인콜</b>이고, 네이버
+          17명 · 홈페이지 8명이다. 즉 <b>카페 글을 보고 전화를 건 사람</b>이며,
+          카페 자체가 예약 창구는 아니다. 내원동기(중)에 '카페'가 적혀 있어 이
+          채널로 분류된다.
         </Callout>
       </Section>
 
@@ -98,10 +116,12 @@ export function CafeDoc() {
           ]}
         />
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
-          모두닥과 거의 같은 모양이다 — <Hi>스마일 절반 이상 + 프로 4분의 1</Hi>.
-          다만 ICL 계열이 5.1%로 절반 수준이라 정가가 더 낮다(385만 대 404만).
+          모두닥과 거의 같은 모양이다 — <Hi>스마일 절반 이상 + 프로 4분의 1</Hi>
+          . 다만 ICL 계열이 5.1%로 절반 수준이라 정가가 더 낮다(385만 대 404만).
         </p>
-        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">할인 항목 — 플랫폼 할인이 76.8%</p>
+        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">
+          할인 항목 — 플랫폼 할인이 76.8%
+        </p>
         <Table
           head={['할인 항목', '카페', '모두닥', '인콜']}
           rows={[
@@ -114,7 +134,8 @@ export function CafeDoc() {
           ]}
         />
         <Callout tone="warn" title="플랫폼 할인이 모두닥보다도 높다">
-          카페 유입에도 <b>플랫폼 계열 할인(85.9%)</b>이 붙는다. 모두닥(68.2%)보다 높은데,
+          카페 유입에도 <b>플랫폼 계열 할인(85.9%)</b>이 붙는다.
+          모두닥(68.2%)보다 높은데,
           <b> 왜 카페에 플랫폼 할인이 적용되는지는 데이터로 알 수 없다.</b>
           할인 정책 정의를 확인해야 한다.
         </Callout>
@@ -129,14 +150,24 @@ export function CafeDoc() {
               <li>접수율 75.7%로 네이버와 동급</li>
               <li>스마일 52.5%, 객단가 296만으로 낮은 축</li>
               <li>플랫폼 계열 할인 85.9%로 전 채널 최고</li>
-              <li>예약경로의 86%가 전화 — 카페는 유입원이지 예약 창구가 아니다</li>
+              <li>
+                예약경로의 86%가 전화 — 카페는 유입원이지 예약 창구가 아니다
+              </li>
             </ul>
           </Callout>
           <Callout tone="warn" title="확인되지 않은 것">
             <ul className="ml-4 list-disc space-y-1">
-              <li><b>어느 카페인지 모른다.</b> 내원동기에 '카페'로만 기록되어 커뮤니티를 특정할 수 없다.</li>
-              <li><b>왜 플랫폼 할인이 붙는지</b> 정책 근거를 확인하지 못했다.</li>
-              <li>표본 99명 — 연령 쏠림은 신뢰할 만하지만 시술별 세부 비교는 무리다.</li>
+              <li>
+                <b>어느 카페인지 모른다.</b> 내원동기에 '카페'로만 기록되어
+                커뮤니티를 특정할 수 없다.
+              </li>
+              <li>
+                <b>왜 플랫폼 할인이 붙는지</b> 정책 근거를 확인하지 못했다.
+              </li>
+              <li>
+                표본 99명 — 연령 쏠림은 신뢰할 만하지만 시술별 세부 비교는
+                무리다.
+              </li>
             </ul>
           </Callout>
         </div>
@@ -144,15 +175,19 @@ export function CafeDoc() {
 
       <Section no="5" title="그래서 무엇을 판단해야 하나">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <p className="text-[15px] font-bold text-slate-900">타깃이 이미 좁혀져 있다 — 어느 카페인지만 알면 된다</p>
+          <p className="text-[15px] font-bold text-slate-900">
+            타깃이 이미 좁혀져 있다 — 어느 카페인지만 알면 된다
+          </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
-            30대 초반 직장인이라는 <b>가장 선명한 층</b>이 오는데, 정작 <b>어느 커뮤니티에서 오는지 기록이 없다</b>.
-            내원동기를 '카페'가 아니라 <Hi>카페 이름까지</Hi> 남기면 그 채널에 집중할 수 있다.
+            30대 초반 직장인이라는 <b>가장 선명한 층</b>이 오는데, 정작{' '}
+            <b>어느 커뮤니티에서 오는지 기록이 없다</b>. 내원동기를 '카페'가
+            아니라 <Hi>카페 이름까지</Hi> 남기면 그 채널에 집중할 수 있다.
             지금은 99명이 어디서 왔는지 모르는 상태다.
           </p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
-            객단가가 296만으로 낮지만 <b>모두닥과 같은 이유(스마일 편중)</b>이고, 이는 검사 단계의
-            임상 판단이라 상담으로 바꿀 수 없다(모두닥 문서 4번 참조).
+            객단가가 296만으로 낮지만 <b>모두닥과 같은 이유(스마일 편중)</b>
+            이고, 이는 검사 단계의 임상 판단이라 상담으로 바꿀 수 없다(모두닥
+            문서 4번 참조).
             <b> 단가는 손댈 곳이 아니다.</b>
           </p>
         </div>
@@ -160,10 +195,21 @@ export function CafeDoc() {
 
       <Sources
         items={[
-          <>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한 사람(<b>예약 퍼널</b>과 같은 정의).</>,
-          <>채널 판정은 내원동기(중)='카페'다. 예약경로는 인콜 163 · 네이버 17 · 홈페이지 8 · 아웃콜 1 로 흩어져 있다.</>,
-          <><b>표본 99명.</b> 연령·직업 쏠림은 표본 오차로 설명되지 않을 만큼 크지만, 시술별 세부 비교는 하지 않았다.</>,
-          <>정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.</>,
+          <>
+            기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한
+            사람(<b>예약 퍼널</b>과 같은 정의).
+          </>,
+          <>
+            채널 판정은 내원동기(중)='카페'다. 예약경로는 인콜 163 · 네이버 17 ·
+            홈페이지 8 · 아웃콜 1 로 흩어져 있다.
+          </>,
+          <>
+            <b>표본 99명.</b> 연령·직업 쏠림은 표본 오차로 설명되지 않을 만큼
+            크지만, 시술별 세부 비교는 하지 않았다.
+          </>,
+          <>
+            정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.
+          </>,
           <>플랫폼 할인이 카페에 적용되는 정책 근거는 확인하지 못했다.</>,
         ]}
       />

@@ -49,7 +49,10 @@ export function TrendPanel({
     [yearData],
   )
 
-  const topTrendKeys = useMemo(() => shareData.slice(0, 4).map((item) => item.key), [shareData])
+  const topTrendKeys = useMemo(
+    () => shareData.slice(0, 4).map((item) => item.key),
+    [shareData],
+  )
 
   const topTrendConfig = useMemo(
     () =>
@@ -80,13 +83,18 @@ export function TrendPanel({
     [trendYear, topTrendKeys, dataMap],
   )
 
-  const lines = useMemo<TrendLine[]>(() => topTrendKeys.map((key) => ({ key })), [topTrendKeys])
+  const lines = useMemo<TrendLine[]>(
+    () => topTrendKeys.map((key) => ({ key })),
+    [topTrendKeys],
+  )
 
   const renderChart = () => (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
         <CardTitle>상위 수술 월별 추이</CardTitle>
-        <CardDescription>{trendYear}년 기준 상위 4개 수술의 월별 추이입니다.</CardDescription>
+        <CardDescription>
+          {trendYear}년 기준 상위 4개 수술의 월별 추이입니다.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <TrendLineChart
@@ -101,5 +109,9 @@ export function TrendPanel({
     </Card>
   )
 
-  return <PanelShell isLoading={isLoading} isError={isError} variant="line">{renderChart()}</PanelShell>
+  return (
+    <PanelShell isLoading={isLoading} isError={isError} variant="line">
+      {renderChart()}
+    </PanelShell>
+  )
 }

@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AccumulatedEyesPage } from '#domain/core/marketing/ui/AccumulatedEyesPage'
 
-export const Route = createFileRoute('/_auth/stats/(marketing)/accumulated-eyes')({
+export const Route = createFileRoute(
+  '/_auth/stats/(marketing)/accumulated-eyes',
+)({
   component: AccumulatedEyesPage,
   staticData: {
     page: {

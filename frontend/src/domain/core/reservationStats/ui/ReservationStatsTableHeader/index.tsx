@@ -50,12 +50,16 @@ type HeaderCell = {
   className: string
 }
 
-const leafCount = <TColumn extends StatsHeaderColumn>(node: StatsHeaderNode<TColumn>): number => {
+const leafCount = <TColumn extends StatsHeaderColumn>(
+  node: StatsHeaderNode<TColumn>,
+): number => {
   if (node.kind === 'leaf') return 1
   return node.children.reduce((total, child) => total + leafCount(child), 0)
 }
 
-const headerDepth = <TColumn extends StatsHeaderColumn>(node: StatsHeaderNode<TColumn>): number => {
+const headerDepth = <TColumn extends StatsHeaderColumn>(
+  node: StatsHeaderNode<TColumn>,
+): number => {
   if (node.kind === 'leaf') return 1
   return 1 + Math.max(...node.children.map(headerDepth))
 }
@@ -68,7 +72,11 @@ function buildHeaderRows<TColumn extends StatsHeaderColumn>(
 ): HeaderCell[][] {
   const rows: HeaderCell[][] = Array.from({ length: maxDepth }, () => [])
 
-  const visit = (node: StatsHeaderNode<TColumn>, depth: number, path: string) => {
+  const visit = (
+    node: StatsHeaderNode<TColumn>,
+    depth: number,
+    path: string,
+  ) => {
     if (node.kind === 'group') {
       rows[depth].push({
         key: `${path}:${node.label}`,
@@ -76,7 +84,9 @@ function buildHeaderRows<TColumn extends StatsHeaderColumn>(
         colSpan: leafCount(node),
         className: `${classes.groupHead} ${classes.stickyRows[depth]} ${classes.headH} ${node.className}`,
       })
-      node.children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`))
+      node.children.forEach((child, index) =>
+        visit(child, depth + 1, `${path}.${index}`),
+      )
       return
     }
 
@@ -122,7 +132,10 @@ export function ReservationStatsTableHeader<TColumn extends StatsHeaderColumn>({
         acc += tr.getBoundingClientRect().height
       }
       setRowTops((prev) =>
-        prev.length === offsets.length && prev.every((value, i) => value === offsets[i]) ? prev : offsets,
+        prev.length === offsets.length &&
+        prev.every((value, i) => value === offsets[i])
+          ? prev
+          : offsets,
       )
     }
     measure()
@@ -132,7 +145,9 @@ export function ReservationStatsTableHeader<TColumn extends StatsHeaderColumn>({
   }, [maxDepth, rows.length])
 
   const topStyle = (rowIndex: number) =>
-    rowTops[rowIndex] === undefined ? undefined : { top: `${rowTops[rowIndex]}px` }
+    rowTops[rowIndex] === undefined
+      ? undefined
+      : { top: `${rowTops[rowIndex]}px` }
 
   return (
     <thead ref={theadRef}>

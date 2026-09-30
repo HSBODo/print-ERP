@@ -22,10 +22,19 @@ import {
 } from './formulas/reservationStatsCataractFormulas'
 import { buildStatsCsv, type CsvColumnGroup } from './reservationStatsCsv'
 import type { CellFormat } from './reservationStatsFormat'
-import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './reservationStatsRows'
+import {
+  buildDisplayRowsFromCounts,
+  buildRangeDisplayRowsFromCounts,
+  type StatsDisplayRow,
+} from './reservationStatsRows'
 import { SUMMARY_COLUMNS, computeSummaryRow } from './reservationStatsSummary'
 
-export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './reservationStatsCore'
+export {
+  DEFAULT_PERIOD,
+  GRANULARITIES,
+  monthFullLabel,
+  monthShortLabel,
+} from './reservationStatsCore'
 export type { Granularity, RowTier } from './reservationStatsCore'
 export { SUMMARY_COLUMNS } from './reservationStatsSummary'
 export type { CellFormat, SummaryFormat } from './reservationStatsFormat'
@@ -54,17 +63,32 @@ export const CATARACT_COLUMNS: CataractColumnMeta[] = [
   { key: 'newReInquiry', label: '신규 재문의', fmt: 'num' },
   { key: 'reInquiryRate', label: '재문의 비율', fmt: 'pct', emphasis: true },
   { key: 'newPatient', label: '★신환', fmt: 'num' },
-  { key: 'inboundReservationRate', label: '예약율', fmt: 'pct', emphasis: true },
+  {
+    key: 'inboundReservationRate',
+    label: '예약율',
+    fmt: 'pct',
+    emphasis: true,
+  },
   // 아웃바운드(TM)
   { key: 'tmTotalDb', label: '총 DB', fmt: 'num' },
   { key: 'tmValidDb', label: '유효 DB', fmt: 'num' },
   { key: 'tmReservation', label: '예약수', fmt: 'num' },
   { key: 'tmTotalDbRate', label: '총 DB 예약율', fmt: 'pct', emphasis: true },
   { key: 'tmValidDbRate', label: '유효 DB 예약율', fmt: 'pct', emphasis: true },
-  { key: 'tmOutboundReservation', label: '아웃바운드 총 예약수', fmt: 'num', emphasis: true },
+  {
+    key: 'tmOutboundReservation',
+    label: '아웃바운드 총 예약수',
+    fmt: 'num',
+    emphasis: true,
+  },
   // 채팅(카카오톡)
   { key: 'kakaoTotalInquiry', label: '총문의(모든)', fmt: 'num' },
-  { key: 'kakaoCataractReservation', label: '백내장 검사예약', fmt: 'num', emphasis: true },
+  {
+    key: 'kakaoCataractReservation',
+    label: '백내장 검사예약',
+    fmt: 'num',
+    emphasis: true,
+  },
   { key: 'kakaoPresbyopiaReservation', label: '노안 검사예약', fmt: 'num' },
   // 온라인예약
   { key: 'onlineReservation', label: '예약수', fmt: 'num' },
@@ -92,18 +116,38 @@ export type CataractDisplayRow = StatsDisplayRow<CataractChannelRow>
 type Counts = CataractStatsCounts
 
 const COUNT_KEYS: (keyof Counts)[] = [
-  'totalCataract', 'totalPresbyopia',
-  'inboundCall', 'answeredCall', 'newExamInquiry', 'newReInquiry', 'newPatient',
-  'tmTotalDb', 'tmValidDb', 'tmReservation',
-  'kakaoTotalInquiry', 'kakaoCataractReservation', 'kakaoPresbyopiaReservation',
-  'onlineReservation', 'onlineNoShow',
-  'cancelOnline', 'cancelCrm', 'cancelKakao',
-  'visit', 'noShowReservation', 'cancel',
+  'totalCataract',
+  'totalPresbyopia',
+  'inboundCall',
+  'answeredCall',
+  'newExamInquiry',
+  'newReInquiry',
+  'newPatient',
+  'tmTotalDb',
+  'tmValidDb',
+  'tmReservation',
+  'kakaoTotalInquiry',
+  'kakaoCataractReservation',
+  'kakaoPresbyopiaReservation',
+  'onlineReservation',
+  'onlineNoShow',
+  'cancelOnline',
+  'cancelCrm',
+  'cancelKakao',
+  'visit',
+  'noShowReservation',
+  'cancel',
 ]
 
-const { zeroCounts, sumCounts, isZeroCounts } = createCountHelpers<Counts>(COUNT_KEYS)
+const { zeroCounts, sumCounts, isZeroCounts } =
+  createCountHelpers<Counts>(COUNT_KEYS)
 
-const countRow = (c: Counts, label: string, tier: RowTier, extra: Partial<CataractDisplayRow> = {}): CataractDisplayRow => ({
+const countRow = (
+  c: Counts,
+  label: string,
+  tier: RowTier,
+  extra: Partial<CataractDisplayRow> = {},
+): CataractDisplayRow => ({
   label,
   tier,
   isTotal: tier === 'month',

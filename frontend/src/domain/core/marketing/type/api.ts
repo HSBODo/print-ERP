@@ -14,21 +14,25 @@ const accumulatedEyeItemSchema = z.object({
   customPhone: z.string(),
   operationCategory: z.string(),
   operationCode: z.string(),
-  operationDate: z.string(),           // YYYY-MM-DD
+  operationDate: z.string(), // YYYY-MM-DD
   accumulatedEyeCount: z.number(),
-  eyePosition: z.string(),             // 'R' | 'L' | ''
+  eyePosition: z.string(), // 'R' | 'L' | ''
   createDate: z.string().nullish(),
   lastModifiedDate: z.string().nullish(),
 })
 
 export type AccumulatedEyeItem = z.infer<typeof accumulatedEyeItemSchema>
 
-export const accumulatedEyeResponseSchema = apiResponseOf(z.array(accumulatedEyeItemSchema))
+export const accumulatedEyeResponseSchema = apiResponseOf(
+  z.array(accumulatedEyeItemSchema),
+)
 
 /** 검색 대상 필드 — 백엔드 SQL 의 :field 파라미터와 값이 일치해야 한다. */
 export type AccumulatedEyesField = 'all' | 'name' | 'chart' | 'phone' | 'eyes'
 
-export const accumulatedEyeTotalSchema = apiResponseOf(z.object({ total: z.number() }))
+export const accumulatedEyeTotalSchema = apiResponseOf(
+  z.object({ total: z.number() }),
+)
 
 /**
  * 채널별 수익성 — 화면이 쓰는 값 중 **퍼널 API 에 없던 것**만 담당한다.
@@ -127,9 +131,13 @@ export const reservationChannelFunnelItemSchema = z.object({
   totalSurgeryPaidPersons: z.number(),
 })
 
-export type ReservationChannelFunnelItem = z.infer<typeof reservationChannelFunnelItemSchema>
+export type ReservationChannelFunnelItem = z.infer<
+  typeof reservationChannelFunnelItemSchema
+>
 
-export const reservationChannelFunnelResponseSchema = apiResponseOf(z.array(reservationChannelFunnelItemSchema))
+export const reservationChannelFunnelResponseSchema = apiResponseOf(
+  z.array(reservationChannelFunnelItemSchema),
+)
 
 /**
  * 채널 × 실제 수술 유형. channel 이 null 이면 전체 기준 행이다.
@@ -140,5 +148,9 @@ export const reservationChannelOpTypeSchema = z.object({
   opType: z.string(),
   persons: z.number(),
 })
-export type ReservationChannelOpType = z.infer<typeof reservationChannelOpTypeSchema>
-export const opTypeResponseSchema = apiResponseOf(z.array(reservationChannelOpTypeSchema))
+export type ReservationChannelOpType = z.infer<
+  typeof reservationChannelOpTypeSchema
+>
+export const opTypeResponseSchema = apiResponseOf(
+  z.array(reservationChannelOpTypeSchema),
+)

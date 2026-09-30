@@ -6,8 +6,17 @@ import { addDays, isoWeek, toIsoDate } from '#shared/utils/isoWeek'
  * 규칙은 디렉팅/예약변경이력 README·기획서 §4·§5·§7 을 그대로 옮겼다.
  */
 
-export const BRANCH_LABEL: Record<string, string> = { M: '시력교정', D: '드림렌즈', H: '백내장' }
-export const STATE_LABEL: Record<string, string> = { Y: '예약', I: '내원', H: '퇴원', C: '취소' }
+export const BRANCH_LABEL: Record<string, string> = {
+  M: '시력교정',
+  D: '드림렌즈',
+  H: '백내장',
+}
+export const STATE_LABEL: Record<string, string> = {
+  Y: '예약',
+  I: '내원',
+  H: '퇴원',
+  C: '취소',
+}
 export const SOURCE_LABEL: Record<string, string> = {
   H: '변경이력 첫 저장',
   I: '등록시각 기록',
@@ -26,7 +35,9 @@ export function parseChain(chain: string): ChangeStep[] {
     .filter(Boolean)
     .map((s) => {
       const i = s.indexOf('@')
-      return i < 0 ? { changedAt: '', date: s } : { changedAt: s.slice(0, i), date: s.slice(i + 1) }
+      return i < 0
+        ? { changedAt: '', date: s }
+        : { changedAt: s.slice(0, i), date: s.slice(i + 1) }
     })
 }
 
@@ -54,15 +65,40 @@ export function weekTag(date: string): string {
 /* ── 명절: 신정·구정·추석 당일 ±5일 (추이 그래프 명절 뷰와 같은 창) ── */
 export const HOLIDAY_WINDOW_DAYS = 5
 const HOLIDAYS: Record<string, string[]> = {
-  '명절(구정)': ['2022-02-01', '2023-01-22', '2024-02-10', '2025-01-29', '2026-02-17', '2027-02-07'],
-  '명절(추석)': ['2022-09-10', '2023-09-29', '2024-09-17', '2025-10-06', '2026-09-25', '2027-09-15'],
-  신정: ['2022-01-01', '2023-01-01', '2024-01-01', '2025-01-01', '2026-01-01', '2027-01-01'],
+  '명절(구정)': [
+    '2022-02-01',
+    '2023-01-22',
+    '2024-02-10',
+    '2025-01-29',
+    '2026-02-17',
+    '2027-02-07',
+  ],
+  '명절(추석)': [
+    '2022-09-10',
+    '2023-09-29',
+    '2024-09-17',
+    '2025-10-06',
+    '2026-09-25',
+    '2027-09-15',
+  ],
+  신정: [
+    '2022-01-01',
+    '2023-01-01',
+    '2024-01-01',
+    '2025-01-01',
+    '2026-01-01',
+    '2027-01-01',
+  ],
 }
 const holidayMap = new Map<string, string>()
 for (const [label, days] of Object.entries(HOLIDAYS)) {
   for (const day of days) {
     const [y, m, d] = day.split('-').map(Number)
-    for (let offset = -HOLIDAY_WINDOW_DAYS; offset <= HOLIDAY_WINDOW_DAYS; offset++) {
+    for (
+      let offset = -HOLIDAY_WINDOW_DAYS;
+      offset <= HOLIDAY_WINDOW_DAYS;
+      offset++
+    ) {
       holidayMap.set(toIsoDate(addDays(new Date(y, m - 1, d), offset)), label)
     }
   }
@@ -102,17 +138,23 @@ export interface ChangeView {
   totalChanges: number
 }
 
-const registeredKey = (r: ReservationChangeItem) => `${r.registeredAt} ${r.registeredTime}`
-const byRegistered = (a: ChangeView, b: ChangeView) => registeredKey(a.row).localeCompare(registeredKey(b.row))
+const registeredKey = (r: ReservationChangeItem) =>
+  `${r.registeredAt} ${r.registeredTime}`
+const byRegistered = (a: ChangeView, b: ChangeView) =>
+  registeredKey(a.row).localeCompare(registeredKey(b.row))
 
-export function buildViews(rows: ReservationChangeItem[], f: ChangeFilters): ChangeView[] {
+export function buildViews(
+  rows: ReservationChangeItem[],
+  f: ChangeFilters,
+): ChangeView[] {
   const q = f.keyword.trim().toLowerCase()
   const views: ChangeView[] = []
   for (const row of rows) {
     if (f.branch && row.branch !== f.branch) continue
     if (f.month && row.registeredAt.slice(5, 7) !== f.month) continue
     if (f.state && row.reserveState !== f.state) continue
-    if (q && !(row.name.toLowerCase().includes(q) || row.chartNo.includes(q))) continue
+    if (q && !(row.name.toLowerCase().includes(q) || row.chartNo.includes(q)))
+      continue
     const full = parseChain(row.changeChain)
     const steps = stepsAsOf(full, f.asOf)
     if (f.asOf) {
@@ -130,8 +172,12 @@ export function buildViews(rows: ReservationChangeItem[], f: ChangeFilters): Cha
       totalChanges: Math.max(0, full.length - 1),
     })
   }
-  if (f.sort === 'chg') views.sort((a, b) => b.changes - a.changes || byRegistered(a, b))
-  else if (f.sort === 'asof') views.sort((a, b) => a.asOfDate.localeCompare(b.asOfDate) || byRegistered(a, b))
+  if (f.sort === 'chg')
+    views.sort((a, b) => b.changes - a.changes || byRegistered(a, b))
+  else if (f.sort === 'asof')
+    views.sort(
+      (a, b) => a.asOfDate.localeCompare(b.asOfDate) || byRegistered(a, b),
+    )
   else views.sort(byRegistered)
   return views
 }
@@ -139,4 +185,7 @@ export function buildViews(rows: ReservationChangeItem[], f: ChangeFilters): Cha
 /** 변경 칸 수 — 페이지가 아니라 조회 결과 전체 기준(최대 6). 페이지 이동 시 헤더가 흔들리지 않게. */
 export const MAX_CHANGE_COLUMNS = 6
 export const changeColumnCount = (views: ChangeView[]) =>
-  Math.min(MAX_CHANGE_COLUMNS, views.reduce((m, v) => Math.max(m, v.changes), 1))
+  Math.min(
+    MAX_CHANGE_COLUMNS,
+    views.reduce((m, v) => Math.max(m, v.changes), 1),
+  )

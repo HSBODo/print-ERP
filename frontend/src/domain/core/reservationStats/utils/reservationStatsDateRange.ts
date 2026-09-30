@@ -5,13 +5,19 @@ export const currentMonth = (): string => {
 }
 
 /** 선택 월의 조회 범위. 진행 중인 달은 전일까지, 지난 달은 말일까지. */
-export function periodRange(period: string): { from: string; to: string; lastDay: number } {
+export function periodRange(period: string): {
+  from: string
+  to: string
+  lastDay: number
+} {
   const now = new Date()
   const year = Number(period.slice(0, 4))
   const month = Number(period.slice(5, 7))
   const daysInMonth = new Date(year, month, 0).getDate()
   const isCurrent = now.getFullYear() === year && now.getMonth() + 1 === month
-  const lastDay = isCurrent ? Math.max(1, Math.min(daysInMonth, now.getDate() - 1)) : daysInMonth
+  const lastDay = isCurrent
+    ? Math.max(1, Math.min(daysInMonth, now.getDate() - 1))
+    : daysInMonth
 
   return {
     from: `${period}-01`,
@@ -39,11 +45,18 @@ export const isSingleMonthRange = (from: string, to: string): boolean =>
   Boolean(from) && from.slice(0, 7) === to.slice(0, 7)
 
 /** from~to 범위 유효성. ok=false면 reason 을 사용자에게 표시. */
-export function validateRange(from: string, to: string): { ok: boolean; reason?: string } {
-  if (!from || !to) return { ok: false, reason: '시작일과 종료일을 모두 선택하세요.' }
+export function validateRange(
+  from: string,
+  to: string,
+): { ok: boolean; reason?: string } {
+  if (!from || !to)
+    return { ok: false, reason: '시작일과 종료일을 모두 선택하세요.' }
   if (from > to) return { ok: false, reason: '시작일이 종료일보다 늦습니다.' }
   const days = daysBetween(from, to)
   if (days > MAX_RANGE_DAYS)
-    return { ok: false, reason: `조회 범위는 최대 ${MAX_RANGE_DAYS}일까지 가능합니다 (현재 ${days}일).` }
+    return {
+      ok: false,
+      reason: `조회 범위는 최대 ${MAX_RANGE_DAYS}일까지 가능합니다 (현재 ${days}일).`,
+    }
   return { ok: true }
 }

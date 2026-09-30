@@ -13,7 +13,7 @@ export function useSurgeryList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? (data ?? []) as SurgeryListItem[] : [],
+    rows: enabled ? ((data ?? []) as SurgeryListItem[]) : [],
     isLoading,
     isFetching,
     isError,

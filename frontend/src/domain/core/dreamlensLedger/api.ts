@@ -7,7 +7,9 @@ import {
   ledgerRowSchema,
 } from './type/api'
 
-const toRequest = (row: DreamlensLedgerRow | DreamlensLedgerRequest): DreamlensLedgerRequest => {
+const toRequest = (
+  row: DreamlensLedgerRow | DreamlensLedgerRequest,
+): DreamlensLedgerRequest => {
   const { ...rest } = row as DreamlensLedgerRow
   delete (rest as Partial<DreamlensLedgerRow>).id
   delete (rest as Partial<DreamlensLedgerRow>).totalRevenue
@@ -17,7 +19,10 @@ const toRequest = (row: DreamlensLedgerRow | DreamlensLedgerRequest): DreamlensL
 
 export const dreamlensLedgerApi = {
   list: async (from: string, to: string, signal?: AbortSignal) => {
-    const { data } = await api.get('/dreamlens-ledger', { params: { from, to }, signal })
+    const { data } = await api.get('/dreamlens-ledger', {
+      params: { from, to },
+      signal,
+    })
     return ledgerListSchema.parse(data).data
   },
 
@@ -26,7 +31,10 @@ export const dreamlensLedgerApi = {
     return ledgerRowSchema.parse(data).data
   },
 
-  update: async (id: number, row: DreamlensLedgerRow | DreamlensLedgerRequest) => {
+  update: async (
+    id: number,
+    row: DreamlensLedgerRow | DreamlensLedgerRequest,
+  ) => {
     const { data } = await api.put(`/dreamlens-ledger/${id}`, toRequest(row))
     return ledgerRowSchema.parse(data).data
   },

@@ -42,7 +42,11 @@ const INTRO_FILTERS = ['전체', '일반', '고객소개', '직원소개'] as co
 const JOB_FILTERS = ['전체', '직장인', '학생', '기타'] as const
 const PATIENT_FILTERS = ['전체', '신환', '구환'] as const
 
-const sortValue = (r: AllExamListItem, key: string, originalIndex: number): string | number => {
+const sortValue = (
+  r: AllExamListItem,
+  key: string,
+  originalIndex: number,
+): string | number => {
   if (key === 'rowNo') return originalIndex
   if (key === 'age') {
     const age = Number(calcAge(r.birth))
@@ -53,7 +57,8 @@ const sortValue = (r: AllExamListItem, key: string, originalIndex: number): stri
 
 export function AllExamListPage() {
   const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
-  const [activeQuickRange, setActiveQuickRange] = useState<QuickRangeKey | null>(null)
+  const [activeQuickRange, setActiveQuickRange] =
+    useState<QuickRangeKey | null>(null)
   const [draftFrom, setDraftFrom] = useState(DEFAULT_FROM)
   const [draftTo, setDraftTo] = useState(DEFAULT_TO)
   const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
@@ -68,7 +73,10 @@ export function AllExamListPage() {
 
   const [sortState, setSortState] = useState<SortState>(null)
 
-  const { rows, isLoading, isFetching, isError } = useAllExamList(queryFrom, queryTo)
+  const { rows, isLoading, isFetching, isError } = useAllExamList(
+    queryFrom,
+    queryTo,
+  )
   const showLoading = isLoading || isFetching
 
   // 토글 필터(즉시 반영) + 키워드
@@ -81,9 +89,21 @@ export function AllExamListPage() {
       if (jobBucket !== '전체' && r.jobBucket !== jobBucket) return false
       if (patientType !== '전체' && r.patientType !== patientType) return false
       if (!q) return true
-      return r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q)
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.chartNo.includes(q) ||
+        r.phone2.includes(q)
+      )
     })
-  }, [rows, examGroup, oneDayFilter, introType, jobBucket, patientType, keyword])
+  }, [
+    rows,
+    examGroup,
+    oneDayFilter,
+    introType,
+    jobBucket,
+    patientType,
+    keyword,
+  ])
 
   const sorted = useMemo(() => {
     if (!sortState) return filtered
@@ -91,7 +111,10 @@ export function AllExamListPage() {
     return filtered
       .map((row, index) => ({ row, index }))
       .sort((a, b) => {
-        const compared = compareSortValue(sortValue(a.row, key, a.index), sortValue(b.row, key, b.index))
+        const compared = compareSortValue(
+          sortValue(a.row, key, a.index),
+          sortValue(b.row, key, b.index),
+        )
         if (compared !== 0) return direction === 'asc' ? compared : -compared
         return a.index - b.index
       })
@@ -103,8 +126,16 @@ export function AllExamListPage() {
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
-    setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
-    setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
+    setQueryFrom(
+      draftPeriodMode === 'monthly'
+        ? toMonthStart(toMonthValue(draftFrom))
+        : draftFrom,
+    )
+    setQueryTo(
+      draftPeriodMode === 'monthly'
+        ? toMonthEnd(toMonthValue(draftTo))
+        : draftTo,
+    )
     pagination.resetPage()
   }
 
@@ -160,7 +191,10 @@ export function AllExamListPage() {
   }
 
   const handleDownloadCsv = () => {
-    downloadCsv(`전체검사자리스트_${queryFrom}_${queryTo}.csv`, columnsToCsv(COLUMNS, sorted))
+    downloadCsv(
+      `전체검사자리스트_${queryFrom}_${queryTo}.csv`,
+      columnsToCsv(COLUMNS, sorted),
+    )
   }
 
   // 토글 버튼 그룹 (컴포넌트 본문 내 클로저 — react-refresh 영향 없음)
@@ -178,9 +212,14 @@ export function AllExamListPage() {
             key={opt}
             type="button"
             aria-pressed={value === opt}
-            onClick={() => { onChange(opt); pagination.resetPage() }}
+            onClick={() => {
+              onChange(opt)
+              pagination.resetPage()
+            }}
             className={`min-w-[3rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
-              value === opt ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+              value === opt
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
             {opt}
@@ -199,7 +238,9 @@ export function AllExamListPage() {
             <select
               aria-label="기간 단위"
               value={draftPeriodMode}
-              onChange={(e) => handlePeriodModeChange(e.target.value as PeriodMode)}
+              onChange={(e) =>
+                handlePeriodModeChange(e.target.value as PeriodMode)
+              }
               className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="daily">일별</option>
@@ -223,7 +264,10 @@ export function AllExamListPage() {
                 aria-label="검사 시작일"
                 type="date"
                 value={draftFrom}
-                onChange={(e) => { setActiveQuickRange(null); setDraftFrom(e.target.value) }}
+                onChange={(e) => {
+                  setActiveQuickRange(null)
+                  setDraftFrom(e.target.value)
+                }}
                 className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
               <span className="text-gray-400">~</span>
@@ -231,7 +275,10 @@ export function AllExamListPage() {
                 aria-label="검사 종료일"
                 type="date"
                 value={draftTo}
-                onChange={(e) => { setActiveQuickRange(null); setDraftTo(e.target.value) }}
+                onChange={(e) => {
+                  setActiveQuickRange(null)
+                  setDraftTo(e.target.value)
+                }}
                 className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </>
@@ -244,7 +291,9 @@ export function AllExamListPage() {
                 key={range.key}
                 type="button"
                 className={`min-w-10 border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
-                  activeQuickRange === range.key ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
+                  activeQuickRange === range.key
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
                 } ${index === visibleQuickRanges.length - 1 ? 'min-w-12' : ''}`}
                 onClick={() => handleQuickRange(range.key)}
               >
@@ -262,12 +311,23 @@ export function AllExamListPage() {
             className="h-full w-[12rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
         </div>
-        <div className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs" aria-live="polite">
+        <div
+          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
+          aria-live="polite"
+        >
           <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">{formatCount(filtered.length)}건</strong>
+          <strong className="tabular-nums text-gray-900">
+            {formatCount(filtered.length)}건
+          </strong>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={handleReset}
+          >
             <RotateCcw className="h-3.5 w-3.5" />
             초기화
           </Button>
@@ -308,14 +368,17 @@ export function AllExamListPage() {
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
           {isError ? (
-            <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">데이터를 불러오지 못했습니다.</div>
+            <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">
+              데이터를 불러오지 못했습니다.
+            </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
               <table className="w-full border-collapse text-[11px]">
                 <thead>
                   <tr className="bg-gray-50 text-[11px] text-gray-700">
                     {COLUMNS.map((col) => {
-                      const dir = sortState?.key === col.key ? sortState.direction : null
+                      const dir =
+                        sortState?.key === col.key ? sortState.direction : null
                       return (
                         <th
                           key={col.key}
@@ -328,9 +391,16 @@ export function AllExamListPage() {
                             onClick={() => handleSort(col.key)}
                           >
                             <span>{col.label}</span>
-                            <span className="flex h-3.5 w-2.5 flex-col items-center justify-center gap-[1px]" aria-hidden="true">
-                              <span className={`h-0 w-0 border-x-[3.5px] border-b-[4px] border-x-transparent ${dir === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'}`} />
-                              <span className={`h-0 w-0 border-x-[3.5px] border-t-[4px] border-x-transparent ${dir === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'}`} />
+                            <span
+                              className="flex h-3.5 w-2.5 flex-col items-center justify-center gap-[1px]"
+                              aria-hidden="true"
+                            >
+                              <span
+                                className={`h-0 w-0 border-x-[3.5px] border-b-[4px] border-x-transparent ${dir === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'}`}
+                              />
+                              <span
+                                className={`h-0 w-0 border-x-[3.5px] border-t-[4px] border-x-transparent ${dir === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'}`}
+                              />
                             </span>
                           </button>
                         </th>
@@ -340,23 +410,43 @@ export function AllExamListPage() {
                 </thead>
                 <tbody>
                   {showLoading && (
-                    <tr><td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">불러오는 중…</td></tr>
+                    <tr>
+                      <td
+                        colSpan={COLUMNS.length}
+                        className="px-3 py-12 text-center text-sm text-muted-foreground"
+                      >
+                        불러오는 중…
+                      </td>
+                    </tr>
                   )}
-                  {!showLoading && pagination.pageRows.map((row, i) => {
-                    const rowNumber = pagination.rangeStart + i
-                    return (
-                      <tr key={`${row.chartNo}-${row.examGroup}-${row.examDate}-${i}`} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
-                        {COLUMNS.map((col) => (
-                          <td key={col.key} className={`whitespace-nowrap px-2.5 py-1 text-[11px] text-gray-800 ${ALIGN[col.align ?? 'left']}`} style={{ minWidth: col.min }}>
-                            {col.render ? col.render(row, rowNumber) : dashCell(row, col.key)}
-                          </td>
-                        ))}
-                      </tr>
-                    )
-                  })}
+                  {!showLoading &&
+                    pagination.pageRows.map((row, i) => {
+                      const rowNumber = pagination.rangeStart + i
+                      return (
+                        <tr
+                          key={`${row.chartNo}-${row.examGroup}-${row.examDate}-${i}`}
+                          className="border-b border-border/40 transition-colors hover:bg-blue-50/40"
+                        >
+                          {COLUMNS.map((col) => (
+                            <td
+                              key={col.key}
+                              className={`whitespace-nowrap px-2.5 py-1 text-[11px] text-gray-800 ${ALIGN[col.align ?? 'left']}`}
+                              style={{ minWidth: col.min }}
+                            >
+                              {col.render
+                                ? col.render(row, rowNumber)
+                                : dashCell(row, col.key)}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
                   {!showLoading && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td
+                        colSpan={COLUMNS.length}
+                        className="px-3 py-12 text-center text-sm text-muted-foreground"
+                      >
                         조회 결과가 없습니다.
                       </td>
                     </tr>

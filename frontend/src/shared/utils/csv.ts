@@ -27,7 +27,9 @@ const escapeCell = (value: unknown): string => {
 
 /** 헤더 + 행(2차원) → CSV 문자열(BOM 미포함, CRLF 구분). */
 export function toCsv(headers: string[], rows: unknown[][]): string {
-  return [headers, ...rows].map((cols) => cols.map(escapeCell).join(',')).join('\r\n')
+  return [headers, ...rows]
+    .map((cols) => cols.map(escapeCell).join(','))
+    .join('\r\n')
 }
 
 export interface CsvColumn<T> {
@@ -44,9 +46,13 @@ export function columnsToCsv<T>(columns: CsvColumn<T>[], rows: T[]): string {
   const headers = columns.map((c) => c.label)
   const data = rows.map((row, i) =>
     columns.map((c) => {
-      const v = c.csv ? c.csv(row, i + 1) : (row as Record<string, unknown>)[c.key]
+      const v = c.csv
+        ? c.csv(row, i + 1)
+        : (row as Record<string, unknown>)[c.key]
       // 텍스트 강제 칼럼은 빈 값이 아닐 때만 ="값"으로 감싼다(빈 칸은 그대로 빈 칸).
-      return c.text && v !== null && v !== undefined && v !== '' ? asText(String(v)) : v
+      return c.text && v !== null && v !== undefined && v !== ''
+        ? asText(String(v))
+        : v
     }),
   )
   return toCsv(headers, data)

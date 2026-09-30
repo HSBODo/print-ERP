@@ -14,7 +14,7 @@ export function useExamList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? (data ?? []) as ExamListItem[] : [],
+    rows: enabled ? ((data ?? []) as ExamListItem[]) : [],
     isLoading,
     isFetching,
     isError,

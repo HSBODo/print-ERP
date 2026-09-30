@@ -44,12 +44,26 @@ export interface MedicalReceipt {
 
 /** 진료명 항목 — 백엔드 VisionItemCatalog.ITEMS 와 같은 17종 (JSON 키 정본). */
 export const VISION_ITEM_KEYS = [
-  '검사비', '수술', 'DNA', 'PRP', 'PIOL렌즈주문', 'D/L', 'D/L용품', 'H/L',
-  '올코드라이아이', '올코어아레즈투', '올코어vitc', 'Dr.PNT', '올코어유산균',
-  '글라우포뮬러', '플로터포뮬러', '기타', '미분류',
+  '검사비',
+  '수술',
+  'DNA',
+  'PRP',
+  'PIOL렌즈주문',
+  'D/L',
+  'D/L용품',
+  'H/L',
+  '올코드라이아이',
+  '올코어아레즈투',
+  '올코어vitc',
+  'Dr.PNT',
+  '올코어유산균',
+  '글라우포뮬러',
+  '플로터포뮬러',
+  '기타',
+  '미분류',
 ] as const
 
-export type VisionItemKey = typeof VISION_ITEM_KEYS[number]
+export type VisionItemKey = (typeof VISION_ITEM_KEYS)[number]
 
 /** 시력교정 매출 내역 1행 — SOFTCRM 비급여 수납 전표 상세(결제수단별). 취소 전표는 결제취소 행(음수)이 따로 온다. */
 export interface VisionReceipt {

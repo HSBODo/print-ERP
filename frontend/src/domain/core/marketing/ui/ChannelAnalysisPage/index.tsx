@@ -50,12 +50,16 @@ function Placeholder({ label, note }: { label: string; note?: string }) {
   return (
     <div className="flex min-h-[320px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white/60 px-8 py-12 text-center">
       <Lock className="h-6 w-6 text-slate-300" />
-      <p className="text-[15px] font-bold text-slate-700">{label} 분석은 아직 작성되지 않았습니다</p>
+      <p className="text-[15px] font-bold text-slate-700">
+        {label} 분석은 아직 작성되지 않았습니다
+      </p>
       {note && <p className="text-[12.5px] text-slate-400">{note}</p>}
       <p className="mt-1 max-w-[420px] text-[12.5px] leading-relaxed text-slate-500">
-        채널 수치 자체는 <b className="font-semibold text-slate-700">예약 퍼널</b>과{' '}
-        <b className="font-semibold text-slate-700">채널별 수익성</b>에서 지금 바로 볼 수 있습니다.
-        이 화면은 그 수치를 해석하고 검증한 <b className="font-semibold text-slate-700">결론</b>을 담는 곳입니다.
+        채널 수치 자체는{' '}
+        <b className="font-semibold text-slate-700">예약 퍼널</b>과{' '}
+        <b className="font-semibold text-slate-700">채널별 수익성</b>에서 지금
+        바로 볼 수 있습니다. 이 화면은 그 수치를 해석하고 검증한{' '}
+        <b className="font-semibold text-slate-700">결론</b>을 담는 곳입니다.
       </p>
     </div>
   )
@@ -72,7 +76,9 @@ export function ChannelAnalysisPage() {
           self-start 로 내용 높이만 차지한다 — 기본값(stretch)이면 채널이 10개뿐인데도
           카드가 화면 끝까지 늘어나 빈 흰 판이 된다. 채널이 많아지면 max-h-full 안에서 스크롤. */}
       <aside className="flex max-h-full w-[196px] flex-none flex-col self-start overflow-y-auto rounded-2xl border border-slate-200/80 bg-white py-3 shadow-sm">
-        <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">채널</p>
+        <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          채널
+        </p>
         {CHANNELS.map((c) => {
           const active = c.id === sel
           const ready = Boolean(c.doc)
@@ -94,9 +100,13 @@ export function ChannelAnalysisPage() {
                 style={{ background: active ? '#2563eb' : 'transparent' }}
               />
               <span className="min-w-0 flex-1 truncate">{c.label}</span>
-              {ready
-                ? <FileText className="h-3.5 w-3.5 flex-none text-slate-400" />
-                : <span className="flex-none text-[10px] text-slate-300">준비중</span>}
+              {ready ? (
+                <FileText className="h-3.5 w-3.5 flex-none text-slate-400" />
+              ) : (
+                <span className="flex-none text-[10px] text-slate-300">
+                  준비중
+                </span>
+              )}
             </button>
           )
         })}
@@ -104,7 +114,11 @@ export function ChannelAnalysisPage() {
 
       {/* ── 우측 문서 ── */}
       <div className="min-w-0 flex-1 overflow-y-auto pb-8">
-        {Doc ? <Doc /> : <Placeholder label={current.label} note={current.note} />}
+        {Doc ? (
+          <Doc />
+        ) : (
+          <Placeholder label={current.label} note={current.note} />
+        )}
       </div>
     </div>
   )

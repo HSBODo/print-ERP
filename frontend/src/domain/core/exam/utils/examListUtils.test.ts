@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { CATARACT_REST_GROUP, GROUP_FILTERS, matchesExamGroup } from './examListUtils'
+import {
+  CATARACT_REST_GROUP,
+  GROUP_FILTERS,
+  matchesExamGroup,
+} from './examListUtils'
 
-const row = (examGroup: string, cataractClass = '') => ({ examGroup, cataractClass })
+const row = (examGroup: string, cataractClass = '') => ({
+  examGroup,
+  cataractClass,
+})
 
 // 2026-07 실측 구성 — 백내장 예약 102행(백내장 45·중단 11·노안/FU 40·기타 6) + 시력교정/드림렌즈.
 const july = [
@@ -13,11 +20,18 @@ const july = [
   ...Array.from({ length: 2 }, () => row('드림렌즈')),
 ]
 
-const count = (selected: string) => july.filter((r) => matchesExamGroup(r, selected)).length
+const count = (selected: string) =>
+  july.filter((r) => matchesExamGroup(r, selected)).length
 
 describe('matchesExamGroup', () => {
   it('검사 필터에 노안/FU/기타 묶음이 있다', () => {
-    expect(GROUP_FILTERS).toEqual(['전체', '시력교정', '드림렌즈', '백내장', '노안/FU/기타'])
+    expect(GROUP_FILTERS).toEqual([
+      '전체',
+      '시력교정',
+      '드림렌즈',
+      '백내장',
+      '노안/FU/기타',
+    ])
     expect(CATARACT_REST_GROUP).toBe('노안/FU/기타')
   })
 
@@ -32,7 +46,9 @@ describe('matchesExamGroup', () => {
 
   it('두 필터는 겹치지 않고 합치면 백내장 예약 전체가 된다', () => {
     const both = july.filter(
-      (r) => matchesExamGroup(r, '백내장') && matchesExamGroup(r, CATARACT_REST_GROUP),
+      (r) =>
+        matchesExamGroup(r, '백내장') &&
+        matchesExamGroup(r, CATARACT_REST_GROUP),
     )
     expect(both).toHaveLength(0)
     expect(count('백내장') + count(CATARACT_REST_GROUP)).toBe(102)
@@ -48,6 +64,8 @@ describe('matchesExamGroup', () => {
     // 백엔드가 새 분류를 내려도 레포트 검사수(백내장 필터)가 조용히 부풀지 않아야 한다.
     const unknown = [row('백내장', '검진')]
     expect(unknown.filter((r) => matchesExamGroup(r, '백내장'))).toHaveLength(0)
-    expect(unknown.filter((r) => matchesExamGroup(r, CATARACT_REST_GROUP))).toHaveLength(1)
+    expect(
+      unknown.filter((r) => matchesExamGroup(r, CATARACT_REST_GROUP)),
+    ).toHaveLength(1)
   })
 })

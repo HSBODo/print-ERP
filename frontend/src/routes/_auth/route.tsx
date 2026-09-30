@@ -14,7 +14,11 @@ export const Route = createFileRoute('/_auth')({
   beforeLoad: ({ matches }): { pageAccess: PageAccessResult } => {
     requireAuth()
     const page = matches.at(-1)?.staticData?.page
-    return { pageAccess: page ? canAccess(page, useAuthStore.getState().user, isProd) : 'ok' }
+    return {
+      pageAccess: page
+        ? canAccess(page, useAuthStore.getState().user, isProd)
+        : 'ok',
+    }
   },
   component: () => (
     <AppLayout>

@@ -1,6 +1,12 @@
 import type { CsvColumn } from '#shared/utils/csv'
 import type { DreamlensLedgerRow } from '../../type/api'
-import { addDays, isoWeek, isoWeekMonday, isoWeeksInYear, toIsoDate } from '#shared/utils/isoWeek'
+import {
+  addDays,
+  isoWeek,
+  isoWeekMonday,
+  isoWeeksInYear,
+  toIsoDate,
+} from '#shared/utils/isoWeek'
 import { maskAddress, maskName } from '#shared/utils/mask'
 import { LEDGER_COLUMNS, type LedgerFieldKey } from './ledgerColumns'
 
@@ -11,17 +17,25 @@ export type PeriodMode = 'daily' | 'weekly' | 'monthly'
 export type SortDirection = 'asc' | 'desc'
 export type SortState = { key: LedgerFieldKey; direction: SortDirection } | null
 
-const COLUMN_TYPE = new Map(LEDGER_COLUMNS.map((column) => [column.key, column.type]))
+const COLUMN_TYPE = new Map(
+  LEDGER_COLUMNS.map((column) => [column.key, column.type]),
+)
 
 /** 매출 컬럼은 숫자로, 나머지(날짜 포함)는 문자열로 비교한다. 날짜는 ISO 라 문자열 비교로 충분. */
-export const getSortValue = (row: DreamlensLedgerRow, key: LedgerFieldKey): string | number => {
+export const getSortValue = (
+  row: DreamlensLedgerRow,
+  key: LedgerFieldKey,
+): string | number => {
   const value = row[key]
   if (COLUMN_TYPE.get(key) === 'number') return Number(value ?? 0)
   return String(value ?? '').trim()
 }
 
 /** 빈 값은 방향과 무관하게 항상 뒤로 — 빈 칸이 많은 장부에서 위를 채우지 않게. */
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0
@@ -30,7 +44,10 @@ export const compareSortValue = (a: string | number | null, b: string | number |
 
   if (typeof a === 'number' && typeof b === 'number') return a - b
 
-  return String(a).localeCompare(String(b), 'ko-KR', { numeric: true, sensitivity: 'base' })
+  return String(a).localeCompare(String(b), 'ko-KR', {
+    numeric: true,
+    sensitivity: 'base',
+  })
 }
 
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
@@ -125,13 +142,17 @@ const isPurchaseTypeValue = (value: string) => PURCHASE_KEYWORD.test(value)
  * 주소·구매구분 컬럼은 값이 섞여 있어, 구매 구분 키워드가 있으면 그대로 두고
  * 나머지(=실제 배송 주소)만 maskAddress 로 상세주소를 가린다.
  */
-const csvValue = (column: (typeof LEDGER_COLUMNS)[number], row: DreamlensLedgerRow) => {
+const csvValue = (
+  column: (typeof LEDGER_COLUMNS)[number],
+  row: DreamlensLedgerRow,
+) => {
   const value = row[column.key]
   if (column.type === 'number') return Number(value ?? 0)
   const text = value == null ? '' : String(value)
   if (!text) return ''
   if (column.key === 'customerName') return maskName(text)
-  if (column.key === 'purchaseType') return isPurchaseTypeValue(text) ? text : maskAddress(text)
+  if (column.key === 'purchaseType')
+    return isPurchaseTypeValue(text) ? text : maskAddress(text)
   return text
 }
 

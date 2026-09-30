@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { SurgeryCompositionPage } from '#domain/core/surgery/ui/SurgeryCompositionPage'
 
-export const Route = createFileRoute('/_auth/stats/(surgery)/surgery-composition')({
+export const Route = createFileRoute(
+  '/_auth/stats/(surgery)/surgery-composition',
+)({
   component: SurgeryCompositionPage,
   staticData: {
     page: {

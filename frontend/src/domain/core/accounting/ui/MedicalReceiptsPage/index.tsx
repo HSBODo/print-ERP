@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { MedicalReceipt } from '../../type/accounting'
-import { useAccountingStatus, useMedicalReceipts } from '../../hooks/useAccounting'
+import {
+  useAccountingStatus,
+  useMedicalReceipts,
+} from '../../hooks/useAccounting'
 import type { AccountingFilterState } from '../../type/filter'
 import {
   MedicalReceiptFilters,
@@ -27,10 +30,10 @@ const DEFAULT_EXTRA_FILTERS: MedicalExtraFilters = {
   breakdown: '전체',
 }
 
-
 const matchesCategory = (row: MedicalReceipt, category: string) => {
   if (category === '전체') return true
-  if (category === '백내장') return row.revenueType === '입원' || row.revenueType === '입원외'
+  if (category === '백내장')
+    return row.revenueType === '입원' || row.revenueType === '입원외'
   return row.receiptType === category
 }
 
@@ -44,18 +47,32 @@ const filterRows = (
   rows: MedicalReceipt[],
   filter: AccountingFilterState,
   extra: MedicalExtraFilters,
-) => rows
-  .filter((row) => matchesCategory(row, filter.category))
-  .filter((row) => extra.insurance === '전체' || row.insuranceType === extra.insurance)
-  .filter((row) => extra.status === '전체' || row.status === extra.status)
-  .filter((row) => extra.outstanding === '전체' || row.outstanding > 0)
-  .filter((row) => extra.support === '전체' || hasSupport(row))
-  .filter((row) => matchesKeyword([row.patientName, row.chartNo, row.doctor], filter.keyword))
+) =>
+  rows
+    .filter((row) => matchesCategory(row, filter.category))
+    .filter(
+      (row) =>
+        extra.insurance === '전체' || row.insuranceType === extra.insurance,
+    )
+    .filter((row) => extra.status === '전체' || row.status === extra.status)
+    .filter((row) => extra.outstanding === '전체' || row.outstanding > 0)
+    .filter((row) => extra.support === '전체' || hasSupport(row))
+    .filter((row) =>
+      matchesKeyword(
+        [row.patientName, row.chartNo, row.doctor],
+        filter.keyword,
+      ),
+    )
 
 /** 보험유형 선택지 — 조회된 행에서 뽑는다 (원형과 동일 · 마트에 어떤 유형이 오든 그대로 노출). */
 const insuranceOptionsOf = (rows: MedicalReceipt[]) => [
   '전체',
-  ...new Set(rows.map((row) => row.insuranceType).filter(Boolean).sort((a, b) => a.localeCompare(b, 'ko'))),
+  ...new Set(
+    rows
+      .map((row) => row.insuranceType)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'ko')),
+  ),
 ]
 
 /**
@@ -73,11 +90,21 @@ export function MedicalReceiptsPage() {
     () => filterRows(query.data ?? [], applied, extra),
     [query.data, applied, extra],
   )
-  const insuranceOptions = useMemo(() => insuranceOptionsOf(query.data ?? []), [query.data])
-  const stamp = dataStamp(status.data?.medicalLoadedAt, status.data?.medicalFrom, status.data?.medicalTo)
+  const insuranceOptions = useMemo(
+    () => insuranceOptionsOf(query.data ?? []),
+    [query.data],
+  )
+  const stamp = dataStamp(
+    status.data?.medicalLoadedAt,
+    status.data?.medicalFrom,
+    status.data?.medicalTo,
+  )
 
   const search = () => {
-    const normalized = draft.from <= draft.to ? draft : { ...draft, from: draft.to, to: draft.from }
+    const normalized =
+      draft.from <= draft.to
+        ? draft
+        : { ...draft, from: draft.to, to: draft.from }
     setDraft(normalized)
     setApplied(normalized)
   }

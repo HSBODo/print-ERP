@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { summarizeClassifications, CLASSIFICATION_ORDER, EXAM_COUNT_CLASSES } from './cataractExamListUtils'
+import {
+  summarizeClassifications,
+  CLASSIFICATION_ORDER,
+  EXAM_COUNT_CLASSES,
+} from './cataractExamListUtils'
 
 const rows = (spec: Record<string, number>) =>
   Object.entries(spec).flatMap(([classification, n]) =>
@@ -35,7 +39,9 @@ describe('summarizeClassifications', () => {
   })
 
   it('빈 분류는 (미지정)으로 드러내고 검사수에 넣지 않는다', () => {
-    const { breakdown, examCount } = summarizeClassifications(rows({ 백내장: 2, '': 1 }))
+    const { breakdown, examCount } = summarizeClassifications(
+      rows({ 백내장: 2, '': 1 }),
+    )
 
     expect(breakdown).toContainEqual({ name: '(미지정)', count: 1 })
     expect(examCount).toBe(2)

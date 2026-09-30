@@ -40,9 +40,11 @@ export function KpiCardsPanel({
           (acc, m) => ({
             visionExamCount: acc.visionExamCount + m.visionExamCount,
             visionCounselCount: acc.visionCounselCount + m.visionCounselCount,
-            visionSurgeryBooked: acc.visionSurgeryBooked + m.visionSurgeryBooked,
+            visionSurgeryBooked:
+              acc.visionSurgeryBooked + m.visionSurgeryBooked,
             cataractExamCount: acc.cataractExamCount + m.cataractExamCount,
-            cataractSurgeryBooked: acc.cataractSurgeryBooked + m.cataractSurgeryBooked,
+            cataractSurgeryBooked:
+              acc.cataractSurgeryBooked + m.cataractSurgeryBooked,
           }),
           {
             visionExamCount: 0,
@@ -59,9 +61,18 @@ export function KpiCardsPanel({
             sums.visionSurgeryBooked + sums.cataractSurgeryBooked,
             sums.visionExamCount + sums.cataractExamCount,
           ),
-          visionConsultation: computeRate(sums.visionCounselCount, sums.visionExamCount),
-          visionSurgery: computeRate(sums.visionSurgeryBooked, sums.visionExamCount),
-          cataractSurgery: computeRate(sums.cataractSurgeryBooked, sums.cataractExamCount),
+          visionConsultation: computeRate(
+            sums.visionCounselCount,
+            sums.visionExamCount,
+          ),
+          visionSurgery: computeRate(
+            sums.visionSurgeryBooked,
+            sums.visionExamCount,
+          ),
+          cataractSurgery: computeRate(
+            sums.cataractSurgeryBooked,
+            sums.cataractExamCount,
+          ),
         }
       }),
     [years, dataMap],
@@ -71,8 +82,13 @@ export function KpiCardsPanel({
     <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {METRICS.map((metric) => {
         const values =
-          mode === 'month' ? periodsData.map((data) => data[metric.key]) : yearAverages.map((data) => data[metric.key])
-        const labels = mode === 'month' ? periods.map(periodLabel) : years.map((year) => `${year}년`)
+          mode === 'month'
+            ? periodsData.map((data) => data[metric.key])
+            : yearAverages.map((data) => data[metric.key])
+        const labels =
+          mode === 'month'
+            ? periods.map(periodLabel)
+            : years.map((year) => `${year}년`)
 
         return (
           <KpiCard
@@ -89,5 +105,9 @@ export function KpiCardsPanel({
     </section>
   )
 
-  return <PanelShell isLoading={isLoading} isError={isError} variant="kpi">{renderCards()}</PanelShell>
+  return (
+    <PanelShell isLoading={isLoading} isError={isError} variant="kpi">
+      {renderCards()}
+    </PanelShell>
+  )
 }

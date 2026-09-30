@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { consultationApi } from '../api'
 import type { StopReasonMonthlyItem } from '../type/api'
 
-function toDataMap(items: StopReasonMonthlyItem[]): Record<number, (StopReasonMonthlyItem | null)[]> {
+function toDataMap(
+  items: StopReasonMonthlyItem[],
+): Record<number, (StopReasonMonthlyItem | null)[]> {
   const map: Record<number, (StopReasonMonthlyItem | null)[]> = {}
   for (const item of items) {
     if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => null)
@@ -13,9 +15,14 @@ function toDataMap(items: StopReasonMonthlyItem[]): Record<number, (StopReasonMo
 }
 
 export function useStopReasonMonthly(years: number[]) {
-  const { data: apiData, isLoading, isError } = useQuery({
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['stop-reason-monthly', years],
-    queryFn: ({ signal }) => consultationApi.getStopReasonMonthly(years, signal),
+    queryFn: ({ signal }) =>
+      consultationApi.getStopReasonMonthly(years, signal),
     enabled: years.length > 0,
   })
 

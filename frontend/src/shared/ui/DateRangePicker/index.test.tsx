@@ -6,21 +6,33 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { DateRangePicker, type DateRange } from '#shared/ui/DateRangePicker'
 
-function Harness({ onChange, initial = { from: '2026-08-01', to: '2026-08-31' } }: { onChange?: (range: DateRange) => void; initial?: DateRange }) {
+function Harness({
+  onChange,
+  initial = { from: '2026-08-01', to: '2026-08-31' },
+}: {
+  onChange?: (range: DateRange) => void
+  initial?: DateRange
+}) {
   const [range, setRange] = useState(initial)
   return (
     <DateRangePicker
       from={range.from}
       to={range.to}
-      onChange={(next) => { setRange(next); onChange?.(next) }}
+      onChange={(next) => {
+        setRange(next)
+        onChange?.(next)
+      }}
     />
   )
 }
 
-const openPanel = () => fireEvent.click(screen.getByRole('button', { name: /2026-08-01/ }))
+const openPanel = () =>
+  fireEvent.click(screen.getByRole('button', { name: /2026-08-01/ }))
 const panel = () => screen.getByRole('dialog', { name: '조회 기간 선택' })
 const day = (value: string) => {
-  const match = [...panel().querySelectorAll('button')].find((node) => node.textContent === value && node.className.includes('h-8.5'))
+  const match = [...panel().querySelectorAll('button')].find(
+    (node) => node.textContent === value && node.className.includes('h-8.5'),
+  )
   if (!match) throw new Error(`day cell ${value} not found`)
   return match
 }
@@ -46,7 +58,10 @@ describe('DateRangePicker', () => {
 
     fireEvent.click(day('12'))
     fireEvent.click(screen.getByRole('button', { name: '적용' }))
-    expect(onChange).toHaveBeenCalledWith({ from: '2026-08-05', to: '2026-08-12' })
+    expect(onChange).toHaveBeenCalledWith({
+      from: '2026-08-05',
+      to: '2026-08-12',
+    })
   })
 
   it('시작일보다 이전 날짜를 누르면 시작일을 다시 잡는다', () => {
@@ -58,7 +73,10 @@ describe('DateRangePicker', () => {
     fireEvent.click(day('3'))
     fireEvent.click(day('7'))
     fireEvent.click(screen.getByRole('button', { name: '적용' }))
-    expect(onChange).toHaveBeenCalledWith({ from: '2026-08-03', to: '2026-08-07' })
+    expect(onChange).toHaveBeenCalledWith({
+      from: '2026-08-03',
+      to: '2026-08-07',
+    })
   })
 
   it('[취소] 는 선택을 버리고 닫는다', () => {

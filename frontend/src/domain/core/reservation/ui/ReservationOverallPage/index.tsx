@@ -1,6 +1,12 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#shared/ui/Card'
 import {
   ChartContainer,
   ChartTooltip,
@@ -18,7 +24,13 @@ const RECENCY_COLORS = ['#E11D2E', '#4B5563', '#A8CEDF', '#F59E0B']
 
 type TabKey = 'total' | 'online' | 'call'
 
-const TABS: { key: TabKey; field: 'reservations' | 'online' | 'call'; label: string; title: string; description: string }[] = [
+const TABS: {
+  key: TabKey
+  field: 'reservations' | 'online' | 'call'
+  label: string
+  title: string
+  description: string
+}[] = [
   {
     key: 'total',
     field: 'reservations',
@@ -49,28 +61,41 @@ const TABS: { key: TabKey; field: 'reservations' | 'online' | 'call'; label: str
 ]
 
 export function ReservationOverallPage() {
-  const filter = useFilterBar('year', [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR])
+  const filter = useFilterBar('year', [
+    CURRENT_YEAR - 2,
+    CURRENT_YEAR - 1,
+    CURRENT_YEAR,
+  ])
   const [tab, setTab] = useState<TabKey>('total')
 
   const currentTab = TABS.find((t) => t.key === tab) ?? TABS[0]
   const field = currentTab.field
 
-  const sortedYears = useMemo(() => [...filter.years].sort((a, b) => a - b), [filter.years])
-  const { dataMap, isLoading, isError } = useReservationOverallTrend(sortedYears)
+  const sortedYears = useMemo(
+    () => [...filter.years].sort((a, b) => a - b),
+    [filter.years],
+  )
+  const { dataMap, isLoading, isError } =
+    useReservationOverallTrend(sortedYears)
 
   const series = useMemo(() => {
     const latestYear = sortedYears[sortedYears.length - 1]
     return sortedYears.map((year, index) => ({
       year,
       key: `y${year}`,
-      color: RECENCY_COLORS[Math.min(sortedYears.length - 1 - index, RECENCY_COLORS.length - 1)],
+      color:
+        RECENCY_COLORS[
+          Math.min(sortedYears.length - 1 - index, RECENCY_COLORS.length - 1)
+        ],
       isLatest: year === latestYear,
     }))
   }, [sortedYears])
 
   const yearChipColors = useMemo(() => {
     const map: Record<number, string> = {}
-    series.forEach((s) => { map[s.year] = s.color })
+    series.forEach((s) => {
+      map[s.year] = s.color
+    })
     return map
   }, [series])
 
@@ -98,7 +123,12 @@ export function ReservationOverallPage() {
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[40rem] flex-col gap-6">
       <FilterBar {...filter} yearOnly yearChipColors={yearChipColors} />
-      <PanelShell isLoading={isLoading} isError={isError} variant="line" className="flex min-h-0 flex-1 flex-col">
+      <PanelShell
+        isLoading={isLoading}
+        isError={isError}
+        variant="line"
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <Card className="flex min-h-0 flex-1 flex-col border-border/70 shadow-sm">
           <CardHeader className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -130,17 +160,32 @@ export function ReservationOverallPage() {
                   className="flex items-center gap-2 text-sm font-bold"
                   style={{ color: s.isLatest ? s.color : '#374151' }}
                 >
-                  <span className="h-[3px] w-8 rounded-full" style={{ backgroundColor: s.color }} />
+                  <span
+                    className="h-[3px] w-8 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                  />
                   {s.year}
                 </span>
               ))}
             </div>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-            <ChartContainer config={chartConfig} className="aspect-auto min-h-0 w-full flex-1">
-              <LineChart data={chartData} margin={{ top: 24, left: 0, right: 80 }}>
+            <ChartContainer
+              config={chartConfig}
+              className="aspect-auto min-h-0 w-full flex-1"
+            >
+              <LineChart
+                data={chartData}
+                margin={{ top: 24, left: 0, right: 80 }}
+              >
                 <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" scale="band" tickLine={false} axisLine={false} tickMargin={8} />
+                <XAxis
+                  dataKey="month"
+                  scale="band"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
                 <YAxis
                   width={80}
                   tickLine={false}
@@ -169,7 +214,9 @@ export function ReservationOverallPage() {
                             fontSize: 14,
                             fontWeight: 700,
                             formatter: (value: unknown) =>
-                              typeof value === 'number' ? formatAxisNumber(value) : '',
+                              typeof value === 'number'
+                                ? formatAxisNumber(value)
+                                : '',
                           }
                         : undefined
                     }
@@ -191,7 +238,10 @@ export function ReservationOverallPage() {
                   <tr className="border-y border-border bg-muted/40">
                     <th className="py-2" />
                     {MONTHS.map((month) => (
-                      <th key={month} className="py-2 font-semibold text-foreground">
+                      <th
+                        key={month}
+                        className="py-2 font-semibold text-foreground"
+                      >
                         {month}
                       </th>
                     ))}
@@ -223,7 +273,9 @@ export function ReservationOverallPage() {
                           const value = chartData[monthIndex][s.key]
                           return (
                             <td key={monthIndex} className="py-2 tabular-nums">
-                              {typeof value === 'number' ? formatAxisNumber(value) : ''}
+                              {typeof value === 'number'
+                                ? formatAxisNumber(value)
+                                : ''}
                             </td>
                           )
                         })}

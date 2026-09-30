@@ -4,7 +4,13 @@ export const MODOODOC_FUNNEL_YEAR = 2026
 
 export type ModoodocMonthlyFunnelSource = Pick<
   ReservationChannelFunnelItem,
-  'reserved' | 'notCancel' | 'visited' | 'examined' | 'notStop' | 'surgery' | 'surgeryDone'
+  | 'reserved'
+  | 'notCancel'
+  | 'visited'
+  | 'examined'
+  | 'notStop'
+  | 'surgery'
+  | 'surgeryDone'
 >
 
 export type ModoodocMonthlyFunnelRow = ModoodocMonthlyFunnelSource & {

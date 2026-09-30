@@ -1,4 +1,12 @@
-import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
+import {
+  Callout,
+  DocHeader,
+  Hi,
+  Section,
+  Sources,
+  Summary,
+  Table,
+} from './docParts'
 
 /**
  * 인콜 채널 분석 문서 (2026-01~08 실측).
@@ -14,21 +22,33 @@ const PERIOD = '2026-01-01 ~ 2026-08-31 (등록일 기준)'
 export function IncallDoc() {
   return (
     <div className="flex flex-col gap-4">
-      <DocHeader title="인콜" badges={[PERIOD, '예약 4,776명 · 수술 2,186명', '최대 채널']} />
+      <DocHeader
+        title="인콜"
+        badges={[PERIOD, '예약 4,776명 · 수술 2,186명', '최대 채널']}
+      />
 
       <Summary headline="전체의 절반을 만드는 채널이자, 가장 많이 흘리는 채널이다.">
-        수술 2,186명으로 2위(네이버 983명)의 <b className="font-semibold text-white">2.2배</b>다.
-        동시에 예약 4,776명 중 <b className="font-semibold text-white">1,728명(36.2%)</b>이
-        취소·미내원으로 사라진다 — 전 채널 손실의 절반이 여기서 나온다.
-        비율로는 홈페이지와 비슷하지만 <b className="font-semibold text-white">절대량이 2.5배</b>라,
-        1%p 개선의 값어치가 가장 큰 곳이다.
+        수술 2,186명으로 2위(네이버 983명)의{' '}
+        <b className="font-semibold text-white">2.2배</b>다. 동시에 예약 4,776명
+        중 <b className="font-semibold text-white">1,728명(36.2%)</b>이
+        취소·미내원으로 사라진다 — 전 채널 손실의 절반이 여기서 나온다. 비율로는
+        홈페이지와 비슷하지만{' '}
+        <b className="font-semibold text-white">절대량이 2.5배</b>라, 1%p 개선의
+        값어치가 가장 큰 곳이다.
       </Summary>
 
       <Section no="1" title="규모 — 다른 채널과 자릿수가 다르다">
         <Table
           head={['채널', '예약', '접수', '수술완료', '접수율', '최종전환']}
           rows={[
-            [<Hi>인콜</Hi>, <Hi>4,776</Hi>, '3,048', <Hi>2,186</Hi>, '63.8%', '45.8%'],
+            [
+              <Hi>인콜</Hi>,
+              <Hi>4,776</Hi>,
+              '3,048',
+              <Hi>2,186</Hi>,
+              '63.8%',
+              '45.8%',
+            ],
             ['네이버', '1,833', '1,385', '983', '75.6%', '53.6%'],
             ['홈페이지', '1,833', '1,136', '834', '62.0%', '45.5%'],
             ['아웃콜', '1,096', '845', '622', '77.1%', '56.8%'],
@@ -37,8 +57,9 @@ export function IncallDoc() {
         />
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <Callout tone="warn" title="손실 1,728명 — 전 채널 최대">
-            예약 4,776명 중 <b>취소 1,000명 + 미내원 728명</b>이 빠진다.
-            2~5위 채널의 손실을 다 합쳐도(697 + 448 + 251 + 143 = 1,539명) 여기 하나에 못 미친다.
+            예약 4,776명 중 <b>취소 1,000명 + 미내원 728명</b>이 빠진다. 2~5위
+            채널의 손실을 다 합쳐도(697 + 448 + 251 + 143 = 1,539명) 여기 하나에
+            못 미친다.
           </Callout>
           <Callout tone="good" title="접수만 하면 그 뒤는 평범하다">
             접수 3,048 → 수술 2,186명으로 <b>71.7%</b>가 통과한다.
@@ -50,7 +71,9 @@ export function IncallDoc() {
       <Section no="2" title="누가 오는가 — 젊고 학생이 많다">
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">연령 (평균 26.7세)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              연령 (평균 26.7세)
+            </p>
             <Table
               head={['연령대', '인콜', '네이버', '전체평균']}
               rows={[
@@ -64,7 +87,9 @@ export function IncallDoc() {
             />
           </div>
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">직업</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              직업
+            </p>
             <Table
               head={['직업', '인콜', '네이버']}
               rows={[
@@ -79,9 +104,10 @@ export function IncallDoc() {
           </div>
         </div>
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
-          10대 + 20~24세가 <Hi>44.8%</Hi>다(네이버 29.4%). 대학생이 직장인보다 많은
-          몇 안 되는 채널이고, 수험생 할인 적용률도 8.6%로 높다.
-          <b> 전화로 문의하는 층이 젊다</b>는 뜻이며, 이는 취소율이 높은 것과 무관하지 않을 수 있다(미검증).
+          10대 + 20~24세가 <Hi>44.8%</Hi>다(네이버 29.4%). 대학생이 직장인보다
+          많은 몇 안 되는 채널이고, 수험생 할인 적용률도 8.6%로 높다.
+          <b> 전화로 문의하는 층이 젊다</b>는 뜻이며, 이는 취소율이 높은 것과
+          무관하지 않을 수 있다(미검증).
         </p>
       </Section>
 
@@ -98,10 +124,13 @@ export function IncallDoc() {
           ]}
         />
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
-          정가가 440만으로 가장 높고 시술 구성도 치우침이 없다.
-          규모가 커서 <Hi>전체 평균을 사실상 인콜이 결정한다</Hi> — 다른 채널을 볼 때의 기준선으로 쓰면 된다.
+          정가가 440만으로 가장 높고 시술 구성도 치우침이 없다. 규모가 커서{' '}
+          <Hi>전체 평균을 사실상 인콜이 결정한다</Hi> — 다른 채널을 볼 때의
+          기준선으로 쓰면 된다.
         </p>
-        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">할인 항목 (적용률)</p>
+        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">
+          할인 항목 (적용률)
+        </p>
         <Table
           head={['할인 항목', '인콜', '네이버', '아웃콜']}
           rows={[
@@ -133,9 +162,18 @@ export function IncallDoc() {
           </Callout>
           <Callout tone="warn" title="확인되지 않은 것">
             <ul className="ml-4 list-disc space-y-1">
-              <li><b>취소·미내원 사유가 기록되지 않는다.</b> 왜 안 오는지 알 수 없다.</li>
-              <li>"젊어서 취소가 잦다"는 <b>가설이지 검증된 인과가 아니다</b>. 연령별 취소율을 따로 봐야 한다.</li>
-              <li>인입 콜 수 대비 예약 전환(응대 품질)은 CRM 밖 데이터라 볼 수 없다.</li>
+              <li>
+                <b>취소·미내원 사유가 기록되지 않는다.</b> 왜 안 오는지 알 수
+                없다.
+              </li>
+              <li>
+                "젊어서 취소가 잦다"는 <b>가설이지 검증된 인과가 아니다</b>.
+                연령별 취소율을 따로 봐야 한다.
+              </li>
+              <li>
+                인입 콜 수 대비 예약 전환(응대 품질)은 CRM 밖 데이터라 볼 수
+                없다.
+              </li>
             </ul>
           </Callout>
         </div>
@@ -143,29 +181,45 @@ export function IncallDoc() {
 
       <Section no="5" title="그래서 무엇을 판단해야 하나">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <p className="text-[15px] font-bold text-slate-900">여기서 1%p가 다른 채널의 5%p다</p>
+          <p className="text-[15px] font-bold text-slate-900">
+            여기서 1%p가 다른 채널의 5%p다
+          </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
-            접수율을 63.8% → <Hi>70%</Hi>로만 올리면 접수 3,048 → 3,343명,
-            뒷단 비율이 그대로라면 수술은 <Hi>2,186 → 약 2,398명(+212명)</Hi>이다.
+            접수율을 63.8% → <Hi>70%</Hi>로만 올리면 접수 3,048 → 3,343명, 뒷단
+            비율이 그대로라면 수술은 <Hi>2,186 → 약 2,398명(+212명)</Hi>이다.
             객단가 339만이면 <Hi>약 72억</Hi>이다.
           </p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
-            같은 6%p 개선을 모두닥에서 하면 +50명이다. <b>어디를 먼저 손댈지는 비율이 아니라 절대량이 정한다.</b>
+            같은 6%p 개선을 모두닥에서 하면 +50명이다.{' '}
+            <b>어디를 먼저 손댈지는 비율이 아니라 절대량이 정한다.</b>
           </p>
         </div>
         <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
           단가는 이미 전 채널 최고 수준(정가 440만)이라 손댈 곳이 아니다.
-          홈페이지와 마찬가지로 <Hi>취소·미내원 사유를 남기게 하는 것</Hi>이 먼저다 —
-          두 채널을 합치면 손실이 2,425명이고, 사유 없이는 무엇을 고칠지 정할 수 없다.
+          홈페이지와 마찬가지로 <Hi>취소·미내원 사유를 남기게 하는 것</Hi>이
+          먼저다 — 두 채널을 합치면 손실이 2,425명이고, 사유 없이는 무엇을
+          고칠지 정할 수 없다.
         </p>
       </Section>
 
       <Sources
         items={[
-          <>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한 사람(<b>예약 퍼널</b>과 같은 정의).</>,
-          <>인콜은 <code>RESERVATION</code> 예약경로 기준이며 내원동기가 비어 있는 건도 포함한다. 실제 유입 매체는 섞여 있을 수 있다.</>,
-          <>정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE)에서 파싱했다. 실수납액과는 편차가 있다.</>,
-          <>취소·미내원 <b>사유는 CRM 에 없다</b>. 5번의 추정치는 뒷단 비율 불변 가정 위의 산수다.</>,
+          <>
+            기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한
+            사람(<b>예약 퍼널</b>과 같은 정의).
+          </>,
+          <>
+            인콜은 <code>RESERVATION</code> 예약경로 기준이며 내원동기가 비어
+            있는 건도 포함한다. 실제 유입 매체는 섞여 있을 수 있다.
+          </>,
+          <>
+            정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE)에서 파싱했다.
+            실수납액과는 편차가 있다.
+          </>,
+          <>
+            취소·미내원 <b>사유는 CRM 에 없다</b>. 5번의 추정치는 뒷단 비율 불변
+            가정 위의 산수다.
+          </>,
         ]}
       />
     </div>

@@ -35,7 +35,8 @@ const CLASS_CHIP_TONE = (name: string) =>
 
 export function CataractExamListPage() {
   const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
-  const [activeQuickRange, setActiveQuickRange] = useState<QuickRangeKey | null>(null)
+  const [activeQuickRange, setActiveQuickRange] =
+    useState<QuickRangeKey | null>(null)
   const [draftFrom, setDraftFrom] = useState(defaultFrom)
   const [draftTo, setDraftTo] = useState(defaultTo)
   const [draftType, setDraftType] = useState('전체')
@@ -46,7 +47,10 @@ export function CataractExamListPage() {
   const [queryKeyword, setQueryKeyword] = useState('')
   const [sortState, setSortState] = useState<SortState>(null)
 
-  const { rows, isLoading, isFetching, isError } = useCataractExamList(queryFrom, queryTo)
+  const { rows, isLoading, isFetching, isError } = useCataractExamList(
+    queryFrom,
+    queryTo,
+  )
   const showSkeleton = isLoading || isFetching
 
   const typeOptions = useMemo(() => {
@@ -59,13 +63,20 @@ export function CataractExamListPage() {
     return rows.filter((r) => {
       if (queryType !== '전체' && r.examType !== queryType) return false
       if (!q) return true
-      return r.name.toLowerCase().includes(q) || r.chartNo.includes(q) || r.phone2.includes(q)
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.chartNo.includes(q) ||
+        r.phone2.includes(q)
+      )
     })
   }, [rows, queryType, queryKeyword])
 
   const tableRows = filtered
 
-  const classCounts = useMemo(() => summarizeClassifications(tableRows), [tableRows])
+  const classCounts = useMemo(
+    () => summarizeClassifications(tableRows),
+    [tableRows],
+  )
 
   const sortedRows = useMemo(() => {
     if (!sortState) return tableRows
@@ -76,7 +87,8 @@ export function CataractExamListPage() {
           getSortValue(a.row, sortState.key, a.index),
           getSortValue(b.row, sortState.key, b.index),
         )
-        if (compared !== 0) return sortState.direction === 'asc' ? compared : -compared
+        if (compared !== 0)
+          return sortState.direction === 'asc' ? compared : -compared
         return a.index - b.index
       })
       .map(({ row }) => row)
@@ -87,8 +99,16 @@ export function CataractExamListPage() {
 
   const handleSearch = () => {
     pagination.resetPage()
-    setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
-    setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
+    setQueryFrom(
+      draftPeriodMode === 'monthly'
+        ? toMonthStart(toMonthValue(draftFrom))
+        : draftFrom,
+    )
+    setQueryTo(
+      draftPeriodMode === 'monthly'
+        ? toMonthEnd(toMonthValue(draftTo))
+        : draftTo,
+    )
     setQueryType(draftType)
     setQueryKeyword(draftKeyword)
   }
@@ -126,16 +146,19 @@ export function CataractExamListPage() {
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
   const handleDownloadCsv = () => {
-    downloadCsv(`백내장검사자리스트_${queryFrom}_${queryTo}.csv`, columnsToCsv(COLUMNS, sortedRows))
+    downloadCsv(
+      `백내장검사자리스트_${queryFrom}_${queryTo}.csv`,
+      columnsToCsv(COLUMNS, sortedRows),
+    )
   }
 
   const handleSort = (key: string) => {
     pagination.resetPage()
-    setSortState((prev) => (
+    setSortState((prev) =>
       prev?.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-        : { key, direction: 'asc' }
-    ))
+        : { key, direction: 'asc' },
+    )
   }
 
   const handlePeriodModeChange = (mode: PeriodMode) => {
@@ -172,7 +195,9 @@ export function CataractExamListPage() {
             <select
               aria-label="기간 단위"
               value={draftPeriodMode}
-              onChange={(e) => handlePeriodModeChange(e.target.value as PeriodMode)}
+              onChange={(e) =>
+                handlePeriodModeChange(e.target.value as PeriodMode)
+              }
               className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="daily">일별</option>
@@ -242,7 +267,11 @@ export function CataractExamListPage() {
             onChange={(e) => setDraftType(e.target.value)}
             className="h-8 w-36 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
-            {typeOptions.map((t) => <option key={t} value={t}>{t === '전체' ? '진료구분 전체' : t}</option>)}
+            {typeOptions.map((t) => (
+              <option key={t} value={t}>
+                {t === '전체' ? '진료구분 전체' : t}
+              </option>
+            ))}
           </select>
           <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
         </div>
@@ -261,20 +290,34 @@ export function CataractExamListPage() {
           title="총건수 = 레거시 BCRM 백내장 검사 전체. 월간 레포트 백내장 검사수는 백내장(검안사·상담사 배정) + 중단(상담사 BS미지정)만 센다. 노안/FU(검안사 미배정 + 상담사 BS미지정)와 기타는 전체 검사수에만 더해진다."
         >
           <span className="font-medium text-amber-700">총건수</span>
-          <strong className="tabular-nums text-amber-900">{formatCount(classCounts.total)}건</strong>
+          <strong className="tabular-nums text-amber-900">
+            {formatCount(classCounts.total)}건
+          </strong>
           <span className="h-3.5 w-px bg-amber-300" />
           <span className="font-medium text-amber-800">
-            백내장검사수 <strong className="tabular-nums text-amber-900">{formatCount(classCounts.examCount)}</strong>
+            백내장검사수{' '}
+            <strong className="tabular-nums text-amber-900">
+              {formatCount(classCounts.examCount)}
+            </strong>
           </span>
           <span className="h-3.5 w-px bg-amber-300" />
           {classCounts.breakdown.map(({ name, count }) => (
             <span key={name} className={CLASS_CHIP_TONE(name)}>
-              {name} <strong className="tabular-nums text-amber-900">{formatCount(count)}</strong>
+              {name}{' '}
+              <strong className="tabular-nums text-amber-900">
+                {formatCount(count)}
+              </strong>
             </span>
           ))}
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={handleReset}
+          >
             <RotateCcw className="h-3.5 w-3.5" />
             초기화
           </Button>
@@ -305,18 +348,27 @@ export function CataractExamListPage() {
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
           {isError ? (
-            <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">데이터를 불러오지 못했습니다.</div>
+            <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">
+              데이터를 불러오지 못했습니다.
+            </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto rounded-t-lg border-b border-border/60">
               <table className="w-full border-collapse text-[11px]">
                 <thead>
                   <tr className="bg-gray-50 text-[11px] text-gray-700">
                     {COLUMNS.map((col) => {
-                      const activeDirection = sortState?.key === col.key ? sortState.direction : null
+                      const activeDirection =
+                        sortState?.key === col.key ? sortState.direction : null
                       return (
                         <th
                           key={col.key}
-                          aria-sort={activeDirection === 'asc' ? 'ascending' : activeDirection === 'desc' ? 'descending' : 'none'}
+                          aria-sort={
+                            activeDirection === 'asc'
+                              ? 'ascending'
+                              : activeDirection === 'desc'
+                                ? 'descending'
+                                : 'none'
+                          }
                           className={`sticky top-0 z-10 whitespace-nowrap border-b border-border/60 bg-gray-50 px-2.5 py-1.5 font-semibold ${ALIGN[col.align ?? 'left']}`}
                           style={{ minWidth: col.min }}
                         >
@@ -326,9 +378,16 @@ export function CataractExamListPage() {
                             onClick={() => handleSort(col.key)}
                           >
                             <span>{col.label}</span>
-                            <span className="flex h-3.5 w-2.5 flex-col items-center justify-center gap-[1px]" aria-hidden="true">
-                              <span className={`h-0 w-0 border-x-[3.5px] border-b-[4px] border-x-transparent ${activeDirection === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'}`} />
-                              <span className={`h-0 w-0 border-x-[3.5px] border-t-[4px] border-x-transparent ${activeDirection === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'}`} />
+                            <span
+                              className="flex h-3.5 w-2.5 flex-col items-center justify-center gap-[1px]"
+                              aria-hidden="true"
+                            >
+                              <span
+                                className={`h-0 w-0 border-x-[3.5px] border-b-[4px] border-x-transparent ${activeDirection === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'}`}
+                              />
+                              <span
+                                className={`h-0 w-0 border-x-[3.5px] border-t-[4px] border-x-transparent ${activeDirection === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'}`}
+                              />
                             </span>
                           </button>
                         </th>
@@ -337,34 +396,60 @@ export function CataractExamListPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {showSkeleton && Array.from({ length: Math.max(pagination.pageSize, SKELETON_ROWS) }, (_, rowIndex) => (
-                    <tr key={`cataract-exam-list-skeleton-${rowIndex}`} className="border-b border-border/40">
-                      {COLUMNS.map((col) => (
-                        <td key={col.key} className="whitespace-nowrap px-2.5 py-1" style={{ minWidth: col.min }}>
-                          <span className="exam-skeleton-bar block h-2.5 w-full rounded" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                  {!showSkeleton && pagination.pageRows.map((row, i) => {
-                    const rowNumber = pagination.rangeStart + i
-                    return (
-                      <tr key={`${row.chartNo}-${row.examDate}-${i}`} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
-                        {COLUMNS.map((col) => (
-                          <td
-                            key={col.key}
-                            className={`whitespace-nowrap px-2.5 py-1 text-[11px] text-gray-800 ${ALIGN[col.align ?? 'left']}`}
-                            style={{ minWidth: col.min }}
-                          >
-                            {col.render ? col.render(row, rowNumber) : dash(String(row[col.key as keyof CataractExamListItem] ?? ''))}
-                          </td>
-                        ))}
-                      </tr>
-                    )
-                  })}
+                  {showSkeleton &&
+                    Array.from(
+                      { length: Math.max(pagination.pageSize, SKELETON_ROWS) },
+                      (_, rowIndex) => (
+                        <tr
+                          key={`cataract-exam-list-skeleton-${rowIndex}`}
+                          className="border-b border-border/40"
+                        >
+                          {COLUMNS.map((col) => (
+                            <td
+                              key={col.key}
+                              className="whitespace-nowrap px-2.5 py-1"
+                              style={{ minWidth: col.min }}
+                            >
+                              <span className="exam-skeleton-bar block h-2.5 w-full rounded" />
+                            </td>
+                          ))}
+                        </tr>
+                      ),
+                    )}
+                  {!showSkeleton &&
+                    pagination.pageRows.map((row, i) => {
+                      const rowNumber = pagination.rangeStart + i
+                      return (
+                        <tr
+                          key={`${row.chartNo}-${row.examDate}-${i}`}
+                          className="border-b border-border/40 transition-colors hover:bg-blue-50/40"
+                        >
+                          {COLUMNS.map((col) => (
+                            <td
+                              key={col.key}
+                              className={`whitespace-nowrap px-2.5 py-1 text-[11px] text-gray-800 ${ALIGN[col.align ?? 'left']}`}
+                              style={{ minWidth: col.min }}
+                            >
+                              {col.render
+                                ? col.render(row, rowNumber)
+                                : dash(
+                                    String(
+                                      row[
+                                        col.key as keyof CataractExamListItem
+                                      ] ?? '',
+                                    ),
+                                  )}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
                   {!showSkeleton && tableRows.length === 0 && (
                     <tr>
-                      <td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td
+                        colSpan={COLUMNS.length}
+                        className="px-3 py-12 text-center text-sm text-muted-foreground"
+                      >
                         검색 결과가 없습니다.
                       </td>
                     </tr>

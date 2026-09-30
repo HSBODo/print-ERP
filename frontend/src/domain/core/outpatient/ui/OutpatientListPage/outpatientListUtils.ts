@@ -53,7 +53,7 @@ export const toMonthEnd = (month: string) => {
 }
 
 export const toMonthWeekRange = (month: string, week: number) => {
-  const startDay = ((week - 1) * 7) + 1
+  const startDay = (week - 1) * 7 + 1
   const monthEnd = toMonthEnd(month)
   const lastDay = Number(monthEnd.slice(-2))
   const endDay = week === 4 ? lastDay : Math.min(startDay + 6, lastDay)
@@ -64,7 +64,11 @@ export const toMonthWeekRange = (month: string, week: number) => {
   }
 }
 
-export const getSortValue = (row: OutpatientListItem, key: string, originalIndex: number) => {
+export const getSortValue = (
+  row: OutpatientListItem,
+  key: string,
+  originalIndex: number,
+) => {
   if (key === 'rowNo') return originalIndex
   if (key === 'age') {
     const age = Number(calcAge(row.birth))
@@ -73,7 +77,10 @@ export const getSortValue = (row: OutpatientListItem, key: string, originalIndex
   return String(row[key as keyof OutpatientListItem] ?? '').trim()
 }
 
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0

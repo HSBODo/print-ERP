@@ -15,10 +15,13 @@ const EMPTY: MonthlyData = {
   call: null,
 }
 
-function toDataMap(items: ReservationOverallMonthlyItem[]): Record<number, MonthlyData[]> {
+function toDataMap(
+  items: ReservationOverallMonthlyItem[],
+): Record<number, MonthlyData[]> {
   const map: Record<number, MonthlyData[]> = {}
   for (const item of items) {
-    if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
+    if (!map[item.year])
+      map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
     map[item.year][item.month - 1] = {
       reservations: item.reservations,
       online: item.online,
@@ -29,9 +32,14 @@ function toDataMap(items: ReservationOverallMonthlyItem[]): Record<number, Month
 }
 
 export function useReservationOverallTrend(years: number[]) {
-  const { data: apiData, isLoading, isError } = useQuery({
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['reservation-overall-trend', years],
-    queryFn: ({ signal }) => reservationApi.getReservationOverallMonthly(years, signal),
+    queryFn: ({ signal }) =>
+      reservationApi.getReservationOverallMonthly(years, signal),
     enabled: years.length > 0,
   })
 

@@ -1,4 +1,12 @@
-import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
+import {
+  Callout,
+  DocHeader,
+  Hi,
+  Section,
+  Sources,
+  Summary,
+  Table,
+} from './docParts'
 
 /**
  * 네이버 채널 분석 문서 (2026-01~08 실측).
@@ -14,13 +22,22 @@ const PERIOD = '2026-01-01 ~ 2026-08-31 (등록일 기준)'
 export function NaverDoc() {
   return (
     <div className="flex flex-col gap-4">
-      <DocHeader title="네이버" badges={[PERIOD, '예약 1,833명 · 수술 983명']} />
+      <DocHeader
+        title="네이버"
+        badges={[PERIOD, '예약 1,833명 · 수술 983명']}
+      />
 
       <Summary headline="홈페이지와 예약 수가 같은데 수술은 149명 더 만든다.">
-        같은 1,833명을 예약받아 <b className="font-semibold text-white">983명 대 834명</b>이다.
-        차이는 전부 접수율(<b className="font-semibold text-white">75.6% 대 62.0%</b>)에서 온다.
-        네이버 이용자가 더 나이가 많고(평균 28.0세) 직장인 비중이 높은데(47.0%),
-        <b className="font-semibold text-white"> 검색해서 찾아온 사람은 실제로 온다</b>.
+        같은 1,833명을 예약받아{' '}
+        <b className="font-semibold text-white">983명 대 834명</b>이다. 차이는
+        전부 접수율(<b className="font-semibold text-white">75.6% 대 62.0%</b>
+        )에서 온다. 네이버 이용자가 더 나이가 많고(평균 28.0세) 직장인 비중이
+        높은데(47.0%),
+        <b className="font-semibold text-white">
+          {' '}
+          검색해서 찾아온 사람은 실제로 온다
+        </b>
+        .
       </Summary>
 
       <Section no="1" title="같은 예약 수, 다른 결과">
@@ -39,12 +56,12 @@ export function NaverDoc() {
         />
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <Callout tone="good" title="격차는 접수 한 곳에서 다 벌어진다">
-            접수에서 <b>+249명</b> 앞서고, 그 뒤 수술까지 가는 비율은 71.0% 대 73.4%로
-            오히려 홈페이지가 약간 높다. <b>뒷단은 차이가 없다.</b>
+            접수에서 <b>+249명</b> 앞서고, 그 뒤 수술까지 가는 비율은 71.0% 대
+            73.4%로 오히려 홈페이지가 약간 높다. <b>뒷단은 차이가 없다.</b>
           </Callout>
           <Callout tone="good" title="8개월 내내 안정적이다">
-            월별 접수율이 1월 81.0% · 3월 78.6% · 7월 69.3% 로 홈페이지보다 매달 높다.
-            변동 폭도 작아 <b>예측 가능한 채널</b>이다.
+            월별 접수율이 1월 81.0% · 3월 78.6% · 7월 69.3% 로 홈페이지보다 매달
+            높다. 변동 폭도 작아 <b>예측 가능한 채널</b>이다.
           </Callout>
         </div>
       </Section>
@@ -52,7 +69,9 @@ export function NaverDoc() {
       <Section no="2" title="누가 오는가 — 25~29세 직장인">
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">연령 (평균 28.0세)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              연령 (평균 28.0세)
+            </p>
             <Table
               head={['연령대', '네이버', '홈페이지', '인콜']}
               rows={[
@@ -69,7 +88,9 @@ export function NaverDoc() {
             </p>
           </div>
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">직업</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              직업
+            </p>
             <Table
               head={['직업', '네이버', '홈페이지', '인콜']}
               rows={[
@@ -81,13 +102,15 @@ export function NaverDoc() {
               ]}
             />
             <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-              직장인 47.0%로 대형 채널 중 최고다. 외국인은 1.9%로 사실상 국내 채널이다.
+              직장인 47.0%로 대형 채널 중 최고다. 외국인은 1.9%로 사실상 국내
+              채널이다.
             </p>
           </div>
         </div>
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
-          <Hi>나이·직업이 접수율 차이를 설명할 수 있다</Hi> — 소득이 있고 스스로 결정하는 층이라
-          예약이 곧 의사결정이다. 다만 이건 <b>해석이지 검증된 인과가 아니다</b>(4번 참조).
+          <Hi>나이·직업이 접수율 차이를 설명할 수 있다</Hi> — 소득이 있고 스스로
+          결정하는 층이라 예약이 곧 의사결정이다. 다만 이건{' '}
+          <b>해석이지 검증된 인과가 아니다</b>(4번 참조).
         </p>
       </Section>
 
@@ -104,10 +127,13 @@ export function NaverDoc() {
           ]}
         />
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
-          대형 채널 중 유일하게 <Hi>스마일이 스마일프로보다 많다</Hi>(36.4% 대 32.7%).
-          그런데도 객단가가 340만으로 인콜(339만)과 같은 이유는 할인율이 낮아서다.
+          대형 채널 중 유일하게 <Hi>스마일이 스마일프로보다 많다</Hi>(36.4% 대
+          32.7%). 그런데도 객단가가 340만으로 인콜(339만)과 같은 이유는 할인율이
+          낮아서다.
         </p>
-        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">할인 항목 — 온라인 전용 할인이 붙는다</p>
+        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">
+          할인 항목 — 온라인 전용 할인이 붙는다
+        </p>
         <Table
           head={['할인 항목', '네이버', '홈페이지', '인콜']}
           rows={[
@@ -121,8 +147,8 @@ export function NaverDoc() {
           ]}
         />
         <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-          <Hi>조조할인 11.2%</Hi>가 전 채널 최고다 — 직장인 비중과 맞물린다(출근 전 수술).
-          온라인 전용 할인(온라인+원데이)은 홈페이지와 함께 8%대다.
+          <Hi>조조할인 11.2%</Hi>가 전 채널 최고다 — 직장인 비중과 맞물린다(출근
+          전 수술). 온라인 전용 할인(온라인+원데이)은 홈페이지와 함께 8%대다.
         </p>
       </Section>
 
@@ -133,14 +159,22 @@ export function NaverDoc() {
               <li>예약 동수(1,833)에서 수술 +149명, 접수 +249명</li>
               <li>격차는 접수 한 곳뿐. 뒷단은 홈페이지가 오히려 근소 우위</li>
               <li>접수율이 8개월 내내 홈페이지보다 높고 변동 폭도 작다</li>
-              <li>직장인 47.0% · 25~34세 56.7%로 대형 채널 중 최고령·최고소득 층</li>
+              <li>
+                직장인 47.0% · 25~34세 56.7%로 대형 채널 중 최고령·최고소득 층
+              </li>
               <li>조조할인 11.2%로 전 채널 최고</li>
             </ul>
           </Callout>
           <Callout tone="warn" title="확인되지 않은 것">
             <ul className="ml-4 list-disc space-y-1">
-              <li><b>"검색해서 온 사람이라 의지가 강하다"는 해석이다.</b> 취소 사유가 없어 검증 불가.</li>
-              <li>네이버 안에서 <b>검색광고·예약광고·플레이스</b>가 섞여 있는데 이 표는 구분하지 못한다.</li>
+              <li>
+                <b>"검색해서 온 사람이라 의지가 강하다"는 해석이다.</b> 취소
+                사유가 없어 검증 불가.
+              </li>
+              <li>
+                네이버 안에서 <b>검색광고·예약광고·플레이스</b>가 섞여 있는데 이
+                표는 구분하지 못한다.
+              </li>
               <li>광고비가 입력되기 전이라 CPA·ROAS 를 낼 수 없다.</li>
             </ul>
           </Callout>
@@ -149,27 +183,46 @@ export function NaverDoc() {
 
       <Section no="5" title="그래서 무엇을 판단해야 하나">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <p className="text-[15px] font-bold text-slate-900">이 채널은 고칠 게 아니라 늘릴 채널이다</p>
+          <p className="text-[15px] font-bold text-slate-900">
+            이 채널은 고칠 게 아니라 늘릴 채널이다
+          </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
-            접수율 75.6%는 대형 채널 중 아웃콜(77.1%) 다음이고, 단가·시술 구성도 평균이다.
-            <b> 눈에 띄는 결함이 없다.</b> 홈페이지·인콜처럼 손실을 줄이는 그림이 아니라,
-            유입 자체를 늘리는 쪽이 맞다.
+            접수율 75.6%는 대형 채널 중 아웃콜(77.1%) 다음이고, 단가·시술 구성도
+            평균이다.
+            <b> 눈에 띄는 결함이 없다.</b> 홈페이지·인콜처럼 손실을 줄이는
+            그림이 아니라, 유입 자체를 늘리는 쪽이 맞다.
           </p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
-            다만 늘릴지 말지는 <Hi>광고비를 알아야</Hi> 정할 수 있다.
-            네이버는 예약광고·검색광고가 나뉘어 있고 검색광고는 유입이 홈페이지·인콜로도 흩어져
-            <b>1:1 귀속이 안 된다</b> — 채널별 수익성 화면에서 이 한계를 감안해 봐야 한다.
+            다만 늘릴지 말지는 <Hi>광고비를 알아야</Hi> 정할 수 있다. 네이버는
+            예약광고·검색광고가 나뉘어 있고 검색광고는 유입이 홈페이지·인콜로도
+            흩어져
+            <b>1:1 귀속이 안 된다</b> — 채널별 수익성 화면에서 이 한계를 감안해
+            봐야 한다.
           </p>
         </div>
       </Section>
 
       <Sources
         items={[
-          <>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한 사람(<b>예약 퍼널</b>과 같은 정의).</>,
-          <>홈페이지와의 비교는 예약 수가 1,833명으로 같아 규모 효과 없이 볼 수 있어서 택했다. <b>홈페이지 문서와 같이 읽을 것.</b></>,
-          <>월별 접수율에서 <b>2026-08 은 진행 중인 달</b>이라 낮게 나온다(21.3%). 추세로 읽지 말 것.</>,
-          <>네이버 예약광고·검색광고·플레이스가 이 채널 하나로 합쳐져 있다. 매체별 분리는 불가능하다.</>,
-          <>정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.</>,
+          <>
+            기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한
+            사람(<b>예약 퍼널</b>과 같은 정의).
+          </>,
+          <>
+            홈페이지와의 비교는 예약 수가 1,833명으로 같아 규모 효과 없이 볼 수
+            있어서 택했다. <b>홈페이지 문서와 같이 읽을 것.</b>
+          </>,
+          <>
+            월별 접수율에서 <b>2026-08 은 진행 중인 달</b>이라 낮게
+            나온다(21.3%). 추세로 읽지 말 것.
+          </>,
+          <>
+            네이버 예약광고·검색광고·플레이스가 이 채널 하나로 합쳐져 있다.
+            매체별 분리는 불가능하다.
+          </>,
+          <>
+            정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.
+          </>,
         ]}
       />
     </div>

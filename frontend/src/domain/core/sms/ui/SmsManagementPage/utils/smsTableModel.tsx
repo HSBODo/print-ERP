@@ -1,4 +1,8 @@
-import type { SmsTarget, SmsTemplate, SmsTemplateGroup } from '../../../type/api'
+import type {
+  SmsTarget,
+  SmsTemplate,
+  SmsTemplateGroup,
+} from '../../../type/api'
 
 /**
  * 문자 발송 관리 표의 **읽는 규칙**만 모은 곳 — 화면 컴포넌트에서 분리했다.
@@ -6,7 +10,8 @@ import type { SmsTarget, SmsTemplate, SmsTemplateGroup } from '../../../type/api
  */
 
 const pad = (n: number) => String(n).padStart(2, '0')
-export const toIso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+export const toIso = (d: Date) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 export const todayIso = () => toIso(new Date())
 /** 기본 조회일 = D-1. 당일은 수술이 아직 마트에 안 실려 있어 기준으로 쓰지 않는다. */
 export const yesterdayIso = () => {
@@ -36,23 +41,74 @@ const md = (iso: string) => iso.slice(5, 10)
  * short  좁은 자리용 짧은 이름(백내장(다초점) → 다초점).
  * full   툴팁용 정식 이름. 채널별 분석 화면과 같은 표기를 쓴다.
  */
-export const OP_TYPE_META: Record<string, { short: string; full: string; className: string }> = {
-  smilePro:  { short: '스마일프로',   full: '스마일프로',       className: 'bg-blue-50 text-blue-700' },
-  smile:     { short: '스마일',       full: '스마일',           className: 'bg-blue-50 text-blue-700' },
-  lasek:     { short: '라섹',         full: '라섹',             className: 'bg-blue-50 text-blue-700' },
-  lasik:     { short: '라식',         full: '라식',             className: 'bg-blue-50 text-blue-700' },
-  presbyond: { short: '프레스비욘드', full: '프레스비욘드',     className: 'bg-blue-50 text-blue-700' },
-  tIcl:      { short: 'T-ICL',        full: 'T-ICL',            className: 'bg-amber-50 text-amber-700' },
-  icl:       { short: 'ICL',          full: 'ICL',              className: 'bg-amber-50 text-amber-700' },
-  tKpl:      { short: 'T-KPL',        full: 'T-KPL',            className: 'bg-amber-50 text-amber-700' },
-  kpl:       { short: 'KPL',          full: 'KPL',              className: 'bg-amber-50 text-amber-700' },
-  viva:      { short: 'VIVA',         full: 'VIVA',             className: 'bg-amber-50 text-amber-700' },
-  catMulti:  { short: '다초점',       full: '백내장(다초점)',   className: 'bg-violet-50 text-violet-700' },
-  catEdof:   { short: '연속초점',     full: '백내장(연속초점)', className: 'bg-violet-50 text-violet-700' },
-  catMono:   { short: '단초점',       full: '백내장(단초점)',   className: 'bg-violet-50 text-violet-700' },
-  reopLens:  { short: '렌즈',         full: '재수술(렌즈)',     className: 'bg-fuchsia-50 text-fuchsia-700' },
-  reopLaser: { short: '레이저',       full: '재수술(레이저)',   className: 'bg-fuchsia-50 text-fuchsia-700' },
-  other:     { short: '기타',         full: '기타',             className: 'bg-gray-100 text-gray-600' },
+export const OP_TYPE_META: Record<
+  string,
+  { short: string; full: string; className: string }
+> = {
+  smilePro: {
+    short: '스마일프로',
+    full: '스마일프로',
+    className: 'bg-blue-50 text-blue-700',
+  },
+  smile: {
+    short: '스마일',
+    full: '스마일',
+    className: 'bg-blue-50 text-blue-700',
+  },
+  lasek: { short: '라섹', full: '라섹', className: 'bg-blue-50 text-blue-700' },
+  lasik: { short: '라식', full: '라식', className: 'bg-blue-50 text-blue-700' },
+  presbyond: {
+    short: '프레스비욘드',
+    full: '프레스비욘드',
+    className: 'bg-blue-50 text-blue-700',
+  },
+  tIcl: {
+    short: 'T-ICL',
+    full: 'T-ICL',
+    className: 'bg-amber-50 text-amber-700',
+  },
+  icl: { short: 'ICL', full: 'ICL', className: 'bg-amber-50 text-amber-700' },
+  tKpl: {
+    short: 'T-KPL',
+    full: 'T-KPL',
+    className: 'bg-amber-50 text-amber-700',
+  },
+  kpl: { short: 'KPL', full: 'KPL', className: 'bg-amber-50 text-amber-700' },
+  viva: {
+    short: 'VIVA',
+    full: 'VIVA',
+    className: 'bg-amber-50 text-amber-700',
+  },
+  catMulti: {
+    short: '다초점',
+    full: '백내장(다초점)',
+    className: 'bg-violet-50 text-violet-700',
+  },
+  catEdof: {
+    short: '연속초점',
+    full: '백내장(연속초점)',
+    className: 'bg-violet-50 text-violet-700',
+  },
+  catMono: {
+    short: '단초점',
+    full: '백내장(단초점)',
+    className: 'bg-violet-50 text-violet-700',
+  },
+  reopLens: {
+    short: '렌즈',
+    full: '재수술(렌즈)',
+    className: 'bg-fuchsia-50 text-fuchsia-700',
+  },
+  reopLaser: {
+    short: '레이저',
+    full: '재수술(레이저)',
+    className: 'bg-fuchsia-50 text-fuchsia-700',
+  },
+  other: {
+    short: '기타',
+    full: '기타',
+    className: 'bg-gray-100 text-gray-600',
+  },
 }
 
 /**
@@ -65,13 +121,14 @@ export const OP_TYPE_META: Record<string, { short: string; full: string; classNa
  *
  * label 은 템플릿 화면과 같은 말로 적는다(서버 라벨 '스마일수술' → 표에서는 '스마일').
  */
-export const GROUP_META: Record<string, { label: string; className: string }> = {
-  SMILE: { label: '스마일',   className: 'bg-blue-50 text-blue-700' },
-  LASIK: { label: '라식',     className: 'bg-indigo-50 text-indigo-700' },
-  LASEK: { label: '라섹',     className: 'bg-teal-50 text-teal-700' },
-  ICL:   { label: '렌즈삽입', className: 'bg-amber-50 text-amber-700' },
-  ETC:   { label: '기타',     className: 'bg-gray-100 text-gray-600' },
-}
+export const GROUP_META: Record<string, { label: string; className: string }> =
+  {
+    SMILE: { label: '스마일', className: 'bg-blue-50 text-blue-700' },
+    LASIK: { label: '라식', className: 'bg-indigo-50 text-indigo-700' },
+    LASEK: { label: '라섹', className: 'bg-teal-50 text-teal-700' },
+    ICL: { label: '렌즈삽입', className: 'bg-amber-50 text-amber-700' },
+    ETC: { label: '기타', className: 'bg-gray-100 text-gray-600' },
+  }
 const UNKNOWN_GROUP = { label: '기타', className: 'bg-gray-100 text-gray-600' }
 
 /**
@@ -82,9 +139,12 @@ const UNKNOWN_GROUP = { label: '기타', className: 'bg-gray-100 text-gray-600' 
  * 서버와 규칙이 두 벌이 되어 언젠가 어긋난다.
  * 어디에도 없으면 ETC(opTypes 가 빈 그룹)로 떨어진다.
  */
-export const groupSlotOf = (tier: SmsTemplate, opType: string): SmsTemplateGroup | undefined =>
-  tier.groups.find((g) => g.opTypes.includes(opType))
-  ?? tier.groups.find((g) => g.groupCode === 'ETC')
+export const groupSlotOf = (
+  tier: SmsTemplate,
+  opType: string,
+): SmsTemplateGroup | undefined =>
+  tier.groups.find((g) => g.opTypes.includes(opType)) ??
+  tier.groups.find((g) => g.groupCode === 'ETC')
 
 /**
  * 이 행의 발송 분류. 매핑 정본은 서버가 내려준 templates[].groups[].opTypes 다
@@ -113,10 +173,15 @@ export const groupOf = (templates: SmsTemplate[], opType: string) => {
  */
 export const groupOptionsOf = (templates: SmsTemplate[]) => {
   const orderedCodes = ['SMILE', 'LASIK', 'LASEK', 'ICL', 'ETC'] as const
-  const groupMap = new Map((templates[0]?.groups ?? []).map((g) => [g.groupCode, g]))
+  const groupMap = new Map(
+    (templates[0]?.groups ?? []).map((g) => [g.groupCode, g]),
+  )
   return orderedCodes.map((code) => {
     const g = groupMap.get(code)
-    const meta = GROUP_META[code] ?? { label: g?.groupLabel ?? code, className: UNKNOWN_GROUP.className }
+    const meta = GROUP_META[code] ?? {
+      label: g?.groupLabel ?? code,
+      className: UNKNOWN_GROUP.className,
+    }
     return { code, ...meta }
   })
 }
@@ -125,7 +190,10 @@ export const groupOptionsOf = (templates: SmsTemplate[]) => {
 export const groupHelpOf = (templates: SmsTemplate[]) =>
   (templates[0]?.groups ?? []).map((g) => ({
     code: g.groupCode,
-    ...(GROUP_META[g.groupCode] ?? { label: g.groupLabel, className: UNKNOWN_GROUP.className }),
+    ...(GROUP_META[g.groupCode] ?? {
+      label: g.groupLabel,
+      className: UNKNOWN_GROUP.className,
+    }),
     // opTypes 가 빈 그룹(ETC)은 "그 외 전부"라 나열할 목록이 없다.
     items: g.opTypes.map((t) => OP_TYPE_META[t]?.short ?? t),
   }))
@@ -162,7 +230,13 @@ export const STATE_UNSENDABLE = '발송 불가'
  */
 export const STATE_NO_TEMPLATE = '발송 대상 아님'
 
-export type StatusBucket = '발송 대기' | '발송' | '발송 중지' | '수신거부' | typeof STATE_UNSENDABLE | typeof STATE_NO_TEMPLATE
+export type StatusBucket =
+  | '발송 대기'
+  | '발송'
+  | '발송 중지'
+  | '수신거부'
+  | typeof STATE_UNSENDABLE
+  | typeof STATE_NO_TEMPLATE
 
 export type TargetState = {
   /** 표에 찍는 문구. 예 '대기' · '2차 대기' · '1차 실패' · '완료' */
@@ -187,27 +261,34 @@ export type TargetState = {
 }
 
 const STATE_STYLE = {
-  optOut:     'bg-slate-200 text-slate-700',
+  optOut: 'bg-slate-200 text-slate-700',
   unsendable: 'bg-red-50 text-red-600',
   noTemplate: 'bg-slate-100 text-slate-500',
-  hold:       'bg-amber-50 text-amber-700 hover:bg-amber-100',
-  alert:      'bg-red-50 text-red-600 hover:bg-red-100',
-  undelivered:'bg-orange-50 text-orange-600 hover:bg-orange-100',
-  done:       'bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
-  running:    'bg-blue-50 text-blue-700 hover:bg-blue-100',
-  idle:       'bg-gray-100 text-gray-600 hover:bg-gray-200',
+  hold: 'bg-amber-50 text-amber-700 hover:bg-amber-100',
+  alert: 'bg-red-50 text-red-600 hover:bg-red-100',
+  undelivered: 'bg-orange-50 text-orange-600 hover:bg-orange-100',
+  done: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+  running: 'bg-blue-50 text-blue-700 hover:bg-blue-100',
+  idle: 'bg-gray-100 text-gray-600 hover:bg-gray-200',
 } as const
 
 export const targetStateOf = (
-  t: SmsTarget, tiers: SmsTemplate[] = [], today = '',
+  t: SmsTarget,
+  tiers: SmsTemplate[] = [],
+  today = '',
   graceFrom = stampMinutesAgo(DELIVERY_GRACE_MINUTES),
 ): TargetState => {
   // 수신거부는 홀딩보다 앞이다 — 홀딩은 이 건 하나지만 거부는 사람 단위라 풀 수 있는 값이 아니다.
   // (해제는 수신거부 목록에서 빼야 한다. 상태 알약을 눌러 되돌리는 값이 아니라 잠가 둔다.)
   if (t.optedOut) {
     return {
-      label: '수신거부', bucket: '수신거부', needsCheck: false, className: STATE_STYLE.optOut, locked: true,
-      title: '수신거부한 번호입니다. 다음 수술에도 발송되지 않습니다 — 해제는 수신거부 목록에서 합니다.',
+      label: '수신거부',
+      bucket: '수신거부',
+      needsCheck: false,
+      className: STATE_STYLE.optOut,
+      locked: true,
+      title:
+        '수신거부한 번호입니다. 다음 수술에도 발송되지 않습니다 — 해제는 수신거부 목록에서 합니다.',
     }
   }
   if (!t.phoneValid) {
@@ -215,8 +296,13 @@ export const targetStateOf = (
     // 매일 여는 창구가 '점검 필요' 하나뿐인데 여기 안 걸리면 CRM 번호 고쳐야 할 사람을
     // 계속 놓친다(2026-09-09 실사용 확인). 두 탭에 겹치는 헷갈림보다 놓치는 사고가 크다.
     return {
-      label: STATE_UNSENDABLE, bucket: STATE_UNSENDABLE, needsCheck: true, className: STATE_STYLE.unsendable, locked: true,
-      title: '유효한 휴대폰 번호가 없어 보낼 수 없습니다. CRM 에서 번호를 고친 뒤 다시 [조회]하세요.',
+      label: STATE_UNSENDABLE,
+      bucket: STATE_UNSENDABLE,
+      needsCheck: true,
+      className: STATE_STYLE.unsendable,
+      locked: true,
+      title:
+        '유효한 휴대폰 번호가 없어 보낼 수 없습니다. CRM 에서 번호를 고친 뒤 다시 [조회]하세요.',
     }
   }
   // ETC 그룹(4대 분류에 안 잡힌 수술) 은 발송할 문구가 없어 나갈 수 없다 —
@@ -224,13 +310,22 @@ export const targetStateOf = (
   // (백엔드에서 큐에도 심지 않으므로 차수 셀도 아래에서 회색 처리됨)
   if (tiers.length > 0 && groupOf(tiers, t.opType)?.code === 'ETC') {
     return {
-      label: STATE_NO_TEMPLATE, bucket: STATE_NO_TEMPLATE, needsCheck: false, className: STATE_STYLE.noTemplate, locked: true,
-      title: '이 수술 종류는 4대 분류(스마일·라식·라섹·렌즈삽입)에 잡히지 않아 발송 문구가 없습니다. 나가지 않지만 어떤 사람이 빠졌는지 확인용으로 표시됩니다.',
+      label: STATE_NO_TEMPLATE,
+      bucket: STATE_NO_TEMPLATE,
+      needsCheck: false,
+      className: STATE_STYLE.noTemplate,
+      locked: true,
+      title:
+        '이 수술 종류는 4대 분류(스마일·라식·라섹·렌즈삽입)에 잡히지 않아 발송 문구가 없습니다. 나가지 않지만 어떤 사람이 빠졌는지 확인용으로 표시됩니다.',
     }
   }
   if (isHeld(t)) {
     return {
-      label: '홀딩', bucket: '발송 중지', needsCheck: false, className: STATE_STYLE.hold, locked: false,
+      label: '홀딩',
+      bucket: '발송 중지',
+      needsCheck: false,
+      className: STATE_STYLE.hold,
+      locked: false,
       title: '보내지 않기로 한 대상입니다. 클릭하면 홀딩을 풉니다.',
     }
   }
@@ -238,31 +333,74 @@ export const targetStateOf = (
   // 필터 묶음은 예전 규칙 그대로 — 한 번이라도 보냈으면 '발송', 아니면 '발송 대기'.
   const bucket: StatusBucket = t.logs.length > 0 ? '발송' : '발송 대기'
   const cells = tiers.map((tier) => ({
-    no: tier.tier, cell: tierCellOf(t, offsetOf(tier, t.opType), tier.code, today, graceFrom),
+    no: tier.tier,
+    cell: tierCellOf(t, offsetOf(tier, t.opType), tier.code, today, graceFrom),
   }))
   const at = (label: string) => cells.find((c) => c.cell.label === label)
-  const state = (label: string, className: string, title: string, needsCheck = false): TargetState =>
-    ({ label, bucket, needsCheck, className, locked: false, title })
+  const state = (
+    label: string,
+    className: string,
+    title: string,
+    needsCheck = false,
+  ): TargetState => ({
+    label,
+    bucket,
+    needsCheck,
+    className,
+    locked: false,
+    title,
+  })
 
   const failed = at('실패')
-  if (failed) return state(`${failed.no}차 실패`, STATE_STYLE.alert, failed.cell.title, true)
+  if (failed)
+    return state(
+      `${failed.no}차 실패`,
+      STATE_STYLE.alert,
+      failed.cell.title,
+      true,
+    )
   const overdue = at('미발송')
-  if (overdue) return state(`${overdue.no}차 미발송`, STATE_STYLE.alert, overdue.cell.title, true)
+  if (overdue)
+    return state(
+      `${overdue.no}차 미발송`,
+      STATE_STYLE.alert,
+      overdue.cell.title,
+      true,
+    )
   const undelivered = at('미도달')
-  if (undelivered) return state(`${undelivered.no}차 미도달`, STATE_STYLE.undelivered, undelivered.cell.title, true)
+  if (undelivered)
+    return state(
+      `${undelivered.no}차 미도달`,
+      STATE_STYLE.undelivered,
+      undelivered.cell.title,
+      true,
+    )
   // 막 나간 건 — 결과를 기다리는 중이라 점검 대상이 아니다.
   const accepted = at('접수')
-  if (accepted) return state(`${accepted.no}차 접수`, STATE_STYLE.running, accepted.cell.title)
+  if (accepted)
+    return state(
+      `${accepted.no}차 접수`,
+      STATE_STYLE.running,
+      accepted.cell.title,
+    )
 
   const next = at('예정')
   if (next) {
     // 1차 대기는 갓 등록된 정상 상태라 차수를 붙이지 않는다.
     return next.no <= 1
       ? state('대기', STATE_STYLE.idle, next.cell.title)
-      : state(`${next.no}차 대기`, STATE_STYLE.running, `${next.no - 1}차까지 나갔고 ${next.cell.title.replace('발송 예정 ', '')} 에 ${next.no}차가 나갑니다`)
+      : state(
+          `${next.no}차 대기`,
+          STATE_STYLE.running,
+          `${next.no - 1}차까지 나갔고 ${next.cell.title.replace('발송 예정 ', '')} 에 ${next.no}차가 나갑니다`,
+        )
   }
   if (cells.length > 0 && cells.every((c) => c.cell.label === '도달')) {
-    return state('완료', STATE_STYLE.done, `1~${cells.length}차 모두 도달했습니다`)
+    return state(
+      '완료',
+      STATE_STYLE.done,
+      `1~${cells.length}차 모두 도달했습니다`,
+    )
   }
 
   // 템플릿을 못 받았거나(차수를 모른다) 판정할 칸이 없을 때 — 옛 두 마디로 물러선다.
@@ -283,11 +421,22 @@ export const targetStateOf = (
  * 홀딩은 우리가 이 건만 막은 것이고, 수신거부는 **환자가 거부한 것**이라 되돌릴 값이 아니다.
  * 섞어 두면 "홀딩 해제"를 누르다 거부한 사람까지 되살릴 위험이 있다.
  */
-export const STATUS_FILTERS = ['전체', '점검 필요', '발송 대기', '발송', '발송 중지', '수신거부', STATE_UNSENDABLE] as const
-export type StatusFilter = typeof STATUS_FILTERS[number]
+export const STATUS_FILTERS = [
+  '전체',
+  '점검 필요',
+  '발송 대기',
+  '발송',
+  '발송 중지',
+  '수신거부',
+  STATE_UNSENDABLE,
+] as const
+export type StatusFilter = (typeof STATUS_FILTERS)[number]
 
 /** 필터 판정은 여기 한 곳에서만 한다 — 화면이 따로 풀어 쓰면 탭과 결과가 어긋난다. */
-export const matchesStatusFilter = (state: TargetState, filter: StatusFilter) => {
+export const matchesStatusFilter = (
+  state: TargetState,
+  filter: StatusFilter,
+) => {
   if (filter === '전체') return true
   if (filter === '점검 필요') return state.needsCheck
   return state.bucket === filter
@@ -338,10 +487,14 @@ export const stampMinutesAgo = (minutes: number, from = new Date()) => {
 const hm = (dt: string) => (dt && dt.length >= 16 ? dt.slice(11, 16) : '')
 
 /** 'MM-dd HH:mm' 조합. 시간이 없으면 날짜만. 셀 하나에 붙는 표기라 붙이는 곳을 한 곳으로 모아둔다. */
-const mdhm = (dateIso: string, time: string) => (time ? `${md(dateIso)} ${time}` : md(dateIso))
+const mdhm = (dateIso: string, time: string) =>
+  time ? `${md(dateIso)} ${time}` : md(dateIso)
 
 export const tierCellOf = (
-  t: SmsTarget, offsetDays: number, code: string, today: string,
+  t: SmsTarget,
+  offsetDays: number,
+  code: string,
+  today: string,
   /** 유예 경계 시각. 이보다 나중에 나간 건은 아직 결과를 기다릴 때다. */
   graceFrom = stampMinutesAgo(DELIVERY_GRACE_MINUTES),
   /** 이 차수의 발송 예정 시각(HH:mm). 큐가 없는 tier 의 폴백 표시에만 쓴다.
@@ -366,17 +519,28 @@ export const tierCellOf = (
     const delivered = log.deliveredAt || log.sentAt
     return {
       text: mdhm(delivered.slice(0, 10), hm(delivered)),
-      label: '도달', className: 'font-semibold text-gray-900', replaced,
-      date: delivered.slice(0, 10), offsetDays,
+      label: '도달',
+      className: 'font-semibold text-gray-900',
+      replaced,
+      date: delivered.slice(0, 10),
+      offsetDays,
       title: `도달 ${log.deliveredAt || '(시각 미상)'} · 발송 ${log.sentAt} · ${log.requestedChannel === 'ALIMTALK' ? '알림톡' : '문자'}${replaced ? ' → 문자 대체' : ''}`,
     }
   }
   // 실패 후 재실행 — send_log 는 FAILED 로 남아 있지만 큐가 PENDING/PROCESSING 이면 재시도 대기 중.
   // 큐의 scheduledAt 을 그대로 써서 다음 시도 시각을 보여준다.
-  if (log?.status === 'FAILED' && queue && (queue.status === 'PENDING' || queue.status === 'PROCESSING')) {
+  if (
+    log?.status === 'FAILED' &&
+    queue &&
+    (queue.status === 'PENDING' || queue.status === 'PROCESSING')
+  ) {
     return {
-      text: mdhm(scheduled, scheduledTime), label: '재실행 대기', className: 'font-semibold text-blue-600', replaced: false,
-      date: scheduled, offsetDays,
+      text: mdhm(scheduled, scheduledTime),
+      label: '재실행 대기',
+      className: 'font-semibold text-blue-600',
+      replaced: false,
+      date: scheduled,
+      offsetDays,
       title: `재실행 대기 · 예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''}${log.failReason ? ` · 이전 실패: ${log.failReason}` : ''}`,
     }
   }
@@ -386,8 +550,10 @@ export const tierCellOf = (
     return {
       text: mdhm(log.sentAt.slice(0, 10), hm(log.sentAt)),
       label: waiting ? '접수' : '미도달',
-      className: waiting ? 'text-gray-500' : 'text-amber-600', replaced,
-      date: log.sentAt.slice(0, 10), offsetDays,
+      className: waiting ? 'text-gray-500' : 'text-amber-600',
+      replaced,
+      date: log.sentAt.slice(0, 10),
+      offsetDays,
       title: waiting
         ? `발송 ${log.sentAt} · 접수됨. 도달 결과는 보통 수 분~수십 분 뒤에 확정된다`
         : `발송 ${log.sentAt} · ${DELIVERY_GRACE_MINUTES}분이 지나도 도달이 확인되지 않았다`,
@@ -396,33 +562,56 @@ export const tierCellOf = (
   if (log?.status === 'FAILED') {
     return {
       text: mdhm(log.sentAt.slice(0, 10), hm(log.sentAt)),
-      label: '실패', className: 'font-semibold text-red-500', replaced,
-      date: log.sentAt.slice(0, 10), offsetDays,
+      label: '실패',
+      className: 'font-semibold text-red-500',
+      replaced,
+      date: log.sentAt.slice(0, 10),
+      offsetDays,
       title: log.failReason || '발송 실패',
     }
   }
-  if (!scheduled) return { text: '—', label: '', className: 'text-gray-300', replaced: false, title: '', date: '', offsetDays }
+  if (!scheduled)
+    return {
+      text: '—',
+      label: '',
+      className: 'text-gray-300',
+      replaced: false,
+      title: '',
+      date: '',
+      offsetDays,
+    }
   if (!t.phoneValid || isHeld(t) || t.optedOut) {
     return {
-      text: mdhm(scheduled, scheduledTime), label: '제외', className: 'text-gray-300 line-through', replaced: false,
-      date: scheduled, offsetDays,
+      text: mdhm(scheduled, scheduledTime),
+      label: '제외',
+      className: 'text-gray-300 line-through',
+      replaced: false,
+      date: scheduled,
+      offsetDays,
       title: `예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''} · ${t.optedOut ? '수신거부' : '홀딩·발송 불가'}라 보내지 않는다`,
     }
   }
   if (scheduled < today) {
     return {
-      text: mdhm(scheduled, scheduledTime), label: '미발송', className: 'font-semibold text-red-500', replaced: false,
-      date: scheduled, offsetDays,
+      text: mdhm(scheduled, scheduledTime),
+      label: '미발송',
+      className: 'font-semibold text-red-500',
+      replaced: false,
+      date: scheduled,
+      offsetDays,
       title: `예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''} — 예정일이 지났는데 아직 발송되지 않았습니다`,
     }
   }
   return {
-    text: mdhm(scheduled, scheduledTime), label: '예정', className: 'text-gray-400', replaced: false,
+    text: mdhm(scheduled, scheduledTime),
+    label: '예정',
+    className: 'text-gray-400',
+    replaced: false,
     title: `발송 예정 ${scheduled}${scheduledTime ? ' ' + scheduledTime : ''}`,
-    date: scheduled, offsetDays,
+    date: scheduled,
+    offsetDays,
   }
 }
-
 
 /* ── 정렬 ── 수술자 리스트와 같은 규칙: 머리글을 누르면 오름차순, 다시 누르면 내림차순. */
 export type SortDirection = 'asc' | 'desc'
@@ -435,19 +624,33 @@ export type SortState = { key: string; direction: SortDirection } | null
  * 같은 값끼리 순서가 매번 바뀌면 표가 흔들려 읽기 어렵다.
  */
 export const getSortValue = (
-  t: SmsTarget, key: string, originalIndex: number, tiers: SmsTemplate[], today: string,
+  t: SmsTarget,
+  key: string,
+  originalIndex: number,
+  tiers: SmsTemplate[],
+  today: string,
 ): string | number => {
   switch (key) {
-    case 'no': return originalIndex
-    case 'surgeryDate': return t.surgeryDate
-    case 'chartNo': return t.chartNo
-    case 'name': return t.name
-    case 'phone': return t.phone
-    case 'surgeryType': return t.surgeryType
-    case 'group': return groupOf(tiers, t.opType)?.label ?? ''
-    case 'surgeryR': return t.surgeryR
-    case 'surgeryL': return t.surgeryL
-    case 'state': return targetStateOf(t, tiers, today).label
+    case 'no':
+      return originalIndex
+    case 'surgeryDate':
+      return t.surgeryDate
+    case 'chartNo':
+      return t.chartNo
+    case 'name':
+      return t.name
+    case 'phone':
+      return t.phone
+    case 'surgeryType':
+      return t.surgeryType
+    case 'group':
+      return groupOf(tiers, t.opType)?.label ?? ''
+    case 'surgeryR':
+      return t.surgeryR
+    case 'surgeryL':
+      return t.surgeryL
+    case 'state':
+      return targetStateOf(t, tiers, today).label
     default: {
       // 차수 칸(T1~T3) — 그 칸이 가리키는 날짜로 정렬한다.
       const tier = tiers.find((x) => x.code === key)

@@ -17,23 +17,31 @@ const EMPTY: MonthlyData = {
   examTotal: 0,
 }
 
-function toDataMap(items: ExaminationMonthlyItem[]): Record<number, MonthlyData[]> {
+function toDataMap(
+  items: ExaminationMonthlyItem[],
+): Record<number, MonthlyData[]> {
   const map: Record<number, MonthlyData[]> = {}
   for (const item of items) {
-    if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
+    if (!map[item.year])
+      map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
     const cataract = item.cataract ?? 0
     map[item.year][item.month - 1] = {
       visionCorrection: item.visionCorrection,
       dreamlens: item.dreamlens,
       cataract,
-      examTotal: item.examTotal ?? item.visionCorrection + item.dreamlens + cataract,
+      examTotal:
+        item.examTotal ?? item.visionCorrection + item.dreamlens + cataract,
     }
   }
   return map
 }
 
 export function useExaminationComposition(years: number[]) {
-  const { data: apiData, isLoading, isError } = useQuery({
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['examination-composition', years],
     queryFn: ({ signal }) => examApi.getExaminationComposition(years, signal),
     enabled: years.length > 0,

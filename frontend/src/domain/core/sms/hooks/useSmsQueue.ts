@@ -11,7 +11,13 @@ import type { SmsQueueStatus } from '../type/api'
  */
 export function useSmsQueueStatus(range: { from?: string; to?: string } = {}) {
   return useQuery({
-    queryKey: ['sms', 'queue', 'status', range.from ?? null, range.to ?? null] as const,
+    queryKey: [
+      'sms',
+      'queue',
+      'status',
+      range.from ?? null,
+      range.to ?? null,
+    ] as const,
     queryFn: ({ signal }) => smsApi.getQueueStatus(range, signal),
     refetchInterval: 30_000,
     staleTime: 15_000,
@@ -33,7 +39,11 @@ export function useSolapiBalance() {
 }
 
 /** 상태별 큐 행 목록 — 실패 재실행 모달에서 씀. */
-export function useSmsQueueRows(status: SmsQueueStatus, limit = 100, enabled = true) {
+export function useSmsQueueRows(
+  status: SmsQueueStatus,
+  limit = 100,
+  enabled = true,
+) {
   return useQuery({
     queryKey: ['sms', 'queue', 'rows', status, limit] as const,
     queryFn: ({ signal }) => smsApi.getQueueRows(status, limit, {}, signal),
