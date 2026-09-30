@@ -1,4 +1,12 @@
-import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
+import {
+  Callout,
+  DocHeader,
+  Hi,
+  Section,
+  Sources,
+  Summary,
+  Table,
+} from './docParts'
 
 /**
  * 앱 채널 분석 문서 (2026-01~08 실측).
@@ -14,21 +22,44 @@ const PERIOD = '2026-01-01 ~ 2026-08-31 (등록일 기준)'
 export function AppDoc() {
   return (
     <div className="flex flex-col gap-4">
-      <DocHeader title="앱" badges={[PERIOD, '예약 254명 · 수술 100명', '외국인 95.4%']} />
+      <DocHeader
+        title="앱"
+        badges={[PERIOD, '예약 254명 · 수술 100명', '외국인 95.4%']}
+      />
 
       <Summary headline="가장 많이 취소하는데, 오면 가장 비싼 걸 한다.">
-        접수율 <b className="font-semibold text-white">51.6%</b>로 전 채널 최저이고 최종전환도 39.4%로 꼴찌다.
-        그런데 <b className="font-semibold text-white">스마일프로 51.5%(전 채널 최고)</b>,
-        객단가 <b className="font-semibold text-white">362만(2위)</b>이다.
-        환자의 <b className="font-semibold text-white">95.4%가 외국인</b>이고 21개국에서 온다 —
-        해외에서 앱으로 미리 잡아 두고 방한 일정에 맞춰 오는 구조다.
+        접수율 <b className="font-semibold text-white">51.6%</b>로 전 채널
+        최저이고 최종전환도 39.4%로 꼴찌다. 그런데{' '}
+        <b className="font-semibold text-white">
+          스마일프로 51.5%(전 채널 최고)
+        </b>
+        , 객단가 <b className="font-semibold text-white">362만(2위)</b>이다.
+        환자의 <b className="font-semibold text-white">95.4%가 외국인</b>이고
+        21개국에서 온다 — 해외에서 앱으로 미리 잡아 두고 방한 일정에 맞춰 오는
+        구조다.
       </Summary>
 
       <Section no="1" title="퍼널 — 절반이 오지 않는다">
         <Table
-          head={['채널', '예약', '취소제외', '접수', '수술완료', '접수율', '최종전환']}
+          head={[
+            '채널',
+            '예약',
+            '취소제외',
+            '접수',
+            '수술완료',
+            '접수율',
+            '최종전환',
+          ]}
           rows={[
-            [<Hi>앱</Hi>, '254', '201', '131', '100', <Hi>51.6%</Hi>, <Hi>39.4%</Hi>],
+            [
+              <Hi>앱</Hi>,
+              '254',
+              '201',
+              '131',
+              '100',
+              <Hi>51.6%</Hi>,
+              <Hi>39.4%</Hi>,
+            ],
             ['홈페이지', '1,833', '1,444', '1,136', '834', '62.0%', '45.5%'],
             ['인콜', '4,776', '3,776', '3,048', '2,186', '63.8%', '45.8%'],
             ['크리에이트립', '38', '38', '38', '34', '100.0%', '89.5%'],
@@ -37,13 +68,15 @@ export function AppDoc() {
         />
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <Callout tone="warn" title="취소 20.9% + 미내원 34.8%">
-            254명 중 <b>123명이 사라진다.</b> 다른 해외 채널(크리에이트립·해외에이전시·자사해외)이
-            취소·부도 0건인 것과 정반대다.
+            254명 중 <b>123명이 사라진다.</b> 다른 해외
+            채널(크리에이트립·해외에이전시·자사해외)이 취소·부도 0건인 것과
+            정반대다.
           </Callout>
           <Callout tone="good" title="리드타임 19일 — 전 채널 최장">
             등록에서 수술까지 19일이 걸린다(해외에이전시 1일, 인콜 13일).
-            <b>비행기표를 끊기 전에 먼저 예약하는 순서</b>라 계획이 바뀌면 그대로 취소된다.
-            같은 해외 환자라도 <b>이미 입국해 있는</b> 에이전시·크리에이트립과는 상황이 다르다.
+            <b>비행기표를 끊기 전에 먼저 예약하는 순서</b>라 계획이 바뀌면
+            그대로 취소된다. 같은 해외 환자라도 <b>이미 입국해 있는</b>{' '}
+            에이전시·크리에이트립과는 상황이 다르다.
           </Callout>
         </div>
       </Section>
@@ -51,7 +84,9 @@ export function AppDoc() {
       <Section no="2" title="누가 오는가 — 21개국, 서구권 중심">
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">국적 (수술 108건 중 95.4%가 외국인)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              국적 (수술 108건 중 95.4%가 외국인)
+            </p>
             <Table
               head={['국적', '인원']}
               rows={[
@@ -66,12 +101,15 @@ export function AppDoc() {
               ]}
             />
             <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-              총 <Hi>21개국</Hi>이다. 대만에 몰린 크리에이트립(74%), 몽골에 몰린 해외에이전시(67%)와 달리
+              총 <Hi>21개국</Hi>이다. 대만에 몰린 크리에이트립(74%), 몽골에 몰린
+              해외에이전시(67%)와 달리
               <b>특정 국가에 쏠리지 않는다</b>.
             </p>
           </div>
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">연령 (평균 31.4세)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              연령 (평균 31.4세)
+            </p>
             <Table
               head={['연령대', '앱', '전체평균']}
               rows={[
@@ -105,10 +143,12 @@ export function AppDoc() {
         />
         <Callout tone="good" title="라섹이 거의 없다">
           라섹 2.0%(전체 9.6%)로 압도적으로 낮다. 회복 기간이 긴 시술이라
-          <b>체류 일정이 정해진 해외 환자에게는 선택지가 아니다</b>.
-          그만큼 스마일프로(51.5%)로 몰려 객단가가 올라간다.
+          <b>체류 일정이 정해진 해외 환자에게는 선택지가 아니다</b>. 그만큼
+          스마일프로(51.5%)로 몰려 객단가가 올라간다.
         </Callout>
-        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">할인 항목</p>
+        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">
+          할인 항목
+        </p>
         <Table
           head={['할인 항목', '앱', '인콜']}
           rows={[
@@ -121,7 +161,8 @@ export function AppDoc() {
           ]}
         />
         <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-          국내 대상 할인(수험생·직장인·B2B군인)이 <Hi>전부 0%</Hi>다. 외국인 채널임이 할인 구성에서도 확인된다.
+          국내 대상 할인(수험생·직장인·B2B군인)이 <Hi>전부 0%</Hi>다. 외국인
+          채널임이 할인 구성에서도 확인된다.
         </p>
       </Section>
 
@@ -138,8 +179,14 @@ export function AppDoc() {
           </Callout>
           <Callout tone="warn" title="확인되지 않은 것">
             <ul className="ml-4 list-disc space-y-1">
-              <li><b>취소·미내원 사유가 없다.</b> 여행 취소인지 가격인지 다른 병원으로 갔는지 모른다.</li>
-              <li>"방한 계획 변경 때문"은 <b>리드타임에서 끌어낸 해석</b>이지 검증된 인과가 아니다.</li>
+              <li>
+                <b>취소·미내원 사유가 없다.</b> 여행 취소인지 가격인지 다른
+                병원으로 갔는지 모른다.
+              </li>
+              <li>
+                "방한 계획 변경 때문"은 <b>리드타임에서 끌어낸 해석</b>이지
+                검증된 인과가 아니다.
+              </li>
               <li>앱 설치·문의 대비 예약 전환은 CRM 밖이라 볼 수 없다.</li>
               <li>표본 100명 — 국적별 세부 비교는 신뢰구간이 너무 넓다.</li>
             </ul>
@@ -149,32 +196,50 @@ export function AppDoc() {
 
       <Section no="5" title="그래서 무엇을 판단해야 하나">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <p className="text-[15px] font-bold text-slate-900">낮은 전환율을 결함으로 보면 안 된다</p>
+          <p className="text-[15px] font-bold text-slate-900">
+            낮은 전환율을 결함으로 보면 안 된다
+          </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
-            해외에서 <b>비행기표보다 먼저 잡는 예약</b>이라 취소가 섞이는 건 구조다.
-            그 대신 오는 사람은 스마일프로를 하고 할인을 거의 안 받는다 —
-            <Hi>1명당 362만</Hi>으로 모두닥(304만)보다 58만 높다.
+            해외에서 <b>비행기표보다 먼저 잡는 예약</b>이라 취소가 섞이는 건
+            구조다. 그 대신 오는 사람은 스마일프로를 하고 할인을 거의 안 받는다
+            —<Hi>1명당 362만</Hi>으로 모두닥(304만)보다 58만 높다.
           </p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
-            판단 기준은 전환율이 아니라 <Hi>예약 1건당 기대 매출</Hi>이어야 한다.
-            앱은 <b>254건 예약 → 100명 × 362만 = 약 3.6억</b>이므로 예약 1건당 142만이다.
-            같은 계산으로 모두닥은 849건 → 475명 × 304만 = 약 14.4억, 예약 1건당 170만이다.
+            판단 기준은 전환율이 아니라 <Hi>예약 1건당 기대 매출</Hi>이어야
+            한다. 앱은 <b>254건 예약 → 100명 × 362만 = 약 3.6억</b>이므로 예약
+            1건당 142만이다. 같은 계산으로 모두닥은 849건 → 475명 × 304만 = 약
+            14.4억, 예약 1건당 170만이다.
             <b> 전환율 격차(39.4% vs 55.9%)만큼 벌어지지 않는다.</b>
           </p>
         </div>
         <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
-          개선 여지는 <Hi>일정 확정 시점을 앞당기는 쪽</Hi>에 있다 — 항공권 확정 후 예약을 받거나,
-          예약 시 일정 재확인 절차를 두면 미내원 34.8%가 줄 수 있다. 다만 사유가 없어 효과는 추정이다.
+          개선 여지는 <Hi>일정 확정 시점을 앞당기는 쪽</Hi>에 있다 — 항공권 확정
+          후 예약을 받거나, 예약 시 일정 재확인 절차를 두면 미내원 34.8%가 줄 수
+          있다. 다만 사유가 없어 효과는 추정이다.
         </p>
       </Section>
 
       <Sources
         items={[
-          <>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한 사람(<b>예약 퍼널</b>과 같은 정의).</>,
-          <><b>표본 100명.</b> 채널 전체 특성(외국인율·시술 구성)은 신뢰할 만하지만 국적별 세부 비교는 하지 않았다.</>,
-          <>5번의 "예약 1건당 기대 매출"은 <b>광고비를 뺀 값이 아니다</b>. 앱 유지·마케팅 비용이 입력돼야 채널 간 비교가 완성된다.</>,
-          <>취소·미내원 <b>사유는 CRM 에 없다</b>. 리드타임 해석은 상관이지 인과가 아니다.</>,
-          <>정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.</>,
+          <>
+            기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 통과한
+            사람(<b>예약 퍼널</b>과 같은 정의).
+          </>,
+          <>
+            <b>표본 100명.</b> 채널 전체 특성(외국인율·시술 구성)은 신뢰할
+            만하지만 국적별 세부 비교는 하지 않았다.
+          </>,
+          <>
+            5번의 "예약 1건당 기대 매출"은 <b>광고비를 뺀 값이 아니다</b>. 앱
+            유지·마케팅 비용이 입력돼야 채널 간 비교가 완성된다.
+          </>,
+          <>
+            취소·미내원 <b>사유는 CRM 에 없다</b>. 리드타임 해석은 상관이지
+            인과가 아니다.
+          </>,
+          <>
+            정가·할인은 검사 시점 <b>견적</b>(EXAM.OP_ESTIMATE) 파싱값이다.
+          </>,
         ]}
       />
     </div>

@@ -1,8 +1,13 @@
-import { RotateCcw, Search, Download } from 'lucide-react'
+import { Download, RotateCcw, Search } from 'lucide-react'
+
 import { Button } from '#shared/ui/Button'
-import { reservationStatsSourceLabel } from '../../utils/reservationStatsMeta'
+
 import { type ReservationStatsResponseMeta } from '../../type/api'
-import { GRANULARITIES, type Granularity } from '../../utils/reservationStatsSystemData'
+import { reservationStatsSourceLabel } from '../../utils/reservationStatsMeta'
+import {
+  GRANULARITIES,
+  type Granularity,
+} from '../../utils/reservationStatsSystemData'
 
 /**
  * 예약통계시스템 전용 툴바 — 시작일/종료일(초안) + 조회 단위(즉시) + 초기화 / 조회 / CSV.
@@ -94,7 +99,9 @@ export function ReservationStatsToolbar({
             aria-pressed={granularity === g.key}
             onClick={() => onGranularityChange(g.key)}
             className={`rounded px-3 text-sm font-medium transition-colors ${
-              granularity === g.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              granularity === g.key
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             {g.label}
@@ -112,7 +119,13 @@ export function ReservationStatsToolbar({
       )}
 
       <div className="ml-auto flex items-center gap-1.5">
-        <Button type="button" variant="outline" size="sm" className="text-xs" onClick={onReset}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={onReset}
+        >
           <RotateCcw className="h-3.5 w-3.5" />
           초기화
         </Button>

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { EMPTY_DATA, toYearMap } from './surgeryRatioUtils'
 import { type SurgeryMonthlyItem } from '../../type/api'
+import { EMPTY_DATA, toYearMap } from './surgeryRatioUtils'
 
-const item = (overrides: Partial<SurgeryMonthlyItem> = {}): SurgeryMonthlyItem => ({
+const item = (
+  overrides: Partial<SurgeryMonthlyItem> = {},
+): SurgeryMonthlyItem => ({
   year: 2026,
   month: 4,
   lasek: 10,
@@ -39,7 +41,10 @@ describe('toYearMap', () => {
   })
 
   it('여러 연도를 분리한다', () => {
-    const map = toYearMap([item({ year: 2025, month: 1 }), item({ year: 2026, month: 4 })])
+    const map = toYearMap([
+      item({ year: 2025, month: 1 }),
+      item({ year: 2026, month: 4 }),
+    ])
 
     expect(Object.keys(map).sort()).toEqual(['2025', '2026'])
     expect(map[2025][0].lasek).toBe(10)

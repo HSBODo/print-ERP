@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { outpatientApi } from '../api'
-import type { OutpatientListItem } from '../type/api'
 
 /**
  * 외래수 리스트 조회 훅. 예약일 범위(from~to)로 서버 조회.
@@ -14,7 +14,7 @@ export function useOutpatientList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? (data ?? []) as OutpatientListItem[] : [],
+    rows: enabled ? (data ?? []) : [],
     isLoading,
     isFetching,
     isError,

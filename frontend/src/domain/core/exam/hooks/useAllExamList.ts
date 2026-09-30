@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { examApi } from '../api'
-import type { AllExamListItem } from '../type/api'
 
 /**
  * 전체 검사자 리스트 조회 훅. 검사일 범위(from~to)로 서버 조회.
@@ -15,7 +15,7 @@ export function useAllExamList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? ((data ?? []) as AllExamListItem[]) : [],
+    rows: enabled ? (data ?? []) : [],
     isLoading,
     isFetching,
     isError,

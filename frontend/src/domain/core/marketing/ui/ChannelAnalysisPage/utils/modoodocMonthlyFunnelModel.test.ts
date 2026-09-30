@@ -1,19 +1,32 @@
 import { describe, expect, it } from 'vitest'
+
+import type { ReservationChannelFunnelItem } from '../../../type/api'
 import {
   buildYearMonthRanges,
   findModoodocFunnel,
   toModoodocMonthlyRow,
 } from './modoodocMonthlyFunnelModel'
-import type { ReservationChannelFunnelItem } from '../../../type/api'
 
 describe('모두닥 월별 퍼널 모델', () => {
   it('2026년 1월부터 12월까지 정확한 월 범위를 만든다', () => {
     const ranges = buildYearMonthRanges(2026)
 
     expect(ranges).toHaveLength(12)
-    expect(ranges[0]).toEqual({ month: 1, from: '2026-01-01', to: '2026-01-31' })
-    expect(ranges[1]).toEqual({ month: 2, from: '2026-02-01', to: '2026-02-28' })
-    expect(ranges[11]).toEqual({ month: 12, from: '2026-12-01', to: '2026-12-31' })
+    expect(ranges[0]).toEqual({
+      month: 1,
+      from: '2026-01-01',
+      to: '2026-01-31',
+    })
+    expect(ranges[1]).toEqual({
+      month: 2,
+      from: '2026-02-01',
+      to: '2026-02-28',
+    })
+    expect(ranges[11]).toEqual({
+      month: 12,
+      from: '2026-12-01',
+      to: '2026-12-31',
+    })
   })
 
   it('모두닥 채널의 예약부터 수술완료까지 건수를 월 행으로 옮긴다', () => {

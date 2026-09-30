@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { Button } from '#shared/ui/Button'
+
 import { useReoperationCandidates } from '../../hooks/useReoperationCandidates'
 import {
   useReoperationDecisions,
@@ -20,7 +22,7 @@ import type { ReoperationCandidate } from '../../type/api'
 
 type KeyedCandidate = ReoperationCandidate & { key: string }
 
-type Props = {
+interface Props {
   from: string
   to: string
   onClose: () => void
@@ -29,22 +31,35 @@ type Props = {
 const dash = (v: string) => (v && v.trim() ? v : '—')
 
 export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
-  const { candidates, isLoading, isFetching, isError } = useReoperationCandidates(from, to, true)
+  const { candidates, isLoading, isFetching, isError } =
+    useReoperationCandidates(from, to, true)
   const { decisions } = useReoperationDecisions(from, to, true)
   const saveMutation = useSaveReoperationDecisions(from, to)
 
   const keyed = useMemo<KeyedCandidate[]>(
-    () => candidates.map((c, i) => ({ ...c, key: `${c.chartNo}-${c.reopDate}-${i}` })),
+    () =>
+      candidates.map((c, i) => ({
+        ...c,
+        key: `${c.chartNo}-${c.reopDate}-${i}`,
+      })),
     [candidates],
   )
 
   // 저장된 판정을 (차트번호, 수술일, 우안, 좌안) 키로 인덱싱. 자동판정보다 우선.
   // 같은 사람·같은 날 시술명이 다른 재수술이 별건으로 존재해서 시술명까지 키에 포함해야 한다.
-  const decisionKey = (chartNo: string, opDate: string, againR: string, againL: string) =>
-    `${chartNo}|${opDate}|${againR}|${againL}`
+  const decisionKey = (
+    chartNo: string,
+    opDate: string,
+    againR: string,
+    againL: string,
+  ) => `${chartNo}|${opDate}|${againR}|${againL}`
   const decisionMap = useMemo(() => {
     const map = new Map<string, boolean>()
-    for (const d of decisions) map.set(decisionKey(d.chartNo, d.opDate, d.againR, d.againL), d.isReoperation)
+    for (const d of decisions)
+      map.set(
+        decisionKey(d.chartNo, d.opDate, d.againR, d.againL),
+        d.isReoperation,
+      )
     return map
   }, [decisions])
 
@@ -52,7 +67,9 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
   const [flipped, setFlipped] = useState<Set<string>>(new Set())
 
   const baseChecked = (c: KeyedCandidate) => {
-    const saved = decisionMap.get(decisionKey(c.chartNo, c.reopDate, c.againR, c.againL))
+    const saved = decisionMap.get(
+      decisionKey(c.chartNo, c.reopDate, c.againR, c.againL),
+    )
     return saved ?? c.autoIncluded === 1
   }
 
@@ -61,8 +78,14 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
     return flipped.has(c.key) ? !base : base
   }
 
-  const included = useMemo(() => keyed.filter((c) => c.autoIncluded === 1), [keyed])
-  const excluded = useMemo(() => keyed.filter((c) => c.autoIncluded === 0), [keyed])
+  const included = useMemo(
+    () => keyed.filter((c) => c.autoIncluded === 1),
+    [keyed],
+  )
+  const excluded = useMemo(
+    () => keyed.filter((c) => c.autoIncluded === 0),
+    [keyed],
+  )
 
   const excludedGroups = useMemo(() => {
     const map = new Map<string, KeyedCandidate[]>()
@@ -77,12 +100,19 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
 
   const autoCount = included.length
   const finalCount = keyed.filter(isChecked).length
-  const addedCount = keyed.filter((c) => c.autoIncluded === 0 && isChecked(c)).length
-  const removedCount = keyed.filter((c) => c.autoIncluded === 1 && !isChecked(c)).length
+  const addedCount = keyed.filter(
+    (c) => c.autoIncluded === 0 && isChecked(c),
+  ).length
+  const removedCount = keyed.filter(
+    (c) => c.autoIncluded === 1 && !isChecked(c),
+  ).length
 
   // 선택(포함)된 행의 수납금액 합계. payment 는 콤마 포함 포맷 문자열이라 숫자만 추출해 합산.
-  const parseWon = (s: string) => (s ? Number(s.replace(/[^0-9]/g, '')) || 0 : 0)
-  const checkedPaymentTotal = keyed.filter(isChecked).reduce((sum, c) => sum + parseWon(c.payment), 0)
+  const parseWon = (s: string) =>
+    s ? Number(s.replace(/[^0-9]/g, '')) || 0 : 0
+  const checkedPaymentTotal = keyed
+    .filter(isChecked)
+    .reduce((sum, c) => sum + parseWon(c.payment), 0)
 
   const toggle = (key: string) => {
     setFlipped((prev) => {
@@ -143,7 +173,9 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
         <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">재수술 검토</h2>
-            <p className="text-[11px] text-muted-foreground">{from} ~ {to} · 재수술일 기준</p>
+            <p className="text-[11px] text-muted-foreground">
+              {from} ~ {to} · 재수술일 기준
+            </p>
           </div>
           <button
             type="button"
@@ -159,17 +191,29 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border/70 bg-gray-50 px-4 py-2.5">
           <div className="flex items-baseline gap-1.5">
             <span className="text-xs text-muted-foreground">재수술</span>
-            <strong className="text-lg tabular-nums text-gray-900">{finalCount}</strong>
+            <strong className="text-lg tabular-nums text-gray-900">
+              {finalCount}
+            </strong>
             <span className="text-xs text-muted-foreground">건</span>
           </div>
           <div className="text-[11px] text-muted-foreground">
             자동 {autoCount}건
-            {addedCount > 0 && <span className="ml-1 font-medium text-emerald-600">· 추가 +{addedCount}</span>}
-            {removedCount > 0 && <span className="ml-1 font-medium text-red-500">· 제외 −{removedCount}</span>}
+            {addedCount > 0 && (
+              <span className="ml-1 font-medium text-emerald-600">
+                · 추가 +{addedCount}
+              </span>
+            )}
+            {removedCount > 0 && (
+              <span className="ml-1 font-medium text-red-500">
+                · 제외 −{removedCount}
+              </span>
+            )}
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-xs text-muted-foreground">비용</span>
-            <strong className="text-sm tabular-nums text-gray-900">{checkedPaymentTotal.toLocaleString('ko-KR')}</strong>
+            <strong className="text-sm tabular-nums text-gray-900">
+              {checkedPaymentTotal.toLocaleString('ko-KR')}
+            </strong>
             <span className="text-xs text-muted-foreground">원</span>
           </div>
         </div>
@@ -177,11 +221,17 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
         {/* 본문 */}
         <div className="min-h-0 flex-1 overflow-auto text-xs">
           {isError ? (
-            <div className="py-12 text-center text-sm text-red-500">데이터를 불러오지 못했습니다.</div>
+            <div className="py-12 text-center text-sm text-red-500">
+              데이터를 불러오지 못했습니다.
+            </div>
           ) : isLoading || isFetching ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">불러오는 중…</div>
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              불러오는 중…
+            </div>
           ) : keyed.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">해당 기간에 재수술 데이터가 없습니다.</div>
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              해당 기간에 재수술 데이터가 없습니다.
+            </div>
           ) : (
             <div className="flex flex-col">
               {/* 컬럼 헤더 (sticky) */}
@@ -198,15 +248,26 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
               {/* 자동 포함 */}
               <div className="flex items-center gap-2 border-b border-border/40 bg-emerald-50/40 px-2.5 py-1.5">
                 <span className="font-semibold text-gray-800">자동 포함</span>
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">{included.length}건</span>
-                <span className="text-[11px] text-muted-foreground">레포트 재수술 건수에 반영되는 행</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                  {included.length}건
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  레포트 재수술 건수에 반영되는 행
+                </span>
               </div>
               {included.length === 0 ? (
-                <p className="px-2.5 py-3 text-center text-muted-foreground">자동 포함 행이 없습니다.</p>
+                <p className="px-2.5 py-3 text-center text-muted-foreground">
+                  자동 포함 행이 없습니다.
+                </p>
               ) : (
                 <ul className="divide-y divide-border/40">
                   {included.map((c) => (
-                    <RowItem key={c.key} c={c} checked={isChecked(c)} onToggle={() => toggle(c.key)} />
+                    <RowItem
+                      key={c.key}
+                      c={c}
+                      checked={isChecked(c)}
+                      onToggle={() => toggle(c.key)}
+                    />
                   ))}
                 </ul>
               )}
@@ -215,9 +276,15 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
               {excludedGroups.length > 0 && (
                 <>
                   <div className="flex items-center gap-2 border-y border-border/40 bg-amber-50/40 px-2.5 py-1.5">
-                    <span className="font-semibold text-gray-800">제외됨 · 검토 필요</span>
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">{excluded.length}건</span>
-                    <span className="text-[11px] text-muted-foreground">체크하면 포함으로 추가</span>
+                    <span className="font-semibold text-gray-800">
+                      제외됨 · 검토 필요
+                    </span>
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                      {excluded.length}건
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      체크하면 포함으로 추가
+                    </span>
                   </div>
                   {excludedGroups.map(([reason, rows]) => {
                     const allChecked = rows.every((r) => isChecked(r))
@@ -225,7 +292,10 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
                       <div key={reason}>
                         <div className="flex items-center justify-between border-b border-border/40 bg-gray-50 px-2.5 py-1">
                           <span className="font-medium text-gray-600">
-                            {reason} <span className="text-muted-foreground">({rows.length})</span>
+                            {reason}{' '}
+                            <span className="text-muted-foreground">
+                              ({rows.length})
+                            </span>
                           </span>
                           <button
                             type="button"
@@ -237,7 +307,12 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
                         </div>
                         <ul className="divide-y divide-border/40">
                           {rows.map((c) => (
-                            <RowItem key={c.key} c={c} checked={isChecked(c)} onToggle={() => toggle(c.key)} />
+                            <RowItem
+                              key={c.key}
+                              c={c}
+                              checked={isChecked(c)}
+                              onToggle={() => toggle(c.key)}
+                            />
                           ))}
                         </ul>
                       </div>
@@ -253,17 +328,28 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-4 py-3">
           <p className="text-[11px] text-muted-foreground">
             {saveMutation.isError ? (
-              <span className="text-red-600">저장에 실패했습니다. 다시 시도해주세요.</span>
+              <span className="text-red-600">
+                저장에 실패했습니다. 다시 시도해주세요.
+              </span>
             ) : saveMutation.isSuccess && !hasChanges ? (
               <span className="text-emerald-600">저장되었습니다.</span>
             ) : hasChanges ? (
               <span>변경 {flipped.size}건 — 저장을 눌러 확정하세요.</span>
             ) : (
-              <span>체크박스를 눌러 재수술 여부를 확정합니다. 저장된 판정은 자동판정보다 우선합니다.</span>
+              <span>
+                체크박스를 눌러 재수술 여부를 확정합니다. 저장된 판정은
+                자동판정보다 우선합니다.
+              </span>
             )}
           </p>
           <div className="flex items-center gap-1.5">
-            <Button type="button" variant="outline" size="sm" className="text-xs" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={onClose}
+            >
               닫기
             </Button>
             <Button
@@ -283,7 +369,15 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
   )
 }
 
-function RowItem({ c, checked, onToggle }: { c: KeyedCandidate; checked: boolean; onToggle: () => void }) {
+function RowItem({
+  c,
+  checked,
+  onToggle,
+}: {
+  c: KeyedCandidate
+  checked: boolean
+  onToggle: () => void
+}) {
   return (
     <li className="flex items-center gap-2.5 px-2.5 py-1.5 transition-colors hover:bg-blue-50/40">
       <input
@@ -293,12 +387,24 @@ function RowItem({ c, checked, onToggle }: { c: KeyedCandidate; checked: boolean
         className="h-3.5 w-3.5 shrink-0 accent-blue-600"
         aria-label={`${c.name} 재수술 포함`}
       />
-      <span className="w-11 shrink-0 tabular-nums text-gray-500">{c.reopDate.slice(5)}</span>
-      <span className="w-16 shrink-0 tabular-nums text-gray-600">{c.chartNo}</span>
-      <span className="w-20 shrink-0 truncate font-medium text-gray-800">{dash(c.name)}</span>
-      <span className="min-w-0 flex-1 truncate text-gray-600" title={c.againR}>{dash(c.againR)}</span>
-      <span className="min-w-0 flex-1 truncate text-gray-600" title={c.againL}>{dash(c.againL)}</span>
-      <span className="w-24 shrink-0 text-right tabular-nums text-gray-700">{c.payment ? `${c.payment}원` : '—'}</span>
+      <span className="w-11 shrink-0 tabular-nums text-gray-500">
+        {c.reopDate.slice(5)}
+      </span>
+      <span className="w-16 shrink-0 tabular-nums text-gray-600">
+        {c.chartNo}
+      </span>
+      <span className="w-20 shrink-0 truncate font-medium text-gray-800">
+        {dash(c.name)}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-gray-600" title={c.againR}>
+        {dash(c.againR)}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-gray-600" title={c.againL}>
+        {dash(c.againL)}
+      </span>
+      <span className="w-24 shrink-0 text-right tabular-nums text-gray-700">
+        {c.payment ? `${c.payment}원` : '—'}
+      </span>
     </li>
   )
 }

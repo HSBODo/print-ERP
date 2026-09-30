@@ -1,21 +1,43 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+
 import type { WeeklyReportItem } from '#domain/core/report/type/api'
-import { weeksOfYear, weeksOfMonth } from './reportWeeks'
+
+import { weeksOfMonth, weeksOfYear } from './reportWeeks'
 import { buildWeeklySeries } from './weeklyReportSeries'
 
 const week = (over: Partial<WeeklyReportItem>): WeeklyReportItem => ({
-  year: 2026, week: 1, startDate: '2025-12-29', endDate: '2026-01-04',
-  reservations: null, call: null, online: null,
-  introGeneral: null, introCustomer: null, introStaff: null,
-  jobOffice: null, jobStudent: null, jobEtc: null,
-  examTotal: null, visionExam: null, cataractExam: null, oneDay: null,
-  visionBooked: null, cataractBooked: null,
-  oneDayBooked: null, stopCount: null,
-  examGeneralBase: null, bookedGeneral: null,
-  visionSurgery: null, cataractSurgery: null, totalSurgery: null,
-  reoperation: null, reopLaser: null, reopLens: null,
+  year: 2026,
+  week: 1,
+  startDate: '2025-12-29',
+  endDate: '2026-01-04',
+  reservations: null,
+  call: null,
+  online: null,
+  introGeneral: null,
+  introCustomer: null,
+  introStaff: null,
+  jobOffice: null,
+  jobStudent: null,
+  jobEtc: null,
+  examTotal: null,
+  visionExam: null,
+  cataractExam: null,
+  oneDay: null,
+  visionBooked: null,
+  cataractBooked: null,
+  oneDayBooked: null,
+  stopCount: null,
+  examGeneralBase: null,
+  bookedGeneral: null,
+  visionSurgery: null,
+  cataractSurgery: null,
+  totalSurgery: null,
+  reoperation: null,
+  reopLaser: null,
+  reopLens: null,
   outpatient: null,
-  dreamlensNew: null, dreamlensFu: null,
+  dreamlensNew: null,
+  dreamlensFu: null,
   ...over,
 })
 
@@ -39,7 +61,11 @@ describe('buildWeeklySeries', () => {
   })
 
   it('응답에 없는 주는 null (선 끊김)', () => {
-    const series = buildWeeklySeries([week({ week: 1, visionExam: 100 })], weeks2026, YEARS)
+    const series = buildWeeklySeries(
+      [week({ week: 1, visionExam: 100 })],
+      weeks2026,
+      YEARS,
+    )
     expect(series.visionExam?.[2026][0]).toBe(100)
     expect(series.visionExam?.[2026][1]).toBeNull()
   })
@@ -47,8 +73,24 @@ describe('buildWeeklySeries', () => {
   it('예약률·비율은 분자/분모로 계산하고 분모가 0이면 null', () => {
     const series = buildWeeklySeries(
       [
-        week({ week: 1, examTotal: 250, visionExam: 200, visionBooked: 150, oneDay: 80, oneDayBooked: 60, stopCount: 10 }),
-        week({ week: 2, examTotal: 0, visionExam: 0, visionBooked: 0, oneDay: 0, oneDayBooked: 0, stopCount: 0 }),
+        week({
+          week: 1,
+          examTotal: 250,
+          visionExam: 200,
+          visionBooked: 150,
+          oneDay: 80,
+          oneDayBooked: 60,
+          stopCount: 10,
+        }),
+        week({
+          week: 2,
+          examTotal: 0,
+          visionExam: 0,
+          visionBooked: 0,
+          oneDay: 0,
+          oneDayBooked: 0,
+          stopCount: 0,
+        }),
       ],
       weeks2026,
       YEARS,

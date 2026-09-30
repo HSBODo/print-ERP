@@ -1,6 +1,7 @@
 import type { WeeklyReportItem } from '#domain/core/report/type/api'
-import type { ReportWeek } from './reportWeeks'
+
 import type { ReportSeriesKey } from '../hooks/useReportSeries'
+import type { ReportWeek } from './reportWeeks'
 
 /**
  * 주차 레포트 원시 집계 → 도표 시리즈.
@@ -15,15 +16,27 @@ import type { ReportSeriesKey } from '../hooks/useReportSeries'
 /** 표시 중인 주차 배열 기준의 (연도 → 값 배열). 값이 없는 주는 null(선 끊김). */
 export type WeeklySeries = Record<number, (number | null)[]>
 
-const num = (v: number | null | undefined): number | null => (typeof v === 'number' ? v : null)
+const num = (v: number | null | undefined): number | null =>
+  typeof v === 'number' ? v : null
 
 /** 분자/분모 → 백분율. 분모가 없거나 0 이면 null. */
-const rate = (numerator: number | null | undefined, denominator: number | null | undefined): number | null => {
-  if (typeof numerator !== 'number' || typeof denominator !== 'number' || denominator <= 0) return null
+const rate = (
+  numerator: number | null | undefined,
+  denominator: number | null | undefined,
+): number | null => {
+  if (
+    typeof numerator !== 'number' ||
+    typeof denominator !== 'number' ||
+    denominator <= 0
+  )
+    return null
   return (numerator / denominator) * 100
 }
 
-const diff = (a: number | null | undefined, b: number | null | undefined): number | null =>
+const diff = (
+  a: number | null | undefined,
+  b: number | null | undefined,
+): number | null =>
   typeof a === 'number' && typeof b === 'number' ? a - b : null
 
 export function buildWeeklySeries(
@@ -73,7 +86,9 @@ export function buildWeeklySeries(
     // 종전에는 시력교정 기준(visionExam − oneDay)이라 검사자 리스트의 examType 집계와 어긋났다.
     examGeneral: pick((it) => diff(it.examTotal, it.oneDay)),
 
-    ratioGeneral: pick((it) => rate(diff(it.examTotal, it.oneDay), it.examTotal)),
+    ratioGeneral: pick((it) =>
+      rate(diff(it.examTotal, it.oneDay), it.examTotal),
+    ),
     cataractRate: pick((it) => rate(it.cataractBooked, it.cataractExam)),
     visionRate: pick((it) => rate(it.visionBooked, it.visionExam)),
     rateVisionGeneral: pick((it) => rate(it.bookedGeneral, it.examGeneralBase)),

@@ -80,7 +80,9 @@ describe('tightAxis (주차 레포트 — 변동 폭 강조)', () => {
 
   it('niceAxis 보다 눈금이 촘촘하다(8등분 기준)', () => {
     const values = [88, 470, 300, 250, 160]
-    expect(tightAxis(values).ticks.length).toBeGreaterThan(niceAxis(values).ticks.length)
+    expect(tightAxis(values).ticks.length).toBeGreaterThan(
+      niceAxis(values).ticks.length,
+    )
   })
 
   it('데이터가 0 근처면 0 부터 그린다', () => {

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { surgeryApi } from '../api'
 
 export function useSurgeryKpi(years: number[]) {

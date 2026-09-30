@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { VisionRevenueSummaryPage } from '#domain/core/accounting/ui/VisionRevenueSummaryPage'
 
-export const Route = createFileRoute('/_auth/accounting/vision-revenue-summary')({
+export const Route = createFileRoute(
+  '/_auth/accounting/vision-revenue-summary',
+)({
   component: VisionRevenueSummaryPage,
   staticData: {
     page: {

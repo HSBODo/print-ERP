@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { VisionRevenueChartPage } from '#domain/core/accounting/ui/VisionRevenueChartPage'
 
 export const Route = createFileRoute('/_auth/accounting/vision-revenue-chart')({

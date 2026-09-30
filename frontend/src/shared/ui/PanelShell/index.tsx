@@ -1,5 +1,6 @@
-import { useState } from 'react'
 import { X } from 'lucide-react'
+import { useState } from 'react'
+
 import { Card, CardContent, CardHeader } from '#shared/ui/Card'
 
 type SkeletonVariant = 'kpi' | 'bar' | 'line' | 'donut' | 'area'
@@ -12,8 +13,19 @@ interface PanelShellProps {
   className?: string
 }
 
-function Bone({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={`animate-pulse rounded bg-muted ${className ?? ''}`} style={style} />
+function Bone({
+  className,
+  style,
+}: {
+  className?: string
+  style?: React.CSSProperties
+}) {
+  return (
+    <div
+      className={`animate-pulse rounded bg-muted ${className ?? ''}`}
+      style={style}
+    />
+  )
 }
 
 function KpiSkeleton() {
@@ -110,7 +122,13 @@ const SKELETON_MAP: Record<SkeletonVariant, () => React.ReactNode> = {
   area: AreaSkeleton,
 }
 
-export function PanelShell({ isLoading, isError, children, variant = 'bar', className }: PanelShellProps) {
+export function PanelShell({
+  isLoading,
+  isError,
+  children,
+  variant = 'bar',
+  className,
+}: PanelShellProps) {
   const [dismissed, setDismissed] = useState(false)
 
   if (isLoading) {

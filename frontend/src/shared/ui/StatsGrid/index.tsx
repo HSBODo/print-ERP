@@ -3,9 +3,5 @@ interface StatsGridProps {
 }
 
 export function StatsGrid({ children }: StatsGridProps) {
-  return (
-    <div className="space-y-6">
-      {children}
-    </div>
-  )
+  return <div className="space-y-6">{children}</div>
 }

@@ -21,11 +21,15 @@ export const addDays = (date: Date, days: number): Date =>
  * 예) 2026-01-01(목) → {year:2026, week:1} · 2026-06-01(월) → {year:2026, week:23}
  */
 export function isoWeek(date: Date): { year: number; week: number } {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  )
   const dayNum = d.getUTCDay() || 7 // 일=0 → 7 로 취급해 월요일=1..일요일=7
   d.setUTCDate(d.getUTCDate() + 4 - dayNum) // 그 주의 목요일로 이동 (ISO 규칙)
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7)
+  const week = Math.ceil(
+    ((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7,
+  )
   return { year: d.getUTCFullYear(), week }
 }
 
@@ -37,10 +41,15 @@ export function isoWeekMonday(year: number, week: number): Date {
 }
 
 /** 해당 ISO 연도의 마지막 주차(52 또는 53). 12월 28일은 항상 그 해 마지막 주에 속한다. */
-export const isoWeeksInYear = (year: number): number => isoWeek(new Date(year, 11, 28)).week
+export const isoWeeksInYear = (year: number): number =>
+  isoWeek(new Date(year, 11, 28)).week
 
 /** 해당 ISO 연도 전체 주차의 조회 범위 — 1주차 월요일 ~ 마지막 주차 일요일. */
-export function isoYearRange(year: number): { from: string; to: string; weeks: number } {
+export function isoYearRange(year: number): {
+  from: string
+  to: string
+  weeks: number
+} {
   const weeks = isoWeeksInYear(year)
   return {
     from: toIsoDate(isoWeekMonday(year, 1)),

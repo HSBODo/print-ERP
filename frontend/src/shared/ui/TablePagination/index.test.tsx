@@ -1,7 +1,14 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
+
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { useMemo } from 'react'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { usePagination } from '#shared/hooks/usePagination'
@@ -9,10 +16,27 @@ import { TablePagination } from '#shared/ui/TablePagination'
 
 afterEach(cleanup)
 
-function Harness({ total = 925, unit, pageSizeOptions }: { total?: number; unit?: string; pageSizeOptions?: number[] }) {
-  const rows = useMemo(() => Array.from({ length: total }, (_, index) => index), [total])
+function Harness({
+  total = 925,
+  unit,
+  pageSizeOptions,
+}: {
+  total?: number
+  unit?: string
+  pageSizeOptions?: number[]
+}) {
+  const rows = useMemo(
+    () => Array.from({ length: total }, (_, index) => index),
+    [total],
+  )
   const pagination = usePagination(rows)
-  return <TablePagination pagination={pagination} unit={unit} pageSizeOptions={pageSizeOptions} />
+  return (
+    <TablePagination
+      pagination={pagination}
+      unit={unit}
+      pageSizeOptions={pageSizeOptions}
+    />
+  )
 }
 
 const button = (name: string) => screen.getByRole('button', { name })
@@ -62,7 +86,12 @@ describe('표 페이지 이동', () => {
     render(<Harness total={0} />)
     expect(screen.getByText('0건 중 0-0')).toBeInTheDocument()
     expect(screen.getByText('1 / 1')).toBeInTheDocument()
-    for (const name of ['처음 페이지', '이전 페이지', '다음 페이지', '마지막 페이지']) {
+    for (const name of [
+      '처음 페이지',
+      '이전 페이지',
+      '다음 페이지',
+      '마지막 페이지',
+    ]) {
       expect(button(name)).toBeDisabled()
     }
   })
@@ -70,7 +99,12 @@ describe('표 페이지 이동', () => {
   it('행 수 선택지 기본값은 25·50·100·200 이고 건수 단위를 바꿀 수 있다', () => {
     render(<Harness total={120} unit="명" />)
     const options = within(pageSizeSelect()).getAllByRole('option')
-    expect(options.map((option) => option.textContent)).toEqual(['25', '50', '100', '200'])
+    expect(options.map((option) => option.textContent)).toEqual([
+      '25',
+      '50',
+      '100',
+      '200',
+    ])
     expect(screen.getByText('120명 중 1-50')).toBeInTheDocument()
   })
 

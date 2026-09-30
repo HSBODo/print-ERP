@@ -1,28 +1,40 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── Monthly (검사 건수 페이지용) ── */
 
 const examinationMonthlyItemSchema = z.object({
-  year: z.number(), month: z.number(),
+  year: z.number(),
+  month: z.number(),
   visionCorrection: z.number(),
   dreamlens: z.number(),
   cataract: z.number().optional(),
-  examTotal: z.number().optional(), total: z.number(),
+  examTotal: z.number().optional(),
+  total: z.number(),
 })
-export type ExaminationMonthlyItem = z.infer<typeof examinationMonthlyItemSchema>
-export const examinationResponseSchema = apiResponseOf(z.array(examinationMonthlyItemSchema))
+export type ExaminationMonthlyItem = z.infer<
+  typeof examinationMonthlyItemSchema
+>
+export const examinationResponseSchema = apiResponseOf(
+  z.array(examinationMonthlyItemSchema),
+)
 
 /* ── Monthly (시술별 검사 건수 페이지용) ── */
 
 const procedureExamMonthlyItemSchema = z.object({
-  year: z.number(), month: z.number(),
+  year: z.number(),
+  month: z.number(),
   examCount: z.number(),
   oneDayExamCount: z.number(),
   total: z.number().optional(),
 })
-export type ProcedureExamMonthlyItem = z.infer<typeof procedureExamMonthlyItemSchema>
-export const procedureExamResponseSchema = apiResponseOf(z.array(procedureExamMonthlyItemSchema))
+export type ProcedureExamMonthlyItem = z.infer<
+  typeof procedureExamMonthlyItemSchema
+>
+export const procedureExamResponseSchema = apiResponseOf(
+  z.array(procedureExamMonthlyItemSchema),
+)
 
 /**
  * 전체 검사자 리스트 — 시력교정(EXAM) + 백내장(Cataract_Exam) 통합 행 목록.
@@ -62,7 +74,9 @@ const allExamListItemSchema = z.object({
 
 export type AllExamListItem = z.infer<typeof allExamListItemSchema>
 
-export const allExamListResponseSchema = apiResponseOf(z.array(allExamListItemSchema))
+export const allExamListResponseSchema = apiResponseOf(
+  z.array(allExamListItemSchema),
+)
 
 /**
  * 백내장 검사자 리스트 — 성민CRM "백내장 검사자 리스트"(FrmCataract_ExamList).
@@ -132,7 +146,9 @@ const cataractExamListItemSchema = z.object({
 
 export type CataractExamListItem = z.infer<typeof cataractExamListItemSchema>
 
-export const cataractExamListResponseSchema = apiResponseOf(z.array(cataractExamListItemSchema))
+export const cataractExamListResponseSchema = apiResponseOf(
+  z.array(cataractExamListItemSchema),
+)
 
 const eoeisCheckupRowSchema = z.object({
   operatorName: z.string(),
@@ -163,7 +179,9 @@ const examCountByClassRowSchema = z.object({
 
 export type ExamCountByClassRow = z.infer<typeof examCountByClassRowSchema>
 
-export const examCountByClassResponseSchema = apiResponseOf(z.array(examCountByClassRowSchema))
+export const examCountByClassResponseSchema = apiResponseOf(
+  z.array(examCountByClassRowSchema),
+)
 
 /**
  * 검사자 리스트(상담사별) — 성민CRM 화면 소스(EXAM+CUSTOM+OPERATIONDATA+EMPLOYEE)의 행 목록.

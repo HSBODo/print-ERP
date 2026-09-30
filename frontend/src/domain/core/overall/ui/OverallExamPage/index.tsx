@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
+
 import { useOverallExamMonthly } from '../../hooks/useOverallExamMonthly'
 import type { OverallExamMonthlyItem } from '../../type/api'
 
@@ -24,13 +26,38 @@ const GROUPS: ColGroup[] = [
   { label: '소개유형', cols: ['일반고객', '고객소개', '직원소개'] },
   { label: '직업', cols: ['직장인', '학생', '기타'] },
   { label: '시력교정 수술예약', cols: ['예약', '예약률(중단포함)'] },
-  { label: '백내장', cols: ['전체(노안포함)', '백내장 만', '중단제외', '예약', '예약률', '전환률'] },
+  {
+    label: '백내장',
+    cols: [
+      '전체(노안포함)',
+      '백내장 만',
+      '중단제외',
+      '예약',
+      '예약률',
+      '전환률',
+    ],
+  },
   { label: '중단', cols: ['중단수', '중단율'] },
-  { label: '검사 건수', cols: ['시력교정', '드림렌즈', '백내장', '노안2', '합계'] },
-  { label: '검사 비율', cols: ['시력교정', '드림렌즈', '노안', '백내장', '노안2+5대질환'] },
+  {
+    label: '검사 건수',
+    cols: ['시력교정', '드림렌즈', '백내장', '노안2', '합계'],
+  },
+  {
+    label: '검사 비율',
+    cols: ['시력교정', '드림렌즈', '노안', '백내장', '노안2+5대질환'],
+  },
   {
     label: '원데이/일반검사',
-    cols: ['시력교정', '원데이', '원데이예약', '일반검사', '일반검사예약', '일반검사비율', '원데이성공률', '일반성공률'],
+    cols: [
+      '시력교정',
+      '원데이',
+      '원데이예약',
+      '일반검사',
+      '일반검사예약',
+      '일반검사비율',
+      '원데이성공률',
+      '일반성공률',
+    ],
   },
 ]
 
@@ -74,46 +101,46 @@ const n = (v: number): string => String(v)
  */
 function apiItemToRow(item: OverallExamMonthlyItem): OverallExamRow {
   const total = item.visionExam + item.dreamlens + item.cataractTotal // idx21 합계
-  const nogan2 = item.cataractTotal - item.cataractOnly               // idx20
-  const nomalExam = item.visionExam - item.oneDay                     // idx30
-  const nomalBooked = item.visionBooked - item.oneDayBooked           // idx31
+  const nogan2 = item.cataractTotal - item.cataractOnly // idx20
+  const nomalExam = item.visionExam - item.oneDay // idx30
+  const nomalBooked = item.visionBooked - item.oneDayBooked // idx31
 
   const cells: string[] = [
-    n(item.totalExam),                                    // 0
-    n(item.introGeneral),                                 // 1
-    n(item.introCustomer),                                // 2
-    n(item.introStaff),                                   // 3
-    n(item.jobOffice),                                    // 4
-    n(item.jobStudent),                                   // 5
-    n(item.jobEtc),                                       // 6
-    n(item.visionBooked),                                 // 7
-    pct1(item.visionBooked, item.visionExam),             // 8 예약률(중단포함) = 예약÷검사
-    n(item.cataractTotal),                                // 9
-    n(item.cataractOnly),                                 // 10
-    '',                                                    // 11 중단제외 (마트에 없음)
-    n(item.cataractBooked),                               // 12
-    pct1(item.cataractBooked, item.cataractOnly),         // 13 예약률 = 예약÷만
-    pct1(item.cataractBooked, item.cataractTotal),        // 14 전환률 = 예약÷전체
-    n(item.stopCount),                                    // 15
-    pct1(item.stopCount, item.visionExam),                // 16 중단율 = 중단÷검사
-    n(item.visionExam),                                   // 17
-    n(item.dreamlens),                                    // 18
-    n(item.cataractOnly),                                 // 19 검사건수 백내장 = idx10
-    n(nogan2),                                            // 20 노안2 = 전체−만
-    n(total),                                             // 21 합계
-    pct1(item.visionExam, total),                         // 22 시력교정 비율
-    pct1(item.dreamlens, total),                          // 23 드림렌즈 비율
-    '0.0%',                                               // 24 노안 비율 (현재 분류 0)
-    pct1(item.cataractOnly, total),                       // 25 백내장 비율
-    pct1(nogan2, total),                                  // 26 노안2+5대질환 비율
-    n(item.visionExam),                                   // 27 원데이/일반검사 시력교정 = idx17
-    n(item.oneDay),                                       // 28 원데이
-    n(item.oneDayBooked),                                 // 29 원데이예약
-    n(nomalExam),                                         // 30 일반검사
-    n(nomalBooked),                                       // 31 일반검사예약
-    pct1(nomalExam, item.visionExam),                     // 32 일반검사비율
-    pct1(item.oneDayBooked, item.oneDay),                 // 33 원데이성공률
-    pct1(nomalBooked, nomalExam),                         // 34 일반성공률
+    n(item.totalExam), // 0
+    n(item.introGeneral), // 1
+    n(item.introCustomer), // 2
+    n(item.introStaff), // 3
+    n(item.jobOffice), // 4
+    n(item.jobStudent), // 5
+    n(item.jobEtc), // 6
+    n(item.visionBooked), // 7
+    pct1(item.visionBooked, item.visionExam), // 8 예약률(중단포함) = 예약÷검사
+    n(item.cataractTotal), // 9
+    n(item.cataractOnly), // 10
+    '', // 11 중단제외 (마트에 없음)
+    n(item.cataractBooked), // 12
+    pct1(item.cataractBooked, item.cataractOnly), // 13 예약률 = 예약÷만
+    pct1(item.cataractBooked, item.cataractTotal), // 14 전환률 = 예약÷전체
+    n(item.stopCount), // 15
+    pct1(item.stopCount, item.visionExam), // 16 중단율 = 중단÷검사
+    n(item.visionExam), // 17
+    n(item.dreamlens), // 18
+    n(item.cataractOnly), // 19 검사건수 백내장 = idx10
+    n(nogan2), // 20 노안2 = 전체−만
+    n(total), // 21 합계
+    pct1(item.visionExam, total), // 22 시력교정 비율
+    pct1(item.dreamlens, total), // 23 드림렌즈 비율
+    '0.0%', // 24 노안 비율 (현재 분류 0)
+    pct1(item.cataractOnly, total), // 25 백내장 비율
+    pct1(nogan2, total), // 26 노안2+5대질환 비율
+    n(item.visionExam), // 27 원데이/일반검사 시력교정 = idx17
+    n(item.oneDay), // 28 원데이
+    n(item.oneDayBooked), // 29 원데이예약
+    n(nomalExam), // 30 일반검사
+    n(nomalBooked), // 31 일반검사예약
+    pct1(nomalExam, item.visionExam), // 32 일반검사비율
+    pct1(item.oneDayBooked, item.oneDay), // 33 원데이성공률
+    pct1(nomalBooked, nomalExam), // 34 일반성공률
   ]
 
   return {
@@ -190,15 +217,26 @@ export function OverallExamPage() {
               })}
             </div>
             <span className="ml-auto text-xs text-muted-foreground">
-              {year === 'all' ? '전체' : `${year}년`} · {rows.length}개월 · 가로 스크롤
+              {year === 'all' ? '전체' : `${year}년`} · {rows.length}개월 · 가로
+              스크롤
             </span>
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
             <table className="w-full min-w-[2200px] border-collapse text-center text-xs">
               <thead>
                 <tr>
-                  <th rowSpan={2} className="sticky left-0 top-0 z-30 h-8 border-b border-border bg-muted px-2 font-semibold text-foreground">연도</th>
-                  <th rowSpan={2} className="sticky top-0 z-20 h-8 border-b border-border bg-muted px-2 font-semibold text-foreground">월</th>
+                  <th
+                    rowSpan={2}
+                    className="sticky left-0 top-0 z-30 h-8 border-b border-border bg-muted px-2 font-semibold text-foreground"
+                  >
+                    연도
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="sticky top-0 z-20 h-8 border-b border-border bg-muted px-2 font-semibold text-foreground"
+                  >
+                    월
+                  </th>
                   {GROUPS.map((g, gi) => (
                     <th
                       key={gi}
@@ -223,19 +261,25 @@ export function OverallExamPage() {
               <tbody>
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={COL_COUNT + 2} className="py-10 text-center text-muted-foreground">
+                    <td
+                      colSpan={COL_COUNT + 2}
+                      className="py-10 text-center text-muted-foreground"
+                    >
                       표시할 데이터가 없습니다.
                     </td>
                   </tr>
                 )}
                 {rows.map((row, index) => {
-                  const isYearStart = index > 0 && rows[index - 1].year !== row.year
+                  const isYearStart =
+                    index > 0 && rows[index - 1].year !== row.year
                   return (
                     <tr
                       key={`${row.year}-${row.month}`}
                       className={`border-b border-border/50 ${isYearStart ? 'border-t-2 border-t-border' : ''}`}
                     >
-                      <td className="sticky left-0 z-10 bg-background px-2 py-1.5 text-muted-foreground">{row.year}</td>
+                      <td className="sticky left-0 z-10 bg-background px-2 py-1.5 text-muted-foreground">
+                        {row.year}
+                      </td>
                       <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
                         {row.month}월{row.partial ? '*' : ''}
                       </td>

@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+import { canSystemOp } from '#domain/support/session/session'
+import { useAuthStore } from '#domain/support/session/store'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
+import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+
 import { overseasMarketingApi } from '../../api'
-import type { OverseasMarketingReception, OverseasMarketingReceptionInput } from '../../type/api'
 import {
   useOverseasMarketingCrmSync,
   useOverseasMarketingMatchConfirm,
@@ -13,12 +17,14 @@ import {
   useOverseasMarketingSheetSync,
   useOverseasMarketingSyncAvailability,
 } from '../../hooks/useOverseasMarketing'
+import type {
+  OverseasMarketingReception,
+  OverseasMarketingReceptionInput,
+} from '../../type/api'
 import { MatchConfirmDialog } from './ui/MatchConfirmDialog'
 import { ReceptionFilterBar } from './ui/ReceptionFilterBar'
 import { ReceptionFormDialog } from './ui/ReceptionFormDialog'
 import { ReceptionTable } from './ui/ReceptionTable'
-import { EMPTY_RECEPTION_INPUT, toReceptionInput } from './utils/receptionForm'
-import { createDefaultParams, type MatchFilter } from './utils/receptionOptions'
 import {
   CSV_COLUMNS,
   MATCH_ORDER,
@@ -26,9 +32,8 @@ import {
   type SortKey,
   sortValue,
 } from './utils/receptionColumns'
-import { canSystemOp } from '#domain/support/session/session'
-import { useAuthStore } from '#domain/support/session/store'
-import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+import { EMPTY_RECEPTION_INPUT, toReceptionInput } from './utils/receptionForm'
+import { createDefaultParams, type MatchFilter } from './utils/receptionOptions'
 
 // CRM [동기화] 버튼 스위치 — 잠시 꺼야 할 때 false 로 바꾸고 재배포.
 const CRM_SYNC_ENABLED = true
@@ -38,10 +43,18 @@ export function OverseasMarketingReceptionPage() {
   const [query, setQuery] = useState(createDefaultParams)
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
-  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
+  const [sort, setSort] = useState<{
+    key: SortKey
+    dir: 'asc' | 'desc'
+  } | null>(null)
 
-  const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; row: OverseasMarketingReception } | null>(null)
-  const [matchTarget, setMatchTarget] = useState<OverseasMarketingReception | null>(null)
+  const [editor, setEditor] = useState<
+    | { mode: 'create' }
+    | { mode: 'edit'; row: OverseasMarketingReception }
+    | null
+  >(null)
+  const [matchTarget, setMatchTarget] =
+    useState<OverseasMarketingReception | null>(null)
   const [matchFilter, setMatchFilter] = useState<MatchFilter>('all')
   const [crmSyncBusy, setCrmSyncBusy] = useState(false)
   const [crmSyncPhase, setCrmSyncPhase] = useState('')
@@ -64,15 +77,28 @@ export function OverseasMarketingReceptionPage() {
 
   const filtered = useMemo(() => {
     const search = appliedKeyword.trim().toLocaleLowerCase('ko-KR')
-    const byMatch = matchFilter === 'all'
-      ? (rows ?? [])
-      : (rows ?? []).filter((row) => row.matchStatus === matchFilter)
+    const byMatch =
+      matchFilter === 'all'
+        ? (rows ?? [])
+        : (rows ?? []).filter((row) => row.matchStatus === matchFilter)
     if (!search) return byMatch
-    return byMatch.filter((row) => [
-      row.customerNo, row.name, row.nationality, row.contact, row.email,
-      row.occupation, row.channelId, row.agentChannel, row.agentId,
-      row.dreamlens, row.referral, row.remark, row.status,
-    ].some((value) => value.toLocaleLowerCase('ko-KR').includes(search)))
+    return byMatch.filter((row) =>
+      [
+        row.customerNo,
+        row.name,
+        row.nationality,
+        row.contact,
+        row.email,
+        row.occupation,
+        row.channelId,
+        row.agentChannel,
+        row.agentId,
+        row.dreamlens,
+        row.referral,
+        row.remark,
+        row.status,
+      ].some((value) => value.toLocaleLowerCase('ko-KR').includes(search)),
+    )
   }, [appliedKeyword, matchFilter, rows])
 
   const sorted = useMemo(() => {
@@ -86,14 +112,17 @@ export function OverseasMarketingReceptionPage() {
         // 빈 값(미매칭·미입력)은 방향과 무관하게 항상 뒤로 — 값 있는 행부터 보인다.
         if (!a && !b) {
           return key === 'customerNo'
-            ? (MATCH_ORDER[left.matchStatus] ?? 9) - (MATCH_ORDER[right.matchStatus] ?? 9)
+            ? (MATCH_ORDER[left.matchStatus] ?? 9) -
+                (MATCH_ORDER[right.matchStatus] ?? 9)
             : 0
         }
         return a ? -1 : 1
       }
       // 고객번호·금액(콤마 포함)은 수치로 비교한다 — 문자열 비교는 '999,000' > '1,200,000' 이 된다.
       if (PLAIN_NUMBER.test(a) && PLAIN_NUMBER.test(b)) {
-        return (Number(a.replace(/,/g, '')) - Number(b.replace(/,/g, ''))) * factor
+        return (
+          (Number(a.replace(/,/g, '')) - Number(b.replace(/,/g, ''))) * factor
+        )
       }
       return a.localeCompare(b, 'ko', { numeric: true }) * factor
     })
@@ -110,7 +139,10 @@ export function OverseasMarketingReceptionPage() {
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
-      if (event.key === 'F1' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(target?.tagName ?? '')) {
+      if (
+        event.key === 'F1' &&
+        !['INPUT', 'SELECT', 'TEXTAREA'].includes(target?.tagName ?? '')
+      ) {
         event.preventDefault()
         search()
       }
@@ -130,13 +162,18 @@ export function OverseasMarketingReceptionPage() {
   }
 
   const runSheetSync = async () => {
-    if (!window.confirm('Google Sheet의 최근 신규 접수를 일괄 업데이트할까요?')) return
+    if (!window.confirm('Google Sheet의 최근 신규 접수를 일괄 업데이트할까요?'))
+      return
     try {
       const result = await sheetSync.mutateAsync()
       toast.success(result.message)
       await receptions.refetch()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Google Sheet 동기화에 실패했습니다.')
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Google Sheet 동기화에 실패했습니다.',
+      )
     }
   }
 
@@ -144,7 +181,12 @@ export function OverseasMarketingReceptionPage() {
   // 페이지를 닫아도 잡은 서버에서 계속 돌고, 다시 열어 버튼을 누르면 진행 중 상태에 다시 붙는다.
   const runCrmSync = async () => {
     if (crmSyncBusy) return
-    if (!window.confirm('CRM 매칭·상태·비용을 갱신할까요? 완료까지 화면 우측 상단 알림으로 안내됩니다.')) return
+    if (
+      !window.confirm(
+        'CRM 매칭·상태·비용을 갱신할까요? 완료까지 화면 우측 상단 알림으로 안내됩니다.',
+      )
+    )
+      return
     setCrmSyncBusy(true)
     try {
       let status = await crmSync.mutateAsync()
@@ -160,10 +202,14 @@ export function OverseasMarketingReceptionPage() {
       } else if (status.state === 'error') {
         toast.error(status.message ?? 'CRM 동기화에 실패했습니다.')
       } else {
-        toast.info('동기화가 아직 진행 중입니다 — 잠시 후 조회를 다시 실행해 주세요.')
+        toast.info(
+          '동기화가 아직 진행 중입니다 — 잠시 후 조회를 다시 실행해 주세요.',
+        )
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'CRM 동기화에 실패했습니다.')
+      toast.error(
+        error instanceof Error ? error.message : 'CRM 동기화에 실패했습니다.',
+      )
     } finally {
       setCrmSyncBusy(false)
       setCrmSyncPhase('')
@@ -173,7 +219,8 @@ export function OverseasMarketingReceptionPage() {
   const saveReception = async (input: OverseasMarketingReceptionInput) => {
     try {
       if (editor?.mode === 'edit') {
-        if (editor.row.seq == null) throw new Error('행 번호를 확인할 수 없습니다.')
+        if (editor.row.seq == null)
+          throw new Error('행 번호를 확인할 수 없습니다.')
         await updateReception.mutateAsync({ rowNumber: editor.row.seq, input })
         toast.success('접수 행을 수정했습니다.')
       } else {
@@ -183,7 +230,9 @@ export function OverseasMarketingReceptionPage() {
       setEditor(null)
       await receptions.refetch()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '저장에 실패했습니다.')
+      toast.error(
+        error instanceof Error ? error.message : '저장에 실패했습니다.',
+      )
     }
   }
 
@@ -195,19 +244,28 @@ export function OverseasMarketingReceptionPage() {
       toast.success('접수 행을 삭제했습니다.')
       await receptions.refetch()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '삭제에 실패했습니다.')
+      toast.error(
+        error instanceof Error ? error.message : '삭제에 실패했습니다.',
+      )
     }
   }
 
   const submitMatch = async (customerNo: string) => {
-    if (!matchTarget || matchTarget.seq == null) return
+    if (matchTarget?.seq == null) return
     try {
-      const result = await confirmMatch.mutateAsync({ rowNumber: matchTarget.seq, customerNo })
-      toast.success(`'${matchTarget.name}' → CRM ${result.customerNo}(${result.customerName}) 매칭 완료`)
+      const result = await confirmMatch.mutateAsync({
+        rowNumber: matchTarget.seq,
+        customerNo,
+      })
+      toast.success(
+        `'${matchTarget.name}' → CRM ${result.customerNo}(${result.customerName}) 매칭 완료`,
+      )
       setMatchTarget(null)
       await receptions.refetch()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '매칭 저장에 실패했습니다.')
+      toast.error(
+        error instanceof Error ? error.message : '매칭 저장에 실패했습니다.',
+      )
     }
   }
 
@@ -219,10 +277,11 @@ export function OverseasMarketingReceptionPage() {
     pagination.resetPage()
   }
 
-  const downloadResults = () => downloadCsv(
-    `해외마케팅_접수리스트_${query.from}_${query.to}.csv`,
-    columnsToCsv(CSV_COLUMNS, sorted),
-  )
+  const downloadResults = () =>
+    downloadCsv(
+      `해외마케팅_접수리스트_${query.from}_${query.to}.csv`,
+      columnsToCsv(CSV_COLUMNS, sorted),
+    )
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[34rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
@@ -231,9 +290,15 @@ export function OverseasMarketingReceptionPage() {
         onDraftChange={setDraft}
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onKeywordApply={() => { setAppliedKeyword(keyword); pagination.resetPage() }}
+        onKeywordApply={() => {
+          setAppliedKeyword(keyword)
+          pagination.resetPage()
+        }}
         matchFilter={matchFilter}
-        onMatchFilterChange={(value) => { setMatchFilter(value); pagination.resetPage() }}
+        onMatchFilterChange={(value) => {
+          setMatchFilter(value)
+          pagination.resetPage()
+        }}
         filteredCount={filtered.length}
         sortedCount={sorted.length}
         onSearch={search}
@@ -276,8 +341,16 @@ export function OverseasMarketingReceptionPage() {
       {editor && (
         <ReceptionFormDialog
           key={editor.mode === 'edit' ? editor.row.rowId : 'create'}
-          title={editor.mode === 'edit' ? `접수 행 수정 — ${editor.row.name}` : '접수 행 추가'}
-          initial={editor.mode === 'edit' ? toReceptionInput(editor.row) : EMPTY_RECEPTION_INPUT}
+          title={
+            editor.mode === 'edit'
+              ? `접수 행 수정 — ${editor.row.name}`
+              : '접수 행 추가'
+          }
+          initial={
+            editor.mode === 'edit'
+              ? toReceptionInput(editor.row)
+              : EMPTY_RECEPTION_INPUT
+          }
           pending={createReception.isPending || updateReception.isPending}
           onSubmit={saveReception}
           onClose={() => setEditor(null)}

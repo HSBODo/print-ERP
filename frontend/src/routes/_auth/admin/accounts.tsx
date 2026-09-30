@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { AccountManagementPage } from '#domain/core/account/ui/AccountManagementPage'
 
 export const Route = createFileRoute('/_auth/admin/accounts')({

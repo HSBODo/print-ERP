@@ -16,7 +16,8 @@ export type UserRole = 'ADMIN' | 'DIRECTOR' | 'MANAGER' | 'STAFF'
  *
  * 이 축은 "부서(department)" 다. 향후 "소속(회사·법인)" 축이 별도로 추가될 수 있다.
  */
-export type UserDepartment = 'ALL' | 'MEDICAL' | 'MARKETING' | 'OVERSEAS_MARKETING'
+export type UserDepartment =
+  'ALL' | 'MEDICAL' | 'MARKETING' | 'OVERSEAS_MARKETING'
 
 export interface AuthUser {
   id: number
@@ -44,7 +45,12 @@ const TOKEN_STORAGE_KEY = 'token'
 const USER_STORAGE_KEY = 'auth-user'
 
 const KNOWN_ROLES: UserRole[] = ['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF']
-const KNOWN_DEPARTMENTS: UserDepartment[] = ['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING']
+const KNOWN_DEPARTMENTS: UserDepartment[] = [
+  'ALL',
+  'MEDICAL',
+  'MARKETING',
+  'OVERSEAS_MARKETING',
+]
 
 const emptySession = (): StoredAuthSession => ({
   token: null,
@@ -77,7 +83,11 @@ const HANGUL_PATTERN = /[가-힣]/
 const repairUtf8Mojibake = (value: string) => {
   const trimmedValue = value.trim()
 
-  if (!trimmedValue || HANGUL_PATTERN.test(trimmedValue) || typeof TextDecoder === 'undefined') {
+  if (
+    !trimmedValue ||
+    HANGUL_PATTERN.test(trimmedValue) ||
+    typeof TextDecoder === 'undefined'
+  ) {
     return trimmedValue
   }
 
@@ -94,7 +104,9 @@ const repairUtf8Mojibake = (value: string) => {
   }
 
   try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(bytes))
+    return new TextDecoder('utf-8', { fatal: true }).decode(
+      Uint8Array.from(bytes),
+    )
   } catch {
     return trimmedValue
   }
@@ -122,11 +134,17 @@ const normalizeRole = (value: unknown): UserRole => {
  * ADMIN·DIRECTOR 는 항상 ALL. 그 외에는 알려진 값(MEDICAL·MARKETING)이 있어야 하고,
  * 값이 없거나 잘못됐으면 MEDICAL 로 강등한다.
  */
-const normalizeDepartment = (value: unknown, role: UserRole): UserDepartment => {
+const normalizeDepartment = (
+  value: unknown,
+  role: UserRole,
+): UserDepartment => {
   if (role === 'ADMIN' || role === 'DIRECTOR') {
     return 'ALL'
   }
-  if (typeof value === 'string' && (KNOWN_DEPARTMENTS as string[]).includes(value)) {
+  if (
+    typeof value === 'string' &&
+    (KNOWN_DEPARTMENTS as string[]).includes(value)
+  ) {
     return value === 'ALL' ? 'MEDICAL' : (value as UserDepartment)
   }
   return 'MEDICAL'
@@ -184,9 +202,7 @@ const normalizeStoredUser = (value: unknown): AuthUser | null => {
   }
 
   const email =
-    typeof record.email === 'string'
-      ? record.email.trim().toLowerCase()
-      : ''
+    typeof record.email === 'string' ? record.email.trim().toLowerCase() : ''
   const name =
     typeof record.name === 'string' && repairUtf8Mojibake(record.name)
       ? repairUtf8Mojibake(record.name)
@@ -299,16 +315,21 @@ export const readStoredAuthSession = (): StoredAuthSession => {
 // ─── Role/Department 판정 헬퍼 (docs/auth/permissions.md § 3, § 5-2) ─────────────
 
 /** 시스템 조작(배치·SMS·오프셋·사용자 부여) 권한 — ADMIN 만. DIRECTOR 는 불가. */
-export const canSystemOp = (user: Pick<AuthUser, 'role'> | null | undefined): boolean =>
-  user?.role === 'ADMIN'
+export const canSystemOp = (
+  user: Pick<AuthUser, 'role'> | null | undefined,
+): boolean => user?.role === 'ADMIN'
 
 /**
  * 매니저 이상 (ADMIN·DIRECTOR·MANAGER). STAFF 만 제외.
  * SMS 큐 [실패·취소 재실행] 처럼 실무 판단이 필요하지만 실 발송·정책 조작은 아닌 액션에 쓴다.
  * 부서 gate 는 별도 — 이 헬퍼는 롤 축만 본다.
  */
-export const canManagerOp = (user: Pick<AuthUser, 'role'> | null | undefined): boolean =>
-  user?.role === 'ADMIN' || user?.role === 'DIRECTOR' || user?.role === 'MANAGER'
+export const canManagerOp = (
+  user: Pick<AuthUser, 'role'> | null | undefined,
+): boolean =>
+  user?.role === 'ADMIN' ||
+  user?.role === 'DIRECTOR' ||
+  user?.role === 'MANAGER'
 
 /**
  * 부서 gate 통과 판정. ADMIN·DIRECTOR (department='ALL') 는 항상 통과.

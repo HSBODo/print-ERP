@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 export interface LoginRequest {
@@ -13,7 +14,12 @@ const loginUserSchema = z.object({
   name: z.string(),
   role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
   /** ADMIN·DIRECTOR 는 'ALL' (docs/auth/permissions.md § 2-3). */
-  department: z.enum(['ALL', 'MEDICAL', 'MARKETING', 'OVERSEAS_MARKETING'] as const),
+  department: z.enum([
+    'ALL',
+    'MEDICAL',
+    'MARKETING',
+    'OVERSEAS_MARKETING',
+  ] as const),
 })
 
 export type LoginUser = z.infer<typeof loginUserSchema>

@@ -1,11 +1,13 @@
-import { useState } from 'react'
 import { Download, Printer } from 'lucide-react'
-import { ReportLineChart } from '../ReportLineChart'
+import { useState } from 'react'
+
 import { CURRENT_YEAR } from '#shared/constants/chart'
-import { YEARS } from '../../utils/monthlyReportUtils'
-import { buildMonthlyReportCsv } from '../../utils/monthlyReportCsv'
+
 import { useReportSeries } from '../../hooks/useReportSeries'
+import { buildMonthlyReportCsv } from '../../utils/monthlyReportCsv'
+import { YEARS } from '../../utils/monthlyReportUtils'
 import { buildReportItems } from '../../utils/reportItems'
+import { ReportLineChart } from '../ReportLineChart'
 import { ReportShell, type ShellReportItem } from '../ReportShell'
 
 export function MonthlyReportPage() {
@@ -14,7 +16,7 @@ export function MonthlyReportPage() {
 
   const periodLabel = `${CURRENT_YEAR}년 ${latestMonthIdx + 1}월`
   const [stopReasonMonth, setStopReasonMonth] = useState<number | null>(null)
-  const activeStopReasonMonth = stopReasonMonth ?? (latestMonthIdx + 1)
+  const activeStopReasonMonth = stopReasonMonth ?? latestMonthIdx + 1
 
   // weeklyOnly 항목(드림렌즈 신규/FU)은 월간 대응 데이터가 없어 여기서 제외한다.
   const items = buildReportItems(series, {
@@ -26,17 +28,19 @@ export function MonthlyReportPage() {
     group: it.group,
     id: it.id,
     label: it.label,
-    node: it.chart
-      ? <ReportLineChart
-          title={it.chart.title}
-          suffix={it.chart.suffix}
-          format={it.chart.format}
-          percentFractionDigits={it.chart.percentFractionDigits}
-          yDomain={it.chart.yDomain}
-          years={it.chart.years ?? YEARS}
-          data={charts[it.chart.series]}
-        />
-      : it.node,
+    node: it.chart ? (
+      <ReportLineChart
+        title={it.chart.title}
+        suffix={it.chart.suffix}
+        format={it.chart.format}
+        percentFractionDigits={it.chart.percentFractionDigits}
+        yDomain={it.chart.yDomain}
+        years={it.chart.years ?? YEARS}
+        data={charts[it.chart.series]}
+      />
+    ) : (
+      it.node
+    ),
   }))
 
   // CSV 다운로드 연도 선택 팝업
@@ -44,14 +48,16 @@ export function MonthlyReportPage() {
   const [csvScope, setCsvScope] = useState<'all' | number>('all')
   const csvYearOptions: { value: 'all' | number; label: string }[] = [
     { value: 'all', label: '전체' },
-    ...[...YEARS].sort((a, b) => a - b).map((year) => ({ value: year, label: `${year}년` })),
+    ...[...YEARS]
+      .sort((a, b) => a - b)
+      .map((year) => ({ value: year, label: `${year}년` })),
   ]
 
   const handleDownloadCsv = (scope: 'all' | number) => {
     const selectedYears = scope === 'all' ? YEARS : [scope]
     const csv = buildMonthlyReportCsv({
       years: selectedYears,
-      charts: charts as unknown as Record<string, unknown>,
+      charts: charts,
       currentYear: CURRENT_YEAR,
       success: {
         all: charts.successAll[CURRENT_YEAR] ?? [],
@@ -80,7 +86,8 @@ export function MonthlyReportPage() {
         title="월간 레포트"
         subtitle={
           <>
-            {periodLabel} 기준 · 당해연도({CURRENT_YEAR})·전년도({CURRENT_YEAR - 1})·전전년도({CURRENT_YEAR - 2}) 3개년 비교
+            {periodLabel} 기준 · 당해연도({CURRENT_YEAR})·전년도(
+            {CURRENT_YEAR - 1})·전전년도({CURRENT_YEAR - 2}) 3개년 비교
             {series.lastBatchDate && ` · ${series.lastBatchDate} 데이터 반영`}
           </>
         }
@@ -121,8 +128,12 @@ export function MonthlyReportPage() {
             className="w-full max-w-xs rounded-lg border border-border/70 bg-white p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="text-base font-bold text-foreground">CSV 다운로드</h2>
-            <p className="mt-1 text-sm text-muted-foreground">내려받을 연도를 선택하세요.</p>
+            <h2 className="text-base font-bold text-foreground">
+              CSV 다운로드
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              내려받을 연도를 선택하세요.
+            </p>
             <div className="mt-4 space-y-1.5">
               {csvYearOptions.map((opt) => (
                 <label

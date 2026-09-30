@@ -6,12 +6,25 @@ export const DEFAULT_BASE_YEAR = YEARS[0]
 export const DEFAULT_COMPARE_YEAR = YEARS[1] ?? YEARS[0]
 
 export const MONTHS = [
-  '1월','2월','3월','4월','5월','6월',
-  '7월','8월','9월','10월','11월','12월',
+  '1월',
+  '2월',
+  '3월',
+  '4월',
+  '5월',
+  '6월',
+  '7월',
+  '8월',
+  '9월',
+  '10월',
+  '11월',
+  '12월',
 ]
 
 export const CHART_COLORS = [
-  'var(--chart-1)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)',
+  'var(--chart-1)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
 ]
 
 export const YEAR_STROKE_PATTERNS = ['', '10 4', '4 4', '2 4']

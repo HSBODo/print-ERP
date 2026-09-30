@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { surgeryApi } from '../api'
-import type { SurgeryListItem } from '../type/api'
 
 /**
  * 수술자 리스트 조회 훅. 수술일 범위(from~to)로 서버 조회.
@@ -13,7 +13,7 @@ export function useSurgeryList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? (data ?? []) as SurgeryListItem[] : [],
+    rows: enabled ? (data ?? []) : [],
     isLoading,
     isFetching,
     isError,

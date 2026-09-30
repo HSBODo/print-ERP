@@ -1,14 +1,15 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../../hooks/useReservationChange', () => ({
   useReservationChangeDaily: vi.fn(),
 }))
 
-import { CalendarTab } from './CalendarTab'
 import { useReservationChangeDaily } from '../../../hooks/useReservationChange'
+import { CalendarTab } from './CalendarTab'
 
 const mockUseDaily = vi.mocked(useReservationChangeDaily)
 
@@ -43,7 +44,9 @@ describe('CalendarTab · 예약 변경이력 추이 달력 탭', () => {
       isError: true,
     })
     render(<CalendarTab />)
-    expect(screen.getByText(/추이 달력 데이터를 불러오지 못했습니다/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/추이 달력 데이터를 불러오지 못했습니다/),
+    ).toBeInTheDocument()
   })
 
   it('빈 결과 시 두 달 각각 마트 적재 안내가 나온다 (선택 월 + 다음 달)', () => {
@@ -60,6 +63,6 @@ describe('CalendarTab · 예약 변경이력 추이 달력 탭', () => {
     expect(from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(to).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     // to 가 from 보다 뒤에 있어야 한다 (문자열 비교 = 날짜 비교 · YYYY-MM-DD)
-    expect(from! < to!).toBe(true)
+    expect(from < to).toBe(true)
   })
 })

@@ -13,8 +13,16 @@ interface DemoProps {
 }
 
 /** 실제 목록 화면처럼 표 아래에 붙여, 페이지를 넘기면 행이 바뀌는 것까지 본다. */
-function PaginatedTableDemo({ total, unit, pageSizeOptions, initialPageSize }: DemoProps) {
-  const rows = useMemo(() => Array.from({ length: total }, (_, index) => index + 1), [total])
+function PaginatedTableDemo({
+  total,
+  unit,
+  pageSizeOptions,
+  initialPageSize,
+}: DemoProps) {
+  const rows = useMemo(
+    () => Array.from({ length: total }, (_, index) => index + 1),
+    [total],
+  )
   const pagination = usePagination(rows, { initialPageSize })
 
   return (
@@ -24,8 +32,12 @@ function PaginatedTableDemo({ total, unit, pageSizeOptions, initialPageSize }: D
           <table className="w-full border-collapse text-[11px]">
             <thead>
               <tr className="bg-gray-50 text-gray-700">
-                <th className="sticky top-0 w-16 bg-gray-50 px-2.5 py-1.5 text-right font-semibold">순번</th>
-                <th className="sticky top-0 bg-gray-50 px-2.5 py-1.5 text-left font-semibold">고객명</th>
+                <th className="sticky top-0 w-16 bg-gray-50 px-2.5 py-1.5 text-right font-semibold">
+                  순번
+                </th>
+                <th className="sticky top-0 bg-gray-50 px-2.5 py-1.5 text-left font-semibold">
+                  고객명
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -36,12 +48,24 @@ function PaginatedTableDemo({ total, unit, pageSizeOptions, initialPageSize }: D
                 </tr>
               ))}
               {total === 0 && (
-                <tr><td colSpan={2} className="px-3 py-12 text-center text-sm text-muted-foreground">조회 결과가 없습니다.</td></tr>
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="px-3 py-12 text-center text-sm text-muted-foreground"
+                  >
+                    조회 결과가 없습니다.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
-        <TablePagination pagination={pagination} unit={unit} pageSizeOptions={pageSizeOptions} className="rounded-b-lg" />
+        <TablePagination
+          pagination={pagination}
+          unit={unit}
+          pageSizeOptions={pageSizeOptions}
+          className="rounded-b-lg"
+        />
       </CardContent>
     </Card>
   )
@@ -54,7 +78,10 @@ const meta = {
   args: { total: 925 },
   argTypes: {
     total: { control: { type: 'number', min: 0, step: 1 } },
-    initialPageSize: { control: { type: 'select' }, options: [25, 50, 100, 200] },
+    initialPageSize: {
+      control: { type: 'select' },
+      options: [25, 50, 100, 200],
+    },
   },
 } satisfies Meta<typeof PaginatedTableDemo>
 

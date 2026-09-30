@@ -29,17 +29,23 @@ export function shiftPeriod(period: Period, monthOffset: number): Period {
   }
 }
 
-export function getDefaultPeriods(referencePeriod: Period = getCurrentPeriod()): Period[] {
+export function getDefaultPeriods(
+  referencePeriod: Period = getCurrentPeriod(),
+): Period[] {
   return [referencePeriod, shiftPeriod(referencePeriod, -1)]
 }
 
-export function getDefaultYears(referenceYear: number = getCurrentPeriod().year): number[] {
+export function getDefaultYears(
+  referenceYear: number = getCurrentPeriod().year,
+): number[] {
   return [referenceYear, referenceYear - 1]
 }
 
 export function formatAxisNumber(value: number | string): string {
   const numericValue = Number(value)
-  return Number.isFinite(numericValue) ? numericValue.toLocaleString('ko-KR') : String(value)
+  return Number.isFinite(numericValue)
+    ? numericValue.toLocaleString('ko-KR')
+    : String(value)
 }
 
 export function formatAxisPercent(value: number | string): string {

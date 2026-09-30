@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+
+import { MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -8,18 +10,18 @@ import {
 } from '#shared/ui/Card'
 import { type ChartConfig } from '#shared/ui/Chart'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { TrendLineChart, type TrendLine } from '#shared/ui/TrendLineChart'
+import { type TrendLine, TrendLineChart } from '#shared/ui/TrendLineChart'
+import { formatAxisPercent } from '#shared/utils/stats'
+
 import {
-  METRICS,
-  EMPTY,
   DETAIL_METRIC_KEYS,
+  EMPTY,
+  formatRate,
   METRIC_COLORS,
   type MetricKey,
+  METRICS,
   type MonthlyData,
-  formatRate,
 } from './consultationRateUtils'
-import { MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
-import { formatAxisPercent } from '#shared/utils/stats'
 
 interface YearTrendPanelProps {
   dataMap: Record<number, MonthlyData[]>
@@ -34,7 +36,9 @@ export function YearTrendPanel({
   isLoading,
   isError,
 }: YearTrendPanelProps) {
-  const [selectedMetrics, setSelectedMetrics] = useState<MetricKey[]>(['overallConsultation'])
+  const [selectedMetrics, setSelectedMetrics] = useState<MetricKey[]>([
+    'overallConsultation',
+  ])
 
   const activeMetrics = useMemo(
     () =>
@@ -103,7 +107,9 @@ export function YearTrendPanel({
   )
 
   const lines = useMemo<TrendLine[]>(() => {
-    const strokeWidth = activeMetrics.includes('overallConsultation') ? 2.75 : 2.25
+    const strokeWidth = activeMetrics.includes('overallConsultation')
+      ? 2.75
+      : 2.25
     const dot = yearChartSeries.length <= 4 ? { r: 4 } : false
     return yearChartSeries.map((series) => ({
       key: series.key,
@@ -120,7 +126,9 @@ export function YearTrendPanel({
     }
 
     setSelectedMetrics((current) => {
-      const currentWithoutOverall = current.filter((item) => item !== 'overallConsultation')
+      const currentWithoutOverall = current.filter(
+        (item) => item !== 'overallConsultation',
+      )
       const next = currentWithoutOverall.includes(metricKey)
         ? currentWithoutOverall.filter((item) => item !== metricKey)
         : [...currentWithoutOverall, metricKey]
@@ -140,7 +148,8 @@ export function YearTrendPanel({
           <div>
             <CardTitle>월별 상담 전환율 추이</CardTitle>
             <CardDescription>
-              전체는 상담 전환율 흐름으로, 세부 전환율을 여러 개 선택하면 그래프가 분화됩니다.
+              전체는 상담 전환율 흐름으로, 세부 전환율을 여러 개 선택하면
+              그래프가 분화됩니다.
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-1 rounded-md bg-gray-100 p-1">
@@ -154,7 +163,11 @@ export function YearTrendPanel({
                     ? 'bg-white shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                style={activeMetrics.includes(metric.key) ? { color: METRIC_COLORS[metric.key] } : undefined}
+                style={
+                  activeMetrics.includes(metric.key)
+                    ? { color: METRIC_COLORS[metric.key] }
+                    : undefined
+                }
               >
                 {metric.label}
               </button>
@@ -174,5 +187,9 @@ export function YearTrendPanel({
     </Card>
   )
 
-  return <PanelShell isLoading={isLoading} isError={isError} variant="line">{renderChart()}</PanelShell>
+  return (
+    <PanelShell isLoading={isLoading} isError={isError} variant="line">
+      {renderChart()}
+    </PanelShell>
+  )
 }

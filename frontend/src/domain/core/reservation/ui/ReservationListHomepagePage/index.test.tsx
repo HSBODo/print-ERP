@@ -1,7 +1,15 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
+
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+
 import type { ReservationListHomepageItem } from '../../type/api'
 
 /**
@@ -21,7 +29,9 @@ vi.mock('../../hooks/useReservationListHomepage', () => ({
   useReservationListHomepage: (from: string, to: string) => mockHook(from, to),
 }))
 
-const row = (over: Partial<ReservationListHomepageItem> = {}): ReservationListHomepageItem => ({
+const row = (
+  over: Partial<ReservationListHomepageItem> = {},
+): ReservationListHomepageItem => ({
   legacyNo: '606840',
   deviceType: 'M',
   name: '홍길동',
@@ -57,8 +67,14 @@ const setRows = (
 const searchWith = async (from?: string, to?: string) => {
   const { ReservationListHomepagePage } = await import('.')
   render(<ReservationListHomepagePage />)
-  if (from) fireEvent.change(screen.getByLabelText('등록 시작일'), { target: { value: from } })
-  if (to) fireEvent.change(screen.getByLabelText('등록 종료일'), { target: { value: to } })
+  if (from)
+    fireEvent.change(screen.getByLabelText('등록 시작일'), {
+      target: { value: from },
+    })
+  if (to)
+    fireEvent.change(screen.getByLabelText('등록 종료일'), {
+      target: { value: to },
+    })
   fireEvent.click(screen.getByRole('button', { name: '조회' }))
 }
 
@@ -72,7 +88,11 @@ describe('CSV 출력', () => {
   it('No 는 화면과 동일하게 총건수에서 1씩 감소한다', async () => {
     const { csvColumnsOf } = await import('./reservationListHomepageColumns')
     const { columnsToCsv } = await import('#shared/utils/csv')
-    const rows = [row({ legacyNo: '3' }), row({ legacyNo: '2' }), row({ legacyNo: '1' })]
+    const rows = [
+      row({ legacyNo: '3' }),
+      row({ legacyNo: '2' }),
+      row({ legacyNo: '1' }),
+    ]
 
     const lines = columnsToCsv(csvColumnsOf(rows.length), rows).split('\r\n')
 
@@ -88,10 +108,10 @@ describe('CSV 출력', () => {
 
     const csv = columnsToCsv(csvColumnsOf(1), [row()])
 
-    expect(csv).toContain('Mobile')                 // deviceType M
-    expect(csv).toContain('시력교정수술 전 검사')     // examType 5
-    expect(csv).toContain('당일수술')                // surgeryTf Y
-    expect(csv).toContain('예약')                    // isReserve Y
+    expect(csv).toContain('Mobile') // deviceType M
+    expect(csv).toContain('시력교정수술 전 검사') // examType 5
+    expect(csv).toContain('당일수술') // surgeryTf Y
+    expect(csv).toContain('예약') // isReserve Y
     expect(csv).toContain('naver-bs / sa / mo_naver-bs_conv_2504') // UTM 3종 한 셀
     // 앞자리 0 손실·지수표기 방지 — ="값" 수식으로 감싼 뒤 CSV 따옴표 이스케이프.
     // 마스킹된 값이라도 ="..." 은 유지돼야 한다.
@@ -132,7 +152,9 @@ describe('ReservationListHomepagePage', () => {
     expect(screen.getByLabelText('등록 시작일')).toBeInTheDocument()
     expect(screen.queryByLabelText('등록 기준 월')).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('기간 단위'), { target: { value: 'monthly' } })
+    fireEvent.change(screen.getByLabelText('기간 단위'), {
+      target: { value: 'monthly' },
+    })
 
     // 월별 모드: 월 한 칸으로 대체
     expect(screen.getByLabelText('등록 기준 월')).toBeInTheDocument()
@@ -150,27 +172,38 @@ describe('ReservationListHomepagePage', () => {
   it('진행 중인 달은 말일이 아니라 오늘까지만 조회한다 (미래 구간 요청 방지)', async () => {
     setRows([row()])
     const { ReservationListHomepagePage } = await import('.')
-    const { todayIso, monthStartOf } = await import('./reservationListHomepageUtils')
+    const { todayIso, monthStartOf } =
+      await import('./reservationListHomepageUtils')
     render(<ReservationListHomepagePage />)
 
-    fireEvent.change(screen.getByLabelText('기간 단위'), { target: { value: 'monthly' } })
+    fireEvent.change(screen.getByLabelText('기간 단위'), {
+      target: { value: 'monthly' },
+    })
     fireEvent.click(screen.getByLabelText('등록 기준 월'))
     fireEvent.click(screen.getByRole('button', { name: '이번 달' }))
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
 
-    expect(mockHook).toHaveBeenLastCalledWith(monthStartOf(todayIso()), todayIso())
+    expect(mockHook).toHaveBeenLastCalledWith(
+      monthStartOf(todayIso()),
+      todayIso(),
+    )
   })
 
   it('진입하자마자 기본 기간(이번 달 1일~오늘)으로 조회한다', async () => {
     const { ReservationListHomepagePage } = await import('.')
-    const { defaultFrom, defaultTo } = await import('./reservationListHomepageUtils')
+    const { defaultFrom, defaultTo } =
+      await import('./reservationListHomepageUtils')
     render(<ReservationListHomepagePage />)
 
     expect(mockHook).toHaveBeenCalledWith(defaultFrom(), defaultTo())
   })
 
   it('No 는 총건수에서 1씩 감소한다 (레거시 표시용 행번호)', async () => {
-    setRows([row({ legacyNo: '3' }), row({ legacyNo: '2' }), row({ legacyNo: '1' })])
+    setRows([
+      row({ legacyNo: '3' }),
+      row({ legacyNo: '2' }),
+      row({ legacyNo: '1' }),
+    ])
     await searchWith('2026-06-01', '2026-06-30')
 
     const bodyRows = screen.getAllByRole('row').slice(1) // 헤더 제외
@@ -185,11 +218,11 @@ describe('ReservationListHomepagePage', () => {
 
     // 'Mobile'·'예약' 은 필터(구분 버튼·예약구분 select)에도 있으므로 반드시 표 안으로 범위를 좁힌다.
     const dataRow = within(screen.getAllByRole('row')[1])
-    expect(dataRow.getByText('Mobile')).toBeInTheDocument()               // M
-    expect(dataRow.getByText('시력교정수술 전 검사')).toBeInTheDocument()   // 5
-    expect(dataRow.getByText('당일수술')).toBeInTheDocument()              // SURGERY_TF=Y
-    expect(dataRow.getByText('예약')).toBeInTheDocument()                  // ISRESERVE=Y
-    expect(dataRow.getByText('naver-bs')).toBeInTheDocument()              // UTM 3줄
+    expect(dataRow.getByText('Mobile')).toBeInTheDocument() // M
+    expect(dataRow.getByText('시력교정수술 전 검사')).toBeInTheDocument() // 5
+    expect(dataRow.getByText('당일수술')).toBeInTheDocument() // SURGERY_TF=Y
+    expect(dataRow.getByText('예약')).toBeInTheDocument() // ISRESERVE=Y
+    expect(dataRow.getByText('naver-bs')).toBeInTheDocument() // UTM 3줄
     expect(dataRow.getByText('mo_naver-bs_conv_2504')).toBeInTheDocument()
   })
 
@@ -204,14 +237,18 @@ describe('ReservationListHomepagePage', () => {
     setRows([row()])
     await searchWith('2026-06-01', '2026-06-30')
 
-    expect(screen.queryByText(/다음 배치까지 표시되지 않습니다/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/다음 배치까지 표시되지 않습니다/),
+    ).not.toBeInTheDocument()
   })
 
   it('조회 기간이 스냅샷을 넘으면 경고를 띄운다 (조용한 미집계 방지)', async () => {
     setRows([row()])
     await searchWith('2026-07-01', '2026-07-15')
 
-    expect(screen.getByText(/다음 배치까지 표시되지 않습니다/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/다음 배치까지 표시되지 않습니다/),
+    ).toBeInTheDocument()
     expect(screen.getByText('2026-07-10 16:15:55')).toBeInTheDocument()
   })
 
@@ -220,15 +257,22 @@ describe('ReservationListHomepagePage', () => {
     setRows([row()], '2026-07-15 15:22:57', true)
     await searchWith('2026-07-01', '2026-07-31')
 
-    expect(screen.queryByText(/다음 배치까지 표시되지 않습니다/)).not.toBeInTheDocument()
-    expect(screen.getByText(/레거시 홈페이지 운영 DB 를 직접 조회/)).toBeInTheDocument()
+    expect(
+      screen.queryByText(/다음 배치까지 표시되지 않습니다/),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(/레거시 홈페이지 운영 DB 를 직접 조회/),
+    ).toBeInTheDocument()
     expect(screen.getByText('2026-07-15 15:22:57')).toBeInTheDocument()
   })
 
   // 구분·예약구분·검색은 이미 받아온 행을 거르는 클라이언트 필터다 → 조회 버튼 없이 즉시 반영돼야 한다.
   // (조회를 기다리게 하면 버튼을 눌러도 아무 일이 없는 것처럼 보인다)
   it('구분 필터는 조회 버튼 없이 즉시 반영된다', async () => {
-    setRows([row({ legacyNo: '1', deviceType: 'M' }), row({ legacyNo: '2', deviceType: 'P' })])
+    setRows([
+      row({ legacyNo: '1', deviceType: 'M' }),
+      row({ legacyNo: '2', deviceType: 'P' }),
+    ])
     const { ReservationListHomepagePage } = await import('.')
     render(<ReservationListHomepagePage />)
 
@@ -244,14 +288,19 @@ describe('ReservationListHomepagePage', () => {
   })
 
   it('예약구분 필터는 조회 버튼 없이 즉시 반영된다', async () => {
-    setRows([row({ legacyNo: '1', isReserve: 'Y' }), row({ legacyNo: '2', isReserve: 'N' })])
+    setRows([
+      row({ legacyNo: '1', isReserve: 'Y' }),
+      row({ legacyNo: '2', isReserve: 'N' }),
+    ])
     const { ReservationListHomepagePage } = await import('.')
     render(<ReservationListHomepagePage />)
 
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('2건')
 
-    fireEvent.change(screen.getByLabelText('예약구분'), { target: { value: 'N' } })
+    fireEvent.change(screen.getByLabelText('예약구분'), {
+      target: { value: 'N' },
+    })
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('1건')
   })
 
@@ -271,14 +320,18 @@ describe('ReservationListHomepagePage', () => {
     // 원문이 '010-1111-2222' 여도 하이픈 없는 입력으로 찾힌다.
     fireEvent.change(keyword, { target: { value: '01011112222' } })
     expect(screen.getByText('조회건수').parentElement).toHaveTextContent('1건')
-    expect(within(screen.getAllByRole('row')[1]).getByText('홍길동')).toBeInTheDocument()
+    expect(
+      within(screen.getAllByRole('row')[1]).getByText('홍길동'),
+    ).toBeInTheDocument()
   })
 
   it('조회 전용 — 삭제·선택 체크박스가 없다 (쓰기 액션은 이관 대상 아님)', async () => {
     setRows([row()])
     await searchWith('2026-06-01', '2026-06-30')
 
-    expect(screen.queryByRole('button', { name: /삭제/ })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /삭제/ }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
   })
 

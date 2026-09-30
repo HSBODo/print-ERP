@@ -25,7 +25,9 @@ export const EMPTY_RECEPTION_INPUT: OverseasMarketingReceptionInput = {
   remark: '',
 }
 
-export const toReceptionInput = (row: OverseasMarketingReception): OverseasMarketingReceptionInput => ({
+export const toReceptionInput = (
+  row: OverseasMarketingReception,
+): OverseasMarketingReceptionInput => ({
   inquiryDate: row.inquiryDate,
   name: row.name,
   contact: row.contact,

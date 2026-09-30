@@ -1,5 +1,7 @@
 import { AlertTriangle, X } from 'lucide-react'
+
 import { Button } from '#shared/ui/Button'
+
 import type { UserRow } from '../../type/api'
 
 interface Props {
@@ -9,7 +11,12 @@ interface Props {
   onCancel: () => void
 }
 
-export function DeleteConfirmDialog({ user, isSubmitting, onConfirm, onCancel }: Props) {
+export function DeleteConfirmDialog({
+  user,
+  isSubmitting,
+  onConfirm,
+  onCancel,
+}: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       <div className="w-full max-w-sm rounded-lg bg-white shadow-xl overflow-hidden">
@@ -30,16 +37,24 @@ export function DeleteConfirmDialog({ user, isSubmitting, onConfirm, onCancel }:
 
         <div className="p-5 space-y-3 text-sm text-gray-700">
           <p>
-            <span className="font-mono font-medium text-gray-900">{user.loginId}</span>{' '}
+            <span className="font-mono font-medium text-gray-900">
+              {user.loginId}
+            </span>{' '}
             ({user.name}) 계정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.
           </p>
           <p className="text-xs text-gray-500">
-            연관된 이력(예: 이 계정이 만든 오프셋 편집 로그) 은 계정만 사라지고 이력은 유지됩니다.
+            연관된 이력(예: 이 계정이 만든 오프셋 편집 로그) 은 계정만 사라지고
+            이력은 유지됩니다.
           </p>
         </div>
 
         <div className="flex items-center justify-end gap-2 px-5 py-3 bg-gray-50 border-t border-gray-200">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             취소
           </Button>
           <Button

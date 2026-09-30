@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { B2BRevenuePage } from '#domain/core/b2b/ui/B2BRevenuePage'
 
 export const Route = createFileRoute('/_auth/stats/(etc)/b2b-revenue')({

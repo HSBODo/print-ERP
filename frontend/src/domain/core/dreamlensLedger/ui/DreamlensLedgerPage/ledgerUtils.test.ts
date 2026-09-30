@@ -80,17 +80,20 @@ describe('드림렌즈 장부 기간 헬퍼', () => {
  * 픽스처는 합성 데이터다.
  */
 describe('CSV 내보내기 마스킹', () => {
-  const rowWith = (overrides: Partial<DreamlensLedgerRow> = {}): DreamlensLedgerRow => ({
-    id: 1,
-    entryDate: '2026-08-02',
-    customerName: '홍길동',
-    customerNo: '2234528',
-    examiner: '한지희',
-    purchaseType: '서울 마포구 서교동 476-49 201호',
-    dlNewRevenue: 900_000,
-    totalRevenue: 900_000,
-    ...overrides,
-  } as DreamlensLedgerRow)
+  const rowWith = (
+    overrides: Partial<DreamlensLedgerRow> = {},
+  ): DreamlensLedgerRow =>
+    ({
+      id: 1,
+      entryDate: '2026-08-02',
+      customerName: '홍길동',
+      customerNo: '2234528',
+      examiner: '한지희',
+      purchaseType: '서울 마포구 서교동 476-49 201호',
+      dlNewRevenue: 900_000,
+      totalRevenue: 900_000,
+      ...overrides,
+    }) as DreamlensLedgerRow
 
   const cell = (key: string, row: DreamlensLedgerRow) =>
     String(csvColumnsOf().find((column) => column.key === key)!.csv!(row, 1))

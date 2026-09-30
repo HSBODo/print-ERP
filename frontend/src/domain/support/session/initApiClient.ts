@@ -1,5 +1,7 @@
 import axios, { type AxiosResponse } from 'axios'
+
 import { api } from '#shared/api/client'
+
 import { clearStoredAuthSession, readStoredAuthSession } from './session'
 
 const WHITELIST = new Set(['/auth/login'])
@@ -9,7 +11,13 @@ const messageOf = ({ data, status, statusText }: AxiosResponse) => {
     return data
   }
 
-  if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string' && data.message.trim()) {
+  if (
+    data &&
+    typeof data === 'object' &&
+    'message' in data &&
+    typeof data.message === 'string' &&
+    data.message.trim()
+  ) {
     return data.message
   }
 
@@ -31,12 +39,17 @@ export const initApiClient = () => {
       return Promise.reject(error)
     }
 
-    if (error.response.status === 401 && !WHITELIST.has(error.config?.url ?? '')) {
+    if (
+      error.response.status === 401 &&
+      !WHITELIST.has(error.config?.url ?? '')
+    ) {
       clearStoredAuthSession()
       if (typeof window !== 'undefined') {
         window.location.href = '/login'
       }
-      return Promise.reject(new Error('세션이 만료되었습니다. 다시 로그인해주세요.'))
+      return Promise.reject(
+        new Error('세션이 만료되었습니다. 다시 로그인해주세요.'),
+      )
     }
 
     // 화면은 e.message 로 서버 메시지를 띄운다.

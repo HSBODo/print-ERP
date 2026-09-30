@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
 import { reservationStatsApi } from '../api'
 import type { ReservationStatsEditableField } from '../type/api'
 
@@ -7,15 +8,27 @@ import type { ReservationStatsEditableField } from '../type/api'
  * 서버 GET이 당월·미잠금이면 D-1까지 자동 증분 채움(조회=호출 통합). 미연결(503) 시 isError → 미연결 안내.
  * refetch로 같은 월 재조회 시 강제 갱신(서버 자동 채움 재평가).
  */
-export function useReservationStatsSystem(from: string, to: string, enabled = true) {
+export function useReservationStatsSystem(
+  from: string,
+  to: string,
+  enabled = true,
+) {
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-stats-system', from, to],
-    queryFn: ({ signal }) => reservationStatsApi.getSystemDailyCounts(from, to, signal),
+    queryFn: ({ signal }) =>
+      reservationStatsApi.getSystemDailyCounts(from, to, signal),
     enabled: enabled && Boolean(from && to),
     retry: false, // 503(미연결)은 재시도해도 동일 → 즉시 오류 상태
   })
 
-  return { dailies: data?.data, meta: data?.meta, isLoading, isFetching, isError, refetch }
+  return {
+    dailies: data?.data,
+    meta: data?.meta,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  }
 }
 
 /**
@@ -50,8 +63,15 @@ export function useReservationStatsSnapshots() {
     mutationFn: (period: string) => reservationStatsApi.getSystemDiff(period),
   })
   const drillDown = useMutation({
-    mutationFn: ({ period, date, field }: { period: string; date: string; field: string }) =>
-      reservationStatsApi.getSystemDrillDown(period, date, field),
+    mutationFn: ({
+      period,
+      date,
+      field,
+    }: {
+      period: string
+      date: string
+      field: string
+    }) => reservationStatsApi.getSystemDrillDown(period, date, field),
   })
   const parity = useMutation({
     mutationFn: ({ period, field }: { period: string; field: string }) =>

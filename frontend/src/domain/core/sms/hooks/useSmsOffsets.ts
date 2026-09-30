@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
 import { smsApi } from '../api'
 import type { SmsOffsetRow, SmsOffsetUpdatePayload } from '../type/api'
 
@@ -23,7 +24,8 @@ export function useSmsOffsets() {
 export function useUpdateSmsOffsets() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: SmsOffsetUpdatePayload) => smsApi.updateOffsets(payload),
+    mutationFn: (payload: SmsOffsetUpdatePayload) =>
+      smsApi.updateOffsets(payload),
     onSuccess: (rows: SmsOffsetRow[]) => {
       qc.setQueryData(KEY, rows)
       qc.invalidateQueries({ queryKey: ['sms', 'targets'] })

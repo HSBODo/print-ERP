@@ -1,29 +1,43 @@
+import {
+  ChevronDown,
+  Download,
+  Radio,
+  RotateCcw,
+  Search,
+  TriangleAlert,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { ChevronDown, Download, Radio, RotateCcw, Search, TriangleAlert } from 'lucide-react'
+
 import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
-import { TablePagination } from '#shared/ui/TablePagination'
-import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
+import { MonthPicker } from '#shared/ui/MonthPicker'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+
 import { useReservationListHomepage } from '../../hooks/useReservationListHomepage'
-import { COLUMNS, ALIGN, HEADER_ALIGN, csvColumnsOf } from './reservationListHomepageColumns'
 import {
-  formatCount,
-  isRangeBeyondSnapshot,
-  matchesSearch,
-  getSortValue,
+  ALIGN,
+  COLUMNS,
+  csvColumnsOf,
+  HEADER_ALIGN,
+} from './reservationListHomepageColumns'
+import {
   compareSortValue,
   defaultFrom,
   defaultTo,
   DEVICE_FILTER_OPTIONS,
+  formatCount,
+  getSortValue,
+  isRangeBeyondSnapshot,
+  matchesSearch,
+  type PeriodMode,
   RESERVE_FILTER_OPTIONS,
   SKELETON_ROWS,
-  toMonthValue,
-  toMonthStart,
-  toMonthEnd,
-  type PeriodMode,
   type SortState,
+  toMonthEnd,
+  toMonthStart,
+  toMonthValue,
 } from './reservationListHomepageUtils'
 
 /** 레거시 nPageSize 기본값(20)에 가장 가까운 공통 선택지. */
@@ -90,13 +104,16 @@ export function ReservationListHomepagePage() {
           getSortValue(a.row, sortState.key, a.index),
           getSortValue(b.row, sortState.key, b.index),
         )
-        if (compared !== 0) return sortState.direction === 'asc' ? compared : -compared
+        if (compared !== 0)
+          return sortState.direction === 'asc' ? compared : -compared
         return a.index - b.index
       })
       .map(({ row }) => row)
   }, [filtered, sortState])
 
-  const pagination = usePagination(sortedRows, { initialPageSize: INITIAL_PAGE_SIZE })
+  const pagination = usePagination(sortedRows, {
+    initialPageSize: INITIAL_PAGE_SIZE,
+  })
 
   /** 조회 = 등록일 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
   const handleSearch = () => {
@@ -157,7 +174,9 @@ export function ReservationListHomepagePage() {
             <select
               aria-label="기간 단위"
               value={draftPeriodMode}
-              onChange={(e) => handlePeriodModeChange(e.target.value as PeriodMode)}
+              onChange={(e) =>
+                handlePeriodModeChange(e.target.value as PeriodMode)
+              }
               className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="daily">일별</option>
@@ -207,7 +226,10 @@ export function ReservationListHomepagePage() {
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
               }`}
-              onClick={() => { setDevice(option.value); pagination.resetPage() }}
+              onClick={() => {
+                setDevice(option.value)
+                pagination.resetPage()
+              }}
             >
               {option.label}
             </button>
@@ -217,7 +239,10 @@ export function ReservationListHomepagePage() {
           <select
             aria-label="예약구분"
             value={reserve}
-            onChange={(e) => { setReserve(e.target.value); pagination.resetPage() }}
+            onChange={(e) => {
+              setReserve(e.target.value)
+              pagination.resetPage()
+            }}
             className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             {RESERVE_FILTER_OPTIONS.map((option) => (
@@ -232,17 +257,31 @@ export function ReservationListHomepagePage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
+            onChange={(e) => {
+              setKeyword(e.target.value)
+              pagination.resetPage()
+            }}
             placeholder="이름 · 휴대폰번호"
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
         </div>
-        <div className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs" aria-live="polite">
+        <div
+          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
+          aria-live="polite"
+        >
           <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">{formatCount(filtered.length)}건</strong>
+          <strong className="tabular-nums text-gray-900">
+            {formatCount(filtered.length)}건
+          </strong>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={handleReset}
+          >
             <RotateCcw className="h-3.5 w-3.5" />
             초기화
           </Button>
@@ -274,8 +313,9 @@ export function ReservationListHomepagePage() {
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
           <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" />
           <span>
-            홈페이지 예약 데이터는 매일 새벽 배치로 반영됩니다.
-            마지막 반영: <strong className="tabular-nums">{lastRegDate}</strong> — 이후 등록건은 다음 배치까지 표시되지 않습니다.
+            홈페이지 예약 데이터는 매일 새벽 배치로 반영됩니다. 마지막 반영:{' '}
+            <strong className="tabular-nums">{lastRegDate}</strong> — 이후
+            등록건은 다음 배치까지 표시되지 않습니다.
           </span>
         </div>
       )}
@@ -284,8 +324,9 @@ export function ReservationListHomepagePage() {
         <div className="flex items-start gap-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-800">
           <Radio className="mt-px h-3.5 w-3.5 shrink-0" />
           <span>
-            <strong>실시간</strong> — 레거시 홈페이지 운영 DB 를 직접 조회합니다.
-            마지막 등록건: <strong className="tabular-nums">{lastRegDate}</strong>
+            <strong>실시간</strong> — 레거시 홈페이지 운영 DB 를 직접
+            조회합니다. 마지막 등록건:{' '}
+            <strong className="tabular-nums">{lastRegDate}</strong>
           </span>
         </div>
       )}
@@ -302,14 +343,17 @@ export function ReservationListHomepagePage() {
                 <thead>
                   <tr className="bg-gray-50 text-[11px] text-gray-700">
                     {COLUMNS.map((col) => {
-                      const activeDirection = sortState?.key === col.key ? sortState.direction : null
+                      const activeDirection =
+                        sortState?.key === col.key ? sortState.direction : null
 
                       return (
                         <th
                           key={col.key}
                           aria-sort={
-                            activeDirection === 'asc' ? 'ascending'
-                              : activeDirection === 'desc' ? 'descending'
+                            activeDirection === 'asc'
+                              ? 'ascending'
+                              : activeDirection === 'desc'
+                                ? 'descending'
                                 : 'none'
                           }
                           className={`sticky top-0 z-10 whitespace-nowrap border-b border-border/60 bg-gray-50 px-2.5 py-1.5 font-semibold ${ALIGN[col.align ?? 'left']}`}
@@ -321,15 +365,22 @@ export function ReservationListHomepagePage() {
                             onClick={() => handleSort(col.key)}
                           >
                             <span>{col.label}</span>
-                            <span className="flex h-3.5 w-2.5 flex-col items-center justify-center gap-[1px]" aria-hidden="true">
+                            <span
+                              className="flex h-3.5 w-2.5 flex-col items-center justify-center gap-[1px]"
+                              aria-hidden="true"
+                            >
                               <span
                                 className={`h-0 w-0 border-x-[3.5px] border-b-[4px] border-x-transparent ${
-                                  activeDirection === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'
+                                  activeDirection === 'asc'
+                                    ? 'border-b-blue-600'
+                                    : 'border-b-gray-300'
                                 }`}
                               />
                               <span
                                 className={`h-0 w-0 border-x-[3.5px] border-t-[4px] border-x-transparent ${
-                                  activeDirection === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'
+                                  activeDirection === 'desc'
+                                    ? 'border-t-blue-600'
+                                    : 'border-t-gray-300'
                                 }`}
                               />
                             </span>
@@ -340,36 +391,55 @@ export function ReservationListHomepagePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {showSkeleton && Array.from({ length: Math.max(pagination.pageSize, SKELETON_ROWS) }, (_, rowIndex) => (
-                    <tr key={`reservation-list-homepage-skeleton-${rowIndex}`} className="border-b border-border/40">
-                      {COLUMNS.map((col) => (
-                        <td key={col.key} className="whitespace-nowrap px-2.5 py-1" style={{ minWidth: col.min }}>
-                          <span className="exam-skeleton-bar block h-2.5 w-full rounded" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                  {!showSkeleton && pagination.pageRows.map((row, i) => {
-                    // 레거시 재현 — No 는 총건수에서 1씩 감소하는 표시용 번호다.
-                    const rowNumber = filtered.length - (pagination.rangeStart - 1 + i)
+                  {showSkeleton &&
+                    Array.from(
+                      { length: Math.max(pagination.pageSize, SKELETON_ROWS) },
+                      (_, rowIndex) => (
+                        <tr
+                          key={`reservation-list-homepage-skeleton-${rowIndex}`}
+                          className="border-b border-border/40"
+                        >
+                          {COLUMNS.map((col) => (
+                            <td
+                              key={col.key}
+                              className="whitespace-nowrap px-2.5 py-1"
+                              style={{ minWidth: col.min }}
+                            >
+                              <span className="exam-skeleton-bar block h-2.5 w-full rounded" />
+                            </td>
+                          ))}
+                        </tr>
+                      ),
+                    )}
+                  {!showSkeleton &&
+                    pagination.pageRows.map((row, i) => {
+                      // 레거시 재현 — No 는 총건수에서 1씩 감소하는 표시용 번호다.
+                      const rowNumber =
+                        filtered.length - (pagination.rangeStart - 1 + i)
 
-                    return (
-                      <tr key={row.legacyNo} className="border-b border-border/40 transition-colors hover:bg-blue-50/40">
-                        {COLUMNS.map((col) => (
-                          <td
-                            key={col.key}
-                            className={`px-2.5 py-1 text-[11px] text-gray-800 ${ALIGN[col.align ?? 'left']}`}
-                            style={{ minWidth: col.min }}
-                          >
-                            {col.render?.(row, rowNumber)}
-                          </td>
-                        ))}
-                      </tr>
-                    )
-                  })}
+                      return (
+                        <tr
+                          key={row.legacyNo}
+                          className="border-b border-border/40 transition-colors hover:bg-blue-50/40"
+                        >
+                          {COLUMNS.map((col) => (
+                            <td
+                              key={col.key}
+                              className={`px-2.5 py-1 text-[11px] text-gray-800 ${ALIGN[col.align ?? 'left']}`}
+                              style={{ minWidth: col.min }}
+                            >
+                              {col.render?.(row, rowNumber)}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
                   {!showSkeleton && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                      <td
+                        colSpan={COLUMNS.length}
+                        className="px-3 py-12 text-center text-sm text-muted-foreground"
+                      >
                         검색 결과가 없습니다.
                       </td>
                     </tr>

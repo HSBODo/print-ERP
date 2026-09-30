@@ -10,7 +10,13 @@ describe('apiResponseOf', () => {
       z.object({ source: z.enum(['SNAPSHOT', 'LIVE']) }),
     )
 
-    expect(schema.parse({ success: true, data: [{ count: 1 }], meta: { source: 'SNAPSHOT' } })).toEqual({
+    expect(
+      schema.parse({
+        success: true,
+        data: [{ count: 1 }],
+        meta: { source: 'SNAPSHOT' },
+      }),
+    ).toEqual({
       success: true,
       data: [{ count: 1 }],
       meta: { source: 'SNAPSHOT' },

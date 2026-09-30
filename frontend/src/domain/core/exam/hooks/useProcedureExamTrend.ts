@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+
 import { examApi } from '../api'
 import type { ProcedureExamMonthlyItem } from '../type/api'
 
@@ -13,10 +14,13 @@ const EMPTY: MonthlyData = {
   oneDayExamCount: 0,
 }
 
-function toDataMap(items: ProcedureExamMonthlyItem[]): Record<number, MonthlyData[]> {
+function toDataMap(
+  items: ProcedureExamMonthlyItem[],
+): Record<number, MonthlyData[]> {
   const map: Record<number, MonthlyData[]> = {}
   for (const item of items) {
-    if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
+    if (!map[item.year])
+      map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
     map[item.year][item.month - 1] = {
       examCount: item.examCount,
       oneDayExamCount: item.oneDayExamCount,
@@ -26,7 +30,11 @@ function toDataMap(items: ProcedureExamMonthlyItem[]): Record<number, MonthlyDat
 }
 
 export function useProcedureExamTrend(years: number[]) {
-  const { data: apiData, isLoading, isError } = useQuery({
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['procedure-exam-trend', years],
     queryFn: ({ signal }) => examApi.getProcedureExamMonthly(years, signal),
     enabled: years.length > 0,

@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
+
+import { cleanup, render, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+
 import { weeksOfYear } from '../../utils/reportWeeks'
 
 vi.mock('recharts', () => ({
@@ -14,7 +16,9 @@ vi.mock('recharts', () => ({
 }))
 
 vi.mock('#shared/ui/Chart', () => ({
-  ChartContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ChartContainer: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
   ChartTooltip: () => null,
   ChartTooltipContent: () => null,
 }))
@@ -32,7 +36,14 @@ const data = {
 
 describe('ReportWeekLineChart 하단 표', () => {
   it('기본 모드는 전체 주차를 27주씩 두 표로 나눈다', () => {
-    render(<ReportWeekLineChart title="일반 지표" years={[2024, 2025, 2026]} weeks={weeks} data={data} />)
+    render(
+      <ReportWeekLineChart
+        title="일반 지표"
+        years={[2024, 2025, 2026]}
+        weeks={weeks}
+        data={data}
+      />,
+    )
 
     expect(screen.getAllByRole('table')).toHaveLength(2)
     expect(screen.getByText('1~27주')).toBeInTheDocument()

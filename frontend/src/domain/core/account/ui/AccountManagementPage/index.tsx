@@ -1,16 +1,18 @@
-import { useMemo, useState } from 'react'
 import { Pencil, Plus, Search, Trash2, Users, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+import type { UserDepartment, UserRole } from '#domain/support/session/session'
+import { useAuthStore } from '#domain/support/session/store'
 import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card } from '#shared/ui/Card'
 import { TablePagination } from '#shared/ui/TablePagination'
-import { useAuthStore } from '#domain/support/session/store'
+
 import { useDeleteUser, useUsers } from '../../hooks/useUsers'
 import type { UserRow } from '../../type/api'
-import type { UserDepartment, UserRole } from '#domain/support/session/session'
-import { UserFormDialog } from './UserFormDialog'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
+import { UserFormDialog } from './UserFormDialog'
 
 /**
  * 계정 관리 페이지 — ADMIN 전용 (SecurityConfig + pageRegistry 이중 방어).
@@ -51,7 +53,9 @@ export function AccountManagementPage() {
   const { data: users, isLoading, isError, error } = useUsers()
   const deleteMutation = useDeleteUser()
 
-  const [formTarget, setFormTarget] = useState<{ mode: 'create' } | { mode: 'edit'; user: UserRow } | null>(null)
+  const [formTarget, setFormTarget] = useState<
+    { mode: 'create' } | { mode: 'edit'; user: UserRow } | null
+  >(null)
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null)
 
   // 필터 미적용 센티널은 빈 문자열 — 부서값 'ALL' 과 충돌하지 않게.
@@ -75,8 +79,11 @@ export function AccountManagementPage() {
 
   const total = filtered.length
   const grandTotal = users?.length ?? 0
-  const isFiltered = keyword.length > 0 || roleFilter !== '' || deptFilter !== ''
-  const pagination = usePagination(filtered, { initialPageSize: INITIAL_PAGE_SIZE })
+  const isFiltered =
+    keyword.length > 0 || roleFilter !== '' || deptFilter !== ''
+  const pagination = usePagination(filtered, {
+    initialPageSize: INITIAL_PAGE_SIZE,
+  })
 
   const resetFilters = () => {
     setKeyword('')
@@ -104,8 +111,8 @@ export function AccountManagementPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-gray-900">계정 관리</h1>
             <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium text-gray-700">
-              <Users className="h-3 w-3" />
-              총 {grandTotal.toLocaleString('ko-KR')}명
+              <Users className="h-3 w-3" />총{' '}
+              {grandTotal.toLocaleString('ko-KR')}명
             </span>
             {isFiltered && (
               <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
@@ -114,7 +121,8 @@ export function AccountManagementPage() {
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            사용자 계정을 신규 추가·편집·삭제합니다. 자기 자신의 권한·부서는 변경할 수 없고, 자기 자신은 삭제할 수 없습니다.
+            사용자 계정을 신규 추가·편집·삭제합니다. 자기 자신의 권한·부서는
+            변경할 수 없고, 자기 자신은 삭제할 수 없습니다.
           </p>
         </div>
         <Button onClick={() => setFormTarget({ mode: 'create' })}>
@@ -129,14 +137,20 @@ export function AccountManagementPage() {
           <input
             type="search"
             value={keyword}
-            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
+            onChange={(e) => {
+              setKeyword(e.target.value)
+              pagination.resetPage()
+            }}
             placeholder="아이디·이름·이메일 검색"
             className="w-full rounded-md border border-gray-300 py-1.5 pl-8 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           />
           {keyword && (
             <button
               type="button"
-              onClick={() => { setKeyword(''); pagination.resetPage() }}
+              onClick={() => {
+                setKeyword('')
+                pagination.resetPage()
+              }}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               aria-label="검색어 지우기"
             >
@@ -147,24 +161,34 @@ export function AccountManagementPage() {
         <div className="flex items-center gap-1.5">
           <select
             value={roleFilter}
-            onChange={(e) => { setRoleFilter(e.target.value as '' | UserRole); pagination.resetPage() }}
+            onChange={(e) => {
+              setRoleFilter(e.target.value as '' | UserRole)
+              pagination.resetPage()
+            }}
             className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             aria-label="권한 필터"
           >
             <option value="">권한 전체</option>
             {ROLE_OPTIONS.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>
+                {r}
+              </option>
             ))}
           </select>
           <select
             value={deptFilter}
-            onChange={(e) => { setDeptFilter(e.target.value as '' | UserDepartment); pagination.resetPage() }}
+            onChange={(e) => {
+              setDeptFilter(e.target.value as '' | UserDepartment)
+              pagination.resetPage()
+            }}
             className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             aria-label="부서 필터"
           >
             <option value="">부서 전체</option>
             {DEPARTMENT_OPTIONS.map((d) => (
-              <option key={d} value={d}>{d}</option>
+              <option key={d} value={d}>
+                {d}
+              </option>
             ))}
           </select>
           {isFiltered && (
@@ -192,20 +216,28 @@ export function AccountManagementPage() {
             <tbody className="divide-y divide-gray-100">
               {isLoading && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-gray-400"
+                  >
                     불러오는 중…
                   </td>
                 </tr>
               )}
               {isError && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-red-500">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-red-500"
+                  >
                     {error instanceof Error ? error.message : '조회 실패'}
                   </td>
                 </tr>
               )}
               {pagination.pageRows.map((u, i) => {
-                const isSelf = currentLoginId != null && u.loginId.toLowerCase() === currentLoginId.toLowerCase()
+                const isSelf =
+                  currentLoginId != null &&
+                  u.loginId.toLowerCase() === currentLoginId.toLowerCase()
                 const seq = pagination.rangeStart + i
                 return (
                   <tr
@@ -232,12 +264,16 @@ export function AccountManagementPage() {
                     <td className="px-4 py-2.5 text-gray-900">{u.name}</td>
                     <td className="px-4 py-2.5 text-gray-600">{u.email}</td>
                     <td className="px-4 py-2.5">
-                      <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${ROLE_BADGE[u.role]}`}>
+                      <span
+                        className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${ROLE_BADGE[u.role]}`}
+                      >
                         {u.role}
                       </span>
                     </td>
                     <td className="px-4 py-2.5">
-                      <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${DEPT_BADGE[u.department]}`}>
+                      <span
+                        className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${DEPT_BADGE[u.department]}`}
+                      >
                         {u.department}
                       </span>
                     </td>
@@ -245,7 +281,9 @@ export function AccountManagementPage() {
                       <div className="flex items-center justify-end gap-0.5">
                         <button
                           type="button"
-                          onClick={() => setFormTarget({ mode: 'edit', user: u })}
+                          onClick={() =>
+                            setFormTarget({ mode: 'edit', user: u })
+                          }
                           className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
                           aria-label={`${u.loginId} 편집`}
                           title="편집"
@@ -258,7 +296,9 @@ export function AccountManagementPage() {
                           onClick={() => setDeleteTarget(u)}
                           className="rounded p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
                           aria-label={`${u.loginId} 삭제`}
-                          title={isSelf ? '자기 자신은 삭제할 수 없습니다' : '삭제'}
+                          title={
+                            isSelf ? '자기 자신은 삭제할 수 없습니다' : '삭제'
+                          }
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -269,8 +309,13 @@ export function AccountManagementPage() {
               })}
               {!isLoading && !isError && pagination.pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
-                    {grandTotal === 0 ? '등록된 사용자가 없습니다.' : '검색 조건에 맞는 사용자가 없습니다.'}
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-gray-400"
+                  >
+                    {grandTotal === 0
+                      ? '등록된 사용자가 없습니다.'
+                      : '검색 조건에 맞는 사용자가 없습니다.'}
                   </td>
                 </tr>
               )}
@@ -278,7 +323,11 @@ export function AccountManagementPage() {
           </table>
         </div>
 
-        <TablePagination pagination={pagination} unit="명" className="border-t border-gray-100 bg-gray-50/50 px-3 py-2" />
+        <TablePagination
+          pagination={pagination}
+          unit="명"
+          className="border-t border-gray-100 bg-gray-50/50 px-3 py-2"
+        />
       </Card>
 
       {formTarget && (
@@ -288,7 +337,8 @@ export function AccountManagementPage() {
           isSelf={
             formTarget.mode === 'edit' &&
             currentLoginId != null &&
-            formTarget.user.loginId.toLowerCase() === currentLoginId.toLowerCase()
+            formTarget.user.loginId.toLowerCase() ===
+              currentLoginId.toLowerCase()
           }
           onClose={() => setFormTarget(null)}
         />

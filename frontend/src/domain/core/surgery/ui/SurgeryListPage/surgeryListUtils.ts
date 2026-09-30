@@ -24,7 +24,7 @@ export const CATEGORY_OPTIONS = ['전체', '시력교정', '백내장', '재수�
 export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
 export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
 export const SKELETON_ROWS = 50
-export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
+export const QUICK_RANGES: { key: QuickRangeKey; label: string }[] = [
   { key: '1w', label: '1주' },
   { key: '2w', label: '2주' },
   { key: '3w', label: '3주' },
@@ -46,7 +46,7 @@ export const toMonthEnd = (month: string) => {
   return `${month}-${pad(lastDate)}`
 }
 export const toMonthWeekRange = (month: string, week: number) => {
-  const startDay = ((week - 1) * 7) + 1
+  const startDay = (week - 1) * 7 + 1
   const monthEnd = toMonthEnd(month)
   const lastDay = Number(monthEnd.slice(-2))
   const endDay = week === 4 ? lastDay : Math.min(startDay + 6, lastDay)
@@ -57,7 +57,11 @@ export const toMonthWeekRange = (month: string, week: number) => {
   }
 }
 
-export const getSortValue = (row: SurgeryListItem, key: string, originalIndex: number) => {
+export const getSortValue = (
+  row: SurgeryListItem,
+  key: string,
+  originalIndex: number,
+) => {
   if (key === 'rowNo') return originalIndex
   if (key === 'age') {
     const age = Number(calcAge(row.birth))
@@ -71,21 +75,61 @@ export const getSortValue = (row: SurgeryListItem, key: string, originalIndex: n
  * RE_OPERATION 출처라 채워지는 값은 수술일(=재수술일)·차트번호·고객명·수술방법 R/L 뿐(나머지는 공란).
  */
 const BLANK_SURGERY_ROW: SurgeryListItem = {
-  chartNo: '', name: '', nameEng: '', surgeryCategory: '', surgeryDate: '', examDate: '',
-  patientType: '', surgeryReserveDate: '', surgeryRegDate: '', surgeryTime: '',
-  surgeryR: '', surgeryL: '', recommendedR: '', recommendedL: '', estimate: '', surgeryRate: '',
-  payment: '', surgeon: '', counselor: '', doctor: '', optometrist: '', birth: '', lunar: '',
-  phone1: '', phone2: '', email: '', zip: '', addr1: '', addr2: '', memo: '', grade: '', job: '',
-  lastVisit: '', route: '', section: '', motiveL: '', motiveM: '', motiveS: '', motiveMemo: '',
-  examMemo: '', insurance: '', nationality: '',
+  chartNo: '',
+  name: '',
+  nameEng: '',
+  surgeryCategory: '',
+  surgeryDate: '',
+  examDate: '',
+  patientType: '',
+  surgeryReserveDate: '',
+  surgeryRegDate: '',
+  surgeryTime: '',
+  surgeryR: '',
+  surgeryL: '',
+  recommendedR: '',
+  recommendedL: '',
+  estimate: '',
+  surgeryRate: '',
+  payment: '',
+  surgeon: '',
+  counselor: '',
+  doctor: '',
+  optometrist: '',
+  birth: '',
+  lunar: '',
+  phone1: '',
+  phone2: '',
+  email: '',
+  zip: '',
+  addr1: '',
+  addr2: '',
+  memo: '',
+  grade: '',
+  job: '',
+  lastVisit: '',
+  route: '',
+  section: '',
+  motiveL: '',
+  motiveM: '',
+  motiveS: '',
+  motiveMemo: '',
+  examMemo: '',
+  insurance: '',
+  nationality: '',
 }
 
-export const reopCandidateToRow = (
-  c: {
-    chartNo: string; name: string; nameEng: string; patientType: string
-    surgeon: string; payment: string; reopDate: string; againR: string; againL: string
-  },
-): SurgeryListItem => ({
+export const reopCandidateToRow = (c: {
+  chartNo: string
+  name: string
+  nameEng: string
+  patientType: string
+  surgeon: string
+  payment: string
+  reopDate: string
+  againR: string
+  againL: string
+}): SurgeryListItem => ({
   ...BLANK_SURGERY_ROW,
   chartNo: c.chartNo,
   name: c.name,
@@ -121,16 +165,46 @@ export const reopCandidateToRow = (
  * (그룹을 나누면 라벨까지 붙어 필터 바가 두 줄로 접혔다)
  */
 export const SURGERY_TYPE_FILTERS = [
-  '전체', '스마일', '스마일프로', 'ICL', 'T-ICL', 'KPL', 'T-KPL', 'VIVA', 'PRESBYOND', '라식계', '라섹계',
+  '전체',
+  '스마일',
+  '스마일프로',
+  'ICL',
+  'T-ICL',
+  'KPL',
+  'T-KPL',
+  'VIVA',
+  'PRESBYOND',
+  '라식계',
+  '라섹계',
 ] as const
-export const OPTION_FILTERS = ['전체', '엑스트라', '퍼스널', '콘트라', '웨이브', '모노'] as const
-export const CATARACT_FILTERS = ['전체', '다초점', '프리미엄', '단초점'] as const
+export const OPTION_FILTERS = [
+  '전체',
+  '엑스트라',
+  '퍼스널',
+  '콘트라',
+  '웨이브',
+  '모노',
+] as const
+export const CATARACT_FILTERS = [
+  '전체',
+  '다초점',
+  '프리미엄',
+  '단초점',
+] as const
 export const REOP_FILTERS = ['전체', '레이저', '렌즈'] as const
 
 export type VisionType =
-  | 'presbyond' | 'smilePro' | 'smile' | 'viva'
-  | 'tIcl' | 'icl' | 'tKpl' | 'kpl'
-  | 'lasik' | 'lasek' | 'other'
+  | 'presbyond'
+  | 'smilePro'
+  | 'smile'
+  | 'viva'
+  | 'tIcl'
+  | 'icl'
+  | 'tKpl'
+  | 'kpl'
+  | 'lasik'
+  | 'lasek'
+  | 'other'
 
 const has = (raw: string, ...keys: string[]) => {
   const s = (raw ?? '').toLowerCase()
@@ -139,17 +213,20 @@ const has = (raw: string, ...keys: string[]) => {
 
 /** 수술명 한 건(한쪽 눈)의 시력교정 유형. SQL CASE 와 판정 순서까지 같아야 한다. */
 export function classifyVision(raw: string): VisionType {
-  if (!raw || !raw.trim()) return 'other'
+  if (!raw?.trim()) return 'other'
   if (has(raw, 'PRESBYOND')) return 'presbyond'
   if (has(raw, 'SMILE Pro', 'SMILEpro', 'SMILE PRO')) return 'smilePro'
   if (has(raw, 'SMILE')) return 'smile'
   if (has(raw, 'VIVA')) return 'viva'
   if (has(raw, 'T-ICL', 'T-IPCL', 'T-GLAZE', 'T-ECHO')) return 'tIcl'
-  if (has(raw, 'ICL', 'IPCL', 'ARF', 'ART', 'ARTIFLEX', 'GLAZE', 'ECHO')) return 'icl'
+  if (has(raw, 'ICL', 'IPCL', 'ARF', 'ART', 'ARTIFLEX', 'GLAZE', 'ECHO'))
+    return 'icl'
   if (has(raw, 'T-KPL')) return 'tKpl'
   if (has(raw, 'KPL')) return 'kpl'
-  if (has(raw, 'FLAP LIFT', 'OPTI', 'iFS', 'VISU', 'fs200', 'Micro+', 'Hybrid')) return 'lasik'
-  if (has(raw, 'EYECLE', 'T-prk', 'EYE CLE', 'EYE+', 'FLAP PRK', 'PtK', 'M-LE')) return 'lasek'
+  if (has(raw, 'FLAP LIFT', 'OPTI', 'iFS', 'VISU', 'fs200', 'Micro+', 'Hybrid'))
+    return 'lasik'
+  if (has(raw, 'EYECLE', 'T-prk', 'EYE CLE', 'EYE+', 'FLAP PRK', 'PtK', 'M-LE'))
+    return 'lasek'
   return 'other'
 }
 
@@ -157,40 +234,74 @@ export type CataractType = 'catEdof' | 'catMulti' | 'catMono'
 
 /** EDOF 를 먼저 본다 — `T-Clareon Vivity` 처럼 두 목록에 다 걸리는 이름이 있다. */
 export function classifyCataract(raw: string): CataractType {
-  if (has(raw, 'EDOF', 'Vivity', 'Eyhance', 'PureSee', 'Isopure', 'Symfony')) return 'catEdof'
-  if (has(raw, 'Clareon', 'Panoptix', 'RESTOR', 'Lara', 'LISA', 'CTR(M)', 'CTRmulti',
-    '3PodF', 'T-CTR', 'T-CATARACT', 'Precizon', 'LAL', 'ELANA', 'Gemetric')) return 'catMulti'
+  if (has(raw, 'EDOF', 'Vivity', 'Eyhance', 'PureSee', 'Isopure', 'Symfony'))
+    return 'catEdof'
+  if (
+    has(
+      raw,
+      'Clareon',
+      'Panoptix',
+      'RESTOR',
+      'Lara',
+      'LISA',
+      'CTR(M)',
+      'CTRmulti',
+      '3PodF',
+      'T-CTR',
+      'T-CATARACT',
+      'Precizon',
+      'LAL',
+      'ELANA',
+      'Gemetric',
+    )
+  )
+    return 'catMulti'
   return 'catMono'
 }
 
 export function classifyReoperation(raw: string): 'reopLens' | 'reopLaser' {
-  return has(raw, 'remo', 'exch', 'ICL', 'ARF', 'ART', 'EVO', 'ECHO', 'GLAZE',
-    'precizon', 'Lisa', 'Gemetric', 'encla')
+  return has(
+    raw,
+    'remo',
+    'exch',
+    'ICL',
+    'ARF',
+    'ART',
+    'EVO',
+    'ECHO',
+    'GLAZE',
+    'precizon',
+    'Lisa',
+    'Gemetric',
+    'encla',
+  )
     ? 'reopLens'
     : 'reopLaser'
 }
 
 const VISION_BY_LABEL: Record<string, VisionType> = {
-  '스마일': 'smile',
-  '스마일프로': 'smilePro',
-  'ICL': 'icl',
+  스마일: 'smile',
+  스마일프로: 'smilePro',
+  ICL: 'icl',
   'T-ICL': 'tIcl',
-  'KPL': 'kpl',
+  KPL: 'kpl',
   'T-KPL': 'tKpl',
-  'VIVA': 'viva',
-  'PRESBYOND': 'presbyond',
-  '라식계': 'lasik',
-  '라섹계': 'lasek',
+  VIVA: 'viva',
+  PRESBYOND: 'presbyond',
+  라식계: 'lasik',
+  라섹계: 'lasek',
 }
 const CATARACT_BY_LABEL: Record<string, CataractType> = {
-  '다초점': 'catMulti', '프리미엄': 'catEdof', '단초점': 'catMono',
+  다초점: 'catMulti',
+  프리미엄: 'catEdof',
+  단초점: 'catMono',
 }
 const OPTION_BY_LABEL: Record<string, (raw: string) => boolean> = {
-  '엑스트라': (r) => has(r, '+X'),
-  '퍼스널': (r) => has(r, 'P.E'),
-  '콘트라': (r) => has(r, 'CONT'),
-  '웨이브': (r) => has(r, 'W.V'),
-  '모노': (r) => (r ?? '').trim().toLowerCase().startsWith('mono'),
+  엑스트라: (r) => has(r, '+X'),
+  퍼스널: (r) => has(r, 'P.E'),
+  콘트라: (r) => has(r, 'CONT'),
+  웨이브: (r) => has(r, 'W.V'),
+  모노: (r) => (r ?? '').trim().toLowerCase().startsWith('mono'),
 }
 
 export interface SurgeryFilterRow {
@@ -205,7 +316,10 @@ const eitherEye = (row: SurgeryFilterRow, ok: (raw: string) => boolean) =>
 /** 값이 빈 눈은 수술하지 않은 눈이라 분류 대상에서 뺀다(빈 문자열이 단초점·레이저로 떨어지는 걸 막는다). */
 const filled = (raw: string) => Boolean(raw && raw.trim())
 
-export function matchesSurgeryType(row: SurgeryFilterRow, filter: string): boolean {
+export function matchesSurgeryType(
+  row: SurgeryFilterRow,
+  filter: string,
+): boolean {
   if (filter === '전체') return true
   const type = VISION_BY_LABEL[filter]
   if (!type) return true
@@ -219,25 +333,40 @@ export function matchesOption(row: SurgeryFilterRow, filter: string): boolean {
   return eitherEye(row, ok)
 }
 
-export function matchesCataract(row: SurgeryFilterRow, filter: string): boolean {
+export function matchesCataract(
+  row: SurgeryFilterRow,
+  filter: string,
+): boolean {
   if (filter === '전체') return true
   const type = CATARACT_BY_LABEL[filter]
   if (!type) return true
   return eitherEye(row, (raw) => filled(raw) && classifyCataract(raw) === type)
 }
 
-export function matchesReoperation(row: SurgeryFilterRow, filter: string): boolean {
+export function matchesReoperation(
+  row: SurgeryFilterRow,
+  filter: string,
+): boolean {
   if (filter === '전체') return true
   const want = filter === '렌즈' ? 'reopLens' : 'reopLaser'
-  return eitherEye(row, (raw) => filled(raw) && classifyReoperation(raw) === want)
+  return eitherEye(
+    row,
+    (raw) => filled(raw) && classifyReoperation(raw) === want,
+  )
 }
 
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0
   if (aEmpty) return 1
   if (bEmpty) return -1
   if (typeof a === 'number' && typeof b === 'number') return a - b
-  return String(a).localeCompare(String(b), 'ko-KR', { numeric: true, sensitivity: 'base' })
+  return String(a).localeCompare(String(b), 'ko-KR', {
+    numeric: true,
+    sensitivity: 'base',
+  })
 }

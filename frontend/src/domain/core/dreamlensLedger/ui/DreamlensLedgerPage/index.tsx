@@ -1,26 +1,36 @@
-import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, Download, Loader2, Plus, RotateCcw, Search, Trash2 } from 'lucide-react'
+import {
+  ChevronDown,
+  Download,
+  Loader2,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+} from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
-import { TablePagination } from '#shared/ui/TablePagination'
-import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
+import { MonthPicker } from '#shared/ui/MonthPicker'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+
 import { dreamlensLedgerApi } from '../../api'
 import type { DreamlensLedgerRow } from '../../type/api'
 import { LedgerCell } from './LedgerCell'
 import {
+  emptyRow,
   EXAMINERS,
+  frozenLeftOffsets,
   LAST_FROZEN_KEY,
   LEDGER_COLUMNS,
   LEDGER_GROUPS,
-  REVENUE_KEYS,
-  emptyRow,
-  frozenLeftOffsets,
-  suggestionListId,
   type LedgerFieldKey,
+  REVENUE_KEYS,
+  suggestionListId,
 } from './ledgerColumns'
 import {
   compareSortValue,
@@ -33,19 +43,20 @@ import {
   isoWeekOf,
   ledgerYears,
   matchesKeyword,
+  type PeriodMode,
+  type SortState,
   today,
-  weekValueOf,
   toMonthEnd,
   toMonthStart,
   toMonthValue,
   toWeekEnd,
   toWeekStart,
   toWeekValue,
-  type PeriodMode,
-  type SortState,
+  weekValueOf,
 } from './ledgerUtils'
 
-const won = (value: number) => (value === 0 ? '' : value.toLocaleString('ko-KR'))
+const won = (value: number) =>
+  value === 0 ? '' : value.toLocaleString('ko-KR')
 
 /** 체크박스/합계 열 폭 — "합계"가 한 줄에 들어가야 세로로 쪼개지지 않는다. */
 const SELECT_COL_WIDTH = 34
@@ -71,11 +82,15 @@ export function DreamlensLedgerPage() {
   const [sortState, setSortState] = useState<SortState>(null)
 
   const queryClient = useQueryClient()
-  const queryKey = useMemo(() => ['dreamlens-ledger', queryFrom, queryTo], [queryFrom, queryTo])
+  const queryKey = useMemo(
+    () => ['dreamlens-ledger', queryFrom, queryTo],
+    [queryFrom, queryTo],
+  )
 
   const { data, error, isLoading, isFetching, isError } = useQuery({
     queryKey,
-    queryFn: ({ signal }) => dreamlensLedgerApi.list(queryFrom, queryTo, signal),
+    queryFn: ({ signal }) =>
+      dreamlensLedgerApi.list(queryFrom, queryTo, signal),
     enabled: Boolean(queryFrom && queryTo) && queryFrom <= queryTo,
   })
 
@@ -85,11 +100,18 @@ export function DreamlensLedgerPage() {
       rows
         .filter(
           (row) =>
-            (examiner === '전체' || (row.examiner ?? '') === examiner) && matchesKeyword(row, keyword),
+            (examiner === '전체' || (row.examiner ?? '') === examiner) &&
+            matchesKeyword(row, keyword),
         )
         // 최신 날짜가 맨 위. 서버도 같은 순서로 주지만, 행을 추가하거나 날짜를 고친 뒤에도
         // 재조회 없이 자리를 잡게 화면에서 한 번 더 정렬한다(같은 날짜면 나중 입력이 위).
-        .sort((a, b) => (a.entryDate === b.entryDate ? b.id - a.id : b.entryDate < a.entryDate ? -1 : 1)),
+        .sort((a, b) =>
+          a.entryDate === b.entryDate
+            ? b.id - a.id
+            : b.entryDate < a.entryDate
+              ? -1
+              : 1,
+        ),
     [rows, examiner, keyword],
   )
 
@@ -100,7 +122,10 @@ export function DreamlensLedgerPage() {
     return filtered
       .map((row, index) => ({ row, index }))
       .sort((a, b) => {
-        const compared = compareSortValue(getSortValue(a.row, key), getSortValue(b.row, key))
+        const compared = compareSortValue(
+          getSortValue(a.row, key),
+          getSortValue(b.row, key),
+        )
         if (compared !== 0) return direction === 'asc' ? compared : -compared
         return a.index - b.index // 동점이면 기존 순서 유지(정렬이 튀지 않게)
       })
@@ -109,8 +134,12 @@ export function DreamlensLedgerPage() {
 
   const pagination = usePagination(sorted)
 
-  const setRows = (updater: (old: DreamlensLedgerRow[]) => DreamlensLedgerRow[]) =>
-    queryClient.setQueryData<DreamlensLedgerRow[]>(queryKey, (old) => updater(old ?? []))
+  const setRows = (
+    updater: (old: DreamlensLedgerRow[]) => DreamlensLedgerRow[],
+  ) =>
+    queryClient.setQueryData<DreamlensLedgerRow[]>(queryKey, (old) =>
+      updater(old ?? []),
+    )
 
   /**
    * 저장 중인 행 id. mutation.variables 는 "가장 최근 한 건"만 가리켜서,
@@ -133,7 +162,8 @@ export function DreamlensLedgerPage() {
       markPending(id, true)
       setRows((old) => old.map((item) => (item.id === id ? row : item)))
     },
-    onSuccess: (saved) => setRows((old) => old.map((row) => (row.id === saved.id ? saved : row))),
+    onSuccess: (saved) =>
+      setRows((old) => old.map((row) => (row.id === saved.id ? saved : row))),
     // 낙관적으로 반영해 둔 값이 틀렸을 수 있으니 서버 상태로 다시 맞춘다(직접 롤백하면
     // 동시에 진행 중이던 다른 행의 편집까지 되돌릴 수 있다).
     onError: () => {
@@ -160,8 +190,12 @@ export function DreamlensLedgerPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (ids: number[]) => {
-      const results = await Promise.allSettled(ids.map((id) => dreamlensLedgerApi.remove(id)))
-      const removed = ids.filter((_id, index) => results[index].status === 'fulfilled')
+      const results = await Promise.allSettled(
+        ids.map((id) => dreamlensLedgerApi.remove(id)),
+      )
+      const removed = ids.filter(
+        (_id, index) => results[index].status === 'fulfilled',
+      )
       const failed = ids.length - removed.length
       return { removed, failed }
     },
@@ -169,7 +203,8 @@ export function DreamlensLedgerPage() {
       const gone = new Set(removed)
       setRows((old) => old.filter((row) => !gone.has(row.id)))
       setSelected(new Set())
-      if (failed > 0) toast.error(`${formatCount(failed)}건을 삭제하지 못했습니다.`)
+      if (failed > 0)
+        toast.error(`${formatCount(failed)}건을 삭제하지 못했습니다.`)
       else toast.success(`${formatCount(removed.length)}건을 삭제했습니다.`)
     },
     onError: () => toast.error('삭제하지 못했습니다.'),
@@ -181,9 +216,14 @@ export function DreamlensLedgerPage() {
    * 셀 저장 — 페이로드는 렌더 시점의 행이 아니라 **캐시의 최신 행**으로 만든다.
    * 렌더 클로저를 쓰면 직전 편집이 아직 반영되기 전 값으로 덮어써 편집이 되돌아간다.
    */
-  const commitCell = (rowId: number, key: LedgerFieldKey, next: string | number | null) => {
-    const current = (queryClient.getQueryData<DreamlensLedgerRow[]>(queryKey) ?? [])
-      .find((row) => row.id === rowId)
+  const commitCell = (
+    rowId: number,
+    key: LedgerFieldKey,
+    next: string | number | null,
+  ) => {
+    const current = (
+      queryClient.getQueryData<DreamlensLedgerRow[]>(queryKey) ?? []
+    ).find((row) => row.id === rowId)
     if (!current) return
     updateMutation.mutate({ id: rowId, row: { ...current, [key]: next } })
   }
@@ -191,9 +231,15 @@ export function DreamlensLedgerPage() {
   const totals = useMemo(() => {
     const sums = {} as Record<string, number>
     for (const key of REVENUE_KEYS) {
-      sums[key] = filtered.reduce((total, row) => total + Number(row[key] ?? 0), 0)
+      sums[key] = filtered.reduce(
+        (total, row) => total + Number(row[key] ?? 0),
+        0,
+      )
     }
-    sums.totalRevenue = filtered.reduce((total, row) => total + row.totalRevenue, 0)
+    sums.totalRevenue = filtered.reduce(
+      (total, row) => total + row.totalRevenue,
+      0,
+    )
     return sums
   }, [filtered])
 
@@ -245,13 +291,21 @@ export function DreamlensLedgerPage() {
   const handleDelete = () => {
     const ids = [...selected]
     if (ids.length === 0) return
-    if (!window.confirm(`선택한 ${formatCount(ids.length)}건을 삭제할까요? 되돌릴 수 없습니다.`)) return
+    if (
+      !window.confirm(
+        `선택한 ${formatCount(ids.length)}건을 삭제할까요? 되돌릴 수 없습니다.`,
+      )
+    )
+      return
     deleteMutation.mutate(ids)
   }
 
   /** 현재 조회·필터·정렬 결과 전체를 CSV로 — 표에 보이는 칼럼/값/순서 그대로(페이지 무관). */
   const handleDownloadCsv = () => {
-    downloadCsv(`드림렌즈장부_${queryFrom}_${queryTo}.csv`, columnsToCsv(csvColumnsOf(), sorted))
+    downloadCsv(
+      `드림렌즈장부_${queryFrom}_${queryTo}.csv`,
+      columnsToCsv(csvColumnsOf(), sorted),
+    )
   }
 
   /** 같은 컬럼을 다시 누르면 오름↔내림 토글, 다른 컬럼이면 오름차순부터. */
@@ -265,7 +319,9 @@ export function DreamlensLedgerPage() {
   }
 
   // 헤더 체크박스는 "보이는 페이지" 기준 — 안 보이는 페이지까지 한 번에 지우는 사고를 막는다.
-  const allChecked = pagination.pageRows.length > 0 && pagination.pageRows.every((row) => selected.has(row.id))
+  const allChecked =
+    pagination.pageRows.length > 0 &&
+    pagination.pageRows.every((row) => selected.has(row.id))
   const toggleAll = () => {
     setSelected((prev) => {
       const next = new Set(prev)
@@ -294,7 +350,9 @@ export function DreamlensLedgerPage() {
             <select
               aria-label="기간 단위"
               value={draftPeriodMode}
-              onChange={(e) => handlePeriodModeChange(e.target.value as PeriodMode)}
+              onChange={(e) =>
+                handlePeriodModeChange(e.target.value as PeriodMode)
+              }
               className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="daily">일별</option>
@@ -311,11 +369,15 @@ export function DreamlensLedgerPage() {
                 <select
                   aria-label="조회 연도"
                   value={weekPick.year}
-                  onChange={(e) => applyWeek(Number(e.target.value), weekPick.week)}
+                  onChange={(e) =>
+                    applyWeek(Number(e.target.value), weekPick.week)
+                  }
                   className="h-8 w-[5.5rem] appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 >
                   {ledgerYears().map((year) => (
-                    <option key={year} value={year}>{year}년</option>
+                    <option key={year} value={year}>
+                      {year}년
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
@@ -324,11 +386,15 @@ export function DreamlensLedgerPage() {
                 <select
                   aria-label="조회 주차"
                   value={weekPick.week}
-                  onChange={(e) => applyWeek(weekPick.year, Number(e.target.value))}
+                  onChange={(e) =>
+                    applyWeek(weekPick.year, Number(e.target.value))
+                  }
                   className="h-8 w-[5.5rem] appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 >
                   {isoWeekNumbers(weekPick.year).map((week) => (
-                    <option key={week} value={week}>{week}주차</option>
+                    <option key={week} value={week}>
+                      {week}주차
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
@@ -373,12 +439,17 @@ export function DreamlensLedgerPage() {
           <select
             aria-label="검사자"
             value={examiner}
-            onChange={(e) => { setExaminer(e.target.value); pagination.resetPage() }}
+            onChange={(e) => {
+              setExaminer(e.target.value)
+              pagination.resetPage()
+            }}
             className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             <option value="전체">검사자 전체</option>
             {EXAMINERS.map((name) => (
-              <option key={name} value={name}>{name}</option>
+              <option key={name} value={name}>
+                {name}
+              </option>
             ))}
           </select>
           <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
@@ -387,17 +458,31 @@ export function DreamlensLedgerPage() {
           <input
             type="text"
             value={keyword}
-            onChange={(e) => { setKeyword(e.target.value); pagination.resetPage() }}
+            onChange={(e) => {
+              setKeyword(e.target.value)
+              pagination.resetPage()
+            }}
             placeholder="이름 · 고객번호 · 검사자"
             className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
         </div>
-        <div className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs" aria-live="polite">
+        <div
+          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
+          aria-live="polite"
+        >
           <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">{formatCount(filtered.length)}건</strong>
+          <strong className="tabular-nums text-gray-900">
+            {formatCount(filtered.length)}건
+          </strong>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <Button type="button" variant="outline" size="sm" className="text-xs" onClick={handleReset}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={handleReset}
+          >
             <RotateCcw className="h-3.5 w-3.5" />
             초기화
           </Button>
@@ -429,7 +514,11 @@ export function DreamlensLedgerPage() {
             className="text-xs"
             onClick={() => createMutation.mutate()}
           >
-            {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+            {createMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Plus className="h-3.5 w-3.5" />
+            )}
             추가
           </Button>
           <Button
@@ -440,7 +529,11 @@ export function DreamlensLedgerPage() {
             onClick={handleDelete}
             title="선택한 행 삭제"
           >
-            {deleteMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            {deleteMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
             삭제{selected.size > 0 ? ` (${selected.size})` : ''}
           </Button>
         </div>
@@ -463,7 +556,11 @@ export function DreamlensLedgerPage() {
                   <tr>
                     <th
                       rowSpan={2}
-                      style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
+                      style={{
+                        width: SELECT_COL_WIDTH,
+                        minWidth: SELECT_COL_WIDTH,
+                        left: 0,
+                      }}
                       className="sticky top-0 left-0 z-30 whitespace-nowrap border border-border/60 bg-slate-100 px-2 py-1.5"
                     >
                       <input
@@ -476,7 +573,11 @@ export function DreamlensLedgerPage() {
                     </th>
                     <th
                       rowSpan={2}
-                      style={{ width: SOURCE_COL_WIDTH, minWidth: SOURCE_COL_WIDTH, left: SELECT_COL_WIDTH }}
+                      style={{
+                        width: SOURCE_COL_WIDTH,
+                        minWidth: SOURCE_COL_WIDTH,
+                        left: SELECT_COL_WIDTH,
+                      }}
                       className="sticky top-0 z-30 whitespace-nowrap border border-border/60 bg-slate-100 px-1 py-1.5 text-[10px] font-semibold"
                       title="행 출처 — 자동은 배치가 CRM 내원·수납으로 만든 초안입니다."
                     >
@@ -484,12 +585,18 @@ export function DreamlensLedgerPage() {
                     </th>
                     {LEDGER_GROUPS.map((group) => {
                       // 고정 그룹의 헤더는 그룹 첫 컬럼 위치에 붙인다(그룹 전체가 함께 고정된다).
-                      const left = group.frozen ? FROZEN_LEFT.get(group.columns[0].key) : undefined
+                      const left = group.frozen
+                        ? FROZEN_LEFT.get(group.columns[0].key)
+                        : undefined
                       return (
                         <th
                           key={group.id}
                           colSpan={group.columns.length}
-                          style={left === undefined ? undefined : { left, ...FROZEN_EDGE_SHADOW }}
+                          style={
+                            left === undefined
+                              ? undefined
+                              : { left, ...FROZEN_EDGE_SHADOW }
+                          }
                           className={`sticky top-0 border border-border/60 px-2 py-1.5 font-semibold ${group.headClass} ${
                             left === undefined ? 'z-10' : 'sticky z-30'
                           }`}
@@ -502,22 +609,29 @@ export function DreamlensLedgerPage() {
                   <tr>
                     {LEDGER_GROUPS.flatMap((group) =>
                       group.columns.map((column) => {
-                        const direction = sortState?.key === column.key ? sortState.direction : null
+                        const direction =
+                          sortState?.key === column.key
+                            ? sortState.direction
+                            : null
                         const left = FROZEN_LEFT.get(column.key)
 
                         return (
                           <th
                             key={column.key}
                             aria-sort={
-                              direction === 'asc' ? 'ascending'
-                                : direction === 'desc' ? 'descending'
+                              direction === 'asc'
+                                ? 'ascending'
+                                : direction === 'desc'
+                                  ? 'descending'
                                   : 'none'
                             }
                             style={{
                               width: column.width,
                               minWidth: column.width,
                               ...(left === undefined ? {} : { left }),
-                              ...(column.key === LAST_FROZEN_KEY ? FROZEN_EDGE_SHADOW : {}),
+                              ...(column.key === LAST_FROZEN_KEY
+                                ? FROZEN_EDGE_SHADOW
+                                : {}),
                             }}
                             className={`sticky top-[31px] whitespace-nowrap border border-border/60 px-1.5 py-1.5 text-center font-medium ${group.headClass} ${
                               left === undefined ? 'z-10' : 'sticky z-30'
@@ -530,15 +644,22 @@ export function DreamlensLedgerPage() {
                               className="inline-flex w-full items-center justify-center gap-1 text-[11px] font-medium text-gray-800 transition-colors hover:text-blue-700 focus-visible:outline-none"
                             >
                               <span>{column.label}</span>
-                              <span className="flex h-3.5 w-2.5 shrink-0 flex-col items-center justify-center gap-[1px]" aria-hidden="true">
+                              <span
+                                className="flex h-3.5 w-2.5 shrink-0 flex-col items-center justify-center gap-[1px]"
+                                aria-hidden="true"
+                              >
                                 <span
                                   className={`h-0 w-0 border-x-[3.5px] border-b-[4px] border-x-transparent ${
-                                    direction === 'asc' ? 'border-b-blue-600' : 'border-b-gray-300'
+                                    direction === 'asc'
+                                      ? 'border-b-blue-600'
+                                      : 'border-b-gray-300'
                                   }`}
                                 />
                                 <span
                                   className={`h-0 w-0 border-x-[3.5px] border-t-[4px] border-x-transparent ${
-                                    direction === 'desc' ? 'border-t-blue-600' : 'border-t-gray-300'
+                                    direction === 'desc'
+                                      ? 'border-t-blue-600'
+                                      : 'border-t-gray-300'
                                   }`}
                                 />
                               </span>
@@ -552,93 +673,123 @@ export function DreamlensLedgerPage() {
                 <tbody>
                   {busy && (
                     <tr>
-                      <td colSpan={LEDGER_COLUMNS.length + 2} className="border border-border/60 py-10 text-center text-sm text-muted-foreground">
+                      <td
+                        colSpan={LEDGER_COLUMNS.length + 2}
+                        className="border border-border/60 py-10 text-center text-sm text-muted-foreground"
+                      >
                         <span className="inline-flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" /> 장부를 불러오는 중...
+                          <Loader2 className="h-4 w-4 animate-spin" /> 장부를
+                          불러오는 중...
                         </span>
                       </td>
                     </tr>
                   )}
                   {!busy && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={LEDGER_COLUMNS.length + 2} className="border border-border/60 py-10 text-center text-sm text-muted-foreground">
+                      <td
+                        colSpan={LEDGER_COLUMNS.length + 2}
+                        className="border border-border/60 py-10 text-center text-sm text-muted-foreground"
+                      >
                         조회된 장부가 없습니다. “추가”로 새 행을 만드세요.
                       </td>
                     </tr>
                   )}
-                  {!busy && pagination.pageRows.map((row) => {
-                    const isSelected = selected.has(row.id)
-                    // 배치 초안(AUTO) 행 — CRM 내원·수납으로 자동 생성됨. 렌즈 정보 보완 필요.
-                    // 어느 셀이든 수정하면 서버가 MANUAL 로 승격해 뱃지가 사라진다.
-                    const isAuto = row.source === 'AUTO'
-                    // 고정 셀은 뒤 내용이 비치므로 불투명 배경이 필요하다.
-                    // 행 hover 는 group-hover 로 고정 셀에도 그대로 전달한다.
-                    const frozenBg = isSelected
-                      ? 'bg-rose-50'
-                      : isAuto
-                        ? 'bg-amber-50 group-hover:bg-blue-50'
-                        : 'bg-white group-hover:bg-blue-50'
+                  {!busy &&
+                    pagination.pageRows.map((row) => {
+                      const isSelected = selected.has(row.id)
+                      // 배치 초안(AUTO) 행 — CRM 내원·수납으로 자동 생성됨. 렌즈 정보 보완 필요.
+                      // 어느 셀이든 수정하면 서버가 MANUAL 로 승격해 뱃지가 사라진다.
+                      const isAuto = row.source === 'AUTO'
+                      // 고정 셀은 뒤 내용이 비치므로 불투명 배경이 필요하다.
+                      // 행 hover 는 group-hover 로 고정 셀에도 그대로 전달한다.
+                      const frozenBg = isSelected
+                        ? 'bg-rose-50'
+                        : isAuto
+                          ? 'bg-amber-50 group-hover:bg-blue-50'
+                          : 'bg-white group-hover:bg-blue-50'
 
-                    return (
-                      <tr
-                        key={row.id}
-                        className={`group ${isSelected ? 'bg-rose-50/50' : isAuto ? 'bg-amber-50/40 hover:bg-blue-50/40' : 'hover:bg-blue-50/40'}`}
-                      >
-                        <td
-                          style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
-                          className={`sticky left-0 z-10 border border-border/60 px-2 py-1 text-center ${frozenBg}`}
+                      return (
+                        <tr
+                          key={row.id}
+                          className={`group ${isSelected ? 'bg-rose-50/50' : isAuto ? 'bg-amber-50/40 hover:bg-blue-50/40' : 'hover:bg-blue-50/40'}`}
                         >
-                          <input
-                            type="checkbox"
-                            aria-label={`${row.entryDate} ${row.customerName ?? ''} 선택`}
-                            checked={isSelected}
-                            onChange={() => toggleOne(row.id)}
-                            className="h-3.5 w-3.5 align-middle accent-rose-600"
-                          />
-                        </td>
-                        <td
-                          style={{ width: SOURCE_COL_WIDTH, minWidth: SOURCE_COL_WIDTH, left: SELECT_COL_WIDTH }}
-                          className={`sticky z-10 border border-border/60 px-1 py-1 text-center ${frozenBg}`}
-                        >
-                          <span
-                            title={isAuto
-                              ? '배치가 CRM 내원·수납으로 만든 초안입니다. 셀을 고치면 수기로 바뀝니다.'
-                              : '사람이 입력하거나 수정한 행입니다. 배치가 덮어쓰지 않습니다.'}
-                            className={`inline-block rounded px-1 text-[9px] font-semibold leading-4 ${
-                              isAuto ? 'bg-amber-200/80 text-amber-900' : 'bg-slate-200/80 text-slate-700'
-                            }`}
+                          <td
+                            style={{
+                              width: SELECT_COL_WIDTH,
+                              minWidth: SELECT_COL_WIDTH,
+                              left: 0,
+                            }}
+                            className={`sticky left-0 z-10 border border-border/60 px-2 py-1 text-center ${frozenBg}`}
                           >
-                            {isAuto ? '자동' : '수기'}
-                          </span>
-                        </td>
-                        {LEDGER_COLUMNS.map((column) => (
-                          <LedgerCell
-                            key={column.key}
-                            column={column}
-                            value={row[column.key]}
-                            busy={pendingRows.has(row.id)}
-                            onCommit={(next) => commitCell(row.id, column.key, next)}
-                            stickyLeft={FROZEN_LEFT.get(column.key)}
-                            stickyBgClass={frozenBg}
-                            frozenEdge={column.key === LAST_FROZEN_KEY}
-                          />
-                        ))}
-                      </tr>
-                    )
-                  })}
+                            <input
+                              type="checkbox"
+                              aria-label={`${row.entryDate} ${row.customerName ?? ''} 선택`}
+                              checked={isSelected}
+                              onChange={() => toggleOne(row.id)}
+                              className="h-3.5 w-3.5 align-middle accent-rose-600"
+                            />
+                          </td>
+                          <td
+                            style={{
+                              width: SOURCE_COL_WIDTH,
+                              minWidth: SOURCE_COL_WIDTH,
+                              left: SELECT_COL_WIDTH,
+                            }}
+                            className={`sticky z-10 border border-border/60 px-1 py-1 text-center ${frozenBg}`}
+                          >
+                            <span
+                              title={
+                                isAuto
+                                  ? '배치가 CRM 내원·수납으로 만든 초안입니다. 셀을 고치면 수기로 바뀝니다.'
+                                  : '사람이 입력하거나 수정한 행입니다. 배치가 덮어쓰지 않습니다.'
+                              }
+                              className={`inline-block rounded px-1 text-[9px] font-semibold leading-4 ${
+                                isAuto
+                                  ? 'bg-amber-200/80 text-amber-900'
+                                  : 'bg-slate-200/80 text-slate-700'
+                              }`}
+                            >
+                              {isAuto ? '자동' : '수기'}
+                            </span>
+                          </td>
+                          {LEDGER_COLUMNS.map((column) => (
+                            <LedgerCell
+                              key={column.key}
+                              column={column}
+                              value={row[column.key]}
+                              busy={pendingRows.has(row.id)}
+                              onCommit={(next) =>
+                                commitCell(row.id, column.key, next)
+                              }
+                              stickyLeft={FROZEN_LEFT.get(column.key)}
+                              stickyBgClass={frozenBg}
+                              frozenEdge={column.key === LAST_FROZEN_KEY}
+                            />
+                          ))}
+                        </tr>
+                      )
+                    })}
                 </tbody>
                 {!busy && filtered.length > 0 && (
                   <tfoot>
                     <tr className="bg-slate-100 font-medium">
                       {/* 좌하단 모서리 — 세로·가로 양쪽 고정이라 z 를 가장 높게 둔다. */}
                       <td
-                        style={{ width: SELECT_COL_WIDTH, minWidth: SELECT_COL_WIDTH, left: 0 }}
+                        style={{
+                          width: SELECT_COL_WIDTH,
+                          minWidth: SELECT_COL_WIDTH,
+                          left: 0,
+                        }}
                         className="sticky bottom-0 left-0 z-30 whitespace-nowrap border border-border/60 bg-slate-100 px-2 py-1.5 text-center"
                       >
                         합계
                       </td>
                       <td
-                        style={{ width: SOURCE_COL_WIDTH, minWidth: SOURCE_COL_WIDTH, left: SELECT_COL_WIDTH }}
+                        style={{
+                          width: SOURCE_COL_WIDTH,
+                          minWidth: SOURCE_COL_WIDTH,
+                          left: SELECT_COL_WIDTH,
+                        }}
                         className="sticky bottom-0 z-30 border border-border/60 bg-slate-100 px-1 py-1.5"
                       />
                       {LEDGER_COLUMNS.map((column) => {
@@ -648,13 +799,19 @@ export function DreamlensLedgerPage() {
                             key={column.key}
                             style={{
                               ...(left === undefined ? {} : { left }),
-                              ...(column.key === LAST_FROZEN_KEY ? FROZEN_EDGE_SHADOW : {}),
+                              ...(column.key === LAST_FROZEN_KEY
+                                ? FROZEN_EDGE_SHADOW
+                                : {}),
                             }}
                             className={`sticky bottom-0 border border-border/60 bg-slate-100 px-1.5 py-1.5 ${
-                              column.type === 'number' ? 'text-right tabular-nums' : 'text-center'
+                              column.type === 'number'
+                                ? 'text-right tabular-nums'
+                                : 'text-center'
                             } ${left === undefined ? '' : 'z-30'}`}
                           >
-                            {column.type === 'number' ? won(totals[column.key] ?? 0) : ''}
+                            {column.type === 'number'
+                              ? won(totals[column.key] ?? 0)
+                              : ''}
                           </td>
                         )
                       })}
@@ -666,9 +823,16 @@ export function DreamlensLedgerPage() {
           )}
           <div className="flex items-center gap-2 rounded-b-lg bg-white pr-2 text-xs">
             <TablePagination pagination={pagination} className="flex-1" />
-            {selected.size > 0 && <span className="text-rose-600">{formatCount(selected.size)}건 선택</span>}
+            {selected.size > 0 && (
+              <span className="text-rose-600">
+                {formatCount(selected.size)}건 선택
+              </span>
+            )}
             <span className="whitespace-nowrap text-gray-700">
-              매출 합계 <strong className="tabular-nums">{totals.totalRevenue.toLocaleString('ko-KR')}원</strong>
+              매출 합계{' '}
+              <strong className="tabular-nums">
+                {totals.totalRevenue.toLocaleString('ko-KR')}원
+              </strong>
             </span>
           </div>
         </CardContent>

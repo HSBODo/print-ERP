@@ -42,7 +42,7 @@ const CSV_COLUMNS = [
   ['미수통장', (row: MedicalReceipt) => row.outstandingTransfer],
   ['환불발생', (row: MedicalReceipt) => row.refundOccurred],
   ['현금영수증', (row: MedicalReceipt) => row.cashReceipt],
-  ['마감', (row: MedicalReceipt) => row.closed ? '마감' : ''],
+  ['마감', (row: MedicalReceipt) => (row.closed ? '마감' : '')],
 ] as const
 
 const escapeCsv = (value: unknown) => `"${String(value).replace(/"/g, '""')}"`
@@ -50,9 +50,13 @@ const escapeCsv = (value: unknown) => `"${String(value).replace(/"/g, '""')}"`
 export function downloadMedicalCsv(rows: MedicalReceipt[]) {
   const lines = [CSV_COLUMNS.map(([label]) => escapeCsv(label)).join(',')]
   rows.forEach((row, index) => {
-    lines.push(CSV_COLUMNS.map(([, value]) => escapeCsv(value(row, index))).join(','))
+    lines.push(
+      CSV_COLUMNS.map(([, value]) => escapeCsv(value(row, index))).join(','),
+    )
   })
-  const blob = new Blob([`\ufeff${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' })
+  const blob = new Blob([`\ufeff${lines.join('\r\n')}`], {
+    type: 'text/csv;charset=utf-8',
+  })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url

@@ -1,5 +1,8 @@
-import type { ReservationChannelFunnelItem } from '../../type/api'
-import type { AdSpend, ChannelLensCost } from '../../type/api'
+import type {
+  AdSpend,
+  ChannelLensCost,
+  ReservationChannelFunnelItem,
+} from '../../type/api'
 
 /**
  * 채널별 수익성 계산 — 화면에서 떼어 둔다(단위 변환과 귀속 규칙이 대부분이라 테스트가 필요하다).
@@ -37,7 +40,11 @@ import type { AdSpend, ChannelLensCost } from '../../type/api'
  */
 export const COHORT_DAYS = { p80: 21, p90: 33, p95: 47 } as const
 
-export type CohortMaturity = { level: 'final' | 'near' | 'watching' | 'early'; label: string; note: string }
+export interface CohortMaturity {
+  level: 'final' | 'near' | 'watching' | 'early'
+  label: string
+  note: string
+}
 
 /** 월말로부터 며칠 지났는지로 성숙도를 판정한다. today 를 인자로 받아 테스트 가능하게 둔다. */
 export function cohortMaturity(ym: string, today: Date): CohortMaturity {
@@ -45,20 +52,33 @@ export function cohortMaturity(ym: string, today: Date): CohortMaturity {
   const monthEnd = new Date(y, m, 0)
   const days = Math.floor((today.getTime() - monthEnd.getTime()) / 86400000)
   if (days >= COHORT_DAYS.p95) {
-    return { level: 'final', label: '성과 확정', note: `월말 +${days}일 — 이 달 코호트의 95% 이상이 수술을 마쳤습니다.` }
+    return {
+      level: 'final',
+      label: '성과 확정',
+      note: `월말 +${days}일 — 이 달 코호트의 95% 이상이 수술을 마쳤습니다.`,
+    }
   }
   if (days >= COHORT_DAYS.p90) {
-    return { level: 'near', label: '거의 확정', note: `월말 +${days}일 — 약 90%가 수술을 마쳤습니다. 남은 건이 반영되면 수치가 조금 올라갑니다.` }
+    return {
+      level: 'near',
+      label: '거의 확정',
+      note: `월말 +${days}일 — 약 90%가 수술을 마쳤습니다. 남은 건이 반영되면 수치가 조금 올라갑니다.`,
+    }
   }
   if (days >= COHORT_DAYS.p80) {
-    return { level: 'watching', label: '관찰 중', note: `월말 +${days}일 — 약 80%만 수술을 마쳤습니다. 전환율·ROAS 가 실제보다 낮게 보입니다.` }
+    return {
+      level: 'watching',
+      label: '관찰 중',
+      note: `월말 +${days}일 — 약 80%만 수술을 마쳤습니다. 전환율·ROAS 가 실제보다 낮게 보입니다.`,
+    }
   }
   return {
     level: 'early',
     label: '미성숙 코호트',
-    note: days < 0
-      ? '진행 중인 달입니다. 예약한 사람의 상당수가 아직 수술 전이라 전환율·ROAS 를 다른 달과 비교하면 안 됩니다.'
-      : `월말 +${days}일 — 아직 수술 전인 사람이 많습니다(중앙값 7일·95% 47일). 전환율·ROAS 를 다른 달과 비교하면 안 됩니다.`,
+    note:
+      days < 0
+        ? '진행 중인 달입니다. 예약한 사람의 상당수가 아직 수술 전이라 전환율·ROAS 를 다른 달과 비교하면 안 됩니다.'
+        : `월말 +${days}일 — 아직 수술 전인 사람이 많습니다(중앙값 7일·95% 47일). 전환율·ROAS 를 다른 달과 비교하면 안 됩니다.`,
   }
 }
 
@@ -93,7 +113,8 @@ export const AD_MEDIA_META: {
     // RESERVE_PATH='NAVER' 는 '네이버에서 예약했다' 이지 '예약광고를 클릭했다' 가 아니다.
     // 자연검색·지도·플레이스·재방문 환자도 네이버 예약을 쓴다.
     attribution: '예약경로 기반 추정',
-    attributionNote: '네이버 예약 이용자를 광고 성과로 추정합니다. 자연검색·지도·재방문 유입이 섞여 있어 실제 광고 기여보다 크게 잡힐 수 있습니다.',
+    attributionNote:
+      '네이버 예약 이용자를 광고 성과로 추정합니다. 자연검색·지도·재방문 유입이 섞여 있어 실제 광고 기여보다 크게 잡힐 수 있습니다.',
     badge: 'N',
   },
   {
@@ -102,11 +123,13 @@ export const AD_MEDIA_META: {
     sub: '네이버 · 검색 상품',
     channel: null,
     attribution: '귀속 불가',
-    attributionNote: '유입이 여러 채널로 흩어져 매출을 붙일 수 없습니다. 비용만 기록합니다.',
+    attributionNote:
+      '유입이 여러 채널로 흩어져 매출을 붙일 수 없습니다. 비용만 기록합니다.',
     // 2026-01~08 실측: 포털 유입으로 보이는 내원동기 1,582건 중 네이버 채널에 잡힌 건 440건뿐이고
     // 나머지는 홈페이지·인콜·아웃콜로 흩어진다. 분모는 광고비 전액인데 분자는 일부라
     // ROAS 를 내면 네이버가 실제보다 나쁘게 나오고, 그 숫자로 예산을 줄이면 오판이다.
-    blockedReason: '검색광고 유입이 홈페이지·인콜·네이버 예약으로 분산되어 매출 귀속이 불가능합니다.',
+    blockedReason:
+      '검색광고 유입이 홈페이지·인콜·네이버 예약으로 분산되어 매출 귀속이 불가능합니다.',
     badge: 'N',
   },
   {
@@ -117,7 +140,8 @@ export const AD_MEDIA_META: {
     blockedReason: null,
     // 내원동기(중)='모두닥' 은 환자 자기신고다. 유료 리드인지 자연 노출인지 구분되지 않는다.
     attribution: '내원동기 기반 추정',
-    attributionNote: '환자가 내원동기에 모두닥이라 적은 건을 광고 성과로 추정합니다. 유료 리드 여부는 구분되지 않습니다.',
+    attributionNote:
+      '환자가 내원동기에 모두닥이라 적은 건을 광고 성과로 추정합니다. 유료 리드 여부는 구분되지 않습니다.',
     badge: 'M',
   },
 ]
@@ -170,18 +194,23 @@ export function buildChannelRows(
       surgeryDone: f.surgeryDonePersons,
       revenueManwon,
       arpuManwon:
-        f.surgeryPaidPersons > 0 ? Math.round(revenueManwon / f.surgeryPaidPersons) : null,
+        f.surgeryPaidPersons > 0
+          ? Math.round(revenueManwon / f.surgeryPaidPersons)
+          : null,
       convRate: pct(f.surgeryDonePersons, f.reservedPersons),
       lensRate: pct(l?.lensEyes ?? 0, f.surgeryDonePersons),
       lensCostManwon,
       lensUnpricedEyes: unpriced,
       contribManwon,
-      contribRate: contribManwon === null ? null : pct(contribManwon, revenueManwon),
+      contribRate:
+        contribManwon === null ? null : pct(contribManwon, revenueManwon),
       reop: f.reopPersons,
       grade:
-        f.surgeryDonePersons < SAMPLE_LOW ? 'low'
-        : f.surgeryDonePersons < SAMPLE_WARN ? 'warn'
-        : 'ok',
+        f.surgeryDonePersons < SAMPLE_LOW
+          ? 'low'
+          : f.surgeryDonePersons < SAMPLE_WARN
+            ? 'warn'
+            : 'ok',
     }
   })
 }
@@ -238,9 +267,14 @@ export function buildAdRows(
       reserved: f?.reservedPersons ?? null,
       surgeryDone: f?.surgeryDonePersons ?? null,
       convRate: f ? pct(f.surgeryDonePersons, f.reservedPersons) : null,
-      cpaReserved: f && adManwon > 0 && f.reservedPersons > 0 ? adManwon / f.reservedPersons : null,
+      cpaReserved:
+        f && adManwon > 0 && f.reservedPersons > 0
+          ? adManwon / f.reservedPersons
+          : null,
       cpaSurgery:
-        f && adManwon > 0 && f.surgeryDonePersons > 0 ? adManwon / f.surgeryDonePersons : null,
+        f && adManwon > 0 && f.surgeryDonePersons > 0
+          ? adManwon / f.surgeryDonePersons
+          : null,
       revenueRoas: ratio(r?.revenueManwon),
       contribRoas: ratio(r?.contribManwon),
     }

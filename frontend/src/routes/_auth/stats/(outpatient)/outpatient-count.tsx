@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { OutpatientCountPage } from '#domain/core/outpatient/ui/OutpatientCountPage'
 
-export const Route = createFileRoute('/_auth/stats/(outpatient)/outpatient-count')({
+export const Route = createFileRoute(
+  '/_auth/stats/(outpatient)/outpatient-count',
+)({
   component: OutpatientCountPage,
   staticData: {
     page: {

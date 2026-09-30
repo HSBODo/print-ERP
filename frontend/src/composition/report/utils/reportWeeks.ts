@@ -1,4 +1,9 @@
-import { addDays, isoWeekMonday, isoWeeksInYear, toIsoDate } from '#shared/utils/isoWeek'
+import {
+  addDays,
+  isoWeekMonday,
+  isoWeeksInYear,
+  toIsoDate,
+} from '#shared/utils/isoWeek'
 
 /**
  * 레포트 주차 축 — 주차 레포트가 쓰는 연간 주차 열거.
@@ -57,7 +62,9 @@ export function weeksOfYear(year: number): ReportWeek[] {
       startDate: toIsoDate(monday),
       endDate: toIsoDate(sunday),
       daysByMonth,
-      months: Object.keys(daysByMonth).map(Number).sort((a, b) => a - b),
+      months: Object.keys(daysByMonth)
+        .map(Number)
+        .sort((a, b) => a - b),
       crossMonth: monday.getMonth() !== sunday.getMonth(),
       label: `${week}주`,
       rangeLabel: `${shortMd(monday)}~${shortMd(sunday)}`,
@@ -66,5 +73,7 @@ export function weeksOfYear(year: number): ReportWeek[] {
 }
 
 /** 해당 월에 하루라도 걸친 주차 — 월 경계 주차를 포함한다. */
-export const weeksOfMonth = (weeks: ReportWeek[], month: number): ReportWeek[] =>
-  weeks.filter((w) => w.months.includes(month))
+export const weeksOfMonth = (
+  weeks: ReportWeek[],
+  month: number,
+): ReportWeek[] => weeks.filter((w) => w.months.includes(month))

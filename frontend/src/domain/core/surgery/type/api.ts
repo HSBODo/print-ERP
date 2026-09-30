@@ -1,52 +1,95 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── Monthly (수술 건수 페이지용) ── */
 
 const surgeryMonthlyItemSchema = z.object({
-  year: z.number(), month: z.number(),
-  lasek: z.number(), lasik: z.number(), smile: z.number(), smilePro: z.number(),
-  icl: z.number(), tIcl: z.number(), kpl: z.number(), tKpl: z.number(), viva: z.number(),
+  year: z.number(),
+  month: z.number(),
+  lasek: z.number(),
+  lasik: z.number(),
+  smile: z.number(),
+  smilePro: z.number(),
+  icl: z.number(),
+  tIcl: z.number(),
+  kpl: z.number(),
+  tKpl: z.number(),
+  viva: z.number(),
   // presbyond: 노안 레이저 / piolPatients: PIOL DISTINCT 환자 수(유형별 합산 아님).
   // 마트 재적재 전 옛 응답과의 호환을 위해 optional.
-  presbyond: z.number().optional(), piolPatients: z.number().optional(),
-  catMulti: z.number(), catMono: z.number(), catEdof: z.number(),
-  xtra: z.number().optional(), waveVision: z.number().optional(), monoVision: z.number().optional(),
-  contra: z.number().optional(), personal: z.number().optional(),
-  lasekEx: z.number().optional(), lasekRed: z.number().optional(),
-  reoperation: z.number().optional(), reopLaser: z.number().optional(), reopLens: z.number().optional(),
-  visionPatients: z.number().optional(), cataractPatients: z.number().optional(),
+  presbyond: z.number().optional(),
+  piolPatients: z.number().optional(),
+  catMulti: z.number(),
+  catMono: z.number(),
+  catEdof: z.number(),
+  xtra: z.number().optional(),
+  waveVision: z.number().optional(),
+  monoVision: z.number().optional(),
+  contra: z.number().optional(),
+  personal: z.number().optional(),
+  lasekEx: z.number().optional(),
+  lasekRed: z.number().optional(),
+  reoperation: z.number().optional(),
+  reopLaser: z.number().optional(),
+  reopLens: z.number().optional(),
+  visionPatients: z.number().optional(),
+  cataractPatients: z.number().optional(),
   total: z.number(),
 })
 export type SurgeryMonthlyItem = z.infer<typeof surgeryMonthlyItemSchema>
-export const surgeryMonthlyResponseSchema = apiResponseOf(z.array(surgeryMonthlyItemSchema))
+export const surgeryMonthlyResponseSchema = apiResponseOf(
+  z.array(surgeryMonthlyItemSchema),
+)
 
 /* ── Daily (수술별 비중 일별 모드용) ── */
 
 const surgeryDailyItemSchema = z.object({
   date: z.string(), // YYYY-MM-DD
-  lasek: z.number(), lasik: z.number(), smile: z.number(), smilePro: z.number(),
-  icl: z.number(), tIcl: z.number(), kpl: z.number(), tKpl: z.number(), viva: z.number(),
+  lasek: z.number(),
+  lasik: z.number(),
+  smile: z.number(),
+  smilePro: z.number(),
+  icl: z.number(),
+  tIcl: z.number(),
+  kpl: z.number(),
+  tKpl: z.number(),
+  viva: z.number(),
   // presbyond: 노안 레이저 / piolPatients: PIOL DISTINCT 환자 수(유형별 합산 아님).
   // 마트 재적재 전 옛 응답과의 호환을 위해 optional.
-  presbyond: z.number().optional(), piolPatients: z.number().optional(),
-  catMulti: z.number(), catMono: z.number(), catEdof: z.number(),
-  xtra: z.number().optional(), waveVision: z.number().optional(), monoVision: z.number().optional(),
-  contra: z.number().optional(), personal: z.number().optional(),
-  lasekEx: z.number().optional(), lasekRed: z.number().optional(),
-  reoperation: z.number().optional(), reopLaser: z.number().optional(), reopLens: z.number().optional(),
-  visionPatients: z.number().optional(), cataractPatients: z.number().optional(),
+  presbyond: z.number().optional(),
+  piolPatients: z.number().optional(),
+  catMulti: z.number(),
+  catMono: z.number(),
+  catEdof: z.number(),
+  xtra: z.number().optional(),
+  waveVision: z.number().optional(),
+  monoVision: z.number().optional(),
+  contra: z.number().optional(),
+  personal: z.number().optional(),
+  lasekEx: z.number().optional(),
+  lasekRed: z.number().optional(),
+  reoperation: z.number().optional(),
+  reopLaser: z.number().optional(),
+  reopLens: z.number().optional(),
+  visionPatients: z.number().optional(),
+  cataractPatients: z.number().optional(),
   total: z.number(),
 })
 export type SurgeryDailyItem = z.infer<typeof surgeryDailyItemSchema>
 
 /** 응답 메타 — 출처(마트/라이브) 표시용. NON_NULL이라 대부분 optional. */
-const surgeryDailyMetaSchema = z.object({
-  source: z.enum(['LIVE', 'MART', 'UNAVAILABLE']).optional(),
-  period: z.string().optional(),
-}).optional()
+const surgeryDailyMetaSchema = z
+  .object({
+    source: z.enum(['LIVE', 'MART', 'UNAVAILABLE']).optional(),
+    period: z.string().optional(),
+  })
+  .optional()
 export type SurgeryDailyMeta = z.infer<typeof surgeryDailyMetaSchema>
-export const surgeryDailyResponseSchema = apiResponseOf(z.array(surgeryDailyItemSchema), surgeryDailyMetaSchema)
+export const surgeryDailyResponseSchema = apiResponseOf(
+  z.array(surgeryDailyItemSchema),
+  surgeryDailyMetaSchema,
+)
 
 /**
  * 수술자 리스트 — 기준일은 수술일자, 보조일은 검사일자.
@@ -99,7 +142,9 @@ const surgeryListItemSchema = z.object({
 
 export type SurgeryListItem = z.infer<typeof surgeryListItemSchema>
 
-export const surgeryListResponseSchema = apiResponseOf(z.array(surgeryListItemSchema))
+export const surgeryListResponseSchema = apiResponseOf(
+  z.array(surgeryListItemSchema),
+)
 
 /**
  * 재수술 후보 — RE_OPERATION 원본 행 + 자동판정(포함/제외)·제외사유.
@@ -125,7 +170,9 @@ const reoperationCandidateSchema = z.object({
 
 export type ReoperationCandidate = z.infer<typeof reoperationCandidateSchema>
 
-export const reoperationCandidatesResponseSchema = apiResponseOf(z.array(reoperationCandidateSchema))
+export const reoperationCandidatesResponseSchema = apiResponseOf(
+  z.array(reoperationCandidateSchema),
+)
 
 /**
  * 재수술 검토 판정 저장·조회 — (차트번호, 수술일) 유니크로 upsert.
@@ -143,11 +190,17 @@ const reoperationDecisionRowSchema = z.object({
   updatedBy: z.string().nullish(),
 })
 
-export type ReoperationDecisionRow = z.infer<typeof reoperationDecisionRowSchema>
+export type ReoperationDecisionRow = z.infer<
+  typeof reoperationDecisionRowSchema
+>
 
-export const reoperationDecisionListResponseSchema = apiResponseOf(z.array(reoperationDecisionRowSchema))
+export const reoperationDecisionListResponseSchema = apiResponseOf(
+  z.array(reoperationDecisionRowSchema),
+)
 
-export const reoperationDecisionSaveResponseSchema = apiResponseOf(z.array(reoperationDecisionRowSchema))
+export const reoperationDecisionSaveResponseSchema = apiResponseOf(
+  z.array(reoperationDecisionRowSchema),
+)
 
 export interface ReoperationDecisionSaveItem {
   chartNo: string

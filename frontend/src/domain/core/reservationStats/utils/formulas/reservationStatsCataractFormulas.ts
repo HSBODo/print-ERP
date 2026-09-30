@@ -41,7 +41,10 @@ export interface CataractChannelRow {
 
 // 백내장 총예약 = ★신환 + TM 예약수 + 카톡 백내장 검사예약 + 온라인 예약수 (채널 예약 합)
 const cataractTotal = (counts: CataractStatsCounts): number =>
-  counts.newPatient + counts.tmReservation + counts.kakaoCataractReservation + counts.onlineReservation
+  counts.newPatient +
+  counts.tmReservation +
+  counts.kakaoCataractReservation +
+  counts.onlineReservation
 
 export const computeCataractChannelRow = (
   counts: CataractStatsCounts,

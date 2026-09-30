@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { ReservationChannelPage } from '#domain/core/marketing/ui/ReservationChannelPage'
 
-export const Route = createFileRoute('/_auth/stats/(reservation)/reservation-channel')({
+export const Route = createFileRoute(
+  '/_auth/stats/(reservation)/reservation-channel',
+)({
   component: ReservationChannelPage,
   staticData: {
     page: {

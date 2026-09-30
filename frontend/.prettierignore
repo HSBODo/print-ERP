@@ -1,0 +1,7 @@
+dist
+storybook-static
+coverage
+package-lock.json
+src/routeTree.gen.ts
+# backend/new_대쉬보드_v4 정본의 배포용 복사본 — 여기서 포맷하면 정본과 갈라진다
+public/guide

@@ -41,7 +41,10 @@ export function usePagination<T>(
   const pageMax = Math.max(1, Math.ceil(total / pageSize))
   const safePage = Math.min(page, pageMax)
   const start = (safePage - 1) * pageSize
-  const pageRows = useMemo(() => rows.slice(start, start + pageSize), [rows, start, pageSize])
+  const pageRows = useMemo(
+    () => rows.slice(start, start + pageSize),
+    [rows, start, pageSize],
+  )
 
   return {
     page: safePage,

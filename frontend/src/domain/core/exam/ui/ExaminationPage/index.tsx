@@ -1,18 +1,26 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#shared/ui/Card'
+
+import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#shared/ui/Card'
+import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useExaminationTrend } from '../../hooks/useExaminationTrend'
-import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
+
+import { useExaminationTrend } from '../../hooks/useExaminationTrend'
 
 type ExamTabKey = 'all' | 'visionCorrection' | 'dreamlens' | 'cataract'
 
@@ -32,10 +40,17 @@ const isFutureMonth = (year: number, monthIndex: number) =>
   (year === now.getFullYear() && monthIndex > now.getMonth())
 
 export function ExaminationPage() {
-  const filter = useFilterBar('year', [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR])
+  const filter = useFilterBar('year', [
+    CURRENT_YEAR - 2,
+    CURRENT_YEAR - 1,
+    CURRENT_YEAR,
+  ])
   const [tab, setTab] = useState<ExamTabKey>('all')
 
-  const sortedYears = useMemo(() => [...filter.years].sort((a, b) => a - b), [filter.years])
+  const sortedYears = useMemo(
+    () => [...filter.years].sort((a, b) => a - b),
+    [filter.years],
+  )
   const { dataMap, isLoading, isError } = useExaminationTrend(sortedYears)
 
   const series = useMemo(() => {
@@ -43,7 +58,10 @@ export function ExaminationPage() {
     return sortedYears.map((year, index) => ({
       year,
       key: `y${year}`,
-      color: RECENCY_COLORS[Math.min(sortedYears.length - 1 - index, RECENCY_COLORS.length - 1)],
+      color:
+        RECENCY_COLORS[
+          Math.min(sortedYears.length - 1 - index, RECENCY_COLORS.length - 1)
+        ],
       isLatest: year === latestYear,
     }))
   }, [sortedYears])
@@ -51,7 +69,9 @@ export function ExaminationPage() {
   // 필터 칩 색상을 차트 라인 색상과 동일하게 매핑 (연도 → 색)
   const yearChipColors = useMemo(() => {
     const map: Record<number, string> = {}
-    series.forEach((s) => { map[s.year] = s.color })
+    series.forEach((s) => {
+      map[s.year] = s.color
+    })
     return map
   }, [series])
 
@@ -73,8 +93,8 @@ export function ExaminationPage() {
           row[`y${year}`] = isFutureMonth(year, monthIndex)
             ? null
             : tab === 'all'
-              ? item?.examTotal ?? 0
-              : item?.[tab] ?? 0
+              ? (item?.examTotal ?? 0)
+              : (item?.[tab] ?? 0)
         })
         return row
       }),
@@ -84,14 +104,20 @@ export function ExaminationPage() {
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[40rem] flex-col gap-6">
       <FilterBar {...filter} yearOnly yearChipColors={yearChipColors} />
-      <PanelShell isLoading={isLoading} isError={isError} variant="line" className="flex min-h-0 flex-1 flex-col">
+      <PanelShell
+        isLoading={isLoading}
+        isError={isError}
+        variant="line"
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <Card className="flex min-h-0 flex-1 flex-col border-border/70 shadow-sm">
           <CardHeader className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <CardTitle>월별 추이 비교</CardTitle>
                 <CardDescription>
-                  전체는 시력교정, 드림렌즈, 백내장을 합산한 흐름으로, 탭을 선택하면 해당 검사만 표시됩니다.
+                  전체는 시력교정, 드림렌즈, 백내장을 합산한 흐름으로, 탭을
+                  선택하면 해당 검사만 표시됩니다.
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-1 rounded-md bg-gray-100 p-1">
@@ -118,18 +144,33 @@ export function ExaminationPage() {
                   className="flex items-center gap-2 text-sm font-bold"
                   style={{ color: s.isLatest ? s.color : '#374151' }}
                 >
-                  <span className="h-[3px] w-8 rounded-full" style={{ backgroundColor: s.color }} />
+                  <span
+                    className="h-[3px] w-8 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                  />
                   {s.year}
                 </span>
               ))}
             </div>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-            <ChartContainer config={chartConfig} className="aspect-auto min-h-0 w-full flex-1">
+            <ChartContainer
+              config={chartConfig}
+              className="aspect-auto min-h-0 w-full flex-1"
+            >
               {/* left/right 여백과 YAxis 폭을 테이블 colgroup(80px)과 맞춰 월 라벨이 표 컬럼 중앙에 정렬됨 */}
-              <LineChart data={chartData} margin={{ top: 24, left: 0, right: 80 }}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 24, left: 0, right: 80 }}
+              >
                 <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" scale="band" tickLine={false} axisLine={false} tickMargin={8} />
+                <XAxis
+                  dataKey="month"
+                  scale="band"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
                 <YAxis
                   width={80}
                   tickLine={false}
@@ -157,7 +198,9 @@ export function ExaminationPage() {
                             fontSize: 14,
                             fontWeight: 700,
                             formatter: (value: unknown) =>
-                              typeof value === 'number' ? formatAxisNumber(value) : '',
+                              typeof value === 'number'
+                                ? formatAxisNumber(value)
+                                : '',
                           }
                         : undefined
                     }
@@ -179,7 +222,10 @@ export function ExaminationPage() {
                   <tr className="border-y border-border bg-muted/40">
                     <th className="py-2" />
                     {MONTHS.map((month) => (
-                      <th key={month} className="py-2 font-semibold text-foreground">
+                      <th
+                        key={month}
+                        className="py-2 font-semibold text-foreground"
+                      >
                         {month}
                       </th>
                     ))}
@@ -194,29 +240,31 @@ export function ExaminationPage() {
                     }, 0)
 
                     return (
-                    <tr key={s.year} className="border-b border-border">
-                      <td className="py-2">
-                        <span
-                          className="flex items-center justify-center gap-1.5 font-semibold"
-                          style={{ color: s.isLatest ? s.color : undefined }}
-                        >
+                      <tr key={s.year} className="border-b border-border">
+                        <td className="py-2">
                           <span
-                            className="h-[3px] w-5 rounded-full"
-                            style={{ backgroundColor: s.color }}
-                          />
-                          {s.year}
-                        </span>
-                      </td>
-                      {MONTHS.map((_, monthIndex) => {
-                        const value = chartData[monthIndex][s.key]
-                        return (
-                          <td key={monthIndex} className="py-2 tabular-nums">
-                            {value === null ? '' : formatAxisNumber(value as number)}
-                          </td>
-                        )
-                      })}
-                      <td className="py-2 font-semibold tabular-nums">{formatAxisNumber(total)}</td>
-                    </tr>
+                            className="flex items-center justify-center gap-1.5 font-semibold"
+                            style={{ color: s.isLatest ? s.color : undefined }}
+                          >
+                            <span
+                              className="h-[3px] w-5 rounded-full"
+                              style={{ backgroundColor: s.color }}
+                            />
+                            {s.year}
+                          </span>
+                        </td>
+                        {MONTHS.map((_, monthIndex) => {
+                          const value = chartData[monthIndex][s.key]
+                          return (
+                            <td key={monthIndex} className="py-2 tabular-nums">
+                              {value === null ? '' : formatAxisNumber(value)}
+                            </td>
+                          )
+                        })}
+                        <td className="py-2 font-semibold tabular-nums">
+                          {formatAxisNumber(total)}
+                        </td>
+                      </tr>
                     )
                   })}
                 </tbody>
