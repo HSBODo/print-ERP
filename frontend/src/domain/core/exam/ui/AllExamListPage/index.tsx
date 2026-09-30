@@ -58,7 +58,6 @@ export function AllExamListPage() {
   const [draftTo, setDraftTo] = useState(DEFAULT_TO)
   const [queryFrom, setQueryFrom] = useState(DEFAULT_FROM)
   const [queryTo, setQueryTo] = useState(DEFAULT_TO)
-  const [hasSearched, setHasSearched] = useState(false)
 
   const [examGroup, setExamGroup] = useState<string>('전체')
   const [oneDayFilter, setOneDayFilter] = useState<string>('전체')
@@ -69,8 +68,8 @@ export function AllExamListPage() {
 
   const [sortState, setSortState] = useState<SortState>(null)
 
-  const { rows, isLoading, isFetching, isError } = useAllExamList(queryFrom, queryTo, hasSearched)
-  const showLoading = hasSearched && (isLoading || isFetching)
+  const { rows, isLoading, isFetching, isError } = useAllExamList(queryFrom, queryTo)
+  const showLoading = isLoading || isFetching
 
   // 토글 필터(즉시 반영) + 키워드
   const filtered = useMemo(() => {
@@ -104,7 +103,6 @@ export function AllExamListPage() {
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
-    setHasSearched(true)
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
     pagination.resetPage()
@@ -150,7 +148,6 @@ export function AllExamListPage() {
     setKeyword('')
     pagination.setPageSize(DEFAULT_PAGE_SIZE)
     setSortState(null)
-    setHasSearched(false)
   }
 
   const handleSort = (key: string) => {
@@ -287,7 +284,7 @@ export function AllExamListPage() {
           <Button
             type="button"
             size="sm"
-            disabled={!hasSearched || sorted.length === 0}
+            disabled={sorted.length === 0}
             className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
             onClick={handleDownloadCsv}
             title="조회 결과 전체를 CSV로 내려받기"
@@ -360,7 +357,7 @@ export function AllExamListPage() {
                   {!showLoading && filtered.length === 0 && (
                     <tr>
                       <td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">
-                        {hasSearched ? '조회 결과가 없습니다.' : '기간을 선택한 뒤 조회 버튼을 눌러주세요.'}
+                        조회 결과가 없습니다.
                       </td>
                     </tr>
                   )}

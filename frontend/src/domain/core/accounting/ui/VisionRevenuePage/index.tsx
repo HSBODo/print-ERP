@@ -27,7 +27,6 @@ const DEFAULT_EXTRA_FILTERS: VisionExtraFilters = {
   breakdown: '전체',
 }
 
-const IDLE_MESSAGE = '기간을 고르고 [조회]를 누르면 시력교정 매출 내역을 불러옵니다.'
 
 /** 결제수단 — 원본 수납방법 중 '카드' 만 카드, 나머지(현금·현금영수·통장…)는 현금 버킷 (레거시 피벗 기준). */
 const paymentGroup = (row: VisionReceipt) => row.paymentMethod === '카드' ? '카드' : '현금'
@@ -49,16 +48,16 @@ const optionsOf = (rows: VisionReceipt[], key: 'category' | 'acquirer') => [
   ...new Set(rows.map((row) => row[key]).filter(Boolean).sort((a, b) => a.localeCompare(b, 'ko'))),
 ]
 
-/** 진입·초기화 = 필터 기본값 + 빈 표. [조회] 를 눌러야 불러온다 (진료 수납 화면과 같은 규칙). */
+/** 진입·초기화 = 필터 기본값으로 바로 조회. 이후 조건 변경은 [조회] 를 눌러야 반영된다 (진료 수납 화면과 같은 규칙). */
 export function VisionRevenuePage() {
   const [draft, setDraft] = useState(DEFAULT_FILTER)
-  const [applied, setApplied] = useState<AccountingFilterState | null>(null)
+  const [applied, setApplied] = useState(DEFAULT_FILTER)
   const [extra, setExtra] = useState(DEFAULT_EXTRA_FILTERS)
   const [resetKey, setResetKey] = useState(0)
-  const query = useVisionReceipts(applied ? { from: applied.from, to: applied.to } : null)
+  const query = useVisionReceipts({ from: applied.from, to: applied.to })
   const status = useAccountingStatus()
   const rows = useMemo(
-    () => (applied ? filterRows(query.data ?? [], applied, extra) : []),
+    () => filterRows(query.data ?? [], applied, extra),
     [query.data, applied, extra],
   )
   const categories = useMemo(() => optionsOf(query.data ?? [], 'category'), [query.data])
@@ -74,7 +73,7 @@ export function VisionRevenuePage() {
   }
   const reset = () => {
     setDraft(DEFAULT_FILTER)
-    setApplied(null)
+    setApplied(DEFAULT_FILTER)
     setExtra(DEFAULT_EXTRA_FILTERS)
     setResetKey((key) => key + 1)
   }
@@ -88,7 +87,7 @@ export function VisionRevenuePage() {
         onChange={setDraft}
         onSearch={search}
         onReset={reset}
-        onCsv={() => downloadVisionRevenueCsv(rows, applied?.from ?? draft.from, applied?.to ?? draft.to)}
+        onCsv={() => downloadVisionRevenueCsv(rows, applied.from, applied.to)}
       />
       <VisionRevenueFilters
         value={extra}
@@ -105,7 +104,6 @@ export function VisionRevenuePage() {
           key={resetKey}
           rows={rows}
           breakdown={extra.breakdown}
-          emptyMessage={applied ? undefined : IDLE_MESSAGE}
         />
       )}
     </div>

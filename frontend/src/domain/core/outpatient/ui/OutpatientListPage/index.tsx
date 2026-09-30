@@ -50,10 +50,9 @@ export function OutpatientListPage() {
   const [queryType, setQueryType] = useState('전체')
   const [queryKeyword, setQueryKeyword] = useState('')
   const [sortState, setSortState] = useState<SortState>(null)
-  const [hasSearched, setHasSearched] = useState(false)
 
-  const { rows, isLoading, isFetching, isError } = useOutpatientList(queryFrom, queryTo, hasSearched)
-  const showSkeleton = hasSearched && (isLoading || isFetching)
+  const { rows, isLoading, isFetching, isError } = useOutpatientList(queryFrom, queryTo)
+  const showSkeleton = isLoading || isFetching
 
   const typeOptions = useMemo(() => {
     const set = new Set(rows.map((r) => r.reserveType.trim()).filter(Boolean))
@@ -91,7 +90,6 @@ export function OutpatientListPage() {
   const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
 
   const handleSearch = () => {
-    setHasSearched(true)
     pagination.resetPage()
     setQueryFrom(draftPeriodMode === 'monthly' ? toMonthStart(toMonthValue(draftFrom)) : draftFrom)
     setQueryTo(draftPeriodMode === 'monthly' ? toMonthEnd(toMonthValue(draftTo)) : draftTo)
@@ -117,7 +115,6 @@ export function OutpatientListPage() {
     setQueryType('전체')
     setQueryKeyword('')
     pagination.setPageSize(DEFAULT_PAGE_SIZE)
-    setHasSearched(false)
   }
 
   const handleDownloadCsv = () => {
@@ -311,7 +308,7 @@ export function OutpatientListPage() {
           <Button
             type="button"
             size="sm"
-            disabled={!hasSearched || sortedRows.length === 0}
+            disabled={sortedRows.length === 0}
             className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
             onClick={handleDownloadCsv}
             title="조회 결과 전체를 CSV로 내려받기"
@@ -397,7 +394,7 @@ export function OutpatientListPage() {
                   {!showSkeleton && filtered.length === 0 && (
                     <tr>
                       <td colSpan={COLUMNS.length} className="px-3 py-12 text-center text-sm text-muted-foreground">
-                        {hasSearched ? '검색 결과가 없습니다.' : '조회 조건을 선택한 뒤 조회 버튼을 눌러주세요.'}
+                        검색 결과가 없습니다.
                       </td>
                     </tr>
                   )}

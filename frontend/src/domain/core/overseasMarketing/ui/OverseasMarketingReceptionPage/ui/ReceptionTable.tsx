@@ -28,13 +28,12 @@ type Props = {
   deletePending: boolean
   fetching: boolean
   isError: boolean
-  hasQuery: boolean
 }
 
 export function ReceptionTable(props: Props) {
   const {
     pagination, sort, onToggleSort,
-    onEdit, onDelete, onOpenMatch, deletePending, fetching, isError, hasQuery,
+    onEdit, onDelete, onOpenMatch, deletePending, fetching, isError,
   } = props
 
   const renderValue = (row: OverseasMarketingReception, column: TableColumn) => {
@@ -81,7 +80,7 @@ export function ReceptionTable(props: Props) {
                       : renderValue(row, column)}
                 </td>)}
               </tr>)}
-              {!fetching && !isError && !pagination.pageRows.length && <tr><td colSpan={COLUMNS.length} className="py-14 text-center text-sm text-muted-foreground">{hasQuery ? '조회 결과가 없습니다.' : '조회 버튼을 클릭하세요.'}</td></tr>}
+              {!fetching && !isError && !pagination.pageRows.length && <tr><td colSpan={COLUMNS.length} className="py-14 text-center text-sm text-muted-foreground">조회 결과가 없습니다.</td></tr>}
             </tbody>
           </table>
         </div>

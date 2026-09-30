@@ -129,13 +129,12 @@ export function ReservationListPage() {
   const [queryKeyword, setQueryKeyword] = useState('')
   const [channel, setChannel] = useState<Channel>('전체')
   const [subChannel, setSubChannel] = useState<string | null>(null)
-  const [hasSearched, setHasSearched] = useState(false)
 
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
 
   const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
-  const { rows, isLoading, isFetching, isError } = useReservationList(from, to, hasSearched)
-  const showLoading = hasSearched && (isLoading || isFetching)
+  const { rows, isLoading, isFetching, isError } = useReservationList(from, to)
+  const showLoading = isLoading || isFetching
 
   // 채널 + 세부채널 필터(즉시 반영)
   const channelFiltered = useMemo(() => {
@@ -164,7 +163,6 @@ export function ReservationListPage() {
   const pagination = usePagination(sorted)
 
   const handleSearch = () => {
-    setHasSearched(true)
     setQueryMonth(draftMonth)
     setQueryKeyword(draftKeyword)
     pagination.resetPage()
@@ -179,7 +177,6 @@ export function ReservationListPage() {
     setSubChannel(null)
     pagination.setPageSize(DEFAULT_PAGE_SIZE)
     setSort(null)
-    setHasSearched(false)
   }
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
@@ -267,7 +264,7 @@ export function ReservationListPage() {
           <Button
             type="button"
             size="sm"
-            disabled={!hasSearched || sorted.length === 0}
+            disabled={sorted.length === 0}
             className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
             onClick={handleDownloadCsv}
             title="조회 결과 전체를 CSV로 내려받기"
@@ -382,7 +379,7 @@ export function ReservationListPage() {
                   {!showLoading && detail.length === 0 && (
                     <tr>
                       <td colSpan={15} className="px-3 py-12 text-center text-sm text-muted-foreground">
-                        {hasSearched ? '조회 결과가 없습니다.' : '기준 월을 선택한 뒤 조회 버튼을 눌러주세요.'}
+                        조회 결과가 없습니다.
                       </td>
                     </tr>
                   )}
