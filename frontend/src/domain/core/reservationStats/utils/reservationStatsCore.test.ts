@@ -6,8 +6,8 @@ import {
   monthShortLabel,
   pct1,
   pctInt,
-  weekOf,
   weekdayKo,
+  weekOf,
 } from './reservationStatsCore'
 
 describe('reservation stats core helpers', () => {
@@ -38,7 +38,7 @@ describe('reservation stats core helpers', () => {
   })
 
   it('creates count helpers for domain-specific numeric records', () => {
-    type Counts = {
+    interface Counts {
       inbound: number
       reservation: number
       cancel: number

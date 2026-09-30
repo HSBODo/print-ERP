@@ -4,15 +4,22 @@ import {
   AreaChart,
   Bar,
   BarChart,
+  CartesianGrid,
+  ComposedChart,
   Line,
   LineChart,
-  ComposedChart,
   Pie,
   PieChart,
-  CartesianGrid,
   XAxis,
   YAxis,
 } from 'recharts'
+
+import {
+  CHART_COLORS,
+  MONTHS,
+  YEAR_STROKE_PATTERNS,
+} from '#shared/constants/chart'
+import { useIsMobile } from '#shared/hooks/useIsMobile'
 import {
   Card,
   CardContent,
@@ -21,37 +28,32 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
-import { KpiCard } from '#shared/ui/KpiCard'
-import { PanelShell } from '#shared/ui/PanelShell'
 import { FilterBar } from '#shared/ui/FilterBar'
 import {
-  useFilterBar,
   type FilterBarControls,
+  useFilterBar,
 } from '#shared/ui/FilterBar/useFilterBar'
-import {
-  CHART_COLORS,
-  MONTHS,
-  YEAR_STROKE_PATTERNS,
-} from '#shared/constants/chart'
+import { KpiCard } from '#shared/ui/KpiCard'
+import { PanelShell } from '#shared/ui/PanelShell'
+import { StatsGrid } from '#shared/ui/StatsGrid'
+import { StatsStack } from '#shared/ui/StatsStack'
 import {
   changeRate,
   formatAxisNumber,
   formatAxisPercent,
   periodLabel,
 } from '#shared/utils/stats'
-import { useIsMobile } from '#shared/hooks/useIsMobile'
+
+import { useReservationComposition } from '../../hooks/useReservationComposition'
 import { useReservationKpi } from '../../hooks/useReservationKpi'
 import { useReservationTrend } from '../../hooks/useReservationTrend'
-import { useReservationComposition } from '../../hooks/useReservationComposition'
-import { StatsGrid } from '#shared/ui/StatsGrid'
-import { StatsStack } from '#shared/ui/StatsStack'
 
 /* ── 상수 ── */
 type MetricKey = 'total' | 'surgery' | 'outpatient' | 'dreamlens'

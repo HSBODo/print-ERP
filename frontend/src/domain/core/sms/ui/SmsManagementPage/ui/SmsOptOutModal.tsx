@@ -1,7 +1,9 @@
-import { useState } from 'react'
 import { AlertTriangle, RefreshCw, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
+
 import { Button } from '#shared/ui/Button'
+
 import {
   useReleaseSmsOptOut,
   useSmsOptOuts,
@@ -46,7 +48,7 @@ export function SmsOptOutModal({
           toast.info('이미 삭제된 항목입니다.')
         }
       },
-      onError: (err) => toast.error(`해제 실패: ${(err as Error).message}`),
+      onError: (err) => toast.error(`해제 실패: ${err.message}`),
     })
   }
 

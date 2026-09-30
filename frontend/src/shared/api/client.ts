@@ -1,12 +1,7 @@
 import axios from 'axios'
 
 type QueryValue =
-  | string
-  | number
-  | boolean
-  | Array<string | number | boolean>
-  | null
-  | undefined
+  string | number | boolean | (string | number | boolean)[] | null | undefined
 
 /** 배열은 콤마로 잇고(years=2025,2026) nullish 는 뺀다 — 백엔드가 이 형식을 받는다. */
 const serializeParams = (params: Record<string, QueryValue>) => {

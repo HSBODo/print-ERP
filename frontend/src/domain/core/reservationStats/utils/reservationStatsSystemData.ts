@@ -8,15 +8,15 @@
 
 import type { ReservationStatsDailyCounts } from '../type/api'
 import {
+  type ChannelRow,
+  computeSystemChannelRow,
+  type SystemStatsCounts,
+} from './formulas/reservationStatsSystemFormulas'
+import {
   createCountHelpers,
   type Granularity,
   type RowTier,
 } from './reservationStatsCore'
-import {
-  computeSystemChannelRow,
-  type ChannelRow,
-  type SystemStatsCounts,
-} from './formulas/reservationStatsSystemFormulas'
 import { buildStatsCsv, type CsvColumnGroup } from './reservationStatsCsv'
 import type { CellFormat } from './reservationStatsFormat'
 import {
@@ -24,7 +24,7 @@ import {
   buildRangeDisplayRowsFromCounts,
   type StatsDisplayRow,
 } from './reservationStatsRows'
-import { SUMMARY_COLUMNS, computeSummaryRow } from './reservationStatsSummary'
+import { computeSummaryRow, SUMMARY_COLUMNS } from './reservationStatsSummary'
 
 export {
   DEFAULT_PERIOD,

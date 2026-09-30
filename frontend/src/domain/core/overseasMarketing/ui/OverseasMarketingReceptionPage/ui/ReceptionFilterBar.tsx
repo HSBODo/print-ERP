@@ -6,12 +6,14 @@ import {
   RotateCcw,
   Search,
 } from 'lucide-react'
+
+import { Button } from '#shared/ui/Button'
+import { DateRangePicker } from '#shared/ui/DateRangePicker'
+
 import type {
   OverseasMarketingDateType,
   OverseasMarketingReceptionParams,
 } from '../../../type/api'
-import { Button } from '#shared/ui/Button'
-import { DateRangePicker } from '#shared/ui/DateRangePicker'
 import {
   createDefaultParams,
   DATE_TYPES,
@@ -33,7 +35,7 @@ function AdminBadge() {
   )
 }
 
-type Props = {
+interface Props {
   draft: OverseasMarketingReceptionParams
   onDraftChange: (next: OverseasMarketingReceptionParams) => void
   keyword: string

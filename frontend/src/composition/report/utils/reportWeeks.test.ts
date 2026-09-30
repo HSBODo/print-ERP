@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { weeksOfYear, weeksOfMonth } from './reportWeeks'
+import { describe, expect, it } from 'vitest'
+
+import { weeksOfMonth, weeksOfYear } from './reportWeeks'
 
 describe('weeksOfYear', () => {
   it('ISO 8601 주차를 따른다 (2026년 1주차 = 2025-12-29~2026-01-04)', () => {

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { StopReasonPage } from '#domain/core/consultation/ui/StopReasonPage'
 
 export const Route = createFileRoute('/_auth/stats/(consultation)/stop-reason')(

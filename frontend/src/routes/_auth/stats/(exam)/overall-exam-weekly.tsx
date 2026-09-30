@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { OverallExamWeeklyPage } from '#domain/core/overall/ui/OverallExamWeeklyPage'
 
 export const Route = createFileRoute('/_auth/stats/(exam)/overall-exam-weekly')(

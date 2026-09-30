@@ -18,7 +18,7 @@ export type ModoodocMonthlyFunnelRow = ModoodocMonthlyFunnelSource & {
   monthNumber: number
 }
 
-export type MonthRange = {
+export interface MonthRange {
   month: number
   from: string
   to: string

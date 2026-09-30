@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── Weekly (주간 검사자 종합지표 페이지용) ── */

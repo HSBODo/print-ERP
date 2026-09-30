@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+
+import type { SmsTarget, SmsTemplate } from '../../../type/api'
 import {
   groupOf,
   groupOptionsOf,
@@ -6,7 +8,6 @@ import {
   targetStateOf,
   tierCellOf,
 } from './smsTableModel'
-import type { SmsTarget, SmsTemplate } from '../../../type/api'
 
 /**
  * 문자 발송 관리 표의 **판정 규칙**을 고정한다.

@@ -1,7 +1,9 @@
-import { RotateCcw, Search, Download } from 'lucide-react'
+import { Download, RotateCcw, Search } from 'lucide-react'
+
 import { Button } from '#shared/ui/Button'
-import { reservationStatsSourceLabel } from '../../utils/reservationStatsMeta'
+
 import { type ReservationStatsResponseMeta } from '../../type/api'
+import { reservationStatsSourceLabel } from '../../utils/reservationStatsMeta'
 import {
   GRANULARITIES,
   type Granularity,

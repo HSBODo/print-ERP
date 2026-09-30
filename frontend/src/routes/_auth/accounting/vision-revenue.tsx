@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { VisionRevenuePage } from '#domain/core/accounting/ui/VisionRevenuePage'
 
 export const Route = createFileRoute('/_auth/accounting/vision-revenue')({

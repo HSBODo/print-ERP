@@ -1,13 +1,15 @@
+import { zodResolver } from '@hookform/resolvers/zod'
+import { X } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { X } from 'lucide-react'
 import { toast } from 'sonner'
+import { z } from 'zod'
+
+import type { UserDepartment, UserRole } from '#domain/support/session/session'
 import { Button } from '#shared/ui/Button'
+
 import { useCreateUser, useUpdateUser } from '../../hooks/useUsers'
 import type { UserRow } from '../../type/api'
-import type { UserDepartment, UserRole } from '#domain/support/session/session'
 
 /**
  * ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING 조합 강제
@@ -131,7 +133,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
         })
         toast.success(`${v.loginId} 계정 생성`)
       } else if (user) {
-        const v = values as UpdateForm
+        const v = values
         await updateMutation.mutateAsync({
           id: user.id,
           payload: {
@@ -182,7 +184,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               <input
                 type="text"
                 autoComplete="off"
-                {...register('loginId' as keyof CreateForm)}
+                {...register('loginId')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 placeholder="영문 소문자·숫자"
               />

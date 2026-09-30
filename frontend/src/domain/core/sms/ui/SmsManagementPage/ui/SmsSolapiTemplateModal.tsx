@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
 import { Loader2, RefreshCw, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { useSolapiTemplates } from '../../../hooks/useSmsManagement'
 import type { SmsSolapiTemplate } from '../../../type/api'
 
@@ -55,7 +56,7 @@ const GROUP_ORDER: Record<string, number> = {
 }
 
 /** 그룹 필터 옵션 — 라벨은 그룹 표시명과 동일하게 유지(수술 분류 컬럼과 대사). */
-const GROUP_OPTIONS: Array<{ value: string; label: string }> = [
+const GROUP_OPTIONS: { value: string; label: string }[] = [
   { value: 'ALL', label: '전체' },
   { value: 'SMILE', label: '스마일수술' },
   { value: 'LASIK', label: '라식' },
@@ -65,7 +66,7 @@ const GROUP_OPTIONS: Array<{ value: string; label: string }> = [
 ]
 
 /** 검수 상태 필터 옵션 — 조회 실패(found=false)도 별도 값으로 필터할 수 있게 한다. */
-const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
+const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'ALL', label: '전체' },
   { value: 'APPROVED', label: '승인 완료' },
   { value: 'INSPECTING', label: '검수 중' },
@@ -74,7 +75,7 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'NOT_FOUND', label: '조회 실패' },
 ]
 
-const TIER_OPTIONS: Array<{ value: string; label: string }> = [
+const TIER_OPTIONS: { value: string; label: string }[] = [
   { value: 'ALL', label: '전체' },
   { value: '1', label: '1차' },
   { value: '2', label: '2차' },
@@ -295,7 +296,7 @@ function FilterSelect({
   label: string
   value: string
   onChange: (value: string) => void
-  options: Array<{ value: string; label: string }>
+  options: { value: string; label: string }[]
 }) {
   return (
     <label className="flex items-center gap-1.5">

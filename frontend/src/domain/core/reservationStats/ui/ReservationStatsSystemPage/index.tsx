@@ -1,65 +1,65 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
 import { api } from '#shared/api/client'
+import { downloadCsv } from '#shared/utils/csv'
+
 import {
-  buildReservationStatsDiffCsv,
-  buildReservationStatsDrillDownCsv,
-  buildReservationStatsParityCsv,
-} from '../../utils/reservationStatsDiagnostics'
-import {
-  type ReservationStatsDiff,
-  type ReservationStatsDiffItem,
-  type ReservationStatsDrillDown,
-  type ReservationStatsParity,
-} from '../../type/api'
+  useReservationStatsSnapshots,
+  useReservationStatsSystem,
+  useReservationStatsSystemCellEdit,
+} from '../../hooks/useReservationStatsSystem'
 import {
   RESERVATION_STATS_EDITABLE_FIELDS,
   type ReservationStatsCellEdit,
   type ReservationStatsDailyCounts,
+  type ReservationStatsDiff,
+  type ReservationStatsDiffItem,
+  type ReservationStatsDrillDown,
   type ReservationStatsEditableField,
+  type ReservationStatsParity,
 } from '../../type/api'
-import { downloadCsv } from '#shared/utils/csv'
-import {
-  useReservationStatsSystem,
-  useReservationStatsSystemCellEdit,
-  useReservationStatsSnapshots,
-} from '../../hooks/useReservationStatsSystem'
-import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
-import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
-import {
-  CHANNEL_COLUMNS,
-  DEFAULT_PERIOD,
-  SUMMARY_COLUMNS,
-  buildReservationStatsCsv,
-  getRangeDisplayRowsFromCounts,
-  monthFullLabel,
-  monthShortLabel,
-  type ColumnMeta,
-  type DisplayRow,
-  type Granularity,
-  type SummaryColumnMeta,
-} from '../../utils/reservationStatsSystemData'
-import {
-  ReservationStatsTableHeader,
-  type StatsHeaderModel,
-  type StatsHeaderNode,
-} from '../ReservationStatsTableHeader'
 import {
   isSingleMonthRange,
   periodRange,
   validateRange,
 } from '../../utils/reservationStatsDateRange'
 import {
+  buildReservationStatsDiffCsv,
+  buildReservationStatsDrillDownCsv,
+  buildReservationStatsParityCsv,
+} from '../../utils/reservationStatsDiagnostics'
+import { editMarkTitle } from '../../utils/reservationStatsEditableCell.utils'
+import {
   formatChannelValue,
   formatNumber,
   formatSummaryValue,
 } from '../../utils/reservationStatsFormat'
-import { EditMark, EditableNumberCell } from './ReservationStatsEditableCell'
-import { editMarkTitle } from '../../utils/reservationStatsEditableCell.utils'
+import {
+  buildReservationStatsCsv,
+  CHANNEL_COLUMNS,
+  type ColumnMeta,
+  DEFAULT_PERIOD,
+  type DisplayRow,
+  getRangeDisplayRowsFromCounts,
+  type Granularity,
+  monthFullLabel,
+  monthShortLabel,
+  SUMMARY_COLUMNS,
+  type SummaryColumnMeta,
+} from '../../utils/reservationStatsSystemData'
 import {
   columnSpan,
   splitColumnGroups,
 } from '../../utils/reservationStatsTable'
+import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
+import {
+  ReservationStatsTableHeader,
+  type StatsHeaderModel,
+  type StatsHeaderNode,
+} from '../ReservationStatsTableHeader'
+import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
+import { EditableNumberCell, EditMark } from './ReservationStatsEditableCell'
 
 /**
  * 예약통계시스템 — 콜/온라인/채팅/취소 채널과 내원·부도·취소 종합을 한 줄(가로 스크롤) 표로 묶은 월간 종합표.
@@ -709,7 +709,7 @@ function BodyRow({
           return (
             <EditableNumberCell
               key={col.key}
-              value={channel[col.key] as number}
+              value={channel[col.key]}
               edit={edit}
               busy={isEditing}
               onSave={(next) =>
@@ -751,7 +751,7 @@ function BodyRow({
           return (
             <EditableNumberCell
               key={col.key}
-              value={summary[col.key] as number}
+              value={summary[col.key]}
               edit={edit}
               busy={isEditing}
               onSave={(next) =>

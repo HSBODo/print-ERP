@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { columnsToCsv, toCsv, type CsvColumn } from '#shared/utils/csv'
+import { columnsToCsv, type CsvColumn, toCsv } from '#shared/utils/csv'
 
 describe('toCsv', () => {
   it('헤더 + 행을 CRLF로 잇는다', () => {

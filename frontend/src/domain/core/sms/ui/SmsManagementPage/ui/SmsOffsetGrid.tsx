@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, Info, RotateCcw, Save } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+import { canSystemOp } from '#domain/support/session/session'
+import { useAuthStore } from '#domain/support/session/store'
 import { Button } from '#shared/ui/Button'
 import { Card } from '#shared/ui/Card'
+
 import {
   useSmsOffsets,
   useUpdateSmsOffsets,
 } from '../../../hooks/useSmsOffsets'
-import { useAuthStore } from '#domain/support/session/store'
-import { canSystemOp } from '#domain/support/session/session'
 import type { SmsMessageKind, SmsOffsetRow } from '../../../type/api'
 
 /**
@@ -41,14 +43,14 @@ const OFFSET_MAX = 30
 const AD_MIN_HOUR = 8
 const AD_MAX_HOUR = 20
 
-type OffsetDraft = {
+interface OffsetDraft {
   groupCode: string
   label: string
   tier1: number
   tier2: number
   tier3: number
 }
-type TierDraft = {
+interface TierDraft {
   tier1Time: string
   tier2Time: string
   tier3Time: string
@@ -247,7 +249,7 @@ export function SmsOffsetGrid() {
           setTierOverrides({})
           toast.success('저장 완료. 예정일·발송 시각이 새 값으로 반영됩니다.')
         },
-        onError: (err) => toast.error(`저장 실패: ${(err as Error).message}`),
+        onError: (err) => toast.error(`저장 실패: ${err.message}`),
       },
     )
   }

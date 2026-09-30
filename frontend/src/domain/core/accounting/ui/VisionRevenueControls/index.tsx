@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react'
+
 import type { AccountingFilterState } from '../../type/filter'
 import { monthRange, weeksOfMonth } from '../../utils/accountingPeriod'
 

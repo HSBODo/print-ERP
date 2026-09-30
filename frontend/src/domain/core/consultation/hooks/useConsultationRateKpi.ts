@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { consultationApi } from '../api'
 
 export function useConsultationRateKpi(years: number[]) {

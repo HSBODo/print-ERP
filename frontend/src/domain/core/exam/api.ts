@@ -2,18 +2,18 @@ import { api } from '#shared/api/client'
 import { apiResponseOf } from '#shared/api/utils'
 
 import {
-  examinationResponseSchema,
-  procedureExamResponseSchema,
   type AllExamListItem,
   allExamListResponseSchema,
   type CataractExamListItem,
   cataractExamListResponseSchema,
-  eoeisCheckupResultSchema,
   type EoeisCheckupResult,
-  type ExamCountByClassRow,
+  eoeisCheckupResultSchema,
   examCountByClassResponseSchema,
+  type ExamCountByClassRow,
+  examinationResponseSchema,
   type ExamListItem,
   examListResponseSchema,
+  procedureExamResponseSchema,
 } from './type/api'
 
 export const examApi = {

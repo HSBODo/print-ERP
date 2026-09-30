@@ -1,10 +1,12 @@
-import { useState } from 'react'
 import { X } from 'lucide-react'
-import type { OverseasMarketingReceptionInput } from '../../../type/api'
+import { useState } from 'react'
+
 import { Button } from '#shared/ui/Button'
 
+import type { OverseasMarketingReceptionInput } from '../../../type/api'
+
 type FieldKey = keyof OverseasMarketingReceptionInput
-type Field = {
+interface Field {
   key: FieldKey
   label: string
   type?: 'date' | 'textarea'

@@ -1,12 +1,13 @@
 import { type ComponentProps } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 
 export interface TrendLine {
@@ -22,7 +23,7 @@ export interface TrendLine {
 
 interface TrendLineChartProps {
   config: ChartConfig
-  data: Array<Record<string, string | number>>
+  data: Record<string, string | number>[]
   lines: TrendLine[]
   yTickFormatter: (value: number | string) => string
   tooltipFormatter?: ComponentProps<typeof ChartTooltipContent>['formatter']

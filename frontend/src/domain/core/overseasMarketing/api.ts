@@ -1,19 +1,19 @@
 import { api } from '#shared/api/client'
 
 import {
+  crmCustomerResponseSchema,
+  crmSyncStatusResponseSchema,
+  matchConfirmResponseSchema,
+  mutationResponseSchema,
   type OverseasMarketingGranularity,
   type OverseasMarketingReceptionInput,
   type OverseasMarketingReceptionParams,
   receptionsResponseSchema,
-  statisticsResponseSchema,
-  syncResponseSchema,
-  mutationResponseSchema,
-  syncAvailabilityResponseSchema,
-  crmSyncStatusResponseSchema,
-  crmCustomerResponseSchema,
-  matchConfirmResponseSchema,
   reservationStatsResponseSchema,
   reservationStatUpdateResponseSchema,
+  statisticsResponseSchema,
+  syncAvailabilityResponseSchema,
+  syncResponseSchema,
 } from './type/api'
 
 export const overseasMarketingApi = {

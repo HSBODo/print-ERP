@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  computeCataractChannelRow,
   type CataractStatsCounts,
+  computeCataractChannelRow,
 } from './reservationStatsCataractFormulas'
 import {
   computeSystemChannelRow,

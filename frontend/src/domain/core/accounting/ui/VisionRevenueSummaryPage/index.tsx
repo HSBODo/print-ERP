@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+
 import {
   useAccountingStatus,
   useVisionReceipts,
@@ -9,9 +10,9 @@ import {
   VisionRevenueSummaryControls,
   type VisionSummaryFilter,
 } from './VisionRevenueSummaryControls'
-import { VisionRevenueSummaryTable } from './VisionRevenueSummaryTable'
-import { buildVisionRevenueSummary } from './visionRevenueSummaryModel'
 import { downloadVisionRevenueSummaryCsv } from './visionRevenueSummaryCsv'
+import { buildVisionRevenueSummary } from './visionRevenueSummaryModel'
+import { VisionRevenueSummaryTable } from './VisionRevenueSummaryTable'
 
 const DEFAULT_FILTER: VisionSummaryFilter = {
   mode: 'monthly',

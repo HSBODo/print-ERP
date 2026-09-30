@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { SURGERY_TYPES, type MonthlyData } from './surgeryRatioUtils'
+
+import { type MonthlyData, SURGERY_TYPES } from './surgeryRatioUtils'
 
 interface KpiCardsPanelProps {
   selectedData: MonthlyData

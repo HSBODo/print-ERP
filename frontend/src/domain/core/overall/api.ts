@@ -1,8 +1,8 @@
 import { api } from '#shared/api/client'
 
 import {
-  overallExamWeeklyResponseSchema,
   overallExamMonthlyResponseSchema,
+  overallExamWeeklyResponseSchema,
 } from './type/api'
 
 export const overallApi = {

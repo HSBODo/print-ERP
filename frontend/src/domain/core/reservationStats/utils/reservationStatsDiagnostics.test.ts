@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import {
-  buildReservationStatsDiffCsv,
-  buildReservationStatsDrillDownCsv,
-  buildReservationStatsParityCsv,
-} from './reservationStatsDiagnostics'
+
 import type {
   ReservationStatsDiff,
   ReservationStatsDrillDown,
   ReservationStatsParity,
 } from '../type/api'
+import {
+  buildReservationStatsDiffCsv,
+  buildReservationStatsDrillDownCsv,
+  buildReservationStatsParityCsv,
+} from './reservationStatsDiagnostics'
 
 describe('reservation stats diagnostics csv', () => {
   it('diff CSV에 상세조회 경로를 포함한다', () => {

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { MedicalRevenueChartPage } from '#domain/core/accounting/ui/MedicalRevenueChartPage'
 
 export const Route = createFileRoute('/_auth/accounting/medical-revenue-chart')(

@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
+
 import type { ReservationChangeItem } from '../../../type/api'
 import {
   buildViews,
   changeColumnCount,
+  type ChangeFilters,
   holidayLabel,
   parseChain,
   stepsAsOf,
   weekTag,
-  type ChangeFilters,
 } from './reservationChangeModel'
 
 const item = (over: Partial<ReservationChangeItem>): ReservationChangeItem => ({

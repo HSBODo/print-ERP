@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { useMemo } from 'react'
+
 import {
   cleanup,
   fireEvent,
@@ -8,6 +8,7 @@ import {
   screen,
   within,
 } from '@testing-library/react'
+import { useMemo } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { usePagination } from '#shared/hooks/usePagination'

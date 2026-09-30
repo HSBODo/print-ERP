@@ -1,8 +1,8 @@
 import { toCsv } from '#shared/utils/csv'
 
 import type {
-  ReservationStatsDiffItem,
   ReservationStatsDiff,
+  ReservationStatsDiffItem,
   ReservationStatsDrillDown,
   ReservationStatsParity,
 } from '../type/api'

@@ -1,13 +1,13 @@
 import {
+  type Granularity,
   isoWeek,
   monthShortLabel,
-  weekOf,
-  weekdayKo,
-  type Granularity,
   type RowTier,
+  weekdayKo,
+  weekOf,
 } from './reservationStatsCore'
-import type { SummaryRow } from './reservationStatsSummary'
 import { isSingleMonthRange } from './reservationStatsDateRange'
+import type { SummaryRow } from './reservationStatsSummary'
 
 export interface StatsDisplayRow<TChannel, TSummary = SummaryRow> {
   label: string

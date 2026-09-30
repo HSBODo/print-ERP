@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { CancelRatePage } from '../../-internal/graveyard/CancelRatePage'
 
 export const Route = createFileRoute(

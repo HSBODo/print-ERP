@@ -1,4 +1,4 @@
-type ColumnGroupSpec<Key extends string> = {
+interface ColumnGroupSpec<Key extends string> {
   key: Key
   span: number
 }

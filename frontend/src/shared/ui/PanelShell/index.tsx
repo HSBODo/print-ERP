@@ -1,5 +1,6 @@
-import { useState } from 'react'
 import { X } from 'lucide-react'
+import { useState } from 'react'
+
 import { Card, CardContent, CardHeader } from '#shared/ui/Card'
 
 type SkeletonVariant = 'kpi' | 'bar' | 'line' | 'donut' | 'area'

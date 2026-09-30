@@ -8,7 +8,7 @@ import {
 } from './reservationStatsRows'
 import { computeSummaryRow } from './reservationStatsSummary'
 
-type Counts = {
+interface Counts {
   inbound: number
   reservation: number
   visit: number
@@ -16,7 +16,7 @@ type Counts = {
   cancel: number
 }
 
-type ChannelRow = {
+interface ChannelRow {
   label: string
   inbound: number
   reservation: number

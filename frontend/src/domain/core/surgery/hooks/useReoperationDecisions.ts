@@ -1,9 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
 import { surgeryApi } from '../api'
-import type {
-  ReoperationDecisionRow,
-  ReoperationDecisionSaveItem,
-} from '../type/api'
+import type { ReoperationDecisionSaveItem } from '../type/api'
 
 /** 기간 내 저장된 재수술 판정 조회. enabled=false 이면 요청하지 않는다(모달 열릴 때만). */
 export function useReoperationDecisions(
@@ -19,7 +17,7 @@ export function useReoperationDecisions(
   })
 
   return {
-    decisions: (data ?? []) as ReoperationDecisionRow[],
+    decisions: data ?? [],
     isLoading,
     isFetching,
     isError,

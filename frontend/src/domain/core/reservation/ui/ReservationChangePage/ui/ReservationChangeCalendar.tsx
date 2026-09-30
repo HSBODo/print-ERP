@@ -1,9 +1,9 @@
 import {
-  formatMetric,
-  metricValue,
   type CalendarMetric,
   type CalendarView,
   type DayCell,
+  formatMetric,
+  metricValue,
 } from '../utils/reservationChangeCalendarModel'
 
 /**

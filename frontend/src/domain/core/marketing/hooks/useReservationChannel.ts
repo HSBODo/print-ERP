@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { marketingApi } from '../api'
-import type {
-  ReservationChannelFunnelItem,
-  ReservationChannelOpType,
-} from '../type/api'
 
 /**
  * 예약통계_채널별 조회 훅. 등록일 범위(from~to)로 채널별 퍼널을 받는다.
@@ -22,7 +19,7 @@ export function useReservationChannel(
   })
 
   return {
-    rows: (enabled ? (data ?? []) : []) as ReservationChannelFunnelItem[],
+    rows: enabled ? (data ?? []) : [],
     isLoading,
     isFetching,
     isError,
@@ -42,7 +39,7 @@ export function useReservationChannelOpTypes(
     enabled: enabled && Boolean(from && to),
   })
   return {
-    rows: (data ?? []) as ReservationChannelOpType[],
+    rows: data ?? [],
     isLoading,
     isError,
   }

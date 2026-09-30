@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 const lastSuccessSchema = z.object({

@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+
 import { CHIP_STYLES } from '#shared/constants/chart'
 
 export function PeriodChip({

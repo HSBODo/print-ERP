@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { marketingApi } from '../api'
-import type { AccumulatedEyeItem, AccumulatedEyesField } from '../type/api'
+import type { AccumulatedEyesField } from '../type/api'
 
 /**
  * 누적 안수 리스트 조회 훅.
@@ -25,7 +26,7 @@ export function useAccumulatedEyes(
   })
 
   return {
-    rows: enabled ? ((data ?? []) as AccumulatedEyeItem[]) : [],
+    rows: enabled ? (data ?? []) : [],
     isLoading,
     isFetching,
     isError,

@@ -1,20 +1,22 @@
-import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
+
 import { useReservationChangeDaily } from '../../../hooks/useReservationChange'
-import { ReservationChangeCalendar } from './ReservationChangeCalendar'
 import {
   BASIS_LABEL,
-  METRIC_LABEL,
   buildCalendar,
-  calendarRange,
-  shiftMonth,
   type CalendarBasis,
   type CalendarMetric,
+  calendarRange,
+  METRIC_LABEL,
+  shiftMonth,
 } from '../utils/reservationChangeCalendarModel'
 import { BRANCH_LABEL } from '../utils/reservationChangeModel'
 import { Segment, Stat } from './FilterControls'
+import { ReservationChangeCalendar } from './ReservationChangeCalendar'
 
 const DATA_FROM_YEAR = 2022
 const pad = (n: number) => String(n).padStart(2, '0')

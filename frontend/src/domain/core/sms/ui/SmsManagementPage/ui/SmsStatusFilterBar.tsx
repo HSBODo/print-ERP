@@ -1,9 +1,9 @@
+import type { SmsTemplate } from '../../../type/api'
 import {
-  STATUS_FILTERS,
   groupOptionsOf,
+  STATUS_FILTERS,
   type StatusFilter,
 } from '../utils/smsTableModel'
-import type { SmsTemplate } from '../../../type/api'
 
 /**
  * 필터 바 — 발송과 대상 적재는 자동화(큐)가 맡으므로, 이 줄에는 점검용 필터만 둔다.

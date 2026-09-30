@@ -19,7 +19,7 @@ export const medicalNetRevenue = (row: MedicalReceipt): number =>
   row.serialNo === 98 ? -row.refund : row.actualPaid + row.outstandingRecovered
 
 export const matchesKeyword = (
-  values: Array<string | number>,
+  values: (string | number)[],
   keyword: string,
 ): boolean => {
   const normalized = keyword.trim().toLowerCase()

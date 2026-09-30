@@ -1,7 +1,7 @@
 import {
   MONTH_LABELS,
-  rowTotal,
   type MonthlyChartRow,
+  rowTotal,
 } from './accountingChartModel'
 
 const escapeCsv = (value: unknown) => `"${String(value).replace(/"/g, '""')}"`

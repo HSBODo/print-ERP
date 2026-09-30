@@ -23,7 +23,7 @@ export const calcAge = (birth: string) => {
 export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
 export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
 export const SKELETON_ROWS = 50
-export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
+export const QUICK_RANGES: { key: QuickRangeKey; label: string }[] = [
   { key: '1w', label: '1주' },
   { key: '2w', label: '2주' },
   { key: '3w', label: '3주' },
@@ -95,7 +95,7 @@ export const CLASSIFICATION_ORDER: string[] = [
 /** 월간 레포트 백내장 검사수에 들어가는 분류. sql/fragments/exam-session-source.sql 의 isCat 과 같은 집합. */
 export const EXAM_COUNT_CLASSES: string[] = ['백내장', '중단']
 
-export type ClassificationBreakdown = {
+export interface ClassificationBreakdown {
   breakdown: { name: string; count: number }[]
   examCount: number
   total: number

@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
+
+import { maskJumin, maskName, maskPhone } from '#shared/utils/mask'
+
 import type { CataractExamListItem } from '../../type/api'
 import { calcAge, dash } from '../../utils/cataractExamListUtils'
-import { maskJumin, maskName, maskPhone } from '#shared/utils/mask'
 
 /** CataractExamListPage 컬럼/뱃지 렌더 설정 (순수 로직은 cataractExamListUtils.ts). */
 

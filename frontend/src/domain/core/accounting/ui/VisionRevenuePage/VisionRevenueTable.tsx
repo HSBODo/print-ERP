@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
+
 import { usePagination } from '#shared/hooks/usePagination'
 import { TablePagination } from '#shared/ui/TablePagination'
+
 import type { VisionReceipt } from '../../type/accounting'
-import type { VisionExtraFilters } from '../VisionRevenueControls'
 import { ACCOUNTING_PAGE_SIZE_OPTIONS } from '../../utils/accountingModel'
+import type { VisionExtraFilters } from '../VisionRevenueControls'
 import {
   VISION_COLUMNS,
   visionCellValue,
-  visionNumericValue,
   type VisionColumn,
   type VisionColumnKey,
+  visionNumericValue,
 } from './visionRevenueColumns'
 
 function RowCell({

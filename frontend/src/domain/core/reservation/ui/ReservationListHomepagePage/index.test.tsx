@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
   cleanup,
   fireEvent,
@@ -8,6 +8,8 @@ import {
   screen,
   within,
 } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import type { ReservationListHomepageItem } from '../../type/api'
 
 /**

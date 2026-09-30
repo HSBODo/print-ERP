@@ -1,20 +1,20 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  Home,
+  BookOpen,
+  Building2,
   CalendarCheck,
+  FileText,
+  Globe2,
+  Home,
+  Hospital,
+  Landmark,
+  Megaphone,
+  MessageSquare,
   Microscope,
+  MoreHorizontal,
   Stethoscope,
   Syringe,
-  Hospital,
-  Megaphone,
-  MoreHorizontal,
-  FileText,
   Wrench,
-  Building2,
-  MessageSquare,
-  Landmark,
-  Globe2,
-  BookOpen,
 } from 'lucide-react'
 
 import type { FileRouteTypes } from '@/routeTree.gen'
@@ -23,6 +23,7 @@ import {
   hasAccess,
   type PageAccess,
 } from '#domain/support/session/utils/access'
+
 import type { MenuStatus, PageMeta } from './pageAccess'
 
 /** 라우트 트리에 실제로 존재하는 경로 — 메뉴에 없는 경로를 적으면 컴파일 에러. */

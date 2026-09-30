@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { examApi } from '../api'
 
 export function useEoeisCheckup(from: string, to: string) {

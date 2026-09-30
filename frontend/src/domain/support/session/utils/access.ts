@@ -1,6 +1,6 @@
 import {
-  matchesDepartment,
   type AuthUser,
+  matchesDepartment,
   type UserDepartment,
 } from '../session'
 

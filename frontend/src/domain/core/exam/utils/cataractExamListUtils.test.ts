@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+
 import {
-  summarizeClassifications,
   CLASSIFICATION_ORDER,
   EXAM_COUNT_CLASSES,
+  summarizeClassifications,
 } from './cataractExamListUtils'
 
 const rows = (spec: Record<string, number>) =>

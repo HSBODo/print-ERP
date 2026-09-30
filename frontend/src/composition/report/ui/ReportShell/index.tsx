@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react'
+
 import { ReportChartSkeleton } from './MonthlyReportCharts'
 
 /**

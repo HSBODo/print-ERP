@@ -1,10 +1,11 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { useState } from 'react'
+
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { DateRangePicker, type DateRange } from '#shared/ui/DateRangePicker'
+import { type DateRange, DateRangePicker } from '#shared/ui/DateRangePicker'
 
 function Harness({
   onChange,

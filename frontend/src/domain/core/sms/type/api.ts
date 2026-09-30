@@ -289,12 +289,12 @@ export type SmsSolapiTemplate = z.infer<typeof solapiTemplateSchema>
 export type SmsSolapiBalance = z.infer<typeof solapiBalanceSchema>
 
 export interface SmsOffsetUpdatePayload {
-  rows: Array<{
+  rows: {
     groupCode: string
     tier1Offset: number
     tier2Offset: number
     tier3Offset: number
-  }>
+  }[]
   /** tier-level 발송 시각 (HH:mm) — 4행 모두 같은 값으로 원자적 갱신. */
   tier1Time: string
   tier2Time: string

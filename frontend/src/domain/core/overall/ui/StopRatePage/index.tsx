@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+
+import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -8,16 +10,16 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { PanelShell } from '#shared/ui/PanelShell'
+
 import { useOverallExamMonthly } from '../../hooks/useOverallExamMonthly'
-import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 
 const RECENCY_COLORS = ['#E11D2E', '#4B5563', '#A8CEDF', '#F59E0B']
 
@@ -49,7 +51,7 @@ export function StopRatePage() {
   const monthlySums = useMemo(() => {
     const acc: Record<
       number,
-      Array<{ stopCount: number; visionExam: number } | undefined>
+      ({ stopCount: number; visionExam: number } | undefined)[]
     > = {}
     for (const it of overall.items) {
       const rows = acc[it.year] ?? Array.from({ length: 12 }, () => undefined)

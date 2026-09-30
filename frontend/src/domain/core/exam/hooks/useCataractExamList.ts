@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { examApi } from '../api'
-import type { CataractExamListItem } from '../type/api'
 
 /**
  * 백내장 검사자 리스트 조회 훅. 검사일 범위(from~to)로 서버 조회.
@@ -14,7 +14,7 @@ export function useCataractExamList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? ((data ?? []) as CataractExamListItem[]) : [],
+    rows: enabled ? (data ?? []) : [],
     isLoading,
     isFetching,
     isError,

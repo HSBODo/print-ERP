@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
-import type { ReservationListHomepageItem } from '../../type/api'
+
 import { maskName, maskPhone } from '#shared/utils/mask'
+
+import type { ReservationListHomepageItem } from '../../type/api'
 import {
   dash,
   formatDeviceType,

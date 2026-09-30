@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -9,13 +8,16 @@ import {
   RotateCcw,
   Search,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
 import { TablePagination } from '#shared/ui/TablePagination'
+import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+
 import { useAccumulatedEyes } from '../../hooks/useAccumulatedEyes'
 import type { AccumulatedEyeItem, AccumulatedEyesField } from '../../type/api'
-import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
 
 const FIELD_OPTIONS: {
   value: AccumulatedEyesField
@@ -52,7 +54,11 @@ const categoryClass = (v: string) =>
 // 수술일 2024-01-01 부터 현재 규칙(최대 +3), 그 이전은 legacy(+W.V, +CONT 도 +1).
 const LEGACY_CUTOFF = '2024-01-01'
 
-type WeightRule = { label: string; style: string; title: string }
+interface WeightRule {
+  label: string
+  style: string
+  title: string
+}
 
 const RULE_STYLE = {
   base: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -128,7 +134,7 @@ type SortDir = 'asc' | 'desc'
 /** 가상 컬럼 키 — 실제 데이터 필드가 아니라 화면에서 파생해 만드는 컬럼(가중치 등). 정렬 불가. */
 type VirtualKey = 'no' | 'weightCodes' | 'weight'
 
-type Column = {
+interface Column {
   key: SortKey | VirtualKey
   label: string
   align?: 'left' | 'center' | 'right'

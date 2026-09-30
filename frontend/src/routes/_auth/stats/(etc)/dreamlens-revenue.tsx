@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { DreamlensLedgerPage } from '#domain/core/dreamlensLedger/ui/DreamlensLedgerPage'
 
 export const Route = createFileRoute('/_auth/stats/(etc)/dreamlens-revenue')({

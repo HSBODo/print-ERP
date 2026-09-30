@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import {
   CalendarRange,
   ChevronDown,
@@ -7,12 +6,15 @@ import {
   Search,
   Settings2,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { TablePagination } from '#shared/ui/TablePagination'
-import type { EoeisCheckupRow } from '../../type/api'
-import { useEoeisCheckup } from '../../hooks/useEoeisCheckup'
 import { downloadCsv, toCsv } from '#shared/utils/csv'
+
+import { useEoeisCheckup } from '../../hooks/useEoeisCheckup'
+import type { EoeisCheckupRow } from '../../type/api'
 import type { SortState } from '../../utils/examListUtils'
 
 type ViewMode = 'count' | 'score'
@@ -21,14 +23,14 @@ type Granularity = 'month' | 'day' | 'week'
 
 const MIN_QUERY_DATE = '2026-07-01'
 
-type PivotRow = {
+interface PivotRow {
   name: string
   kind: 'group' | 'staff'
   cells: number[]
   total: number
 }
 
-type DateGroup = {
+interface DateGroup {
   label: string
   dayIndexes: number[]
 }

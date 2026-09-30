@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { OutpatientListPage } from '#domain/core/outpatient/ui/OutpatientListPage'
 
 export const Route = createFileRoute(

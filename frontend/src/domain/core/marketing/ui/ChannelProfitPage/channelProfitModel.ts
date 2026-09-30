@@ -1,5 +1,8 @@
-import type { ReservationChannelFunnelItem } from '../../type/api'
-import type { AdSpend, ChannelLensCost } from '../../type/api'
+import type {
+  AdSpend,
+  ChannelLensCost,
+  ReservationChannelFunnelItem,
+} from '../../type/api'
 
 /**
  * 채널별 수익성 계산 — 화면에서 떼어 둔다(단위 변환과 귀속 규칙이 대부분이라 테스트가 필요하다).
@@ -37,7 +40,7 @@ import type { AdSpend, ChannelLensCost } from '../../type/api'
  */
 export const COHORT_DAYS = { p80: 21, p90: 33, p95: 47 } as const
 
-export type CohortMaturity = {
+export interface CohortMaturity {
   level: 'final' | 'near' | 'watching' | 'early'
   label: string
   note: string

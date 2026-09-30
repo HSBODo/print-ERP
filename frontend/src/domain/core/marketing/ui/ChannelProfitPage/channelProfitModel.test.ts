@@ -1,48 +1,50 @@
 import { describe, expect, it } from 'vitest'
-import type { ReservationChannelFunnelItem } from '../../type/api'
-import type { ChannelLensCost } from '../../type/api'
+
+import type {
+  ChannelLensCost,
+  ReservationChannelFunnelItem,
+} from '../../type/api'
 import {
   buildChannelRows,
-  cohortMaturity,
   COHORT_DAYS,
+  cohortMaturity,
 } from './channelProfitModel'
 
 /** 퍼널 한 행 — 이 테스트가 보는 필드만 채우고 나머지는 0. */
 const funnelRow = (
   o: Partial<ReservationChannelFunnelItem>,
-): ReservationChannelFunnelItem =>
-  ({
-    channel: '네이버',
-    reserved: 0,
-    notCancel: 0,
-    visited: 0,
-    examined: 0,
-    notStop: 0,
-    surgery: 0,
-    surgeryDone: 0,
-    reop: 0,
-    surgeryAmount: 0,
-    reservedPersons: 0,
-    notCancelPersons: 0,
-    visitedPersons: 0,
-    examinedPersons: 0,
-    notStopPersons: 0,
-    surgeryPersons: 0,
-    surgeryDonePersons: 0,
-    reopPersons: 0,
-    surgeryPaidPersons: 0,
-    totalReservedPersons: 0,
-    totalNotCancelPersons: 0,
-    totalVisitedPersons: 0,
-    totalExaminedPersons: 0,
-    totalNotStopPersons: 0,
-    totalSurgeryPersons: 0,
-    totalSurgeryDonePersons: 0,
-    totalReopPersons: 0,
-    totalSurgeryAmount: 0,
-    totalSurgeryPaidPersons: 0,
-    ...o,
-  }) as ReservationChannelFunnelItem
+): ReservationChannelFunnelItem => ({
+  channel: '네이버',
+  reserved: 0,
+  notCancel: 0,
+  visited: 0,
+  examined: 0,
+  notStop: 0,
+  surgery: 0,
+  surgeryDone: 0,
+  reop: 0,
+  surgeryAmount: 0,
+  reservedPersons: 0,
+  notCancelPersons: 0,
+  visitedPersons: 0,
+  examinedPersons: 0,
+  notStopPersons: 0,
+  surgeryPersons: 0,
+  surgeryDonePersons: 0,
+  reopPersons: 0,
+  surgeryPaidPersons: 0,
+  totalReservedPersons: 0,
+  totalNotCancelPersons: 0,
+  totalVisitedPersons: 0,
+  totalExaminedPersons: 0,
+  totalNotStopPersons: 0,
+  totalSurgeryPersons: 0,
+  totalSurgeryDonePersons: 0,
+  totalReopPersons: 0,
+  totalSurgeryAmount: 0,
+  totalSurgeryPaidPersons: 0,
+  ...o,
+})
 
 const lensRow = (o: Partial<ChannelLensCost>): ChannelLensCost => ({
   channel: '네이버',

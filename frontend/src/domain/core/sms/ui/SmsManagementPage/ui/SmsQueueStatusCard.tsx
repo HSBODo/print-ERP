@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import {
   AlertCircle,
   ChevronDown,
@@ -7,23 +6,26 @@ import {
   RefreshCw,
   Wallet,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+import {
+  canManagerOp,
+  canSystemOp,
+  matchesDepartment,
+} from '#domain/support/session/session'
+import { useAuthStore } from '#domain/support/session/store'
 import { Button } from '#shared/ui/Button'
+
 import {
   useRunQueueNow,
   useSmsQueueRows,
   useSmsQueueStatus,
   useSolapiBalance,
 } from '../../../hooks/useSmsQueue'
-import { useAuthStore } from '#domain/support/session/store'
-import {
-  canManagerOp,
-  canSystemOp,
-  matchesDepartment,
-} from '#domain/support/session/session'
-import { SmsFailedQueueModal } from './SmsFailedQueueModal'
-import { CATEGORY_STYLE, groupByReason } from '../utils/smsFailReasonSummary'
 import type { SmsSolapiBalance } from '../../../type/api'
+import { CATEGORY_STYLE, groupByReason } from '../utils/smsFailReasonSummary'
+import { SmsFailedQueueModal } from './SmsFailedQueueModal'
 
 /** yyyy-mm-dd 로컬 날짜 문자열 — Date.toISOString() 은 UTC 라 KST 새벽엔 하루 어긋난다. */
 function todayIso(): string {
@@ -125,7 +127,7 @@ export function SmsQueueStatusCard() {
           `큐 실행됨 — 성공 ${stats.sent ?? 0} · 실패 ${stats.failed ?? 0} · 대기 ${stats.skipped ?? 0}`,
         )
       },
-      onError: (err) => toast.error(`큐 실행 실패: ${(err as Error).message}`),
+      onError: (err) => toast.error(`큐 실행 실패: ${err.message}`),
     })
   }
 

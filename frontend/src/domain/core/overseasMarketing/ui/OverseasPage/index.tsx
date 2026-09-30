@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
 import { ChevronDown, RotateCcw, Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { OverseasMarketingGranularity } from '../../type/api'
+
 import { Button } from '#shared/ui/Button'
 import {
   Card,
@@ -21,8 +21,10 @@ import {
   CardHeader,
   CardTitle,
 } from '#shared/ui/Card'
-import { useOverseasMarketingStatistics } from '../../hooks/useOverseasMarketing'
 import { formatAxisNumber } from '#shared/utils/stats'
+
+import { useOverseasMarketingStatistics } from '../../hooks/useOverseasMarketing'
+import type { OverseasMarketingGranularity } from '../../type/api'
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = Array.from({ length: 7 }, (_, index) => CURRENT_YEAR - index)

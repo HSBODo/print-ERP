@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronsUpDown,
@@ -6,10 +5,12 @@ import {
   Info,
   Search,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useReservationChannel } from '../../hooks/useReservationChannel'
+
 import {
   useAdSpend,
   useChannelLensCost,
@@ -17,9 +18,11 @@ import {
   useSaveAdSpend,
   useSaveLensPrices,
 } from '../../hooks/useChannelProfit'
+import { useReservationChannel } from '../../hooks/useReservationChannel'
 import {
   buildAdRows,
   buildChannelRows,
+  type ChannelProfitRow,
   cohortMaturity,
   fmtEok,
   fmtInt,
@@ -27,7 +30,6 @@ import {
   fmtRatio,
   SAMPLE_LOW,
   SAMPLE_WARN,
-  type ChannelProfitRow,
 } from './channelProfitModel'
 
 /**

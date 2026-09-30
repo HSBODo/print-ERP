@@ -1,64 +1,64 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
 import { api } from '#shared/api/client'
-import {
-  CATARACT_EDITABLE_FIELDS,
-  type CataractEditableField,
-  type CataractStatsCellEdit,
-  type CataractStatsDailyCounts,
-} from '../../type/api'
-import {
-  buildReservationStatsDiffCsv,
-  buildReservationStatsDrillDownCsv,
-  buildReservationStatsParityCsv,
-} from '../../utils/reservationStatsDiagnostics'
-import {
-  type ReservationStatsDiff,
-  type ReservationStatsDiffItem,
-  type ReservationStatsDrillDown,
-  type ReservationStatsParity,
-} from '../../type/api'
 import { downloadCsv } from '#shared/utils/csv'
+
 import {
   useReservationStatsCataract,
   useReservationStatsCataractCellEdit,
   useReservationStatsCataractSnapshots,
 } from '../../hooks/useReservationStatsCataract'
-import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
-import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
 import {
-  CATARACT_COLUMNS,
-  DEFAULT_PERIOD,
-  SUMMARY_COLUMNS,
+  CATARACT_EDITABLE_FIELDS,
+  type CataractEditableField,
+  type CataractStatsCellEdit,
+  type CataractStatsDailyCounts,
+  type ReservationStatsDiff,
+  type ReservationStatsDiffItem,
+  type ReservationStatsDrillDown,
+  type ReservationStatsParity,
+} from '../../type/api'
+import {
   buildCataractStatsCsv,
-  getRangeDisplayRowsFromCounts,
-  monthFullLabel,
-  monthShortLabel,
+  CATARACT_COLUMNS,
   type CataractColumnMeta,
   type CataractDisplayRow,
+  DEFAULT_PERIOD,
+  getRangeDisplayRowsFromCounts,
   type Granularity,
+  monthFullLabel,
+  monthShortLabel,
+  SUMMARY_COLUMNS,
 } from '../../utils/reservationStatsCataractData'
-import {
-  ReservationStatsTableHeader,
-  type StatsHeaderModel,
-  type StatsHeaderNode,
-} from '../ReservationStatsTableHeader'
 import {
   isSingleMonthRange,
   periodRange,
   validateRange,
 } from '../../utils/reservationStatsDateRange'
 import {
+  buildReservationStatsDiffCsv,
+  buildReservationStatsDrillDownCsv,
+  buildReservationStatsParityCsv,
+} from '../../utils/reservationStatsDiagnostics'
+import {
   formatChannelValue,
   formatSummaryValue,
 } from '../../utils/reservationStatsFormat'
-import { EditMark, EditableNumberCell } from './ReservationStatsCataractCells'
-import { editMarkTitle } from './ReservationStatsCataractCells.utils'
 import type { SummaryColumnMeta } from '../../utils/reservationStatsSummary'
 import {
   columnSpan,
   splitColumnGroups,
 } from '../../utils/reservationStatsTable'
+import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
+import {
+  ReservationStatsTableHeader,
+  type StatsHeaderModel,
+  type StatsHeaderNode,
+} from '../ReservationStatsTableHeader'
+import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
+import { EditableNumberCell, EditMark } from './ReservationStatsCataractCells'
+import { editMarkTitle } from './ReservationStatsCataractCells.utils'
 
 /**
  * 예약통계_백내장 — 인바운드(컨택센터)/아웃바운드(TM)/채팅/온라인/취소 채널과 내원·부도·취소 종합을
@@ -719,7 +719,7 @@ function BodyRow({
           return (
             <EditableNumberCell
               key={col.key}
-              value={summary[col.key] as number}
+              value={summary[col.key]}
               edit={edit}
               busy={isEditing}
               onSave={(next) =>

@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
 import {
   Card,
   CardContent,
@@ -19,20 +20,20 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { StatsSelect, TrendChip } from '#shared/ui/StatsPrimitives'
-import { changePoint, changeRate, formatDelta } from '#shared/utils/statsUtils'
 import {
   formatAxisNumber,
   formatAxisPercent,
   getCurrentPeriod,
 } from '#shared/utils/stats'
+import { changePoint, changeRate, formatDelta } from '#shared/utils/statsUtils'
 
 type ChannelKey = 'search' | 'meta' | 'content' | 'referral'
 

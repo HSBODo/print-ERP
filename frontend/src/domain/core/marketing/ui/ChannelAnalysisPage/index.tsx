@@ -1,14 +1,15 @@
-import { useState, type FC } from 'react'
 import { FileText, Lock } from 'lucide-react'
-import { ModoodocDoc } from './ui/ModoodocDoc'
-import { OverseasAgencyDoc } from './ui/OverseasAgencyDoc'
-import { HomepageDoc } from './ui/HomepageDoc'
-import { IncallDoc } from './ui/IncallDoc'
-import { NaverDoc } from './ui/NaverDoc'
-import { OutcallDoc } from './ui/OutcallDoc'
+import { type FC, useState } from 'react'
+
 import { AppDoc } from './ui/AppDoc'
 import { CafeDoc } from './ui/CafeDoc'
 import { CreatripDoc } from './ui/CreatripDoc'
+import { HomepageDoc } from './ui/HomepageDoc'
+import { IncallDoc } from './ui/IncallDoc'
+import { ModoodocDoc } from './ui/ModoodocDoc'
+import { NaverDoc } from './ui/NaverDoc'
+import { OutcallDoc } from './ui/OutcallDoc'
+import { OverseasAgencyDoc } from './ui/OverseasAgencyDoc'
 import { SelfOverseasDoc } from './ui/SelfOverseasDoc'
 
 /**
@@ -23,7 +24,7 @@ import { SelfOverseasDoc } from './ui/SelfOverseasDoc'
  * doc 이 없으면 자동으로 '준비 중' 으로 표시되며 클릭해도 안내만 나온다.
  */
 
-type ChannelDoc = {
+interface ChannelDoc {
   id: string
   label: string
   /** 문서가 없으면 준비 중으로 표시한다. 목록에는 남긴다 — 무엇이 안 됐는지 보이게. */

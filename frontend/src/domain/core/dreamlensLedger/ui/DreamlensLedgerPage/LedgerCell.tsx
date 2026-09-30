@@ -1,5 +1,6 @@
-import { useState, type CSSProperties } from 'react'
-import { suggestionListId, type LedgerColumn } from './ledgerColumns'
+import { type CSSProperties, useState } from 'react'
+
+import { type LedgerColumn, suggestionListId } from './ledgerColumns'
 
 const displayValue = (
   column: LedgerColumn,

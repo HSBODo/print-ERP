@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
 import {
   Card,
   CardContent,
@@ -23,15 +24,16 @@ import {
   ChartTooltipContent,
 } from '#shared/ui/Chart'
 import { PanelShell } from '#shared/ui/PanelShell'
+import { formatAxisNumber, formatAxisPercent } from '#shared/utils/stats'
+
 import {
-  SURGERY_TYPES,
-  FAMILY_META,
   barConfig,
+  FAMILY_META,
   familyConfig,
   type FamilyKey,
   type MonthlyData,
+  SURGERY_TYPES,
 } from './surgeryRatioUtils'
-import { formatAxisNumber, formatAxisPercent } from '#shared/utils/stats'
 
 interface CompositionPanelProps {
   selectedData: MonthlyData

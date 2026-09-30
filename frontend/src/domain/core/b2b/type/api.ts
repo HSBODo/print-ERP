@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── Monthly (B2B 매출 페이지용) ── */

@@ -2,8 +2,8 @@ import { api } from '#shared/api/client'
 
 import {
   outpatientCountResponseSchema,
-  outpatientListResponseSchema,
   type OutpatientListItem,
+  outpatientListResponseSchema,
 } from './type/api'
 
 export const outpatientApi = {

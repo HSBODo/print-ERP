@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
+
+import type { ReservationChannelFunnelItem } from '../../../type/api'
 import {
   buildYearMonthRanges,
   findModoodocFunnel,
   toModoodocMonthlyRow,
 } from './modoodocMonthlyFunnelModel'
-import type { ReservationChannelFunnelItem } from '../../../type/api'
 
 describe('모두닥 월별 퍼널 모델', () => {
   it('2026년 1월부터 12월까지 정확한 월 범위를 만든다', () => {

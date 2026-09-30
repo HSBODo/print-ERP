@@ -5,7 +5,7 @@ export type LedgerFieldKey = Exclude<
   'id' | 'totalRevenue' | 'source'
 >
 
-export type LedgerColumn = {
+export interface LedgerColumn {
   key: LedgerFieldKey
   label: string
   /** date·number 는 전용 입력, text 는 자유 입력(+suggestions 있으면 datalist 제안). */
@@ -23,7 +23,7 @@ export type LedgerColumn = {
 /** 텍스트 컬럼 길이 상한 — 백엔드와 공유하는 값이라 한 곳에서 관리한다. */
 const LEN = { short: 50, name: 100, long: 200 } as const
 
-export type LedgerGroup = {
+export interface LedgerGroup {
   id: string
   label: string
   /** 그룹 헤더 배경 — 시트의 색 구분을 따라간다. */

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildSurgeryRows,
+  type Cell,
   COLS,
   EMPTY,
-  buildSurgeryRows,
   monthRange,
   queryRange,
-  type Cell,
 } from './surgeryCompositionUtils'
 
 const cell = (overrides: Partial<Cell> = {}): Cell => ({

@@ -10,13 +10,18 @@ import {
   Search,
   Undo2,
 } from 'lucide-react'
+
 import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
-import { toMonthEnd, toMonthStart, toMonthValue } from '../utils/smsTableModel'
+
 import type { SmsQueryBasis, SmsTemplate } from '../../../type/api'
+import { toMonthEnd, toMonthStart, toMonthValue } from '../utils/smsTableModel'
 
 export type PeriodMode = 'daily' | 'monthly'
-export type DateRange = { from: string; to: string }
+export interface DateRange {
+  from: string
+  to: string
+}
 
 const INPUT_CLS =
   'h-8 rounded-md border border-border/80 bg-white px-2 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100'

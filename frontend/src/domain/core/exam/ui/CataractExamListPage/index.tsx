@@ -1,33 +1,35 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
-import { TablePagination } from '#shared/ui/TablePagination'
-import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
+import { MonthPicker } from '#shared/ui/MonthPicker'
+import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+
 import { useCataractExamList } from '../../hooks/useCataractExamList'
 import type { CataractExamListItem } from '../../type/api'
-import { COLUMNS, ALIGN, HEADER_ALIGN } from './cataractExamListColumns'
 import {
+  compareSortValue,
   dash,
-  formatCount,
   defaultFrom,
   defaultTo,
-  SKELETON_ROWS,
-  QUICK_RANGES,
-  toMonthValue,
-  toMonthStart,
-  toMonthEnd,
-  toMonthWeekRange,
-  getSortValue,
-  compareSortValue,
-  summarizeClassifications,
   EXAM_COUNT_CLASSES,
+  formatCount,
+  getSortValue,
   type PeriodMode,
+  QUICK_RANGES,
   type QuickRangeKey,
+  SKELETON_ROWS,
   type SortState,
+  summarizeClassifications,
+  toMonthEnd,
+  toMonthStart,
+  toMonthValue,
+  toMonthWeekRange,
 } from '../../utils/cataractExamListUtils'
+import { ALIGN, COLUMNS, HEADER_ALIGN } from './cataractExamListColumns'
 
 /** 백내장 검사수에 안 들어가는 분류는 옅게 — 총건수를 검사수로 오독하지 않게. */
 const CLASS_CHIP_TONE = (name: string) =>

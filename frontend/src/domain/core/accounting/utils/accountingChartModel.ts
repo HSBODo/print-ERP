@@ -13,7 +13,7 @@ export interface MonthlyChartRow {
   key: string
   label: string
   color: string
-  values: Array<number | null>
+  values: (number | null)[]
   main?: boolean
   kind: 'amount' | 'count'
 }
@@ -27,7 +27,7 @@ const valuesOf = <T extends { month: number }>(
   rows: T[],
   getter: (row: T) => number,
 ) => {
-  const values: Array<number | null> = Array(12).fill(null)
+  const values: (number | null)[] = Array(12).fill(null)
   rows.forEach((row) => {
     values[row.month - 1] = Math.round(getter(row))
   })

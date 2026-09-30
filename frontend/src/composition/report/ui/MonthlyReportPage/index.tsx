@@ -1,11 +1,13 @@
-import { useState } from 'react'
 import { Download, Printer } from 'lucide-react'
-import { ReportLineChart } from '../ReportLineChart'
+import { useState } from 'react'
+
 import { CURRENT_YEAR } from '#shared/constants/chart'
-import { YEARS } from '../../utils/monthlyReportUtils'
-import { buildMonthlyReportCsv } from '../../utils/monthlyReportCsv'
+
 import { useReportSeries } from '../../hooks/useReportSeries'
+import { buildMonthlyReportCsv } from '../../utils/monthlyReportCsv'
+import { YEARS } from '../../utils/monthlyReportUtils'
 import { buildReportItems } from '../../utils/reportItems'
+import { ReportLineChart } from '../ReportLineChart'
 import { ReportShell, type ShellReportItem } from '../ReportShell'
 
 export function MonthlyReportPage() {
@@ -55,7 +57,7 @@ export function MonthlyReportPage() {
     const selectedYears = scope === 'all' ? YEARS : [scope]
     const csv = buildMonthlyReportCsv({
       years: selectedYears,
-      charts: charts as unknown as Record<string, unknown>,
+      charts: charts,
       currentYear: CURRENT_YEAR,
       success: {
         all: charts.successAll[CURRENT_YEAR] ?? [],

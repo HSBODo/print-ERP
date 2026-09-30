@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
+
+import { cleanup, render, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+
 import { weeksOfYear } from '../../utils/reportWeeks'
 
 vi.mock('recharts', () => ({

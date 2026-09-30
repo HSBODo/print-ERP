@@ -1,19 +1,20 @@
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
-import { Select } from '#shared/ui/Select'
-import { PeriodChip } from '#shared/ui/PeriodChip'
+
 import {
   MAX_PERIODS,
-  YEAR_OPTIONS,
   MONTH_OPTIONS,
+  YEAR_OPTIONS,
 } from '#shared/constants/chart'
+import type { FilterBarControls } from '#shared/ui/FilterBar/useFilterBar'
+import { PeriodChip } from '#shared/ui/PeriodChip'
+import { Select } from '#shared/ui/Select'
 import {
   getCurrentPeriod,
   getDefaultYears,
   periodLabel,
 } from '#shared/utils/stats'
-import type { FilterBarControls } from '#shared/ui/FilterBar/useFilterBar'
 
 const currentPeriod = getCurrentPeriod()
 const defaultYears = getDefaultYears()

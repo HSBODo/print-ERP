@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+
+import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -8,17 +10,17 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { useExaminationTrend } from '../../hooks/useExaminationTrend'
-import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
+
+import { useExaminationTrend } from '../../hooks/useExaminationTrend'
 
 type ExamTabKey = 'all' | 'visionCorrection' | 'dreamlens' | 'cataract'
 
@@ -255,9 +257,7 @@ export function ExaminationPage() {
                           const value = chartData[monthIndex][s.key]
                           return (
                             <td key={monthIndex} className="py-2 tabular-nums">
-                              {value === null
-                                ? ''
-                                : formatAxisNumber(value as number)}
+                              {value === null ? '' : formatAxisNumber(value)}
                             </td>
                           )
                         })}

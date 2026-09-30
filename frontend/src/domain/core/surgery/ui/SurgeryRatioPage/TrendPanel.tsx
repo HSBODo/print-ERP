@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+
+import { MONTHS } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -8,14 +10,14 @@ import {
 } from '#shared/ui/Card'
 import { type ChartConfig } from '#shared/ui/Chart'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { TrendLineChart, type TrendLine } from '#shared/ui/TrendLineChart'
+import { type TrendLine, TrendLineChart } from '#shared/ui/TrendLineChart'
+import { formatAxisNumber } from '#shared/utils/stats'
+
 import {
-  SURGERY_TYPES,
   EMPTY_DATA,
   type MonthlyData,
+  SURGERY_TYPES,
 } from './surgeryRatioUtils'
-import { MONTHS } from '#shared/constants/chart'
-import { formatAxisNumber } from '#shared/utils/stats'
 
 interface TrendPanelProps {
   trendYear: number

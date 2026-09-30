@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { AccumulatedEyesPage } from '#domain/core/marketing/ui/AccumulatedEyesPage'
 
 export const Route = createFileRoute(

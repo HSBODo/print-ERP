@@ -11,15 +11,15 @@
 
 import type { CataractStatsDailyCounts } from '../type/api'
 import {
+  type CataractChannelRow,
+  type CataractStatsCounts,
+  computeCataractChannelRow,
+} from './formulas/reservationStatsCataractFormulas'
+import {
   createCountHelpers,
   type Granularity,
   type RowTier,
 } from './reservationStatsCore'
-import {
-  computeCataractChannelRow,
-  type CataractChannelRow,
-  type CataractStatsCounts,
-} from './formulas/reservationStatsCataractFormulas'
 import { buildStatsCsv, type CsvColumnGroup } from './reservationStatsCsv'
 import type { CellFormat } from './reservationStatsFormat'
 import {
@@ -27,7 +27,7 @@ import {
   buildRangeDisplayRowsFromCounts,
   type StatsDisplayRow,
 } from './reservationStatsRows'
-import { SUMMARY_COLUMNS, computeSummaryRow } from './reservationStatsSummary'
+import { computeSummaryRow, SUMMARY_COLUMNS } from './reservationStatsSummary'
 
 export {
   DEFAULT_PERIOD,

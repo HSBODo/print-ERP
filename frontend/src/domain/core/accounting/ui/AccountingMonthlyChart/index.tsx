@@ -7,18 +7,20 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
-import { formatWonCompact } from '../../utils/accountingModel'
+
 import {
   MONTH_LABELS,
-  rowTotal,
   type MonthlyChartView,
+  rowTotal,
 } from '../../utils/accountingChartModel'
+import { formatWonCompact } from '../../utils/accountingModel'
 
 const fullNumber = (value: number) => Math.round(value).toLocaleString('ko-KR')
 

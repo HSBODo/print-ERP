@@ -1,4 +1,10 @@
 import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -7,18 +13,15 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import {
-  CalendarDays,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
 
 import { cn } from '#shared/utils/cn'
 
-export type DateRange = { from: string; to: string }
+export interface DateRange {
+  from: string
+  to: string
+}
 
-type Props = {
+interface Props {
   from: string
   to: string
   onChange: (range: DateRange) => void

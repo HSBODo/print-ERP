@@ -1,5 +1,7 @@
-import { useAuthStore } from '#domain/support/session/store'
 import { useMatches, useNavigate } from '@tanstack/react-router'
+
+import { useAuthStore } from '#domain/support/session/store'
+
 import { DEPARTMENT_LABEL, ROLE_LABEL, SCOPE_BADGE_CLASS } from './label'
 
 export function Topbar() {

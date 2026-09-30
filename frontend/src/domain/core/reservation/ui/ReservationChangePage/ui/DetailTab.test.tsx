@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // 훅 mock — 실제 네트워크·TanStack Query 없이 컴포넌트 자체 렌더만 검증한다.
 vi.mock('../../../hooks/useReservationChange', () => ({
@@ -11,8 +12,8 @@ vi.mock('../utils/reservationChangeCsv', () => ({
   downloadReservationChangeCsv: vi.fn(),
 }))
 
-import { DetailTab } from './DetailTab'
 import { useReservationChange } from '../../../hooks/useReservationChange'
+import { DetailTab } from './DetailTab'
 
 const mockUseReservationChange = vi.mocked(useReservationChange)
 

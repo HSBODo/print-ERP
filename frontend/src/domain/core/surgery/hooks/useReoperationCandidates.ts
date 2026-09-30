@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { surgeryApi } from '../api'
-import type { ReoperationCandidate } from '../type/api'
 
 /**
  * 재수술 후보 조회 훅. 재수술일 범위(from~to)로 서버 조회.
@@ -19,7 +19,7 @@ export function useReoperationCandidates(
   })
 
   return {
-    candidates: (data ?? []) as ReoperationCandidate[],
+    candidates: data ?? [],
     isLoading,
     isFetching,
     isError,

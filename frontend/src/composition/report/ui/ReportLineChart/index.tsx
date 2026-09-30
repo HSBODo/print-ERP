@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+
+import { MONTHS } from '#shared/constants/chart'
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
-import { MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
+
 import { niceAxis, niceAxisFor } from '../../utils/niceAxis'
 import { colorOf } from '../../utils/reportYearColors'
 

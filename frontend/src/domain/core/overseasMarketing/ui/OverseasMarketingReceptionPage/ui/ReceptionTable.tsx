@@ -1,20 +1,22 @@
 import {
   ChevronDown,
-  ChevronUp,
   ChevronsUpDown,
+  ChevronUp,
   Pencil,
   Trash2,
 } from 'lucide-react'
-import type { OverseasMarketingReception } from '../../../type/api'
+
 import type { Pagination } from '#shared/hooks/usePagination'
 import { Card, CardContent } from '#shared/ui/Card'
 import { TablePagination } from '#shared/ui/TablePagination'
+
+import type { OverseasMarketingReception } from '../../../type/api'
 import {
   alignClass,
   COLUMNS,
   dash,
-  STATUS_STYLE,
   type SortKey,
+  STATUS_STYLE,
   type TableColumn,
 } from '../utils/receptionColumns'
 
@@ -30,7 +32,7 @@ function Badge({ text, className }: { text: string; className: string }) {
   )
 }
 
-type Props = {
+interface Props {
   pagination: Pagination<OverseasMarketingReception>
   sort: { key: SortKey; dir: 'asc' | 'desc' } | null
   onToggleSort: (key: SortKey) => void

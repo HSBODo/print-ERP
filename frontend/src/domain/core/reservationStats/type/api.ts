@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── 공통: 응답 meta · 진단(diff·drill-down·parity) ── */
@@ -176,7 +177,7 @@ const systemDailyCountsSchema = z.object({
 export type ReservationStatsDailyCounts = z.infer<
   typeof systemDailyCountsSchema
 >
-export type ReservationStatsDailyCountsResult = {
+export interface ReservationStatsDailyCountsResult {
   data: ReservationStatsDailyCounts[]
   meta?: ReservationStatsResponseMeta
 }
@@ -267,7 +268,7 @@ const cataractDailyCountsSchema = z.object({
 })
 
 export type CataractStatsDailyCounts = z.infer<typeof cataractDailyCountsSchema>
-export type CataractStatsDailyCountsResult = {
+export interface CataractStatsDailyCountsResult {
   data: CataractStatsDailyCounts[]
   meta?: ReservationStatsResponseMeta
 }

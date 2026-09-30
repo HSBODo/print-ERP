@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
 import { api } from '#shared/api/client'
+
 import { mockApiAdapter } from '../../test/mockApiAdapter'
 
 describe('api client', () => {

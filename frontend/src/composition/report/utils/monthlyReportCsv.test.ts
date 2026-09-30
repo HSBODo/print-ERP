@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildMonthlyReportCsv } from './monthlyReportCsv'
 import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
+
+import { buildMonthlyReportCsv } from './monthlyReportCsv'
 
 const emptyStop: StopReasonMonthlyItem = {
   year: 2026,
@@ -16,8 +17,7 @@ const emptyStop: StopReasonMonthlyItem = {
   total: 0,
 }
 
-const blank12 = (): Array<number | null> =>
-  Array.from({ length: 12 }, () => null)
+const blank12 = (): (number | null)[] => Array.from({ length: 12 }, () => null)
 
 const run = () =>
   buildMonthlyReportCsv({
@@ -44,7 +44,7 @@ const run = () =>
       ratioGeneral: { 2026: [51.8128, ...Array<number | null>(11).fill(null)] },
       stopRate: { 2026: [6.37, ...Array<number | null>(11).fill(null)] },
       // examCount 등 나머지 키는 미제공 → 행이 생기지 않아야 함
-    } as Record<string, unknown>,
+    },
     success: {
       all: [79.1, ...Array<number | null>(11).fill(null)],
       oneday: blank12(),
@@ -122,7 +122,7 @@ describe('buildMonthlyReportCsv', () => {
       currentYear: 2026,
       charts: {
         reservations: { 2025: Array.from({ length: 12 }, (_, i) => i) },
-      } as Record<string, unknown>,
+      },
       success: { all: blank12(), oneday: blank12(), general: blank12() },
       stopReasonByMonth: Array<StopReasonMonthlyItem | null>(12).fill(null),
       stopReasonMonth: 1,
@@ -141,7 +141,7 @@ describe('buildMonthlyReportCsv', () => {
         stopRate: { 2026: blank12() },
         cataractSurgery: { 2026: blank12() },
         outpatient: { 2026: blank12() },
-      } as Record<string, unknown>,
+      },
       success: { all: blank12(), oneday: blank12(), general: blank12() },
       stopReasonByMonth: Array<StopReasonMonthlyItem | null>(12).fill(null),
       stopReasonMonth: 1,

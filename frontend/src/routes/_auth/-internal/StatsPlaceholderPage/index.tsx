@@ -1,5 +1,5 @@
 import { DatabaseZap, LayoutTemplate, Route, Workflow } from 'lucide-react'
-import type { PageMeta } from '../pageAccess'
+
 import {
   Card,
   CardContent,
@@ -7,6 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from '#shared/ui/Card'
+
+import type { PageMeta } from '../pageAccess'
 
 export function StatsPlaceholderPage({
   page,

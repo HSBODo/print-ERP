@@ -1,4 +1,5 @@
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
+
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import { changeRate } from '#shared/utils/stats'
 

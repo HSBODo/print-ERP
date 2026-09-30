@@ -30,7 +30,7 @@ export const SUMMARY_COLUMNS: SummaryColumnMeta[] = [
   { key: 'cancelRate', label: '취소율', fmt: 'pct1', emphasis: true },
 ]
 
-type SummaryCounts = {
+interface SummaryCounts {
   visit: number
   noShowReservation: number
   cancel: number

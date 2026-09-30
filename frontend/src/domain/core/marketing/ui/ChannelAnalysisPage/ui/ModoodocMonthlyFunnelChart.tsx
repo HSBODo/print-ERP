@@ -1,15 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { LoaderCircle, RefreshCw, TrendingUp } from 'lucide-react'
-import { marketingApi } from '../../../api'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
+
+import { marketingApi } from '../../../api'
 import {
   buildYearMonthRanges,
   findModoodocFunnel,

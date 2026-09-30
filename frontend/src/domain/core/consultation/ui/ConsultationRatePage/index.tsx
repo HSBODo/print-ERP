@@ -1,16 +1,18 @@
 import { useMemo } from 'react'
+
+import { useIsMobile } from '#shared/hooks/useIsMobile'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { StatsGrid } from '#shared/ui/StatsGrid'
 import { StatsStack } from '#shared/ui/StatsStack'
-import { useIsMobile } from '#shared/hooks/useIsMobile'
+
+import { useConsultationRateComposition } from '../../hooks/useConsultationRateComposition'
 import { useConsultationRateKpi } from '../../hooks/useConsultationRateKpi'
 import { useConsultationRateTrend } from '../../hooks/useConsultationRateTrend'
-import { useConsultationRateComposition } from '../../hooks/useConsultationRateComposition'
+import { toDataMap } from './consultationRateUtils'
 import { KpiCardsPanel } from './KpiCardsPanel'
 import { MonthComparePanel } from './MonthComparePanel'
 import { YearTrendPanel } from './YearTrendPanel'
-import { toDataMap } from './consultationRateUtils'
 
 export function ConsultationRatePage() {
   const filter = useFilterBar()

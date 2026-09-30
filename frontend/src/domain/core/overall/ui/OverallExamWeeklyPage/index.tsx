@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -6,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from '#shared/ui/Card'
+
 import { useOverallExamWeekly } from '../../hooks/useOverallExamWeekly'
-import { CURRENT_YEAR } from '#shared/constants/chart'
 import type { OverallExamWeeklyItem } from '../../type/api'
 
 /**

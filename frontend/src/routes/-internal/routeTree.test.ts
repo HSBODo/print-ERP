@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest'
 import { createRouter } from '@tanstack/react-router'
+import { describe, expect, it } from 'vitest'
+
 import { routeTree } from '@/routeTree.gen'
 
 // 통계 페이지가 아닌 라우트 (staticData.page 없음)

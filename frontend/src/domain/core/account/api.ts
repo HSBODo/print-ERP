@@ -1,10 +1,10 @@
 import { api } from '#shared/api/client'
 
 import {
-  type UserRow,
   listResponseSchema,
   singleResponseSchema,
   type UserCreatePayload,
+  type UserRow,
   type UserUpdatePayload,
 } from './type/api'
 

@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -6,6 +5,9 @@ import {
   Play,
   RefreshCw,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
+import { Button } from '#shared/ui/Button'
 import {
   Card,
   CardContent,
@@ -13,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#shared/ui/Card'
-import { Button } from '#shared/ui/Button'
+
 import {
   useBatchReconcileOnedayFlag,
   useBatchRerun,
@@ -21,7 +23,7 @@ import {
 } from '../../hooks/useBatchAdmin'
 import type { BatchDomain, BatchRunLog } from '../../type/api'
 
-type BatchJobOption = {
+interface BatchJobOption {
   value: BatchDomain
   label: string
   description: string
@@ -556,8 +558,7 @@ export function BatchManagementPage() {
           )}
           {reconcileOneday.isError && (
             <p className="text-xs text-red-700">
-              실행 실패:{' '}
-              {(reconcileOneday.error as Error)?.message ?? '알 수 없는 오류'}
+              실행 실패: {reconcileOneday.error?.message ?? '알 수 없는 오류'}
             </p>
           )}
         </CardContent>

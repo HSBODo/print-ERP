@@ -1,5 +1,7 @@
 import axios, { type AxiosResponse } from 'axios'
+
 import { api } from '#shared/api/client'
+
 import { clearStoredAuthSession, readStoredAuthSession } from './session'
 
 const WHITELIST = new Set(['/auth/login'])

@@ -1,25 +1,25 @@
 import { api } from '#shared/api/client'
 
 import {
-  type ReservationStatsEditableField,
+  cataractCellEditResponseSchema,
+  cataractDiffResponseSchema,
+  cataractDrillDownResponseSchema,
+  type CataractEditableField,
+  cataractParityResponseSchema,
+  cataractResponseSchema,
+  type CataractStatsDailyCounts,
+  type CataractStatsDailyCountsResult,
   type ReservationStatsDailyCounts,
   type ReservationStatsDailyCountsResult,
-  systemResponseSchema,
+  type ReservationStatsDiff,
+  type ReservationStatsDrillDown,
+  type ReservationStatsEditableField,
+  type ReservationStatsParity,
   systemCellEditResponseSchema,
   systemDiffResponseSchema,
   systemDrillDownResponseSchema,
   systemParityResponseSchema,
-  type CataractEditableField,
-  type CataractStatsDailyCounts,
-  type CataractStatsDailyCountsResult,
-  cataractResponseSchema,
-  cataractCellEditResponseSchema,
-  cataractDiffResponseSchema,
-  cataractDrillDownResponseSchema,
-  cataractParityResponseSchema,
-  type ReservationStatsDiff,
-  type ReservationStatsDrillDown,
-  type ReservationStatsParity,
+  systemResponseSchema,
 } from './type/api'
 
 export const reservationStatsApi = {

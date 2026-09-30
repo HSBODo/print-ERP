@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 
-type StatsHeaderColumn = {
+interface StatsHeaderColumn {
   key: PropertyKey
   label: string
 }
@@ -18,13 +18,13 @@ export type StatsHeaderNode<TColumn extends StatsHeaderColumn> =
       className: string
     }
 
-export type StatsHeaderStandaloneCell = {
+export interface StatsHeaderStandaloneCell {
   key: string
   content: ReactNode
   className: string
 }
 
-export type StatsHeaderModel<TColumn extends StatsHeaderColumn> = {
+export interface StatsHeaderModel<TColumn extends StatsHeaderColumn> {
   corner: {
     content: ReactNode
     className: string
@@ -33,7 +33,7 @@ export type StatsHeaderModel<TColumn extends StatsHeaderColumn> = {
   nodes: readonly StatsHeaderNode<TColumn>[]
 }
 
-export type StatsTableHeaderClasses = {
+export interface StatsTableHeaderClasses {
   groupHead: string
   headH: string
   headBottom: string
@@ -42,7 +42,7 @@ export type StatsTableHeaderClasses = {
   leftDivider: string
 }
 
-type HeaderCell = {
+interface HeaderCell {
   key: string
   content: ReactNode
   colSpan?: number

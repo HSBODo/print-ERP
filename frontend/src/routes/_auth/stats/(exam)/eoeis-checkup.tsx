@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { EoeisCheckupStatsPage } from '#domain/core/exam/ui/EoeisCheckupStatsPage'
 
 export const Route = createFileRoute('/_auth/stats/(exam)/eoeis-checkup')({

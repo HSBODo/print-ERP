@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react'
+
 import type { AccountingFilterState } from '../../type/filter'
 
 export interface MedicalExtraFilters {
@@ -34,7 +35,7 @@ const weeksOfMonth = (month: string) => {
   const first = new Date(year, monthNo - 1, 1)
   first.setDate(first.getDate() - ((first.getDay() + 6) % 7))
   const last = new Date(year, monthNo, 0)
-  const weeks: Array<{ from: string; to: string; label: string }> = []
+  const weeks: { from: string; to: string; label: string }[] = []
   for (
     const monday = first;
     monday <= last;

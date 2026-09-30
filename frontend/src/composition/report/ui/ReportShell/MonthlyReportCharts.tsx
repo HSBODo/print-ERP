@@ -10,17 +10,19 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
+import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
+import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { Select } from '#shared/ui/Select'
-import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
-import { CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
+
 import { isIncompleteMonth } from '../../utils/monthlyReportUtils'
 
 const MONTH_SELECT_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
@@ -74,7 +76,7 @@ export function StopReasonBar({
   const chartData = useMemo(() => {
     const rows = REASONS.map((r) => ({
       name: r.label,
-      value: item ? (item[r.key] as number) : 0,
+      value: item ? item[r.key] : 0,
       color: r.color,
     }))
     rows.push({
@@ -153,7 +155,7 @@ export function StopReasonBar({
 /* ── 수술 상세표 (시술별, 라이브) ── */
 // 뒤늦게 추가된 지표(V33 프레스비욘드·PIOL 실인원, 라섹 세부, 재수술 분해)는
 // API 스키마에서 optional 이다 — 과거 캐시/시드에 값이 없을 수 있어서다. 여기서도 optional 로 맞춘다.
-type SurgeryCell = {
+interface SurgeryCell {
   lasek: number
   lasik: number
   smile: number
@@ -611,8 +613,7 @@ export function ReportExamByClassChart({
 
   const seriesTotal = (key: string) =>
     chartData.reduce(
-      (sum, row) =>
-        sum + (typeof row[key] === 'number' ? (row[key] as number) : 0),
+      (sum, row) => sum + (typeof row[key] === 'number' ? row[key] : 0),
       0,
     )
   const cell = (v: number | null) =>

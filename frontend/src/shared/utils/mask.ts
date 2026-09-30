@@ -12,7 +12,7 @@
  *  - 뒷자리 일부는 남긴다 — 전부 가리면 행 대조·중복 확인이 불가능해져 CSV 자체가 쓸모없어진다.
  */
 
-const isBlank = (v: string | null | undefined): boolean => !v || !v.trim()
+const isBlank = (v: string | null | undefined): boolean => !v?.trim()
 
 /**
  * 이름 — 처음과 끝만 남기고 가운데를 가린다.

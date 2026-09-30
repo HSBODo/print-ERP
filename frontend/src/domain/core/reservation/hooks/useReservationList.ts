@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { reservationApi } from '../api'
-import type { ReservationListItem } from '../type/api'
 
 /**
  * 예약자 리스트 조회 훅. 예약일 범위(from~to)로 서버 조회 (월 또는 주 단위).
@@ -17,7 +17,7 @@ export function useReservationList(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: enabled ? ((data?.rows ?? []) as ReservationListItem[]) : [],
+    rows: enabled ? (data?.rows ?? []) : [],
     isLoading,
     isFetching,
     isError,

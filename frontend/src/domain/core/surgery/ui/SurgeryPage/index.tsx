@@ -8,6 +8,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
+import { CHART_COLORS, CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
+import { useIsMobile } from '#shared/hooks/useIsMobile'
 import {
   Card,
   CardContent,
@@ -16,10 +19,10 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
@@ -27,12 +30,11 @@ import { KpiCard } from '#shared/ui/KpiCard'
 import { PanelShell } from '#shared/ui/PanelShell'
 import { StatsGrid } from '#shared/ui/StatsGrid'
 import { StatsStack } from '#shared/ui/StatsStack'
-import { useIsMobile } from '#shared/hooks/useIsMobile'
+import { formatAxisNumber, periodLabel } from '#shared/utils/stats'
+
+import { useSurgeryComposition } from '../../hooks/useSurgeryComposition'
 import { useSurgeryKpi } from '../../hooks/useSurgeryKpi'
 import { useSurgeryTrend } from '../../hooks/useSurgeryTrend'
-import { useSurgeryComposition } from '../../hooks/useSurgeryComposition'
-import { CHART_COLORS, CURRENT_YEAR, MONTHS } from '#shared/constants/chart'
-import { formatAxisNumber, periodLabel } from '#shared/utils/stats'
 
 /* ── 타입 ── */
 type GroupKey = 'total' | 'refractive' | 'lens' | 'cataract'
@@ -134,7 +136,7 @@ function KpiCardsPanel({
 }: {
   dataMap: Record<number, SurgeryData[]>
   mode: string
-  periods: Array<{ year: number; month: number }>
+  periods: { year: number; month: number }[]
   years: number[]
   isLoading: boolean
   isError: boolean
@@ -197,7 +199,7 @@ function MonthComparePanel({
   isError,
 }: {
   dataMap: Record<number, SurgeryData[]>
-  periods: Array<{ year: number; month: number }>
+  periods: { year: number; month: number }[]
   isLoading: boolean
   isError: boolean
 }) {
@@ -473,9 +475,7 @@ function YearTrendPanel({
                       const value = yearChartData[monthIndex][s.key]
                       return (
                         <td key={monthIndex} className="py-2 tabular-nums">
-                          {value === null
-                            ? ''
-                            : formatAxisNumber(value as number)}
+                          {value === null ? '' : formatAxisNumber(value)}
                         </td>
                       )
                     })}

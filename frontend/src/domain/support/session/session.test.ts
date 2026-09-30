@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
+  type AuthUser,
   clearStoredAuthSession,
   persistAuthSession,
   readStoredAuthSession,
-  type AuthUser,
 } from './session'
 
 class MemoryStorage implements Storage {

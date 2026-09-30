@@ -76,7 +76,7 @@ export function categorize(
  */
 export function groupByReason(
   rows: SmsQueueRow[],
-): Array<{ category: ReasonCategory; count: number }> {
+): { category: ReasonCategory; count: number }[] {
   const counts = new Map<ReasonCategory, number>()
   for (const row of rows) {
     const c = categorize(row.lastError)

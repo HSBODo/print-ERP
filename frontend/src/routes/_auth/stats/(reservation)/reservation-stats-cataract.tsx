@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { ReservationStatsCataractPage } from '#domain/core/reservationStats/ui/ReservationStatsCataractPage'
 
 export const Route = createFileRoute(

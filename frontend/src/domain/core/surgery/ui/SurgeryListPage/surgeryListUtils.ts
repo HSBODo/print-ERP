@@ -24,7 +24,7 @@ export const CATEGORY_OPTIONS = ['전체', '시력교정', '백내장', '재수�
 export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
 export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
 export const SKELETON_ROWS = 50
-export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
+export const QUICK_RANGES: { key: QuickRangeKey; label: string }[] = [
   { key: '1w', label: '1주' },
   { key: '2w', label: '2주' },
   { key: '3w', label: '3주' },
@@ -213,7 +213,7 @@ const has = (raw: string, ...keys: string[]) => {
 
 /** 수술명 한 건(한쪽 눈)의 시력교정 유형. SQL CASE 와 판정 순서까지 같아야 한다. */
 export function classifyVision(raw: string): VisionType {
-  if (!raw || !raw.trim()) return 'other'
+  if (!raw?.trim()) return 'other'
   if (has(raw, 'PRESBYOND')) return 'presbyond'
   if (has(raw, 'SMILE Pro', 'SMILEpro', 'SMILE PRO')) return 'smilePro'
   if (has(raw, 'SMILE')) return 'smile'

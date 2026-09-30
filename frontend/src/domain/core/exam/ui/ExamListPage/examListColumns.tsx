@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
-import type { ExamListItem } from '../../type/api'
+
 import { maskJumin, maskName, maskPhone } from '#shared/utils/mask'
+
+import type { ExamListItem } from '../../type/api'
 import { calcAge, dash, formatExamType } from '../../utils/examListUtils'
 
 /**

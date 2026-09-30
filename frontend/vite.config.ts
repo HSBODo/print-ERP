@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import react from '@vitejs/plugin-react'
 import path from 'path'
+import { defineConfig } from 'vite'
 
 const frontendPort = Number(process.env.VITE_FRONTEND_PORT ?? 15173)
 const backendUrl = process.env.VITE_BACKEND_URL ?? 'http://localhost:18080'

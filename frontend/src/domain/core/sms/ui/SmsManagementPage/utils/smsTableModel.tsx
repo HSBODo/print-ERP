@@ -238,7 +238,7 @@ export type StatusBucket =
   | typeof STATE_UNSENDABLE
   | typeof STATE_NO_TEMPLATE
 
-export type TargetState = {
+export interface TargetState {
   /** 표에 찍는 문구. 예 '대기' · '2차 대기' · '1차 실패' · '완료' */
   label: string
   /** 상태 필터가 세는 묶음 — 전과 같은 4분류. */
@@ -453,7 +453,7 @@ export const lastLogOf = (target: SmsTarget, templateCode: string) =>
  *   회색       아직 예정일 전 · 또는 홀딩·발송 불가라 보낼 대상이 아님
  * 정확한 시각과 채널은 툴팁에 둔다 — 표에 다 펼치면 컬럼이 12개가 되어 오히려 안 보인다.
  */
-export type TierCell = {
+export interface TierCell {
   text: string
   label: string
   className: string
@@ -500,7 +500,7 @@ export const tierCellOf = (
   /** 이 차수의 발송 예정 시각(HH:mm). 큐가 없는 tier 의 폴백 표시에만 쓴다.
    *  큐(t.tierQueues[code])가 있으면 큐의 scheduledAt 을 그대로 쓴다 —
    *  재실행/홀딩 해제/오프셋 편집으로 clamp 된 실 시각과 화면이 어긋나지 않게. */
-  tierTime: string = '',
+  tierTime = '',
 ): TierCell => {
   const log = lastLogOf(t, code)
   const queue = t.tierQueues?.[code] ?? null

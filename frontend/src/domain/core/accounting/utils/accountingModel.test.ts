@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
+
 import type { MedicalReceipt } from '../type/accounting'
-import { dataStamp, medicalNetRevenue } from './accountingModel'
 import {
   buildMedicalChart,
   buildVisionChart,
   chartYears,
 } from './accountingChartModel'
+import { dataStamp, medicalNetRevenue } from './accountingModel'
 
 describe('회계 프런트 집계 모델', () => {
   it('진료 실수납합계는 수납과 미수를 더하고 환불을 뺀다', () => {

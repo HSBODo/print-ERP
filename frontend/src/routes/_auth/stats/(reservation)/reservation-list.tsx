@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { ReservationListPage } from '#domain/core/reservation/ui/ReservationListPage'
 
 export const Route = createFileRoute(

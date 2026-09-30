@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { reservationApi } from '../api'
-import type { ReservationListHomepageItem } from '../type/api'
 
 /**
  * 예약자 리스트_홈페이지 조회 훅. 등록일 범위(from~to)로 서버 조회.
@@ -19,7 +19,7 @@ export function useReservationListHomepage(
   })
 
   return {
-    rows: enabled ? ((data?.rows ?? []) as ReservationListHomepageItem[]) : [],
+    rows: enabled ? (data?.rows ?? []) : [],
     lastRegDate: enabled ? (data?.lastRegDate ?? '') : '',
     // 실시간 소스면 '스냅샷 초과' 경고가 의미 없다 → 배너를 끈다.
     // 응답 전(undefined)에는 false 로 둔다 — 스냅샷 가정이 안전한 기본값이다(경고를 놓치는 쪽보다 낫다).

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+
 import type { VisionReceipt } from '../../type/accounting'
 import {
   buildVisionRevenueSummary,
@@ -21,8 +22,8 @@ const receipt = (
 describe('시력교정 매출 집계 모델', () => {
   it('카드는 매입사 열에, 카드 외 결제는 현금 열에 합산한다', () => {
     const summary = buildVisionRevenueSummary([
-      receipt('카드', '국민', { 수술: 300 } as VisionReceipt['itemAmounts']),
-      receipt('현금영수', '', { 수술: 120 } as VisionReceipt['itemAmounts']),
+      receipt('카드', '국민', { 수술: 300 }),
+      receipt('현금영수', '', { 수술: 120 }),
     ])
     const surgery = VISION_SUMMARY_ROWS.find((row) => row.key === '수술')!
     const values = summaryRowValues(summary, surgery)
@@ -35,10 +36,10 @@ describe('시력교정 매출 집계 모델', () => {
 
   it('면세와 과세 항목을 분리하고 전체 합계를 보존한다', () => {
     const summary = buildVisionRevenueSummary([
-      receipt('카드', '신한', { 수술: 1_000 } as VisionReceipt['itemAmounts']),
+      receipt('카드', '신한', { 수술: 1_000 }),
       receipt('카드', '신한', {
         올코드라이아이: 110,
-      } as VisionReceipt['itemAmounts']),
+      }),
     ])
 
     expect(summary.freeTotals['신한']).toBe(1_000)

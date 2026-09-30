@@ -2,17 +2,17 @@ import { toCsv } from '#shared/utils/csv'
 
 type CsvValue = string | number
 
-type CsvColumn = {
+interface CsvColumn {
   key: PropertyKey
   label: string
 }
 
-export type CsvColumnGroup<TColumn> = {
+export interface CsvColumnGroup<TColumn> {
   label: string
   columns: readonly TColumn[]
 }
 
-type CsvRow = {
+interface CsvRow {
   label: string
   weekday?: string
   muted?: boolean
@@ -20,7 +20,7 @@ type CsvRow = {
   summary: object
 }
 
-type LeadingColumn<TRow> = {
+interface LeadingColumn<TRow> {
   header: string
   value: (row: TRow) => CsvValue
 }

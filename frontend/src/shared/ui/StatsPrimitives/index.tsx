@@ -1,4 +1,5 @@
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
+
 import { formatDelta } from '#shared/utils/statsUtils'
 
 export interface SelectOption {

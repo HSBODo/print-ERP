@@ -1,16 +1,18 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { formatAxisNumber } from '#shared/utils/stats'
+
 import { niceAxisFor, tightAxis } from '../../utils/niceAxis'
-import { colorOf } from '../../utils/reportYearColors'
 import type { ReportWeek } from '../../utils/reportWeeks'
+import { colorOf } from '../../utils/reportYearColors'
 
 /**
  * 주차축 레포트 라인차트 — `ReportLineChart`(월축)의 주차 버전.

@@ -31,7 +31,7 @@ function ticksBetween(bottom: number, top: number, step: number): number[] {
 }
 
 /** 값 배열에서 [하한, 상한] 도메인과 눈금 배열을 만든다. 값이 없으면 [0,1]. */
-export function niceAxis(values: Array<number | null | undefined>): Axis {
+export function niceAxis(values: (number | null | undefined)[]): Axis {
   const nums = values.filter(
     (v): v is number => typeof v === 'number' && Number.isFinite(v),
   )
@@ -85,7 +85,7 @@ function niceStepFor(range: number, divisions: number): number {
  *
  * 음수 하한은 여전히 금지(카운트·비율 모두 ≥0).
  */
-export function tightAxis(values: Array<number | null | undefined>): Axis {
+export function tightAxis(values: (number | null | undefined)[]): Axis {
   const nums = values.filter(
     (v): v is number => typeof v === 'number' && Number.isFinite(v),
   )

@@ -1,9 +1,9 @@
 import { api } from '#shared/api/client'
 
 import {
-  stopReasonResponseSchema,
   cataractReservationRateResponseSchema,
   consultationRateResponseSchema,
+  stopReasonResponseSchema,
 } from './type/api'
 
 export const consultationApi = {

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { accountingApi } from '../api'
 import type { MedicalCategory } from '../type/accounting'
 

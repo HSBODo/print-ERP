@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
+import { useMemo } from 'react'
 import {
   Area,
   AreaChart,
@@ -12,6 +12,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
+import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
+import { useAccumulatedEyesTotal } from '#domain/core/marketing/hooks/useAccumulatedEyesTotal'
+import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
+import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
+import { useReservationStatsSystem } from '#domain/core/reservationStats/hooks/useReservationStatsSystem'
+import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -20,19 +28,12 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
-import { CURRENT_YEAR } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
-import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
-import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
-import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
-import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
-import { useAccumulatedEyesTotal } from '#domain/core/marketing/hooks/useAccumulatedEyesTotal'
-import { useReservationStatsSystem } from '#domain/core/reservationStats/hooks/useReservationStatsSystem'
 
 /**
  * 홈(대시보드) — 시스템 각 도메인 마트에서 이번달 요약을 조회.

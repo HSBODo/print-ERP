@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { examApi } from '../api'
 
 export function useExaminationKpi(years: number[]) {

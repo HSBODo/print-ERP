@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronsUpDown,
@@ -7,9 +6,12 @@ import {
   Search,
   X,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { Button } from '#shared/ui/Button'
 import { MonthPicker } from '#shared/ui/MonthPicker'
 import { PanelShell } from '#shared/ui/PanelShell'
+
 import {
   useReservationChannel,
   useReservationChannelOpTypes,
@@ -153,7 +155,7 @@ const FINAL_INDEX = 5
  *
  * prev  통과율 분모가 되는 칸의 인덱스(-1 이면 비율 없음).
  *       수술완료는 대기(6)가 아니라 등록(5) 대비여야 한다 — 대기를 건너뛴다. */
-type ColDef = {
+interface ColDef {
   label: string
   hint: string
   color: string

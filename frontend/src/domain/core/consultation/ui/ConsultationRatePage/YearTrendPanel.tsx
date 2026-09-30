@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+
+import { MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -8,18 +10,18 @@ import {
 } from '#shared/ui/Card'
 import { type ChartConfig } from '#shared/ui/Chart'
 import { PanelShell } from '#shared/ui/PanelShell'
-import { TrendLineChart, type TrendLine } from '#shared/ui/TrendLineChart'
+import { type TrendLine, TrendLineChart } from '#shared/ui/TrendLineChart'
+import { formatAxisPercent } from '#shared/utils/stats'
+
 import {
-  METRICS,
-  EMPTY,
   DETAIL_METRIC_KEYS,
+  EMPTY,
+  formatRate,
   METRIC_COLORS,
   type MetricKey,
+  METRICS,
   type MonthlyData,
-  formatRate,
 } from './consultationRateUtils'
-import { MONTHS, YEAR_STROKE_PATTERNS } from '#shared/constants/chart'
-import { formatAxisPercent } from '#shared/utils/stats'
 
 interface YearTrendPanelProps {
   dataMap: Record<number, MonthlyData[]>

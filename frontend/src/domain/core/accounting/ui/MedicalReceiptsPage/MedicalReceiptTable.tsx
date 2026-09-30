@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
+
 import { usePagination } from '#shared/hooks/usePagination'
 import { TablePagination } from '#shared/ui/TablePagination'
+
 import type { MedicalReceipt } from '../../type/accounting'
 import {
   ACCOUNTING_PAGE_SIZE_OPTIONS,

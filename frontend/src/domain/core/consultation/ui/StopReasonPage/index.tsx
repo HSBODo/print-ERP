@@ -8,6 +8,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -15,15 +17,15 @@ import {
   CardHeader,
   CardTitle,
 } from '#shared/ui/Card'
-import { Select } from '#shared/ui/Select'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
+import { Select } from '#shared/ui/Select'
+
 import { useStopReasonMonthly } from '../../hooks/useStopReasonMonthly'
-import { CURRENT_YEAR } from '#shared/constants/chart'
 import type { StopReasonMonthlyItem } from '../../type/api'
 
 const YEAR_OPTIONS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]
@@ -103,7 +105,7 @@ export function StopReasonPage() {
     const rows: { name: string; value: number; color: string }[] = REASONS.map(
       (r) => ({
         name: r.label,
-        value: item ? (item[r.key] as number) : 0,
+        value: item ? item[r.key] : 0,
         color: r.color,
       }),
     )
@@ -116,11 +118,11 @@ export function StopReasonPage() {
   }, [item])
 
   const suspendTotal = REASONS.filter((r) => r.group === '잠정 중단').reduce(
-    (sum, r) => sum + (item ? (item[r.key] as number) : 0),
+    (sum, r) => sum + (item ? item[r.key] : 0),
     0,
   )
   const impossibleTotal = REASONS.filter((r) => r.group === '수술 불가').reduce(
-    (sum, r) => sum + (item ? (item[r.key] as number) : 0),
+    (sum, r) => sum + (item ? item[r.key] : 0),
     0,
   )
 

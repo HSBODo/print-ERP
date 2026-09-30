@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import { useMemo } from 'react'
 import {
   Bar,
   BarChart,
@@ -10,6 +10,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
+import {
+  CHART_COLORS,
+  MONTHS,
+  YEAR_STROKE_PATTERNS,
+} from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -18,26 +24,22 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
-import { MetricSection, type MetricDef } from '#shared/ui/MetricSection'
-import {
-  CHART_COLORS,
-  MONTHS,
-  YEAR_STROKE_PATTERNS,
-} from '#shared/constants/chart'
-import { b2bApi } from '../../api'
-import type { B2bRevenueMonthlyItem } from '../../type/api'
+import { type MetricDef, MetricSection } from '#shared/ui/MetricSection'
 import { periodLabel } from '#shared/utils/stats'
 
-type MonthlyData = {
+import { b2bApi } from '../../api'
+import type { B2bRevenueMonthlyItem } from '../../type/api'
+
+interface MonthlyData {
   totalRevenue: number
   caseCount: number
   avgRevenuePerCase: number

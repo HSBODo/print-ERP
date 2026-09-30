@@ -1,14 +1,16 @@
 // @vitest-environment happy-dom
-import { describe, it, expect } from 'vitest'
 import { createRouter } from '@tanstack/react-router'
+import { describe, expect, it } from 'vitest'
+
 import { routeTree } from '@/routeTree.gen'
+import type { AuthUser } from '#domain/support/session/session'
+
 import {
   buildMenu,
   MENU_TREE,
   type MenuItem,
   type PagePath,
 } from '../../navigation'
-import type { AuthUser } from '#domain/support/session/session'
 
 /**
  * 사이드바 노출 규칙 (docs/auth/permissions.md § 2-2, § 3).

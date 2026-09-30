@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+import { canSystemOp } from '#domain/support/session/session'
+import { useAuthStore } from '#domain/support/session/store'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
+import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+
 import { overseasMarketingApi } from '../../api'
-import type {
-  OverseasMarketingReception,
-  OverseasMarketingReceptionInput,
-} from '../../type/api'
 import {
   useOverseasMarketingCrmSync,
   useOverseasMarketingMatchConfirm,
@@ -16,12 +17,14 @@ import {
   useOverseasMarketingSheetSync,
   useOverseasMarketingSyncAvailability,
 } from '../../hooks/useOverseasMarketing'
+import type {
+  OverseasMarketingReception,
+  OverseasMarketingReceptionInput,
+} from '../../type/api'
 import { MatchConfirmDialog } from './ui/MatchConfirmDialog'
 import { ReceptionFilterBar } from './ui/ReceptionFilterBar'
 import { ReceptionFormDialog } from './ui/ReceptionFormDialog'
 import { ReceptionTable } from './ui/ReceptionTable'
-import { EMPTY_RECEPTION_INPUT, toReceptionInput } from './utils/receptionForm'
-import { createDefaultParams, type MatchFilter } from './utils/receptionOptions'
 import {
   CSV_COLUMNS,
   MATCH_ORDER,
@@ -29,9 +32,8 @@ import {
   type SortKey,
   sortValue,
 } from './utils/receptionColumns'
-import { canSystemOp } from '#domain/support/session/session'
-import { useAuthStore } from '#domain/support/session/store'
-import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+import { EMPTY_RECEPTION_INPUT, toReceptionInput } from './utils/receptionForm'
+import { createDefaultParams, type MatchFilter } from './utils/receptionOptions'
 
 // CRM [동기화] 버튼 스위치 — 잠시 꺼야 할 때 false 로 바꾸고 재배포.
 const CRM_SYNC_ENABLED = true
@@ -249,7 +251,7 @@ export function OverseasMarketingReceptionPage() {
   }
 
   const submitMatch = async (customerNo: string) => {
-    if (!matchTarget || matchTarget.seq == null) return
+    if (matchTarget?.seq == null) return
     try {
       const result = await confirmMatch.mutateAsync({
         rowNumber: matchTarget.seq,

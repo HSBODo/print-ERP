@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { SurgeryCompositionPage } from '#domain/core/surgery/ui/SurgeryCompositionPage'
 
 export const Route = createFileRoute(

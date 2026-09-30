@@ -1,19 +1,21 @@
-import { useMemo, useState } from 'react'
 import {
+  ChevronDown,
+  ChevronsUpDown,
+  ChevronUp,
+  Download,
   RotateCcw,
   Search,
-  ChevronDown,
-  ChevronUp,
-  ChevronsUpDown,
-  Download,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
-import { TablePagination } from '#shared/ui/TablePagination'
-import { MonthPicker } from '#shared/ui/MonthPicker'
 import { Card, CardContent } from '#shared/ui/Card'
-import { columnsToCsv, downloadCsv, type CsvColumn } from '#shared/utils/csv'
+import { MonthPicker } from '#shared/ui/MonthPicker'
+import { TablePagination } from '#shared/ui/TablePagination'
+import { columnsToCsv, type CsvColumn, downloadCsv } from '#shared/utils/csv'
 import { maskName } from '#shared/utils/mask'
+
 import { useReservationList } from '../../hooks/useReservationList'
 import type { ReservationListItem } from '../../type/api'
 
@@ -24,7 +26,7 @@ import type { ReservationListItem } from '../../type/api'
 
 /* ── 표시 헬퍼 ── */
 // 값이 optional 인 컬럼(내원동기 중 등)도 그대로 넘길 수 있게 undefined 를 받는다.
-const dash = (v: string | undefined) => (v && v.trim() ? v : '—')
+const dash = (v: string | undefined) => (v?.trim() ? v : '—')
 const formatCount = (n: number) => n.toLocaleString('ko-KR')
 /** 수술 수납액. 아직 수술 전이면 0 으로 오는데 '0원'으로 보이면 무료로 오해하므로 대시로 둔다. */
 const formatPayment = (v?: number) =>

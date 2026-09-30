@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
 import { Button } from '#shared/ui/Button'
+
 import { useReoperationCandidates } from '../../hooks/useReoperationCandidates'
 import {
   useReoperationDecisions,
@@ -20,7 +22,7 @@ import type { ReoperationCandidate } from '../../type/api'
 
 type KeyedCandidate = ReoperationCandidate & { key: string }
 
-type Props = {
+interface Props {
   from: string
   to: string
   onClose: () => void

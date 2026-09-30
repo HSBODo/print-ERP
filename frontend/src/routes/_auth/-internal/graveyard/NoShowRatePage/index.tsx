@@ -1,14 +1,15 @@
-import { useState, useMemo } from 'react'
-import { TrendingDown, TrendingUp, Minus, Plus, X } from 'lucide-react'
+import { Minus, Plus, TrendingDown, TrendingUp, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import {
   Bar,
   BarChart,
-  Line,
-  ComposedChart,
   CartesianGrid,
+  ComposedChart,
+  Line,
   XAxis,
   YAxis,
 } from 'recharts'
+
 import {
   Card,
   CardContent,
@@ -17,12 +18,12 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import {
   type CompareMode,
@@ -31,8 +32,8 @@ import {
   getCurrentPeriod,
   getDefaultPeriods,
   getDefaultYears,
-  periodLabel,
   type Period,
+  periodLabel,
 } from '#shared/utils/stats'
 
 /* ── 상수 ── */

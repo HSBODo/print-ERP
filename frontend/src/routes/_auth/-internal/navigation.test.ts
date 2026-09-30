@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest'
 import { createRouter } from '@tanstack/react-router'
+import { describe, expect, it } from 'vitest'
+
 import { routeTree } from '@/routeTree.gen'
+
 import {
   buildMenu,
   HIDDEN_PAGE_PATHS,

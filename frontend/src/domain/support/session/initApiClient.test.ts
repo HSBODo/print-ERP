@@ -7,7 +7,9 @@ import {
   it,
   vi,
 } from 'vitest'
+
 import { api } from '#shared/api/client'
+
 import { mockApiAdapter } from '../../../test/mockApiAdapter'
 import { initApiClient } from './initApiClient'
 

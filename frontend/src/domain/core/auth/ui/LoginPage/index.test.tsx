@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
   cleanup,
   fireEvent,
@@ -8,6 +8,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const loginMock = vi.fn()
 const navigateMock = vi.fn()
@@ -20,8 +21,8 @@ vi.mock('#domain/support/session/store', () => ({
 }))
 vi.mock('../../api', () => ({ authApi: { login: vi.fn() } }))
 
-import { LoginPage } from '.'
 import { authApi } from '../../api'
+import { LoginPage } from '.'
 
 const loginApi = vi.mocked(authApi.login)
 

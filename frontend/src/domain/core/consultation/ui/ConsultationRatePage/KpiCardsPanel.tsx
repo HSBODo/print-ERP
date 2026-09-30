@@ -1,19 +1,21 @@
 import { useMemo } from 'react'
-import { PanelShell } from '#shared/ui/PanelShell'
+
 import { KpiCard } from '#shared/ui/KpiCard'
-import {
-  METRICS,
-  EMPTY,
-  type MonthlyData,
-  computeRate,
-  formatRate,
-} from './consultationRateUtils'
+import { PanelShell } from '#shared/ui/PanelShell'
 import { periodLabel } from '#shared/utils/stats'
+
+import {
+  computeRate,
+  EMPTY,
+  formatRate,
+  METRICS,
+  type MonthlyData,
+} from './consultationRateUtils'
 
 interface KpiCardsPanelProps {
   dataMap: Record<number, MonthlyData[]>
   mode: string
-  periods: Array<{ year: number; month: number }>
+  periods: { year: number; month: number }[]
   years: number[]
   isLoading: boolean
   isError: boolean

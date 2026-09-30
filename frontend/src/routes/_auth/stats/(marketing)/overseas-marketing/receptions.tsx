@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { OverseasMarketingReceptionPage } from '#domain/core/overseasMarketing/ui/OverseasMarketingReceptionPage'
 
 export const Route = createFileRoute(

@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { reservationApi } from '../api'
-import type {
-  ReservationChangeDailyResult,
-  ReservationChangeItem,
-} from '../type/api'
+import type { ReservationChangeDailyResult } from '../type/api'
 
 /**
  * 예약 변경이력 조회 훅. 등록일 범위(from~to)로 서버 조회 — 보통 연도 하나, '연도 전체' 면 2022-01-01~오늘.
@@ -20,7 +18,7 @@ export function useReservationChange(from: string, to: string, enabled = true) {
   })
 
   return {
-    rows: (data?.rows ?? []) as ReservationChangeItem[],
+    rows: data?.rows ?? [],
     isLoading,
     isFetching,
     isError,

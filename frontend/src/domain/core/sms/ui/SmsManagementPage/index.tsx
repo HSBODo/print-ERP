@@ -1,44 +1,46 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Card, CardContent } from '#shared/ui/Card'
 import { TablePagination } from '#shared/ui/TablePagination'
+import { formatPhone } from '#shared/utils/phone'
+
 import {
   useSmsMutations,
   useSmsTargets,
   useSmsTemplates,
 } from '../../hooks/useSmsManagement'
 import { useSmsOffsets } from '../../hooks/useSmsOffsets'
-import { TargetFormModal } from './ui/TargetFormModal'
-import { SmsStatusFilterBar } from './ui/SmsStatusFilterBar'
-import { SmsToolbar, type PeriodMode } from './ui/SmsToolbar'
-import { SmsOffsetGrid } from './ui/SmsOffsetGrid'
-import { SmsOpTypeHelp } from './ui/SmsOpTypeHelp'
-import { SmsSolapiTemplateModal } from './ui/SmsSolapiTemplateModal'
-import { SmsOptOutModal } from './ui/SmsOptOutModal'
-import { SmsQueueStatusCard } from './ui/SmsQueueStatusCard'
 import { SmsMessagePreview } from './ui/SmsMessagePreview'
-import { formatPhone } from '#shared/utils/phone'
+import { SmsOffsetGrid } from './ui/SmsOffsetGrid'
+import { SmsOptOutModal } from './ui/SmsOptOutModal'
+import { SmsOpTypeHelp } from './ui/SmsOpTypeHelp'
+import { SmsQueueStatusCard } from './ui/SmsQueueStatusCard'
+import { SmsSolapiTemplateModal } from './ui/SmsSolapiTemplateModal'
+import { SmsStatusFilterBar } from './ui/SmsStatusFilterBar'
+import { type PeriodMode, SmsToolbar } from './ui/SmsToolbar'
+import { TargetFormModal } from './ui/TargetFormModal'
 import {
-  DELIVERY_GRACE_MINUTES,
-  GROUP_META,
-  OP_TYPE_META,
-  isHeld,
   compareSortValue,
+  DELIVERY_GRACE_MINUTES,
   getSortValue,
+  GROUP_META,
   groupHelpOf,
   groupOf,
+  isHeld,
   matchesStatusFilter,
-  stampMinutesAgo,
   offsetOf,
+  OP_TYPE_META,
+  type SortState,
+  stampMinutesAgo,
+  type StatusFilter,
   targetStateOf,
   tierCellOf,
   todayIso,
   toMonthEnd,
   toMonthStart,
   toMonthValue,
-  type SortState,
-  type StatusFilter,
 } from './utils/smsTableModel'
 
 /**
@@ -185,14 +187,14 @@ export function SmsManagementPage() {
   // 첫 행에서 tier1Time/tier2Time/tier3Time 을 뽑아 T1/T2/T3 매핑을 만든다. 데이터 없으면 빈 문자열.
   // 서버 TIME 컬럼은 "10:00:00" 로 직렬화돼 초까지 오므로 앞 5자(HH:mm)만 잘라 셀에 붙인다.
   const { data: offsets = [] } = useSmsOffsets()
-  const tierTimeMap = useMemo(() => {
+  const tierTimeMap = useMemo<Record<string, string>>(() => {
     const base = offsets[0]
     const hhmm = (t: string | undefined) => (t ?? '').slice(0, 5)
     return {
       T1: hhmm(base?.tier1Time),
       T2: hhmm(base?.tier2Time),
       T3: hhmm(base?.tier3Time),
-    } as Record<string, string>
+    }
   }, [offsets])
   // changeStatus (개별 홀딩 토글) 은 상태 셀 클릭 잠금(실수 방지)으로 화면에서 안 씀 —
   // 훅 자체는 useSmsMutations 안에 유지 (관리자 UI 재도입 시 재사용).

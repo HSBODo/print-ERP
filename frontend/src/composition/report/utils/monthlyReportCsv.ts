@@ -1,12 +1,12 @@
-import { MONTHS } from '#shared/constants/chart'
 import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
+import { MONTHS } from '#shared/constants/chart'
 
 /**
  * 월간 레포트 도표 데이터를 세로형 CSV로 직렬화 (수술 상세표 #27 제외).
  * 화면 charts 객체를 그대로 사용 — 행 = (지표 × 연도), 열 = 1~12월.
  */
 
-type YearSeries = Record<number, Array<number | null>>
+type YearSeries = Record<number, (number | null)[]>
 
 /**
  * 출력 순서 = 화면 LNB 목차(MonthlyReportPage의 items) 순서.
@@ -232,12 +232,12 @@ export interface MonthlyReportCsvInput {
   /** 당해연도(상담성공률·중단사유는 당해연도만 존재). */
   currentYear: number
   success: {
-    all: Array<number | null>
-    oneday: Array<number | null>
-    general: Array<number | null>
+    all: (number | null)[]
+    oneday: (number | null)[]
+    general: (number | null)[]
   }
   /** 당해연도 12개월 중단 사유(없는 달은 null). */
-  stopReasonByMonth: Array<StopReasonMonthlyItem | null>
+  stopReasonByMonth: (StopReasonMonthlyItem | null)[]
   /** 중단 사유 화면에서 선택한 월(1~12). CSV는 이 월 데이터만 채운다. */
   stopReasonMonth: number
 }
@@ -261,7 +261,7 @@ export function buildMonthlyReportCsv({
     label: string,
     unit: '건' | '%',
     year: number,
-    values: Array<number | null>,
+    values: (number | null)[],
     fractionDigits?: number,
   ) => {
     lines.push(
@@ -316,12 +316,9 @@ export function buildMonthlyReportCsv({
       // 중단 사유는 화면에서 선택한 단일 월만 값을 채우고, 나머지 월 열은 빈칸으로 둔다.
       const selectedItem = stopReasonByMonth[stopReasonMonth - 1] ?? null
       for (const reason of STOP_REASONS) {
-        const values: Array<number | null> = Array.from(
-          { length: 12 },
-          () => null,
-        )
+        const values: (number | null)[] = Array.from({ length: 12 }, () => null)
         values[stopReasonMonth - 1] = selectedItem
-          ? (selectedItem[reason.key] as number)
+          ? selectedItem[reason.key]
           : null
         pushRow('중단', reason.label, '건', currentYear, values)
       }

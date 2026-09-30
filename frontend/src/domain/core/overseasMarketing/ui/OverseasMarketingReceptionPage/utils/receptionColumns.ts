@@ -1,10 +1,11 @@
-import type { OverseasMarketingReception } from '../../../type/api'
 import type { CsvColumn } from '#shared/utils/csv'
 import { maskName } from '#shared/utils/mask'
 
+import type { OverseasMarketingReception } from '../../../type/api'
+
 export type SortKey = keyof OverseasMarketingReception
 
-export type TableColumn = {
+export interface TableColumn {
   key: SortKey | null
   label: string
   align?: 'left' | 'center' | 'right'

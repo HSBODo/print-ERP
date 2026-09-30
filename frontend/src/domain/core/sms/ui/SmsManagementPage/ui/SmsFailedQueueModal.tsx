@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react'
 import { RefreshCw, RotateCcw, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
 import { Button } from '#shared/ui/Button'
-import { useRetryQueueRows, useSmsQueueRows } from '../../../hooks/useSmsQueue'
 import { formatPhone } from '#shared/utils/phone'
+
+import { useRetryQueueRows, useSmsQueueRows } from '../../../hooks/useSmsQueue'
 import {
-  CATEGORY_STYLE,
   categorize,
+  CATEGORY_STYLE,
   groupByReason,
   type ReasonCategory,
 } from '../utils/smsFailReasonSummary'
@@ -77,7 +79,7 @@ export function SmsFailedQueueModal({
         )
         setSelected(new Set())
       },
-      onError: (err) => toast.error(`재실행 실패: ${(err as Error).message}`),
+      onError: (err) => toast.error(`재실행 실패: ${err.message}`),
     })
   }
 

@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
+
 import {
   useAccountingStatus,
   useVisionMonthly,
 } from '../../hooks/useAccounting'
-import { AccountingMonthlyChart } from '../AccountingMonthlyChart'
-import { ChartMetricBadge, ChartSegment } from '../AccountingChartControls'
 import { downloadAccountingChartCsv } from '../../utils/accountingChartCsv'
 import {
   buildVisionChart,
@@ -12,6 +11,8 @@ import {
   rowTotal,
 } from '../../utils/accountingChartModel'
 import { dataStamp } from '../../utils/accountingModel'
+import { ChartMetricBadge, ChartSegment } from '../AccountingChartControls'
+import { AccountingMonthlyChart } from '../AccountingMonthlyChart'
 
 export function VisionRevenueChartPage() {
   const status = useAccountingStatus()

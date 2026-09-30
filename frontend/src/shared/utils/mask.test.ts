@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { maskAddress, maskName, maskPhone, maskJumin } from '#shared/utils/mask'
+
+import { maskAddress, maskJumin, maskName, maskPhone } from '#shared/utils/mask'
 
 /**
  * 개인정보 마스킹 계약. CSV 로 나가는 값이라 조용히 덜 가려지면 그대로 유출된다.

@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+import { CHART_COLORS } from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -8,24 +10,24 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { PanelShell } from '#shared/ui/PanelShell'
-import {
-  METRICS,
-  EMPTY,
-  type MonthlyData,
-  formatRate,
-} from './consultationRateUtils'
-import { CHART_COLORS } from '#shared/constants/chart'
 import { formatAxisPercent, periodLabel } from '#shared/utils/stats'
+
+import {
+  EMPTY,
+  formatRate,
+  METRICS,
+  type MonthlyData,
+} from './consultationRateUtils'
 
 interface MonthComparePanelProps {
   dataMap: Record<number, MonthlyData[]>
-  periods: Array<{ year: number; month: number }>
+  periods: { year: number; month: number }[]
   isLoading: boolean
   isError: boolean
 }

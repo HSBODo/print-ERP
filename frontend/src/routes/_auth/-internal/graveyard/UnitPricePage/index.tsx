@@ -1,14 +1,20 @@
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   Line,
   LineChart,
-  CartesianGrid,
   XAxis,
   YAxis,
 } from 'recharts'
+
+import {
+  CHART_COLORS,
+  MONTHS,
+  YEAR_STROKE_PATTERNS,
+} from '#shared/constants/chart'
 import {
   Card,
   CardContent,
@@ -17,25 +23,20 @@ import {
   CardTitle,
 } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import {
-  CHART_COLORS,
-  MONTHS,
-  YEAR_STROKE_PATTERNS,
-} from '#shared/constants/chart'
-import {
   changeRate,
   formatAxisMan,
-  periodLabel,
   type Period,
+  periodLabel,
 } from '#shared/utils/stats'
 
 /* ── 타입 ── */

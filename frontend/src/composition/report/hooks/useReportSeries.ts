@@ -1,18 +1,20 @@
 import { useMemo } from 'react'
-import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
-import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
-import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
-import { useExaminationTrend } from '#domain/core/exam/hooks/useExaminationTrend'
-import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
-import { useCataractReservationRateTrend } from '#domain/core/consultation/hooks/useCataractReservationRateTrend'
-import { useStopReasonMonthly } from '#domain/core/consultation/hooks/useStopReasonMonthly'
-import { useOverallExamMonthly } from '#domain/core/overall/hooks/useOverallExamMonthly'
-import { useConsultationRateTrend } from '#domain/core/consultation/hooks/useConsultationRateTrend'
-import { useExamCountByClass } from '#domain/core/exam/hooks/useExamCountByClass'
+
 import { useBatchLastSuccess } from '#domain/core/batch/hooks/useBatchLastSuccess'
-import { CURRENT_YEAR } from '#shared/constants/chart'
+import { useCataractReservationRateTrend } from '#domain/core/consultation/hooks/useCataractReservationRateTrend'
+import { useConsultationRateTrend } from '#domain/core/consultation/hooks/useConsultationRateTrend'
+import { useStopReasonMonthly } from '#domain/core/consultation/hooks/useStopReasonMonthly'
+import { useExamCountByClass } from '#domain/core/exam/hooks/useExamCountByClass'
+import { useExaminationTrend } from '#domain/core/exam/hooks/useExaminationTrend'
+import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
+import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
+import { useOverallExamMonthly } from '#domain/core/overall/hooks/useOverallExamMonthly'
 import type { OverallExamMonthlyItem } from '#domain/core/overall/type/api'
-import { YEARS, isIncompleteMonth } from '../utils/monthlyReportUtils'
+import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
+import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
+import { CURRENT_YEAR } from '#shared/constants/chart'
+
+import { isIncompleteMonth, YEARS } from '../utils/monthlyReportUtils'
 
 /**
  * 레포트 공통 월별 시리즈 — 마트 + 레거시 확정값.

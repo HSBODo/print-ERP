@@ -1,4 +1,4 @@
-import { AxiosError, type AxiosAdapter } from 'axios'
+import { type AxiosAdapter, AxiosError } from 'axios'
 
 /**
  * 네트워크 없이 고정 응답을 돌려주는 axios adapter. body 는 서버가 보낸 원문 그대로 넘긴다(JSON 파싱은 axios 가 한다).

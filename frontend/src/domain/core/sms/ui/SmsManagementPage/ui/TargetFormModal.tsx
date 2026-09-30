@@ -1,13 +1,15 @@
+import { Search, X } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Search, X } from 'lucide-react'
+
 import { Button } from '#shared/ui/Button'
-import { GROUP_META } from '../utils/smsTableModel'
+
 import type {
   SmsLookup,
   SmsTargetRequest,
   SmsTemplate,
 } from '../../../type/api'
+import { GROUP_META } from '../utils/smsTableModel'
 
 /**
  * 발송 대상 추가/수정 팝업.

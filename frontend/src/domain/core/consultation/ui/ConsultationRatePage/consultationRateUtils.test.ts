@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { type ConsultationRateItem } from '../../type/api'
 import {
   changePoint,
   computeRate,
@@ -7,7 +8,6 @@ import {
   itemToData,
   toDataMap,
 } from './consultationRateUtils'
-import { type ConsultationRateItem } from '../../type/api'
 
 const baseItem = (
   overrides: Partial<ConsultationRateItem> = {},
