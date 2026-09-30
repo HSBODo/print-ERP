@@ -57,7 +57,7 @@ project-root/
 │   │   ├── main.tsx                     # 진입점 (React 렌더)
 │   │   ├── App.tsx                      # QueryClientProvider + createRouter(routeTree) + RouterProvider
 │   │   ├── routeTree.gen.ts             # @tanstack/router-plugin 이 src/routes 로부터 생성 (커밋 대상 · 직접 수정 금지)
-│   │   │                                # 레이어 구조 — 정본은 .claude/docs/ARCHITECTURE.md · CONVENTION.md (경계는 eslint no-restricted-imports 가 강제)
+│   │   │                                # 레이어 구조 — 정본은 .claude/docs/ARCHITECTURE.md · CONVENTION.md (경계는 eslint-plugin-boundaries 가 강제)
 │   │   ├── routes/                      # [page 레이어] TanStack 파일 기반 라우트 — 페이지 입구 + staticData.page(메타·권한)
 │   │   │   ├── __root.tsx · login.tsx   # 루트(NotFound) · 로그인
 │   │   │   ├── -internal/               # 라우트 아닌 파일(`-` 접두사) — NotFound · routeTree.test
