@@ -12,12 +12,12 @@ export default defineConfig({
   plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '#composition': path.resolve(__dirname, './src/composition'),
-      '#domain': path.resolve(__dirname, './src/domain'),
-      '#entity': path.resolve(__dirname, './src/entity'),
-      '#page': path.resolve(__dirname, './src/routes'),
-      '#shared': path.resolve(__dirname, './src/shared'),
+      '@': path.resolve(import.meta.dirname, './src'),
+      '#composition': path.resolve(import.meta.dirname, './src/composition'),
+      '#domain': path.resolve(import.meta.dirname, './src/domain'),
+      '#entity': path.resolve(import.meta.dirname, './src/entity'),
+      '#page': path.resolve(import.meta.dirname, './src/routes'),
+      '#shared': path.resolve(import.meta.dirname, './src/shared'),
     },
   },
   build: {
