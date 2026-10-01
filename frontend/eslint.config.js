@@ -243,7 +243,6 @@ const GRADUAL_RULES = [
   '@typescript-eslint/restrict-template-expressions',
   'sonarjs/concise-regex',
   'sonarjs/deprecation',
-  'sonarjs/different-types-comparison',
   'sonarjs/function-return-type',
   'sonarjs/no-all-duplicated-branches',
   'sonarjs/no-alphabetical-sort',

@@ -662,8 +662,8 @@ export const getSortValue = (
 
 /** 빈 값은 항상 뒤로 보낸다 — 정렬 방향과 무관하게 "값 없음"이 위로 올라오면 성가시다. */
 export const compareSortValue = (a: string | number, b: string | number) => {
-  const aEmpty = a === '' || a === null || a === undefined
-  const bEmpty = b === '' || b === null || b === undefined
+  const aEmpty = a === ''
+  const bEmpty = b === ''
   if (aEmpty && bEmpty) return 0
   if (aEmpty) return 1
   if (bEmpty) return -1
