@@ -12,15 +12,18 @@ import { DateRange } from './DateRange'
 function Harness({
   onChange,
   initial = { from: '2026-08-01', to: '2026-08-31' },
+  max,
 }: {
   onChange?: (range: Range) => void
   initial?: Range
+  max?: string
 }) {
   const [range, setRange] = useState(initial)
   return (
     <DateRange
       value={range}
       maxDays={366}
+      max={max}
       onChange={(next) => {
         setRange(next)
         onChange?.(next)
@@ -111,6 +114,15 @@ describe('Filter.DateRange', () => {
     openPanel()
     fireEvent.click(screen.getByRole('button', { name: '오늘' }))
     expect(panel().textContent).toContain('1일간')
+  })
+
+  it('프리셋도 max 안으로 잘린다', () => {
+    const today = new Date()
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    render(<Harness max={todayIso} />)
+    openPanel()
+    fireEvent.click(screen.getByRole('button', { name: '이번 달' }))
+    expect(panel().textContent).toContain(`~${todayIso}`)
   })
 
   it('월 이동 버튼이 표시 월을 바꾼다', () => {

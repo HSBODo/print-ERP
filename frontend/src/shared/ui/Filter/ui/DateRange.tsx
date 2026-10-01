@@ -197,10 +197,18 @@ export function DateRange({
       }),
     },
   ]
-  const activePreset = PRESETS.find((preset) => {
-    const range = preset.range()
-    return range.from === start && range.to === end
-  })?.label
+  // 프리셋도 선택 가능 범위(min·max) 안으로 자른다 — 예: max=오늘이면 '이번 달'은 1일~오늘.
+  const clamp = ({ from: lo, to: hi }: Range): Range => ({
+    from: min && lo < min ? min : lo,
+    to: max && hi > max ? max : hi,
+  })
+  const presetRanges = PRESETS.map((preset) => ({
+    label: preset.label,
+    range: clamp(preset.range()),
+  }))
+  const activePreset = presetRanges.find(
+    ({ range }) => range.from === start && range.to === end,
+  )?.label
 
   const panel = pos && (
     <div
@@ -373,11 +381,11 @@ export function DateRange({
 
       <div className="mt-3 border-t border-gray-100 pt-3">
         <div className="flex flex-wrap gap-1.5">
-          {PRESETS.map((preset) => (
+          {presetRanges.map((preset) => (
             <button
               key={preset.label}
               type="button"
-              onClick={() => applyRange(preset.range())}
+              onClick={() => applyRange(preset.range)}
               className={cn(
                 'rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
                 activePreset === preset.label
