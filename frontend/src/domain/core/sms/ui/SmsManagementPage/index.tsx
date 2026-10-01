@@ -275,8 +275,10 @@ export function SmsManagementPage() {
   const toggleAll = () =>
     setSelected((prev) => {
       const next = new Set(prev)
-      if (allSelected) selectable.forEach((t) => next.delete(t.id))
-      else selectable.forEach((t) => next.add(t.id))
+      for (const t of selectable) {
+        if (allSelected) next.delete(t.id)
+        else next.add(t.id)
+      }
       return next
     })
   const toggleOne = (id: number) =>

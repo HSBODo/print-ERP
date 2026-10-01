@@ -84,9 +84,9 @@ function buildHeaderRows<TColumn extends StatsHeaderColumn>(
         colSpan: leafCount(node),
         className: `${classes.groupHead} ${classes.stickyRows[depth]} ${classes.headH} ${node.className}`,
       })
-      node.children.forEach((child, index) =>
-        visit(child, depth + 1, `${path}.${index}`),
-      )
+      node.children.forEach((child, index) => {
+        visit(child, depth + 1, `${path}.${index}`)
+      })
       return
     }
 
@@ -98,7 +98,9 @@ function buildHeaderRows<TColumn extends StatsHeaderColumn>(
     })
   }
 
-  nodes.forEach((node, index) => visit(node, 0, `${index}`))
+  nodes.forEach((node, index) => {
+    visit(node, 0, `${index}`)
+  })
 
   return rows
 }
@@ -140,7 +142,7 @@ export function ReservationStatsTableHeader<TColumn extends StatsHeaderColumn>({
     }
     measure()
     const observer = new ResizeObserver(measure)
-    Array.from(thead.rows).forEach((tr) => observer.observe(tr))
+    for (const tr of thead.rows) observer.observe(tr)
     return () => observer.disconnect()
   }, [maxDepth, rows.length])
 

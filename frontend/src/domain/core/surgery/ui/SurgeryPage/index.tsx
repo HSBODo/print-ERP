@@ -524,10 +524,8 @@ export function SurgeryPage() {
   }, [sortedYears])
 
   const queryYears = useMemo(() => {
-    const set = new Set<number>()
-    if (mode === 'month') periods.forEach((p) => set.add(p.year))
-    else sortedYears.forEach((y) => set.add(y))
-    return [...set].sort()
+    const source = mode === 'month' ? periods.map((p) => p.year) : sortedYears
+    return [...new Set(source)].sort()
   }, [mode, periods, sortedYears])
 
   const kpiQuery = useSurgeryKpi(queryYears)

@@ -20,10 +20,8 @@ export function ConsultationRatePage() {
   const { mode, periods, years } = filter
 
   const queryYears = useMemo(() => {
-    const set = new Set<number>()
-    if (mode === 'month') periods.forEach((p) => set.add(p.year))
-    else years.forEach((y) => set.add(y))
-    return [...set].sort()
+    const source = mode === 'month' ? periods.map((p) => p.year) : years
+    return [...new Set(source)].sort()
   }, [mode, periods, years])
 
   const kpiQuery = useConsultationRateKpi(queryYears)
