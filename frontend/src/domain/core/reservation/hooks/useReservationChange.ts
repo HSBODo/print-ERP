@@ -9,7 +9,7 @@ import type { ReservationChangeDailyResult } from '../type/api'
  * 마트가 변경된 예약만 담아 수 년치도 3만 행 안쪽이라 넓은 범위를 한 번에 받는다.
  */
 export function useReservationChange(from: string, to: string, enabled = true) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-change', from, to],
     queryFn: ({ signal }) =>
       reservationApi.getReservationChanges(from, to, signal),
@@ -22,6 +22,7 @@ export function useReservationChange(from: string, to: string, enabled = true) {
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }
 
@@ -32,12 +33,18 @@ const EMPTY_DAILY: ReservationChangeDailyResult = {
 
 /** 추이 달력 조회 훅 — 달력 그리드 범위(최대 6주)의 일별 등록·변경 건수. 등록일·예약일 기준을 한 번에 받는다. */
 export function useReservationChangeDaily(from: string, to: string) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-change-daily', from, to],
     queryFn: ({ signal }) =>
       reservationApi.getReservationChangeDailyCounts(from, to, signal),
     enabled: Boolean(from && to),
     staleTime: 5 * 60 * 1000,
   })
-  return { daily: data ?? EMPTY_DAILY, isLoading, isFetching, isError }
+  return {
+    daily: data ?? EMPTY_DAILY,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  }
 }

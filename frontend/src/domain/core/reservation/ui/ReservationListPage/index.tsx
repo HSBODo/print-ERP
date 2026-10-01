@@ -1,19 +1,14 @@
-import {
-  ChevronDown,
-  ChevronsUpDown,
-  ChevronUp,
-  Download,
-  RotateCcw,
-  Search,
-} from 'lucide-react'
+import { ChevronDown, ChevronsUpDown, ChevronUp, Download } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
-import { MonthPicker } from '#shared/ui/MonthPicker'
+import { Filter } from '#shared/ui/Filter'
 import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, type CsvColumn, downloadCsv } from '#shared/utils/csv'
+import { capToToday, currentMonth, monthRange } from '#shared/utils/date'
 import { maskName } from '#shared/utils/mask'
 
 import { useReservationList } from '../../hooks/useReservationList'
@@ -57,24 +52,6 @@ const Badge = ({ text, className }: { text: string; className?: string }) =>
   ) : (
     <span className="text-gray-300">—</span>
   )
-
-/* ── 기간 헬퍼 ── */
-const pad = (n: number) => String(n).padStart(2, '0')
-const todayIso = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-const currentMonth = () => todayIso().slice(0, 7)
-
-const monthRange = (month: string) => {
-  const [y, m] = month.split('-').map(Number)
-  const lastDay = new Date(y, m, 0).getDate()
-  const from = `${month}-01`
-  let to = `${month}-${pad(lastDay)}`
-  const today = todayIso()
-  if (to > today) to = today // 진행 중인 월은 오늘(등록일)까지만
-  return { from, to }
-}
 
 const CHANNELS = ['전체', '콜', '온라인'] as const
 type Channel = (typeof CHANNELS)[number]
@@ -145,20 +122,35 @@ const CSV_COLUMNS: CsvColumn<ReservationListItem>[] = [
 ]
 
 export function ReservationListPage() {
-  const [draftMonth, setDraftMonth] = useState(currentMonth())
-  const [draftKeyword, setDraftKeyword] = useState('')
-  const [queryMonth, setQueryMonth] = useState(currentMonth())
-  const [queryKeyword, setQueryKeyword] = useState('')
+  // 기준 월만 조회 조건, 채널·세부채널·키워드는 받아온 명단을 바로 거른다.
+  const filter = useFilter({
+    defaults: () => ({ month: currentMonth() }),
+    onSearch: () => {
+      pagination.resetPage()
+    },
+    onReset: () => {
+      setChannel('전체')
+      setSubChannel(null)
+      setKeyword('')
+      pagination.setPageSize(DEFAULT_PAGE_SIZE)
+      setSort(null)
+    },
+  })
   const [channel, setChannel] = useState<Channel>('전체')
   const [subChannel, setSubChannel] = useState<string | null>(null)
+  const [keyword, setKeyword] = useState('')
 
   const [sort, setSort] = useState<{
     key: SortKey
     dir: 'asc' | 'desc'
   } | null>(null)
 
-  const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
-  const { rows, isLoading, isFetching, isError } = useReservationList(from, to)
+  // 진행 중인 월은 오늘(등록일)까지만
+  const { from, to } = capToToday(monthRange(filter.applied.month))
+  const { rows, isLoading, isFetching, isError, refetch } = useReservationList(
+    from,
+    to,
+  )
   const showLoading = isLoading || isFetching
 
   // 채널 + 세부채널 필터(즉시 반영)
@@ -171,12 +163,12 @@ export function ReservationListPage() {
 
   // 상세 테이블 (채널 + 키워드)
   const detail = useMemo(() => {
-    const q = queryKeyword.trim().toLowerCase()
+    const q = keyword.trim().toLowerCase()
     if (!q) return channelFiltered
     return channelFiltered.filter(
       (r) => r.name.toLowerCase().includes(q) || r.chartNo.includes(q),
     )
-  }, [channelFiltered, queryKeyword])
+  }, [channelFiltered, keyword])
 
   // 정렬 (헤더 클릭) — 한글·숫자 자연 정렬. 필터 결과 길이는 그대로라 건수·페이지 표시는 불변.
   const sorted = useMemo(() => {
@@ -193,27 +185,10 @@ export function ReservationListPage() {
 
   const pagination = usePagination(sorted)
 
-  const handleSearch = () => {
-    setQueryMonth(draftMonth)
-    setQueryKeyword(draftKeyword)
-    pagination.resetPage()
-  }
-
-  const handleReset = () => {
-    setDraftMonth(currentMonth())
-    setDraftKeyword('')
-    setQueryMonth(currentMonth())
-    setQueryKeyword('')
-    setChannel('전체')
-    setSubChannel(null)
-    pagination.setPageSize(DEFAULT_PAGE_SIZE)
-    setSort(null)
-  }
-
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
   const handleDownloadCsv = () => {
     downloadCsv(
-      `예약자리스트_${queryMonth}.csv`,
+      `예약자리스트_${filter.applied.month}.csv`,
       columnsToCsv(CSV_COLUMNS, sorted),
     )
   }
@@ -229,113 +204,54 @@ export function ReservationListPage() {
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
-      {/* 필터 바 */}
-      <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
-        <MonthPicker
-          ariaLabel="기준 월"
-          value={draftMonth}
-          onChange={setDraftMonth}
-          defaultValue={currentMonth()}
-        />
-        <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
-          {CHANNELS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              aria-pressed={channel === c}
-              onClick={() => {
-                setChannel(c)
-                setSubChannel(null)
+      <Filter.Root filter={filter} isFetching={showLoading} refetch={refetch}>
+        <Filter.Bar>
+          <Filter.Month {...filter.field('month')} ariaLabel="기준 월" />
+          <Filter.Segment
+            value={channel}
+            onChange={(next) => {
+              setChannel(next)
+              setSubChannel(null)
+              pagination.resetPage()
+            }}
+            options={CHANNELS}
+            ariaLabel="채널"
+          />
+          {channel !== '전체' && (
+            <Filter.Segment
+              value={subChannel ?? '전체'}
+              onChange={(next) => {
+                setSubChannel(next === '전체' ? null : next)
                 pagination.resetPage()
               }}
-              className={`min-w-[3.5rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
-                channel === c
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-        {channel !== '전체' && (
-          <div className="flex h-8 items-center gap-1 rounded-md border border-blue-200 bg-blue-50/60 px-1">
-            {['전체', ...SUB_CHANNELS[channel]].map((sc) => {
-              const active =
-                sc === '전체' ? subChannel === null : subChannel === sc
-              return (
-                <button
-                  key={sc}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => {
-                    setSubChannel(sc === '전체' ? null : sc)
-                    pagination.resetPage()
-                  }}
-                  className={`h-6 rounded px-2 text-[11px] font-medium transition-colors ${
-                    active
-                      ? 'bg-blue-600 text-white'
-                      : 'text-blue-700 hover:bg-blue-100'
-                  }`}
-                >
-                  {sc}
-                </button>
-              )
-            })}
-          </div>
-        )}
-        <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
-          <input
-            type="text"
-            value={draftKeyword}
-            onChange={(e) => setDraftKeyword(e.target.value)}
+              options={['전체', ...SUB_CHANNELS[channel]]}
+              ariaLabel="세부 채널"
+            />
+          )}
+          <Filter.Keyword
+            value={keyword}
+            onChange={(value) => {
+              setKeyword(value)
+              pagination.resetPage()
+            }}
             placeholder="고객명 · 차트번호"
-            className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
-        </div>
-        <div
-          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
-          aria-live="polite"
-        >
-          <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">
-            {formatCount(detail.length)}건
-          </strong>
-        </div>
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            onClick={handleReset}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            초기화
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={showLoading}
-            className="bg-blue-600 text-xs text-white hover:bg-blue-700"
-            onClick={handleSearch}
-          >
-            <Search className="h-3.5 w-3.5" />
-            조회
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={sorted.length === 0}
-            className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
-            onClick={handleDownloadCsv}
-            title="조회 결과 전체를 CSV로 내려받기"
-          >
-            <Download className="h-3.5 w-3.5" />
-            CSV
-          </Button>
-        </div>
-      </div>
+          <Filter.Count value={detail.length} />
+          <Filter.Actions>
+            <Button
+              type="button"
+              size="sm"
+              disabled={sorted.length === 0}
+              className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+              onClick={handleDownloadCsv}
+              title="조회 결과 전체를 CSV로 내려받기"
+            >
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+          </Filter.Actions>
+        </Filter.Bar>
+      </Filter.Root>
 
       {/* 상세 테이블 */}
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">

@@ -5,7 +5,6 @@ import {
   calendarRange,
   formatMetric,
   rateOf,
-  shiftMonth,
 } from './reservationChangeCalendarModel'
 
 const row = (day: string, branch: string, total: number, changed: number) => ({
@@ -16,7 +15,7 @@ const row = (day: string, branch: string, total: number, changed: number) => ({
 })
 
 describe('reservationChangeCalendarModel', () => {
-  it('그리드 범위는 월요일 시작 ~ 일요일 끝, 월 이동은 연 경계를 넘는다', () => {
+  it('그리드 범위는 월요일 시작 ~ 일요일 끝', () => {
     expect(calendarRange('2026-09')).toEqual({
       from: '2026-08-31',
       to: '2026-10-04',
@@ -25,8 +24,6 @@ describe('reservationChangeCalendarModel', () => {
       from: '2026-01-26',
       to: '2026-03-01',
     })
-    expect(shiftMonth('2026-01', -1)).toBe('2025-12')
-    expect(shiftMonth('2026-12', 1)).toBe('2027-01')
   })
 
   it('주 행은 ISO 주차를 달고, 합계는 그 달의 날만 센다', () => {

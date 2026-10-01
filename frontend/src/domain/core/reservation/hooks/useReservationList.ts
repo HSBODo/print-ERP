@@ -9,7 +9,7 @@ import { reservationApi } from '../api'
  * 실 데이터 전용(mock 없음) — RESERVATION 대용량이라 좁은 범위로만 조회한다.
  */
 export function useReservationList(from: string, to: string, enabled = true) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-list', from, to],
     queryFn: ({ signal }) =>
       reservationApi.getReservationList(from, to, signal),
@@ -21,5 +21,6 @@ export function useReservationList(from: string, to: string, enabled = true) {
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }

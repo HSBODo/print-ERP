@@ -19,6 +19,7 @@ beforeEach(() => {
     isLoading: false,
     isFetching: false,
     isError: false,
+    refetch: vi.fn(),
   })
 })
 afterEach(cleanup)
@@ -42,6 +43,7 @@ describe('CalendarTab · 예약 변경이력 추이 달력 탭', () => {
       isLoading: false,
       isFetching: false,
       isError: true,
+      refetch: vi.fn(),
     })
     render(<CalendarTab />)
     expect(
