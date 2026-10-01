@@ -5,7 +5,7 @@
 - **큐 적재**: 182 신규 target × 3차 = 546건 (DONE 482 · CANCELED 60 · FAILED 4)
 - **2차 영향**: 사고로 일일 발송 한도(500) 조기 소진 → 10/1 10:00 정상 발송 **125건 묶임** (T1 15 · T2 110)
 - **중복 발송 여부**: ❌ 중복 아님. 161명은 모두 9월에 한 번도 안내를 받지 않은 신규 수신자. 세 차수가 몰려 도착했을 뿐.
-- **상태**: 큐 복구 완료 · 코드 fix 미착수 (11/1 전 필수) · 일일 한도 임시 상향 운영 결정 중
+- **상태**: 큐 복구 완료 · 코드 fix 머지(`d8819fc` Phase 1 · `aba4979` Phase 2) · 운영 배포 11/1 전 필수 · 일일 한도 임시 상향 운영 결정 중
 
 ---
 
@@ -153,21 +153,38 @@ WHERE q.created_at >= '2026-10-01 03:30:00'
 
 ## 3. Follow-up
 
-### 🚨 긴급 — 11/1 03:30 전 필수
-1. **`BatchOrchestrator.runMonthlyReconcile` 에서 SMS 제외**  
-   `ALL_DOMAINS` → `MANUAL_ALL_DOMAINS` (기존에 수동 UI 에서는 이미 SMS 제외 중, 자동 월배치도 같은 정책 적용).  
-   한 줄 수정 수준. 재발 즉시 차단.
+### ✅ 머지 완료 — 운영 배포만 남음 (11/1 03:30 전 필수)
 
-2. (대안·보완) **`enqueueForTarget` 멱등성 키 변경**  
-   현재: `(templateCode, scheduled_at)` → clamping 으로 저장값과 계산값 어긋나면 중복 insert.  
-   개선: `(target_id, template_code)` 로 좁히고, 상태가 PENDING/PROCESSING/RECEIVED/DONE 중 하나라도 있으면 skip (FAILED/CANCELED 만 재사용).
+| 커밋 | Phase | 효과 |
+|---|---|---|
+| `d8819fc` | **Phase 1** — `BatchOrchestrator.runMonthlyReconcile` 가 `ALL_DOMAINS` 대신 `MANUAL_ALL_DOMAINS` 사용 (SMS 제외) | 월배치 자동 재발동 차단 (사고 트리거 직접 차단) |
+| `aba4979` | **Phase 2** — `enqueueForTarget` 멱등 키 `(templateCode, scheduled_at)` → `(target_id, template_code)` 교체 | clamping·오프셋 변경·op_type 변경·수동 재적재·홀딩 해제 어떤 경로로도 중복 insert 불가 |
 
-### 🔍 중기 — 근본 원인 조사
-- **왜 9월 데일리 배치가 182명을 놓쳤는가?**
-  - `SmsSurgeryImportRepository.findSurgeryRows` SQL 조건 확인
-  - 마트(`list_surgery`) 에 수술 데이터가 실시간이 아니라 지연 적재되는지 확인
-  - D-1 범위가 아니라 D-N 까지 보는 방식으로 바꿀 수 있는지 검토
-- **10월 중에도 비슷하게 적체되는 사람이 있는지 모니터링** — 이 조사 안 하면 11/1 월배치 SMS 를 꺼도 이들에게는 영영 안내가 안 나감.
+**🚨 운영 배포**: 두 커밋 모두 origin/develop 반영 완료. 운영 서버에 백엔드 재배포돼야 효력 발생. **11/1 03:30 전 반드시**.
+
+### 🔭 Phase 2+ (후속, 선택)
+**DB partial unique index** — 코드 멱등 + DB 멱등 이중 방어:
+```sql
+CREATE UNIQUE INDEX idx_sms_queue_active
+  ON sms_dispatch_queue (target_id, template_code)
+  WHERE status != 'CANCELED';
+```
+스키마 마이그레이션 + 동시성 테스트 필요. 급하지 않음.
+
+### ✅ 근본 원인 조사 완료 (Phase 3)
+
+**원인 확정**: 배치 시스템이 **2026-09-14 오후 최초 배포** 됨 → 9/15 03:00 가 첫 자동 데일리 → 9/14 이전 수술자(= 9/1~9/12 수술 182명)는 데일리로 영원히 등록 불가 → 10/1 월배치가 전월 전체 reconcile 로 뒤늦게 발견 → clamping bug 트리거.
+
+조사 궤적:
+| 가설 | 검증 쿼리 | 결과 |
+|---|---|---|
+| A. SQL 필터 miss | 182명이 `list_surgery` 에 지금 있나? | ❌ 소거 (182/182 전부 있음) |
+| **B. 데일리 미실행 (9/15 이전)** | `batch_run_log` 로 DAILY 실행일 조회 | ✅ **확정** (9/14 16:48 ~ 17:21 수동 테스트 3건 뒤 9/15 부터 매일 2건) |
+| C. 마트 지연 | — | ❌ 조사 불필요 (B 로 설명 완결) |
+
+**재발 리스크**: 1회성 (배치 최초 배포 시점의 공백). Phase 1·2 로 **자동 월배치 트리거**는 완전 차단. 수동 재적재를 과거 범위로 돌릴 때 "뒷북 안내 폭탄"은 여전히 가능하지만 관리자 판단 영역.
+
+**결정**: Phase 1·2 로 중복 발송 자체는 완전 방어됐으므로 Phase 3 는 조사 결과 기록만, 추가 코드 변경 없음.
 
 ### 📋 포렌식 (Table 3 완료)
 - 피해자 리스트 161명 산출 쿼리는 §5 참조.
