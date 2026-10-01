@@ -8,7 +8,7 @@ import { Card, CardContent } from '#shared/ui/Card'
 import { Filter } from '#shared/ui/Filter'
 import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
-import { thisMonthRange } from '#shared/utils/date'
+import { thisMonthRange, validateRange } from '#shared/utils/date'
 
 import { useReoperationCandidates } from '../../hooks/useReoperationCandidates'
 import { useReoperationDecisions } from '../../hooks/useReoperationDecisions'
@@ -35,10 +35,14 @@ import {
   SURGERY_TYPE_FILTERS,
 } from './surgeryListUtils'
 
+/** 백엔드 SurgeryListController 조회 기간 제한과 맞춘다 */
+const MAX_RANGE_DAYS = 366
+
 export function SurgeryListPage() {
   // 수술 기간만 조회 조건, 구분·유형·검색은 받아온 행을 바로 거른다.
   const filter = useFilter({
     defaults: () => ({ range: thisMonthRange() }),
+    validate: ({ range }) => validateRange(range, { maxDays: MAX_RANGE_DAYS }),
     onSearch: () => {
       pagination.resetPage()
     },
@@ -264,7 +268,11 @@ export function SurgeryListPage() {
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
       <Filter.Root filter={filter} isFetching={showSkeleton} refetch={refetch}>
         <Filter.Bar>
-          <Filter.DateRange {...filter.field('range')} ariaLabel="수술 기간" />
+          <Filter.DateRange
+            {...filter.field('range')}
+            maxDays={MAX_RANGE_DAYS}
+            ariaLabel="수술 기간"
+          />
           <div className="h-6 w-px bg-border" />
           <Filter.Segment
             value={category}

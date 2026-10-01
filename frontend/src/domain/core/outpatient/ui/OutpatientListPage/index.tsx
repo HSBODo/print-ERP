@@ -8,7 +8,7 @@ import { Card, CardContent } from '#shared/ui/Card'
 import { Filter } from '#shared/ui/Filter'
 import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
-import { thisMonthRange } from '#shared/utils/date'
+import { thisMonthRange, validateRange } from '#shared/utils/date'
 
 import { useOutpatientList } from '../../hooks/useOutpatientList'
 import type { OutpatientListItem } from '../../type/api'
@@ -23,6 +23,9 @@ import {
   STATE_OPTIONS,
 } from './outpatientListUtils'
 
+/** 백엔드 OutpatientListController 조회 기간 제한과 맞춘다 */
+const MAX_RANGE_DAYS = 366
+
 /**
  * 외래수 리스트 — RESERVATION 기준 외래(F) + 내원/퇴원(I/H) 행 목록.
  * 리스트 합계 = 월별 외래수 지표(outpatient-count)와 정합.
@@ -32,6 +35,7 @@ export function OutpatientListPage() {
   // 외래 기간만 조회 조건, 상태·신구환·진료구분·검색은 받아온 행을 바로 거른다.
   const filter = useFilter({
     defaults: () => ({ range: thisMonthRange() }),
+    validate: ({ range }) => validateRange(range, { maxDays: MAX_RANGE_DAYS }),
     onSearch: () => {
       pagination.resetPage()
     },
@@ -116,7 +120,11 @@ export function OutpatientListPage() {
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
       <Filter.Root filter={filter} isFetching={showSkeleton} refetch={refetch}>
         <Filter.Bar>
-          <Filter.DateRange {...filter.field('range')} ariaLabel="외래 기간" />
+          <Filter.DateRange
+            {...filter.field('range')}
+            maxDays={MAX_RANGE_DAYS}
+            ariaLabel="외래 기간"
+          />
           <div className="h-6 w-px bg-border" />
           <Filter.Segment
             value={state}
