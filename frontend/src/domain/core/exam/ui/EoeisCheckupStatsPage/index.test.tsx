@@ -2,8 +2,14 @@
 
 import '@testing-library/jest-dom/vitest'
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { checkupResult } = vi.hoisted(() => {
   const operators = [
@@ -43,33 +49,40 @@ vi.mock('../../hooks/useEoeisCheckup', () => ({
     isLoading: false,
     isFetching: false,
     isError: false,
+    refetch: vi.fn(),
   }),
 }))
 
 import { EoeisCheckupStatsPage } from '.'
 
-afterEach(cleanup)
+// 픽스처가 2026년 7월 데이터라 '이번 달' 기본 기간이 7월이 되도록 오늘을 고정한다.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 6, 15))
+})
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('EoeisCheckupStatsPage', () => {
-  it('2026년 7월 1일 이전 조회를 제한하고 테이블 외곽 Card를 사용하지 않는다', () => {
+  it('2026년 7월 1일 이전 날짜는 고를 수 없고 테이블 외곽 Card를 사용하지 않는다', () => {
     const { container } = render(<EoeisCheckupStatsPage />)
 
-    expect(
-      screen.getByRole('button', { name: '통계 조회' }),
-    ).toBeInTheDocument()
-    const startDate = screen.getByLabelText('조회 시작일')
-    const endDate = screen.getByLabelText('조회 종료일')
-    expect(startDate).toHaveAttribute('min', '2026-07-01')
-    expect(endDate).toHaveAttribute('min', '2026-07-01')
+    expect(screen.getByRole('button', { name: '조회' })).toBeInTheDocument()
     expect(
       container.querySelector('[data-slot="card"]'),
     ).not.toBeInTheDocument()
 
-    fireEvent.change(startDate, { target: { value: '2026-06-01' } })
-    fireEvent.change(endDate, { target: { value: '2026-06-30' } })
-    fireEvent.click(screen.getByRole('button', { name: '통계 조회' }))
-    expect(startDate).toHaveValue('2026-07-01')
-    expect(endDate).toHaveValue('2026-07-01')
+    // 기본 기간 = 이번 달(7월). 달력을 6월로 넘기면 날짜 칸이 모두 잠겨 있다.
+    fireEvent.click(screen.getByRole('button', { name: /^조회 기간/ }))
+    const dialog = screen.getByRole('dialog', { name: '조회 기간 선택' })
+    fireEvent.click(within(dialog).getByRole('button', { name: '이전 달' }))
+    expect(dialog.textContent).toContain('2026년 6월')
+    expect(
+      within(dialog).getAllByRole('button', { name: '15' })[0],
+    ).toBeDisabled()
+
     expect(screen.getByLabelText('조회 단위')).toHaveValue('day')
     expect(screen.getByRole('radio', { name: '검사자 × 장비' })).toBeChecked()
     expect(screen.getByText('휴비츠 OCT')).toBeInTheDocument()
