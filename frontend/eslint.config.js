@@ -244,7 +244,6 @@ const GRADUAL_RULES = [
   'sonarjs/concise-regex',
   'sonarjs/deprecation',
   'sonarjs/function-return-type',
-  'sonarjs/no-all-duplicated-branches',
   'sonarjs/no-alphabetical-sort',
   'sonarjs/no-floating-point-equality',
   'sonarjs/no-inverted-boolean-check',

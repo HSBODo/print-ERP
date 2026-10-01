@@ -306,7 +306,7 @@ export function ReportWeekLineChart({
               }
             >
               <colgroup>
-                <col className={denseTable ? 'w-16' : 'w-16'} />
+                <col className="w-16" />
                 {chunk.map((c) => (
                   <col key={c.i} />
                 ))}
