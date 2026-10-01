@@ -1,7 +1,5 @@
 import type { MedicalReceipt } from '../type/accounting'
 
-export type PeriodMode = 'daily' | 'weekly' | 'monthly'
-
 /** 회계 리스트 표 행 수 선택지 (예전 AccountingPagination 과 같은 값). */
 export const ACCOUNTING_PAGE_SIZE_OPTIONS = [50, 100, 200, 500]
 

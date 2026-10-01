@@ -1,27 +1,29 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+
+import { useFilter } from '#shared/hooks/useFilter'
+import { Filter } from '#shared/ui/Filter'
+import { thisMonthRange } from '#shared/utils/date'
 
 import {
   useAccountingStatus,
   useMedicalReceipts,
 } from '../../hooks/useAccounting'
 import type { MedicalReceipt } from '../../type/accounting'
-import type { AccountingFilterState } from '../../type/filter'
 import { dataStamp, matchesKeyword } from '../../utils/accountingModel'
-import { currentMonthRange } from '../../utils/accountingPeriod'
+import {
+  AccountingFilterBar,
+  validateAccountingRange,
+} from '../AccountingFilterBar'
 import {
   type MedicalExtraFilters,
   MedicalReceiptFilters,
-  MedicalReceiptToolbar,
 } from './MedicalReceiptControls'
 import { downloadMedicalCsv } from './medicalReceiptCsv'
 import { MedicalReceiptTable } from './MedicalReceiptTable'
 
-const DEFAULT_FILTER: AccountingFilterState = {
-  mode: 'daily',
-  ...currentMonthRange(),
-  category: '전체',
-  keyword: '',
-}
+const CATEGORIES = ['전체', '외래', '입원', '백내장'] as const
+type Category = (typeof CATEGORIES)[number]
+const ALL_CATEGORY: Category = '전체'
 
 const DEFAULT_EXTRA_FILTERS: MedicalExtraFilters = {
   insurance: '전체',
@@ -46,11 +48,12 @@ const hasSupport = (row: MedicalReceipt) =>
 
 const filterRows = (
   rows: MedicalReceipt[],
-  filter: AccountingFilterState,
+  category: Category,
+  keyword: string,
   extra: MedicalExtraFilters,
 ) =>
   rows
-    .filter((row) => matchesCategory(row, filter.category))
+    .filter((row) => matchesCategory(row, category))
     .filter(
       (row) =>
         extra.insurance === '전체' || row.insuranceType === extra.insurance,
@@ -59,10 +62,7 @@ const filterRows = (
     .filter((row) => extra.outstanding === '전체' || row.outstanding > 0)
     .filter((row) => extra.support === '전체' || hasSupport(row))
     .filter((row) =>
-      matchesKeyword(
-        [row.patientName, row.chartNo, row.doctor],
-        filter.keyword,
-      ),
+      matchesKeyword([row.patientName, row.chartNo, row.doctor], keyword),
     )
 
 /** 보험유형 선택지 — 조회된 행에서 뽑는다 (원형과 동일 · 마트에 어떤 유형이 오든 그대로 노출). */
@@ -77,19 +77,29 @@ const insuranceOptionsOf = (rows: MedicalReceipt[]) => [
 ]
 
 /**
- * 진입·초기화 = 필터 기본값으로 바로 조회. 이후 조건 변경은 [조회](F1) 를 눌러야 반영된다.
+ * 진입·초기화 = 이번 달로 바로 조회. 수납 기간만 [조회](F1) 때 반영되고, 구분·검색·둘째 줄 조건은 바로 거른다.
  * 초기화는 resetKey 로 표(정렬·페이지)를 새로 마운트한다.
  */
 export function MedicalReceiptsPage() {
-  const [draft, setDraft] = useState(DEFAULT_FILTER)
-  const [applied, setApplied] = useState(DEFAULT_FILTER)
+  const filter = useFilter({
+    defaults: () => ({ range: thisMonthRange() }),
+    validate: validateAccountingRange,
+    onReset: () => {
+      setCategory(ALL_CATEGORY)
+      setKeyword('')
+      setExtra(DEFAULT_EXTRA_FILTERS)
+      setResetKey((key) => key + 1)
+    },
+  })
+  const [category, setCategory] = useState(ALL_CATEGORY)
+  const [keyword, setKeyword] = useState('')
   const [extra, setExtra] = useState(DEFAULT_EXTRA_FILTERS)
   const [resetKey, setResetKey] = useState(0)
-  const query = useMedicalReceipts({ from: applied.from, to: applied.to })
+  const query = useMedicalReceipts(filter.applied.range)
   const status = useAccountingStatus()
   const rows = useMemo(
-    () => filterRows(query.data ?? [], applied, extra),
-    [query.data, applied, extra],
+    () => filterRows(query.data ?? [], category, keyword, extra),
+    [query.data, category, keyword, extra],
   )
   const insuranceOptions = useMemo(
     () => insuranceOptionsOf(query.data ?? []),
@@ -101,42 +111,29 @@ export function MedicalReceiptsPage() {
     status.data?.medicalTo,
   )
 
-  const search = () => {
-    const normalized =
-      draft.from <= draft.to
-        ? draft
-        : { ...draft, from: draft.to, to: draft.from }
-    setDraft(normalized)
-    setApplied(normalized)
-  }
-  const reset = () => {
-    setDraft(DEFAULT_FILTER)
-    setApplied(DEFAULT_FILTER)
-    setExtra(DEFAULT_EXTRA_FILTERS)
-    setResetKey((key) => key + 1)
-  }
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'F1') return
-      event.preventDefault()
-      setApplied(draft)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [draft])
-
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[560px] flex-col gap-2">
-      <MedicalReceiptToolbar
-        value={draft}
+      <AccountingFilterBar
+        filter={filter}
+        isFetching={query.isFetching}
+        refetch={query.refetch}
         dataDate={stamp.date}
         dataRange={stamp.range}
-        onChange={setDraft}
-        onSearch={search}
-        onReset={reset}
         onCsv={() => downloadMedicalCsv(rows)}
-      />
+      >
+        <Filter.Segment
+          value={category}
+          onChange={setCategory}
+          options={CATEGORIES}
+          ariaLabel="구분"
+        />
+        <Filter.Keyword
+          value={keyword}
+          onChange={setKeyword}
+          placeholder="환자명 · 차트번호 · 진료의사"
+          className="w-[200px]"
+        />
+      </AccountingFilterBar>
       <MedicalReceiptFilters
         value={extra}
         insuranceOptions={insuranceOptions}
