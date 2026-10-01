@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Card, CardContent } from '#shared/ui/Card'
 import { TablePagination } from '#shared/ui/TablePagination'
@@ -19,7 +20,7 @@ import { SmsOpTypeHelp } from './ui/SmsOpTypeHelp'
 import { SmsQueueStatusCard } from './ui/SmsQueueStatusCard'
 import { SmsSolapiTemplateModal } from './ui/SmsSolapiTemplateModal'
 import { SmsStatusFilterBar } from './ui/SmsStatusFilterBar'
-import { type PeriodMode, SmsToolbar } from './ui/SmsToolbar'
+import { SmsToolbar } from './ui/SmsToolbar'
 import { TargetFormModal } from './ui/TargetFormModal'
 import {
   compareSortValue,
@@ -38,9 +39,6 @@ import {
   targetStateOf,
   tierCellOf,
   todayIso,
-  toMonthEnd,
-  toMonthStart,
-  toMonthValue,
 } from './utils/smsTableModel'
 
 /**
@@ -56,6 +54,8 @@ function todayRange(): { from: string; to: string } {
   return { from: today, to: today }
 }
 import type { SmsQueryBasis, SmsTarget, SmsTargetRequest } from '../../type/api'
+
+const DEFAULT_BASIS: SmsQueryBasis = 'SCHEDULED'
 
 /**
  * 문자 발송 관리 — 수술 후 안내 1~3차가 **잘 나갔는지 점검**하고, 보내면 안 되는 사람을 막는 화면.
@@ -135,18 +135,24 @@ const TH =
 const TD = 'px-1.5 py-1.5'
 
 export function SmsManagementPage() {
-  const [basis, setBasis] = useState<SmsQueryBasis>('SCHEDULED')
-  const [tierFilter, setTierFilter] = useState('')
-  // 조회에 실제로 쓰인 기준 — 셀렉트를 바꿔도 [조회] 전까지는 목록이 흔들리지 않게 분리한다.
-  const [queryBasis, setQueryBasis] = useState<{
-    basis: SmsQueryBasis
-    tier: string
-  }>({ basis: 'SCHEDULED', tier: '' })
-  const [periodMode, setPeriodMode] = useState<PeriodMode>('daily')
-  const [draft, setDraft] = useState(todayRange)
-  const [range, setRange] = useState(todayRange)
-  // 화면에 들어오자마자 오늘 예정 리스트를 자동 조회한다 — 관리자가 매번 [조회] 안 눌러도 되게.
-  const [hasSearched, setHasSearched] = useState(true)
+  // 조회 기준·차수·기간은 [조회] 때 반영(셀렉트를 바꿔도 목록이 흔들리지 않는다).
+  // 화면에 들어오자마자 오늘 예정 리스트를 조회한다 — 관리자가 매번 [조회] 안 눌러도 되게.
+  const filter = useFilter({
+    defaults: () => ({ basis: DEFAULT_BASIS, tier: '', range: todayRange() }),
+    onSearch: () => {
+      setSelected(new Set())
+      pagination.resetPage()
+    },
+    onReset: () => {
+      setKeyword('')
+      setStatusFilter('전체')
+      setGroupFilter('')
+      setSelected(new Set())
+      setSortState(null)
+      pagination.setPageSize(DEFAULT_PAGE_SIZE)
+    },
+  })
+  const { basis, tier, range } = filter.applied
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
   const [sortState, setSortState] = useState<SortState>(null)
@@ -175,13 +181,7 @@ export function SmsManagementPage() {
     isFetching,
     isError,
     refetch,
-  } = useSmsTargets(
-    range.from,
-    range.to,
-    hasSearched,
-    queryBasis.basis,
-    queryBasis.tier || undefined,
-  )
+  } = useSmsTargets(range.from, range.to, true, basis, tier || undefined)
   const { data: templates = [] } = useSmsTemplates()
   // 차수별 발송 예정 시각 (HH:mm) 을 차수 셀에 붙이려고 로딩. tier-level 이라 모든 그룹 동일 값 —
   // 첫 행에서 tier1Time/tier2Time/tier3Time 을 뽑아 T1/T2/T3 매핑을 만든다. 데이터 없으면 빈 문자열.
@@ -289,54 +289,6 @@ export function SmsManagementPage() {
       return next
     })
 
-  /** 월별이면 그 달의 1일~말일로, 일별이면 고른 날짜 그대로. */
-  const resolveRange = () =>
-    periodMode === 'monthly'
-      ? {
-          from: toMonthStart(toMonthValue(draft.from)),
-          to: toMonthEnd(toMonthValue(draft.from)),
-        }
-      : { ...draft }
-
-  const applyRange = () => {
-    const next = resolveRange()
-    setRange(next)
-    setQueryBasis({ basis, tier: tierFilter })
-    setHasSearched(true)
-    setSelected(new Set())
-    pagination.resetPage()
-    return next
-  }
-
-  const handleSearch = () => {
-    applyRange()
-  }
-
-  const handlePeriodModeChange = (mode: PeriodMode) => {
-    setPeriodMode(mode)
-    if (mode === 'monthly') {
-      const month = toMonthValue(draft.from)
-      setDraft({ from: toMonthStart(month), to: toMonthEnd(month) })
-    }
-  }
-
-  const handleReset = () => {
-    const initial = todayRange()
-    setPeriodMode('daily')
-    setBasis('SCHEDULED')
-    setTierFilter('')
-    setQueryBasis({ basis: 'SCHEDULED', tier: '' })
-    setDraft(initial)
-    setRange(initial)
-    // 리셋해도 오늘 예정 자동 조회 상태로 되돌린다 — 초기 로딩과 같은 상태.
-    setHasSearched(true)
-    setKeyword('')
-    setStatusFilter('전체')
-    setGroupFilter('')
-    setSelected(new Set())
-    pagination.setPageSize(DEFAULT_PAGE_SIZE)
-  }
-
   /**
    * 수신거부 등록 — 홀딩과 달리 **사람 단위**라 다음 수술에도 계속 막힌다.
    * 그만큼 되돌리기 번거로운 조작이라 한 번 확인받는다.
@@ -406,7 +358,6 @@ export function SmsManagementPage() {
         onSuccess: () => {
           toast.success('대상이 추가되었습니다.')
           setModal(null)
-          if (!hasSearched) applyRange()
         },
         onError: (e) => toast.error('추가 실패', { description: e.message }),
       })
@@ -434,23 +385,18 @@ export function SmsManagementPage() {
     preview?.targetId === id && preview.tierCode === tierCode
   // 첫 조회(데이터가 아직 없을 때)에만 표를 비운다. 갱신 중이라고 이미 보고 있던 행을
   // 통째로 치우면 "나왔다가 사라진다" — 재조회는 툴바의 '갱신 중' 표시로만 알린다.
-  const showLoading = hasSearched && isLoading
-  const isRefreshing = hasSearched && isFetching && !isLoading
+  const showLoading = isLoading
+  const isRefreshing = isFetching && !isLoading
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col gap-3 text-xs text-gray-800">
       <SmsQueueStatusCard />
       <SmsOffsetGrid />
       <SmsToolbar
-        basis={basis}
-        onBasisChange={setBasis}
-        tierFilter={tierFilter}
-        onTierFilterChange={setTierFilter}
+        filter={filter}
+        isFetching={isFetching}
+        refetch={refetch}
         templates={templates}
-        periodMode={periodMode}
-        onPeriodModeChange={handlePeriodModeChange}
-        draft={draft}
-        onDraftChange={setDraft}
         keyword={keyword}
         onKeywordChange={(v) => {
           setKeyword(v)
@@ -460,11 +406,9 @@ export function SmsManagementPage() {
         resultCount={filtered.length}
         isRefreshing={isRefreshing}
         holdPending={changeStatusBulk.isPending}
-        onSearch={handleSearch}
         onRefresh={() => {
           void refetch()
         }}
-        onReset={handleReset}
         onHold={handleHold}
         onOptOut={handleOptOut}
         onAdd={() => setModal({ mode: 'create' })}
@@ -494,7 +438,7 @@ export function SmsManagementPage() {
       <div className="flex min-h-[32rem] flex-1 gap-3">
         <Card className="min-h-0 flex-[8] border-border/70 py-0 shadow-sm">
           <CardContent className="flex h-full min-h-0 flex-col px-0">
-            {hasSearched && isError ? (
+            {isError ? (
               <div className="flex flex-1 items-center justify-center px-3 text-sm text-red-500">
                 데이터를 불러오지 못했습니다.
               </div>
@@ -633,9 +577,8 @@ export function SmsManagementPage() {
                           colSpan={columnCount}
                           className="px-3 py-12 text-center text-sm text-muted-foreground"
                         >
-                          {hasSearched
-                            ? '이 기간에 수술한 사람이 없습니다. 조회하면 마트의 수술 완료자가 자동으로 등록됩니다.'
-                            : '기간을 선택한 뒤 조회 버튼을 눌러주세요.'}
+                          이 기간에 수술한 사람이 없습니다. 조회하면 마트의 수술
+                          완료자가 자동으로 등록됩니다.
                         </td>
                       </tr>
                     )}
