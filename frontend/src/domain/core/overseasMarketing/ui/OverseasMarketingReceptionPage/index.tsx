@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Download, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { canSystemOp } from '#domain/support/session/session'
 import { useAuthStore } from '#domain/support/session/store'
+import { useFilter } from '#shared/hooks/useFilter'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
+import { Button } from '#shared/ui/Button'
+import { Filter } from '#shared/ui/Filter'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
 
 import { overseasMarketingApi } from '../../api'
@@ -22,8 +26,8 @@ import type {
   OverseasMarketingReceptionInput,
 } from '../../type/api'
 import { MatchConfirmDialog } from './ui/MatchConfirmDialog'
-import { ReceptionFilterBar } from './ui/ReceptionFilterBar'
 import { ReceptionFormDialog } from './ui/ReceptionFormDialog'
+import { ReceptionSyncButtons } from './ui/ReceptionSyncButtons'
 import { ReceptionTable } from './ui/ReceptionTable'
 import {
   CSV_COLUMNS,
@@ -33,16 +37,34 @@ import {
   sortValue,
 } from './utils/receptionColumns'
 import { EMPTY_RECEPTION_INPUT, toReceptionInput } from './utils/receptionForm'
-import { createDefaultParams, type MatchFilter } from './utils/receptionOptions'
+import {
+  DATE_TYPES,
+  defaultReceptionFilter,
+  MATCH_OPTIONS,
+  type MatchFilter,
+  STATUS_OPTIONS,
+  toReceptionParams,
+} from './utils/receptionOptions'
 
 // CRM [동기화] 버튼 스위치 — 잠시 꺼야 할 때 false 로 바꾸고 재배포.
 const CRM_SYNC_ENABLED = true
 
 export function OverseasMarketingReceptionPage() {
-  const [draft, setDraft] = useState(createDefaultParams)
-  const [query, setQuery] = useState(createDefaultParams)
+  // 조회 조건(조회 기준·기간·상태)은 [조회] 때 반영, 매칭구분·키워드는 받아온 행을 바로 거른다.
+  const filter = useFilter({
+    defaults: defaultReceptionFilter,
+    onSearch: () => {
+      pagination.resetPage()
+    },
+    onReset: () => {
+      setKeyword('')
+      setMatchFilter('all')
+      pagination.setPageSize(DEFAULT_PAGE_SIZE)
+      setSort(null)
+    },
+  })
   const [keyword, setKeyword] = useState('')
-  const [appliedKeyword, setAppliedKeyword] = useState('')
+  const [matchFilter, setMatchFilter] = useState<MatchFilter>('all')
   const [sort, setSort] = useState<{
     key: SortKey
     dir: 'asc' | 'desc'
@@ -55,7 +77,6 @@ export function OverseasMarketingReceptionPage() {
   >(null)
   const [matchTarget, setMatchTarget] =
     useState<OverseasMarketingReception | null>(null)
-  const [matchFilter, setMatchFilter] = useState<MatchFilter>('all')
   const [crmSyncBusy, setCrmSyncBusy] = useState(false)
   const [crmSyncPhase, setCrmSyncPhase] = useState('')
 
@@ -65,7 +86,10 @@ export function OverseasMarketingReceptionPage() {
   // 백엔드 SecurityConfig 는 아직 MARKETING 부서 전체에 열려 있으니 방어 정책 강화가 필요하면 별도 조치.
   const isAdmin = canSystemOp(user)
 
-  const receptions = useOverseasMarketingReceptions(query, true)
+  const receptions = useOverseasMarketingReceptions(
+    toReceptionParams(filter.applied),
+    true,
+  )
   const sheetSync = useOverseasMarketingSheetSync()
   const crmSync = useOverseasMarketingCrmSync()
   const syncAvailability = useOverseasMarketingSyncAvailability()
@@ -76,7 +100,7 @@ export function OverseasMarketingReceptionPage() {
   const rows = receptions.data
 
   const filtered = useMemo(() => {
-    const search = appliedKeyword.trim().toLocaleLowerCase('ko-KR')
+    const search = keyword.trim().toLocaleLowerCase('ko-KR')
     const byMatch =
       matchFilter === 'all'
         ? (rows ?? [])
@@ -99,7 +123,7 @@ export function OverseasMarketingReceptionPage() {
         row.status,
       ].some((value) => value.toLocaleLowerCase('ko-KR').includes(search)),
     )
-  }, [appliedKeyword, matchFilter, rows])
+  }, [keyword, matchFilter, rows])
 
   const sorted = useMemo(() => {
     if (!sort) return filtered
@@ -129,37 +153,6 @@ export function OverseasMarketingReceptionPage() {
   }, [filtered, sort])
 
   const pagination = usePagination(sorted)
-
-  const search = () => {
-    setQuery({ ...draft })
-    setAppliedKeyword(keyword)
-    pagination.resetPage()
-  }
-
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null
-      if (
-        event.key === 'F1' &&
-        !['INPUT', 'SELECT', 'TEXTAREA'].includes(target?.tagName ?? '')
-      ) {
-        event.preventDefault()
-        search()
-      }
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  })
-
-  const reset = () => {
-    setDraft(createDefaultParams())
-    setQuery(createDefaultParams())
-    setKeyword('')
-    setAppliedKeyword('')
-    setMatchFilter('all')
-    pagination.setPageSize(DEFAULT_PAGE_SIZE)
-    setSort(null)
-  }
 
   const runSheetSync = async () => {
     if (!window.confirm('Google Sheet의 최근 신규 접수를 일괄 업데이트할까요?'))
@@ -279,42 +272,85 @@ export function OverseasMarketingReceptionPage() {
 
   const downloadResults = () =>
     downloadCsv(
-      `해외마케팅_접수리스트_${query.from}_${query.to}.csv`,
+      `해외마케팅_접수리스트_${filter.applied.range.from}_${filter.applied.range.to}.csv`,
       columnsToCsv(CSV_COLUMNS, sorted),
     )
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[34rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
-      <ReceptionFilterBar
-        draft={draft}
-        onDraftChange={setDraft}
-        keyword={keyword}
-        onKeywordChange={setKeyword}
-        onKeywordApply={() => {
-          setAppliedKeyword(keyword)
-          pagination.resetPage()
-        }}
-        matchFilter={matchFilter}
-        onMatchFilterChange={(value) => {
-          setMatchFilter(value)
-          pagination.resetPage()
-        }}
-        filteredCount={filtered.length}
-        sortedCount={sorted.length}
-        onSearch={search}
-        onReset={reset}
-        onAddRow={() => setEditor({ mode: 'create' })}
-        onSheetSync={runSheetSync}
-        onCrmSync={runCrmSync}
-        onCsvDownload={downloadResults}
-        sheetSyncEnabled={isAdmin && syncAvailability.data === true}
-        crmSyncEnabled={isAdmin && CRM_SYNC_ENABLED}
-        crmSyncBusy={crmSyncBusy}
-        crmSyncPhase={crmSyncPhase}
-        sheetSyncPending={sheetSync.isPending}
-        crmSyncPending={crmSync.isPending}
-        fetching={receptions.isFetching}
-      />
+      <Filter.Root
+        filter={filter}
+        isFetching={receptions.isFetching || sheetSync.isPending}
+        refetch={receptions.refetch}
+      >
+        <Filter.Bar>
+          <Filter.Select
+            {...filter.field('dateType')}
+            options={DATE_TYPES}
+            ariaLabel="조회 기준"
+            className="w-[7rem]"
+          />
+          <Filter.DateRange {...filter.field('range')} />
+          <Filter.Select
+            {...filter.field('status')}
+            options={STATUS_OPTIONS}
+            ariaLabel="상태"
+            className="w-[7rem]"
+          />
+          <Filter.Select
+            value={matchFilter}
+            onChange={(value) => {
+              setMatchFilter(value)
+              pagination.resetPage()
+            }}
+            options={MATCH_OPTIONS}
+            ariaLabel="매칭구분"
+            className="w-[7rem]"
+          />
+          <Filter.Keyword
+            value={keyword}
+            onChange={(value) => {
+              setKeyword(value)
+              pagination.resetPage()
+            }}
+            placeholder="이름 · 고객번호 · 국가 · 채널"
+            className="w-[14rem]"
+          />
+          <Filter.Count value={filtered.length} />
+          <Filter.Actions>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => setEditor({ mode: 'create' })}
+            >
+              <Plus className="h-3.5 w-3.5" />행 추가
+            </Button>
+            <ReceptionSyncButtons
+              onSheetSync={runSheetSync}
+              onCrmSync={runCrmSync}
+              sheetSyncEnabled={isAdmin && syncAvailability.data === true}
+              crmSyncEnabled={isAdmin && CRM_SYNC_ENABLED}
+              crmSyncBusy={crmSyncBusy}
+              crmSyncPhase={crmSyncPhase}
+              sheetSyncPending={sheetSync.isPending}
+              crmSyncPending={crmSync.isPending}
+              fetching={receptions.isFetching}
+            />
+            <Button
+              type="button"
+              size="sm"
+              disabled={!sorted.length}
+              onClick={downloadResults}
+              className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+            >
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+          </Filter.Actions>
+        </Filter.Bar>
+      </Filter.Root>
 
       <ReceptionTable
         pagination={pagination}
