@@ -57,6 +57,11 @@ const sharedConfig = {
     '@typescript-eslint/no-explicit-any': 'error',
     // 사내 컨벤션: 추론이 안 되면 as 로 최대한 비슷한 타입을 지정한다 (x! 로 바꾸지 않는다)
     '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+    // onSubmit={handleSubmit(fn)} · async onClick 은 React 표준 패턴이라 JSX 속성은 검사하지 않는다
+    '@typescript-eslint/no-misused-promises': [
+      'error',
+      { checksVoidReturn: { attributes: false } },
+    ],
 
     'array-callback-return': ['warn', { checkForEach: true }],
     'no-console': ['error', { allow: ['error'] }],
@@ -229,7 +234,6 @@ const testConfig = {
 const GRADUAL_RULES = [
   '@typescript-eslint/no-base-to-string',
   '@typescript-eslint/no-floating-promises',
-  '@typescript-eslint/no-misused-promises',
   '@typescript-eslint/no-unnecessary-type-assertion',
   '@typescript-eslint/no-unsafe-argument',
   '@typescript-eslint/no-unsafe-call',
