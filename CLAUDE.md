@@ -407,6 +407,14 @@ filterStore (Zustand)   — 글로벌 필터: 기간, 부서, 카테고리 (구�
 TanStack Query          — 서버 데이터 캐싱/갱신
 ```
 
+### 조회 필터 (`useFilter` + `Filter.*`)
+
+- 서버로 요청을 보내는 조건만 `useFilter`(`shared/hooks/useFilter`)에 둔다 — 입력값·적용값 두 벌, [조회]·Enter·F1 때 반영. 받아온 행을 화면에서 거르는 조건(채널·키워드 등)은 화면이 `useState` 로 들고 바로 반영한다.
+- 기본값은 함수로 넘긴다(`defaults: () => ({ range: thisMonthRange() })`). 서버에 기간 제한이 있으면 `validate`(`validateRange(range, { maxDays })`)와 `Filter.DateRange maxDays` 를 같이 건다.
+- 구성: `<Filter.Root filter isFetching refetch>` > `Filter.Bar` > 입력(`DateRange`·`Month`·`Select`·`Segment`·`Keyword`) · `Filter.Count` · `Filter.Actions`(뒤에 CSV 등 화면 버튼). 조회 조건은 `{...filter.field('key')}` 로 연결한다.
+- 날짜 계산은 `#shared/utils/date`(로컬 시간). `toISOString()` 으로 날짜를 만들지 않는다.
+- 예시: `domain/core/overseasMarketing/ui/OverseasMarketingReceptionPage`
+
 ### shadcn 컴포넌트 추가
 
 ```bash
