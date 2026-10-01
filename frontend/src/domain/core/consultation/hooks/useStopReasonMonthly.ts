@@ -19,7 +19,9 @@ export function useStopReasonMonthly(years: number[]) {
   const {
     data: apiData,
     isLoading,
+    isFetching,
     isError,
+    refetch,
   } = useQuery({
     queryKey: ['stop-reason-monthly', years],
     queryFn: ({ signal }) =>
@@ -29,5 +31,5 @@ export function useStopReasonMonthly(years: number[]) {
 
   const dataMap = useMemo(() => (apiData ? toDataMap(apiData) : {}), [apiData])
 
-  return { dataMap, isLoading, isError }
+  return { dataMap, isLoading, isFetching, isError, refetch }
 }
