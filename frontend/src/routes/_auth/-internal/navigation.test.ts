@@ -1,9 +1,7 @@
 // @vitest-environment happy-dom
-import { createRouter } from '@tanstack/react-router'
 import { describe, expect, it } from 'vitest'
 
-import { routeTree } from '@/routeTree.gen'
-
+import { testRouter as router, testRoutes } from '../../../test/testRoutes'
 import {
   buildMenu,
   HIDDEN_PAGE_PATHS,
@@ -12,7 +10,6 @@ import {
   type PagePath,
 } from './navigation'
 
-const router = createRouter({ routeTree })
 const getPage = (path: PagePath) =>
   router.routesByPath[path]?.options.staticData?.page
 
@@ -34,7 +31,7 @@ describe('navigation menu', () => {
   it('모든 통계 페이지 라우트는 메뉴에 있거나 HIDDEN_PAGE_PATHS 에 있어야 한다', () => {
     // 라우트만 추가하고 메뉴 등록을 잊으면 사이드바에서 영영 안 보인다 → 숨길 거면 HIDDEN_PAGE_PATHS 에 명시.
     const paths = collectPaths(fullMenu())
-    const pageRoutes = Object.values(router.routesByPath)
+    const pageRoutes = testRoutes
       .filter((route) => route.options.staticData?.page)
       .map((route) => route.fullPath)
 
