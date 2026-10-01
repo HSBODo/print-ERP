@@ -85,34 +85,54 @@ public class SmsDispatchQueueService {
         // SKIPPED 처리하는데, PENDING 으로 남겨두면 폴링마다 재시도되어 로그 소음만 낸다.
         // 리스트에는 그대로 남고, 프론트가 차수 셀을 "발송 대상 아님" 으로 표시한다.
         if (SurgeryGroup.of(target.getOpType()) == SurgeryGroup.ETC) return 0;
-        // 이미 이 대상에 있는 (template, scheduled_at) 조합을 미리 뽑아서 중복 INSERT 를 피한다.
-        Map<String, SmsDispatchQueue> existing = new HashMap<>();
-        for (SmsDispatchQueue row : queueRepository.findByTargetIdInOrderByScheduledAtAsc(List.of(target.getId()))) {
-            existing.put(row.getTemplateCode() + "@" + row.getScheduledAt(), row);
-        }
+
+        // 멱등 체크는 (target_id, template_code) 로만 한다 — 2026-10-01 사고 fix (Phase 2).
+        // 참조 문서: docs/sms/incidents/2026-10-01-reconcile-bulk-dispatch.md
+        //
+        // 과거엔 (templateCode, scheduled_at) 조합으로 "같은 slot 에 이미 있나" 를 봤는데,
+        // 저장된 scheduled_at 은 clamping/오프셋 변경/op_type refreshFromCrm 등으로 재계산값과
+        // 쉽게 어긋났고, 어긋나면 새 row 가 꽂혀 중복 발송으로 이어졌다. 이제는 "그 대상의 그 차수가
+        // 어떤 scheduled_at 로든 비(非)CANCELED 상태로 존재하면" 재enqueue 를 전면 금지한다.
+        Map<String, List<SmsDispatchQueue>> existingByTier = queueRepository
+                .findByTargetIdInOrderByScheduledAtAsc(List.of(target.getId()))
+                .stream()
+                .collect(Collectors.groupingBy(SmsDispatchQueue::getTemplateCode));
+
         int inserted = 0;
         for (int tier = 1; tier <= 3; tier++) {
+            String templateCode = "T" + tier;
+            List<SmsDispatchQueue> existing = existingByTier.getOrDefault(templateCode, List.of());
+
+            // 비(非)CANCELED 가 하나라도 있으면 skip — PENDING(큐 대기)·PROCESSING(발송 중)·
+            // RECEIVED(Solapi 접수)·DONE(도달)·FAILED(재시도 소진) 전부 보존. FAILED 는 관리자
+            // "실패 재실행" API 로만 되살아나므로 자동 재enqueue 안 한다.
+            boolean lockedExists = existing.stream()
+                    .anyMatch(r -> !SmsDispatchQueue.STATUS_CANCELED.equals(r.getStatus()));
+            if (lockedExists) continue;
+
             LocalDateTime scheduled = scheduledAtOf(target, tier);
-            String key = "T" + tier + "@" + scheduled;
             String kind = offsetConfigService.kindOf(tier);
-            SmsDispatchQueue existingRow = existing.get(key);
-            if (existingRow != null) {
-                if (SmsDispatchQueue.STATUS_CANCELED.equals(existingRow.getStatus())) {
-                    existingRow.reset(now);
-                    existingRow.reschedule(scheduled, kind, now);
-                    queueRepository.saveAndFlush(existingRow);
+
+            // CANCELED 만 있으면 가장 최근(ASC 의 끝) 한 건을 재사용 — 홀딩 해제 흐름 유지.
+            if (!existing.isEmpty()) {
+                SmsDispatchQueue reusable = existing.get(existing.size() - 1);
+                reusable.reset(now);
+                reusable.reschedule(scheduled, kind, now);
+                try {
+                    queueRepository.saveAndFlush(reusable);
                     inserted++;
+                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                    // 같은 (target, tier) 의 다른 CANCELED row 가 새 scheduled_at 과 겹치는 희귀 케이스.
+                    log.debug("큐 CANCELED 재사용 중복 skip: target={}, tier={}", target.getId(), tier);
                 }
                 continue;
             }
-            // 과거 예정은 now 로 밀어 화면 표시와 실제 폴링 시각을 일치시킨다.
-            // reschedule()/reset() 은 이미 같은 규칙을 적용하는데 최초 INSERT 만 예외였다 —
-            // 수동 등록→홀딩 해제 시 T1 이 오늘 timeOf(1)(이미 지난 시각)로 저장돼
-            // UI 는 그 시각, 실제 발송은 다음 폴링 시각이 되는 어긋남이 있었다.
+
+            // 아예 없음 → 신규 insert. 과거 예정은 now 로 clamp (화면 표시 vs 실제 폴링 시각 일치).
             LocalDateTime scheduledClamped = scheduled.isBefore(now) ? now : scheduled;
             SmsDispatchQueue row = SmsDispatchQueue.builder()
                     .targetId(target.getId())
-                    .templateCode("T" + tier)
+                    .templateCode(templateCode)
                     .scheduledAt(scheduledClamped)
                     .kind(kind)
                     .status(SmsDispatchQueue.STATUS_PENDING)
@@ -123,7 +143,7 @@ public class SmsDispatchQueueService {
                 queueRepository.saveAndFlush(row);
                 inserted++;
             } catch (org.springframework.dao.DataIntegrityViolationException e) {
-                // 병렬 잡·재실행으로 같은 (target,tier,scheduled_at) 이 이미 있을 때. 조용히 skip.
+                // 동시 enqueue 경쟁의 안전망 — DB UNIQUE(target, tier, scheduled_at) 가 걸러준다.
                 log.debug("큐 중복 skip: target={}, tier={}, scheduled={}", target.getId(), tier, scheduledClamped);
             }
         }
