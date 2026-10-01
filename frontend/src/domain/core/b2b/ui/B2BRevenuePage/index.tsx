@@ -216,7 +216,7 @@ export function B2BRevenuePage() {
   const queryYears = useMemo(() => {
     const source =
       mode === 'month' ? periods.map((period) => period.year) : years
-    return [...new Set(source)].sort()
+    return [...new Set(source)].sort((a, b) => a - b)
   }, [mode, periods, years])
 
   const { data, isLoading, isError } = useQuery({

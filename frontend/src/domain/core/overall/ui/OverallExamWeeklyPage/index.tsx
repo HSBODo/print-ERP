@@ -150,7 +150,7 @@ export function OverallExamWeeklyPage() {
     setYears((prev) =>
       prev.includes(year)
         ? prev.filter((y) => y !== year)
-        : [...prev, year].sort(),
+        : [...prev, year].sort((a, b) => a - b),
     )
 
   return (

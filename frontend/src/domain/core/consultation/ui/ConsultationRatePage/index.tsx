@@ -21,7 +21,7 @@ export function ConsultationRatePage() {
 
   const queryYears = useMemo(() => {
     const source = mode === 'month' ? periods.map((p) => p.year) : years
-    return [...new Set(source)].sort()
+    return [...new Set(source)].sort((a, b) => a - b)
   }, [mode, periods, years])
 
   const kpiQuery = useConsultationRateKpi(queryYears)

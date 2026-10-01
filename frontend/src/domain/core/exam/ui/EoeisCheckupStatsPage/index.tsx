@@ -388,11 +388,17 @@ export function EoeisCheckupStatsPage() {
   )
   const records = useMemo(() => data?.rows ?? [], [data])
   const devices = useMemo(
-    () => [...new Set(records.map((row) => row.deviceName))].sort(),
+    () =>
+      [...new Set(records.map((row) => row.deviceName))].sort((a, b) =>
+        a.localeCompare(b, 'ko'),
+      ),
     [records],
   )
   const operators = useMemo(
-    () => [...new Set(records.map((row) => row.operatorName))].sort(),
+    () =>
+      [...new Set(records.map((row) => row.operatorName))].sort((a, b) =>
+        a.localeCompare(b, 'ko'),
+      ),
     [records],
   )
   const scores = useMemo(

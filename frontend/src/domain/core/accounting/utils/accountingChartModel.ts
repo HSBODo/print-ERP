@@ -39,7 +39,7 @@ export function buildMedicalChart(
   metrics: MedicalMonthlyMetric[],
   selectedYears: number[],
 ): MonthlyChartView {
-  const years = [...selectedYears].sort()
+  const years = [...selectedYears].sort((a, b) => a - b)
   if (years.length > 1) {
     const lines = years.map((year, index): MonthlyChartRow => ({
       key: `medical-${year}`,
@@ -118,7 +118,7 @@ export function buildVisionChart(
   metrics: VisionMonthlyMetric[],
   selectedYears: number[],
 ): MonthlyChartView {
-  const years = [...selectedYears].sort()
+  const years = [...selectedYears].sort((a, b) => a - b)
   const lines = years.map((year, index): MonthlyChartRow => ({
     key: `vision-${year}`,
     label: `${year}년`,

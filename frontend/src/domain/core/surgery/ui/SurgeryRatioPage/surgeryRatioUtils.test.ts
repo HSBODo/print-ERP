@@ -46,7 +46,10 @@ describe('toYearMap', () => {
       item({ year: 2026, month: 4 }),
     ])
 
-    expect(Object.keys(map).sort()).toEqual(['2025', '2026'])
+    expect(Object.keys(map).sort((a, b) => a.localeCompare(b, 'ko'))).toEqual([
+      '2025',
+      '2026',
+    ])
     expect(map[2025][0].lasek).toBe(10)
     expect(map[2026][3].lasik).toBe(20)
   })

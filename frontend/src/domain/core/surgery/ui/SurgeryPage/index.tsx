@@ -525,7 +525,7 @@ export function SurgeryPage() {
 
   const queryYears = useMemo(() => {
     const source = mode === 'month' ? periods.map((p) => p.year) : sortedYears
-    return [...new Set(source)].sort()
+    return [...new Set(source)].sort((a, b) => a - b)
   }, [mode, periods, sortedYears])
 
   const kpiQuery = useSurgeryKpi(queryYears)
