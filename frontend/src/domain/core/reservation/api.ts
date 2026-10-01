@@ -16,7 +16,7 @@ import {
 
 export const reservationApi = {
   getReservationMonthly: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/reservation/monthly', {
+    const { data } = await api.get<unknown>('/stats/reservation/monthly', {
       params: { years },
       signal,
     })
@@ -24,7 +24,7 @@ export const reservationApi = {
   },
 
   getReservationKpi: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/reservation/kpi', {
+    const { data } = await api.get<unknown>('/stats/reservation/kpi', {
       params: { years },
       signal,
     })
@@ -32,7 +32,7 @@ export const reservationApi = {
   },
 
   getReservationTrend: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/reservation/trend', {
+    const { data } = await api.get<unknown>('/stats/reservation/trend', {
       params: { years },
       signal,
     })
@@ -40,7 +40,7 @@ export const reservationApi = {
   },
 
   getReservationComposition: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/reservation/composition', {
+    const { data } = await api.get<unknown>('/stats/reservation/composition', {
       params: { years },
       signal,
     })
@@ -51,7 +51,7 @@ export const reservationApi = {
     years: number[],
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get('/stats/reservation-overall/monthly', {
+    const { data } = await api.get<unknown>('/stats/reservation-overall/monthly', {
       params: { years },
       signal,
     })
@@ -62,7 +62,7 @@ export const reservationApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationChangeResult> => {
-    const { data } = await api.get('/reservation-change', {
+    const { data } = await api.get<unknown>('/reservation-change', {
       params: { from, to },
       signal,
     })
@@ -73,7 +73,7 @@ export const reservationApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationChangeDailyResult> => {
-    const { data } = await api.get('/reservation-change/daily', {
+    const { data } = await api.get<unknown>('/reservation-change/daily', {
       params: { from, to },
       signal,
     })
@@ -84,7 +84,7 @@ export const reservationApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationListResult> => {
-    const { data } = await api.get('/reservation-list', {
+    const { data } = await api.get<unknown>('/reservation-list', {
       params: { from, to },
       signal,
     })
@@ -95,7 +95,7 @@ export const reservationApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationListHomepageResult> => {
-    const { data } = await api.get('/reservation-list-homepage', {
+    const { data } = await api.get<unknown>('/reservation-list-homepage', {
       params: { from, to },
       signal,
     })

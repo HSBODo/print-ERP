@@ -28,7 +28,7 @@ export const reservationStatsApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationStatsDailyCountsResult> => {
-    const { data } = await api.get('/stats/reservation-stats-system', {
+    const { data } = await api.get<unknown>('/stats/reservation-stats-system', {
       params: { from, to },
       signal,
     })
@@ -46,7 +46,7 @@ export const reservationStatsApi = {
     field: ReservationStatsEditableField,
     value: number,
   ): Promise<ReservationStatsDailyCounts> => {
-    const { data } = await api.post(
+    const { data } = await api.post<unknown>(
       '/stats/reservation-stats-system/cell',
       {},
       { params: { period, date, field, value } },
@@ -56,7 +56,7 @@ export const reservationStatsApi = {
 
   /** 확정 스냅샷과 라이브 재조회값을 일자/필드별로 비교한다. */
   getSystemDiff: async (period: string): Promise<ReservationStatsDiff> => {
-    const { data } = await api.get(
+    const { data } = await api.get<unknown>(
       '/stats/reservation-stats-system/diagnostics/diff',
       { params: { period } },
     )
@@ -69,7 +69,7 @@ export const reservationStatsApi = {
     date: string,
     field: string,
   ): Promise<ReservationStatsDrillDown> => {
-    const { data } = await api.get(
+    const { data } = await api.get<unknown>(
       '/stats/reservation-stats-system/diagnostics/drill-down',
       { params: { period, date, field } },
     )
@@ -81,7 +81,7 @@ export const reservationStatsApi = {
     period: string,
     field: string,
   ): Promise<ReservationStatsParity> => {
-    const { data } = await api.get(
+    const { data } = await api.get<unknown>(
       '/stats/reservation-stats-system/diagnostics/parity',
       { params: { period, field } },
     )
@@ -92,7 +92,7 @@ export const reservationStatsApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<CataractStatsDailyCountsResult> => {
-    const { data } = await api.get('/stats/reservation-stats-cataract', {
+    const { data } = await api.get<unknown>('/stats/reservation-stats-cataract', {
       params: { from, to },
       signal,
     })
@@ -110,7 +110,7 @@ export const reservationStatsApi = {
     field: CataractEditableField,
     value: number,
   ): Promise<CataractStatsDailyCounts> => {
-    const { data } = await api.post(
+    const { data } = await api.post<unknown>(
       '/stats/reservation-stats-cataract/cell',
       {},
       { params: { period, date, field, value } },
@@ -120,7 +120,7 @@ export const reservationStatsApi = {
 
   /** 확정 스냅샷과 라이브 재조회값을 일자/필드별로 비교한다. */
   getCataractDiff: async (period: string): Promise<ReservationStatsDiff> => {
-    const { data } = await api.get(
+    const { data } = await api.get<unknown>(
       '/stats/reservation-stats-cataract/diagnostics/diff',
       { params: { period } },
     )
@@ -133,7 +133,7 @@ export const reservationStatsApi = {
     date: string,
     field: string,
   ): Promise<ReservationStatsDrillDown> => {
-    const { data } = await api.get(
+    const { data } = await api.get<unknown>(
       '/stats/reservation-stats-cataract/diagnostics/drill-down',
       { params: { period, date, field } },
     )
@@ -145,7 +145,7 @@ export const reservationStatsApi = {
     period: string,
     field: string,
   ): Promise<ReservationStatsParity> => {
-    const { data } = await api.get(
+    const { data } = await api.get<unknown>(
       '/stats/reservation-stats-cataract/diagnostics/parity',
       { params: { period, field } },
     )

@@ -28,7 +28,7 @@ export const marketingApi = {
     field: AccumulatedEyesField = 'all',
     signal?: AbortSignal,
   ): Promise<AccumulatedEyeItem[]> => {
-    const { data } = await api.get('/accumulated-eyes', {
+    const { data } = await api.get<unknown>('/accumulated-eyes', {
       params: { from, to, query, field },
       signal,
     })
@@ -36,7 +36,7 @@ export const marketingApi = {
   },
   /** 총 누적 안수 (마트 max). 홈 대시보드 KPI. */
   getAccumulatedEyesTotal: async (signal?: AbortSignal): Promise<number> => {
-    const { data } = await api.get('/accumulated-eyes/total', { signal })
+    const { data } = await api.get<unknown>('/accumulated-eyes/total', { signal })
     return accumulatedEyeTotalSchema.parse(data).data.total
   },
   getChannelLensCost: async (
@@ -44,7 +44,7 @@ export const marketingApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ChannelLensCost[]> => {
-    const { data } = await api.get(`${CHANNEL_PROFIT_BASE}/lens-cost`, {
+    const { data } = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/lens-cost`, {
       params: { from, to },
       signal,
     })
@@ -52,7 +52,7 @@ export const marketingApi = {
   },
 
   getAdSpend: async (ym: string, signal?: AbortSignal): Promise<AdSpend[]> => {
-    const { data } = await api.get(`${CHANNEL_PROFIT_BASE}/ad-spend`, {
+    const { data } = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/ad-spend`, {
       params: { ym },
       signal,
     })
@@ -60,19 +60,19 @@ export const marketingApi = {
   },
 
   saveAdSpend: async (items: AdSpend[]): Promise<number> => {
-    const { data } = await api.put(`${CHANNEL_PROFIT_BASE}/ad-spend`, items)
+    const { data } = await api.put<unknown>(`${CHANNEL_PROFIT_BASE}/ad-spend`, items)
     return savedRes.parse(data).data.saved
   },
 
   getLensPrices: async (signal?: AbortSignal): Promise<LensCost[]> => {
-    const { data } = await api.get(`${CHANNEL_PROFIT_BASE}/lens-price`, {
+    const { data } = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/lens-price`, {
       signal,
     })
     return lensPriceListRes.parse(data).data
   },
 
   saveLensPrices: async (items: LensCost[]): Promise<number> => {
-    const { data } = await api.put(`${CHANNEL_PROFIT_BASE}/lens-price`, items)
+    const { data } = await api.put<unknown>(`${CHANNEL_PROFIT_BASE}/lens-price`, items)
     return savedRes.parse(data).data.saved
   },
   getReservationChannelFunnel: async (
@@ -80,7 +80,7 @@ export const marketingApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationChannelFunnelItem[]> => {
-    const { data } = await api.get('/stats/reservation-channel', {
+    const { data } = await api.get<unknown>('/stats/reservation-channel', {
       params: { from, to },
       signal,
     })
@@ -92,7 +92,7 @@ export const marketingApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationChannelOpType[]> => {
-    const { data } = await api.get('/stats/reservation-channel/op-types', {
+    const { data } = await api.get<unknown>('/stats/reservation-channel/op-types', {
       params: { from, to },
       signal,
     })

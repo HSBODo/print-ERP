@@ -19,7 +19,7 @@ const toRequest = (
 
 export const dreamlensLedgerApi = {
   list: async (from: string, to: string, signal?: AbortSignal) => {
-    const { data } = await api.get('/dreamlens-ledger', {
+    const { data } = await api.get<unknown>('/dreamlens-ledger', {
       params: { from, to },
       signal,
     })
@@ -27,7 +27,7 @@ export const dreamlensLedgerApi = {
   },
 
   create: async (row: DreamlensLedgerRequest) => {
-    const { data } = await api.post('/dreamlens-ledger', toRequest(row))
+    const { data } = await api.post<unknown>('/dreamlens-ledger', toRequest(row))
     return ledgerRowSchema.parse(data).data
   },
 
@@ -35,7 +35,7 @@ export const dreamlensLedgerApi = {
     id: number,
     row: DreamlensLedgerRow | DreamlensLedgerRequest,
   ) => {
-    const { data } = await api.put(`/dreamlens-ledger/${id}`, toRequest(row))
+    const { data } = await api.put<unknown>(`/dreamlens-ledger/${id}`, toRequest(row))
     return ledgerRowSchema.parse(data).data
   },
 

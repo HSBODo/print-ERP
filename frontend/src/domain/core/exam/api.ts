@@ -18,14 +18,14 @@ import {
 
 export const examApi = {
   getExaminationMonthly: async (years: number[]) => {
-    const { data } = await api.get('/stats/examination/monthly', {
+    const { data } = await api.get<unknown>('/stats/examination/monthly', {
       params: { years },
     })
     return examinationResponseSchema.parse(data).data
   },
 
   getProcedureExamMonthly: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/procedure-exam/monthly', {
+    const { data } = await api.get<unknown>('/stats/procedure-exam/monthly', {
       params: { years },
       signal,
     })
@@ -33,7 +33,7 @@ export const examApi = {
   },
 
   getExaminationKpi: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/examination/kpi', {
+    const { data } = await api.get<unknown>('/stats/examination/kpi', {
       params: { years },
       signal,
     })
@@ -41,7 +41,7 @@ export const examApi = {
   },
 
   getExaminationTrend: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/examination/trend', {
+    const { data } = await api.get<unknown>('/stats/examination/trend', {
       params: { years },
       signal,
     })
@@ -49,7 +49,7 @@ export const examApi = {
   },
 
   getExaminationComposition: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/examination/composition', {
+    const { data } = await api.get<unknown>('/stats/examination/composition', {
       params: { years },
       signal,
     })
@@ -60,7 +60,7 @@ export const examApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<AllExamListItem[]> => {
-    const { data } = await api.get('/all-exam-list', {
+    const { data } = await api.get<unknown>('/all-exam-list', {
       params: { from, to },
       signal,
     })
@@ -71,7 +71,7 @@ export const examApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<CataractExamListItem[]> => {
-    const { data } = await api.get('/cataract-exam-list', {
+    const { data } = await api.get<unknown>('/cataract-exam-list', {
       params: { from, to },
       signal,
     })
@@ -82,7 +82,7 @@ export const examApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<EoeisCheckupResult> => {
-    const { data } = await api.get('/eoeis-checkup', {
+    const { data } = await api.get<unknown>('/eoeis-checkup', {
       params: { from, to },
       signal,
     })
@@ -92,7 +92,7 @@ export const examApi = {
     year: number,
     signal?: AbortSignal,
   ): Promise<ExamCountByClassRow[]> => {
-    const { data } = await api.get('/stats/exam-count/by-class', {
+    const { data } = await api.get<unknown>('/stats/exam-count/by-class', {
       params: { year },
       signal,
     })
@@ -103,7 +103,7 @@ export const examApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ExamListItem[]> => {
-    const { data } = await api.get('/exam-list', {
+    const { data } = await api.get<unknown>('/exam-list', {
       params: { from, to },
       signal,
     })

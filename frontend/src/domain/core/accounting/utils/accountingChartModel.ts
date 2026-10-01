@@ -27,7 +27,7 @@ const valuesOf = <T extends { month: number }>(
   rows: T[],
   getter: (row: T) => number,
 ) => {
-  const values: (number | null)[] = Array(12).fill(null)
+  const values = Array<number | null>(12).fill(null)
   rows.forEach((row) => {
     values[row.month - 1] = Math.round(getter(row))
   })

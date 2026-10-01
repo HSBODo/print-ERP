@@ -21,7 +21,7 @@ export const overseasMarketingApi = {
     params: OverseasMarketingReceptionParams,
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get('/overseas-marketing/receptions', {
+    const { data } = await api.get<unknown>('/overseas-marketing/receptions', {
       params,
       signal,
     })
@@ -32,22 +32,22 @@ export const overseasMarketingApi = {
     granularity: OverseasMarketingGranularity,
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get('/overseas-marketing/statistics', {
+    const { data } = await api.get<unknown>('/overseas-marketing/statistics', {
       params: { year, granularity },
       signal,
     })
     return statisticsResponseSchema.parse(data).data
   },
   syncSheet: async () => {
-    const { data } = await api.post('/overseas-marketing/sync-sheet', {})
+    const { data } = await api.post<unknown>('/overseas-marketing/sync-sheet', {})
     return syncResponseSchema.parse(data).data
   },
   syncCrm: async () => {
-    const { data } = await api.post('/overseas-marketing/sync-crm', {})
+    const { data } = await api.post<unknown>('/overseas-marketing/sync-crm', {})
     return crmSyncStatusResponseSchema.parse(data).data
   },
   getCrmSyncStatus: async () => {
-    const { data } = await api.get('/overseas-marketing/sync-crm/status')
+    const { data } = await api.get<unknown>('/overseas-marketing/sync-crm/status')
     return crmSyncStatusResponseSchema.parse(data).data
   },
   getReservationStats: async (
@@ -55,7 +55,7 @@ export const overseasMarketingApi = {
     granularity: OverseasMarketingGranularity,
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get('/overseas-marketing/reservation-stats', {
+    const { data } = await api.get<unknown>('/overseas-marketing/reservation-stats', {
       params: { year, granularity },
       signal,
     })
@@ -67,47 +67,47 @@ export const overseasMarketingApi = {
     metricKey: string,
     value: number,
   ) => {
-    const { data } = await api.put(
+    const { data } = await api.put<unknown>(
       `/overseas-marketing/reservation-stats/${date}`,
       { groupKey, metricKey, value },
     )
     return reservationStatUpdateResponseSchema.parse(data).data
   },
   getCrmCustomer: async (customerNo: string) => {
-    const { data } = await api.get(
+    const { data } = await api.get<unknown>(
       `/overseas-marketing/crm-customers/${encodeURIComponent(customerNo)}`,
     )
     return crmCustomerResponseSchema.parse(data).data
   },
   confirmMatch: async (rowNumber: number, customerNo: string) => {
-    const { data } = await api.put(
+    const { data } = await api.put<unknown>(
       `/overseas-marketing/receptions/${rowNumber}/match`,
       { customerNo },
     )
     return matchConfirmResponseSchema.parse(data).data
   },
   getSyncAvailability: async (signal?: AbortSignal) => {
-    const { data } = await api.get('/overseas-marketing/sync-availability', {
+    const { data } = await api.get<unknown>('/overseas-marketing/sync-availability', {
       signal,
     })
     return syncAvailabilityResponseSchema.parse(data).data.enabled
   },
   createReception: async (input: OverseasMarketingReceptionInput) => {
-    const { data } = await api.post('/overseas-marketing/receptions', input)
+    const { data } = await api.post<unknown>('/overseas-marketing/receptions', input)
     return mutationResponseSchema.parse(data).data
   },
   updateReception: async (
     rowNumber: number,
     input: OverseasMarketingReceptionInput,
   ) => {
-    const { data } = await api.put(
+    const { data } = await api.put<unknown>(
       `/overseas-marketing/receptions/${rowNumber}`,
       input,
     )
     return mutationResponseSchema.parse(data).data
   },
   deleteReception: async (rowNumber: number) => {
-    const { data } = await api.delete(
+    const { data } = await api.delete<unknown>(
       `/overseas-marketing/receptions/${rowNumber}`,
     )
     return mutationResponseSchema.parse(data).data

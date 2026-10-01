@@ -26,7 +26,7 @@ export const accountingApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<MedicalReceipt[]> => {
-    const { data } = await api.get('/accounting/medical-receipts', {
+    const { data } = await api.get<unknown>('/accounting/medical-receipts', {
       params: { from, to },
       signal,
     })
@@ -37,7 +37,7 @@ export const accountingApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<VisionReceipt[]> => {
-    const { data } = await api.get('/accounting/vision-receipts', {
+    const { data } = await api.get<unknown>('/accounting/vision-receipts', {
       params: { from, to },
       signal,
     })
@@ -48,7 +48,7 @@ export const accountingApi = {
     category: MedicalCategory = '전체',
     signal?: AbortSignal,
   ): Promise<MedicalMonthlyMetric[]> => {
-    const { data } = await api.get('/accounting/medical-receipts/monthly', {
+    const { data } = await api.get<unknown>('/accounting/medical-receipts/monthly', {
       params: { years, category },
       signal,
     })
@@ -58,14 +58,14 @@ export const accountingApi = {
     years: number[],
     signal?: AbortSignal,
   ): Promise<VisionMonthlyMetric[]> => {
-    const { data } = await api.get('/accounting/vision-receipts/monthly', {
+    const { data } = await api.get<unknown>('/accounting/vision-receipts/monthly', {
       params: { years },
       signal,
     })
     return visionMonthlyResponseSchema.parse(data).data
   },
   getStatus: async (signal?: AbortSignal): Promise<AccountingStatus> => {
-    const { data } = await api.get('/accounting/status', { signal })
+    const { data } = await api.get<unknown>('/accounting/status', { signal })
     return statusResponseSchema.parse(data).data
   },
 }

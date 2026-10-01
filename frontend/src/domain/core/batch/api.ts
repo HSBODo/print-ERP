@@ -13,14 +13,14 @@ export const batchApi = {
   lastSuccess: async (
     signal?: AbortSignal,
   ): Promise<BatchLastSuccess | null> => {
-    const { data } = await api.get('/batch/last-success', { signal })
+    const { data } = await api.get<unknown>('/batch/last-success', { signal })
     return lastSuccessResponseSchema.parse(data).data
   },
   listRunLogs: async (
     limit = 50,
     signal?: AbortSignal,
   ): Promise<BatchRunLog[]> => {
-    const { data } = await api.get('/admin/batch/run-logs', {
+    const { data } = await api.get<unknown>('/admin/batch/run-logs', {
       params: { limit },
       signal,
     })
@@ -28,7 +28,7 @@ export const batchApi = {
   },
 
   rerun: async (from: string, to: string, domain: BatchDomain = 'ALL') => {
-    const { data } = await api.post('/admin/batch/rerun', null, {
+    const { data } = await api.post<unknown>('/admin/batch/rerun', null, {
       params: { from, to, domain },
     })
     return rerunResponseSchema.parse(data)
@@ -40,7 +40,7 @@ export const batchApi = {
    * min-year 가드 없음.
    */
   reconcileOnedayFlag: async (from: string, to: string) => {
-    const { data } = await api.post(
+    const { data } = await api.post<unknown>(
       '/admin/batch/exam/reconcile-oneday-flag',
       null,
       { params: { from, to } },
