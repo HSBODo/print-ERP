@@ -4,7 +4,7 @@ import { b2bRevenueResponseSchema } from './type/api'
 
 export const b2bApi = {
   getB2bRevenueMonthly: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/b2b-revenue', {
+    const { data } = await api.get<unknown>('/stats/b2b-revenue', {
       params: { years },
       signal,
     })

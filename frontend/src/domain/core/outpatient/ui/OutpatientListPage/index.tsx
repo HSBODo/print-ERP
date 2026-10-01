@@ -62,7 +62,7 @@ export function OutpatientListPage() {
 
   const typeOptions = useMemo(() => {
     const set = new Set(rows.map((r) => r.reserveType.trim()).filter(Boolean))
-    return ['전체', ...[...set].sort()]
+    return ['전체', ...[...set].sort((a, b) => a.localeCompare(b, 'ko'))]
   }, [rows])
 
   const filtered = useMemo(() => {

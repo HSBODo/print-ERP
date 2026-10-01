@@ -1,10 +1,9 @@
 // @vitest-environment happy-dom
-import { createRouter } from '@tanstack/react-router'
 import { describe, expect, it } from 'vitest'
 
-import { routeTree } from '@/routeTree.gen'
 import type { UserRole } from '#domain/support/session/session'
 
+import { testRoutes } from '../../../test/testRoutes'
 import { canAccess, type PageMeta } from './pageAccess'
 
 // ADMIN·DIRECTOR 는 department='ALL' 이라 부서 gate 를 우회하므로 테스트에서 편의상 사용.
@@ -28,9 +27,7 @@ const asRoleUser = (role: UserRole) =>
     ? { role, department: 'ALL' as const }
     : { role, department: 'MEDICAL' as const }
 
-const pages: PageMeta[] = Object.values(
-  createRouter({ routeTree }).routesByPath,
-).flatMap((route) =>
+const pages: PageMeta[] = testRoutes.flatMap((route) =>
   route.options.staticData?.page ? [route.options.staticData.page] : [],
 )
 const byStatus = (status: PageMeta['status']) =>
@@ -82,7 +79,9 @@ describe('통계 페이지 접근 정책 불변식', () => {
 
   it('회계 페이지는 임원(ADMIN·DIRECTOR) 이상 접근한다 (백엔드 /api/accounting/** 매처와 대칭, 2026-09-17)', () => {
     const accounting = pages.filter((p) => p.id.startsWith('accounting-'))
-    expect(accounting.map((p) => p.id).sort()).toEqual([
+    expect(
+      accounting.map((p) => p.id).sort((a, b) => a.localeCompare(b, 'ko')),
+    ).toEqual([
       'accounting-medical',
       'accounting-medical-chart',
       'accounting-vision',

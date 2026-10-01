@@ -64,7 +64,7 @@ export function ExamListPage() {
     const set = new Set(
       rows.map((r) => formatExamType(r.examType)).filter(Boolean),
     )
-    return ['전체', ...[...set].sort()]
+    return ['전체', ...[...set].sort((a, b) => a.localeCompare(b, 'ko'))]
   }, [rows])
 
   const filtered = useMemo(() => {

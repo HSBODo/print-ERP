@@ -27,7 +27,9 @@ export function VisionRevenueChartPage() {
     () => buildVisionChart(query.data ?? [], selected.map(Number)),
     [query.data, selected],
   )
-  const currentYear = [...selected].sort().at(-1) ?? years[years.length - 1]
+  const currentYear =
+    [...selected].sort((a, b) => a.localeCompare(b, 'ko')).at(-1) ??
+    years[years.length - 1]
   const amountRow = view.lines.find((row) => row.label === `${currentYear}년`)
   const countRow = view.tableRows.find(
     (row) => row.label === `${currentYear}년 건수`,
@@ -39,7 +41,7 @@ export function VisionRevenueChartPage() {
         ? current.length === 1
           ? current
           : current.filter((item) => item !== year)
-        : [...current, year].sort(),
+        : [...current, year].sort((a, b) => a.localeCompare(b, 'ko')),
     )
 
   return (

@@ -57,6 +57,11 @@ const sharedConfig = {
     '@typescript-eslint/no-explicit-any': 'error',
     // 사내 컨벤션: 추론이 안 되면 as 로 최대한 비슷한 타입을 지정한다 (x! 로 바꾸지 않는다)
     '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+    // onSubmit={handleSubmit(fn)} · async onClick 은 React 표준 패턴이라 JSX 속성은 검사하지 않는다
+    '@typescript-eslint/no-misused-promises': [
+      'error',
+      { checksVoidReturn: { attributes: false } },
+    ],
 
     'array-callback-return': ['warn', { checkForEach: true }],
     'no-console': ['error', { allow: ['error'] }],
@@ -208,11 +213,7 @@ const architectureConfig = {
     'import/resolver': {
       typescript: {
         alwaysTryTypes: true,
-        project: [
-          './tsconfig.app.json',
-          './tsconfig.test.json',
-          './tsconfig.node.json',
-        ],
+        project: './tsconfig.json',
       },
     },
   },
@@ -233,10 +234,8 @@ const testConfig = {
 const GRADUAL_RULES = [
   '@typescript-eslint/no-base-to-string',
   '@typescript-eslint/no-floating-promises',
-  '@typescript-eslint/no-misused-promises',
   '@typescript-eslint/no-unnecessary-type-assertion',
   '@typescript-eslint/no-unsafe-argument',
-  '@typescript-eslint/no-unsafe-assignment',
   '@typescript-eslint/no-unsafe-call',
   '@typescript-eslint/no-unsafe-member-access',
   '@typescript-eslint/no-unsafe-return',
@@ -248,10 +247,7 @@ const GRADUAL_RULES = [
   '@typescript-eslint/restrict-template-expressions',
   'sonarjs/concise-regex',
   'sonarjs/deprecation',
-  'sonarjs/different-types-comparison',
   'sonarjs/function-return-type',
-  'sonarjs/no-all-duplicated-branches',
-  'sonarjs/no-alphabetical-sort',
   'sonarjs/no-floating-point-equality',
   'sonarjs/no-inverted-boolean-check',
   'sonarjs/no-nested-conditional',

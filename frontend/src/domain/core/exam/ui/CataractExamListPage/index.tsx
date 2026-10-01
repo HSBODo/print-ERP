@@ -57,7 +57,7 @@ export function CataractExamListPage() {
 
   const typeOptions = useMemo(() => {
     const set = new Set(rows.map((r) => r.examType).filter(Boolean))
-    return ['전체', ...[...set].sort()]
+    return ['전체', ...[...set].sort((a, b) => a.localeCompare(b, 'ko'))]
   }, [rows])
 
   const filtered = useMemo(() => {

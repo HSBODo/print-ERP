@@ -112,12 +112,9 @@ export function ReportWeekLineChart({
   // niceAxis 는 여백 15% + 하한 0 스냅이라 주 단위 값에서는 데이터가 축 절반에만 몰린다.
   const { domain: axisDomain, ticks: yTicks } = useMemo(() => {
     if (yDomain) return niceAxisFor(yDomain[0], yDomain[1])
-    const values: number[] = []
-    sorted.forEach((y) =>
-      (data[y] ?? []).forEach((v) => {
-        if (typeof v === 'number') values.push(v)
-      }),
-    )
+    const values = sorted
+      .flatMap((y) => data[y] ?? [])
+      .filter((v) => typeof v === 'number')
     return tightAxis(values)
   }, [sorted, data, yDomain])
 
@@ -306,7 +303,7 @@ export function ReportWeekLineChart({
               }
             >
               <colgroup>
-                <col className={denseTable ? 'w-16' : 'w-16'} />
+                <col className="w-16" />
                 {chunk.map((c) => (
                   <col key={c.i} />
                 ))}

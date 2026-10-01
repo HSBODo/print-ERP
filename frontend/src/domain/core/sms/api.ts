@@ -34,7 +34,7 @@ import {
 
 export const smsApi = {
   async lookup(chartNo: string): Promise<SmsLookup> {
-    const { data } = await api.get('/sms-management/lookup', {
+    const { data } = await api.get<unknown>('/sms-management/lookup', {
       params: { chartNo },
     })
     return apiResponseOf(lookupSchema).parse(data).data
@@ -47,7 +47,7 @@ export const smsApi = {
     templateCode?: string,
     signal?: AbortSignal,
   ): Promise<SmsTarget[]> {
-    const { data } = await api.get('/sms-management/targets', {
+    const { data } = await api.get<unknown>('/sms-management/targets', {
       params: { from, to, basis, templateCode },
       signal,
     })
@@ -55,7 +55,9 @@ export const smsApi = {
   },
 
   async getTemplates(signal?: AbortSignal): Promise<SmsTemplate[]> {
-    const { data } = await api.get('/sms-management/templates', { signal })
+    const { data } = await api.get<unknown>('/sms-management/templates', {
+      signal,
+    })
     return apiResponseOf(z.array(templateSchema)).parse(data).data
   },
 
@@ -64,9 +66,12 @@ export const smsApi = {
    * 상태·본문과 함께 돌려준다. API 키 미설정 시 빈 배열. 관리자 "템플릿" 모달용.
    */
   async getSolapiTemplates(signal?: AbortSignal): Promise<SmsSolapiTemplate[]> {
-    const { data } = await api.get('/sms-management/solapi-templates', {
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/sms-management/solapi-templates',
+      {
+        signal,
+      },
+    )
     return apiResponseOf(z.array(solapiTemplateSchema)).parse(data).data
   },
 
@@ -75,12 +80,14 @@ export const smsApi = {
    * API 키 미설정이면 configured=false 로 반환(500 안 던짐).
    */
   async getSolapiBalance(signal?: AbortSignal): Promise<SmsSolapiBalance> {
-    const { data } = await api.get('/sms-management/solapi-balance', { signal })
+    const { data } = await api.get<unknown>('/sms-management/solapi-balance', {
+      signal,
+    })
     return apiResponseOf(solapiBalanceSchema).parse(data).data
   },
 
   async createTarget(request: SmsTargetRequest): Promise<SmsTarget> {
-    const { data } = await api.post('/sms-management/targets', request)
+    const { data } = await api.post<unknown>('/sms-management/targets', request)
     return apiResponseOf(targetSchema).parse(data).data
   },
 
@@ -88,7 +95,10 @@ export const smsApi = {
     id: number,
     request: SmsTargetRequest,
   ): Promise<SmsTarget> {
-    const { data } = await api.put(`/sms-management/targets/${id}`, request)
+    const { data } = await api.put<unknown>(
+      `/sms-management/targets/${id}`,
+      request,
+    )
     return apiResponseOf(targetSchema).parse(data).data
   },
 
@@ -96,7 +106,7 @@ export const smsApi = {
     id: number,
     value: 'SENDABLE' | 'HOLD',
   ): Promise<SmsTarget> {
-    const { data } = await api.put(
+    const { data } = await api.put<unknown>(
       `/sms-management/targets/${id}/status`,
       {},
       { params: { value } },
@@ -109,7 +119,7 @@ export const smsApi = {
    * 새로 등록된 사람 수를 돌려준다(이미 목록에 있던 번호는 세지 않는다).
    */
   async registerOptOut(targetIds: number[]): Promise<number> {
-    const { data } = await api.post('/sms-management/opt-outs', {
+    const { data } = await api.post<unknown>('/sms-management/opt-outs', {
       targetIds,
       value: 'HOLD',
     })
@@ -121,7 +131,7 @@ export const smsApi = {
     targetIds: number[],
     value: 'SENDABLE' | 'HOLD',
   ): Promise<number> {
-    const { data } = await api.put('/sms-management/targets/status', {
+    const { data } = await api.put<unknown>('/sms-management/targets/status', {
       targetIds,
       value,
     })
@@ -133,7 +143,7 @@ export const smsApi = {
    * ⚠️ 기간은 **발송 시각** 기준이다(수술일 범위가 아니다). 비우면 최근 7일.
    */
   async syncResults(sentFrom?: string, sentTo?: string): Promise<number> {
-    const { data } = await api.post(
+    const { data } = await api.post<unknown>(
       '/sms-management/sync',
       {},
       { params: { sentFrom, sentTo } },
@@ -142,7 +152,7 @@ export const smsApi = {
   },
 
   async importTargets(from: string, to: string): Promise<SmsImportResult> {
-    const { data } = await api.post(
+    const { data } = await api.post<unknown>(
       '/sms-management/targets/import',
       {},
       { params: { from, to } },
@@ -155,7 +165,7 @@ export const smsApi = {
     templateCode: string,
     channel: 'ALIMTALK' | 'SMS',
   ): Promise<SmsSendResult> {
-    const { data } = await api.post('/sms-management/send', {
+    const { data } = await api.post<unknown>('/sms-management/send', {
       targetIds,
       templateCode,
       channel,
@@ -165,7 +175,9 @@ export const smsApi = {
 
   /** 수신거부 목록 조회 — 관리 모달에서 씀. */
   async getOptOuts(signal?: AbortSignal): Promise<SmsOptOutRow[]> {
-    const { data } = await api.get('/sms-management/opt-outs', { signal })
+    const { data } = await api.get<unknown>('/sms-management/opt-outs', {
+      signal,
+    })
     return apiResponseOf(z.array(optOutRowSchema)).parse(data).data
   },
 
@@ -176,13 +188,15 @@ export const smsApi = {
    * true 반환: 실제 삭제됨 · false: 이미 없었음.
    */
   async releaseOptOut(id: number): Promise<boolean> {
-    const { data } = await api.delete(`/sms-management/opt-outs/${id}`)
+    const { data } = await api.delete<unknown>(`/sms-management/opt-outs/${id}`)
     return apiResponseOf(z.boolean()).parse(data).data
   },
 
   /** 오프셋 그리드 조회 — 4행(SMILE·LASIK·LASEK·ICL). */
   async getOffsets(signal?: AbortSignal): Promise<SmsOffsetRow[]> {
-    const { data } = await api.get('/sms-management/offsets', { signal })
+    const { data } = await api.get<unknown>('/sms-management/offsets', {
+      signal,
+    })
     return apiResponseOf(z.array(offsetRowSchema)).parse(data).data
   },
 
@@ -190,7 +204,7 @@ export const smsApi = {
   async updateOffsets(
     payload: SmsOffsetUpdatePayload,
   ): Promise<SmsOffsetRow[]> {
-    const { data } = await api.put('/sms-management/offsets', payload)
+    const { data } = await api.put<unknown>('/sms-management/offsets', payload)
     return apiResponseOf(z.array(offsetRowSchema)).parse(data).data
   },
 
@@ -210,7 +224,7 @@ export const smsApi = {
     range: { from?: string; to?: string } = {},
     signal?: AbortSignal,
   ): Promise<SmsQueueStatusResponse> {
-    const { data } = await api.get('/admin/batch/sms/queue/status', {
+    const { data } = await api.get<unknown>('/admin/batch/sms/queue/status', {
       params: range,
       signal,
     })
@@ -227,7 +241,7 @@ export const smsApi = {
     range: { from?: string; to?: string } = {},
     signal?: AbortSignal,
   ): Promise<SmsQueueRow[]> {
-    const { data } = await api.get('/admin/batch/sms/queue/rows', {
+    const { data } = await api.get<unknown>('/admin/batch/sms/queue/rows', {
       params: { status, limit, ...range },
       signal,
     })
@@ -237,7 +251,7 @@ export const smsApi = {
   /** 실패·취소 재실행 — attempt_count 리셋 후 PENDING 으로. 리셋된 건수 반환. */
   async retryQueueRows(ids: number[]): Promise<number> {
     if (ids.length === 0) return 0
-    const { data } = await api.post(
+    const { data } = await api.post<unknown>(
       '/admin/batch/sms/queue/retry',
       {},
       { params: { ids } },
@@ -247,7 +261,7 @@ export const smsApi = {
 
   /** 5분 폴러 즉시 실행 — 개발·긴급용. 처리 통계 반환. */
   async runQueueNow(): Promise<Record<string, number>> {
-    const { data } = await api.post('/admin/batch/sms/queue/run', {})
+    const { data } = await api.post<unknown>('/admin/batch/sms/queue/run', {})
     return apiResponseOf(z.record(z.string(), z.number())).parse(data).data
   },
 }

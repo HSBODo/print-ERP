@@ -15,14 +15,14 @@ import {
 
 export const surgeryApi = {
   getSurgeryMonthly: async (years: number[]) => {
-    const { data } = await api.get('/stats/surgery/monthly', {
+    const { data } = await api.get<unknown>('/stats/surgery/monthly', {
       params: { years },
     })
     return surgeryMonthlyResponseSchema.parse(data).data
   },
 
   getSurgeryRatio: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/surgery-ratio', {
+    const { data } = await api.get<unknown>('/stats/surgery-ratio', {
       params: { years },
       signal,
     })
@@ -30,7 +30,7 @@ export const surgeryApi = {
   },
 
   getSurgeryKpi: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/surgery/kpi', {
+    const { data } = await api.get<unknown>('/stats/surgery/kpi', {
       params: { years },
       signal,
     })
@@ -38,7 +38,7 @@ export const surgeryApi = {
   },
 
   getSurgeryTrend: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/surgery/panel/trend', {
+    const { data } = await api.get<unknown>('/stats/surgery/panel/trend', {
       params: { years },
       signal,
     })
@@ -46,16 +46,19 @@ export const surgeryApi = {
   },
 
   getSurgeryComposition: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/surgery/panel/composition', {
-      params: { years },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/surgery/panel/composition',
+      {
+        params: { years },
+        signal,
+      },
+    )
     return surgeryMonthlyResponseSchema.parse(data).data
   },
 
   /** 수술별 비중 일별 — mart_surgery_daily 조회. data+meta 반환(마트 미적재 시 라이브 폴백). */
   getSurgeryDaily: async (from: string, to: string, signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/surgery/daily', {
+    const { data } = await api.get<unknown>('/stats/surgery/daily', {
       params: { from, to },
       signal,
     })
@@ -67,7 +70,7 @@ export const surgeryApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<SurgeryListItem[]> => {
-    const { data } = await api.get('/surgery-list', {
+    const { data } = await api.get<unknown>('/surgery-list', {
       params: { from, to },
       signal,
     })
@@ -78,10 +81,13 @@ export const surgeryApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReoperationCandidate[]> => {
-    const { data } = await api.get('/stats/surgery/reoperation-candidates', {
-      params: { from, to },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/surgery/reoperation-candidates',
+      {
+        params: { from, to },
+        signal,
+      },
+    )
     return reoperationCandidatesResponseSchema.parse(data).data
   },
   getReoperationDecisions: async (
@@ -89,7 +95,7 @@ export const surgeryApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReoperationDecisionRow[]> => {
-    const { data } = await api.get('/reoperation-decisions', {
+    const { data } = await api.get<unknown>('/reoperation-decisions', {
       params: { from, to },
       signal,
     })
@@ -99,7 +105,9 @@ export const surgeryApi = {
   saveReoperationDecisions: async (
     decisions: ReoperationDecisionSaveItem[],
   ): Promise<ReoperationDecisionRow[]> => {
-    const { data } = await api.put('/reoperation-decisions', { decisions })
+    const { data } = await api.put<unknown>('/reoperation-decisions', {
+      decisions,
+    })
     return reoperationDecisionSaveResponseSchema.parse(data).data
   },
 }

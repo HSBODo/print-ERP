@@ -8,7 +8,7 @@ import {
 
 export const outpatientApi = {
   getOutpatientCountMonthly: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/outpatient-count/monthly', {
+    const { data } = await api.get<unknown>('/stats/outpatient-count/monthly', {
       params: { years },
       signal,
     })
@@ -19,7 +19,7 @@ export const outpatientApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<OutpatientListItem[]> => {
-    const { data } = await api.get('/outpatient-list', {
+    const { data } = await api.get<unknown>('/outpatient-list', {
       params: { from, to },
       signal,
     })

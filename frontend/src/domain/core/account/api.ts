@@ -12,19 +12,19 @@ const BASE = '/admin/users'
 
 export const accountApi = {
   list: async (signal?: AbortSignal): Promise<UserRow[]> => {
-    const { data } = await api.get(BASE, { signal })
+    const { data } = await api.get<unknown>(BASE, { signal })
     return listResponseSchema.parse(data).data
   },
   get: async (id: number): Promise<UserRow> => {
-    const { data } = await api.get(`${BASE}/${id}`)
+    const { data } = await api.get<unknown>(`${BASE}/${id}`)
     return singleResponseSchema.parse(data).data
   },
   create: async (payload: UserCreatePayload): Promise<UserRow> => {
-    const { data } = await api.post(BASE, payload)
+    const { data } = await api.post<unknown>(BASE, payload)
     return singleResponseSchema.parse(data).data
   },
   update: async (id: number, payload: UserUpdatePayload): Promise<UserRow> => {
-    const { data } = await api.put(`${BASE}/${id}`, payload)
+    const { data } = await api.put<unknown>(`${BASE}/${id}`, payload)
     return singleResponseSchema.parse(data).data
   },
   remove: async (id: number): Promise<void> => {

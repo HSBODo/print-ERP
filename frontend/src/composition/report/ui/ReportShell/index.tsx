@@ -38,7 +38,7 @@ export function ReportShell({
   items,
   isLoading,
 }: ReportShellProps) {
-  const done = items.filter((it) => it.node)
+  const done = items.filter((it) => Boolean(it.node))
 
   return (
     <div className="flex justify-center gap-6">

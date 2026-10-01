@@ -51,7 +51,7 @@ export function MedicalRevenueChartPage() {
         ? current.length === 1
           ? current
           : current.filter((item) => item !== year)
-        : [...current, year].sort(),
+        : [...current, year].sort((a, b) => a.localeCompare(b, 'ko')),
     )
 
   return (

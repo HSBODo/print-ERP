@@ -125,12 +125,9 @@ export function ReportLineChart({
   // Y축: yDomain 지정 시 그 범위로 고정, 아니면 데이터 스케일 자동 (음수 방지, PDF처럼 0·20·40…)
   const { domain: axisDomain, ticks: yTicks } = useMemo(() => {
     if (yDomain) return niceAxisFor(yDomain[0], yDomain[1])
-    const values: number[] = []
-    sorted.forEach((y) =>
-      (data[y] ?? []).forEach((v) => {
-        if (typeof v === 'number') values.push(v)
-      }),
-    )
+    const values = sorted
+      .flatMap((y) => data[y] ?? [])
+      .filter((v) => typeof v === 'number')
     return niceAxis(values)
   }, [sorted, data, yDomain])
 

@@ -7,14 +7,14 @@ import {
 
 export const overallApi = {
   getOverallExamWeekly: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/overall-exam/weekly', {
+    const { data } = await api.get<unknown>('/stats/overall-exam/weekly', {
       params: { years },
       signal,
     })
     return overallExamWeeklyResponseSchema.parse(data).data
   },
   getOverallExamMonthly: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get('/stats/overall-exam/monthly', {
+    const { data } = await api.get<unknown>('/stats/overall-exam/monthly', {
       params: { years },
       signal,
     })

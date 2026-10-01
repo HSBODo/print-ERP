@@ -154,11 +154,7 @@ export function Sidebar({
       activeIds.size > 0 &&
       ![...activeIds].every((id) => openMenus.has(id))
     ) {
-      setOpenMenus((prev) => {
-        const next = new Set(prev)
-        activeIds.forEach((id) => next.add(id))
-        return next
-      })
+      setOpenMenus((prev) => new Set([...prev, ...activeIds]))
     }
   }
 

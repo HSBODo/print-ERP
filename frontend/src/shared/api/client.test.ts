@@ -15,7 +15,7 @@ describe('api client', () => {
     const adapter = vi.fn(mockApiAdapter(200, JSON.stringify({ ok: true })))
     api.defaults.adapter = adapter
 
-    const { data } = await api.get('/health')
+    const { data } = await api.get<unknown>('/health')
     expect(data).toEqual({ ok: true })
     expect(adapter).toHaveBeenCalledWith(
       expect.objectContaining({ baseURL: '/api', url: '/health' }),

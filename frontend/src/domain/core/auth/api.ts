@@ -8,7 +8,7 @@ import {
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginData> => {
-    const res = await api.post('/auth/login', data)
+    const res = await api.post<unknown>('/auth/login', data)
     return loginResponseSchema.parse(res.data).data
   },
 }

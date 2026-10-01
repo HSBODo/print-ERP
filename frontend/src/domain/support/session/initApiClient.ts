@@ -6,7 +6,7 @@ import { clearStoredAuthSession, readStoredAuthSession } from './session'
 
 const WHITELIST = new Set(['/auth/login'])
 
-const messageOf = ({ data, status, statusText }: AxiosResponse) => {
+const messageOf = ({ data, status, statusText }: AxiosResponse<unknown>) => {
   if (typeof data === 'string' && data.trim()) {
     return data
   }
