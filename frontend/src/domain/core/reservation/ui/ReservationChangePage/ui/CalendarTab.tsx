@@ -1,8 +1,11 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
+import { Filter } from '#shared/ui/Filter'
+import { currentMonth, shiftMonth } from '#shared/utils/date'
 
 import { useReservationChangeDaily } from '../../../hooks/useReservationChange'
 import {
@@ -12,22 +15,22 @@ import {
   type CalendarMetric,
   calendarRange,
   METRIC_LABEL,
-  shiftMonth,
 } from '../utils/reservationChangeCalendarModel'
-import { BRANCH_LABEL } from '../utils/reservationChangeModel'
-import { Segment, Stat } from './FilterControls'
+import { BRANCH_LABEL, DATA_FROM_YEAR } from '../utils/reservationChangeModel'
 import { ReservationChangeCalendar } from './ReservationChangeCalendar'
+import { Stat } from './Stat'
 
-const DATA_FROM_YEAR = 2022
-const pad = (n: number) => String(n).padStart(2, '0')
-const todayIso = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-const currentMonth = () => todayIso().slice(0, 7)
 const monthLabel = (ym: string) =>
   `${ym.slice(0, 4)}년 ${Number(ym.slice(5))}월`
+/** 예약일 기준은 미래 달도 잡혀 있어 1년 뒤까지 넘겨 볼 수 있다 */
+const maxMonth = () => shiftMonth(currentMonth(), 12)
 
+const BASIS_OPTIONS = (Object.keys(BASIS_LABEL) as CalendarBasis[]).map(
+  (value) => ({ value, label: BASIS_LABEL[value] }),
+)
+const METRIC_OPTIONS = (Object.keys(METRIC_LABEL) as CalendarMetric[]).map(
+  (value) => ({ value, label: METRIC_LABEL[value] }),
+)
 const BRANCH_OPTIONS = [
   { value: '', label: '전체' },
   ...Object.entries(BRANCH_LABEL).map(([value, label]) => ({ value, label })),
@@ -35,10 +38,18 @@ const BRANCH_OPTIONS = [
 
 /**
  * 추이 달력 탭 — 선택 월 + 다음 달 두 장을 세로로. 일별 등록 · 변경 · 변경률.
- * 기준(등록일 / 예약일) 두 축 · 지표 3종 · 구분(M/D/H) 로 필터.
+ * 월은 [조회] 로 서버에서 받고(‹ › · 이번 달은 누르는 즉시 조회), 기준(등록일 / 예약일)·지표·구분은 받아온 값을 바로 바꿔 그린다.
  */
 export function CalendarTab() {
-  const [calMonth, setCalMonth] = useState(currentMonth())
+  const filter = useFilter({
+    defaults: () => ({ month: currentMonth() }),
+    onReset: () => {
+      setBasis('rsv')
+      setMetric('total')
+      setCalBranch('')
+    },
+  })
+  const calMonth = filter.applied.month
   const [basis, setBasis] = useState<CalendarBasis>('rsv')
   const [metric, setMetric] = useState<CalendarMetric>('total')
   const [calBranch, setCalBranch] = useState('')
@@ -65,65 +76,73 @@ export function CalendarTab() {
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 shadow-sm">
-        <div className="flex h-8 items-center overflow-hidden rounded-md border border-border/80 bg-white">
-          <button
+      <Filter.Root
+        filter={filter}
+        isFetching={calLoading}
+        refetch={daily.refetch}
+      >
+        <Filter.Bar>
+          <Button
             type="button"
+            variant="outline"
+            size="icon-sm"
             aria-label="이전 달"
-            onClick={() => setCalMonth((m) => shiftMonth(m, -1))}
-            className="h-full px-1.5 text-gray-600 hover:bg-gray-50"
+            disabled={filter.draft.month <= `${DATA_FROM_YEAR}-01`}
+            onClick={() =>
+              filter.apply({ month: shiftMonth(filter.draft.month, -1) })
+            }
           >
             <ChevronLeft className="h-4 w-4" />
-          </button>
-          <input
-            type="month"
-            aria-label="달력 월"
-            value={calMonth}
+          </Button>
+          <Filter.Month
+            {...filter.field('month')}
             min={`${DATA_FROM_YEAR}-01`}
-            onChange={(e) => e.target.value && setCalMonth(e.target.value)}
-            className="h-full border-x border-border/70 px-2 text-xs font-semibold text-gray-800 outline-none"
+            max={maxMonth()}
+            ariaLabel="달력 월"
           />
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon-sm"
             aria-label="다음 달"
-            onClick={() => setCalMonth((m) => shiftMonth(m, 1))}
-            className="h-full px-1.5 text-gray-600 hover:bg-gray-50"
+            disabled={filter.draft.month >= maxMonth()}
+            onClick={() =>
+              filter.apply({ month: shiftMonth(filter.draft.month, 1) })
+            }
           >
             <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="text-xs"
-          onClick={() => setCalMonth(currentMonth())}
-        >
-          이번 달
-        </Button>
-        <span className="mx-1 h-6 w-px bg-gray-200" />
-        <Segment
-          value={basis}
-          onChange={setBasis}
-          options={(Object.keys(BASIS_LABEL) as CalendarBasis[]).map((v) => ({
-            value: v,
-            label: BASIS_LABEL[v],
-          }))}
-        />
-        <Segment
-          value={metric}
-          onChange={setMetric}
-          options={(Object.keys(METRIC_LABEL) as CalendarMetric[]).map((v) => ({
-            value: v,
-            label: METRIC_LABEL[v],
-          }))}
-        />
-        <Segment
-          value={calBranch}
-          onChange={setCalBranch}
-          options={BRANCH_OPTIONS}
-        />
-      </div>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => filter.apply({ month: currentMonth() })}
+          >
+            이번 달
+          </Button>
+          <span className="mx-1 h-6 w-px bg-gray-200" />
+          <Filter.Segment
+            value={basis}
+            onChange={setBasis}
+            options={BASIS_OPTIONS}
+            ariaLabel="기준"
+          />
+          <Filter.Segment
+            value={metric}
+            onChange={setMetric}
+            options={METRIC_OPTIONS}
+            ariaLabel="지표"
+          />
+          <Filter.Segment
+            value={calBranch}
+            onChange={setCalBranch}
+            options={BRANCH_OPTIONS}
+            ariaLabel="구분"
+          />
+          <Filter.Actions />
+        </Filter.Bar>
+      </Filter.Root>
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
           {daily.isError ? (

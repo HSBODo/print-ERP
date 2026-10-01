@@ -1,17 +1,9 @@
 import type { CsvColumn } from '#shared/utils/csv'
-import {
-  addDays,
-  isoWeek,
-  isoWeekMonday,
-  isoWeeksInYear,
-  toIsoDate,
-} from '#shared/utils/isoWeek'
+import { type DateRange, toIsoDate, todayIso } from '#shared/utils/date'
 import { maskAddress, maskName } from '#shared/utils/mask'
 
 import type { DreamlensLedgerRow } from '../../type/api'
 import { LEDGER_COLUMNS, type LedgerFieldKey } from './ledgerColumns'
-
-export type PeriodMode = 'daily' | 'weekly' | 'monthly'
 
 /* ── 컬럼 정렬 (검사자·수술자 리스트와 동일 규약) ── */
 
@@ -54,73 +46,16 @@ export const compareSortValue = (
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
 
 /** 기본 조회 구간 — 지난달 1일 ~ 오늘(장부는 최근 것을 주로 본다). */
-export const defaultFrom = () => {
+export const defaultRange = (): DateRange => {
   const now = new Date()
-  return toIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1))
-}
-export const defaultTo = () => toIsoDate(new Date())
-export const today = () => toIsoDate(new Date())
-
-/** 진행 중인 구간이면 오늘까지만 자른다 — 미래 조회는 의미가 없다. */
-const clampToToday = (date: Date) => {
-  const now = new Date()
-  return toIsoDate(date > now ? now : date)
+  return {
+    from: toIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+    to: todayIso(),
+  }
 }
 
-/* ── 월별 모드 헬퍼 (예약자 리스트와 동일 규약) ── */
-
-export const toMonthValue = (date: string) => date.slice(0, 7)
-export const toMonthStart = (month: string) => `${month}-01`
-export const toMonthEnd = (month: string) => {
-  const [year, mo] = month.split('-').map(Number)
-  return clampToToday(new Date(year, mo, 0))
-}
-
-/* ── 주차 모드 헬퍼 ──
- * ISO 8601 연간 주차(월~일, 첫 목요일이 든 주가 1주차)를 쓴다. 주차 레포트·예약통계와 같은 기준이라
- * 화면끼리 "몇 주차"가 어긋나지 않는다. '그 달의 주차'(월 경계에서 잘라 각 달로 귀속)와는 다른 개념이니 주의.
- * <input type="week"> 의 값 형식(YYYY-Www)이 곧 ISO 주차라 변환 없이 맞물린다.
- */
-
-/** 장부에 데이터가 존재하는 첫 연도(D/L 장부 마이그레이션 기준 2006-10). 연도 드롭다운 하한. */
-export const LEDGER_FIRST_YEAR = 2006
-
-/** 연도 선택 목록 — 최신 연도부터 내림차순. */
-export const ledgerYears = (): number[] => {
-  const now = new Date().getFullYear()
-  return Array.from({ length: now - LEDGER_FIRST_YEAR + 1 }, (_, i) => now - i)
-}
-
-/** 그 해의 주차 목록(1..52 또는 53). ISO 기준이라 해마다 53주가 있을 수 있다. */
-export const isoWeekNumbers = (year: number): number[] =>
-  Array.from({ length: isoWeeksInYear(year) }, (_, i) => i + 1)
-
-export const weekValueOf = (year: number, week: number) =>
-  `${year}-W${String(week).padStart(2, '0')}`
-
-/** 'YYYY-MM-DD' → 그 날짜가 속한 ISO 주차. 연말·연초는 year 가 인접 해로 넘어간다. */
-export const isoWeekOf = (date: string): { year: number; week: number } => {
-  const [y, m, d] = date.split('-').map(Number)
-  return isoWeek(new Date(y, m - 1, d))
-}
-
-export const toWeekValue = (date: string) => {
-  const { year, week } = isoWeekOf(date)
-  return weekValueOf(year, week)
-}
-export const toWeekStart = (weekValue: string) => {
-  const [year, week] = weekValue.split('-W').map(Number)
-  return toIsoDate(isoWeekMonday(year, week))
-}
-/**
- * 그 주의 일요일. 월별과 달리 오늘로 자르지 않는다 —
- * 주차를 드롭다운으로 직접 고를 수 있어, 미래 주를 클램프하면 시작일 > 종료일이 되어
- * 조회 자체가 막힌다. 미래 주는 그냥 0건으로 나오는 편이 예측 가능하다.
- */
-export const toWeekEnd = (weekValue: string) => {
-  const [year, week] = weekValue.split('-W').map(Number)
-  return toIsoDate(addDays(isoWeekMonday(year, week), 6))
-}
+/** 백엔드 DreamlensLedgerService 조회 구간 제한(양 끝 포함 92일)과 같다. */
+export const LEDGER_MAX_DAYS = 92
 
 /** 이름·고객번호·검사자 부분일치. 공백 키워드는 통과. */
 export const matchesKeyword = (row: DreamlensLedgerRow, keyword: string) => {

@@ -23,6 +23,7 @@ beforeEach(() => {
     isLoading: false,
     isFetching: false,
     isError: false,
+    refetch: vi.fn(),
   })
 })
 afterEach(cleanup)
@@ -47,6 +48,7 @@ describe('DetailTab · 예약 변경이력 상세 탭', () => {
       isLoading: true,
       isFetching: false,
       isError: false,
+      refetch: vi.fn(),
     })
     render(<DetailTab />)
     expect(screen.getByRole('button', { name: /조회/ })).toBeDisabled()
@@ -58,6 +60,7 @@ describe('DetailTab · 예약 변경이력 상세 탭', () => {
       isLoading: false,
       isFetching: false,
       isError: true,
+      refetch: vi.fn(),
     })
     render(<DetailTab />)
     expect(

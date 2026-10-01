@@ -16,7 +16,7 @@ export function useAccumulatedEyes(
   field: AccumulatedEyesField = 'all',
   enabled = true,
 ) {
-  const { data, isLoading, isFetching, isError, error } = useQuery({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['accumulated-eyes', from, to, query, field],
     queryFn: ({ signal }) =>
       marketingApi.getAccumulatedEyes(from, to, query, field, signal),
@@ -32,5 +32,6 @@ export function useAccumulatedEyes(
     isError,
     /** 서버 응답의 message 를 그대로 담는다(예: "조회 기간은 최대 366일입니다."). */
     errorMessage: error instanceof Error ? error.message : null,
+    refetch,
   }
 }

@@ -45,6 +45,8 @@ export interface FilterState<T extends Values> {
   /** 여러 값을 한 번에 고친다 — 엮인 값(예: 기준을 바꾸면 차수 비우기)용 */
   setDraft: (patch: Partial<T>) => void
   search: () => SearchResult
+  /** 입력값을 고치면서 바로 적용 — ‹ › 같은 빠른 이동 버튼용 ([조회]를 따로 누르지 않는다) */
+  apply: (patch: Partial<T>) => SearchResult
   reset: () => void
 }
 
@@ -68,17 +70,21 @@ export function useFilter<T extends Values>({
     onChange: (value) => setDraftState((prev) => ({ ...prev, [key]: value })),
   })
 
-  const search = (): SearchResult => {
-    const message = validate?.(draft)
+  const apply = (patch: Partial<T>): SearchResult => {
+    const next = { ...draft, ...patch }
+    const message = validate?.(next)
     if (message) {
       toast.error('조회 조건을 확인해 주세요', { description: message })
       return 'invalid'
     }
+    setDraftState(next)
     onSearch?.()
-    if (isSame(draft, applied)) return 'unchanged'
-    setApplied(draft)
+    if (isSame(next, applied)) return 'unchanged'
+    setApplied(next)
     return 'applied'
   }
+
+  const search = () => apply({})
 
   const reset = () => {
     const next = defaults()
@@ -87,5 +93,5 @@ export function useFilter<T extends Values>({
     onReset?.()
   }
 
-  return { draft, applied, field, setDraft, search, reset }
+  return { draft, applied, field, setDraft, search, apply, reset }
 }

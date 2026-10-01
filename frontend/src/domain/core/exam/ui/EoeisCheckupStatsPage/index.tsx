@@ -1,17 +1,13 @@
-import {
-  CalendarRange,
-  ChevronDown,
-  Download,
-  MonitorCog,
-  Search,
-  Settings2,
-} from 'lucide-react'
+import { CalendarRange, Download, MonitorCog, Settings2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
+import { Filter } from '#shared/ui/Filter'
 import { TablePagination } from '#shared/ui/TablePagination'
 import { downloadCsv, toCsv } from '#shared/utils/csv'
+import { thisMonthRange, toIsoDate } from '#shared/utils/date'
 
 import { useEoeisCheckup } from '../../hooks/useEoeisCheckup'
 import type { EoeisCheckupRow } from '../../type/api'
@@ -22,6 +18,15 @@ type PivotTab = 'device' | 'date'
 type Granularity = 'month' | 'day' | 'week'
 
 const MIN_QUERY_DATE = '2026-07-01'
+const GRANULARITY_OPTIONS: { value: Granularity; label: string }[] = [
+  { value: 'month', label: '월별' },
+  { value: 'day', label: '일별' },
+  { value: 'week', label: '주차별' },
+]
+const MODE_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: 'count', label: '건수' },
+  { value: 'score', label: '점수' },
+]
 
 interface PivotRow {
   name: string
@@ -44,18 +49,11 @@ const enumerateDates = (from: string, to: string): string[] => {
   const cursor = new Date(`${from}T00:00:00`)
   const end = new Date(`${to}T00:00:00`)
   while (cursor <= end) {
-    dates.push(toLocalIsoDate(cursor))
+    dates.push(toIsoDate(cursor))
     cursor.setDate(cursor.getDate() + 1)
   }
   return dates
 }
-
-const toLocalIsoDate = (date: Date) =>
-  [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-')
 
 const buildDateGroups = (
   granularity: Granularity,
@@ -74,7 +72,7 @@ const buildDateGroups = (
     if (granularity === 'week') {
       const current = new Date(`${date}T00:00:00`)
       current.setDate(current.getDate() - ((current.getDay() + 6) % 7))
-      key = toLocalIsoDate(current)
+      key = toIsoDate(current)
     }
     const group = groups.get(key) ?? { dates: [], dayIndexes: [] }
     group.dates.push(date)
@@ -90,29 +88,6 @@ const buildDateGroups = (
     dayIndexes: group.dayIndexes,
   }))
 }
-
-const SegmentedButton = ({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean
-  children: string
-  onClick: () => void
-}) => (
-  <button
-    type="button"
-    aria-pressed={active}
-    onClick={onClick}
-    className={`h-7 min-w-12 px-3 text-xs font-semibold transition-colors ${
-      active
-        ? 'bg-gray-900 text-white'
-        : 'bg-white text-gray-600 hover:bg-gray-50'
-    }`}
-  >
-    {children}
-  </button>
-)
 
 const DeviceScorePanel = ({
   devices,
@@ -364,12 +339,22 @@ const StatsTable = ({
 }
 
 export function EoeisCheckupStatsPage() {
-  const [draftFrom, setDraftFrom] = useState('2026-07-01')
-  const [draftTo, setDraftTo] = useState('2026-07-31')
-  const [queryPeriod, setQueryPeriod] = useState({
-    from: draftFrom,
-    to: draftTo,
+  // 조회 기간만 [조회] 때 반영, 조회 단위·보기·탭은 받아온 측정 기록을 다시 묶기만 한다.
+  const filter = useFilter({
+    defaults: () => ({ range: thisMonthRange() }),
+    onSearch: () => {
+      pagination.resetPage()
+      setStatus('실데이터를 조회하고 있습니다.')
+    },
+    onReset: () => {
+      setMode('count')
+      setTab('device')
+      setGranularity('day')
+      setSortState(null)
+      pagination.resetPage()
+    },
   })
+  const queryPeriod = filter.applied.range
   const [mode, setMode] = useState<ViewMode>('count')
   const [tab, setTab] = useState<PivotTab>('device')
   const [granularity, setGranularity] = useState<Granularity>('day')
@@ -382,7 +367,7 @@ export function EoeisCheckupStatsPage() {
   const [status, setStatus] = useState('실데이터를 조회하고 있습니다.')
   const [sortState, setSortState] = useState<SortState>(null)
 
-  const { data, isLoading, isFetching, isError } = useEoeisCheckup(
+  const { data, isLoading, isFetching, isError, refetch } = useEoeisCheckup(
     queryPeriod.from,
     queryPeriod.to,
   )
@@ -464,16 +449,6 @@ export function EoeisCheckupStatsPage() {
   }, [rows, sortState])
   const pagination = usePagination(sortedRows)
 
-  const handleQuery = () => {
-    const from = draftFrom < MIN_QUERY_DATE ? MIN_QUERY_DATE : draftFrom
-    const to = draftTo < from ? from : draftTo
-    setDraftFrom(from)
-    setDraftTo(to)
-    setQueryPeriod({ from, to })
-    pagination.resetPage()
-    setStatus(`실데이터 조회 중 · ${from} ~ ${to}`)
-  }
-
   const handleSort = (key: string) => {
     pagination.resetPage()
     setSortState((current) =>
@@ -517,108 +492,70 @@ export function EoeisCheckupStatsPage() {
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[36rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-2 py-1.5 shadow-sm">
-        <div className="relative">
-          <select
-            aria-label="조회 단위"
+      <Filter.Root filter={filter} isFetching={isFetching} refetch={refetch}>
+        <Filter.Bar>
+          <Filter.Select
             value={granularity}
-            onChange={(event) =>
-              handleGranularityChange(event.target.value as Granularity)
-            }
-            className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-7 text-xs font-medium outline-none transition-colors focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            onChange={handleGranularityChange}
+            options={GRANULARITY_OPTIONS}
+            ariaLabel="조회 단위"
+            className="w-20"
+          />
+          <Filter.DateRange {...filter.field('range')} min={MIN_QUERY_DATE} />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled
+            title="API 연동 후 활성화"
           >
-            <option value="month">월별</option>
-            <option value="day">일별</option>
-            <option value="week">주차별</option>
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-        </div>
-        <input
-          aria-label="조회 시작일"
-          type="date"
-          min={MIN_QUERY_DATE}
-          value={draftFrom}
-          onChange={(event) => setDraftFrom(event.target.value)}
-          className="h-8 w-[8.3rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-        />
-        <span className="text-gray-400">~</span>
-        <input
-          aria-label="조회 종료일"
-          type="date"
-          min={draftFrom < MIN_QUERY_DATE ? MIN_QUERY_DATE : draftFrom}
-          value={draftTo}
-          onChange={(event) => setDraftTo(event.target.value)}
-          className="h-8 w-[8.3rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-        />
-        <Button
-          type="button"
-          size="sm"
-          className="bg-teal-600 text-white hover:bg-teal-700"
-          disabled={isFetching}
-          onClick={handleQuery}
-        >
-          <Search />
-          {isFetching ? '조회 중' : '통계 조회'}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled
-          title="API 연동 후 활성화"
-        >
-          오늘 수집
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled
-          title="API 연동 후 활성화"
-        >
-          기간 수집
-        </Button>
-        <span
-          className={`rounded-full px-2 py-1 text-[10px] font-semibold ${isError ? 'bg-red-50 text-red-700' : isFetching ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}
-        >
-          {isError ? '연결 오류' : isFetching ? '조회 중' : '실데이터'}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
+            오늘 수집
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled
+            title="API 연동 후 활성화"
+          >
+            기간 수집
+          </Button>
+          <span
+            className={`rounded-full px-2 py-1 text-[10px] font-semibold ${isError ? 'bg-red-50 text-red-700' : isFetching ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}
+          >
+            {isError ? '연결 오류' : isFetching ? '조회 중' : '실데이터'}
+          </span>
           <span className="text-muted-foreground">보기</span>
-          <div className="flex overflow-hidden rounded-md border border-border/80">
-            <SegmentedButton
-              active={mode === 'count'}
-              onClick={() => setMode('count')}
+          <Filter.Segment
+            value={mode}
+            onChange={setMode}
+            options={MODE_OPTIONS}
+            ariaLabel="보기"
+          />
+          <Filter.Actions>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="text-xs"
+              onClick={handleSettingsToggle}
             >
-              건수
-            </SegmentedButton>
-            <SegmentedButton
-              active={mode === 'score'}
-              onClick={() => setMode('score')}
+              <Settings2 />
+              장비 점수 설정
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="text-xs"
+              onClick={handleExport}
             >
-              점수
-            </SegmentedButton>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleSettingsToggle}
-          >
-            <Settings2 />
-            장비 점수 설정
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleExport}
-          >
-            <Download />
-            CSV 내보내기
-          </Button>
-        </div>
-      </div>
+              <Download />
+              CSV 내보내기
+            </Button>
+          </Filter.Actions>
+        </Filter.Bar>
+      </Filter.Root>
 
       {settingsOpen && (
         <DeviceScorePanel

@@ -7,7 +7,7 @@ import { examApi } from '../api'
  * 진료구분·검색 필터는 페이지에서 클라이언트 사이드로 적용한다.
  */
 export function useExamList(from: string, to: string, enabled = true) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['exam-list', from, to],
     queryFn: ({ signal }) => examApi.getExamList(from, to, signal),
     enabled: enabled && Boolean(from && to),
@@ -18,5 +18,6 @@ export function useExamList(from: string, to: string, enabled = true) {
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }

@@ -110,12 +110,6 @@ export const isEmptyCell = (c: Cell): boolean =>
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 
-/** 'YYYY-MM' → 현재 연/월 문자열(기본 조회월) */
-export function currentMonthValue(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`
-}
-
 /** 'YYYY-MM' → { from, to } 해당 월의 1일~말일 */
 export function monthRange(ym: string): {
   from: string

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { api } from '#shared/api/client'
+import { useFilter } from '#shared/hooks/useFilter'
 import { downloadCsv } from '#shared/utils/csv'
 
 import {
@@ -24,7 +25,6 @@ import {
   CATARACT_COLUMNS,
   type CataractColumnMeta,
   type CataractDisplayRow,
-  DEFAULT_PERIOD,
   getRangeDisplayRowsFromCounts,
   type Granularity,
   monthFullLabel,
@@ -33,8 +33,8 @@ import {
 } from '../../utils/reservationStatsCataractData'
 import {
   isSingleMonthRange,
-  periodRange,
-  validateRange,
+  defaultStatsRange,
+  validateStatsRange,
 } from '../../utils/reservationStatsDateRange'
 import {
   buildReservationStatsDiffCsv,
@@ -282,16 +282,21 @@ function buildManualEditsByDate(
   return map
 }
 
-/** 기본 조회 범위 = 당월(월초 ~ 어제/월말). */
-const DEFAULT_RANGE = periodRange(DEFAULT_PERIOD)
-
 export function ReservationStatsCataractPage() {
-  const [draftFrom, setDraftFrom] = useState(DEFAULT_RANGE.from)
-  const [draftTo, setDraftTo] = useState(DEFAULT_RANGE.to)
-  const [appliedFrom, setAppliedFrom] = useState(DEFAULT_RANGE.from)
-  const [appliedTo, setAppliedTo] = useState(DEFAULT_RANGE.to)
+  // 조회 기간은 [조회] 때 반영(92일 제한), 조회 단위는 받아온 일자별 값을 다시 묶기만 해서 바로 반영.
+  const filter = useFilter({
+    defaults: () => ({ range: defaultStatsRange() }),
+    validate: validateStatsRange,
+    onSearch: () => {
+      clearDiagnostics()
+    },
+    onReset: () => {
+      setGranularity('month')
+      clearDiagnostics()
+    },
+  })
+  const { from: appliedFrom, to: appliedTo } = filter.applied.range
   const [granularity, setGranularity] = useState<Granularity>('month')
-  const [hasSearched, setHasSearched] = useState(false)
   const [diagnosticDiff, setDiagnosticDiff] =
     useState<ReservationStatsDiff | null>(null)
   const [diagnosticDrillDown, setDiagnosticDrillDown] =
@@ -300,18 +305,17 @@ export function ReservationStatsCataractPage() {
     useState<ReservationStatsParity | null>(null)
 
   const { dailies, meta, isLoading, isFetching, isError, refetch } =
-    useReservationStatsCataract(appliedFrom, appliedTo, hasSearched)
+    useReservationStatsCataract(appliedFrom, appliedTo)
   const live = Boolean(dailies && !isError)
   // 미연결/실패(503)는 시드로 폴백하지 않는다(잘못된 수치 표시 방지) — tbody에서 미연결 안내.
-  const rows =
-    !hasSearched || !live
-      ? []
-      : getRangeDisplayRowsFromCounts(
-          granularity,
-          dailies!,
-          appliedFrom,
-          appliedTo,
-        )
+  const rows = !live
+    ? []
+    : getRangeDisplayRowsFromCounts(
+        granularity,
+        dailies!,
+        appliedFrom,
+        appliedTo,
+      )
   const hasData = rows.length > 0
   const appliedSingleMonth = isSingleMonthRange(appliedFrom, appliedTo)
   const appliedPeriod = appliedFrom.slice(0, 7)
@@ -357,31 +361,7 @@ export function ReservationStatsCataractPage() {
     }
   }
 
-  // 조회 = 호출 통합: 서버 GET이 당월·미잠금이면 자동 증분 채움까지 처리한다.
-  // 같은 범위를 다시 조회하면 쿼리 키가 안 바뀌므로 refetch로 강제 갱신(서버 자동 채움 재평가).
-  const handleSearch = () => {
-    const validation = validateRange(draftFrom, draftTo)
-    if (!validation.ok) {
-      toast.error('조회 범위 오류', { description: validation.reason })
-      return
-    }
-    const sameRange =
-      hasSearched && appliedFrom === draftFrom && appliedTo === draftTo
-    setAppliedFrom(draftFrom)
-    setAppliedTo(draftTo)
-    setHasSearched(true)
-    setDiagnosticDiff(null)
-    setDiagnosticDrillDown(null)
-    setDiagnosticParity(null)
-    if (sameRange) refetch()
-  }
-  const handleReset = () => {
-    setDraftFrom(DEFAULT_RANGE.from)
-    setDraftTo(DEFAULT_RANGE.to)
-    setAppliedFrom(DEFAULT_RANGE.from)
-    setAppliedTo(DEFAULT_RANGE.to)
-    setGranularity('month')
-    setHasSearched(false)
+  const clearDiagnostics = () => {
     setDiagnosticDiff(null)
     setDiagnosticDrillDown(null)
     setDiagnosticParity(null)
@@ -395,18 +375,17 @@ export function ReservationStatsCataractPage() {
   }
   const handleRunDiagnostics = async () => {
     // 진단은 확정 스냅샷 vs 라이브 재조회 비교라 period(YYYY-MM) 단위. 여러 달 범위에서는 불가.
-    if (!isSingleMonthRange(draftFrom, draftTo)) {
+    if (!appliedSingleMonth) {
       toast.error('진단 불가', {
         description: '진단은 같은 달 범위에서만 가능합니다.',
       })
       return
     }
-    const draftPeriod = draftFrom.slice(0, 7)
     try {
-      const diff = await getDiff(draftPeriod)
+      const diff = await getDiff(appliedPeriod)
       if (!diff.snapshotExists) {
         toast.error('진단 불가', {
-          description: `${draftPeriod} 스냅샷이 없습니다.`,
+          description: `${appliedPeriod} 스냅샷이 없습니다.`,
         })
         return
       }
@@ -498,21 +477,17 @@ export function ReservationStatsCataractPage() {
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden p-1 text-xs text-gray-800">
       <ReservationStatsToolbar
-        draftFrom={draftFrom}
-        draftTo={draftTo}
-        onDraftFromChange={setDraftFrom}
-        onDraftToChange={setDraftTo}
-        maxDate={DEFAULT_RANGE.to}
+        filter={filter}
+        isFetching={isLoading || isFetching}
+        refetch={refetch}
         granularity={granularity}
         onGranularityChange={setGranularity}
-        onSearch={handleSearch}
-        onReset={handleReset}
         onDownloadCsv={handleDownloadCsv}
         canDownload={hasData}
         onRunDiagnostics={handleRunDiagnostics}
         isDiagnosing={isDiffing}
         canRunDiagnostics={!isDiffing}
-        dataMeta={hasSearched ? meta : undefined}
+        dataMeta={meta}
       />
 
       <div
@@ -525,18 +500,7 @@ export function ReservationStatsCataractPage() {
             renderLabel={(label) => <ColLabel label={label} />}
           />
           <tbody>
-            {!hasSearched ? (
-              <tr>
-                <td
-                  colSpan={TOTAL_COL_SPAN}
-                  className={`${labelCell} bg-white py-12 text-sm text-muted-foreground`}
-                >
-                  조회 기간(시작일~종료일)을 선택하고{' '}
-                  <span className="font-semibold text-slate-700">조회</span>{' '}
-                  버튼을 눌러 데이터를 불러오세요.
-                </td>
-              </tr>
-            ) : isLoading || isFetching ? (
+            {isLoading || isFetching ? (
               <SkeletonRows />
             ) : hasData ? (
               rows.map((row) => (

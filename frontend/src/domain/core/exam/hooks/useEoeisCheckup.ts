@@ -14,5 +14,6 @@ export function useEoeisCheckup(from: string, to: string) {
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
+    refetch: query.refetch,
   }
 }

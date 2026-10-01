@@ -60,16 +60,9 @@ export interface CalendarView {
 export const rateOf = (changed: number, total: number): number | null =>
   total ? Math.round((changed / total) * 1000) / 10 : null
 
-const pad2 = (n: number) => String(n).padStart(2, '0')
 const parseYm = (yearMonth: string) => {
   const [y, m] = yearMonth.split('-').map(Number)
   return { y, m }
-}
-
-export const shiftMonth = (yearMonth: string, delta: number): string => {
-  const { y, m } = parseYm(yearMonth)
-  const d = new Date(y, m - 1 + delta, 1)
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`
 }
 
 /** 달력 그리드 범위 — 1일이 든 주의 월요일 ~ 말일이 든 주의 일요일 (최대 6주). */

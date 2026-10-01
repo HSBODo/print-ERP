@@ -8,7 +8,7 @@ import { examApi } from '../api'
  * 실 데이터 전용(mock 없음).
  */
 export function useAllExamList(from: string, to: string, enabled = true) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['all-exam-list', from, to],
     queryFn: ({ signal }) => examApi.getAllExamList(from, to, signal),
     enabled: enabled && Boolean(from && to),
@@ -19,5 +19,6 @@ export function useAllExamList(from: string, to: string, enabled = true) {
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }

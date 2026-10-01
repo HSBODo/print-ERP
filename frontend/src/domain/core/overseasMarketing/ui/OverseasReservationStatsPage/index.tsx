@@ -1,6 +1,9 @@
-import { ChevronDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+import { useFilter } from '#shared/hooks/useFilter'
+import { Filter } from '#shared/ui/Filter'
+import { pad2, yearsDesc } from '#shared/utils/date'
 
 import {
   useOverseasReservationStats,
@@ -122,7 +125,6 @@ const MONTH_SCOPED: ViewMode[] = ['week', 'day', 'all']
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
-const pad2 = (n: number) => String(n).padStart(2, '0')
 const dayLabel = (iso: string) => {
   const date = new Date(`${iso}T00:00:00`)
   return `${date.getMonth() + 1}/${date.getDate()} (${WEEKDAYS[date.getDay()]})`
@@ -222,16 +224,31 @@ const buildRows = (view: ViewMode, year: number, month: number): StatRow[] => {
   return [...weekRows, ...dayRows]
 }
 
-const SELECT_CLASS =
-  'h-8 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+/** 데이터 시작 연도 — 레거시 시트 시드가 2026-03 부터 */
+const DATA_FROM_YEAR = 2026
+const YEAR_OPTIONS = yearsDesc(DATA_FROM_YEAR).map((y) => ({
+  value: y,
+  label: `${y}년`,
+}))
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+  value: i + 1,
+  label: `${i + 1}월`,
+}))
+const thisMonthNumber = () => new Date().getMonth() + 1
 
 export function OverseasReservationStatsPage() {
-  const now = new Date()
-  const [year, setYear] = useState(2026)
+  // 연도는 [조회] 때 반영(일간 값을 그 해 통째로 받는다), 보기·월은 받아온 값을 다시 묶기만 한다.
+  const filter = useFilter({
+    defaults: () => ({ year: new Date().getFullYear() }),
+    onReset: () => {
+      setView('month')
+      setMonth(thisMonthNumber())
+      setEditing(null)
+    },
+  })
+  const { year } = filter.applied
   const [view, setView] = useState<ViewMode>('month')
-  const [month, setMonth] = useState(
-    now.getFullYear() === 2026 ? now.getMonth() + 1 : 8,
-  )
+  const [month, setMonth] = useState(thisMonthNumber)
   const [editing, setEditing] = useState<{
     date: string
     cellKey: string
@@ -344,62 +361,44 @@ export function OverseasReservationStatsPage() {
 
   return (
     <div className="flex h-full flex-col gap-2 p-3">
-      <div className="rounded-lg border border-border/70 bg-white">
-        <div className="flex h-11 min-w-max items-center gap-1.5 px-2">
-          <div className="relative">
-            <select
-              value={year}
-              onChange={(event) => setYear(Number(event.target.value))}
-              className={`${SELECT_CLASS} w-[6.5rem]`}
-              aria-label="연도"
-            >
-              {[2026, 2027].map((y) => (
-                <option key={y} value={y}>
-                  {y}년
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-          </div>
-          <div className="flex h-8 overflow-hidden rounded-md border border-border/80">
-            {VIEW_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  setView(option.value)
-                  setEditing(null)
-                }}
-                className={`border-l border-border/70 px-3 text-xs first:border-l-0 ${view === option.value ? 'bg-blue-600 font-semibold text-white' : 'hover:bg-gray-50'}`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+      <Filter.Root
+        filter={filter}
+        isFetching={stats.isFetching}
+        refetch={stats.refetch}
+      >
+        <Filter.Bar>
+          <Filter.Select
+            {...filter.field('year')}
+            options={YEAR_OPTIONS}
+            ariaLabel="연도"
+            className="w-[6.5rem]"
+          />
+          <Filter.Segment
+            value={view}
+            onChange={(next) => {
+              setView(next)
+              setEditing(null)
+            }}
+            options={VIEW_OPTIONS}
+            ariaLabel="보기"
+          />
           {MONTH_SCOPED.includes(view) && (
-            <div className="relative">
-              <select
-                value={month}
-                onChange={(event) => setMonth(Number(event.target.value))}
-                className={`${SELECT_CLASS} w-[5.5rem]`}
-                aria-label="월"
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                  <option key={m} value={m}>
-                    {m}월
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-            </div>
+            <Filter.Select
+              value={month}
+              onChange={setMonth}
+              options={MONTH_OPTIONS}
+              ariaLabel="월"
+              className="w-[5.5rem]"
+            />
           )}
           <span className="ml-2 text-[11px] text-muted-foreground">
             {stats.data
               ? `${stats.data.cutover}까지 레거시 시트 숫자 · 이후는 접수리스트 자동 집계 · 일 행은 셀 클릭으로 수정`
               : ''}
           </span>
-        </div>
-      </div>
+          <Filter.Actions />
+        </Filter.Bar>
+      </Filter.Root>
 
       <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border/70 bg-white">
         {stats.isLoading && (

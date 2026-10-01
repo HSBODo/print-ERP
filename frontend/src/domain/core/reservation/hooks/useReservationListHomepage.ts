@@ -11,7 +11,7 @@ export function useReservationListHomepage(
   to: string,
   enabled = true,
 ) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-list-homepage', from, to],
     queryFn: ({ signal }) =>
       reservationApi.getReservationListHomepage(from, to, signal),
@@ -27,5 +27,6 @@ export function useReservationListHomepage(
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }

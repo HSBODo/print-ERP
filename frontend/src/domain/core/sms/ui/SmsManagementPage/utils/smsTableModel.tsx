@@ -19,12 +19,6 @@ export const yesterdayIso = () => {
   d.setDate(d.getDate() - 1)
   return toIso(d)
 }
-export const toMonthValue = (iso: string) => iso.slice(0, 7)
-export const toMonthStart = (month: string) => `${month}-01`
-export const toMonthEnd = (month: string) => {
-  const [y, m] = month.split('-').map(Number)
-  return `${month}-${pad(new Date(y, m, 0).getDate())}`
-}
 const addDays = (iso: string, days: number) => {
   const d = new Date(`${iso}T00:00:00`)
   d.setDate(d.getDate() + days)

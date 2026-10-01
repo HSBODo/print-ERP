@@ -2,8 +2,7 @@ import { useState } from 'react'
 
 import { CalendarTab } from './ui/CalendarTab'
 import { DetailTab } from './ui/DetailTab'
-
-const DATA_FROM_YEAR = 2022
+import { DATA_FROM_YEAR } from './utils/reservationChangeModel'
 
 const TABS = [
   { key: 'detail' as const, label: '변경 상세' },
@@ -18,7 +17,7 @@ const SUBTITLE: Record<'detail' | 'calendar', string> = {
 
 /**
  * 예약 변경이력 — 검사예약(시력교정·드림렌즈·백내장)의 예약일이 언제, 어떻게 바뀌었는지.
- * 탭 ① 변경 상세: 등록 연도(또는 전체) 범위 하나를 서버에서 받고 나머지 필터는 [조회] 로 클라이언트 적용.
+ * 탭 ① 변경 상세: 등록 연도(또는 전체) 범위 하나를 [조회] 로 서버에서 받고, 나머지 필터는 받아온 행을 바로 거른다.
  * 탭 ② 추이 달력: 선택 월 + 다음 달 두 장을 세로로 — 일별 등록·변경·변경률(등록일/예약일 기준). 기획서 §6 추이 그래프의 달력판.
  *
  * 탭별 state·훅은 각 하위 컴포넌트에 캡슐화되어 있어 이 컨테이너는 탭 전환만 담당한다.

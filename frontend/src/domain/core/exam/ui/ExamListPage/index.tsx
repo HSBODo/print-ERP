@@ -1,33 +1,25 @@
-import { ChevronDown, Download, RotateCcw, Search } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
-import { MonthPicker } from '#shared/ui/MonthPicker'
+import { Filter } from '#shared/ui/Filter'
 import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+import { thisMonthRange } from '#shared/utils/date'
 
 import { useExamList } from '../../hooks/useExamList'
 import type { ExamListItem } from '../../type/api'
 import {
   compareSortValue,
   dash,
-  defaultFrom,
-  defaultTo,
   EXAM_CATEGORY_OPTIONS,
-  formatCount,
   formatExamType,
   getSortValue,
-  type PeriodMode,
-  QUICK_RANGES,
-  type QuickRangeKey,
   SKELETON_ROWS,
   type SortState,
-  toMonthEnd,
-  toMonthStart,
-  toMonthValue,
-  toMonthWeekRange,
 } from '../../utils/examListUtils'
 import { ALIGN, COLUMNS, HEADER_ALIGN } from './examListColumns'
 
@@ -39,24 +31,29 @@ import { ALIGN, COLUMNS, HEADER_ALIGN } from './examListColumns'
  */
 
 export function ExamListPage() {
-  const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
-  const [activeQuickRange, setActiveQuickRange] =
-    useState<QuickRangeKey | null>(null)
-  const [draftFrom, setDraftFrom] = useState(defaultFrom)
-  const [draftTo, setDraftTo] = useState(defaultTo)
-  const [draftExamCategory, setDraftExamCategory] = useState('전체')
-  const [draftType, setDraftType] = useState('전체')
-  const [draftKeyword, setDraftKeyword] = useState('')
-  const [queryFrom, setQueryFrom] = useState(defaultFrom)
-  const [queryTo, setQueryTo] = useState(defaultTo)
-  const [queryExamCategory, setQueryExamCategory] = useState('전체')
-  const [queryType, setQueryType] = useState('전체')
-  const [queryKeyword, setQueryKeyword] = useState('')
+  // 검사 기간만 조회 조건, 검사 분류·진료구분·검색은 받아온 행을 바로 거른다.
+  const filter = useFilter({
+    defaults: () => ({ range: thisMonthRange() }),
+    onSearch: () => {
+      pagination.resetPage()
+    },
+    onReset: () => {
+      setCategory('전체')
+      setType('전체')
+      setKeyword('')
+      pagination.setPageSize(DEFAULT_PAGE_SIZE)
+      setSortState(null)
+    },
+  })
+  const { range } = filter.applied
+  const [category, setCategory] = useState('전체')
+  const [type, setType] = useState('전체')
+  const [keyword, setKeyword] = useState('')
   const [sortState, setSortState] = useState<SortState>(null)
 
-  const { rows, isLoading, isFetching, isError } = useExamList(
-    queryFrom,
-    queryTo,
+  const { rows, isLoading, isFetching, isError, refetch } = useExamList(
+    range.from,
+    range.to,
   )
   const showSkeleton = isLoading || isFetching
 
@@ -68,12 +65,10 @@ export function ExamListPage() {
   }, [rows])
 
   const filtered = useMemo(() => {
-    const q = queryKeyword.trim().toLowerCase()
+    const q = keyword.trim().toLowerCase()
     return rows.filter((r) => {
-      if (queryExamCategory !== '전체' && r.examCategory !== queryExamCategory)
-        return false
-      if (queryType !== '전체' && formatExamType(r.examType) !== queryType)
-        return false
+      if (category !== '전체' && r.examCategory !== category) return false
+      if (type !== '전체' && formatExamType(r.examType) !== type) return false
       if (!q) return true
       return (
         r.name.toLowerCase().includes(q) ||
@@ -81,7 +76,7 @@ export function ExamListPage() {
         r.phone2.includes(q)
       )
     })
-  }, [rows, queryExamCategory, queryType, queryKeyword])
+  }, [rows, category, type, keyword])
 
   const tableRows = filtered
 
@@ -103,45 +98,11 @@ export function ExamListPage() {
   }, [tableRows, sortState])
 
   const pagination = usePagination(sortedRows)
-  const visibleQuickRanges = draftPeriodMode === 'daily' ? QUICK_RANGES : []
-
-  const handleSearch = () => {
-    pagination.resetPage()
-    setQueryFrom(
-      draftPeriodMode === 'monthly'
-        ? toMonthStart(toMonthValue(draftFrom))
-        : draftFrom,
-    )
-    setQueryTo(
-      draftPeriodMode === 'monthly'
-        ? toMonthEnd(toMonthValue(draftTo))
-        : draftTo,
-    )
-    setQueryExamCategory(draftExamCategory)
-    setQueryType(draftType)
-    setQueryKeyword(draftKeyword)
-  }
-
-  const handleReset = () => {
-    setDraftPeriodMode('daily')
-    setActiveQuickRange(null)
-    setDraftFrom(defaultFrom())
-    setDraftTo(defaultTo())
-    setDraftExamCategory('전체')
-    setDraftType('전체')
-    setDraftKeyword('')
-    setQueryFrom(defaultFrom())
-    setQueryTo(defaultTo())
-    setQueryExamCategory('전체')
-    setQueryType('전체')
-    setQueryKeyword('')
-    pagination.setPageSize(DEFAULT_PAGE_SIZE)
-  }
 
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
   const handleDownloadCsv = () => {
     downloadCsv(
-      `검사자리스트_${queryFrom}_${queryTo}.csv`,
+      `검사자리스트_${range.from}_${range.to}.csv`,
       columnsToCsv(COLUMNS, sortedRows),
     )
   }
@@ -155,195 +116,59 @@ export function ExamListPage() {
     )
   }
 
-  const handlePeriodModeChange = (mode: PeriodMode) => {
-    setDraftPeriodMode(mode)
-    setActiveQuickRange(null)
-
-    if (mode === 'monthly') {
-      // 월별은 단일 월 — to도 from과 같은 달로 맞춤
-      const month = toMonthValue(draftFrom)
-      setDraftFrom(toMonthStart(month))
-      setDraftTo(toMonthEnd(month))
-    }
-  }
-
-  const handleQuickRange = (key: QuickRangeKey) => {
-    setActiveQuickRange(key)
-
-    if (key === 'monthly') {
-      setDraftPeriodMode('daily')
-      setDraftFrom(toMonthStart(toMonthValue(draftFrom)))
-      setDraftTo(toMonthEnd(toMonthValue(draftTo)))
-      return
-    }
-
-    const week = Number(key.replace('w', ''))
-    const { from, to } = toMonthWeekRange(toMonthValue(draftFrom), week)
-    setDraftPeriodMode('daily')
-    setDraftFrom(from)
-    setDraftTo(to)
-  }
-
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
-      <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
-        <div className="flex flex-wrap items-center gap-1 text-xs text-gray-700">
-          <div className="relative">
-            <select
-              aria-label="기간 단위"
-              value={draftPeriodMode}
-              onChange={(e) =>
-                handlePeriodModeChange(e.target.value as PeriodMode)
-              }
-              className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="daily">일별</option>
-              <option value="monthly">월별</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-          </div>
-          {draftPeriodMode === 'monthly' ? (
-            <MonthPicker
-              id="exam-list-from"
-              ariaLabel="검사 기준 월"
-              value={toMonthValue(draftFrom)}
-              onChange={(v) => {
-                setActiveQuickRange(null)
-                setDraftFrom(toMonthStart(v))
-                setDraftTo(toMonthEnd(v))
-              }}
-            />
-          ) : (
-            <>
-              <input
-                id="exam-list-from"
-                aria-label="검사 시작일"
-                type="date"
-                value={draftFrom}
-                onChange={(e) => {
-                  setActiveQuickRange(null)
-                  setDraftFrom(e.target.value)
-                }}
-                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
-              <span className="text-gray-400">~</span>
-              <input
-                id="exam-list-to"
-                aria-label="검사 종료일"
-                type="date"
-                value={draftTo}
-                onChange={(e) => {
-                  setActiveQuickRange(null)
-                  setDraftTo(e.target.value)
-                }}
-                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
-            </>
-          )}
-        </div>
-        {visibleQuickRanges.length > 0 && (
-          <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
-            {visibleQuickRanges.map((range, index) => (
-              <button
-                key={range.key}
-                type="button"
-                className={`min-w-10 border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 ${
-                  activeQuickRange === range.key
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
-                } ${index === visibleQuickRanges.length - 1 ? 'min-w-12' : ''}`}
-                onClick={() => handleQuickRange(range.key)}
-              >
-                {range.label}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="h-6 w-px bg-border" />
-        <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
-          {EXAM_CATEGORY_OPTIONS.map((category) => (
-            <button
-              key={category}
-              type="button"
-              aria-pressed={draftExamCategory === category}
-              className={`min-w-[4.25rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 ${
-                draftExamCategory === category
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
-              }`}
-              onClick={() => setDraftExamCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-        <div className="relative">
-          <select
-            aria-label="진료구분"
-            value={draftType}
-            onChange={(e) => setDraftType(e.target.value)}
-            className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          >
-            {typeOptions.map((t) => (
-              <option key={t} value={t}>
-                {t === '전체' ? '진료구분 전체' : t}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-        </div>
-        <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
-          <input
-            type="text"
-            value={draftKeyword}
-            onChange={(e) => setDraftKeyword(e.target.value)}
-            placeholder="고객명 · 차트번호 · 연락처"
-            className="h-full w-[15.1rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
+      <Filter.Root filter={filter} isFetching={showSkeleton} refetch={refetch}>
+        <Filter.Bar>
+          <Filter.DateRange {...filter.field('range')} ariaLabel="검사 기간" />
+          <div className="h-6 w-px bg-border" />
+          <Filter.Segment
+            value={category}
+            onChange={(value) => {
+              setCategory(value)
+              pagination.resetPage()
+            }}
+            options={EXAM_CATEGORY_OPTIONS}
+            ariaLabel="검사 분류"
           />
-        </div>
-        <div
-          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
-          aria-live="polite"
-        >
-          <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">
-            {formatCount(tableRows.length)}건
-          </strong>
-        </div>
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            onClick={handleReset}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            초기화
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={isLoading}
-            className="bg-blue-600 text-xs text-white hover:bg-blue-700"
-            onClick={handleSearch}
-          >
-            <Search className="h-3.5 w-3.5" />
-            조회 (F1)
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={sortedRows.length === 0}
-            className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
-            onClick={handleDownloadCsv}
-            title="조회 결과 전체를 CSV로 내려받기"
-          >
-            <Download className="h-3.5 w-3.5" />
-            CSV
-          </Button>
-        </div>
-      </div>
+          <Filter.Select
+            value={type}
+            onChange={(value) => {
+              setType(value)
+              pagination.resetPage()
+            }}
+            options={typeOptions.map((t) => ({
+              value: t,
+              label: t === '전체' ? '진료구분 전체' : t,
+            }))}
+            ariaLabel="진료구분"
+            className="w-32"
+          />
+          <Filter.Keyword
+            value={keyword}
+            onChange={(value) => {
+              setKeyword(value)
+              pagination.resetPage()
+            }}
+            placeholder="고객명 · 차트번호 · 연락처"
+            className="w-[15rem]"
+          />
+          <Filter.Count value={tableRows.length} />
+          <Filter.Actions>
+            <Button
+              type="button"
+              size="sm"
+              disabled={sortedRows.length === 0}
+              className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+              onClick={handleDownloadCsv}
+              title="조회 결과 전체를 CSV로 내려받기"
+            >
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+          </Filter.Actions>
+        </Filter.Bar>
+      </Filter.Root>
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">

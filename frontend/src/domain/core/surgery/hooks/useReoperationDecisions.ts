@@ -9,7 +9,7 @@ export function useReoperationDecisions(
   to: string,
   enabled = true,
 ) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reoperation-decisions', from, to],
     queryFn: ({ signal }) =>
       surgeryApi.getReoperationDecisions(from, to, signal),
@@ -21,6 +21,7 @@ export function useReoperationDecisions(
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }
 
