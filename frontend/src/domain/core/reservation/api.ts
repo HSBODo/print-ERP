@@ -51,10 +51,13 @@ export const reservationApi = {
     years: number[],
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get<unknown>('/stats/reservation-overall/monthly', {
-      params: { years },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/reservation-overall/monthly',
+      {
+        params: { years },
+        signal,
+      },
+    )
     return reservationOverallResponseSchema.parse(data).data
   },
   getReservationChanges: async (

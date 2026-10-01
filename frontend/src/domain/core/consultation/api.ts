@@ -27,10 +27,13 @@ export const consultationApi = {
     category: 'vision' | 'cataract',
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get<unknown>('/stats/cataract-reservation-rate/trend', {
-      params: { years, category },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/cataract-reservation-rate/trend',
+      {
+        params: { years, category },
+        signal,
+      },
+    )
     return cataractReservationRateResponseSchema.parse(data).data
   },
 
@@ -54,10 +57,13 @@ export const consultationApi = {
     years: number[],
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get<unknown>('/stats/consultation-rate/composition', {
-      params: { years },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/consultation-rate/composition',
+      {
+        params: { years },
+        signal,
+      },
+    )
     return consultationRateResponseSchema.parse(data).data
   },
 }

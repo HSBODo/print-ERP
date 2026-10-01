@@ -46,10 +46,13 @@ export const surgeryApi = {
   },
 
   getSurgeryComposition: async (years: number[], signal?: AbortSignal) => {
-    const { data } = await api.get<unknown>('/stats/surgery/panel/composition', {
-      params: { years },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/surgery/panel/composition',
+      {
+        params: { years },
+        signal,
+      },
+    )
     return surgeryMonthlyResponseSchema.parse(data).data
   },
 
@@ -78,10 +81,13 @@ export const surgeryApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReoperationCandidate[]> => {
-    const { data } = await api.get<unknown>('/stats/surgery/reoperation-candidates', {
-      params: { from, to },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/surgery/reoperation-candidates',
+      {
+        params: { from, to },
+        signal,
+      },
+    )
     return reoperationCandidatesResponseSchema.parse(data).data
   },
   getReoperationDecisions: async (
@@ -99,7 +105,9 @@ export const surgeryApi = {
   saveReoperationDecisions: async (
     decisions: ReoperationDecisionSaveItem[],
   ): Promise<ReoperationDecisionRow[]> => {
-    const { data } = await api.put<unknown>('/reoperation-decisions', { decisions })
+    const { data } = await api.put<unknown>('/reoperation-decisions', {
+      decisions,
+    })
     return reoperationDecisionSaveResponseSchema.parse(data).data
   },
 }

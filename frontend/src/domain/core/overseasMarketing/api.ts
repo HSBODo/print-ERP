@@ -39,7 +39,10 @@ export const overseasMarketingApi = {
     return statisticsResponseSchema.parse(data).data
   },
   syncSheet: async () => {
-    const { data } = await api.post<unknown>('/overseas-marketing/sync-sheet', {})
+    const { data } = await api.post<unknown>(
+      '/overseas-marketing/sync-sheet',
+      {},
+    )
     return syncResponseSchema.parse(data).data
   },
   syncCrm: async () => {
@@ -47,7 +50,9 @@ export const overseasMarketingApi = {
     return crmSyncStatusResponseSchema.parse(data).data
   },
   getCrmSyncStatus: async () => {
-    const { data } = await api.get<unknown>('/overseas-marketing/sync-crm/status')
+    const { data } = await api.get<unknown>(
+      '/overseas-marketing/sync-crm/status',
+    )
     return crmSyncStatusResponseSchema.parse(data).data
   },
   getReservationStats: async (
@@ -55,10 +60,13 @@ export const overseasMarketingApi = {
     granularity: OverseasMarketingGranularity,
     signal?: AbortSignal,
   ) => {
-    const { data } = await api.get<unknown>('/overseas-marketing/reservation-stats', {
-      params: { year, granularity },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/overseas-marketing/reservation-stats',
+      {
+        params: { year, granularity },
+        signal,
+      },
+    )
     return reservationStatsResponseSchema.parse(data).data
   },
   updateReservationStat: async (
@@ -87,13 +95,19 @@ export const overseasMarketingApi = {
     return matchConfirmResponseSchema.parse(data).data
   },
   getSyncAvailability: async (signal?: AbortSignal) => {
-    const { data } = await api.get<unknown>('/overseas-marketing/sync-availability', {
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/overseas-marketing/sync-availability',
+      {
+        signal,
+      },
+    )
     return syncAvailabilityResponseSchema.parse(data).data.enabled
   },
   createReception: async (input: OverseasMarketingReceptionInput) => {
-    const { data } = await api.post<unknown>('/overseas-marketing/receptions', input)
+    const { data } = await api.post<unknown>(
+      '/overseas-marketing/receptions',
+      input,
+    )
     return mutationResponseSchema.parse(data).data
   },
   updateReception: async (

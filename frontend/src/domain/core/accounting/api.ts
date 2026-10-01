@@ -48,20 +48,26 @@ export const accountingApi = {
     category: MedicalCategory = '전체',
     signal?: AbortSignal,
   ): Promise<MedicalMonthlyMetric[]> => {
-    const { data } = await api.get<unknown>('/accounting/medical-receipts/monthly', {
-      params: { years, category },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/accounting/medical-receipts/monthly',
+      {
+        params: { years, category },
+        signal,
+      },
+    )
     return medicalMonthlyResponseSchema.parse(data).data
   },
   getVisionMonthly: async (
     years: number[],
     signal?: AbortSignal,
   ): Promise<VisionMonthlyMetric[]> => {
-    const { data } = await api.get<unknown>('/accounting/vision-receipts/monthly', {
-      params: { years },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/accounting/vision-receipts/monthly',
+      {
+        params: { years },
+        signal,
+      },
+    )
     return visionMonthlyResponseSchema.parse(data).data
   },
   getStatus: async (signal?: AbortSignal): Promise<AccountingStatus> => {

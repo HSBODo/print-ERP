@@ -36,7 +36,9 @@ export const marketingApi = {
   },
   /** 총 누적 안수 (마트 max). 홈 대시보드 KPI. */
   getAccumulatedEyesTotal: async (signal?: AbortSignal): Promise<number> => {
-    const { data } = await api.get<unknown>('/accumulated-eyes/total', { signal })
+    const { data } = await api.get<unknown>('/accumulated-eyes/total', {
+      signal,
+    })
     return accumulatedEyeTotalSchema.parse(data).data.total
   },
   getChannelLensCost: async (
@@ -44,10 +46,13 @@ export const marketingApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ChannelLensCost[]> => {
-    const { data } = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/lens-cost`, {
-      params: { from, to },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      `${CHANNEL_PROFIT_BASE}/lens-cost`,
+      {
+        params: { from, to },
+        signal,
+      },
+    )
     return lensCostListRes.parse(data).data
   },
 
@@ -60,19 +65,28 @@ export const marketingApi = {
   },
 
   saveAdSpend: async (items: AdSpend[]): Promise<number> => {
-    const { data } = await api.put<unknown>(`${CHANNEL_PROFIT_BASE}/ad-spend`, items)
+    const { data } = await api.put<unknown>(
+      `${CHANNEL_PROFIT_BASE}/ad-spend`,
+      items,
+    )
     return savedRes.parse(data).data.saved
   },
 
   getLensPrices: async (signal?: AbortSignal): Promise<LensCost[]> => {
-    const { data } = await api.get<unknown>(`${CHANNEL_PROFIT_BASE}/lens-price`, {
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      `${CHANNEL_PROFIT_BASE}/lens-price`,
+      {
+        signal,
+      },
+    )
     return lensPriceListRes.parse(data).data
   },
 
   saveLensPrices: async (items: LensCost[]): Promise<number> => {
-    const { data } = await api.put<unknown>(`${CHANNEL_PROFIT_BASE}/lens-price`, items)
+    const { data } = await api.put<unknown>(
+      `${CHANNEL_PROFIT_BASE}/lens-price`,
+      items,
+    )
     return savedRes.parse(data).data.saved
   },
   getReservationChannelFunnel: async (
@@ -92,10 +106,13 @@ export const marketingApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<ReservationChannelOpType[]> => {
-    const { data } = await api.get<unknown>('/stats/reservation-channel/op-types', {
-      params: { from, to },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/reservation-channel/op-types',
+      {
+        params: { from, to },
+        signal,
+      },
+    )
     return opTypeResponseSchema.parse(data).data
   },
 }

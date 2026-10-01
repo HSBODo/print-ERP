@@ -55,7 +55,9 @@ export const smsApi = {
   },
 
   async getTemplates(signal?: AbortSignal): Promise<SmsTemplate[]> {
-    const { data } = await api.get<unknown>('/sms-management/templates', { signal })
+    const { data } = await api.get<unknown>('/sms-management/templates', {
+      signal,
+    })
     return apiResponseOf(z.array(templateSchema)).parse(data).data
   },
 
@@ -64,9 +66,12 @@ export const smsApi = {
    * 상태·본문과 함께 돌려준다. API 키 미설정 시 빈 배열. 관리자 "템플릿" 모달용.
    */
   async getSolapiTemplates(signal?: AbortSignal): Promise<SmsSolapiTemplate[]> {
-    const { data } = await api.get<unknown>('/sms-management/solapi-templates', {
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/sms-management/solapi-templates',
+      {
+        signal,
+      },
+    )
     return apiResponseOf(z.array(solapiTemplateSchema)).parse(data).data
   },
 
@@ -75,7 +80,9 @@ export const smsApi = {
    * API 키 미설정이면 configured=false 로 반환(500 안 던짐).
    */
   async getSolapiBalance(signal?: AbortSignal): Promise<SmsSolapiBalance> {
-    const { data } = await api.get<unknown>('/sms-management/solapi-balance', { signal })
+    const { data } = await api.get<unknown>('/sms-management/solapi-balance', {
+      signal,
+    })
     return apiResponseOf(solapiBalanceSchema).parse(data).data
   },
 
@@ -88,7 +95,10 @@ export const smsApi = {
     id: number,
     request: SmsTargetRequest,
   ): Promise<SmsTarget> {
-    const { data } = await api.put<unknown>(`/sms-management/targets/${id}`, request)
+    const { data } = await api.put<unknown>(
+      `/sms-management/targets/${id}`,
+      request,
+    )
     return apiResponseOf(targetSchema).parse(data).data
   },
 
@@ -165,7 +175,9 @@ export const smsApi = {
 
   /** 수신거부 목록 조회 — 관리 모달에서 씀. */
   async getOptOuts(signal?: AbortSignal): Promise<SmsOptOutRow[]> {
-    const { data } = await api.get<unknown>('/sms-management/opt-outs', { signal })
+    const { data } = await api.get<unknown>('/sms-management/opt-outs', {
+      signal,
+    })
     return apiResponseOf(z.array(optOutRowSchema)).parse(data).data
   },
 
@@ -182,7 +194,9 @@ export const smsApi = {
 
   /** 오프셋 그리드 조회 — 4행(SMILE·LASIK·LASEK·ICL). */
   async getOffsets(signal?: AbortSignal): Promise<SmsOffsetRow[]> {
-    const { data } = await api.get<unknown>('/sms-management/offsets', { signal })
+    const { data } = await api.get<unknown>('/sms-management/offsets', {
+      signal,
+    })
     return apiResponseOf(z.array(offsetRowSchema)).parse(data).data
   },
 

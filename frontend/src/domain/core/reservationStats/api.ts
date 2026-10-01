@@ -92,10 +92,13 @@ export const reservationStatsApi = {
     to: string,
     signal?: AbortSignal,
   ): Promise<CataractStatsDailyCountsResult> => {
-    const { data } = await api.get<unknown>('/stats/reservation-stats-cataract', {
-      params: { from, to },
-      signal,
-    })
+    const { data } = await api.get<unknown>(
+      '/stats/reservation-stats-cataract',
+      {
+        params: { from, to },
+        signal,
+      },
+    )
     const parsed = cataractResponseSchema.parse(data)
     return { data: parsed.data, meta: parsed.meta }
   },
