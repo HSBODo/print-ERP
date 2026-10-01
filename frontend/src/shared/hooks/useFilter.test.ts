@@ -53,6 +53,15 @@ describe('useFilter', () => {
     })
   })
 
+  it('apply 는 입력값을 고치면서 바로 적용한다', () => {
+    const { result } = renderHook(() => useFilter({ defaults }))
+    act(() => {
+      expect(result.current.apply({ month: '2026-10' })).toBe('applied')
+    })
+    expect(result.current.draft.month).toBe('2026-10')
+    expect(result.current.applied.month).toBe('2026-10')
+  })
+
   it('초기화는 입력값·적용값을 기본값으로 되돌리고 onReset 을 부른다', () => {
     const onReset = vi.fn()
     const { result } = renderHook(() => useFilter({ defaults, onReset }))
