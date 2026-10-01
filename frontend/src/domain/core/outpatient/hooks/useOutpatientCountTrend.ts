@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+
 import { outpatientApi } from '../api'
 import type { OutpatientCountMonthlyItem } from '../type/api'
 
@@ -11,10 +12,13 @@ const EMPTY: MonthlyData = {
   outpatientCount: null,
 }
 
-function toDataMap(items: OutpatientCountMonthlyItem[]): Record<number, MonthlyData[]> {
+function toDataMap(
+  items: OutpatientCountMonthlyItem[],
+): Record<number, MonthlyData[]> {
   const map: Record<number, MonthlyData[]> = {}
   for (const item of items) {
-    if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
+    if (!map[item.year])
+      map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
     map[item.year][item.month - 1] = {
       outpatientCount: item.outpatientCount,
     }
@@ -23,9 +27,14 @@ function toDataMap(items: OutpatientCountMonthlyItem[]): Record<number, MonthlyD
 }
 
 export function useOutpatientCountTrend(years: number[]) {
-  const { data: apiData, isLoading, isError } = useQuery({
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['outpatient-count-trend', years],
-    queryFn: ({ signal }) => outpatientApi.getOutpatientCountMonthly(years, signal),
+    queryFn: ({ signal }) =>
+      outpatientApi.getOutpatientCountMonthly(years, signal),
     enabled: years.length > 0,
   })
 

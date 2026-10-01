@@ -63,7 +63,7 @@ project-root/
 │   │   ├── main.tsx                     # 진입점 (React 렌더)
 │   │   ├── App.tsx                      # QueryClientProvider + createRouter(routeTree) + RouterProvider
 │   │   ├── routeTree.gen.ts             # @tanstack/router-plugin 이 src/routes 로부터 생성 (커밋 대상 · 직접 수정 금지)
-│   │   │                                # 레이어 구조 — 정본은 .claude/docs/ARCHITECTURE.md · CONVENTION.md (경계는 eslint no-restricted-imports 가 강제)
+│   │   │                                # 레이어 구조 — 정본은 .claude/docs/ARCHITECTURE.md · CONVENTION.md (경계는 eslint-plugin-boundaries 가 강제)
 │   │   ├── routes/                      # [page 레이어] TanStack 파일 기반 라우트 — 페이지 입구 + staticData.page(메타·권한)
 │   │   │   └── _auth/                   # 인증 레이아웃 — route.tsx(beforeLoad: 인증 + 접근 판정) · stats/(<group>)/ · report/ · accounting/ · admin/
 │   │   │       └── -internal/           # 앱 셸: layout/(AppLayout·Sidebar·Topbar) · navigation.ts(MENU_TREE·HIDDEN_PAGE_PATHS·buildMenu)
@@ -270,6 +270,7 @@ cd frontend && npm run dev               # Frontend (Vite dev server)
 cd frontend && npm run build             # 프로덕션 빌드
 cd frontend && npm run lint              # ESLint
 cd frontend && npm run test              # Vitest
+cd frontend && npm run storybook         # Storybook (http://localhost:6006 · 스토리는 컴포넌트 옆 index.stories.tsx)
 ```
 
 ## 공통 규칙

@@ -1,4 +1,5 @@
 import { redirect } from '@tanstack/react-router'
+
 import { readStoredAuthSession } from '#domain/support/session/session'
 
 /**

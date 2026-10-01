@@ -45,11 +45,18 @@ const formatValue = (
 ): string => {
   if (value === null || value === undefined) return ''
   if (unit !== '%') return String(value)
-  return typeof fractionDigits === 'number' ? value.toFixed(fractionDigits) : String(Math.round(value))
+  return typeof fractionDigits === 'number'
+    ? value.toFixed(fractionDigits)
+    : String(Math.round(value))
 }
 
 /** 주차 레포트를 세로형 CSV 문자열로 만든다(BOM 미포함, CRLF 구분). */
-export function buildWeeklyReportCsv({ years, weeks, charts, rows }: WeeklyReportCsvInput): string {
+export function buildWeeklyReportCsv({
+  years,
+  weeks,
+  charts,
+  rows,
+}: WeeklyReportCsvInput): string {
   const sortedYears = [...years].sort((a, b) => a - b)
   const weekHeaders = weeks.map((w) => `${pad2(w.week)}주차`)
 
@@ -69,7 +76,9 @@ export function buildWeeklyReportCsv({ years, weeks, charts, rows }: WeeklyRepor
           spec.label,
           unit,
           year,
-          ...weeks.map((_, i) => formatValue(values[i], unit, spec.fractionDigits)),
+          ...weeks.map((_, i) =>
+            formatValue(values[i], unit, spec.fractionDigits),
+          ),
         ]
           .map(escapeCell)
           .join(','),

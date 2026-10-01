@@ -1,16 +1,18 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
 import { formatAxisNumber } from '#shared/utils/stats'
+
 import { niceAxisFor, tightAxis } from '../../utils/niceAxis'
-import { colorOf } from '../../utils/reportYearColors'
 import type { ReportWeek } from '../../utils/reportWeeks'
+import { colorOf } from '../../utils/reportYearColors'
 
 /**
  * 주차축 레포트 라인차트 — `ReportLineChart`(월축)의 주차 버전.
@@ -59,13 +61,16 @@ export function ReportWeekLineChart({
 
   const fmt = (v: number) => {
     if (format !== 'percent') return formatAxisNumber(v)
-    if (typeof percentFractionDigits === 'number') return `${v.toFixed(percentFractionDigits)}%`
+    if (typeof percentFractionDigits === 'number')
+      return `${v.toFixed(percentFractionDigits)}%`
     return `${Math.round(v)}%`
   }
 
   // 우측 합계 칼럼 — 숫자=합계 / 퍼센트=평균
   const summarize = (year: number, from: number, to: number): number | null => {
-    const vals = (data[year] ?? []).slice(from, to).filter((v): v is number => typeof v === 'number')
+    const vals = (data[year] ?? [])
+      .slice(from, to)
+      .filter((v): v is number => typeof v === 'number')
     if (!vals.length) return null
     const sum = vals.reduce((a, b) => a + b, 0)
     return format === 'percent' ? sum / vals.length : sum
@@ -82,7 +87,9 @@ export function ReportWeekLineChart({
   const chartData = useMemo(
     () =>
       weeks.map((w, i) => {
-        const row: Record<string, string | number | null> = { w: `${w.label} (${w.rangeLabel})` }
+        const row: Record<string, string | number | null> = {
+          w: `${w.label} (${w.rangeLabel})`,
+        }
         sorted.forEach((y) => {
           row[`y${y}`] = data[y]?.[i] ?? null
         })
@@ -105,10 +112,9 @@ export function ReportWeekLineChart({
   // niceAxis 는 여백 15% + 하한 0 스냅이라 주 단위 값에서는 데이터가 축 절반에만 몰린다.
   const { domain: axisDomain, ticks: yTicks } = useMemo(() => {
     if (yDomain) return niceAxisFor(yDomain[0], yDomain[1])
-    const values: number[] = []
-    sorted.forEach((y) => (data[y] ?? []).forEach((v) => {
-      if (typeof v === 'number') values.push(v)
-    }))
+    const values = sorted
+      .flatMap((y) => data[y] ?? [])
+      .filter((v) => typeof v === 'number')
     return tightAxis(values)
   }, [sorted, data, yDomain])
 
@@ -132,7 +138,14 @@ export function ReportWeekLineChart({
     }
     return (
       <g>
-        <text x={x} y={y + 13} textAnchor="middle" fontSize={13} fontWeight={700} fill={color}>
+        <text
+          x={x}
+          y={y + 13}
+          textAnchor="middle"
+          fontSize={13}
+          fontWeight={700}
+          fill={color}
+        >
           {wk.label}
         </text>
         <text x={x} y={y + 28} textAnchor="middle" fontSize={11} fill="#9CA3AF">
@@ -164,7 +177,9 @@ export function ReportWeekLineChart({
     const neighbors = [values[index - 1], values[index + 1]].filter(
       (v): v is number => typeof v === 'number',
     )
-    const avg = neighbors.length ? neighbors.reduce((a, b) => a + b, 0) / neighbors.length : value
+    const avg = neighbors.length
+      ? neighbors.reduce((a, b) => a + b, 0) / neighbors.length
+      : value
     const above = value >= avg
     return (
       <text
@@ -191,8 +206,16 @@ export function ReportWeekLineChart({
       <CardHeader className="items-center gap-1 pb-2">
         <CardTitle className="text-center text-lg">
           {title}
-          <span className="text-sm font-medium text-muted-foreground"> (주차)</span>
-          {suffix && <span className="text-sm font-medium text-muted-foreground"> {suffix}</span>}
+          <span className="text-sm font-medium text-muted-foreground">
+            {' '}
+            (주차)
+          </span>
+          {suffix && (
+            <span className="text-sm font-medium text-muted-foreground">
+              {' '}
+              {suffix}
+            </span>
+          )}
         </CardTitle>
         <div className="flex flex-wrap items-center justify-center gap-5 pt-1">
           {sorted.map((y) => (
@@ -201,14 +224,20 @@ export function ReportWeekLineChart({
               className="flex items-center gap-1.5 text-sm font-bold"
               style={{ color: y === latest ? colorOf(y, latest) : '#374151' }}
             >
-              <span className="h-[3px] w-7 rounded-full" style={{ backgroundColor: colorOf(y, latest) }} />
+              <span
+                className="h-[3px] w-7 rounded-full"
+                style={{ backgroundColor: colorOf(y, latest) }}
+              />
               {y}
             </span>
           ))}
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <ChartContainer config={chartConfig} className="report-chart-area aspect-auto h-[480px] w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="report-chart-area aspect-auto h-[480px] w-full"
+        >
           <LineChart data={chartData} margin={{ top: 24, left: 0, right: 80 }}>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -267,12 +296,14 @@ export function ReportWeekLineChart({
              * 화면 가독성을 살리고, 인쇄는 index.css 의 @media print .report-week-table 압축(min-width 0 + 6.5px)이 담당.
              */}
             <table
-              className={denseTable
-                ? 'report-week-table w-full min-w-[1900px] table-fixed border-collapse text-center text-[13px]'
-                : 'report-week-table w-full min-w-[840px] table-fixed border-collapse text-center text-[11px]'}
+              className={
+                denseTable
+                  ? 'report-week-table w-full min-w-[1900px] table-fixed border-collapse text-center text-[13px]'
+                  : 'report-week-table w-full min-w-[840px] table-fixed border-collapse text-center text-[11px]'
+              }
             >
               <colgroup>
-                <col className={denseTable ? 'w-16' : 'w-16'} />
+                <col className="w-16" />
                 {chunk.map((c) => (
                   <col key={c.i} />
                 ))}
@@ -285,7 +316,9 @@ export function ReportWeekLineChart({
                     <th
                       key={c.i}
                       className="py-1.5 font-semibold"
-                      style={{ color: c.w.crossMonth ? CROSS_MONTH_COLOR : undefined }}
+                      style={{
+                        color: c.w.crossMonth ? CROSS_MONTH_COLOR : undefined,
+                      }}
                       title={`${c.w.startDate} ~ ${c.w.endDate}`}
                     >
                       {c.w.week}
@@ -299,12 +332,18 @@ export function ReportWeekLineChart({
               </thead>
               <tbody>
                 {sorted.map((y) => {
-                  const summary = summarize(y, chunk[0].i, chunk[chunk.length - 1].i + 1)
+                  const summary = summarize(
+                    y,
+                    chunk[0].i,
+                    chunk[chunk.length - 1].i + 1,
+                  )
                   return (
                     <tr key={y} className="border-b border-border">
                       <td
                         className="py-1.5 font-semibold"
-                        style={{ color: y === latest ? colorOf(y, latest) : undefined }}
+                        style={{
+                          color: y === latest ? colorOf(y, latest) : undefined,
+                        }}
                       >
                         {y}
                       </td>

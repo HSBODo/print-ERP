@@ -70,10 +70,13 @@ export function itemToData(item: ConsultationRateItem): MonthlyData {
   }
 }
 
-export function toDataMap(items: ConsultationRateItem[]): Record<number, MonthlyData[]> {
+export function toDataMap(
+  items: ConsultationRateItem[],
+): Record<number, MonthlyData[]> {
   const map: Record<number, MonthlyData[]> = {}
   for (const item of items) {
-    if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
+    if (!map[item.year])
+      map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY }))
     map[item.year][item.month - 1] = itemToData(item)
   }
   return map

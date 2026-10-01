@@ -1,8 +1,5 @@
-import {
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from 'react'
+import { type Dispatch, type SetStateAction, useState } from 'react'
+
 import {
   type CompareMode,
   getDefaultPeriods,
@@ -26,7 +23,9 @@ export function useFilterBar(
 ): FilterBarControls {
   const [mode, setMode] = useState<CompareMode>(initialMode)
   const [periods, setPeriods] = useState<Period[]>(() => getDefaultPeriods())
-  const [years, setYears] = useState<number[]>(() => initialYears ?? getDefaultYears())
+  const [years, setYears] = useState<number[]>(
+    () => initialYears ?? getDefaultYears(),
+  )
 
   const removePeriod = (index: number) => {
     if (mode === 'month' && periods.length > 1) {

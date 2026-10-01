@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+
+import { MONTHS } from '#shared/constants/chart'
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '#shared/ui/Chart'
-import { MONTHS } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
+
 import { niceAxis, niceAxisFor } from '../../utils/niceAxis'
 import { colorOf } from '../../utils/reportYearColors'
 
@@ -39,13 +41,16 @@ export function ReportLineChart({
 
   const fmt = (v: number) => {
     if (format !== 'percent') return formatAxisNumber(v)
-    if (typeof percentFractionDigits === 'number') return `${v.toFixed(percentFractionDigits)}%`
+    if (typeof percentFractionDigits === 'number')
+      return `${v.toFixed(percentFractionDigits)}%`
     return `${Math.round(v)}%`
   }
 
   // 우측 합계 칼럼 = 차트 우측여백(80)과 같은 폭의 정렬용 칼럼. 숫자=합계 / 퍼센트=평균
   const summarize = (year: number): number | null => {
-    const vals = (data[year] ?? []).filter((v): v is number => typeof v === 'number')
+    const vals = (data[year] ?? []).filter(
+      (v): v is number => typeof v === 'number',
+    )
     if (!vals.length) return null
     const sum = vals.reduce((a, b) => a + b, 0)
     return format === 'percent' ? sum / vals.length : sum
@@ -95,7 +100,9 @@ export function ReportLineChart({
     const neighbors = [values[index - 1], values[index + 1]].filter(
       (v): v is number => typeof v === 'number',
     )
-    const avg = neighbors.length ? neighbors.reduce((a, b) => a + b, 0) / neighbors.length : value
+    const avg = neighbors.length
+      ? neighbors.reduce((a, b) => a + b, 0) / neighbors.length
+      : value
     const above = value >= avg
     return (
       <text
@@ -118,10 +125,9 @@ export function ReportLineChart({
   // Y축: yDomain 지정 시 그 범위로 고정, 아니면 데이터 스케일 자동 (음수 방지, PDF처럼 0·20·40…)
   const { domain: axisDomain, ticks: yTicks } = useMemo(() => {
     if (yDomain) return niceAxisFor(yDomain[0], yDomain[1])
-    const values: number[] = []
-    sorted.forEach((y) => (data[y] ?? []).forEach((v) => {
-      if (typeof v === 'number') values.push(v)
-    }))
+    const values = sorted
+      .flatMap((y) => data[y] ?? [])
+      .filter((v) => typeof v === 'number')
     return niceAxis(values)
   }, [sorted, data, yDomain])
 
@@ -130,7 +136,12 @@ export function ReportLineChart({
       <CardHeader className="items-center gap-1 pb-2">
         <CardTitle className="text-center text-lg">
           {title}
-          {suffix && <span className="text-sm font-medium text-muted-foreground"> {suffix}</span>}
+          {suffix && (
+            <span className="text-sm font-medium text-muted-foreground">
+              {' '}
+              {suffix}
+            </span>
+          )}
         </CardTitle>
         <div className="flex flex-wrap items-center justify-center gap-5 pt-1">
           {sorted.map((y) => (
@@ -139,18 +150,30 @@ export function ReportLineChart({
               className="flex items-center gap-1.5 text-sm font-bold"
               style={{ color: y === latest ? colorOf(y, latest) : '#374151' }}
             >
-              <span className="h-[3px] w-7 rounded-full" style={{ backgroundColor: colorOf(y, latest) }} />
+              <span
+                className="h-[3px] w-7 rounded-full"
+                style={{ backgroundColor: colorOf(y, latest) }}
+              />
               {y}
             </span>
           ))}
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <ChartContainer config={chartConfig} className="report-chart-area aspect-auto h-[480px] w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="report-chart-area aspect-auto h-[480px] w-full"
+        >
           {/* YAxis 폭(80)·우측여백(80)을 테이블 colgroup(첫/끝 w-20=80px)과 맞춰 월이 표 칼럼 중앙에 정렬됨 */}
           <LineChart data={chartData} margin={{ top: 24, left: 0, right: 80 }}>
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="month" scale="band" tickLine={false} axisLine={false} tickMargin={8} />
+            <XAxis
+              dataKey="month"
+              scale="band"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
             <YAxis
               width={80}
               tickLine={false}
@@ -213,7 +236,12 @@ export function ReportLineChart({
                 const summary = summarize(y)
                 return (
                   <tr key={y} className="border-b border-border">
-                    <td className="py-1.5 font-semibold" style={{ color: y === latest ? colorOf(y, latest) : undefined }}>
+                    <td
+                      className="py-1.5 font-semibold"
+                      style={{
+                        color: y === latest ? colorOf(y, latest) : undefined,
+                      }}
+                    >
                       {y}
                     </td>
                     {MONTHS.map((_, i) => {

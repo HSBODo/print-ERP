@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── 공통: 응답 meta · 진단(diff·drill-down·parity) ── */
@@ -13,7 +14,9 @@ export const reservationStatsResponseMetaSchema = z.object({
   confirmedBy: z.string().optional(),
 })
 
-export type ReservationStatsResponseMeta = z.infer<typeof reservationStatsResponseMetaSchema>
+export type ReservationStatsResponseMeta = z.infer<
+  typeof reservationStatsResponseMetaSchema
+>
 
 export const reservationStatsDiffItemSchema = z.object({
   date: z.string(),
@@ -80,12 +83,22 @@ export const reservationStatsParitySchema = z.object({
   items: z.array(reservationStatsParityItemSchema),
 })
 
-export type ReservationStatsDiffItem = z.infer<typeof reservationStatsDiffItemSchema>
+export type ReservationStatsDiffItem = z.infer<
+  typeof reservationStatsDiffItemSchema
+>
 export type ReservationStatsDiff = z.infer<typeof reservationStatsDiffSchema>
-export type ReservationStatsDrillDownRow = z.infer<typeof reservationStatsDrillDownRowSchema>
-export type ReservationStatsDrillDown = z.infer<typeof reservationStatsDrillDownSchema>
-export type ReservationStatsParityItem = z.infer<typeof reservationStatsParityItemSchema>
-export type ReservationStatsParity = z.infer<typeof reservationStatsParitySchema>
+export type ReservationStatsDrillDownRow = z.infer<
+  typeof reservationStatsDrillDownRowSchema
+>
+export type ReservationStatsDrillDown = z.infer<
+  typeof reservationStatsDrillDownSchema
+>
+export type ReservationStatsParityItem = z.infer<
+  typeof reservationStatsParityItemSchema
+>
+export type ReservationStatsParity = z.infer<
+  typeof reservationStatsParitySchema
+>
 
 /**
  * 예약통계시스템 — BCRM RSS 컨택통계 일자별 원시 카운트(CH01~CH24).
@@ -129,7 +142,8 @@ export const RESERVATION_STATS_EDITABLE_FIELDS = [
   'noShowReservation',
   'cancel',
 ] as const
-export type ReservationStatsEditableField = (typeof RESERVATION_STATS_EDITABLE_FIELDS)[number]
+export type ReservationStatsEditableField =
+  (typeof RESERVATION_STATS_EDITABLE_FIELDS)[number]
 
 const systemDailyCountsSchema = z.object({
   date: z.string(),
@@ -160,18 +174,31 @@ const systemDailyCountsSchema = z.object({
   manualEdits: z.array(systemCellEditSchema).optional(),
 })
 
-export type ReservationStatsDailyCounts = z.infer<typeof systemDailyCountsSchema>
-export type ReservationStatsDailyCountsResult = {
+export type ReservationStatsDailyCounts = z.infer<
+  typeof systemDailyCountsSchema
+>
+export interface ReservationStatsDailyCountsResult {
   data: ReservationStatsDailyCounts[]
   meta?: ReservationStatsResponseMeta
 }
 
-export const systemResponseSchema = apiResponseOf(z.array(systemDailyCountsSchema), reservationStatsResponseMetaSchema)
-export const systemCellEditResponseSchema = apiResponseOf(systemDailyCountsSchema)
+export const systemResponseSchema = apiResponseOf(
+  z.array(systemDailyCountsSchema),
+  reservationStatsResponseMetaSchema,
+)
+export const systemCellEditResponseSchema = apiResponseOf(
+  systemDailyCountsSchema,
+)
 
-export const systemDiffResponseSchema = apiResponseOf(reservationStatsDiffSchema)
-export const systemDrillDownResponseSchema = apiResponseOf(reservationStatsDrillDownSchema)
-export const systemParityResponseSchema = apiResponseOf(reservationStatsParitySchema)
+export const systemDiffResponseSchema = apiResponseOf(
+  reservationStatsDiffSchema,
+)
+export const systemDrillDownResponseSchema = apiResponseOf(
+  reservationStatsDrillDownSchema,
+)
+export const systemParityResponseSchema = apiResponseOf(
+  reservationStatsParitySchema,
+)
 
 /**
  * 예약통계_백내장 — 일자별 원시 카운트.
@@ -241,15 +268,25 @@ const cataractDailyCountsSchema = z.object({
 })
 
 export type CataractStatsDailyCounts = z.infer<typeof cataractDailyCountsSchema>
-export type CataractStatsDailyCountsResult = {
+export interface CataractStatsDailyCountsResult {
   data: CataractStatsDailyCounts[]
   meta?: ReservationStatsResponseMeta
 }
 
-export const cataractResponseSchema = apiResponseOf(z.array(cataractDailyCountsSchema), reservationStatsResponseMetaSchema)
-export const cataractCellEditResponseSchema = apiResponseOf(cataractDailyCountsSchema)
+export const cataractResponseSchema = apiResponseOf(
+  z.array(cataractDailyCountsSchema),
+  reservationStatsResponseMetaSchema,
+)
+export const cataractCellEditResponseSchema = apiResponseOf(
+  cataractDailyCountsSchema,
+)
 
-export const cataractDiffResponseSchema = apiResponseOf(reservationStatsDiffSchema)
-export const cataractDrillDownResponseSchema = apiResponseOf(reservationStatsDrillDownSchema)
-export const cataractParityResponseSchema = apiResponseOf(reservationStatsParitySchema)
-
+export const cataractDiffResponseSchema = apiResponseOf(
+  reservationStatsDiffSchema,
+)
+export const cataractDrillDownResponseSchema = apiResponseOf(
+  reservationStatsDrillDownSchema,
+)
+export const cataractParityResponseSchema = apiResponseOf(
+  reservationStatsParitySchema,
+)

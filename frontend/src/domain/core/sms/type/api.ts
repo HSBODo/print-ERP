@@ -62,18 +62,31 @@ export const targetSchema = z.object({
    * 큐 scheduledAt 이 clamp 됐을 때 화면=실제 일치.
    * 큐가 없거나 발송 완료 후 이력만 남은 tier 는 이 맵에 없다(선택적).
    */
-  tierQueues: z.record(z.string(), z.object({
-    id: z.number(),
-    targetId: z.number(),
-    templateCode: z.string(),
-    scheduledAt: z.string(),
-    kind: z.enum(['NOTIFICATION', 'AD']),
-    status: z.enum(['PENDING', 'PROCESSING', 'RECEIVED', 'DONE', 'FAILED', 'CANCELED']),
-    attemptCount: z.number(),
-    lastError: z.string().nullish(),
-    pickedAt: z.string().nullish(),
-    processedAt: z.string().nullish(),
-  })).nullish().default({}),
+  tierQueues: z
+    .record(
+      z.string(),
+      z.object({
+        id: z.number(),
+        targetId: z.number(),
+        templateCode: z.string(),
+        scheduledAt: z.string(),
+        kind: z.enum(['NOTIFICATION', 'AD']),
+        status: z.enum([
+          'PENDING',
+          'PROCESSING',
+          'RECEIVED',
+          'DONE',
+          'FAILED',
+          'CANCELED',
+        ]),
+        attemptCount: z.number(),
+        lastError: z.string().nullish(),
+        pickedAt: z.string().nullish(),
+        processedAt: z.string().nullish(),
+      }),
+    )
+    .nullish()
+    .default({}),
 })
 
 /**
@@ -109,15 +122,21 @@ export const sendResultSchema = z.object({
   success: z.number(),
   failed: z.number(),
   skipped: z.number(),
-  items: z.array(z.object({
-    targetId: z.number(),
-    name: z.string(),
-    result: z.string(),
-    detail: z.string(),
-  })),
+  items: z.array(
+    z.object({
+      targetId: z.number(),
+      name: z.string(),
+      result: z.string(),
+      detail: z.string(),
+    }),
+  ),
 })
 
-export const importResultSchema = z.object({ created: z.number(), updated: z.number(), skipped: z.number() })
+export const importResultSchema = z.object({
+  created: z.number(),
+  updated: z.number(),
+  skipped: z.number(),
+})
 
 /**
  * 오프셋 그리드 한 줄 — 그룹 하나의 1·2·3차 오프셋(일).
@@ -180,7 +199,14 @@ export const lookupSchema = z.object({
  *   FAILED      재시도 소진 · 또는 도달 실패 (관리자 재실행 API 로만 되살아남)
  *   CANCELED    홀딩·수신거부·번호무효 등 재개 불가 사유
  */
-const queueStatusSchema = z.enum(['PENDING', 'PROCESSING', 'RECEIVED', 'DONE', 'FAILED', 'CANCELED'])
+const queueStatusSchema = z.enum([
+  'PENDING',
+  'PROCESSING',
+  'RECEIVED',
+  'DONE',
+  'FAILED',
+  'CANCELED',
+])
 
 export const queueRowSchema = z.object({
   id: z.number(),
@@ -263,12 +289,12 @@ export type SmsSolapiTemplate = z.infer<typeof solapiTemplateSchema>
 export type SmsSolapiBalance = z.infer<typeof solapiBalanceSchema>
 
 export interface SmsOffsetUpdatePayload {
-  rows: Array<{
+  rows: {
     groupCode: string
     tier1Offset: number
     tier2Offset: number
     tier3Offset: number
-  }>
+  }[]
   /** tier-level 발송 시각 (HH:mm) — 4행 모두 같은 값으로 원자적 갱신. */
   tier1Time: string
   tier2Time: string

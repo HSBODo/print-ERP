@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildMonthlyReportCsv } from './monthlyReportCsv'
 import type { StopReasonMonthlyItem } from '#domain/core/consultation/type/api'
+
+import { buildMonthlyReportCsv } from './monthlyReportCsv'
 
 const emptyStop: StopReasonMonthlyItem = {
   year: 2026,
@@ -16,7 +17,7 @@ const emptyStop: StopReasonMonthlyItem = {
   total: 0,
 }
 
-const blank12 = (): Array<number | null> => Array.from({ length: 12 }, () => null)
+const blank12 = (): (number | null)[] => Array.from({ length: 12 }, () => null)
 
 const run = () =>
   buildMonthlyReportCsv({
@@ -25,18 +26,34 @@ const run = () =>
     charts: {
       reservations: {
         2025: Array.from({ length: 12 }, (_, i) => 100 + i),
-        2026: [200, 201, null, null, null, null, null, null, null, null, null, null],
+        2026: [
+          200,
+          201,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+        ],
       },
       ratioGeneral: { 2026: [51.8128, ...Array<number | null>(11).fill(null)] },
       stopRate: { 2026: [6.37, ...Array<number | null>(11).fill(null)] },
       // examCount 등 나머지 키는 미제공 → 행이 생기지 않아야 함
-    } as Record<string, unknown>,
+    },
     success: {
       all: [79.1, ...Array<number | null>(11).fill(null)],
       oneday: blank12(),
       general: blank12(),
     },
-    stopReasonByMonth: [{ ...emptyStop, recommendX: 23, total: 100 }, ...Array<StopReasonMonthlyItem | null>(11).fill(null)],
+    stopReasonByMonth: [
+      { ...emptyStop, recommendX: 23, total: 100 },
+      ...Array<StopReasonMonthlyItem | null>(11).fill(null),
+    ],
     stopReasonMonth: 1,
   })
 
@@ -45,7 +62,9 @@ const row = (prefix: string) => lines().find((line) => line.startsWith(prefix))
 
 describe('buildMonthlyReportCsv', () => {
   it('헤더는 그룹·지표·단위·연도 + 1~12월', () => {
-    expect(lines()[0]).toBe('그룹,지표,단위,연도,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월')
+    expect(lines()[0]).toBe(
+      '그룹,지표,단위,연도,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월',
+    )
   })
 
   it('series는 연도 오름차순으로 행을 만들고 모든 달을 채운다', () => {
@@ -53,14 +72,27 @@ describe('buildMonthlyReportCsv', () => {
       '예약,예약 종합(콜+온라인),건,2025,100,101,102,103,104,105,106,107,108,109,110,111',
     )
     const all = lines()
-    expect(all.indexOf(row('예약,예약 종합(콜+온라인),건,2025,')!)).toBeLessThan(
-      all.indexOf(row('예약,예약 종합(콜+온라인),건,2026,')!),
-    )
+    expect(
+      all.indexOf(row('예약,예약 종합(콜+온라인),건,2025,')!),
+    ).toBeLessThan(all.indexOf(row('예약,예약 종합(콜+온라인),건,2026,')!))
   })
 
   it('null 달은 빈칸으로 직렬화', () => {
     const cells = row('예약,예약 종합(콜+온라인),건,2026,')!.split(',').slice(4)
-    expect(cells).toEqual(['200', '201', '', '', '', '', '', '', '', '', '', ''])
+    expect(cells).toEqual([
+      '200',
+      '201',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+    ])
   })
 
   it('비율(%)은 화면 차트와 동일하게 정수 반올림', () => {
@@ -88,7 +120,9 @@ describe('buildMonthlyReportCsv', () => {
     const csv = buildMonthlyReportCsv({
       years: [2025],
       currentYear: 2026,
-      charts: { reservations: { 2025: Array.from({ length: 12 }, (_, i) => i) } } as Record<string, unknown>,
+      charts: {
+        reservations: { 2025: Array.from({ length: 12 }, (_, i) => i) },
+      },
       success: { all: blank12(), oneday: blank12(), general: blank12() },
       stopReasonByMonth: Array<StopReasonMonthlyItem | null>(12).fill(null),
       stopReasonMonth: 1,
@@ -107,7 +141,7 @@ describe('buildMonthlyReportCsv', () => {
         stopRate: { 2026: blank12() },
         cataractSurgery: { 2026: blank12() },
         outpatient: { 2026: blank12() },
-      } as Record<string, unknown>,
+      },
       success: { all: blank12(), oneday: blank12(), general: blank12() },
       stopReasonByMonth: Array<StopReasonMonthlyItem | null>(12).fill(null),
       stopReasonMonth: 1,

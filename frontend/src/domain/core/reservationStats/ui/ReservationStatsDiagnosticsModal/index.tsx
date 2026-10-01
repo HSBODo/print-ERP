@@ -1,6 +1,13 @@
 import { Download, GitCompare, X } from 'lucide-react'
+
 import { Button } from '#shared/ui/Button'
-import type { ReservationStatsDiff, ReservationStatsDiffItem, ReservationStatsDrillDown, ReservationStatsParity } from '../../type/api'
+
+import type {
+  ReservationStatsDiff,
+  ReservationStatsDiffItem,
+  ReservationStatsDrillDown,
+  ReservationStatsParity,
+} from '../../type/api'
 
 interface Props {
   title: string
@@ -17,8 +24,10 @@ interface Props {
   onDownloadParityCsv: () => void
 }
 
-const formatNullable = (value: number | null) => (value === null ? '-' : value.toLocaleString('ko-KR'))
-const mismatchItems = (parity: ReservationStatsParity) => parity.items.filter((item) => item.delta !== 0)
+const formatNullable = (value: number | null) =>
+  value === null ? '-' : value.toLocaleString('ko-KR')
+const mismatchItems = (parity: ReservationStatsParity) =>
+  parity.items.filter((item) => item.delta !== 0)
 
 export function ReservationStatsDiagnosticsModal({
   title,
@@ -38,7 +47,11 @@ export function ReservationStatsDiagnosticsModal({
   const parityMismatches = parity ? mismatchItems(parity) : []
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="flex max-h-[88vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-md border border-slate-300 bg-white shadow-xl">
         <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
           <div>
@@ -48,7 +61,13 @@ export function ReservationStatsDiagnosticsModal({
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" className="text-xs" onClick={onDownloadDiffCsv}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={onDownloadDiffCsv}
+            >
               <Download className="h-3.5 w-3.5" />
               Diff CSV
             </Button>
@@ -74,7 +93,13 @@ export function ReservationStatsDiagnosticsModal({
               <Download className="h-3.5 w-3.5" />
               Parity CSV
             </Button>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} aria-label="닫기">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={onClose}
+              aria-label="닫기"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -85,11 +110,21 @@ export function ReservationStatsDiagnosticsModal({
             <table className="w-full border-separate border-spacing-0 text-xs">
               <thead className="sticky top-0 z-10 bg-slate-50 text-slate-600">
                 <tr>
-                  <th className="border-b border-slate-300 px-3 py-2 text-left">일자</th>
-                  <th className="border-b border-slate-300 px-3 py-2 text-left">필드</th>
-                  <th className="border-b border-slate-300 px-3 py-2 text-right">스냅샷</th>
-                  <th className="border-b border-slate-300 px-3 py-2 text-right">라이브</th>
-                  <th className="border-b border-slate-300 px-3 py-2 text-right">차이</th>
+                  <th className="border-b border-slate-300 px-3 py-2 text-left">
+                    일자
+                  </th>
+                  <th className="border-b border-slate-300 px-3 py-2 text-left">
+                    필드
+                  </th>
+                  <th className="border-b border-slate-300 px-3 py-2 text-right">
+                    스냅샷
+                  </th>
+                  <th className="border-b border-slate-300 px-3 py-2 text-right">
+                    라이브
+                  </th>
+                  <th className="border-b border-slate-300 px-3 py-2 text-right">
+                    차이
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -101,8 +136,13 @@ export function ReservationStatsDiagnosticsModal({
                       className={`cursor-pointer ${selectedKey === key ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
                       onClick={() => onSelectDiff(item)}
                     >
-                      <td className="border-b border-slate-200 px-3 py-2 font-medium text-slate-800">{item.date}</td>
-                      <td className="border-b border-slate-200 px-3 py-2 text-slate-700" title={item.field}>
+                      <td className="border-b border-slate-200 px-3 py-2 font-medium text-slate-800">
+                        {item.date}
+                      </td>
+                      <td
+                        className="border-b border-slate-200 px-3 py-2 text-slate-700"
+                        title={item.field}
+                      >
                         {item.label}
                       </td>
                       <td className="border-b border-slate-200 px-3 py-2 text-right tabular-nums">
@@ -154,8 +194,15 @@ export function ReservationStatsDiagnosticsModal({
                         <span>
                           {parity.liveFrom} ~ {parity.liveTo}
                         </span>
-                        <span className={parity.mismatchCount > 0 ? 'font-semibold text-rose-600' : 'font-semibold text-emerald-700'}>
-                          불일치 {parity.mismatchCount.toLocaleString('ko-KR')}건
+                        <span
+                          className={
+                            parity.mismatchCount > 0
+                              ? 'font-semibold text-rose-600'
+                              : 'font-semibold text-emerald-700'
+                          }
+                        >
+                          불일치 {parity.mismatchCount.toLocaleString('ko-KR')}
+                          건
                         </span>
                       </div>
                       {parityMismatches.length > 0 && (
@@ -165,12 +212,18 @@ export function ReservationStatsDiagnosticsModal({
                               key={item.date}
                               className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] text-rose-700"
                             >
-                              {item.date} {item.dailyValue.toLocaleString('ko-KR')}→{item.drillDownValue.toLocaleString('ko-KR')}
+                              {item.date}{' '}
+                              {item.dailyValue.toLocaleString('ko-KR')}→
+                              {item.drillDownValue.toLocaleString('ko-KR')}
                             </span>
                           ))}
                           {parityMismatches.length > 6 && (
                             <span className="px-2 py-1 text-[11px] text-slate-500">
-                              외 {(parityMismatches.length - 6).toLocaleString('ko-KR')}건
+                              외{' '}
+                              {(parityMismatches.length - 6).toLocaleString(
+                                'ko-KR',
+                              )}
+                              건
                             </span>
                           )}
                         </div>
@@ -180,23 +233,49 @@ export function ReservationStatsDiagnosticsModal({
                   <table className="w-full border-separate border-spacing-0 text-xs">
                     <thead className="sticky top-0 z-10 bg-white text-slate-600">
                       <tr>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">source</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">GB</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">GB2</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">PK</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">차트</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">예약</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">상태</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-left">제외후보</th>
-                        <th className="border-b border-slate-300 px-3 py-2 text-right">기여도</th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          source
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          GB
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          GB2
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          PK
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          차트
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          예약
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          상태
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-left">
+                          제외후보
+                        </th>
+                        <th className="border-b border-slate-300 px-3 py-2 text-right">
+                          기여도
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {drillDown.rows.map((row, index) => (
-                        <tr key={`${row.source}-${row.primaryKey ?? index}-${row.contribution}`}>
-                          <td className="border-b border-slate-200 px-3 py-2 text-slate-700">{row.source}</td>
-                          <td className="border-b border-slate-200 px-3 py-2 text-slate-800">{row.gb}</td>
-                          <td className="border-b border-slate-200 px-3 py-2 text-slate-600">{row.gb2}</td>
+                        <tr
+                          key={`${row.source}-${row.primaryKey ?? index}-${row.contribution}`}
+                        >
+                          <td className="border-b border-slate-200 px-3 py-2 text-slate-700">
+                            {row.source}
+                          </td>
+                          <td className="border-b border-slate-200 px-3 py-2 text-slate-800">
+                            {row.gb}
+                          </td>
+                          <td className="border-b border-slate-200 px-3 py-2 text-slate-600">
+                            {row.gb2}
+                          </td>
                           <td className="border-b border-slate-200 px-3 py-2 font-mono text-[11px] text-slate-600">
                             {row.primaryKey ?? '-'}
                           </td>
@@ -206,7 +285,9 @@ export function ReservationStatsDiagnosticsModal({
                           <td className="border-b border-slate-200 px-3 py-2 font-mono text-[11px] text-slate-600">
                             {row.reserveNum || '-'}
                           </td>
-                          <td className="border-b border-slate-200 px-3 py-2 text-slate-600">{row.reserveState || '-'}</td>
+                          <td className="border-b border-slate-200 px-3 py-2 text-slate-600">
+                            {row.reserveState || '-'}
+                          </td>
                           <td className="border-b border-slate-200 px-3 py-2 text-slate-600">
                             {row.exclusionReasonCandidate || '-'}
                           </td>
@@ -219,7 +300,9 @@ export function ReservationStatsDiagnosticsModal({
                   </table>
                 </>
               ) : (
-                <div className="p-4 text-xs text-slate-500">선택된 항목 없음</div>
+                <div className="p-4 text-xs text-slate-500">
+                  선택된 항목 없음
+                </div>
               )}
             </div>
           </div>

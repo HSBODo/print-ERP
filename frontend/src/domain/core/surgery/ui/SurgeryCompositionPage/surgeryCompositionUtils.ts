@@ -1,4 +1,10 @@
-import { addDays, isoWeekMonday, isoWeeksInYear, isoYearRange, toIsoDate } from '#shared/utils/isoWeek'
+import {
+  addDays,
+  isoWeekMonday,
+  isoWeeksInYear,
+  isoYearRange,
+  toIsoDate,
+} from '#shared/utils/isoWeek'
 import { formatAxisNumber } from '#shared/utils/stats'
 
 /**
@@ -24,8 +30,15 @@ export const GRANULARITIES: { key: Granularity; label: string }[] = [
 export type RowTier = 'month' | 'week' | 'day'
 
 export interface Cell {
-  lasek: number; lasik: number; smile: number; smilePro: number
-  icl: number; tIcl: number; kpl: number; tKpl: number; viva: number
+  lasek: number
+  lasik: number
+  smile: number
+  smilePro: number
+  icl: number
+  tIcl: number
+  kpl: number
+  tKpl: number
+  viva: number
   /** 노안 레이저(PRESBYOND) — PIOL 그룹 밖의 독립 항목 */
   presbyond: number
   /**
@@ -34,21 +47,52 @@ export interface Cell {
    * (2026-07: 합산 168 vs 실인원 148).
    */
   piolPatients: number
-  catMulti: number; catMono: number; catEdof: number
-  xtra: number; waveVision: number; monoVision: number; contra: number; personal: number
-  lasekEx: number; lasekRed: number
-  reoperation: number; reopLaser: number; reopLens: number
-  visionPatients: number; cataractPatients: number; total: number
+  catMulti: number
+  catMono: number
+  catEdof: number
+  xtra: number
+  waveVision: number
+  monoVision: number
+  contra: number
+  personal: number
+  lasekEx: number
+  lasekRed: number
+  reoperation: number
+  reopLaser: number
+  reopLens: number
+  visionPatients: number
+  cataractPatients: number
+  total: number
 }
 
 export const EMPTY: Cell = {
-  lasek: 0, lasik: 0, smile: 0, smilePro: 0, icl: 0, tIcl: 0, kpl: 0, tKpl: 0, viva: 0,
-  presbyond: 0, piolPatients: 0,
-  catMulti: 0, catMono: 0, catEdof: 0,
-  xtra: 0, waveVision: 0, monoVision: 0, contra: 0, personal: 0,
-  lasekEx: 0, lasekRed: 0,
-  reoperation: 0, reopLaser: 0, reopLens: 0,
-  visionPatients: 0, cataractPatients: 0, total: 0,
+  lasek: 0,
+  lasik: 0,
+  smile: 0,
+  smilePro: 0,
+  icl: 0,
+  tIcl: 0,
+  kpl: 0,
+  tKpl: 0,
+  viva: 0,
+  presbyond: 0,
+  piolPatients: 0,
+  catMulti: 0,
+  catMono: 0,
+  catEdof: 0,
+  xtra: 0,
+  waveVision: 0,
+  monoVision: 0,
+  contra: 0,
+  personal: 0,
+  lasekEx: 0,
+  lasekRed: 0,
+  reoperation: 0,
+  reopLaser: 0,
+  reopLens: 0,
+  visionPatients: 0,
+  cataractPatients: 0,
+  total: 0,
 }
 
 const CELL_KEYS = Object.keys(EMPTY) as (keyof Cell)[]
@@ -61,7 +105,8 @@ export const sumCells = (cells: Cell[]): Cell => {
 }
 
 /** 모든 지표가 0인 빈 셀(데이터 없는 날) */
-export const isEmptyCell = (c: Cell): boolean => CELL_KEYS.every((k) => c[k] === 0)
+export const isEmptyCell = (c: Cell): boolean =>
+  CELL_KEYS.every((k) => c[k] === 0)
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 
@@ -72,7 +117,11 @@ export function currentMonthValue(): string {
 }
 
 /** 'YYYY-MM' → { from, to } 해당 월의 1일~말일 */
-export function monthRange(ym: string): { from: string; to: string; lastDay: number } {
+export function monthRange(ym: string): {
+  from: string
+  to: string
+  lastDay: number
+} {
   const [y, m] = ym.split('-').map(Number)
   const lastDay = new Date(y, m, 0).getDate()
   return { from: `${ym}-01`, to: `${ym}-${pad2(lastDay)}`, lastDay }
@@ -81,7 +130,8 @@ export function monthRange(ym: string): { from: string; to: string; lastDay: num
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토']
 export const weekdayKo = (idx: number): string => WEEKDAY_KO[idx] ?? ''
 /** 월 내 0-based 캘린더 주차 */
-export const weekOf = (day: number, firstWeekday: number): number => Math.floor((day - 1 + firstWeekday) / 7)
+export const weekOf = (day: number, firstWeekday: number): number =>
+  Math.floor((day - 1 + firstWeekday) / 7)
 
 export interface SurgeryRow {
   label: string
@@ -98,7 +148,10 @@ export interface SurgeryRow {
 export const yearOf = (ym: string): number => Number(ym.slice(0, 4))
 
 /** 조회 범위 — 주차는 그 해 1주차 월요일~마지막 주차 일요일, 나머지는 선택한 달의 1일~말일. */
-export function queryRange(granularity: Granularity, ym: string): { from: string; to: string } {
+export function queryRange(
+  granularity: Granularity,
+  ym: string,
+): { from: string; to: string } {
   if (granularity === 'yearWeek') {
     const { from, to } = isoYearRange(yearOf(ym))
     return { from, to }
@@ -114,14 +167,20 @@ const shortMd = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
  * 데이터가 없는 주(미래·휴진)는 muted 로 비워 두어 주차 번호가 끊기지 않게 한다.
  * 1주차는 전년 12월을, 마지막 주차는 다음 해 1월을 물 수 있다(ISO 규칙).
  */
-export function buildYearWeekRows(dataMap: Record<string, Cell>, year: number): SurgeryRow[] {
+export function buildYearWeekRows(
+  dataMap: Record<string, Cell>,
+  year: number,
+): SurgeryRow[] {
   const weeks = isoWeeksInYear(year)
   const weekRows: SurgeryRow[] = []
   const allCells: Cell[] = []
 
   for (let week = 1; week <= weeks; week++) {
     const monday = isoWeekMonday(year, week)
-    const days = Array.from({ length: 7 }, (_, i) => dataMap[toIsoDate(addDays(monday, i))] ?? EMPTY)
+    const days = Array.from(
+      { length: 7 },
+      (_, i) => dataMap[toIsoDate(addDays(monday, i))] ?? EMPTY,
+    )
     const d = sumCells(days)
     allCells.push(d)
     weekRows.push({
@@ -133,7 +192,10 @@ export function buildYearWeekRows(dataMap: Record<string, Cell>, year: number): 
     })
   }
 
-  return [{ label: `${year}년`, tier: 'month', d: sumCells(allCells) }, ...weekRows]
+  return [
+    { label: `${year}년`, tier: 'month', d: sumCells(allCells) },
+    ...weekRows,
+  ]
 }
 
 /**
@@ -150,7 +212,8 @@ export function buildSurgeryRows(
   period: string,
   lastDay: number,
 ): SurgeryRow[] {
-  if (granularity === 'yearWeek') return buildYearWeekRows(dataMap, yearOf(period))
+  if (granularity === 'yearWeek')
+    return buildYearWeekRows(dataMap, yearOf(period))
 
   const [year, month] = period.split('-').map(Number)
   const firstWeekday = new Date(year, month - 1, 1).getDay()
@@ -186,7 +249,11 @@ export function buildSurgeryRows(
 
   const weekRows: SurgeryRow[] = [...weekBuckets.keys()]
     .sort((a, b) => a - b)
-    .map((week) => ({ label: `${week + 1}주`, tier: 'week', d: sumCells(weekBuckets.get(week) ?? []) }))
+    .map((week) => ({
+      label: `${week + 1}주`,
+      tier: 'week',
+      d: sumCells(weekBuckets.get(week) ?? []),
+    }))
 
   if (granularity === 'week') return [totalRow, ...weekRows]
   if (granularity === 'all') return [totalRow, ...weekRows, ...dayRows]
@@ -194,9 +261,11 @@ export function buildSurgeryRows(
 }
 
 /* ── 셀 표시 헬퍼 ── */
-const pct = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0)
+const pct = (part: number, whole: number) =>
+  whole > 0 ? Math.round((part / whole) * 100) : 0
 /** 값(비중%) — 그룹 합계 대비 */
-const vp = (v: number, base: number) => (v > 0 ? `${formatAxisNumber(v)} (${pct(v, base)}%)` : '-')
+const vp = (v: number, base: number) =>
+  v > 0 ? `${formatAxisNumber(v)} (${pct(v, base)}%)` : '-'
 const vc = (v: number) => (v > 0 ? formatAxisNumber(v) : '-')
 
 export type Tone = 'blue' | 'violet' | undefined
@@ -214,35 +283,61 @@ export interface ColDef {
 
 // 본문 27개 컬럼(구분 컬럼 제외) — 헤더 leaf 순서와 1:1 대응.
 export const COLS: ColDef[] = [
-  { render: (d) => vc(d.total), border: true, strong: true, bg: 'bg-slate-50' },                 // 합계
-  { render: (d) => vc(d.visionPatients), border: true, strong: true, tone: 'blue', bg: 'bg-blue-50' }, // 시력교정
-  { render: (d) => vp(d.smile, d.visionPatients) },                                              // 스마일
-  { render: (d) => vp(d.smilePro, d.visionPatients) },                                           // 스마일프로
+  { render: (d) => vc(d.total), border: true, strong: true, bg: 'bg-slate-50' }, // 합계
+  {
+    render: (d) => vc(d.visionPatients),
+    border: true,
+    strong: true,
+    tone: 'blue',
+    bg: 'bg-blue-50',
+  }, // 시력교정
+  { render: (d) => vp(d.smile, d.visionPatients) }, // 스마일
+  { render: (d) => vp(d.smilePro, d.visionPatients) }, // 스마일프로
   // PIOL 합계는 유형별 합산이 아니라 원천이 세어 준 DISTINCT 환자 수(piolPatients)다.
   // 양안에 다른 렌즈를 넣은 환자가 이중 계상되므로 icl+tIcl+… 로 더하면 안 된다.
-  { render: (d) => vp(d.piolPatients, d.visionPatients), border: true, strong: true },           // PIOL 합계
-  { render: (d) => vc(d.icl), muted: true },                                                     // ICL
-  { render: (d) => vc(d.tIcl), muted: true },                                                    // T-ICL
-  { render: (d) => vc(d.kpl), muted: true },                                                     // KPL
-  { render: (d) => vc(d.tKpl), muted: true },                                                    // T-KPL
-  { render: (d) => vc(d.viva), muted: true },                                                    // VIVA
-  { render: (d) => vp(d.presbyond, d.visionPatients), border: true, bg: 'bg-yellow-50', tight: true }, // PRESBYOND
-  { render: (d) => vp(d.lasik, d.visionPatients), border: true },                                // 라식계
-  { render: (d) => vp(d.lasekEx + d.lasekRed, d.visionPatients), border: true, strong: true },   // 라섹계 합계
-  { render: (d) => vp(d.lasekEx, d.lasekEx + d.lasekRed) },                                       // 라섹계 EX
-  { render: (d) => vp(d.lasekRed, d.lasekEx + d.lasekRed) },                                      // 라섹계 Red
-  { render: (d) => vc(d.reoperation), border: true, strong: true },                              // 재수술 합계
-  { render: (d) => vp(d.reopLaser, d.reoperation) },                                             // 재수술 레이저
-  { render: (d) => vp(d.reopLens, d.reoperation) },                                              // 재수술 렌즈
-  { render: (d) => vc(d.xtra), border: true },                                                   // 엑스트라
-  { render: (d) => vc(d.personal) },                                                             // 퍼스널
-  { render: (d) => vc(d.contra) },                                                               // 콘트라
-  { render: (d) => vc(d.waveVision) },                                                           // 웨이브비전
-  { render: (d) => vc(d.monoVision) },                                                           // 모노비전
-  { render: (d) => vc(d.cataractPatients), border: true, strong: true, tone: 'violet', bg: 'bg-violet-50' }, // 백내장 수술수
-  { render: (d) => vp(d.catMulti, d.cataractPatients) },                                         // 다초점
-  { render: (d) => vp(d.catEdof, d.cataractPatients) },                                          // 프리미엄
-  { render: (d) => vp(d.catMono, d.cataractPatients) },                                          // 단초점
+  {
+    render: (d) => vp(d.piolPatients, d.visionPatients),
+    border: true,
+    strong: true,
+  }, // PIOL 합계
+  { render: (d) => vc(d.icl), muted: true }, // ICL
+  { render: (d) => vc(d.tIcl), muted: true }, // T-ICL
+  { render: (d) => vc(d.kpl), muted: true }, // KPL
+  { render: (d) => vc(d.tKpl), muted: true }, // T-KPL
+  { render: (d) => vc(d.viva), muted: true }, // VIVA
+  {
+    render: (d) => vp(d.presbyond, d.visionPatients),
+    border: true,
+    bg: 'bg-yellow-50',
+    tight: true,
+  }, // PRESBYOND
+  { render: (d) => vp(d.lasik, d.visionPatients), border: true }, // 라식계
+  {
+    render: (d) => vp(d.lasekEx + d.lasekRed, d.visionPatients),
+    border: true,
+    strong: true,
+  }, // 라섹계 합계
+  { render: (d) => vp(d.lasekEx, d.lasekEx + d.lasekRed) }, // 라섹계 EX
+  { render: (d) => vp(d.lasekRed, d.lasekEx + d.lasekRed) }, // 라섹계 Red
+  { render: (d) => vc(d.reoperation), border: true, strong: true }, // 재수술 합계
+  { render: (d) => vp(d.reopLaser, d.reoperation) }, // 재수술 레이저
+  { render: (d) => vp(d.reopLens, d.reoperation) }, // 재수술 렌즈
+  { render: (d) => vc(d.xtra), border: true }, // 엑스트라
+  { render: (d) => vc(d.personal) }, // 퍼스널
+  { render: (d) => vc(d.contra) }, // 콘트라
+  { render: (d) => vc(d.waveVision) }, // 웨이브비전
+  { render: (d) => vc(d.monoVision) }, // 모노비전
+  {
+    render: (d) => vc(d.cataractPatients),
+    border: true,
+    strong: true,
+    tone: 'violet',
+    bg: 'bg-violet-50',
+  }, // 백내장 수술수
+  { render: (d) => vp(d.catMulti, d.cataractPatients) }, // 다초점
+  { render: (d) => vp(d.catEdof, d.cataractPatients) }, // 프리미엄
+  { render: (d) => vp(d.catMono, d.cataractPatients) }, // 단초점
 ]
 
-export const toneClass = (t: Tone) => (t === 'blue' ? 'text-blue-700' : t === 'violet' ? 'text-violet-700' : '')
+export const toneClass = (t: Tone) =>
+  t === 'blue' ? 'text-blue-700' : t === 'violet' ? 'text-violet-700' : ''

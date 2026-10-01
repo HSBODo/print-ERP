@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { ChannelAnalysisPage } from '#domain/core/marketing/ui/ChannelAnalysisPage'
 
-export const Route = createFileRoute('/_auth/stats/(marketing)/channel-analysis')({
+export const Route = createFileRoute(
+  '/_auth/stats/(marketing)/channel-analysis',
+)({
   component: ChannelAnalysisPage,
   staticData: {
     page: {

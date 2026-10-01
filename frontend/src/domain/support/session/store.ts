@@ -1,10 +1,11 @@
 import { create } from 'zustand'
+
 import {
+  type AuthUser,
   clearStoredAuthSession,
   normalizeAuthUser,
   persistAuthSession,
   readStoredAuthSession,
-  type AuthUser,
 } from './session'
 
 const initialSession = readStoredAuthSession()

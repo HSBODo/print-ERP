@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { BatchManagementPage } from '#domain/core/batch/ui/BatchManagementPage'
 
 export const Route = createFileRoute('/_auth/admin/batch')({

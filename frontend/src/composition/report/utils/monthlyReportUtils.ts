@@ -8,7 +8,8 @@ export const YEARS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]
 const now = new Date()
 // 미래 월은 데이터 자체가 없으므로 null 처리. 당월은 누적 중이지만 값을 노출한다.
 export const isIncompleteMonth = (year: number, monthIndex: number) =>
-  year > now.getFullYear() || (year === now.getFullYear() && monthIndex > now.getMonth())
+  year > now.getFullYear() ||
+  (year === now.getFullYear() && monthIndex > now.getMonth())
 
 /**
  * MonthlyReportPage 도표별 UI 라벨 (title/suffix/format).
@@ -29,7 +30,15 @@ export const MONTHLY_CHART_LABELS: Record<string, ChartLabels> = {
   'exam-etc': { title: '기타 검사', suffix: '(직장인·학생 제외)' },
   'exam-general': { title: '일반 검사' },
   'ratio-general': { title: '일반검사 비율', format: 'percent' },
-  'rate-vision-general': { title: '시력교정 일반예약률', suffix: '(수술예약건/검사자)', format: 'percent' },
-  'rate-oneday': { title: '원데이 예약률', suffix: '(수술예약건/검사자)', format: 'percent' },
+  'rate-vision-general': {
+    title: '시력교정 일반예약률',
+    suffix: '(수술예약건/검사자)',
+    format: 'percent',
+  },
+  'rate-oneday': {
+    title: '원데이 예약률',
+    suffix: '(수술예약건/검사자)',
+    format: 'percent',
+  },
   'stop-rate': { title: '중단율', format: 'percent' },
 }

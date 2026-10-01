@@ -21,27 +21,36 @@ export const DEFAULT_PERIOD = (() => {
 })()
 
 /** '2026-03' -> '3월' */
-export const monthShortLabel = (period: string) => `${Number(period.slice(5, 7))}월`
+export const monthShortLabel = (period: string) =>
+  `${Number(period.slice(5, 7))}월`
 
 /** '2026-03' -> '2026년 3월' */
-export const monthFullLabel = (period: string) => `${period.slice(0, 4)}년 ${Number(period.slice(5, 7))}월`
+export const monthFullLabel = (period: string) =>
+  `${period.slice(0, 4)}년 ${Number(period.slice(5, 7))}월`
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토']
 
-export const weekdayKo = (weekdayIndex: number): string => WEEKDAY_KO[weekdayIndex] ?? ''
+export const weekdayKo = (weekdayIndex: number): string =>
+  WEEKDAY_KO[weekdayIndex] ?? ''
 
 /** 0-based calendar week within a month. */
-export const weekOf = (day: number, firstWeekday: number): number => Math.floor((day - 1 + firstWeekday) / 7)
+export const weekOf = (day: number, firstWeekday: number): number =>
+  Math.floor((day - 1 + firstWeekday) / 7)
 
 /** ISO 8601 주차 (1~53) — 구현은 공용 유틸(#shared/utils/isoWeek)에 있다. */
 export { isoWeek } from '#shared/utils/isoWeek'
 
-export const pctInt = (a: number, b: number): number => (b === 0 ? 0 : Math.round((a * 100) / b))
+export const pctInt = (a: number, b: number): number =>
+  b === 0 ? 0 : Math.round((a * 100) / b)
 
-export const pct1 = (a: number, b: number): number => (b === 0 ? 0 : Math.round((a * 1000) / b) / 10)
+export const pct1 = (a: number, b: number): number =>
+  b === 0 ? 0 : Math.round((a * 1000) / b) / 10
 
-export const createCountHelpers = <T extends object>(keys: readonly (keyof T)[]) => {
-  const zeroCounts = (): T => Object.fromEntries(keys.map((key) => [key, 0])) as T
+export const createCountHelpers = <T extends object>(
+  keys: readonly (keyof T)[],
+) => {
+  const zeroCounts = (): T =>
+    Object.fromEntries(keys.map((key) => [key, 0])) as T
 
   const sumCounts = (rows: readonly T[]): T => {
     const acc = zeroCounts() as unknown as Record<keyof T, number>

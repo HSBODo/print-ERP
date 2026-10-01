@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
+
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+
 import { EditableNumberCell } from './ReservationStatsCataractCells'
 
 afterEach(cleanup)
@@ -15,7 +17,14 @@ const renderCell = (override: Partial<Props> = {}) => {
     <table>
       <tbody>
         <tr>
-          <EditableNumberCell value={17} edit={undefined} busy={false} cellClassName="cell" onSave={onSave} {...override} />
+          <EditableNumberCell
+            value={17}
+            edit={undefined}
+            busy={false}
+            cellClassName="cell"
+            onSave={onSave}
+            {...override}
+          />
         </tr>
       </tbody>
     </table>,
@@ -62,7 +71,12 @@ describe('EditableNumberCell', () => {
 
   it('수기 보정 이력이 있으면 마커(●)와 툴팁을 표시한다', () => {
     renderCell({
-      edit: { field: 'inboundCall', value: 17, editedBy: 'kim', editedAt: '2026-06-24T00:00:00' },
+      edit: {
+        field: 'inboundCall',
+        value: 17,
+        editedBy: 'kim',
+        editedAt: '2026-06-24T00:00:00',
+      },
     })
     const cell = screen.getByRole('cell')
     expect(cell).toHaveTextContent('●')

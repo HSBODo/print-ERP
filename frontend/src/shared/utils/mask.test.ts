@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { maskAddress, maskName, maskPhone, maskJumin } from '#shared/utils/mask'
+
+import { maskAddress, maskJumin, maskName, maskPhone } from '#shared/utils/mask'
 
 /**
  * 개인정보 마스킹 계약. CSV 로 나가는 값이라 조용히 덜 가려지면 그대로 유출된다.
@@ -80,10 +81,14 @@ describe('maskJumin', () => {
 
 describe('maskAddress', () => {
   it('시/도·시군구만 남기고 상세주소를 가린다', () => {
-    expect(maskAddress('경기 성남시 분당구 분당로 190 (분당동) 101동 1101호'))
-      .toBe('경기 성남시 ***')
-    expect(maskAddress('서울시 노원구 동일로207길 186 학여울 청구아파트 110동 503호'))
-      .toBe('서울시 노원구 ***')
+    expect(
+      maskAddress('경기 성남시 분당구 분당로 190 (분당동) 101동 1101호'),
+    ).toBe('경기 성남시 ***')
+    expect(
+      maskAddress(
+        '서울시 노원구 동일로207길 186 학여울 청구아파트 110동 503호',
+      ),
+    ).toBe('서울시 노원구 ***')
   })
 
   it('동·호수가 남지 않는다(집을 특정할 수 있는 부분)', () => {

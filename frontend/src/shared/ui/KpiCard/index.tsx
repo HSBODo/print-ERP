@@ -1,7 +1,6 @@
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
-import {
-  Card, CardContent, CardHeader, CardTitle,
-} from '#shared/ui/Card'
+
+import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import { changeRate } from '#shared/utils/stats'
 
 interface KpiCardProps {
@@ -43,14 +42,24 @@ export function KpiCard({
           </p>
         </div>
         {values.slice(1).map((val, i) => {
-          const delta = changeMode === 'point' ? val - base : changeRate(base, val)
+          const delta =
+            changeMode === 'point' ? val - base : changeRate(base, val)
           const positive = delta > 0
           const neutral = delta === 0
-          const TrendIcon = neutral ? Minus : positive ? TrendingUp : TrendingDown
+          const TrendIcon = neutral
+            ? Minus
+            : positive
+              ? TrendingUp
+              : TrendingDown
 
           return (
-            <div key={labels[i + 1]} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3">
-              <span className="text-sm text-muted-foreground">{labels[i + 1]}</span>
+            <div
+              key={labels[i + 1]}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3"
+            >
+              <span className="text-sm text-muted-foreground">
+                {labels[i + 1]}
+              </span>
               <div className="flex items-center justify-end gap-2">
                 <span
                   className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -62,7 +71,9 @@ export function KpiCard({
                   }`}
                 >
                   <TrendIcon className="h-3 w-3" />
-                  {delta > 0 ? '+' : ''}{delta.toFixed(1)}{changeUnit}
+                  {delta > 0 ? '+' : ''}
+                  {delta.toFixed(1)}
+                  {changeUnit}
                 </span>
                 <span className="min-w-[7ch] text-right text-sm font-medium tabular-nums text-gray-700">
                   {formatValue(val)}

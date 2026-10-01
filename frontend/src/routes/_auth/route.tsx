@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
+
+import { useAuthStore } from '#domain/support/session/store'
+
 import { AppLayout } from './-internal/layout/AppLayout'
 import { canAccess, type PageAccessResult } from './-internal/pageAccess'
-import { useAuthStore } from '#domain/support/session/store'
 import { requireAuth } from './-internal/requireAuth'
 import { RouteGate } from './-internal/RouteGate'
 
@@ -14,7 +16,11 @@ export const Route = createFileRoute('/_auth')({
   beforeLoad: ({ matches }): { pageAccess: PageAccessResult } => {
     requireAuth()
     const page = matches.at(-1)?.staticData?.page
-    return { pageAccess: page ? canAccess(page, useAuthStore.getState().user, isProd) : 'ok' }
+    return {
+      pageAccess: page
+        ? canAccess(page, useAuthStore.getState().user, isProd)
+        : 'ok',
+    }
   },
   component: () => (
     <AppLayout>

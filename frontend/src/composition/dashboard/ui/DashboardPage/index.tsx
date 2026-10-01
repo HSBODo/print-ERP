@@ -1,22 +1,39 @@
-import { useMemo } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
+import { useMemo } from 'react'
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
 } from 'recharts'
+
+import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
+import { useAccumulatedEyesTotal } from '#domain/core/marketing/hooks/useAccumulatedEyesTotal'
+import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
+import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
+import { useReservationStatsSystem } from '#domain/core/reservationStats/hooks/useReservationStatsSystem'
+import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
+import { CURRENT_YEAR } from '#shared/constants/chart'
 import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from '#shared/ui/Card'
 import {
-  ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
 } from '#shared/ui/Chart'
-import { CURRENT_YEAR } from '#shared/constants/chart'
 import { formatAxisNumber } from '#shared/utils/stats'
-import { useReservationOverallTrend } from '#domain/core/reservation/hooks/useReservationOverallTrend'
-import { useSurgeryTrend } from '#domain/core/surgery/hooks/useSurgeryTrend'
-import { useProcedureExamTrend } from '#domain/core/exam/hooks/useProcedureExamTrend'
-import { useOutpatientCountTrend } from '#domain/core/outpatient/hooks/useOutpatientCountTrend'
-import { useAccumulatedEyesTotal } from '#domain/core/marketing/hooks/useAccumulatedEyesTotal'
-import { useReservationStatsSystem } from '#domain/core/reservationStats/hooks/useReservationStatsSystem'
 
 /**
  * 홈(대시보드) — 시스템 각 도메인 마트에서 이번달 요약을 조회.
@@ -26,7 +43,7 @@ import { useReservationStatsSystem } from '#domain/core/reservationStats/hooks/u
  */
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => `${i + 1}월`)
-const CURRENT_MONTH = new Date().getMonth() + 1  // 1~12
+const CURRENT_MONTH = new Date().getMonth() + 1 // 1~12
 const M_IDX = CURRENT_MONTH - 1
 const PREV_IDX = M_IDX > 0 ? M_IDX - 1 : 0
 
@@ -36,7 +53,10 @@ const CHART_YEARS = [CURRENT_YEAR]
 const PREV_MONTH_LABEL = CURRENT_MONTH === 1 ? 12 : CURRENT_MONTH - 1
 
 /** 전월 대비 변화율(%). 전월이 0 이거나 값이 null 이면 null. */
-const changeRate = (curr: number | null | undefined, prev: number | null | undefined): number | null => {
+const changeRate = (
+  curr: number | null | undefined,
+  prev: number | null | undefined,
+): number | null => {
   if (curr == null || prev == null || prev === 0) return null
   return ((curr - prev) / prev) * 100
 }
@@ -70,19 +90,31 @@ const outpatientTrendConfig = {
 export function DashboardPage() {
   // 이번달 예약 · 월별 예약 추이
   const reservation = useReservationOverallTrend(CHART_YEARS)
-  const resMonthly = useMemo(() => reservation.dataMap[CURRENT_YEAR] ?? [], [reservation.dataMap])
+  const resMonthly = useMemo(
+    () => reservation.dataMap[CURRENT_YEAR] ?? [],
+    [reservation.dataMap],
+  )
 
   // 이번달 수술 · 월별 수술 추이 · 시술별 비중
   const surgery = useSurgeryTrend(CHART_YEARS)
-  const sgMonthly = useMemo(() => surgery.dataMap[CURRENT_YEAR] ?? [], [surgery.dataMap])
+  const sgMonthly = useMemo(
+    () => surgery.dataMap[CURRENT_YEAR] ?? [],
+    [surgery.dataMap],
+  )
 
   // 이번달 검사수 (procedure-exam · 관리자 아님)
   const procedureExam = useProcedureExamTrend(CHART_YEARS)
-  const peMonthly = useMemo(() => procedureExam.dataMap[CURRENT_YEAR] ?? [], [procedureExam.dataMap])
+  const peMonthly = useMemo(
+    () => procedureExam.dataMap[CURRENT_YEAR] ?? [],
+    [procedureExam.dataMap],
+  )
 
   // 이번달 외래수 · 월별 추이
   const outpatient = useOutpatientCountTrend(CHART_YEARS)
-  const opMonthly = useMemo(() => outpatient.dataMap[CURRENT_YEAR] ?? [], [outpatient.dataMap])
+  const opMonthly = useMemo(
+    () => outpatient.dataMap[CURRENT_YEAR] ?? [],
+    [outpatient.dataMap],
+  )
 
   // 총 누적 안수
   const eyeTotal = useAccumulatedEyesTotal()
@@ -144,34 +176,71 @@ export function DashboardPage() {
       {
         label: '총 누적 안수',
         value: eyeTotal.total,
-        change: null,  // 누적 값이라 전월 대비 개념 없음
+        change: null, // 누적 값이라 전월 대비 개념 없음
         loading: eyeTotal.isLoading,
         error: eyeTotal.isError,
         unit: '안',
         hint: '병원 전체 누적',
       },
     ]
-  }, [resMonthly, peMonthly, sgMonthly, opMonthly, eyeTotal.total,
-      reservation.isLoading, reservation.isError,
-      procedureExam.isLoading, procedureExam.isError,
-      surgery.isLoading, surgery.isError,
-      outpatient.isLoading, outpatient.isError,
-      eyeTotal.isLoading, eyeTotal.isError])
+  }, [
+    resMonthly,
+    peMonthly,
+    sgMonthly,
+    opMonthly,
+    eyeTotal.total,
+    reservation.isLoading,
+    reservation.isError,
+    procedureExam.isLoading,
+    procedureExam.isError,
+    surgery.isLoading,
+    surgery.isError,
+    outpatient.isLoading,
+    outpatient.isError,
+    eyeTotal.isLoading,
+    eyeTotal.isError,
+  ])
 
   /* ── 차트 데이터 ─────────────────────────────────────── */
 
   // 월별 수술 추이 — 시술별 스택 막대
   const surgeryTrendData = MONTHS.map((month, i) => {
     const d = sgMonthly[i]
-    if (!d) return { month, lasek: 0, lasik: 0, smile: 0, smilePro: 0, icl: 0, cataract: 0, other: 0 }
+    if (!d)
+      return {
+        month,
+        lasek: 0,
+        lasik: 0,
+        smile: 0,
+        smilePro: 0,
+        icl: 0,
+        cataract: 0,
+        other: 0,
+      }
     return {
       month,
-      lasek: d.lasek, lasik: d.lasik, smile: d.smile, smilePro: d.smilePro,
-      icl: d.icl + d.tIcl + d.kpl + d.tKpl + d.viva,   // 렌즈삽입 통합
+      lasek: d.lasek,
+      lasik: d.lasik,
+      smile: d.smile,
+      smilePro: d.smilePro,
+      icl: d.icl + d.tIcl + d.kpl + d.tKpl + d.viva, // 렌즈삽입 통합
       cataract: d.catMulti + d.catMono + d.catEdof,
-      other: Math.max(0, d.total - (d.lasek + d.lasik + d.smile + d.smilePro
-        + d.icl + d.tIcl + d.kpl + d.tKpl + d.viva
-        + d.catMulti + d.catMono + d.catEdof)),
+      other: Math.max(
+        0,
+        d.total -
+          (d.lasek +
+            d.lasik +
+            d.smile +
+            d.smilePro +
+            d.icl +
+            d.tIcl +
+            d.kpl +
+            d.tKpl +
+            d.viva +
+            d.catMulti +
+            d.catMono +
+            d.catEdof),
+      ),
     }
   })
 
@@ -184,28 +253,76 @@ export function DashboardPage() {
 
   // 이번달 시술별 비중 — Pie
   const surgeryTypeThis = sgMonthly[M_IDX]
-  const surgeryTypeData = surgeryTypeThis ? [
-    { key: 'lasek', name: '라섹', value: surgeryTypeThis.lasek, fill: 'var(--chart-1)' },
-    { key: 'lasik', name: '라식', value: surgeryTypeThis.lasik, fill: 'var(--chart-2)' },
-    { key: 'smile', name: '스마일', value: surgeryTypeThis.smile + surgeryTypeThis.smilePro, fill: 'var(--chart-3)' },
-    { key: 'icl', name: 'ICL/렌즈', value: surgeryTypeThis.icl + surgeryTypeThis.tIcl + surgeryTypeThis.kpl + surgeryTypeThis.tKpl + surgeryTypeThis.viva, fill: 'var(--chart-4)' },
-    { key: 'cataract', name: '백내장', value: surgeryTypeThis.catMulti + surgeryTypeThis.catMono + surgeryTypeThis.catEdof, fill: '#8b5cf6' },
-  ].filter((d) => d.value > 0) : []
+  const surgeryTypeData = surgeryTypeThis
+    ? [
+        {
+          key: 'lasek',
+          name: '라섹',
+          value: surgeryTypeThis.lasek,
+          fill: 'var(--chart-1)',
+        },
+        {
+          key: 'lasik',
+          name: '라식',
+          value: surgeryTypeThis.lasik,
+          fill: 'var(--chart-2)',
+        },
+        {
+          key: 'smile',
+          name: '스마일',
+          value: surgeryTypeThis.smile + surgeryTypeThis.smilePro,
+          fill: 'var(--chart-3)',
+        },
+        {
+          key: 'icl',
+          name: 'ICL/렌즈',
+          value:
+            surgeryTypeThis.icl +
+            surgeryTypeThis.tIcl +
+            surgeryTypeThis.kpl +
+            surgeryTypeThis.tKpl +
+            surgeryTypeThis.viva,
+          fill: 'var(--chart-4)',
+        },
+        {
+          key: 'cataract',
+          name: '백내장',
+          value:
+            surgeryTypeThis.catMulti +
+            surgeryTypeThis.catMono +
+            surgeryTypeThis.catEdof,
+          fill: '#8b5cf6',
+        },
+      ].filter((d) => d.value > 0)
+    : []
   const surgeryTypeTotal = surgeryTypeData.reduce((s, d) => s + d.value, 0)
 
   // 예약 채널 비중 — Pie (이번달 예약통계_시력교정 합계)
   const channelData = useMemo(() => {
     const dailies = resStats.dailies ?? []
-    const sum = dailies.reduce((acc, d) => ({
-      inCall: acc.inCall + (d.callReservation ?? 0),
-      tm: acc.tm + (d.tmReservation ?? 0) + (d.tmRecounselReservation ?? 0),
-      naver: acc.naver + (d.naverReservation ?? 0),
-      kakao: acc.kakao + (d.kakaoReservation ?? 0),
-    }), { inCall: 0, tm: 0, naver: 0, kakao: 0 })
+    const sum = dailies.reduce(
+      (acc, d) => ({
+        inCall: acc.inCall + (d.callReservation ?? 0),
+        tm: acc.tm + (d.tmReservation ?? 0) + (d.tmRecounselReservation ?? 0),
+        naver: acc.naver + (d.naverReservation ?? 0),
+        kakao: acc.kakao + (d.kakaoReservation ?? 0),
+      }),
+      { inCall: 0, tm: 0, naver: 0, kakao: 0 },
+    )
     return [
-      { key: 'inCall', name: '인콜', value: sum.inCall, fill: 'var(--chart-1)' },
+      {
+        key: 'inCall',
+        name: '인콜',
+        value: sum.inCall,
+        fill: 'var(--chart-1)',
+      },
       { key: 'tm', name: 'TM/재상담', value: sum.tm, fill: 'var(--chart-2)' },
-      { key: 'naver', name: '네이버', value: sum.naver, fill: 'var(--chart-5)' },
+      {
+        key: 'naver',
+        name: '네이버',
+        value: sum.naver,
+        fill: 'var(--chart-5)',
+      },
       { key: 'kakao', name: '카카오', value: sum.kakao, fill: '#eab308' },
     ].filter((d) => d.value > 0)
   }, [resStats.dailies])
@@ -225,13 +342,16 @@ export function DashboardPage() {
           {CURRENT_YEAR}년 {CURRENT_MONTH}월
         </span>
         <span>기준</span>
-        <span className="ml-2 text-xs">· 지난달({PREV_MONTH_LABEL}월) 대비 변화율 함께 표시</span>
+        <span className="ml-2 text-xs">
+          · 지난달({PREV_MONTH_LABEL}월) 대비 변화율 함께 표시
+        </span>
       </div>
 
       {/* ── KPI 5개 ── */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {kpiCards.map((card) => {
-          const TrendIcon = card.change != null && card.change >= 0 ? TrendingUp : TrendingDown
+          const TrendIcon =
+            card.change != null && card.change >= 0 ? TrendingUp : TrendingDown
           const positive = card.change != null && card.change >= 0
           return (
             <Card key={card.label} className="border-border/70 shadow-sm">
@@ -239,28 +359,41 @@ export function DashboardPage() {
                 <CardDescription>{card.label}</CardDescription>
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-2xl font-semibold tracking-tight text-gray-900">
-                    {card.loading ? '…' : card.error ? '—' :
+                    {card.loading ? (
+                      '…'
+                    ) : card.error ? (
+                      '—'
+                    ) : (
                       <>
                         {formatNumber(card.value)}
-                        <span className="ml-1 text-sm font-normal text-gray-400">{card.unit}</span>
-                      </>}
+                        <span className="ml-1 text-sm font-normal text-gray-400">
+                          {card.unit}
+                        </span>
+                      </>
+                    )}
                   </CardTitle>
                   {card.change != null && (
                     <span
                       className={
                         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ' +
-                        (positive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')
+                        (positive
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-rose-50 text-rose-700')
                       }
                     >
                       <TrendIcon className="h-3 w-3" />
-                      {positive ? '+' : ''}{card.change.toFixed(1)}%
+                      {positive ? '+' : ''}
+                      {card.change.toFixed(1)}%
                     </span>
                   )}
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  {card.hint ?? (card.error ? '데이터 조회 실패' : `지난달(${PREV_MONTH_LABEL}월) 대비`)}
+                  {card.hint ??
+                    (card.error
+                      ? '데이터 조회 실패'
+                      : `지난달(${PREV_MONTH_LABEL}월) 대비`)}
                 </p>
               </CardContent>
             </Card>
@@ -276,14 +409,40 @@ export function DashboardPage() {
             <CardDescription>{CURRENT_YEAR}년 · 콜/온라인</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={reservationTrendConfig} className="h-80 w-full">
+            <ChartContainer
+              config={reservationTrendConfig}
+              className="h-80 w-full"
+            >
               <BarChart data={reservationTrendData}>
                 <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-                <Bar dataKey="call" stackId="res" fill="var(--color-call)" radius={[0, 0, 6, 6]} />
-                <Bar dataKey="online" stackId="res" fill="var(--color-online)" radius={[6, 6, 0, 0]} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatAxisNumber}
+                  width={40}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dashed" />}
+                />
+                <Bar
+                  dataKey="call"
+                  stackId="res"
+                  fill="var(--color-call)"
+                  radius={[0, 0, 6, 6]}
+                />
+                <Bar
+                  dataKey="online"
+                  stackId="res"
+                  fill="var(--color-online)"
+                  radius={[6, 6, 0, 0]}
+                />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -298,16 +457,47 @@ export function DashboardPage() {
             <ChartContainer config={surgeryTrendConfig} className="h-80 w-full">
               <BarChart data={surgeryTrendData}>
                 <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-                <Bar dataKey="lasek" stackId="sg" fill="var(--color-lasek)" radius={[0, 0, 6, 6]} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatAxisNumber}
+                  width={40}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dashed" />}
+                />
+                <Bar
+                  dataKey="lasek"
+                  stackId="sg"
+                  fill="var(--color-lasek)"
+                  radius={[0, 0, 6, 6]}
+                />
                 <Bar dataKey="lasik" stackId="sg" fill="var(--color-lasik)" />
                 <Bar dataKey="smile" stackId="sg" fill="var(--color-smile)" />
-                <Bar dataKey="smilePro" stackId="sg" fill="var(--color-smilePro)" />
+                <Bar
+                  dataKey="smilePro"
+                  stackId="sg"
+                  fill="var(--color-smilePro)"
+                />
                 <Bar dataKey="icl" stackId="sg" fill="var(--color-icl)" />
-                <Bar dataKey="cataract" stackId="sg" fill="var(--color-cataract)" />
-                <Bar dataKey="other" stackId="sg" fill="var(--color-other)" radius={[6, 6, 0, 0]} />
+                <Bar
+                  dataKey="cataract"
+                  stackId="sg"
+                  fill="var(--color-cataract)"
+                />
+                <Bar
+                  dataKey="other"
+                  stackId="sg"
+                  fill="var(--color-other)"
+                  radius={[6, 6, 0, 0]}
+                />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -320,39 +510,69 @@ export function DashboardPage() {
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>예약 채널 비중</CardTitle>
-            <CardDescription>{CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 시력교정 예약</CardDescription>
+            <CardDescription>
+              {CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 시력교정
+              예약
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {channelData.length === 0 ? (
               <div className="py-16 text-center text-sm text-muted-foreground">
-                {resStats.isLoading ? '불러오는 중…' : resStats.isError ? '조회 실패' : '이번달 예약 없음'}
+                {resStats.isLoading
+                  ? '불러오는 중…'
+                  : resStats.isError
+                    ? '조회 실패'
+                    : '이번달 예약 없음'}
               </div>
             ) : (
               <>
                 <ChartContainer
-                  config={{
-                    inCall: { label: '인콜', color: 'var(--chart-1)' },
-                    tm: { label: 'TM/재상담', color: 'var(--chart-2)' },
-                    naver: { label: '네이버', color: 'var(--chart-5)' },
-                    kakao: { label: '카카오', color: '#eab308' },
-                  } satisfies ChartConfig}
+                  config={
+                    {
+                      inCall: { label: '인콜', color: 'var(--chart-1)' },
+                      tm: { label: 'TM/재상담', color: 'var(--chart-2)' },
+                      naver: { label: '네이버', color: 'var(--chart-5)' },
+                      kakao: { label: '카카오', color: '#eab308' },
+                    } satisfies ChartConfig
+                  }
                   className="mx-auto h-56 w-full max-w-[260px]"
                 >
                   <PieChart>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                    <Pie data={channelData} dataKey="value" nameKey="key"
-                         innerRadius={56} outerRadius={84} paddingAngle={3} strokeWidth={3}>
-                      {channelData.map((d) => <Cell key={d.key} fill={d.fill} />)}
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                    />
+                    <Pie
+                      data={channelData}
+                      dataKey="value"
+                      nameKey="key"
+                      innerRadius={56}
+                      outerRadius={84}
+                      paddingAngle={3}
+                      strokeWidth={3}
+                    >
+                      {channelData.map((d) => (
+                        <Cell key={d.key} fill={d.fill} />
+                      ))}
                     </Pie>
                   </PieChart>
                 </ChartContainer>
                 <div className="grid grid-cols-2 gap-1.5 text-xs">
                   {channelData.map((d) => (
-                    <div key={d.key} className="flex items-center gap-1.5 text-muted-foreground">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.fill }} />
+                    <div
+                      key={d.key}
+                      className="flex items-center gap-1.5 text-muted-foreground"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: d.fill }}
+                      />
                       <span>{d.name}</span>
                       <span className="ml-auto font-medium text-foreground">
-                        {channelTotal ? Math.round((d.value / channelTotal) * 100) : 0}%
+                        {channelTotal
+                          ? Math.round((d.value / channelTotal) * 100)
+                          : 0}
+                        %
                       </span>
                     </div>
                   ))}
@@ -366,7 +586,9 @@ export function DashboardPage() {
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>이번달 시술별 비중</CardTitle>
-            <CardDescription>{CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 기준</CardDescription>
+            <CardDescription>
+              {CURRENT_YEAR}-{String(CURRENT_MONTH).padStart(2, '0')} 기준
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {surgeryTypeData.length === 0 ? (
@@ -375,22 +597,46 @@ export function DashboardPage() {
               </div>
             ) : (
               <>
-                <ChartContainer config={surgeryTrendConfig} className="mx-auto h-56 w-full max-w-[260px]">
+                <ChartContainer
+                  config={surgeryTrendConfig}
+                  className="mx-auto h-56 w-full max-w-[260px]"
+                >
                   <PieChart>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                    <Pie data={surgeryTypeData} dataKey="value" nameKey="key"
-                         innerRadius={56} outerRadius={84} paddingAngle={3} strokeWidth={3}>
-                      {surgeryTypeData.map((d) => <Cell key={d.key} fill={d.fill} />)}
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                    />
+                    <Pie
+                      data={surgeryTypeData}
+                      dataKey="value"
+                      nameKey="key"
+                      innerRadius={56}
+                      outerRadius={84}
+                      paddingAngle={3}
+                      strokeWidth={3}
+                    >
+                      {surgeryTypeData.map((d) => (
+                        <Cell key={d.key} fill={d.fill} />
+                      ))}
                     </Pie>
                   </PieChart>
                 </ChartContainer>
                 <div className="grid grid-cols-2 gap-1.5 text-xs">
                   {surgeryTypeData.map((d) => (
-                    <div key={d.key} className="flex items-center gap-1.5 text-muted-foreground">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.fill }} />
+                    <div
+                      key={d.key}
+                      className="flex items-center gap-1.5 text-muted-foreground"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: d.fill }}
+                      />
                       <span>{d.name}</span>
                       <span className="ml-auto font-medium text-foreground">
-                        {surgeryTypeTotal ? Math.round((d.value / surgeryTypeTotal) * 100) : 0}%
+                        {surgeryTypeTotal
+                          ? Math.round((d.value / surgeryTypeTotal) * 100)
+                          : 0}
+                        %
                       </span>
                     </div>
                   ))}
@@ -408,22 +654,59 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             {outpatient.isLoading ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">불러오는 중…</div>
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                불러오는 중…
+              </div>
             ) : outpatient.isError ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">조회 실패</div>
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                조회 실패
+              </div>
             ) : (
-              <ChartContainer config={outpatientTrendConfig} className="h-56 w-full">
-                <AreaChart data={outpatientTrendData} margin={{ left: 8, right: 8 }}>
+              <ChartContainer
+                config={outpatientTrendConfig}
+                className="h-56 w-full"
+              >
+                <AreaChart
+                  data={outpatientTrendData}
+                  margin={{ left: 8, right: 8 }}
+                >
                   <defs>
-                    <linearGradient id="fill-outpatient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-outpatient)" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="var(--color-outpatient)" stopOpacity={0.04} />
+                    <linearGradient
+                      id="fill-outpatient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-outpatient)"
+                        stopOpacity={0.35}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-outpatient)"
+                        stopOpacity={0.04}
+                      />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={6} />
-                  <YAxis tickLine={false} axisLine={false} tickFormatter={formatAxisNumber} width={40} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={6}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={formatAxisNumber}
+                    width={40}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent />}
+                  />
                   <Area
                     dataKey="outpatient"
                     type="monotone"

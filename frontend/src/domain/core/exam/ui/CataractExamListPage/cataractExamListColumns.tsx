@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react'
+
+import { maskJumin, maskName, maskPhone } from '#shared/utils/mask'
+
 import type { CataractExamListItem } from '../../type/api'
 import { calcAge, dash } from '../../utils/cataractExamListUtils'
-import { maskJumin, maskName, maskPhone } from '#shared/utils/mask'
 
 /** CataractExamListPage 컬럼/뱃지 렌더 설정 (순수 로직은 cataractExamListUtils.ts). */
 
 const EXAM_TYPE_STYLE: Record<string, string> = {
   백내장검사: 'bg-amber-50 text-amber-700',
-  'C_OP전검사': 'bg-amber-50 text-amber-700',
+  C_OP전검사: 'bg-amber-50 text-amber-700',
   'Cataract OP': 'bg-amber-50 text-amber-700',
 }
 const PATIENT_TYPE_STYLE: Record<string, string> = {
@@ -36,14 +38,28 @@ const GRADE_STYLE: Record<string, string> = {
 const cell = {
   badge: (text: string, className?: string): ReactNode =>
     text ? (
-      <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${className ?? 'bg-gray-100 text-gray-600'}`}>{text}</span>
+      <span
+        className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${className ?? 'bg-gray-100 text-gray-600'}`}
+      >
+        {text}
+      </span>
     ) : (
       <span className="text-gray-300">—</span>
     ),
   yn: (v: string): ReactNode =>
-    v === 'Y' ? <span className="font-medium text-red-500">Y</span> : <span className="text-gray-300">—</span>,
+    v === 'Y' ? (
+      <span className="font-medium text-red-500">Y</span>
+    ) : (
+      <span className="text-gray-300">—</span>
+    ),
   truncate: (v: string, w = '14rem'): ReactNode => (
-    <span className="block truncate text-gray-700" style={{ maxWidth: w }} title={v}>{dash(v)}</span>
+    <span
+      className="block truncate text-gray-700"
+      style={{ maxWidth: w }}
+      title={v}
+    >
+      {dash(v)}
+    </span>
   ),
 }
 
@@ -60,57 +76,298 @@ export interface Column {
 }
 
 export const COLUMNS: Column[] = [
-  { key: 'rowNo', label: 'No', align: 'right', min: '3.5rem', render: (_r, rowNumber) => rowNumber.toLocaleString('ko-KR'), csv: (_r, rowNumber) => rowNumber },
+  {
+    key: 'rowNo',
+    label: 'No',
+    align: 'right',
+    min: '3.5rem',
+    render: (_r, rowNumber) => rowNumber.toLocaleString('ko-KR'),
+    csv: (_r, rowNumber) => rowNumber,
+  },
   { key: 'examDate', label: '검사일', align: 'center', min: '6rem' },
-  { key: 'classification', label: '분류', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.classification, CLASSIFICATION_STYLE[r.classification]) },
-  { key: 'patientType', label: '신/구환', align: 'center', min: '4.5rem', render: (r) => cell.badge(r.patientType, PATIENT_TYPE_STYLE[r.patientType]) },
-  { key: 'examType', label: '진료구분', align: 'center', min: '6rem', render: (r) => cell.badge(r.examType, EXAM_TYPE_STYLE[r.examType]) },
+  {
+    key: 'classification',
+    label: '분류',
+    align: 'center',
+    min: '4.5rem',
+    render: (r) =>
+      cell.badge(r.classification, CLASSIFICATION_STYLE[r.classification]),
+  },
+  {
+    key: 'patientType',
+    label: '신/구환',
+    align: 'center',
+    min: '4.5rem',
+    render: (r) => cell.badge(r.patientType, PATIENT_TYPE_STYLE[r.patientType]),
+  },
+  {
+    key: 'examType',
+    label: '진료구분',
+    align: 'center',
+    min: '6rem',
+    render: (r) => cell.badge(r.examType, EXAM_TYPE_STYLE[r.examType]),
+  },
   { key: 'examTime', label: '검사시간', align: 'center', min: '4.5rem' },
-  { key: 'chartNo', label: '차트번호', align: 'center', min: '6rem', text: true },
-  { key: 'name', csv: (r) => maskName(r.name), label: '고객명', align: 'center', min: '5rem', render: (r) => <span className="font-medium text-gray-900">{r.name}</span> },
-  { key: 'nameEng', csv: (r) => maskName(r.nameEng), label: '고객명(영)', align: 'left', min: '7rem' },
-  { key: 'grade', label: '등급', align: 'center', min: '3.5rem', render: (r) => cell.badge(r.grade, GRADE_STYLE[r.grade]) },
+  {
+    key: 'chartNo',
+    label: '차트번호',
+    align: 'center',
+    min: '6rem',
+    text: true,
+  },
+  {
+    key: 'name',
+    csv: (r) => maskName(r.name),
+    label: '고객명',
+    align: 'center',
+    min: '5rem',
+    render: (r) => <span className="font-medium text-gray-900">{r.name}</span>,
+  },
+  {
+    key: 'nameEng',
+    csv: (r) => maskName(r.nameEng),
+    label: '고객명(영)',
+    align: 'left',
+    min: '7rem',
+  },
+  {
+    key: 'grade',
+    label: '등급',
+    align: 'center',
+    min: '3.5rem',
+    render: (r) => cell.badge(r.grade, GRADE_STYLE[r.grade]),
+  },
   { key: 'birth', label: '생년월일', align: 'center', min: '6rem' },
-  { key: 'age', label: '만나이', align: 'right', min: '3.5rem', csv: (r) => calcAge(r.birth), render: (r) => calcAge(r.birth) },
+  {
+    key: 'age',
+    label: '만나이',
+    align: 'right',
+    min: '3.5rem',
+    csv: (r) => calcAge(r.birth),
+    render: (r) => calcAge(r.birth),
+  },
   { key: 'lunar', label: '양/음', align: 'center', min: '3.5rem' },
-  { key: 'phone2', csv: (r) => maskPhone(r.phone2), label: '휴대전화', align: 'left', min: '8rem', text: true },
-  { key: 'phone1', csv: (r) => maskPhone(r.phone1), label: '집전화', align: 'left', min: '7rem', text: true },
-  { key: 'email', label: '이메일', align: 'left', min: '10rem', render: (r) => cell.truncate(r.email, '11rem') },
+  {
+    key: 'phone2',
+    csv: (r) => maskPhone(r.phone2),
+    label: '휴대전화',
+    align: 'left',
+    min: '8rem',
+    text: true,
+  },
+  {
+    key: 'phone1',
+    csv: (r) => maskPhone(r.phone1),
+    label: '집전화',
+    align: 'left',
+    min: '7rem',
+    text: true,
+  },
+  {
+    key: 'email',
+    label: '이메일',
+    align: 'left',
+    min: '10rem',
+    render: (r) => cell.truncate(r.email, '11rem'),
+  },
   { key: 'counselor', label: '상담사', align: 'center', min: '5rem' },
   { key: 'doctor', label: '상담의', align: 'center', min: '5rem' },
   { key: 'optometrist', label: '검안사', align: 'center', min: '5rem' },
-  { key: 'recommendedR', label: '적절IOL(R)', align: 'left', min: '9rem', render: (r) => cell.truncate(r.recommendedR, '9rem') },
-  { key: 'recommendedL', label: '적절IOL(L)', align: 'left', min: '9rem', render: (r) => cell.truncate(r.recommendedL, '9rem') },
-  { key: 'surgeryReserveDate', label: '수술예약일', align: 'center', min: '6rem', render: (r) => dash(r.surgeryReserveDate) },
-  { key: 'surgeryDate', label: '수술일', align: 'center', min: '6rem', render: (r) => dash(r.surgeryDate) },
-  { key: 'surgeryR', label: '수술IOL(R)', align: 'left', min: '9rem', render: (r) => cell.truncate(r.surgeryR, '9rem') },
-  { key: 'surgeryL', label: '수술IOL(L)', align: 'left', min: '9rem', render: (r) => cell.truncate(r.surgeryL, '9rem') },
-  { key: 'surgeon', label: '집도의', align: 'center', min: '5rem', render: (r) => dash(r.surgeon) },
-  { key: 'estimate', label: '견적가', align: 'left', min: '10rem', render: (r) => cell.truncate(r.estimate, '10rem') },
-  { key: 'surgeryRate', label: '영업가율', align: 'center', min: '4.5rem', render: (r) => dash(r.surgeryRate) },
-  { key: 'payment', label: '수납금액', align: 'right', min: '6rem', render: (r) => <span className="tabular-nums">{dash(r.payment)}</span> },
-  { key: 'opImpossible', label: '수술불가', align: 'center', min: '4rem', render: (r) => cell.yn(r.opImpossible) },
-  { key: 'examStop', label: '검사중단', align: 'center', min: '4rem', render: (r) => cell.yn(r.examStop) },
-  { key: 'cancelCode', label: '취소사유', align: 'center', min: '4.5rem', render: (r) => dash(r.cancelCode) },
-  { key: 'cancelMemo', label: '취소메모', align: 'left', min: '8rem', render: (r) => cell.truncate(r.cancelMemo, '8rem') },
-  { key: 'route', label: '예약경로', align: 'center', min: '5rem', render: (r) => dash(r.route) },
-  { key: 'section', label: '섹션', align: 'center', min: '3.5rem', render: (r) => dash(r.section) },
-  { key: 'motiveL', label: '내원동기(대)', align: 'center', min: '6rem', render: (r) => dash(r.motiveL) },
-  { key: 'motiveM', label: '내원동기(중)', align: 'center', min: '6rem', render: (r) => dash(r.motiveM) },
-  { key: 'motiveS', label: '내원동기(세)', align: 'center', min: '6rem', render: (r) => dash(r.motiveS) },
-  { key: 'motiveMemo', label: '동기메모', align: 'left', min: '7rem', render: (r) => cell.truncate(r.motiveMemo, '7rem') },
+  {
+    key: 'recommendedR',
+    label: '적절IOL(R)',
+    align: 'left',
+    min: '9rem',
+    render: (r) => cell.truncate(r.recommendedR, '9rem'),
+  },
+  {
+    key: 'recommendedL',
+    label: '적절IOL(L)',
+    align: 'left',
+    min: '9rem',
+    render: (r) => cell.truncate(r.recommendedL, '9rem'),
+  },
+  {
+    key: 'surgeryReserveDate',
+    label: '수술예약일',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.surgeryReserveDate),
+  },
+  {
+    key: 'surgeryDate',
+    label: '수술일',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.surgeryDate),
+  },
+  {
+    key: 'surgeryR',
+    label: '수술IOL(R)',
+    align: 'left',
+    min: '9rem',
+    render: (r) => cell.truncate(r.surgeryR, '9rem'),
+  },
+  {
+    key: 'surgeryL',
+    label: '수술IOL(L)',
+    align: 'left',
+    min: '9rem',
+    render: (r) => cell.truncate(r.surgeryL, '9rem'),
+  },
+  {
+    key: 'surgeon',
+    label: '집도의',
+    align: 'center',
+    min: '5rem',
+    render: (r) => dash(r.surgeon),
+  },
+  {
+    key: 'estimate',
+    label: '견적가',
+    align: 'left',
+    min: '10rem',
+    render: (r) => cell.truncate(r.estimate, '10rem'),
+  },
+  {
+    key: 'surgeryRate',
+    label: '영업가율',
+    align: 'center',
+    min: '4.5rem',
+    render: (r) => dash(r.surgeryRate),
+  },
+  {
+    key: 'payment',
+    label: '수납금액',
+    align: 'right',
+    min: '6rem',
+    render: (r) => <span className="tabular-nums">{dash(r.payment)}</span>,
+  },
+  {
+    key: 'opImpossible',
+    label: '수술불가',
+    align: 'center',
+    min: '4rem',
+    render: (r) => cell.yn(r.opImpossible),
+  },
+  {
+    key: 'examStop',
+    label: '검사중단',
+    align: 'center',
+    min: '4rem',
+    render: (r) => cell.yn(r.examStop),
+  },
+  {
+    key: 'cancelCode',
+    label: '취소사유',
+    align: 'center',
+    min: '4.5rem',
+    render: (r) => dash(r.cancelCode),
+  },
+  {
+    key: 'cancelMemo',
+    label: '취소메모',
+    align: 'left',
+    min: '8rem',
+    render: (r) => cell.truncate(r.cancelMemo, '8rem'),
+  },
+  {
+    key: 'route',
+    label: '예약경로',
+    align: 'center',
+    min: '5rem',
+    render: (r) => dash(r.route),
+  },
+  {
+    key: 'section',
+    label: '섹션',
+    align: 'center',
+    min: '3.5rem',
+    render: (r) => dash(r.section),
+  },
+  {
+    key: 'motiveL',
+    label: '내원동기(대)',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.motiveL),
+  },
+  {
+    key: 'motiveM',
+    label: '내원동기(중)',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.motiveM),
+  },
+  {
+    key: 'motiveS',
+    label: '내원동기(세)',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.motiveS),
+  },
+  {
+    key: 'motiveMemo',
+    label: '동기메모',
+    align: 'left',
+    min: '7rem',
+    render: (r) => cell.truncate(r.motiveMemo, '7rem'),
+  },
   { key: 'job', label: '직업', align: 'center', min: '6rem' },
   { key: 'nationality', label: '국적', align: 'center', min: '4.5rem' },
   { key: 'insurance', label: '보험사', align: 'center', min: '4.5rem' },
-  { key: 'jumin', csv: (r) => maskJumin(r.jumin), label: '주민번호', align: 'center', min: '8rem', text: true },
+  {
+    key: 'jumin',
+    csv: (r) => maskJumin(r.jumin),
+    label: '주민번호',
+    align: 'center',
+    min: '8rem',
+    text: true,
+  },
   { key: 'zip', label: '우편번호', align: 'center', min: '4.5rem', text: true },
-  { key: 'addr1', label: '주소1', align: 'left', min: '12rem', render: (r) => cell.truncate(r.addr1, '14rem') },
-  { key: 'addr2', label: '주소2', align: 'left', min: '8rem', render: (r) => cell.truncate(r.addr2, '9rem') },
-  { key: 'examRegDate', label: '검사예약등록일', align: 'center', min: '6rem', render: (r) => dash(r.examRegDate) },
-  { key: 'surgeryRegDate', label: '수술예약등록일', align: 'center', min: '6rem', render: (r) => dash(r.surgeryRegDate) },
+  {
+    key: 'addr1',
+    label: '주소1',
+    align: 'left',
+    min: '12rem',
+    render: (r) => cell.truncate(r.addr1, '14rem'),
+  },
+  {
+    key: 'addr2',
+    label: '주소2',
+    align: 'left',
+    min: '8rem',
+    render: (r) => cell.truncate(r.addr2, '9rem'),
+  },
+  {
+    key: 'examRegDate',
+    label: '검사예약등록일',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.examRegDate),
+  },
+  {
+    key: 'surgeryRegDate',
+    label: '수술예약등록일',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.surgeryRegDate),
+  },
   { key: 'lastVisit', label: '최근내원일', align: 'center', min: '6rem' },
-  { key: 'examMemo', label: '검사특이사항', align: 'left', min: '16rem', render: (r) => cell.truncate(r.examMemo, '18rem') },
-  { key: 'memo', label: '고객메모', align: 'left', min: '12rem', render: (r) => cell.truncate(r.memo, '14rem') },
+  {
+    key: 'examMemo',
+    label: '검사특이사항',
+    align: 'left',
+    min: '16rem',
+    render: (r) => cell.truncate(r.examMemo, '18rem'),
+  },
+  {
+    key: 'memo',
+    label: '고객메모',
+    align: 'left',
+    min: '12rem',
+    render: (r) => cell.truncate(r.memo, '14rem'),
+  },
 ]
 
 export const ALIGN: Record<NonNullable<Column['align']>, string> = {

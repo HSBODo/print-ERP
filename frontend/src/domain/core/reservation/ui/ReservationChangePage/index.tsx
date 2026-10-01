@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import { CalendarTab } from './ui/CalendarTab'
 import { DetailTab } from './ui/DetailTab'
 
@@ -11,7 +12,8 @@ const TABS = [
 
 const SUBTITLE: Record<'detail' | 'calendar', string> = {
   detail: `검사예약(시력교정·드림렌즈·백내장) 중 예약일이 1회 이상 바뀐 건 · 취소·미내원 포함 · 등록일 ${DATA_FROM_YEAR}-01 ~`,
-  calendar: '일별 등록 건수 · 예약일이 바뀐 건수 · 변경률. 예약일 기준은 그 날로 잡혀 있는 예약(미래 달 포함), 등록일 기준은 그 날 등록된 예약. 명절 당일 ±5일은 호박색 테두리.',
+  calendar:
+    '일별 등록 건수 · 예약일이 바뀐 건수 · 변경률. 예약일 기준은 그 날로 잡혀 있는 예약(미래 달 포함), 등록일 기준은 그 날 등록된 예약. 명절 당일 ±5일은 호박색 테두리.',
 }
 
 /**

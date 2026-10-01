@@ -1,16 +1,25 @@
 import { useMemo, useState } from 'react'
-import { Select } from '#shared/ui/Select'
+
+import {
+  CURRENT_YEAR,
+  MONTH_OPTIONS,
+  YEAR_OPTIONS,
+} from '#shared/constants/chart'
 import { useIsMobile } from '#shared/hooks/useIsMobile'
+import { Select } from '#shared/ui/Select'
+
 import { useSurgeryRatioComposition } from '../../hooks/useSurgeryRatioComposition'
-import { KpiCardsPanel } from './KpiCardsPanel'
 import { CompositionPanel } from './CompositionPanel'
+import { KpiCardsPanel } from './KpiCardsPanel'
+import { EMPTY_DATA, SURGERY_TYPES, toYearMap } from './surgeryRatioUtils'
 import { TrendPanel } from './TrendPanel'
-import { SURGERY_TYPES, EMPTY_DATA, toYearMap } from './surgeryRatioUtils'
-import { CURRENT_YEAR, MONTH_OPTIONS, YEAR_OPTIONS } from '#shared/constants/chart'
 
 /** 월 Select 의 "연간 전체" 센티널. Select 가 number 만 받으므로 0~11(월 index)과 겹치지 않는 -1을 쓴다. */
 const ALL_MONTHS = -1
-const MONTH_SELECT_OPTIONS = [{ value: ALL_MONTHS, label: '연간 전체' }, ...MONTH_OPTIONS]
+const MONTH_SELECT_OPTIONS = [
+  { value: ALL_MONTHS, label: '연간 전체' },
+  ...MONTH_OPTIONS,
+]
 
 /**
  * 주요 수술별 비중 — KPI · 유형별 점유율 · 상위 수술 월별 추이.
@@ -34,19 +43,31 @@ export function SurgeryRatioPage() {
     const months = dataMap[year] ?? []
     if (month !== ALL_MONTHS) return months[month] ?? EMPTY_DATA
     const summed = { ...EMPTY_DATA }
-    for (const m of months) for (const type of SURGERY_TYPES) summed[type.key] += m[type.key]
+    for (const m of months)
+      for (const type of SURGERY_TYPES) summed[type.key] += m[type.key]
     return summed
   }, [dataMap, year, month])
 
-  const baseLabel = month === ALL_MONTHS ? `${year}년` : `${year}년 ${month + 1}월`
+  const baseLabel =
+    month === ALL_MONTHS ? `${year}년` : `${year}년 ${month + 1}월`
 
   return (
     <div className="space-y-6">
       {/* 예약통계·리스트 툴바와 동일 규격: flat white · px-2 py-1.5 · text-xs · 공유 Select(h-8) */}
       <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-2 py-1.5 text-xs shadow-sm">
         <span className="text-muted-foreground">기준 기간</span>
-        <Select value={year} onChange={setYear} options={YEAR_OPTIONS} title="기준 연도" />
-        <Select value={month} onChange={setMonth} options={MONTH_SELECT_OPTIONS} title="기준 월" />
+        <Select
+          value={year}
+          onChange={setYear}
+          options={YEAR_OPTIONS}
+          title="기준 연도"
+        />
+        <Select
+          value={month}
+          onChange={setMonth}
+          options={MONTH_SELECT_OPTIONS}
+          title="기준 월"
+        />
         <span className="text-muted-foreground">
           KPI·점유율은 {baseLabel} 기준 · 추이는 {year}년 12개월
         </span>

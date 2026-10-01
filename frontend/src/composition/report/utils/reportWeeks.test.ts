@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { weeksOfYear, weeksOfMonth } from './reportWeeks'
+import { describe, expect, it } from 'vitest'
+
+import { weeksOfMonth, weeksOfYear } from './reportWeeks'
 
 describe('weeksOfYear', () => {
   it('ISO 8601 주차를 따른다 (2026년 1주차 = 2025-12-29~2026-01-04)', () => {
@@ -74,7 +75,10 @@ describe('weeksOfMonth', () => {
 
   it('선택한 달의 모든 날짜가 반환된 주차에 덮인다 (2026 기준)', () => {
     for (let m = 1; m <= 12; m++) {
-      const covered = weeksOfMonth(weeks, m).reduce((sum, w) => sum + (w.daysByMonth[m] ?? 0), 0)
+      const covered = weeksOfMonth(weeks, m).reduce(
+        (sum, w) => sum + (w.daysByMonth[m] ?? 0),
+        0,
+      )
       expect(covered).toBe(new Date(Date.UTC(2026, m, 0)).getUTCDate())
     }
   })

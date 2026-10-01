@@ -33,16 +33,16 @@ export const EXAM_TYPE_LABELS: Record<string, string> = {
   '7': '검사OP(Re)',
 }
 
-export const formatExamType = (value: string) => EXAM_TYPE_LABELS[value.trim()] ?? value
+export const formatExamType = (value: string) =>
+  EXAM_TYPE_LABELS[value.trim()] ?? value
 
 export const EXAM_CATEGORY_OPTIONS = ['전체', '시력교정', '드림렌즈']
 
 /** 기본 조회 기간 = 현재 월 1일 ~ 말일. (상수가 아니라 함수 — 탭을 오래 켜둬도 안 낡는다) */
 export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
 export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
-export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 export const SKELETON_ROWS = 50
-export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
+export const QUICK_RANGES: { key: QuickRangeKey; label: string }[] = [
   { key: '1w', label: '1주' },
   { key: '2w', label: '2주' },
   { key: '3w', label: '3주' },
@@ -76,7 +76,7 @@ export const previousMonthValue = () => {
 }
 
 export const toMonthWeekRange = (month: string, week: number) => {
-  const startDay = ((week - 1) * 7) + 1
+  const startDay = (week - 1) * 7 + 1
   const monthEnd = toMonthEnd(month)
   const lastDay = Number(monthEnd.slice(-2))
   const endDay = week === 4 ? lastDay : Math.min(startDay + 6, lastDay)
@@ -87,25 +87,11 @@ export const toMonthWeekRange = (month: string, week: number) => {
   }
 }
 
-export const buildPaginationItems = (currentPage: number, pageMax: number): Array<number | string> => {
-  if (pageMax <= 7) {
-    return Array.from({ length: pageMax }, (_, index) => index + 1)
-  }
-
-  const pages = new Set([1, pageMax, currentPage - 1, currentPage, currentPage + 1])
-  const normalized = [...pages]
-    .filter((page) => page >= 1 && page <= pageMax)
-    .sort((a, b) => a - b)
-
-  return normalized.reduce<Array<number | string>>((items, page, index) => {
-    const prev = normalized[index - 1]
-    if (prev && page - prev > 1) items.push(`ellipsis-${prev}-${page}`)
-    items.push(page)
-    return items
-  }, [])
-}
-
-export const getSortValue = (row: ExamListItem, key: string, originalIndex: number) => {
+export const getSortValue = (
+  row: ExamListItem,
+  key: string,
+  originalIndex: number,
+) => {
   if (key === 'rowNo') return originalIndex
   if (key === 'age') {
     const age = Number(calcAge(row.birth))
@@ -116,7 +102,10 @@ export const getSortValue = (row: ExamListItem, key: string, originalIndex: numb
   return String(row[key as keyof ExamListItem] ?? '').trim()
 }
 
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0
@@ -140,7 +129,13 @@ export const compareSortValue = (a: string | number | null, b: string | number |
  * 분류 정의는 sql/exam/find-cataract-exam-list.sql 참조.
  */
 export const CATARACT_REST_GROUP = '노안/FU/기타'
-export const GROUP_FILTERS = ['전체', '시력교정', '드림렌즈', '백내장', CATARACT_REST_GROUP] as const
+export const GROUP_FILTERS = [
+  '전체',
+  '시력교정',
+  '드림렌즈',
+  '백내장',
+  CATARACT_REST_GROUP,
+] as const
 
 export const matchesExamGroup = (
   row: { examGroup: string; cataractClass: string },
@@ -149,10 +144,16 @@ export const matchesExamGroup = (
   if (selected === '전체') return true
   // '백내장' 은 레포트 검사수와 같은 집합만. cataractExamListUtils.EXAM_COUNT_CLASSES 와 같은 기준.
   if (selected === '백내장') {
-    return row.examGroup === '백내장' && EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    return (
+      row.examGroup === '백내장' &&
+      EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    )
   }
   if (selected === CATARACT_REST_GROUP) {
-    return row.examGroup === '백내장' && !EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    return (
+      row.examGroup === '백내장' &&
+      !EXAM_COUNT_CLASSES.includes(row.cataractClass)
+    )
   }
   return row.examGroup === selected
 }

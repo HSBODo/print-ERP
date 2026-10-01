@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 
-type StatsHeaderColumn = {
+interface StatsHeaderColumn {
   key: PropertyKey
   label: string
 }
@@ -18,13 +18,13 @@ export type StatsHeaderNode<TColumn extends StatsHeaderColumn> =
       className: string
     }
 
-export type StatsHeaderStandaloneCell = {
+export interface StatsHeaderStandaloneCell {
   key: string
   content: ReactNode
   className: string
 }
 
-export type StatsHeaderModel<TColumn extends StatsHeaderColumn> = {
+export interface StatsHeaderModel<TColumn extends StatsHeaderColumn> {
   corner: {
     content: ReactNode
     className: string
@@ -33,7 +33,7 @@ export type StatsHeaderModel<TColumn extends StatsHeaderColumn> = {
   nodes: readonly StatsHeaderNode<TColumn>[]
 }
 
-export type StatsTableHeaderClasses = {
+export interface StatsTableHeaderClasses {
   groupHead: string
   headH: string
   headBottom: string
@@ -42,7 +42,7 @@ export type StatsTableHeaderClasses = {
   leftDivider: string
 }
 
-type HeaderCell = {
+interface HeaderCell {
   key: string
   content: ReactNode
   colSpan?: number
@@ -50,12 +50,16 @@ type HeaderCell = {
   className: string
 }
 
-const leafCount = <TColumn extends StatsHeaderColumn>(node: StatsHeaderNode<TColumn>): number => {
+const leafCount = <TColumn extends StatsHeaderColumn>(
+  node: StatsHeaderNode<TColumn>,
+): number => {
   if (node.kind === 'leaf') return 1
   return node.children.reduce((total, child) => total + leafCount(child), 0)
 }
 
-const headerDepth = <TColumn extends StatsHeaderColumn>(node: StatsHeaderNode<TColumn>): number => {
+const headerDepth = <TColumn extends StatsHeaderColumn>(
+  node: StatsHeaderNode<TColumn>,
+): number => {
   if (node.kind === 'leaf') return 1
   return 1 + Math.max(...node.children.map(headerDepth))
 }
@@ -68,7 +72,11 @@ function buildHeaderRows<TColumn extends StatsHeaderColumn>(
 ): HeaderCell[][] {
   const rows: HeaderCell[][] = Array.from({ length: maxDepth }, () => [])
 
-  const visit = (node: StatsHeaderNode<TColumn>, depth: number, path: string) => {
+  const visit = (
+    node: StatsHeaderNode<TColumn>,
+    depth: number,
+    path: string,
+  ) => {
     if (node.kind === 'group') {
       rows[depth].push({
         key: `${path}:${node.label}`,
@@ -76,7 +84,9 @@ function buildHeaderRows<TColumn extends StatsHeaderColumn>(
         colSpan: leafCount(node),
         className: `${classes.groupHead} ${classes.stickyRows[depth]} ${classes.headH} ${node.className}`,
       })
-      node.children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`))
+      node.children.forEach((child, index) => {
+        visit(child, depth + 1, `${path}.${index}`)
+      })
       return
     }
 
@@ -88,7 +98,9 @@ function buildHeaderRows<TColumn extends StatsHeaderColumn>(
     })
   }
 
-  nodes.forEach((node, index) => visit(node, 0, `${index}`))
+  nodes.forEach((node, index) => {
+    visit(node, 0, `${index}`)
+  })
 
   return rows
 }
@@ -122,17 +134,22 @@ export function ReservationStatsTableHeader<TColumn extends StatsHeaderColumn>({
         acc += tr.getBoundingClientRect().height
       }
       setRowTops((prev) =>
-        prev.length === offsets.length && prev.every((value, i) => value === offsets[i]) ? prev : offsets,
+        prev.length === offsets.length &&
+        prev.every((value, i) => value === offsets[i])
+          ? prev
+          : offsets,
       )
     }
     measure()
     const observer = new ResizeObserver(measure)
-    Array.from(thead.rows).forEach((tr) => observer.observe(tr))
+    for (const tr of thead.rows) observer.observe(tr)
     return () => observer.disconnect()
   }, [maxDepth, rows.length])
 
   const topStyle = (rowIndex: number) =>
-    rowTops[rowIndex] === undefined ? undefined : { top: `${rowTops[rowIndex]}px` }
+    rowTops[rowIndex] === undefined
+      ? undefined
+      : { top: `${rowTops[rowIndex]}px` }
 
   return (
     <thead ref={theadRef}>

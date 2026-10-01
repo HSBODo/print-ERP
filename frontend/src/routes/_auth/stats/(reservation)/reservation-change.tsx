@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { ReservationChangePage } from '#domain/core/reservation/ui/ReservationChangePage'
 
-export const Route = createFileRoute('/_auth/stats/(reservation)/reservation-change')({
+export const Route = createFileRoute(
+  '/_auth/stats/(reservation)/reservation-change',
+)({
   component: ReservationChangePage,
   staticData: {
     page: {

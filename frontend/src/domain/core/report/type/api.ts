@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── 주차 레포트 (ISO 8601 연간 주차) ── */
@@ -7,8 +8,8 @@ import { apiResponseOf } from '#shared/api/utils'
 const count = z.number().nullable()
 
 const weeklyReportItemSchema = z.object({
-  year: z.number(),   // ISO 주차연도
-  week: z.number(),   // 1~53
+  year: z.number(), // ISO 주차연도
+  week: z.number(), // 1~53
   startDate: z.string(),
   endDate: z.string(),
 
@@ -33,7 +34,7 @@ const weeklyReportItemSchema = z.object({
 
   // 비율 계산용 원시값
   visionBooked: count,
-  cataractBooked: count,  // 백내장 예약률 분자 (분모 = cataractExam, 사람 단위 — 2026-08 통일)
+  cataractBooked: count, // 백내장 예약률 분자 (분모 = cataractExam, 사람 단위 — 2026-08 통일)
   oneDayBooked: count,
   stopCount: count,
   examGeneralBase: count,
@@ -57,4 +58,6 @@ const weeklyReportItemSchema = z.object({
 
 export type WeeklyReportItem = z.infer<typeof weeklyReportItemSchema>
 
-export const weeklyReportResponseSchema = apiResponseOf(z.array(weeklyReportItemSchema))
+export const weeklyReportResponseSchema = apiResponseOf(
+  z.array(weeklyReportItemSchema),
+)

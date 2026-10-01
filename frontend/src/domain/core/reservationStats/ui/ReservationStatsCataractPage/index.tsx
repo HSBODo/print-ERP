@@ -1,52 +1,64 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
 import { api } from '#shared/api/client'
-import {
-  CATARACT_EDITABLE_FIELDS,
-  type CataractEditableField,
-  type CataractStatsCellEdit,
-  type CataractStatsDailyCounts,
-} from '../../type/api'
-import { buildReservationStatsDiffCsv, buildReservationStatsDrillDownCsv, buildReservationStatsParityCsv } from '../../utils/reservationStatsDiagnostics'
-import { type ReservationStatsDiff, type ReservationStatsDiffItem, type ReservationStatsDrillDown, type ReservationStatsParity } from '../../type/api'
 import { downloadCsv } from '#shared/utils/csv'
+
 import {
   useReservationStatsCataract,
   useReservationStatsCataractCellEdit,
   useReservationStatsCataractSnapshots,
 } from '../../hooks/useReservationStatsCataract'
-import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
-import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
 import {
-  CATARACT_COLUMNS,
-  DEFAULT_PERIOD,
-  SUMMARY_COLUMNS,
+  CATARACT_EDITABLE_FIELDS,
+  type CataractEditableField,
+  type CataractStatsCellEdit,
+  type CataractStatsDailyCounts,
+  type ReservationStatsDiff,
+  type ReservationStatsDiffItem,
+  type ReservationStatsDrillDown,
+  type ReservationStatsParity,
+} from '../../type/api'
+import {
   buildCataractStatsCsv,
-  getRangeDisplayRowsFromCounts,
-  monthFullLabel,
-  monthShortLabel,
+  CATARACT_COLUMNS,
   type CataractColumnMeta,
   type CataractDisplayRow,
+  DEFAULT_PERIOD,
+  getRangeDisplayRowsFromCounts,
   type Granularity,
+  monthFullLabel,
+  monthShortLabel,
+  SUMMARY_COLUMNS,
 } from '../../utils/reservationStatsCataractData'
-import {
-  ReservationStatsTableHeader,
-  type StatsHeaderModel,
-  type StatsHeaderNode,
-} from '../ReservationStatsTableHeader'
 import {
   isSingleMonthRange,
   periodRange,
   validateRange,
 } from '../../utils/reservationStatsDateRange'
 import {
+  buildReservationStatsDiffCsv,
+  buildReservationStatsDrillDownCsv,
+  buildReservationStatsParityCsv,
+} from '../../utils/reservationStatsDiagnostics'
+import {
   formatChannelValue,
   formatSummaryValue,
 } from '../../utils/reservationStatsFormat'
-import { EditMark, EditableNumberCell } from './ReservationStatsCataractCells'
-import { editMarkTitle } from './ReservationStatsCataractCells.utils'
 import type { SummaryColumnMeta } from '../../utils/reservationStatsSummary'
-import { columnSpan, splitColumnGroups } from '../../utils/reservationStatsTable'
+import {
+  columnSpan,
+  splitColumnGroups,
+} from '../../utils/reservationStatsTable'
+import { ReservationStatsDiagnosticsModal } from '../ReservationStatsDiagnosticsModal'
+import {
+  ReservationStatsTableHeader,
+  type StatsHeaderModel,
+  type StatsHeaderNode,
+} from '../ReservationStatsTableHeader'
+import { ReservationStatsToolbar } from '../ReservationStatsToolbar'
+import { EditableNumberCell, EditMark } from './ReservationStatsCataractCells'
+import { editMarkTitle } from './ReservationStatsCataractCells.utils'
 
 /**
  * 예약통계_백내장 — 인바운드(컨택센터)/아웃바운드(TM)/채팅/온라인/취소 채널과 내원·부도·취소 종합을
@@ -79,10 +91,12 @@ const ONLINE_COLS = CATARACT_CHANNEL_GROUPS.online
 const CANCEL_COLS = CATARACT_CHANNEL_GROUPS.cancel
 
 /* ── 셀 스타일 (시력교정 페이지와 동일 규칙) ── */
-const cellBase = 'border-b border-r border-slate-400 px-2.5 py-1 whitespace-nowrap'
+const cellBase =
+  'border-b border-r border-slate-400 px-2.5 py-1 whitespace-nowrap'
 const numCell = `${cellBase} text-right tabular-nums`
 const labelCell = `${cellBase} text-center`
-const groupHead = 'border-b border-r border-slate-400 px-2.5 py-1.5 text-center font-semibold'
+const groupHead =
+  'border-b border-r border-slate-400 px-2.5 py-1.5 text-center font-semibold'
 const divider = 'border-l-2 border-l-slate-600'
 const leftDivider = 'border-r-2 border-r-slate-600'
 
@@ -186,19 +200,33 @@ const CATARACT_HEADER_NODES: StatsHeaderNode<CataractHeaderColumn>[] = [
   ),
   group('인바운드 (컨택센터)', 'bg-amber-100', [
     ...cataractLeaves(INBOUND_PLAIN),
-    group('백내장', 'bg-rose-50 text-rose-700', cataractLeaves(INBOUND_CATARACT)),
+    group(
+      '백내장',
+      'bg-rose-50 text-rose-700',
+      cataractLeaves(INBOUND_CATARACT),
+    ),
   ]),
   group('아웃바운드 (TM)', 'bg-amber-200', [
-    group('백내장', 'bg-rose-50 text-rose-700', cataractLeaves(OUTBOUND_CATARACT)),
+    group(
+      '백내장',
+      'bg-rose-50 text-rose-700',
+      cataractLeaves(OUTBOUND_CATARACT),
+    ),
     ...cataractLeaves(OUTBOUND_TAIL),
   ]),
   group('채팅 (카카오톡)', 'bg-sky-100', cataractLeaves(KAKAO_COLS)),
   group('온라인예약', 'bg-emerald-100', cataractLeaves(ONLINE_COLS)),
   group('취소', 'bg-slate-100', cataractLeaves(CANCEL_COLS)),
-  group('예약 종합 (내원 · 부도 · 취소)', `${divider} bg-emerald-200`, cataractSummaryLeaves),
+  group(
+    '예약 종합 (내원 · 부도 · 취소)',
+    `${divider} bg-emerald-200`,
+    cataractSummaryLeaves,
+  ),
 ]
 
-const cataractHeaderModel = (period: string): StatsHeaderModel<CataractHeaderColumn> => ({
+const cataractHeaderModel = (
+  period: string,
+): StatsHeaderModel<CataractHeaderColumn> => ({
   corner: {
     content: (
       <>
@@ -241,7 +269,9 @@ const EDITABLE_FIELD_LABEL: Record<CataractEditableField, string> = {
 type ManualEditsByDate = Map<string, Record<string, CataractStatsCellEdit>>
 
 /** dailies → date별 수기 보정 이력(field → 이력) 맵. 마커·툴팁 표시에 사용. */
-function buildManualEditsByDate(dailies: CataractStatsDailyCounts[] | undefined): ManualEditsByDate {
+function buildManualEditsByDate(
+  dailies: CataractStatsDailyCounts[] | undefined,
+): ManualEditsByDate {
   const map: ManualEditsByDate = new Map()
   for (const d of dailies ?? []) {
     if (!d.manualEdits?.length) continue
@@ -262,39 +292,68 @@ export function ReservationStatsCataractPage() {
   const [appliedTo, setAppliedTo] = useState(DEFAULT_RANGE.to)
   const [granularity, setGranularity] = useState<Granularity>('month')
   const [hasSearched, setHasSearched] = useState(false)
-  const [diagnosticDiff, setDiagnosticDiff] = useState<ReservationStatsDiff | null>(null)
-  const [diagnosticDrillDown, setDiagnosticDrillDown] = useState<ReservationStatsDrillDown | null>(null)
-  const [diagnosticParity, setDiagnosticParity] = useState<ReservationStatsParity | null>(null)
+  const [diagnosticDiff, setDiagnosticDiff] =
+    useState<ReservationStatsDiff | null>(null)
+  const [diagnosticDrillDown, setDiagnosticDrillDown] =
+    useState<ReservationStatsDrillDown | null>(null)
+  const [diagnosticParity, setDiagnosticParity] =
+    useState<ReservationStatsParity | null>(null)
 
-  const { dailies, meta, isLoading, isFetching, isError, refetch } = useReservationStatsCataract(
-    appliedFrom,
-    appliedTo,
-    hasSearched,
-  )
+  const { dailies, meta, isLoading, isFetching, isError, refetch } =
+    useReservationStatsCataract(appliedFrom, appliedTo, hasSearched)
   const live = Boolean(dailies && !isError)
   // 미연결/실패(503)는 시드로 폴백하지 않는다(잘못된 수치 표시 방지) — tbody에서 미연결 안내.
-  const rows = !hasSearched || !live ? [] : getRangeDisplayRowsFromCounts(granularity, dailies!, appliedFrom, appliedTo)
+  const rows =
+    !hasSearched || !live
+      ? []
+      : getRangeDisplayRowsFromCounts(
+          granularity,
+          dailies!,
+          appliedFrom,
+          appliedTo,
+        )
   const hasData = rows.length > 0
   const appliedSingleMonth = isSingleMonthRange(appliedFrom, appliedTo)
   const appliedPeriod = appliedFrom.slice(0, 7)
 
-  const { getDiff, isDiffing, getDrillDown, isDrillingDown, getParity, isCheckingParity } =
-    useReservationStatsCataractSnapshots()
+  const {
+    getDiff,
+    isDiffing,
+    getDrillDown,
+    isDrillingDown,
+    getParity,
+    isCheckingParity,
+  } = useReservationStatsCataractSnapshots()
   const { editCell, isEditing } = useReservationStatsCataractCellEdit()
-  const tableViewportClass = granularity === 'month' ? 'max-h-[72vh]' : 'min-h-0 flex-1'
+  const tableViewportClass =
+    granularity === 'month' ? 'max-h-[72vh]' : 'min-h-0 flex-1'
 
   // 셀 손보정: 확정 스냅샷 or 마트(D-1 배치 적재)일 때 허용. 라이브는 저장 대상 없음.
   // 편집은 period(YYYY-MM) 단위 스냅샷 저장이라 단일 월 범위에서만 활성.
-  const cellEditEnabled = live && appliedSingleMonth && (meta?.source === 'SNAPSHOT' || meta?.source === 'MART')
+  const cellEditEnabled =
+    live &&
+    appliedSingleMonth &&
+    (meta?.source === 'SNAPSHOT' || meta?.source === 'MART')
   // 일자별 수기 보정 이력(date → field → 이력) — 마커·툴팁 표시용.
-  const manualEditsByDate = useMemo(() => buildManualEditsByDate(dailies), [dailies])
+  const manualEditsByDate = useMemo(
+    () => buildManualEditsByDate(dailies),
+    [dailies],
+  )
 
-  const handleEditCell = async (date: string, field: CataractEditableField, value: number) => {
+  const handleEditCell = async (
+    date: string,
+    field: CataractEditableField,
+    value: number,
+  ) => {
     try {
       await editCell({ period: appliedPeriod, date, field, value })
-      toast.success('수정 완료', { description: `${date} ${EDITABLE_FIELD_LABEL[field]} → ${value}` })
+      toast.success('수정 완료', {
+        description: `${date} ${EDITABLE_FIELD_LABEL[field]} → ${value}`,
+      })
     } catch (e) {
-      toast.error('수정 실패', { description: e instanceof Error ? e.message : undefined })
+      toast.error('수정 실패', {
+        description: e instanceof Error ? e.message : undefined,
+      })
     }
   }
 
@@ -306,7 +365,8 @@ export function ReservationStatsCataractPage() {
       toast.error('조회 범위 오류', { description: validation.reason })
       return
     }
-    const sameRange = hasSearched && appliedFrom === draftFrom && appliedTo === draftTo
+    const sameRange =
+      hasSearched && appliedFrom === draftFrom && appliedTo === draftTo
     setAppliedFrom(draftFrom)
     setAppliedTo(draftTo)
     setHasSearched(true)
@@ -328,34 +388,50 @@ export function ReservationStatsCataractPage() {
   }
   const handleDownloadCsv = () => {
     if (!hasData) return
-    downloadCsv(`예약통계_백내장_${appliedFrom}_${appliedTo}_${granularity}.csv`, buildCataractStatsCsv(rows))
+    downloadCsv(
+      `예약통계_백내장_${appliedFrom}_${appliedTo}_${granularity}.csv`,
+      buildCataractStatsCsv(rows),
+    )
   }
   const handleRunDiagnostics = async () => {
     // 진단은 확정 스냅샷 vs 라이브 재조회 비교라 period(YYYY-MM) 단위. 여러 달 범위에서는 불가.
     if (!isSingleMonthRange(draftFrom, draftTo)) {
-      toast.error('진단 불가', { description: '진단은 같은 달 범위에서만 가능합니다.' })
+      toast.error('진단 불가', {
+        description: '진단은 같은 달 범위에서만 가능합니다.',
+      })
       return
     }
     const draftPeriod = draftFrom.slice(0, 7)
     try {
       const diff = await getDiff(draftPeriod)
       if (!diff.snapshotExists) {
-        toast.error('진단 불가', { description: `${draftPeriod} 스냅샷이 없습니다.` })
+        toast.error('진단 불가', {
+          description: `${draftPeriod} 스냅샷이 없습니다.`,
+        })
         return
       }
       if (diff.diffCount === 0) {
-        toast.success('진단 완료', { description: '스냅샷과 라이브 재조회값의 차이가 없습니다.' })
+        toast.success('진단 완료', {
+          description: '스냅샷과 라이브 재조회값의 차이가 없습니다.',
+        })
         return
       }
       setDiagnosticDiff(diff)
       setDiagnosticDrillDown(null)
       setDiagnosticParity(null)
-      toast('진단 완료', { description: `${diff.diffCount.toLocaleString('ko-KR')}건의 차이를 확인했습니다.` })
+      toast('진단 완료', {
+        description: `${diff.diffCount.toLocaleString('ko-KR')}건의 차이를 확인했습니다.`,
+      })
     } catch (e) {
-      toast.error('진단 실패', { description: e instanceof Error ? e.message : undefined })
+      toast.error('진단 실패', {
+        description: e instanceof Error ? e.message : undefined,
+      })
     }
   }
-  const drillDownPathFor = (diff: ReservationStatsDiff, item: ReservationStatsDiffItem) =>
+  const drillDownPathFor = (
+    diff: ReservationStatsDiff,
+    item: ReservationStatsDiffItem,
+  ) =>
     api.getUri({
       url: '/stats/reservation-stats-cataract/diagnostics/drill-down',
       params: { period: diff.period, date: item.date, field: item.field },
@@ -372,7 +448,9 @@ export function ReservationStatsCataractPage() {
       })
       setDiagnosticDrillDown(drillDown)
     } catch (e) {
-      toast.error('상세 진단 실패', { description: e instanceof Error ? e.message : undefined })
+      toast.error('상세 진단 실패', {
+        description: e instanceof Error ? e.message : undefined,
+      })
     }
   }
   const handleCheckDiagnosticParity = async (field: string) => {
@@ -384,16 +462,22 @@ export function ReservationStatsCataractPage() {
         parity.mismatchCount === 0
           ? 'daily 집계값과 drill-down 합계가 일치합니다.'
           : `${parity.mismatchCount.toLocaleString('ko-KR')}개 일자에서 차이를 확인했습니다.`
-      toast(parity.mismatchCount === 0 ? 'Parity 정상' : 'Parity 차이 확인', { description })
+      toast(parity.mismatchCount === 0 ? 'Parity 정상' : 'Parity 차이 확인', {
+        description,
+      })
     } catch (e) {
-      toast.error('Parity 검사 실패', { description: e instanceof Error ? e.message : undefined })
+      toast.error('Parity 검사 실패', {
+        description: e instanceof Error ? e.message : undefined,
+      })
     }
   }
   const handleDownloadDiagnosticDiffCsv = () => {
     if (!diagnosticDiff) return
     downloadCsv(
       `예약통계_백내장_진단_${diagnosticDiff.period}.csv`,
-      buildReservationStatsDiffCsv(diagnosticDiff, (item) => drillDownPathFor(diagnosticDiff, item)),
+      buildReservationStatsDiffCsv(diagnosticDiff, (item) =>
+        drillDownPathFor(diagnosticDiff, item),
+      ),
     )
   }
   const handleDownloadDiagnosticDrillDownCsv = () => {
@@ -431,7 +515,9 @@ export function ReservationStatsCataractPage() {
         dataMeta={hasSearched ? meta : undefined}
       />
 
-      <div className={`${tableViewportClass} overflow-auto rounded-md border border-slate-400 bg-white`}>
+      <div
+        className={`${tableViewportClass} overflow-auto rounded-md border border-slate-400 bg-white`}
+      >
         <table className="min-w-[1800px] border-separate border-spacing-0 text-xs">
           <ReservationStatsTableHeader
             model={cataractHeaderModel(appliedPeriod)}
@@ -441,8 +527,13 @@ export function ReservationStatsCataractPage() {
           <tbody>
             {!hasSearched ? (
               <tr>
-                <td colSpan={TOTAL_COL_SPAN} className={`${labelCell} bg-white py-12 text-sm text-muted-foreground`}>
-                  조회 기간(시작일~종료일)을 선택하고 <span className="font-semibold text-slate-700">조회</span> 버튼을 눌러 데이터를 불러오세요.
+                <td
+                  colSpan={TOTAL_COL_SPAN}
+                  className={`${labelCell} bg-white py-12 text-sm text-muted-foreground`}
+                >
+                  조회 기간(시작일~종료일)을 선택하고{' '}
+                  <span className="font-semibold text-slate-700">조회</span>{' '}
+                  버튼을 눌러 데이터를 불러오세요.
                 </td>
               </tr>
             ) : isLoading || isFetching ? (
@@ -460,7 +551,10 @@ export function ReservationStatsCataractPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={TOTAL_COL_SPAN} className={`${labelCell} bg-white py-8 text-sm text-muted-foreground`}>
+                <td
+                  colSpan={TOTAL_COL_SPAN}
+                  className={`${labelCell} bg-white py-8 text-sm text-muted-foreground`}
+                >
                   {isError
                     ? '운영 데이터에 연결되지 않았습니다 (미연결). 잠시 후 다시 조회해주세요.'
                     : appliedSingleMonth
@@ -503,7 +597,9 @@ function SkeletonRows() {
     <>
       {Array.from({ length: SKELETON_ROW_COUNT }).map((_, r) => (
         <tr key={r} className="bg-white">
-          <th className={`${labelCell} ${leftDivider} sticky left-0 z-10 bg-white`}>
+          <th
+            className={`${labelCell} ${leftDivider} sticky left-0 z-10 bg-white`}
+          >
             <div className="mx-auto h-3 w-8 animate-pulse rounded bg-slate-200" />
           </th>
           {Array.from({ length: TOTAL_COL_SPAN - 1 }).map((__, c) => (
@@ -528,12 +624,17 @@ function BodyRow({
   edits: Record<string, CataractStatsCellEdit> | undefined
   cellEditEnabled: boolean
   isEditing: boolean
-  onEditCell: (date: string, field: CataractEditableField, value: number) => void
+  onEditCell: (
+    date: string,
+    field: CataractEditableField,
+    value: number,
+  ) => void
 }) {
   const { channel, summary, tier, muted, weekStart } = row
   const isSunday = row.weekday === '일'
   // 손보정 가능 셀 = 일(day) 행 + 확정 스냅샷 + 미음영(데이터 있는 날).
-  const canEditRow = cellEditEnabled && tier === 'day' && !muted && Boolean(row.date)
+  const canEditRow =
+    cellEditEnabled && tier === 'day' && !muted && Boolean(row.date)
 
   const rowBg =
     tier === 'month'
@@ -551,11 +652,14 @@ function BodyRow({
         : isSunday
           ? 'bg-rose-50 text-rose-600'
           : 'bg-amber-50 text-slate-700'
-  const topBorder = weekStart && tier === 'day' ? 'border-t-2 border-t-slate-400' : ''
+  const topBorder =
+    weekStart && tier === 'day' ? 'border-t-2 border-t-slate-400' : ''
 
   return (
     <tr className={`${rowBg} ${topBorder} transition-colors`}>
-      <th className={`${labelCell} ${leftDivider} sticky left-0 z-10 font-semibold ${leftBg}`}>
+      <th
+        className={`${labelCell} ${leftDivider} sticky left-0 z-10 font-semibold ${leftBg}`}
+      >
         {row.label}
         {row.weekday ? ` (${row.weekday})` : ''}
       </th>
@@ -576,7 +680,9 @@ function BodyRow({
               value={channel[col.key]}
               edit={edit}
               busy={isEditing}
-              onSave={(next) => onEditCell(row.date!, col.key as CataractEditableField, next)}
+              onSave={(next) =>
+                onEditCell(row.date!, col.key as CataractEditableField, next)
+              }
               cellClassName={numCell}
             />
           )
@@ -586,7 +692,9 @@ function BodyRow({
             key={col.key}
             title={edit ? editMarkTitle(edit) : undefined}
             className={`${numCell} ${col.emphasis ? 'text-rose-600' : ''} ${
-              col.key === 'totalSum' ? 'bg-sky-50/60 font-semibold text-sky-700' : ''
+              col.key === 'totalSum'
+                ? 'bg-sky-50/60 font-semibold text-sky-700'
+                : ''
             }`}
           >
             {formatChannelValue(channel[col.key], col.fmt)}
@@ -598,7 +706,10 @@ function BodyRow({
       {SUMMARY_COLUMNS.map((col, i) => {
         if (muted) {
           return (
-            <td key={col.key} className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}>
+            <td
+              key={col.key}
+              className={`${numCell} text-slate-300 ${i === 0 ? divider : ''}`}
+            >
               –
             </td>
           )
@@ -608,10 +719,12 @@ function BodyRow({
           return (
             <EditableNumberCell
               key={col.key}
-              value={summary[col.key] as number}
+              value={summary[col.key]}
               edit={edit}
               busy={isEditing}
-              onSave={(next) => onEditCell(row.date!, col.key as CataractEditableField, next)}
+              onSave={(next) =>
+                onEditCell(row.date!, col.key as CataractEditableField, next)
+              }
               cellClassName={`${numCell} ${i === 0 ? divider : ''} ${col.emphasis ? 'bg-rose-50' : ''}`}
             />
           )

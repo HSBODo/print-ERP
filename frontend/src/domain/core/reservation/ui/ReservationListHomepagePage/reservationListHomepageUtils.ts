@@ -44,7 +44,8 @@ export const formatReserveState = (v: string) =>
   v.trim() === 'Y' ? '예약' : v.trim() === 'N' ? '취소' : ''
 
 /** 당일수술 — SURGERY_TF. Y 일 때만 표기(빈값 990건 존재). */
-export const formatSurgeryTf = (v: string) => (v.trim() === 'Y' ? '당일수술' : '')
+export const formatSurgeryTf = (v: string) =>
+  v.trim() === 'Y' ? '당일수술' : ''
 
 /* ── 필터 옵션 (레거시 화면 동일) ── */
 export const DEVICE_FILTER_OPTIONS = [
@@ -61,9 +62,6 @@ export const RESERVE_FILTER_OPTIONS = [
   { value: 'N', label: '취소' },
 ]
 
-export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200]
-/** 레거시 nPageSize 기본값과 동일. */
-export const DEFAULT_PAGE_SIZE = 20
 export const SKELETON_ROWS = 20
 
 /* ── 기간 ── */
@@ -116,7 +114,10 @@ export const isRangeBeyondSnapshot = (to: string, lastRegDate: string) => {
  * (레거시의 검색조건 select 는 두지 않는다. 제목·내용이 전 행 고정/빈값이라 무의미했고,
  *  이름/휴대폰은 서로 값이 겹치지 않아 필드를 좁힐 실익이 없다.)
  */
-export const matchesSearch = (row: ReservationListHomepageItem, keyword: string) => {
+export const matchesSearch = (
+  row: ReservationListHomepageItem,
+  keyword: string,
+) => {
   const q = keyword.trim().toLowerCase()
   if (!q) return true
 
@@ -125,24 +126,6 @@ export const matchesSearch = (row: ReservationListHomepageItem, keyword: string)
   const phoneHit = digits(q).length > 0 && digits(row.phone).includes(digits(q))
 
   return row.name.toLowerCase().includes(q) || phoneHit
-}
-
-export const buildPaginationItems = (currentPage: number, pageMax: number): Array<number | string> => {
-  if (pageMax <= 7) {
-    return Array.from({ length: pageMax }, (_, index) => index + 1)
-  }
-
-  const pages = new Set([1, pageMax, currentPage - 1, currentPage, currentPage + 1])
-  const normalized = [...pages]
-    .filter((page) => page >= 1 && page <= pageMax)
-    .sort((a, b) => a - b)
-
-  return normalized.reduce<Array<number | string>>((items, page, index) => {
-    const prev = normalized[index - 1]
-    if (prev && page - prev > 1) items.push(`ellipsis-${prev}-${page}`)
-    items.push(page)
-    return items
-  }, [])
 }
 
 export const getSortValue = (
@@ -155,12 +138,16 @@ export const getSortValue = (
   if (key === 'examType') return formatExamType(row.examType)
   if (key === 'isReserve') return formatReserveState(row.isReserve)
   if (key === 'surgeryTf') return formatSurgeryTf(row.surgeryTf)
-  if (key === 'utm') return `${row.utmSource} ${row.utmMedium} ${row.utmCampaign}`.trim()
+  if (key === 'utm')
+    return `${row.utmSource} ${row.utmMedium} ${row.utmCampaign}`.trim()
 
   return String(row[key as keyof ReservationListHomepageItem] ?? '').trim()
 }
 
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0

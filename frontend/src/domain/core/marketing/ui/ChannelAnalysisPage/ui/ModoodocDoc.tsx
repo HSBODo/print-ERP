@@ -1,4 +1,12 @@
-import { Callout, DocHeader, Hi, Section, Sources, Summary, Table } from './docParts'
+import {
+  Callout,
+  DocHeader,
+  Hi,
+  Section,
+  Sources,
+  Summary,
+  Table,
+} from './docParts'
 import { ModoodocMonthlyFunnelChart } from './ModoodocMonthlyFunnelChart'
 
 /**
@@ -23,15 +31,20 @@ export function ModoodocDoc() {
       <ModoodocMonthlyFunnelChart />
 
       <Summary headline="국내 20대 후반 직장인이, 정가가 낮은 스마일을 골라, 플랫폼 할인을 받고 수술한다.">
-        객단가 326만원은 <b className="font-semibold text-white">깎아준 결과가 아니라 이 채널의 고정 특성</b>이다.
-        타채널과의 차이 43만원 중 36만원(84%)이 시술 구성 차이이고,
-        그 구성은 검사 단계의 임상 판단으로 이미 정해져 있다.
+        객단가 326만원은{' '}
+        <b className="font-semibold text-white">
+          깎아준 결과가 아니라 이 채널의 고정 특성
+        </b>
+        이다. 타채널과의 차이 43만원 중 36만원(84%)이 시술 구성 차이이고, 그
+        구성은 검사 단계의 임상 판단으로 이미 정해져 있다.
       </Summary>
 
       <Section no="1" title="누가 오는가">
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">연령 분포</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              연령 분포
+            </p>
             <Table
               head={['연령대', '모두닥', '타채널']}
               rows={[
@@ -44,12 +57,15 @@ export function ModoodocDoc() {
               ]}
             />
             <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-              25–29세에 <Hi>+10%p</Hi> 몰린다. 10대는 3분의 1 수준이라 <Hi>수험생·학생 유입 경로가 아니다</Hi>.
+              25–29세에 <Hi>+10%p</Hi> 몰린다. 10대는 3분의 1 수준이라{' '}
+              <Hi>수험생·학생 유입 경로가 아니다</Hi>.
             </p>
           </div>
 
           <div>
-            <p className="mb-2 text-[12px] font-semibold text-slate-500">직업 (상위 6)</p>
+            <p className="mb-2 text-[12px] font-semibold text-slate-500">
+              직업 (상위 6)
+            </p>
             <Table
               head={['직업', '인원', '비중']}
               rows={[
@@ -62,13 +78,16 @@ export function ModoodocDoc() {
               ]}
             />
             <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-              직장인 비중이 타채널(36.2%)보다 <Hi>9%p 높다</Hi>. 가처분소득이 있는 층이다.
+              직장인 비중이 타채널(36.2%)보다 <Hi>9%p 높다</Hi>. 가처분소득이
+              있는 층이다.
             </p>
           </div>
         </div>
 
         <div className="mt-5">
-          <p className="mb-2 text-[12px] font-semibold text-slate-500">국적 — 외국인 채널이 아니다</p>
+          <p className="mb-2 text-[12px] font-semibold text-slate-500">
+            국적 — 외국인 채널이 아니다
+          </p>
           <Table
             head={['채널', '수술 인원', '외국인 비율']}
             rows={[
@@ -82,16 +101,21 @@ export function ModoodocDoc() {
             ]}
           />
           <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-            모두닥 외국인은 5명(1.1%)으로 전 채널 최저 수준이다. <Hi>국내 채널로 봐야 한다.</Hi>
-            {' '}신환 비율은 94.1%로 타채널과 같아 신규 유치력 자체는 평범하다.
+            모두닥 외국인은 5명(1.1%)으로 전 채널 최저 수준이다.{' '}
+            <Hi>국내 채널로 봐야 한다.</Hi> 신환 비율은 94.1%로 타채널과 같아
+            신규 유치력 자체는 평범하다.
           </p>
           <p className="mt-2 text-[12px] leading-relaxed text-slate-400">
-            ※ 성별은 확인할 수 없다 — CRM(CUSTOM)에 성별 컬럼이 없고 주민번호는 암호화되어 있다.
+            ※ 성별은 확인할 수 없다 — CRM(CUSTOM)에 성별 컬럼이 없고 주민번호는
+            암호화되어 있다.
           </p>
         </div>
       </Section>
 
-      <Section no="2" title="할인은 얼마인가 — 평균 78만원 (할인율 19.2%, 전 채널 최고)">
+      <Section
+        no="2"
+        title="할인은 얼마인가 — 평균 78만원 (할인율 19.2%, 전 채널 최고)"
+      >
         <Table
           head={['할인 항목', '모두닥 적용률', '타채널', '평균 금액']}
           rows={[
@@ -108,12 +132,14 @@ export function ModoodocDoc() {
         />
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <Callout tone="good" title="할인은 전부 채널 정책이다">
-            <Hi>플랫폼</Hi> · <Hi>모두닥</Hi> · <Hi>모두닥(스마일)</Hi> 세 항목이 할인의 83%를 차지한다.
-            모두닥 유입에 자동으로 붙는 값이고 <b>상담사 재량 할인이 아니다</b>.
+            <Hi>플랫폼</Hi> · <Hi>모두닥</Hi> · <Hi>모두닥(스마일)</Hi> 세
+            항목이 할인의 83%를 차지한다. 모두닥 유입에 자동으로 붙는 값이고{' '}
+            <b>상담사 재량 할인이 아니다</b>.
           </Callout>
           <Callout tone="warn" title="계약 조건인지 자체 정책인지는 모른다">
-            <b>플랫폼-70</b>이 모두닥과의 계약상 의무인지 우리가 정한 판촉인지는 데이터로 알 수 없다.
-            계약 조건이라면 할인 조정은 애초에 선택지가 아니다. <b>확인 필요.</b>
+            <b>플랫폼-70</b>이 모두닥과의 계약상 의무인지 우리가 정한 판촉인지는
+            데이터로 알 수 없다. 계약 조건이라면 할인 조정은 애초에 선택지가
+            아니다. <b>확인 필요.</b>
           </Callout>
         </div>
         <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500">
@@ -123,10 +149,15 @@ export function ModoodocDoc() {
 
       <Section no="3" title="객단가가 낮은 이유 — 84%가 시술 구성">
         <p className="mb-3 text-[13px] leading-relaxed text-slate-600">
-          최종 수납액만 보면 "깎아줬나 싼 걸 했나"를 구분할 수 없다.
-          검사 견적(<code className="rounded bg-slate-100 px-1 text-[12px]">EXAM.OP_ESTIMATE</code>)에
-          정가와 할인이 <code className="rounded bg-slate-100 px-1 text-[12px]">SMILE_300/플랫폼-70</code> 형태로
-          들어 있어 둘을 갈랐다.
+          최종 수납액만 보면 "깎아줬나 싼 걸 했나"를 구분할 수 없다. 검사 견적(
+          <code className="rounded bg-slate-100 px-1 text-[12px]">
+            EXAM.OP_ESTIMATE
+          </code>
+          )에 정가와 할인이{' '}
+          <code className="rounded bg-slate-100 px-1 text-[12px]">
+            SMILE_300/플랫폼-70
+          </code>{' '}
+          형태로 들어 있어 둘을 갈랐다.
         </p>
         <Table
           head={['', '모두닥', '인콜(최대 채널)', '차이']}
@@ -137,7 +168,9 @@ export function ModoodocDoc() {
             ['할인율', '19.2%', '16.1%', '+3.1%p'],
           ]}
         />
-        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">정가가 낮은 원인 — 스마일 편중</p>
+        <p className="mb-2 mt-4 text-[12px] font-semibold text-slate-500">
+          정가가 낮은 원인 — 스마일 편중
+        </p>
         <Table
           head={['시술', '모두닥 비중', '전체 비중', '평균 단가']}
           rows={[
@@ -149,8 +182,9 @@ export function ModoodocDoc() {
           ]}
         />
         <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-          245만짜리 스마일이 절반이고, 398만짜리 스마일프로는 전체보다 12%p 적다.
-          같은 시술 안에서는 오히려 스마일프로를 <Hi>405만</Hi>(전체 398만)으로 더 받았다.
+          245만짜리 스마일이 절반이고, 398만짜리 스마일프로는 전체보다 12%p
+          적다. 같은 시술 안에서는 오히려 스마일프로를 <Hi>405만</Hi>(전체
+          398만)으로 더 받았다.
         </p>
       </Section>
 
@@ -158,7 +192,8 @@ export function ModoodocDoc() {
         <div className="grid gap-3 lg:grid-cols-2">
           <Callout tone="bad" title="철회 — 「스마일 → 스마일프로 상담 전환」">
             <p className="mb-2">
-              한 번 제안했다가 <b>데이터로 반박된 안</b>이다. 추천 시술과 실제 시술을 3,727건 대조한 결과
+              한 번 제안했다가 <b>데이터로 반박된 안</b>이다. 추천 시술과 실제
+              시술을 3,727건 대조한 결과
               <b> 하향 변경이 단 한 건도 없었다.</b>
             </p>
             <div className="rounded-lg bg-white/70 p-2.5">
@@ -172,8 +207,10 @@ export function ModoodocDoc() {
               />
             </div>
             <p className="mt-2">
-              전원이 추천받은 대로 수술했다. 시술 구성은 <b>검사 단계의 임상 판단(각막 두께·도수·난시)</b>으로
-              이미 결정되며 상담으로 옮길 여지가 없다. 임상 결정을 영업 변수로 다룬 잘못된 제안이었다.
+              전원이 추천받은 대로 수술했다. 시술 구성은{' '}
+              <b>검사 단계의 임상 판단(각막 두께·도수·난시)</b>으로 이미
+              결정되며 상담으로 옮길 여지가 없다. 임상 결정을 영업 변수로 다룬
+              잘못된 제안이었다.
             </p>
           </Callout>
 
@@ -198,28 +235,46 @@ export function ModoodocDoc() {
 
       <Section no="5" title="그래서 무엇을 판단해야 하나">
         <p className="text-[14px] font-bold leading-relaxed text-slate-900">
-          객단가는 조정 대상이 아니라 이 채널의 고정 특성이다. 남는 질문은 하나다.
+          객단가는 조정 대상이 아니라 이 채널의 고정 특성이다. 남는 질문은
+          하나다.
         </p>
         <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <p className="text-[15px] font-bold text-slate-900">모두닥 광고비를 쓸 만한가?</p>
+          <p className="text-[15px] font-bold text-slate-900">
+            모두닥 광고비를 쓸 만한가?
+          </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">
-            326만 × 475명 = <Hi>약 15.5억</Hi> 매출. 시력교정은 렌즈 원가가 없어 공헌이익률이 높다.
-            객단가가 43만 낮아도 물량이 받쳐주면 충분히 남을 수 있다.
+            326만 × 475명 = <Hi>약 15.5억</Hi> 매출. 시력교정은 렌즈 원가가 없어
+            공헌이익률이 높다. 객단가가 43만 낮아도 물량이 받쳐주면 충분히 남을
+            수 있다.
           </p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
-            객단가를 올리려 하지 말고 <Hi>CAC 대비 공헌이익</Hi>으로 판단해야 한다.
-            광고비만 입력되면 <b>채널별 수익성</b> 화면에서 바로 나온다.
+            객단가를 올리려 하지 말고 <Hi>CAC 대비 공헌이익</Hi>으로 판단해야
+            한다. 광고비만 입력되면 <b>채널별 수익성</b> 화면에서 바로 나온다.
           </p>
         </div>
       </Section>
 
       <Sources
         items={[
-          <>기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 모두 통과한 사람이다(<b>예약 퍼널</b>과 같은 정의).</>,
-          <>정가·할인은 검사 시점 <b>견적</b>이라 실수납액과 편차가 있다. 매출 분석에는 수납액을, 가격 정책 분석에는 견적을 쓴다.</>,
-          <>견적 파싱 커버리지는 시력교정 100%(6,349건). 백내장은 형식이 달라 빠지지만 예약 퍼널에 1건뿐이라 영향이 없다.</>,
-          <>할인 컬럼(COSTPRICE.DicPrc 등)은 사실상 비어 있어(0.09%) 쓰지 않았다. 할인은 견적 텍스트에서 파싱했다.</>,
-          <>성별 미확인. 광고비 미입력 상태라 CAC·ROAS 는 아직 계산할 수 없다.</>,
+          <>
+            기간 {PERIOD}. 인원은 예약 → 검사 → 수술등록 → 수술완료를 모두
+            통과한 사람이다(<b>예약 퍼널</b>과 같은 정의).
+          </>,
+          <>
+            정가·할인은 검사 시점 <b>견적</b>이라 실수납액과 편차가 있다. 매출
+            분석에는 수납액을, 가격 정책 분석에는 견적을 쓴다.
+          </>,
+          <>
+            견적 파싱 커버리지는 시력교정 100%(6,349건). 백내장은 형식이 달라
+            빠지지만 예약 퍼널에 1건뿐이라 영향이 없다.
+          </>,
+          <>
+            할인 컬럼(COSTPRICE.DicPrc 등)은 사실상 비어 있어(0.09%) 쓰지
+            않았다. 할인은 견적 텍스트에서 파싱했다.
+          </>,
+          <>
+            성별 미확인. 광고비 미입력 상태라 CAC·ROAS 는 아직 계산할 수 없다.
+          </>,
         ]}
       />
     </div>

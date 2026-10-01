@@ -1,5 +1,6 @@
-import type { ReservationChangeDailyCount } from '../../../type/api'
 import { addDays, isoWeek, toIsoDate } from '#shared/utils/isoWeek'
+
+import type { ReservationChangeDailyCount } from '../../../type/api'
 import { holidayDayLabel, holidayLabel } from './reservationChangeModel'
 
 /**
@@ -10,8 +11,15 @@ import { holidayDayLabel, holidayLabel } from './reservationChangeModel'
 
 export type CalendarBasis = 'reg' | 'rsv'
 export type CalendarMetric = 'total' | 'changed' | 'rate'
-export const BASIS_LABEL: Record<CalendarBasis, string> = { reg: '등록일 기준', rsv: '예약일 기준' }
-export const METRIC_LABEL: Record<CalendarMetric, string> = { total: '등록 건수', changed: '변경 건수', rate: '변경률 %' }
+export const BASIS_LABEL: Record<CalendarBasis, string> = {
+  reg: '등록일 기준',
+  rsv: '예약일 기준',
+}
+export const METRIC_LABEL: Record<CalendarMetric, string> = {
+  total: '등록 건수',
+  changed: '변경 건수',
+  rate: '변경률 %',
+}
 
 export interface DayCell {
   date: string
@@ -74,7 +82,11 @@ export function calendarRange(yearMonth: string): { from: string; to: string } {
   return { from: toIsoDate(from), to: toIsoDate(to) }
 }
 
-export function buildCalendar(yearMonth: string, rows: ReservationChangeDailyCount[], branch: string): CalendarView {
+export function buildCalendar(
+  yearMonth: string,
+  rows: ReservationChangeDailyCount[],
+  branch: string,
+): CalendarView {
   const byDay = new Map<string, { total: number; changed: number }>()
   for (const r of rows) {
     if (branch && r.branch !== branch) continue
@@ -102,9 +114,15 @@ export function buildCalendar(yearMonth: string, rows: ReservationChangeDailyCou
       const inMonth = date.slice(0, 7) === yearMonth
       const rate = rateOf(counts.changed, counts.total)
       days.push({
-        date, dayOfMonth: cursor.getDate(), inMonth, weekday: i,
-        total: counts.total, changed: counts.changed, rate,
-        holiday: holidayLabel(date), holidayDay: holidayDayLabel(date),
+        date,
+        dayOfMonth: cursor.getDate(),
+        inMonth,
+        weekday: i,
+        total: counts.total,
+        changed: counts.changed,
+        rate,
+        holiday: holidayLabel(date),
+        holidayDay: holidayDayLabel(date),
       })
       if (inMonth) {
         weekTotal += counts.total
@@ -117,16 +135,40 @@ export function buildCalendar(yearMonth: string, rows: ReservationChangeDailyCou
     }
     const monday = days[0].date
     const { year, week } = isoWeek(new Date(monday + 'T00:00:00'))
-    weeks.push({ key: monday, isoYear: year, isoWeek: week, days, total: weekTotal, changed: weekChanged, rate: rateOf(weekChanged, weekTotal) })
+    weeks.push({
+      key: monday,
+      isoYear: year,
+      isoWeek: week,
+      days,
+      total: weekTotal,
+      changed: weekChanged,
+      rate: rateOf(weekChanged, weekTotal),
+    })
     monthTotal += weekTotal
     monthChanged += weekChanged
   }
 
-  return { yearMonth, weeks, total: monthTotal, changed: monthChanged, rate: rateOf(monthChanged, monthTotal), max }
+  return {
+    yearMonth,
+    weeks,
+    total: monthTotal,
+    changed: monthChanged,
+    rate: rateOf(monthChanged, monthTotal),
+    max,
+  }
 }
 
-export const metricValue = (cell: { total: number; changed: number; rate: number | null }, metric: CalendarMetric): number | null =>
-  metric === 'rate' ? cell.rate : cell[metric]
+export const metricValue = (
+  cell: { total: number; changed: number; rate: number | null },
+  metric: CalendarMetric,
+): number | null => (metric === 'rate' ? cell.rate : cell[metric])
 
-export const formatMetric = (value: number | null, metric: CalendarMetric): string =>
-  value === null ? '' : metric === 'rate' ? `${value.toFixed(1)}%` : value.toLocaleString('ko-KR')
+export const formatMetric = (
+  value: number | null,
+  metric: CalendarMetric,
+): string =>
+  value === null
+    ? ''
+    : metric === 'rate'
+      ? `${value.toFixed(1)}%`
+      : value.toLocaleString('ko-KR')

@@ -54,15 +54,22 @@ export interface ChannelRow {
   cancelKakao: number // 카톡
 }
 
-export const computeSystemChannelRow = (counts: SystemStatsCounts, label: string): ChannelRow => {
+export const computeSystemChannelRow = (
+  counts: SystemStatsCounts,
+  label: string,
+): ChannelRow => {
   // 네이버 유효/예약은 정의상 카운트(유효=접수−거절=RESERVATION네이버, 예약=비취소분)라 음수가 날 수 없지만,
   // 데이터 이상치 대비로 0 클램프만 유지(방어적, 정상 데이터엔 무영향).
   const naverValid = Math.max(0, counts.naverValid)
   const naverReservation = Math.max(0, counts.naverReservation)
   // 총예약 = 각 채널 예약수 합(인입콜 제외) — CH04+CH07+CH10+CH12+CH16+CH18
   const totalReservation =
-    counts.callReservation + counts.tmReservation + counts.tmRecounselReservation +
-    counts.homeReservation + naverReservation + counts.kakaoReservation
+    counts.callReservation +
+    counts.tmReservation +
+    counts.tmRecounselReservation +
+    counts.homeReservation +
+    naverReservation +
+    counts.kakaoReservation
   // 채널별 예약율 = 해당 채널 예약수 ÷ 총예약 (엑셀 RSS 기준, 각 채널의 예약 비중).
   return {
     label,

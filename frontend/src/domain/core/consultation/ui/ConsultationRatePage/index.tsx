@@ -1,16 +1,18 @@
 import { useMemo } from 'react'
+
+import { useIsMobile } from '#shared/hooks/useIsMobile'
 import { FilterBar } from '#shared/ui/FilterBar'
 import { useFilterBar } from '#shared/ui/FilterBar/useFilterBar'
 import { StatsGrid } from '#shared/ui/StatsGrid'
 import { StatsStack } from '#shared/ui/StatsStack'
-import { useIsMobile } from '#shared/hooks/useIsMobile'
+
+import { useConsultationRateComposition } from '../../hooks/useConsultationRateComposition'
 import { useConsultationRateKpi } from '../../hooks/useConsultationRateKpi'
 import { useConsultationRateTrend } from '../../hooks/useConsultationRateTrend'
-import { useConsultationRateComposition } from '../../hooks/useConsultationRateComposition'
+import { toDataMap } from './consultationRateUtils'
 import { KpiCardsPanel } from './KpiCardsPanel'
 import { MonthComparePanel } from './MonthComparePanel'
 import { YearTrendPanel } from './YearTrendPanel'
-import { toDataMap } from './consultationRateUtils'
 
 export function ConsultationRatePage() {
   const filter = useFilterBar()
@@ -18,10 +20,8 @@ export function ConsultationRatePage() {
   const { mode, periods, years } = filter
 
   const queryYears = useMemo(() => {
-    const set = new Set<number>()
-    if (mode === 'month') periods.forEach((p) => set.add(p.year))
-    else years.forEach((y) => set.add(y))
-    return [...set].sort()
+    const source = mode === 'month' ? periods.map((p) => p.year) : years
+    return [...new Set(source)].sort((a, b) => a - b)
   }, [mode, periods, years])
 
   const kpiQuery = useConsultationRateKpi(queryYears)

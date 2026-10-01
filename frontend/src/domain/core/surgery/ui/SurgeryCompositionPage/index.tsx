@@ -1,18 +1,20 @@
 import { useMemo, useState } from 'react'
+
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import { MonthPicker } from '#shared/ui/MonthPicker'
+
 import { useSurgeryDaily } from '../../hooks/useSurgeryDaily'
 import {
-  COLS,
-  GRANULARITIES,
   buildSurgeryRows,
+  COLS,
   currentMonthValue,
+  GRANULARITIES,
+  type Granularity,
   monthRange,
   queryRange,
+  type SurgeryRow,
   toneClass,
   yearOf,
-  type Granularity,
-  type SurgeryRow,
 } from './surgeryCompositionUtils'
 
 /* ── 헤더 스타일 ── */
@@ -32,29 +34,77 @@ function CompositionHead() {
   return (
     <thead>
       <tr className="border-y border-border">
-        <th rowSpan={3} className={`${TH} bg-muted/40`}>구분</th>
-        <th rowSpan={3} className={`${THL} bg-slate-100`}>합계</th>
-        <th colSpan={22} className={`${THL} border-b bg-blue-100 text-blue-800`}>시력교정수술</th>
-        <th colSpan={4} className={`${THL} border-b bg-violet-100 text-violet-800`}>백내장</th>
+        <th rowSpan={3} className={`${TH} bg-muted/40`}>
+          구분
+        </th>
+        <th rowSpan={3} className={`${THL} bg-slate-100`}>
+          합계
+        </th>
+        <th
+          colSpan={22}
+          className={`${THL} border-b bg-blue-100 text-blue-800`}
+        >
+          시력교정수술
+        </th>
+        <th
+          colSpan={4}
+          className={`${THL} border-b bg-violet-100 text-violet-800`}
+        >
+          백내장
+        </th>
       </tr>
       <tr className="border-b border-border">
-        <th rowSpan={2} className={`${THL_B} text-blue-800`}>시력교정</th>
-        <th rowSpan={2} className={TH_B}>스마일</th>
-        <th rowSpan={2} className={TH_B}>스마일프로</th>
-        <th colSpan={6} className={`${THL_B} border-b`}>PIOL</th>
-        <th rowSpan={2} className={THL_Y} title="프레스비욘드 (노안 레이저)">PRESBYOND</th>
-        <th rowSpan={2} className={THL_B}>라식계</th>
-        <th colSpan={3} className={`${THL_B} border-b`}>라섹계</th>
-        <th colSpan={3} className={`${THL_B} border-b`}>재수술</th>
-        <th rowSpan={2} className={THL_B}>엑스트라</th>
-        <th rowSpan={2} className={TH_B}>퍼스널</th>
-        <th rowSpan={2} className={TH_B}>콘트라</th>
-        <th rowSpan={2} className={TH_B}>웨이브비전</th>
-        <th rowSpan={2} className={TH_B}>모노비전</th>
-        <th rowSpan={2} className={`${THL} bg-violet-100 text-violet-800`}>수술수</th>
-        <th rowSpan={2} className={TH_V}>다초점</th>
-        <th rowSpan={2} className={TH_V}>프리미엄</th>
-        <th rowSpan={2} className={TH_V}>단초점</th>
+        <th rowSpan={2} className={`${THL_B} text-blue-800`}>
+          시력교정
+        </th>
+        <th rowSpan={2} className={TH_B}>
+          스마일
+        </th>
+        <th rowSpan={2} className={TH_B}>
+          스마일프로
+        </th>
+        <th colSpan={6} className={`${THL_B} border-b`}>
+          PIOL
+        </th>
+        <th rowSpan={2} className={THL_Y} title="프레스비욘드 (노안 레이저)">
+          PRESBYOND
+        </th>
+        <th rowSpan={2} className={THL_B}>
+          라식계
+        </th>
+        <th colSpan={3} className={`${THL_B} border-b`}>
+          라섹계
+        </th>
+        <th colSpan={3} className={`${THL_B} border-b`}>
+          재수술
+        </th>
+        <th rowSpan={2} className={THL_B}>
+          엑스트라
+        </th>
+        <th rowSpan={2} className={TH_B}>
+          퍼스널
+        </th>
+        <th rowSpan={2} className={TH_B}>
+          콘트라
+        </th>
+        <th rowSpan={2} className={TH_B}>
+          웨이브비전
+        </th>
+        <th rowSpan={2} className={TH_B}>
+          모노비전
+        </th>
+        <th rowSpan={2} className={`${THL} bg-violet-100 text-violet-800`}>
+          수술수
+        </th>
+        <th rowSpan={2} className={TH_V}>
+          다초점
+        </th>
+        <th rowSpan={2} className={TH_V}>
+          프리미엄
+        </th>
+        <th rowSpan={2} className={TH_V}>
+          단초점
+        </th>
       </tr>
       <tr className="border-b border-border text-muted-foreground">
         {/* 유형별이 환자당 대표유형 1건만 세므로 이 합계는 유형별 값의 합과 일치한다. */}
@@ -98,13 +148,23 @@ function leftCellClass(row: SurgeryRow): string {
 function DataRow({ row }: { row: SurgeryRow }) {
   const muted = Boolean(row.muted)
   const rowBg = muted ? 'bg-slate-50 text-slate-400' : ROW_BG[row.tier]
-  const topBorder = row.tier === 'day' && row.weekStart ? 'border-t-2 border-t-slate-300' : ''
+  const topBorder =
+    row.tier === 'day' && row.weekStart ? 'border-t-2 border-t-slate-300' : ''
 
   return (
-    <tr className={`${rowBg} ${topBorder} border-b border-border transition-colors`}>
-      <td className={`px-1.5 py-1.5 font-semibold whitespace-nowrap ${leftCellClass(row)}`}>
-        {row.label}{row.weekday ? ` (${row.weekday})` : ''}
-        {row.range ? <span className="ml-1 text-[9px] font-normal opacity-70">{row.range}</span> : null}
+    <tr
+      className={`${rowBg} ${topBorder} border-b border-border transition-colors`}
+    >
+      <td
+        className={`px-1.5 py-1.5 font-semibold whitespace-nowrap ${leftCellClass(row)}`}
+      >
+        {row.label}
+        {row.weekday ? ` (${row.weekday})` : ''}
+        {row.range ? (
+          <span className="ml-1 text-[9px] font-normal opacity-70">
+            {row.range}
+          </span>
+        ) : null}
       </td>
       {COLS.map((c, i) => (
         <td
@@ -119,7 +179,10 @@ function DataRow({ row }: { row: SurgeryRow }) {
 }
 
 /** 연도 선택 목록 — 올해부터 4년 전까지. */
-const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => yearOf(currentMonthValue()) - i)
+const YEAR_OPTIONS = Array.from(
+  { length: 5 },
+  (_, i) => yearOf(currentMonthValue()) - i,
+)
 
 export function SurgeryCompositionPage() {
   const [month, setMonth] = useState<string>(currentMonthValue)
@@ -128,23 +191,33 @@ export function SurgeryCompositionPage() {
   // 주차(yearWeek)만 그 해 전체(1주차 월요일~마지막 주차 일요일)를 조회한다.
   const isYearWeek = granularity === 'yearWeek'
   const year = yearOf(month)
-  const { from, to } = useMemo(() => queryRange(granularity, month), [granularity, month])
+  const { from, to } = useMemo(
+    () => queryRange(granularity, month),
+    [granularity, month],
+  )
   const { lastDay } = useMemo(() => monthRange(month), [month])
-  const { dataMap, meta, latestDate, isLoading, isError } = useSurgeryDaily(from, to, true)
+  const { dataMap, meta, latestDate, isLoading, isError } = useSurgeryDaily(
+    from,
+    to,
+    true,
+  )
 
   const rows = useMemo(
     () => buildSurgeryRows(granularity, dataMap, month, lastDay),
     [granularity, dataMap, month, lastDay],
   )
 
-  const granularityLabel = GRANULARITIES.find((g) => g.key === granularity)?.label ?? ''
+  const granularityLabel =
+    GRANULARITIES.find((g) => g.key === granularity)?.label ?? ''
   const periodLabel = isYearWeek ? `${year}년` : month
 
   return (
     <div className="space-y-4">
       {/* 조회 영역 — 조회 월(주차는 연도) + 조회 단위(월별/주차/주별/일별/전체) */}
       <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/70 bg-white px-3 py-2 shadow-sm">
-        <span className="text-sm font-semibold text-foreground">{isYearWeek ? '조회 연도' : '조회 월'}</span>
+        <span className="text-sm font-semibold text-foreground">
+          {isYearWeek ? '조회 연도' : '조회 월'}
+        </span>
         {isYearWeek ? (
           <select
             aria-label="조회 연도"
@@ -153,7 +226,9 @@ export function SurgeryCompositionPage() {
             className="h-9 w-[9rem] rounded-md border border-border/80 bg-white px-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           >
             {YEAR_OPTIONS.map((y) => (
-              <option key={y} value={y}>{y}년</option>
+              <option key={y} value={y}>
+                {y}년
+              </option>
             ))}
           </select>
         ) : (
@@ -176,7 +251,9 @@ export function SurgeryCompositionPage() {
               aria-pressed={granularity === g.key}
               onClick={() => setGranularity(g.key)}
               className={`rounded px-3 text-sm font-medium transition-colors ${
-                granularity === g.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                granularity === g.key
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               {g.label}
@@ -201,26 +278,41 @@ export function SurgeryCompositionPage() {
             마트{latestDate ? ` · 최종 ${latestDate}` : ''}
           </span>
         ) : meta?.source === 'LIVE' ? (
-          <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700" title="소스 라이브 조회(마트 미적재 폴백)">
+          <span
+            className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700"
+            title="소스 라이브 조회(마트 미적재 폴백)"
+          >
             라이브
           </span>
         ) : null}
 
         <div className="ml-auto flex items-center gap-3 text-sm">
-          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-blue-600" />시력교정수술</span>
-          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-violet-600" />백내장</span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-sm bg-blue-600" />
+            시력교정수술
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-sm bg-violet-600" />
+            백내장
+          </span>
         </div>
       </div>
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>수술별 비중 (시술별 · {periodLabel} · {granularityLabel})</CardTitle>
+          <CardTitle>
+            수술별 비중 (시술별 · {periodLabel} · {granularityLabel})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isError ? (
-            <div className="flex h-40 items-center justify-center text-sm text-red-500">데이터를 불러오지 못했습니다.</div>
+            <div className="flex h-40 items-center justify-center text-sm text-red-500">
+              데이터를 불러오지 못했습니다.
+            </div>
           ) : isLoading ? (
-            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">불러오는 중…</div>
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              불러오는 중…
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1900px] border-collapse text-center text-[10px]">

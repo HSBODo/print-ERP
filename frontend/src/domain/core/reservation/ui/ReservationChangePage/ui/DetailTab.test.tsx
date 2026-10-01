@@ -1,16 +1,19 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // 훅 mock — 실제 네트워크·TanStack Query 없이 컴포넌트 자체 렌더만 검증한다.
 vi.mock('../../../hooks/useReservationChange', () => ({
   useReservationChange: vi.fn(),
 }))
-vi.mock('../utils/reservationChangeCsv', () => ({ downloadReservationChangeCsv: vi.fn() }))
+vi.mock('../utils/reservationChangeCsv', () => ({
+  downloadReservationChangeCsv: vi.fn(),
+}))
 
-import { DetailTab } from './DetailTab'
 import { useReservationChange } from '../../../hooks/useReservationChange'
+import { DetailTab } from './DetailTab'
 
 const mockUseReservationChange = vi.mocked(useReservationChange)
 
@@ -39,21 +42,35 @@ describe('DetailTab · 예약 변경이력 상세 탭', () => {
   })
 
   it('로딩 상태에서 조회 버튼이 비활성화된다', () => {
-    mockUseReservationChange.mockReturnValue({ rows: [], isLoading: true, isFetching: false, isError: false })
+    mockUseReservationChange.mockReturnValue({
+      rows: [],
+      isLoading: true,
+      isFetching: false,
+      isError: false,
+    })
     render(<DetailTab />)
     expect(screen.getByRole('button', { name: /조회/ })).toBeDisabled()
   })
 
   it('에러 상태에서 실패 메시지가 노출된다', () => {
-    mockUseReservationChange.mockReturnValue({ rows: [], isLoading: false, isFetching: false, isError: true })
+    mockUseReservationChange.mockReturnValue({
+      rows: [],
+      isLoading: false,
+      isFetching: false,
+      isError: true,
+    })
     render(<DetailTab />)
-    expect(screen.getByText(/예약 변경이력을 불러오지 못했습니다/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/예약 변경이력을 불러오지 못했습니다/),
+    ).toBeInTheDocument()
   })
 
   it('빈 결과 시 초기화 안내 메시지가 나타난다', () => {
     render(<DetailTab />)
     // rows.length === 0 → 마트 적재 여부 확인 문구
-    expect(screen.getByText(/조회 범위에 변경된 예약이 없습니다/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/조회 범위에 변경된 예약이 없습니다/),
+    ).toBeInTheDocument()
   })
 
   it('초기화 버튼 클릭 시 훅 재호출 인자가 기본값(현재 연도)으로 돌아간다', () => {

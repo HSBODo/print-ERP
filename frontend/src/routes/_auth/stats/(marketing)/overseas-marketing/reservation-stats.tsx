@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { OverseasReservationStatsPage } from '#domain/core/overseasMarketing/ui/OverseasReservationStatsPage'
 
-export const Route = createFileRoute('/_auth/stats/(marketing)/overseas-marketing/reservation-stats')({
+export const Route = createFileRoute(
+  '/_auth/stats/(marketing)/overseas-marketing/reservation-stats',
+)({
   component: OverseasReservationStatsPage,
   staticData: {
     page: {

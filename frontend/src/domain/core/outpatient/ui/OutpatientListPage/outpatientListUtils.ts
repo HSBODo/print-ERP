@@ -27,9 +27,8 @@ export const PATIENT_TYPE_OPTIONS = ['전체', '신환', '구환']
 
 export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
 export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
-export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 export const SKELETON_ROWS = 50
-export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
+export const QUICK_RANGES: { key: QuickRangeKey; label: string }[] = [
   { key: '1w', label: '1주' },
   { key: '2w', label: '2주' },
   { key: '3w', label: '3주' },
@@ -54,7 +53,7 @@ export const toMonthEnd = (month: string) => {
 }
 
 export const toMonthWeekRange = (month: string, week: number) => {
-  const startDay = ((week - 1) * 7) + 1
+  const startDay = (week - 1) * 7 + 1
   const monthEnd = toMonthEnd(month)
   const lastDay = Number(monthEnd.slice(-2))
   const endDay = week === 4 ? lastDay : Math.min(startDay + 6, lastDay)
@@ -65,25 +64,11 @@ export const toMonthWeekRange = (month: string, week: number) => {
   }
 }
 
-export const buildPaginationItems = (currentPage: number, pageMax: number): Array<number | string> => {
-  if (pageMax <= 7) {
-    return Array.from({ length: pageMax }, (_, index) => index + 1)
-  }
-
-  const pages = new Set([1, pageMax, currentPage - 1, currentPage, currentPage + 1])
-  const normalized = [...pages]
-    .filter((page) => page >= 1 && page <= pageMax)
-    .sort((a, b) => a - b)
-
-  return normalized.reduce<Array<number | string>>((items, page, index) => {
-    const prev = normalized[index - 1]
-    if (prev && page - prev > 1) items.push(`ellipsis-${prev}-${page}`)
-    items.push(page)
-    return items
-  }, [])
-}
-
-export const getSortValue = (row: OutpatientListItem, key: string, originalIndex: number) => {
+export const getSortValue = (
+  row: OutpatientListItem,
+  key: string,
+  originalIndex: number,
+) => {
   if (key === 'rowNo') return originalIndex
   if (key === 'age') {
     const age = Number(calcAge(row.birth))
@@ -92,7 +77,10 @@ export const getSortValue = (row: OutpatientListItem, key: string, originalIndex
   return String(row[key as keyof OutpatientListItem] ?? '').trim()
 }
 
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0

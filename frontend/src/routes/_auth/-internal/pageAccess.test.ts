@@ -1,30 +1,47 @@
 // @vitest-environment happy-dom
-import { describe, it, expect } from 'vitest'
-import { createRouter } from '@tanstack/react-router'
-import { routeTree } from '@/routeTree.gen'
-import { canAccess, type PageMeta } from './pageAccess'
+import { describe, expect, it } from 'vitest'
+
 import type { UserRole } from '#domain/support/session/session'
+
+import { testRoutes } from '../../../test/testRoutes'
+import { canAccess, type PageMeta } from './pageAccess'
 
 // ADMIN·DIRECTOR 는 department='ALL' 이라 부서 gate 를 우회하므로 테스트에서 편의상 사용.
 const asAdmin = { role: 'ADMIN' as const, department: 'ALL' as const }
 const asDirector = { role: 'DIRECTOR' as const, department: 'ALL' as const }
-const asStaffMedical = { role: 'STAFF' as const, department: 'MEDICAL' as const }
-const asStaffMarketing = { role: 'STAFF' as const, department: 'MARKETING' as const }
-const asManagerMedical = { role: 'MANAGER' as const, department: 'MEDICAL' as const }
+const asStaffMedical = {
+  role: 'STAFF' as const,
+  department: 'MEDICAL' as const,
+}
+const asStaffMarketing = {
+  role: 'STAFF' as const,
+  department: 'MARKETING' as const,
+}
+const asManagerMedical = {
+  role: 'MANAGER' as const,
+  department: 'MEDICAL' as const,
+}
 
 const asRoleUser = (role: UserRole) =>
   role === 'ADMIN' || role === 'DIRECTOR'
-    ? ({ role, department: 'ALL' as const })
-    : ({ role, department: 'MEDICAL' as const })
+    ? { role, department: 'ALL' as const }
+    : { role, department: 'MEDICAL' as const }
 
-const pages: PageMeta[] = Object.values(createRouter({ routeTree }).routesByPath).flatMap((route) =>
+const pages: PageMeta[] = testRoutes.flatMap((route) =>
   route.options.staticData?.page ? [route.options.staticData.page] : [],
 )
-const byStatus = (status: PageMeta['status']) => pages.filter((p) => p.status === status)
-const isRole = (p: PageMeta, role: 'ADMIN' | 'EXECUTIVE') => 'role' in p.access && p.access.role === role
-const isDepartment = (p: PageMeta, department: string) => 'department' in p.access && p.access.department === department
+const byStatus = (status: PageMeta['status']) =>
+  pages.filter((p) => p.status === status)
+const isRole = (p: PageMeta, role: 'ADMIN' | 'EXECUTIVE') =>
+  'role' in p.access && p.access.role === role
+const isDepartment = (p: PageMeta, department: string) =>
+  'department' in p.access && p.access.department === department
 
-const blocked = (p: PageMeta, isProd: boolean, user: Parameters<typeof canAccess>[1]) => canAccess(p, user, isProd) !== 'ok'
+const blocked = (
+  p: PageMeta,
+  isProd: boolean,
+  user: Parameters<typeof canAccess>[1],
+) => canAccess(p, user, isProd) !== 'ok'
 
 /**
  * 통계 페이지 접근 정책 불변식 가드 (라우트 staticData.page 기준).
@@ -62,7 +79,9 @@ describe('통계 페이지 접근 정책 불변식', () => {
 
   it('회계 페이지는 임원(ADMIN·DIRECTOR) 이상 접근한다 (백엔드 /api/accounting/** 매처와 대칭, 2026-09-17)', () => {
     const accounting = pages.filter((p) => p.id.startsWith('accounting-'))
-    expect(accounting.map((p) => p.id).sort()).toEqual([
+    expect(
+      accounting.map((p) => p.id).sort((a, b) => a.localeCompare(b, 'ko')),
+    ).toEqual([
       'accounting-medical',
       'accounting-medical-chart',
       'accounting-vision',
@@ -127,7 +146,9 @@ describe('통계 페이지 접근 정책 불변식', () => {
 
   it('부서 gate: 해외마케팅 3종은 MARKETING 부서 STAFF 에게 차단된다 (2026-09-17 스코프 분리)', () => {
     // 2026-09-17: MARKETING 을 해외마케팅에서 배제. OVERSEAS_MARKETING 전담 부서만 접근.
-    const overseas = completeIds.filter((p) => isDepartment(p, 'OVERSEAS_MARKETING'))
+    const overseas = completeIds.filter((p) =>
+      isDepartment(p, 'OVERSEAS_MARKETING'),
+    )
     expect(overseas.length).toBe(3)
     for (const p of overseas) {
       expect(canAccess(p, asStaffMarketing, false)).toBe('forbidden')

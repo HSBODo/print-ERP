@@ -1,9 +1,18 @@
-import { VISION_ITEM_KEYS, type VisionItemKey, type VisionReceipt } from '../../type/accounting'
+import {
+  VISION_ITEM_KEYS,
+  type VisionItemKey,
+  type VisionReceipt,
+} from '../../type/accounting'
 
 type DirectKey = Exclude<keyof VisionReceipt, 'itemAmounts'>
 export type VisionColumnKey = DirectKey | '__no' | `item:${VisionItemKey}`
-export type VisionColumnKind = 'no' | 'text' | 'center' | 'status' | 'number' | 'derived'
-export interface VisionColumn { key: VisionColumnKey; label: string; kind: VisionColumnKind }
+export type VisionColumnKind =
+  'no' | 'text' | 'center' | 'status' | 'number' | 'derived'
+export interface VisionColumn {
+  key: VisionColumnKey
+  label: string
+  kind: VisionColumnKind
+}
 
 export const VISION_COLUMNS: VisionColumn[] = [
   { key: '__no', label: 'No', kind: 'no' },
@@ -36,11 +45,15 @@ export const VISION_COLUMNS: VisionColumn[] = [
   { key: 'paymentMemo', label: '결제메모', kind: 'text' },
 ]
 
-const itemKey = (key: VisionColumnKey) => key.toString().startsWith('item:')
-  ? key.toString().slice(5) as VisionItemKey
-  : null
+const itemKey = (key: VisionColumnKey) =>
+  key.toString().startsWith('item:')
+    ? (key.toString().slice(5) as VisionItemKey)
+    : null
 
-export const visionCellValue = (row: VisionReceipt, key: VisionColumnKey): string | number => {
+export const visionCellValue = (
+  row: VisionReceipt,
+  key: VisionColumnKey,
+): string | number => {
   if (key === '__no') return 0
   const item = itemKey(key)
   if (item) return row.itemAmounts[item] ?? 0
@@ -48,7 +61,10 @@ export const visionCellValue = (row: VisionReceipt, key: VisionColumnKey): strin
   return typeof value === 'number' ? value : String(value)
 }
 
-export const visionNumericValue = (row: VisionReceipt, key: VisionColumnKey): number => {
+export const visionNumericValue = (
+  row: VisionReceipt,
+  key: VisionColumnKey,
+): number => {
   const value = visionCellValue(row, key)
   return typeof value === 'number' ? value : 0
 }

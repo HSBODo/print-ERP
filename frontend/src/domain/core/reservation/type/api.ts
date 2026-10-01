@@ -1,23 +1,37 @@
 import { z } from 'zod'
+
 import { apiResponseOf } from '#shared/api/utils'
 
 /* ── KPI (예약 KPI 카드용) ── */
 
 const reservationKpiItemSchema = z.object({
-  year: z.number(), surgery: z.number(), outpatient: z.number(),
-  dreamlens: z.number(), total: z.number(),
+  year: z.number(),
+  surgery: z.number(),
+  outpatient: z.number(),
+  dreamlens: z.number(),
+  total: z.number(),
 })
 export type ReservationKpiItem = z.infer<typeof reservationKpiItemSchema>
-export const reservationKpiResponseSchema = apiResponseOf(z.array(reservationKpiItemSchema))
+export const reservationKpiResponseSchema = apiResponseOf(
+  z.array(reservationKpiItemSchema),
+)
 
 /* ── Monthly (예약 건수 페이지용) ── */
 
 const reservationMonthlyItemSchema = z.object({
-  year: z.number(), month: z.number(), surgery: z.number(),
-  outpatient: z.number(), dreamlens: z.number(), total: z.number(),
+  year: z.number(),
+  month: z.number(),
+  surgery: z.number(),
+  outpatient: z.number(),
+  dreamlens: z.number(),
+  total: z.number(),
 })
-export type ReservationMonthlyItem = z.infer<typeof reservationMonthlyItemSchema>
-export const reservationMonthlyResponseSchema = apiResponseOf(z.array(reservationMonthlyItemSchema))
+export type ReservationMonthlyItem = z.infer<
+  typeof reservationMonthlyItemSchema
+>
+export const reservationMonthlyResponseSchema = apiResponseOf(
+  z.array(reservationMonthlyItemSchema),
+)
 
 /* ── Monthly (예약 종합 페이지용) ── */
 
@@ -29,8 +43,12 @@ const reservationOverallMonthlyItemSchema = z.object({
   call: z.number().nullable(),
   total: z.number().nullable().optional(),
 })
-export type ReservationOverallMonthlyItem = z.infer<typeof reservationOverallMonthlyItemSchema>
-export const reservationOverallResponseSchema = apiResponseOf(z.array(reservationOverallMonthlyItemSchema))
+export type ReservationOverallMonthlyItem = z.infer<
+  typeof reservationOverallMonthlyItemSchema
+>
+export const reservationOverallResponseSchema = apiResponseOf(
+  z.array(reservationOverallMonthlyItemSchema),
+)
 
 /**
  * 예약 변경이력 — 예약일이 1회 이상 바뀐 검사예약(시력교정·드림렌즈·백내장) 명단.
@@ -58,13 +76,11 @@ const reservationChangeItemSchema = z.object({
 
 export type ReservationChangeItem = z.infer<typeof reservationChangeItemSchema>
 
-export const reservationChangeResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.object({
+export const reservationChangeResponseSchema = apiResponseOf(
+  z.object({
     rows: z.array(reservationChangeItemSchema),
   }),
-  message: z.string().nullish(),
-})
+)
 
 export interface ReservationChangeResult {
   rows: ReservationChangeItem[]
@@ -85,14 +101,12 @@ const dailyCountSchema = z.object({
 
 export type ReservationChangeDailyCount = z.infer<typeof dailyCountSchema>
 
-export const reservationChangeDailyResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.object({
+export const reservationChangeDailyResponseSchema = apiResponseOf(
+  z.object({
     byRegistered: z.array(dailyCountSchema),
     byReserveDate: z.array(dailyCountSchema),
   }),
-  message: z.string().nullish(),
-})
+)
 
 export interface ReservationChangeDailyResult {
   byRegistered: ReservationChangeDailyCount[]
@@ -141,13 +155,11 @@ const reservationListItemSchema = z.object({
 
 export type ReservationListItem = z.infer<typeof reservationListItemSchema>
 
-export const reservationListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.object({
+export const reservationListResponseSchema = apiResponseOf(
+  z.object({
     rows: z.array(reservationListItemSchema),
   }),
-  message: z.string().nullish(),
-})
+)
 
 export interface ReservationListResult {
   rows: ReservationListItem[]
@@ -181,7 +193,9 @@ const reservationListHomepageItemSchema = z.object({
   regDate: z.string(),
 })
 
-export type ReservationListHomepageItem = z.infer<typeof reservationListHomepageItemSchema>
+export type ReservationListHomepageItem = z.infer<
+  typeof reservationListHomepageItemSchema
+>
 
 /**
  * `lastRegDate` — 현재 소스가 담고 있는 마지막 등록일시.
@@ -197,6 +211,10 @@ const reservationListHomepageResultSchema = z.object({
   live: z.boolean(),
 })
 
-export type ReservationListHomepageResult = z.infer<typeof reservationListHomepageResultSchema>
+export type ReservationListHomepageResult = z.infer<
+  typeof reservationListHomepageResultSchema
+>
 
-export const reservationListHomepageResponseSchema = apiResponseOf(reservationListHomepageResultSchema)
+export const reservationListHomepageResponseSchema = apiResponseOf(
+  reservationListHomepageResultSchema,
+)

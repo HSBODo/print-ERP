@@ -1,17 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { weeksOfYear, weeksOfMonth } from './reportWeeks'
+
+import { weeksOfMonth, weeksOfYear } from './reportWeeks'
 import { buildWeeklyReportCsv, type WeeklyCsvRowSpec } from './weeklyReportCsv'
 
 const ROWS: WeeklyCsvRowSpec[] = [
   { group: '예약', label: '예약 종합', series: 'reservations' },
-  { group: '비율', label: '중단율', series: 'stopRate', format: 'percent', fractionDigits: 1 },
+  {
+    group: '비율',
+    label: '중단율',
+    series: 'stopRate',
+    format: 'percent',
+    fractionDigits: 1,
+  },
 ]
 
 const weeks2026 = weeksOfYear(2026)
 
 /** n주차 위치에 값을 넣은 배열 (weeks 길이만큼, 나머지는 null) */
-const seriesOf = (weeks: typeof weeks2026, values: Record<number, number | null>) =>
-  weeks.map((w) => (w.week in values ? values[w.week] : null))
+const seriesOf = (
+  weeks: typeof weeks2026,
+  values: Record<number, number | null>,
+) => weeks.map((w) => (w.week in values ? values[w.week] : null))
 
 describe('buildWeeklyReportCsv', () => {
   it('헤더는 그룹·지표·단위·연도 + 주차 열이고 2자리로 패딩된다', () => {
@@ -29,7 +38,8 @@ describe('buildWeeklyReportCsv', () => {
 
   it('2026 은 ISO 53주차까지 열이 만들어진다', () => {
     const csv = buildWeeklyReportCsv({
-      years: [2026], weeks: weeks2026,
+      years: [2026],
+      weeks: weeks2026,
       charts: { reservations: { 2026: seriesOf(weeks2026, {}) } },
       rows: ROWS,
     })
@@ -42,7 +52,8 @@ describe('buildWeeklyReportCsv', () => {
   it('월을 고르면 그 달에 걸친 주차 열만 나온다', () => {
     const julyWeeks = weeksOfMonth(weeks2026, 7)
     const csv = buildWeeklyReportCsv({
-      years: [2026], weeks: julyWeeks,
+      years: [2026],
+      weeks: julyWeeks,
       charts: { reservations: { 2026: seriesOf(julyWeeks, {}) } },
       rows: ROWS,
     })
@@ -72,7 +83,8 @@ describe('buildWeeklyReportCsv', () => {
 
   it('퍼센트는 fractionDigits 자리로, 건수는 원값, null 은 빈칸', () => {
     const csv = buildWeeklyReportCsv({
-      years: [2026], weeks: weeks2026,
+      years: [2026],
+      weeks: weeks2026,
       charts: {
         reservations: { 2026: seriesOf(weeks2026, { 1: 7 }) },
         stopRate: { 2026: seriesOf(weeks2026, { 1: 6.37 }) },
@@ -88,7 +100,8 @@ describe('buildWeeklyReportCsv', () => {
 
   it('charts 에 없는 series 는 행을 만들지 않는다', () => {
     const csv = buildWeeklyReportCsv({
-      years: [2026], weeks: weeks2026,
+      years: [2026],
+      weeks: weeks2026,
       charts: { reservations: { 2026: seriesOf(weeks2026, { 1: 1 }) } },
       rows: ROWS, // stopRate 는 charts 에 없음
     })

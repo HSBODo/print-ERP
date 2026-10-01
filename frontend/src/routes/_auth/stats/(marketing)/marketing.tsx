@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { MarketingPage } from '../../-internal/graveyard/MarketingPage'
 
 export const Route = createFileRoute('/_auth/stats/(marketing)/marketing')({

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { type ConsultationRateItem } from '../../type/api'
 import {
   changePoint,
   computeRate,
@@ -7,9 +8,10 @@ import {
   itemToData,
   toDataMap,
 } from './consultationRateUtils'
-import { type ConsultationRateItem } from '../../type/api'
 
-const baseItem = (overrides: Partial<ConsultationRateItem> = {}): ConsultationRateItem => ({
+const baseItem = (
+  overrides: Partial<ConsultationRateItem> = {},
+): ConsultationRateItem => ({
   year: 2026,
   month: 3,
   visionExamCount: 100,
@@ -72,9 +74,15 @@ describe('itemToData', () => {
 
 describe('toDataMap', () => {
   it('연도별 12개월 배열로 분배하고 빈 달은 EMPTY(0)', () => {
-    const map = toDataMap([baseItem({ month: 3 }), baseItem({ year: 2025, month: 1 })])
+    const map = toDataMap([
+      baseItem({ month: 3 }),
+      baseItem({ year: 2025, month: 1 }),
+    ])
 
-    expect(Object.keys(map).sort()).toEqual(['2025', '2026'])
+    expect(Object.keys(map).sort((a, b) => a.localeCompare(b, 'ko'))).toEqual([
+      '2025',
+      '2026',
+    ])
     expect(map[2026]).toHaveLength(12)
     // month=3 → index 2 채워짐
     expect(map[2026][2].overallConsultation).toBe(57.1)

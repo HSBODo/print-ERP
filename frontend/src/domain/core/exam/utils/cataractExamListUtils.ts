@@ -22,9 +22,8 @@ export const calcAge = (birth: string) => {
 /** 기본 조회 기간 = 현재 월 1일 ~ 말일. (상수가 아니라 함수 — 탭을 오래 켜둬도 안 낡는다) */
 export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
 export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
-export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 export const SKELETON_ROWS = 50
-export const QUICK_RANGES: Array<{ key: QuickRangeKey; label: string }> = [
+export const QUICK_RANGES: { key: QuickRangeKey; label: string }[] = [
   { key: '1w', label: '1주' },
   { key: '2w', label: '2주' },
   { key: '3w', label: '3주' },
@@ -46,7 +45,7 @@ export const toMonthEnd = (month: string) => {
   return `${month}-${pad(lastDate)}`
 }
 export const toMonthWeekRange = (month: string, week: number) => {
-  const startDay = ((week - 1) * 7) + 1
+  const startDay = (week - 1) * 7 + 1
   const monthEnd = toMonthEnd(month)
   const lastDay = Number(monthEnd.slice(-2))
   const endDay = week === 4 ? lastDay : Math.min(startDay + 6, lastDay)
@@ -56,21 +55,11 @@ export const toMonthWeekRange = (month: string, week: number) => {
   }
 }
 
-export const buildPaginationItems = (currentPage: number, pageMax: number): Array<number | string> => {
-  if (pageMax <= 7) return Array.from({ length: pageMax }, (_, index) => index + 1)
-
-  const pages = new Set([1, pageMax, currentPage - 1, currentPage, currentPage + 1])
-  const normalized = [...pages].filter((page) => page >= 1 && page <= pageMax).sort((a, b) => a - b)
-
-  return normalized.reduce<Array<number | string>>((items, page, index) => {
-    const prev = normalized[index - 1]
-    if (prev && page - prev > 1) items.push(`ellipsis-${prev}-${page}`)
-    items.push(page)
-    return items
-  }, [])
-}
-
-export const getSortValue = (row: CataractExamListItem, key: string, originalIndex: number) => {
+export const getSortValue = (
+  row: CataractExamListItem,
+  key: string,
+  originalIndex: number,
+) => {
   if (key === 'rowNo') return originalIndex
   if (key === 'age') {
     const age = Number(calcAge(row.birth))
@@ -79,23 +68,34 @@ export const getSortValue = (row: CataractExamListItem, key: string, originalInd
   return String(row[key as keyof CataractExamListItem] ?? '').trim()
 }
 
-export const compareSortValue = (a: string | number | null, b: string | number | null) => {
+export const compareSortValue = (
+  a: string | number | null,
+  b: string | number | null,
+) => {
   const aEmpty = a === null || a === ''
   const bEmpty = b === null || b === ''
   if (aEmpty && bEmpty) return 0
   if (aEmpty) return 1
   if (bEmpty) return -1
   if (typeof a === 'number' && typeof b === 'number') return a - b
-  return String(a).localeCompare(String(b), 'ko-KR', { numeric: true, sensitivity: 'base' })
+  return String(a).localeCompare(String(b), 'ko-KR', {
+    numeric: true,
+    sensitivity: 'base',
+  })
 }
 
 /** 요약 칩에 고정으로 노출할 분류와 순서. 백엔드 분류(find-cataract-exam-list.sql)를 늘리면 여기도 함께 늘릴 것. */
-export const CLASSIFICATION_ORDER: string[] = ['백내장', '중단', '노안/FU', '기타']
+export const CLASSIFICATION_ORDER: string[] = [
+  '백내장',
+  '중단',
+  '노안/FU',
+  '기타',
+]
 
 /** 월간 레포트 백내장 검사수에 들어가는 분류. sql/fragments/exam-session-source.sql 의 isCat 과 같은 집합. */
 export const EXAM_COUNT_CLASSES: string[] = ['백내장', '중단']
 
-export type ClassificationBreakdown = {
+export interface ClassificationBreakdown {
   breakdown: { name: string; count: number }[]
   examCount: number
   total: number
@@ -118,7 +118,10 @@ export const summarizeClassifications = (
     const key = row.classification || '(미지정)'
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
-  const known = CLASSIFICATION_ORDER.map((name) => ({ name, count: counts.get(name) ?? 0 }))
+  const known = CLASSIFICATION_ORDER.map((name) => ({
+    name,
+    count: counts.get(name) ?? 0,
+  }))
   const unknown = [...counts.entries()]
     .filter(([name]) => !CLASSIFICATION_ORDER.includes(name))
     .map(([name, count]) => ({ name, count }))

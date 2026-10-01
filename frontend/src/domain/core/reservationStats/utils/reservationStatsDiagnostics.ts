@@ -1,8 +1,8 @@
 import { toCsv } from '#shared/utils/csv'
 
 import type {
-  ReservationStatsDiffItem,
   ReservationStatsDiff,
+  ReservationStatsDiffItem,
   ReservationStatsDrillDown,
   ReservationStatsParity,
 } from '../type/api'
@@ -44,7 +44,9 @@ export const buildReservationStatsDiffCsv = (
     ]),
   )
 
-export const buildReservationStatsDrillDownCsv = (drillDown: ReservationStatsDrillDown): string =>
+export const buildReservationStatsDrillDownCsv = (
+  drillDown: ReservationStatsDrillDown,
+): string =>
   toCsv(
     [
       '기간',
@@ -86,9 +88,22 @@ export const buildReservationStatsDrillDownCsv = (drillDown: ReservationStatsDri
     ]),
   )
 
-export const buildReservationStatsParityCsv = (parity: ReservationStatsParity): string =>
+export const buildReservationStatsParityCsv = (
+  parity: ReservationStatsParity,
+): string =>
   toCsv(
-    ['기간', '라이브 시작', '라이브 종료', '일자', '필드', '필드키', 'daily', 'drill-down', '차이', 'row수'],
+    [
+      '기간',
+      '라이브 시작',
+      '라이브 종료',
+      '일자',
+      '필드',
+      '필드키',
+      'daily',
+      'drill-down',
+      '차이',
+      'row수',
+    ],
     parity.items.map((item) => [
       parity.period,
       parity.liveFrom,

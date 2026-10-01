@@ -1,6 +1,12 @@
-import { getRouteApi, Outlet, useLocation, useMatches } from '@tanstack/react-router'
-import { StatsPlaceholderPage } from './StatsPlaceholderPage'
+import {
+  getRouteApi,
+  Outlet,
+  useLocation,
+  useMatches,
+} from '@tanstack/react-router'
+
 import { Forbidden } from './Forbidden'
+import { StatsPlaceholderPage } from './StatsPlaceholderPage'
 
 const authRoute = getRouteApi('/_auth')
 
@@ -10,11 +16,16 @@ const authRoute = getRouteApi('/_auth')
  *   forbidden   — 접근 권한 없음
  */
 export function RouteGate() {
-  const pageAccess = authRoute.useRouteContext({ select: (context) => context.pageAccess })
-  const page = useMatches({ select: (matches) => matches.at(-1)?.staticData.page })
+  const pageAccess = authRoute.useRouteContext({
+    select: (context) => context.pageAccess,
+  })
+  const page = useMatches({
+    select: (matches) => matches.at(-1)?.staticData.page,
+  })
   const pathname = useLocation({ select: (location) => location.pathname })
 
   if (pageAccess === 'forbidden') return <Forbidden />
-  if (pageAccess === 'unavailable' && page) return <StatsPlaceholderPage page={page} path={pathname} />
+  if (pageAccess === 'unavailable' && page)
+    return <StatsPlaceholderPage page={page} path={pathname} />
   return <Outlet />
 }

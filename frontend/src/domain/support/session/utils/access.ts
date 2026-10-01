@@ -1,4 +1,8 @@
-import { matchesDepartment, type AuthUser, type UserDepartment } from '../session'
+import {
+  type AuthUser,
+  matchesDepartment,
+  type UserDepartment,
+} from '../session'
 
 /**
  * 페이지 접근 조건 (docs/auth/permissions.md). 셋 중 하나만 지정한다.

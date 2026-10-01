@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+
 import { SurgeryRatioPage } from '#domain/core/surgery/ui/SurgeryRatioPage'
 
 export const Route = createFileRoute('/_auth/stats/(surgery)/surgery-ratio')({

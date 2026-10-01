@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react'
+
 import { ReportChartSkeleton } from './MonthlyReportCharts'
 
 /**
@@ -29,8 +30,15 @@ export interface ReportShellProps {
   isLoading?: boolean
 }
 
-export function ReportShell({ title, subtitle, actions, banner, items, isLoading }: ReportShellProps) {
-  const done = items.filter((it) => it.node)
+export function ReportShell({
+  title,
+  subtitle,
+  actions,
+  banner,
+  items,
+  isLoading,
+}: ReportShellProps) {
+  const done = items.filter((it) => Boolean(it.node))
 
   return (
     <div className="flex justify-center gap-6">
@@ -38,7 +46,10 @@ export function ReportShell({ title, subtitle, actions, banner, items, isLoading
       <div className="hidden w-0 flex-1 justify-start min-[1520px]:flex">
         <nav className="report-no-print sticky top-3 h-[calc(100vh-6rem)] w-[210px] overflow-y-auto rounded-lg border border-border/70 bg-white p-3 shadow-sm">
           <p className="mb-1 px-1 text-xs font-bold text-foreground">
-            전체 도표 <span className="font-medium text-muted-foreground">({done.length}/{items.length})</span>
+            전체 도표{' '}
+            <span className="font-medium text-muted-foreground">
+              ({done.length}/{items.length})
+            </span>
           </p>
           <ul className="space-y-0.5 text-[13px]">
             {items.map((it, idx) => {
@@ -46,11 +57,16 @@ export function ReportShell({ title, subtitle, actions, banner, items, isLoading
               return (
                 <Fragment key={it.id}>
                   {showGroup && (
-                    <li className="px-1 pt-2 text-[11px] font-bold text-muted-foreground">{it.group}</li>
+                    <li className="px-1 pt-2 text-[11px] font-bold text-muted-foreground">
+                      {it.group}
+                    </li>
                   )}
                   <li>
                     {it.node ? (
-                      <a href={`#c-${it.id}`} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-gray-700 hover:bg-blue-50">
+                      <a
+                        href={`#c-${it.id}`}
+                        className="flex items-center gap-1.5 rounded px-1.5 py-1 text-gray-700 hover:bg-blue-50"
+                      >
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                         <span className="truncate">{it.label}</span>
                         {it.badge}

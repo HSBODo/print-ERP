@@ -8,21 +8,30 @@
 
 import type { ReservationStatsDailyCounts } from '../type/api'
 import {
+  type ChannelRow,
+  computeSystemChannelRow,
+  type SystemStatsCounts,
+} from './formulas/reservationStatsSystemFormulas'
+import {
   createCountHelpers,
   type Granularity,
   type RowTier,
 } from './reservationStatsCore'
-import {
-  computeSystemChannelRow,
-  type ChannelRow,
-  type SystemStatsCounts,
-} from './formulas/reservationStatsSystemFormulas'
 import { buildStatsCsv, type CsvColumnGroup } from './reservationStatsCsv'
 import type { CellFormat } from './reservationStatsFormat'
-import { buildDisplayRowsFromCounts, buildRangeDisplayRowsFromCounts, type StatsDisplayRow } from './reservationStatsRows'
-import { SUMMARY_COLUMNS, computeSummaryRow } from './reservationStatsSummary'
+import {
+  buildDisplayRowsFromCounts,
+  buildRangeDisplayRowsFromCounts,
+  type StatsDisplayRow,
+} from './reservationStatsRows'
+import { computeSummaryRow, SUMMARY_COLUMNS } from './reservationStatsSummary'
 
-export { DEFAULT_PERIOD, GRANULARITIES, monthFullLabel, monthShortLabel } from './reservationStatsCore'
+export {
+  DEFAULT_PERIOD,
+  GRANULARITIES,
+  monthFullLabel,
+  monthShortLabel,
+} from './reservationStatsCore'
 export type { Granularity, RowTier } from './reservationStatsCore'
 export { SUMMARY_COLUMNS } from './reservationStatsSummary'
 export type { CellFormat, SummaryFormat } from './reservationStatsFormat'
@@ -47,7 +56,12 @@ export const CHANNEL_COLUMNS: ColumnMeta[] = [
   { key: 'newInquiry', label: '신규예약문의', fmt: 'num' },
   { key: 'newInquiryRate', label: '신규문의 비율', fmt: 'pct' },
   { key: 'callReservation', label: '예약수', fmt: 'num' },
-  { key: 'reservationVsNewInquiry', label: '신규문의 대비 예약율', fmt: 'pct', emphasis: true },
+  {
+    key: 'reservationVsNewInquiry',
+    label: '신규문의 대비 예약율',
+    fmt: 'pct',
+    emphasis: true,
+  },
   { key: 'callReservationRate', label: '예약율', fmt: 'pct', emphasis: true },
   // 콜 › TM
   { key: 'tmTotalDb', label: '총 DB', fmt: 'num' },
@@ -56,7 +70,12 @@ export const CHANNEL_COLUMNS: ColumnMeta[] = [
   { key: 'tmValidDbRate', label: '유효 DB 예약율', fmt: 'pct', emphasis: true },
   { key: 'tmReservationRate', label: '예약율', fmt: 'pct', emphasis: true },
   { key: 'tmRecounsel', label: '재상담', fmt: 'num' },
-  { key: 'tmRecounselRatio', label: '총 DB 중 재상담비율', fmt: 'pct', emphasis: true },
+  {
+    key: 'tmRecounselRatio',
+    label: '총 DB 중 재상담비율',
+    fmt: 'pct',
+    emphasis: true,
+  },
   { key: 'tmRecounselValid', label: '재상담 유효수', fmt: 'num' },
   { key: 'tmRecounselReservation', label: '예약수', fmt: 'num' },
   { key: 'tmRecounselRate', label: '예약율', fmt: 'pct', emphasis: true },
@@ -69,7 +88,12 @@ export const CHANNEL_COLUMNS: ColumnMeta[] = [
   { key: 'naverRejected', label: '파트너거절', fmt: 'num' },
   { key: 'naverValid', label: '유효접수', fmt: 'num' },
   { key: 'naverReservation', label: '예약수', fmt: 'num' },
-  { key: 'naverValidRate', label: '유효접수 예약율', fmt: 'pct', emphasis: true },
+  {
+    key: 'naverValidRate',
+    label: '유효접수 예약율',
+    fmt: 'pct',
+    emphasis: true,
+  },
   { key: 'naverReservationRate', label: '예약율', fmt: 'pct', emphasis: true },
   // 채팅 › 카카오톡
   { key: 'kakaoInquiry', label: '문의', fmt: 'num' },
@@ -103,18 +127,41 @@ export type DisplayRow = StatsDisplayRow<ChannelRow>
 type Counts = SystemStatsCounts
 
 const COUNT_KEYS: (keyof Counts)[] = [
-  'inboundCall', 'answeredCall', 'newInquiry', 'callReservation',
-  'tmTotalDb', 'tmValidDb', 'tmReservation', 'tmRecounsel', 'tmRecounselValid', 'tmRecounselReservation',
-  'homeReceived', 'homeReservation',
-  'naverReceived', 'naverRejected', 'naverValid', 'naverReservation',
-  'kakaoInquiry', 'kakaoReservation',
-  'cancelCallNaver', 'cancelHome', 'cancelKakao',
-  'visit', 'noShowReservation', 'cancel',
+  'inboundCall',
+  'answeredCall',
+  'newInquiry',
+  'callReservation',
+  'tmTotalDb',
+  'tmValidDb',
+  'tmReservation',
+  'tmRecounsel',
+  'tmRecounselValid',
+  'tmRecounselReservation',
+  'homeReceived',
+  'homeReservation',
+  'naverReceived',
+  'naverRejected',
+  'naverValid',
+  'naverReservation',
+  'kakaoInquiry',
+  'kakaoReservation',
+  'cancelCallNaver',
+  'cancelHome',
+  'cancelKakao',
+  'visit',
+  'noShowReservation',
+  'cancel',
 ]
 
-const { zeroCounts, sumCounts, isZeroCounts } = createCountHelpers<Counts>(COUNT_KEYS)
+const { zeroCounts, sumCounts, isZeroCounts } =
+  createCountHelpers<Counts>(COUNT_KEYS)
 
-const countRow = (c: Counts, label: string, tier: RowTier, extra: Partial<DisplayRow> = {}): DisplayRow => ({
+const countRow = (
+  c: Counts,
+  label: string,
+  tier: RowTier,
+  extra: Partial<DisplayRow> = {},
+): DisplayRow => ({
   label,
   tier,
   isTotal: tier === 'month',

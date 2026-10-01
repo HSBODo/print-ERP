@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+
 import { consultationApi } from '../api'
 import type { ConsultationRateItem } from '../type/api'
 
@@ -19,11 +20,18 @@ interface MonthlyData {
 }
 
 const EMPTY_RATES: MonthlyData = {
-  overallConsultation: 0, visionConsultation: 0,
-  visionConsultationOneday: 0, visionConsultationGeneral: 0, visionGeneralBookRate: 0,
-  visionSurgery: 0, cataractSurgery: 0,
-  visionExamCount: 0, visionCounselCount: 0, visionSurgeryBooked: 0,
-  cataractExamCount: 0, cataractSurgeryBooked: 0,
+  overallConsultation: 0,
+  visionConsultation: 0,
+  visionConsultationOneday: 0,
+  visionConsultationGeneral: 0,
+  visionGeneralBookRate: 0,
+  visionSurgery: 0,
+  cataractSurgery: 0,
+  visionExamCount: 0,
+  visionCounselCount: 0,
+  visionSurgeryBooked: 0,
+  cataractExamCount: 0,
+  cataractSurgeryBooked: 0,
 }
 
 const computeRate = (numerator: number, denominator: number) =>
@@ -49,23 +57,34 @@ function itemToData(item: ConsultationRateItem): MonthlyData {
   }
 }
 
-function toDataMap(items: ConsultationRateItem[]): Record<number, MonthlyData[]> {
+function toDataMap(
+  items: ConsultationRateItem[],
+): Record<number, MonthlyData[]> {
   const map: Record<number, MonthlyData[]> = {}
   for (const item of items) {
-    if (!map[item.year]) map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY_RATES }))
+    if (!map[item.year])
+      map[item.year] = Array.from({ length: 12 }, () => ({ ...EMPTY_RATES }))
     map[item.year][item.month - 1] = itemToData(item)
   }
   return map
 }
 
 export function useConsultationRateTrend(years: number[]) {
-  const { data: apiItems, isLoading, isError } = useQuery({
+  const {
+    data: apiItems,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['consultation-rate-trend', years],
-    queryFn: ({ signal }) => consultationApi.getConsultationRateTrend(years, signal),
+    queryFn: ({ signal }) =>
+      consultationApi.getConsultationRateTrend(years, signal),
     enabled: years.length > 0,
   })
 
-  const dataMap = useMemo(() => (apiItems ? toDataMap(apiItems) : {}), [apiItems])
+  const dataMap = useMemo(
+    () => (apiItems ? toDataMap(apiItems) : {}),
+    [apiItems],
+  )
 
   return {
     dataMap,
