@@ -1,8 +1,15 @@
-import { Download, RotateCcw, Search } from 'lucide-react'
+import { Download, Search } from 'lucide-react'
 
+import type { FilterState } from '#shared/hooks/useFilter'
 import { Button } from '#shared/ui/Button'
+import { Filter } from '#shared/ui/Filter'
+import type { DateRange } from '#shared/utils/date'
 
 import { type ReservationStatsResponseMeta } from '../../type/api'
+import {
+  defaultStatsRange,
+  MAX_RANGE_DAYS,
+} from '../../utils/reservationStatsDateRange'
 import { reservationStatsSourceLabel } from '../../utils/reservationStatsMeta'
 import {
   GRANULARITIES,
@@ -10,21 +17,14 @@ import {
 } from '../../utils/reservationStatsSystemData'
 
 /**
- * 예약통계시스템 전용 툴바 — 시작일/종료일(초안) + 조회 단위(즉시) + 초기화 / 조회 / CSV.
- * 날짜는 초안(draft)이라 [조회]를 눌러야 적용되고, 조회 단위는 즉시 반영된다(예약자 리스트 패턴과 동일).
- * 백엔드 92일 제한은 페이지에서 validateRange 로 미리 검증.
+ * 예약통계(시력교정·백내장) 공용 툴바 — 조회 기간은 [조회] 때 반영(92일 제한), 조회 단위는 받아온 일자별 값을 다시 묶기만 해서 바로 반영.
  */
 interface Props {
-  draftFrom: string
-  draftTo: string
-  onDraftFromChange: (from: string) => void
-  onDraftToChange: (to: string) => void
-  /** date input 의 max 값 (미래 날짜 차단). 페이지가 오늘 날짜를 넘겨준다. */
-  maxDate: string
+  filter: FilterState<{ range: DateRange }>
+  isFetching: boolean
+  refetch: () => unknown
   granularity: Granularity
   onGranularityChange: (g: Granularity) => void
-  onSearch: () => void
-  onReset: () => void
   onDownloadCsv: () => void
   canDownload: boolean
   onRunDiagnostics?: () => void
@@ -34,15 +34,11 @@ interface Props {
 }
 
 export function ReservationStatsToolbar({
-  draftFrom,
-  draftTo,
-  onDraftFromChange,
-  onDraftToChange,
-  maxDate,
+  filter,
+  isFetching,
+  refetch,
   granularity,
   onGranularityChange,
-  onSearch,
-  onReset,
   onDownloadCsv,
   canDownload,
   onRunDiagnostics,
@@ -64,106 +60,59 @@ export function ReservationStatsToolbar({
         .join(' · ')
     : undefined
 
-  const dateInputClass =
-    'h-8 rounded border border-input bg-white px-2 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring'
-
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-2 py-1.5 text-xs shadow-sm">
-      <div className="flex items-center gap-1.5">
-        <span className="text-muted-foreground">조회 기간</span>
-        <input
-          aria-label="시작일"
-          type="date"
-          className={dateInputClass}
-          value={draftFrom}
-          max={draftTo || maxDate}
-          onChange={(e) => onDraftFromChange(e.target.value)}
+    <Filter.Root filter={filter} isFetching={isFetching} refetch={refetch}>
+      <Filter.Bar>
+        {/* 진행 중인 달은 어제까지만 적재돼 있다 — 기본 기간의 종료일이 선택 상한 */}
+        <Filter.DateRange
+          {...filter.field('range')}
+          maxDays={MAX_RANGE_DAYS}
+          max={defaultStatsRange().to}
         />
-        <span className="text-muted-foreground">~</span>
-        <input
-          aria-label="종료일"
-          type="date"
-          className={dateInputClass}
-          value={draftTo}
-          min={draftFrom || undefined}
-          max={maxDate}
-          onChange={(e) => onDraftToChange(e.target.value)}
+        <Filter.Segment
+          value={granularity}
+          onChange={onGranularityChange}
+          options={GRANULARITIES.map((g) => ({ value: g.key, label: g.label }))}
+          ariaLabel="조회 단위"
         />
-      </div>
 
-      <div className="flex h-8 gap-1 rounded-md bg-gray-100 p-1">
-        {GRANULARITIES.map((g) => (
-          <button
-            key={g.key}
-            type="button"
-            aria-pressed={granularity === g.key}
-            onClick={() => onGranularityChange(g.key)}
-            className={`rounded px-3 text-sm font-medium transition-colors ${
-              granularity === g.key
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+        {sourceLabel && (
+          <span
+            className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+            title={sourceTitle}
           >
-            {g.label}
-          </button>
-        ))}
-      </div>
+            {sourceLabel}
+          </span>
+        )}
 
-      {sourceLabel && (
-        <span
-          className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"
-          title={sourceTitle}
-        >
-          {sourceLabel}
-        </span>
-      )}
-
-      <div className="ml-auto flex items-center gap-1.5">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="text-xs"
-          onClick={onReset}
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          초기화
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          className="bg-blue-600 text-xs text-white hover:bg-blue-700"
-          onClick={onSearch}
-        >
-          <Search className="h-3.5 w-3.5" />
-          조회
-        </Button>
-        {onRunDiagnostics && (
+        <Filter.Actions>
+          {onRunDiagnostics && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!canRunDiagnostics || isDiagnosing}
+              className="text-xs"
+              onClick={onRunDiagnostics}
+              title="선택한 달의 확정 스냅샷과 라이브 재조회값을 일자/필드별로 비교합니다."
+            >
+              <Search className="h-3.5 w-3.5" />
+              {isDiagnosing ? '진단 중…' : '진단'}
+            </Button>
+          )}
           <Button
             type="button"
-            variant="outline"
             size="sm"
-            disabled={!canRunDiagnostics || isDiagnosing}
-            className="text-xs"
-            onClick={onRunDiagnostics}
-            title="선택한 달의 확정 스냅샷과 라이브 재조회값을 일자/필드별로 비교합니다."
+            disabled={!canDownload}
+            className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+            onClick={onDownloadCsv}
+            title="조회 결과 전체를 CSV로 내려받기"
           >
-            <Search className="h-3.5 w-3.5" />
-            {isDiagnosing ? '진단 중…' : '진단'}
+            <Download className="h-3.5 w-3.5" />
+            CSV
           </Button>
-        )}
-        <Button
-          type="button"
-          size="sm"
-          disabled={!canDownload}
-          className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
-          onClick={onDownloadCsv}
-          title="조회 결과 전체를 CSV로 내려받기"
-        >
-          <Download className="h-3.5 w-3.5" />
-          CSV
-        </Button>
-      </div>
-    </div>
+        </Filter.Actions>
+      </Filter.Bar>
+    </Filter.Root>
   )
 }
