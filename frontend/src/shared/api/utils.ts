@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export function apiResponseOf<T extends z.ZodTypeAny>(
+export function apiResponseOf<T extends z.ZodType>(
   itemSchema: T,
 ): z.ZodObject<{
   success: z.ZodBoolean
@@ -8,7 +8,7 @@ export function apiResponseOf<T extends z.ZodTypeAny>(
   message: z.ZodOptional<z.ZodString>
   meta: z.ZodOptional<z.ZodUnknown>
 }>
-export function apiResponseOf<T extends z.ZodTypeAny, M extends z.ZodTypeAny>(
+export function apiResponseOf<T extends z.ZodType, M extends z.ZodType>(
   itemSchema: T,
   metaSchema: M,
 ): z.ZodObject<{
@@ -17,7 +17,7 @@ export function apiResponseOf<T extends z.ZodTypeAny, M extends z.ZodTypeAny>(
   message: z.ZodOptional<z.ZodString>
   meta: z.ZodOptional<M>
 }>
-export function apiResponseOf<T extends z.ZodTypeAny, M extends z.ZodTypeAny>(
+export function apiResponseOf<T extends z.ZodType, M extends z.ZodType>(
   itemSchema: T,
   metaSchema?: M,
 ) {
