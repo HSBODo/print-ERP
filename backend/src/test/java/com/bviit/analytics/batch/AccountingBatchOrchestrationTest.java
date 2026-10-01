@@ -2,6 +2,7 @@ package com.bviit.analytics.batch;
 
 import com.bviit.analytics.batch.dto.BatchRunLog;
 import com.bviit.analytics.batch.job.AccountingMartJob;
+import com.bviit.analytics.batch.job.SmsImportJob;
 import com.bviit.analytics.batch.repository.BatchRunLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,5 +86,21 @@ class AccountingBatchOrchestrationTest {
         ReflectionTestUtils.setField(orchestrator, "enabled", false);
         orchestrator.runMonthlyReconcile();
         verifyNoInteractions(accounting, logs, notifier);
+    }
+
+    /**
+     * 2026-10-01 사고 (docs/sms/incidents/2026-10-01-reconcile-bulk-dispatch.md) 재발 방지 회귀 테스트.
+     *
+     * <p>월배치가 뒤늦게 발견한 수술자의 과거-예정 T1·T2·T3 가 enqueue 시 clamp 되어 몇 분 안에
+     * 몰려 발송되는 사고 재발 방지. 월배치는 SMS 를 건드리면 안 되고, 관리자 UI 의 "SMS 재적재"
+     * 로 명시 실행만 가능. 이 테스트가 깨지면 MANUAL_ALL_DOMAINS 운영 정책이 깨진 것이라
+     * 의도적으로 바꿀 때는 테스트와 함께 docs/sms/incidents/ 문서도 함께 갱신해야 한다.
+     */
+    @Test
+    void 월별_보정은_SMS_도메인을_건드리지_않는다() {
+        SmsImportJob sms = (SmsImportJob) ReflectionTestUtils.getField(orchestrator, "smsImportJob");
+        when(accounting.run(any(), any())).thenReturn(Map.of("list_vision_receipt", 2));
+        orchestrator.runMonthlyReconcile();
+        verify(sms, never()).run(any(), any());
     }
 }

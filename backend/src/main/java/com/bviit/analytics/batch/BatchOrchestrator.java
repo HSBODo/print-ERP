@@ -47,10 +47,19 @@ public class BatchOrchestrator {
     static final String ORCHESTRATOR_JOB_PREFIX = "orchestrator";
     private static final Set<Domain> ALL_DOMAINS = EnumSet.allOf(Domain.class);
     /**
-     * 관리자 화면 "전체 도메인 재실행" 대상. SMS 만 제외한다 — SMS 는 실제 문자 발송 대상
-     * 테이블(sms_target)을 재적재하므로 다른 통계 도메인과 함께 무심코 돌리지 않도록 분리한다.
-     * SMS 만 재실행하려면 관리자 UI 의 "문자 발송 대상만" 옵션을 사용한다.
-     * 자동 스케줄러(runDaily/runMonthlyReconcile)는 계속 ALL_DOMAINS 를 사용한다.
+     * 자동 월배치·관리자 수동 "전체 도메인 재실행" 공통 대상. SMS 만 제외.
+     *
+     * <p>SMS 는 실제 문자 발송 대상 테이블(sms_target)을 재적재한다 — 관리자가 다른 통계 도메인과
+     * 함께 무심코 돌리지 않도록 분리. SMS 만 재적재하려면 관리자 UI 의 "문자 발송 대상만" 옵션을 쓴다.
+     *
+     * <p>자동 월배치(runMonthlyReconcile)에서도 이 세트를 쓴다 — 2026-10-01 사고 재발 방지
+     * (docs/sms/incidents/2026-10-01-reconcile-bulk-dispatch.md). 월배치가 뒤늦게 발견한 수술자의
+     * 과거-예정 T1~T3 가 enqueue 시 clamp 되어 몇 분 안에 몰려 발송되는 문제. 일배치(runDaily)는
+     * D-1 만 처리 → scheduled 가 미래 → clamp 안 걸림 → ALL_DOMAINS 유지해도 안전.
+     *
+     * <p>⚠️ 알려진 트레이드오프: 일배치가 어떤 이유(마트 적재 지연 등)로 수술자를 놓치면 월배치도
+     * 안 돌리므로 그 사람은 안내 못 받음. Phase 3 (일배치가 수술자를 놓치는 경로 조사·보완) 가
+     * 완료되기 전까지의 임시 수용.
      */
     private static final Set<Domain> MANUAL_ALL_DOMAINS = EnumSet.complementOf(EnumSet.of(Domain.SMS));
 
@@ -153,8 +162,10 @@ public class BatchOrchestrator {
         }
         LocalDate from = prev.atDay(1);
         LocalDate to = prev.atEndOfMonth();
-        runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to, ALL_DOMAINS,
-                () -> runAllDomains(from, to));
+        // SMS 는 MANUAL_ALL_DOMAINS 가 제외한다 — 2026-10-01 사고 재발 방지.
+        // 월배치가 뒤늦게 발견한 수술자의 과거-예정 T1~T3 가 enqueue 시 clamp 되어 몰려 발송되는 문제.
+        runWithLog(BatchRunLog.RunType.MONTHLY_RECONCILE, from, to, MANUAL_ALL_DOMAINS,
+                () -> runDomains(from, to, MANUAL_ALL_DOMAINS));
 
         // 원데이 검사 소급 보정 (전전월~전월, 2개월) — 재검사 예약이 시간차로 등록되는 성격이라
         // 매월 보정 범위(전월)를 넘어 그전 달까지 다시 훑는다. 원본 사용자 SQL 취지 유지.
