@@ -5,22 +5,22 @@ import type { AdSpend, LensCost } from '../type/api'
 
 /** 채널별 렌즈원가(안 단위). 조회 기간의 실제 수술명 기준이라 추정이 아니다. */
 export function useChannelLensCost(from: string, to: string, enabled = true) {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['channel-lens-cost', from, to],
     queryFn: ({ signal }) => marketingApi.getChannelLensCost(from, to, signal),
     enabled: enabled && Boolean(from && to),
   })
-  return { rows: data ?? [], isLoading, isError }
+  return { rows: data ?? [], isLoading, isError, refetch }
 }
 
 /** 그 달의 매체별 광고비. 입력 전이면 빈 배열이라 화면이 0 으로 채운다. */
 export function useAdSpend(ym: string, enabled = true) {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['ad-spend', ym],
     queryFn: ({ signal }) => marketingApi.getAdSpend(ym, signal),
     enabled: enabled && Boolean(ym),
   })
-  return { rows: data ?? [], isLoading, isError }
+  return { rows: data ?? [], isLoading, isError, refetch }
 }
 
 /** 렌즈 단가표. 유형 목록은 마트가 미리 넣어 두므로 비어 있지 않다(단가만 0). */
