@@ -37,7 +37,7 @@ export function MatchConfirmDialog({
 
   const lookup = useCallback(async (value: string) => {
     const trimmed = value.trim()
-    if (!/^[0-9]{1,20}$/.test(trimmed)) {
+    if (!/^\d{1,20}$/.test(trimmed)) {
       setError('고객번호는 숫자만 입력할 수 있습니다.')
       setCustomer(null)
       return

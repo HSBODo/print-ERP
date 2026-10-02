@@ -246,7 +246,6 @@ const GRADUAL_RULES = [
   '@typescript-eslint/prefer-promise-reject-errors',
   '@typescript-eslint/require-await',
   '@typescript-eslint/restrict-template-expressions',
-  'sonarjs/concise-regex',
   'sonarjs/deprecation',
   'sonarjs/function-return-type',
   'sonarjs/no-nested-conditional',

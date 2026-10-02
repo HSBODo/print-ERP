@@ -314,6 +314,6 @@ export function SmsFailedQueueModal({
 
 /** 백엔드 templateCode(T1/T2/T3) → 화면 라벨(1차·2차·3차). 알 수 없는 값은 원본 유지. */
 const tierLabel = (code: string): string => {
-  const m = /^T([0-9]+)$/.exec(code)
+  const m = /^T(\d+)$/.exec(code)
   return m ? `${m[1]}차` : code
 }
