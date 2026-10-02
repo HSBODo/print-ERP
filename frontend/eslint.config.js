@@ -251,7 +251,6 @@ const GRADUAL_RULES = [
   'sonarjs/deprecation',
   'sonarjs/function-return-type',
   'sonarjs/no-floating-point-equality',
-  'sonarjs/no-inverted-boolean-check',
   'sonarjs/no-nested-conditional',
   'sonarjs/no-nested-functions',
   'sonarjs/no-nested-template-literals',
