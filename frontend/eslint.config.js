@@ -70,6 +70,8 @@ const sharedConfig = {
 
     'sonarjs/cognitive-complexity': ['warn', 10],
     'sonarjs/no-ignored-exceptions': 'off',
+    // props 를 Readonly 로 감싸지 않는다 — 실익보다 표기 소음이 크다
+    'sonarjs/prefer-read-only-props': 'off',
 
     'react-hooks/purity': 'warn',
     'react-hooks/set-state-in-effect': 'warn',
@@ -254,7 +256,6 @@ const GRADUAL_RULES = [
   'sonarjs/no-nested-functions',
   'sonarjs/no-nested-template-literals',
   'sonarjs/no-redundant-optional',
-  'sonarjs/prefer-read-only-props',
   'sonarjs/prefer-specific-assertions',
   'sonarjs/reduce-initial-value',
   'sonarjs/redundant-type-aliases',
