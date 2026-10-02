@@ -149,7 +149,7 @@ describe('통계 페이지 접근 정책 불변식', () => {
     const overseas = completeIds.filter((p) =>
       isDepartment(p, 'OVERSEAS_MARKETING'),
     )
-    expect(overseas.length).toBe(3)
+    expect(overseas).toHaveLength(3)
     for (const p of overseas) {
       expect(canAccess(p, asStaffMarketing, false)).toBe('forbidden')
     }

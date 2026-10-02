@@ -253,7 +253,6 @@ const GRADUAL_RULES = [
   'sonarjs/no-nested-functions',
   'sonarjs/no-nested-template-literals',
   'sonarjs/no-redundant-optional',
-  'sonarjs/prefer-specific-assertions',
   'sonarjs/reduce-initial-value',
   'sonarjs/redundant-type-aliases',
   'sonarjs/super-linear-regex',
