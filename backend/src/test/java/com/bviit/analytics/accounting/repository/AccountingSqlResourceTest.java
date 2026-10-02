@@ -34,18 +34,18 @@ class AccountingSqlResourceTest {
     @Test
     void SOFTCRM_시력교정_쿼리는_수납일_바인딩과_NOLOCK을_쓴다() {
         for (String location : new String[]{
-                VisionReceiptSourceRepository.PAYMENTS_SQL, VisionReceiptSourceRepository.ITEM_DETAILS_SQL,
-                VisionReceiptSourceRepository.ITEMS_SQL, VisionReceiptSourceRepository.OPERATIONS_SQL}) {
+                VisionReceiptSourceRepository.PAYMENTS_MSSQL, VisionReceiptSourceRepository.ITEM_DETAILS_MSSQL,
+                VisionReceiptSourceRepository.ITEMS_MSSQL, VisionReceiptSourceRepository.OPERATIONS_MSSQL}) {
             assertThat(SqlLoader.load(location)).as(location)
                     .contains(":from", ":to", "WITH(NOLOCK)", "AS custNum")
                     .doesNotContain("OPENQUERY", "STRING_AGG")
                     .doesNotContainPattern("(?<![LR])TRIM\\(");   // MSSQL 2014 — TRIM 금지 (LTRIM/RTRIM 만)
         }
-        assertThat(SqlLoader.load(VisionReceiptSourceRepository.PAYMENTS_SQL))
+        assertThat(SqlLoader.load(VisionReceiptSourceRepository.PAYMENTS_MSSQL))
                 .contains("CstPrcSub", "AS cancelYn", "AS modifiedAt", "AS acquirerName", "AS cardCode", "AS approvalNo");
-        assertThat(SqlLoader.load(VisionReceiptSourceRepository.ITEM_DETAILS_SQL)).contains("PrcItmDtl", "AS itemCode", "AS subSeq");
-        assertThat(SqlLoader.load(VisionReceiptSourceRepository.ITEMS_SQL)).contains("PrcItmLst", "PrcItmQty * p.PrcItmPrc");
-        assertThat(SqlLoader.load(VisionReceiptSourceRepository.OPERATIONS_SQL)).contains("OPERATIONDATA", "AS operationDate");
+        assertThat(SqlLoader.load(VisionReceiptSourceRepository.ITEM_DETAILS_MSSQL)).contains("PrcItmDtl", "AS itemCode", "AS subSeq");
+        assertThat(SqlLoader.load(VisionReceiptSourceRepository.ITEMS_MSSQL)).contains("PrcItmLst", "PrcItmQty * p.PrcItmPrc");
+        assertThat(SqlLoader.load(VisionReceiptSourceRepository.OPERATIONS_MSSQL)).contains("OPERATIONDATA", "AS operationDate");
     }
 
     @Test
