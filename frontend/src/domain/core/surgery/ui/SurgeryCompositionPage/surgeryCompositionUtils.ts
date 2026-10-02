@@ -262,7 +262,7 @@ const vp = (v: number, base: number) =>
   v > 0 ? `${formatAxisNumber(v)} (${pct(v, base)}%)` : '-'
 const vc = (v: number) => (v > 0 ? formatAxisNumber(v) : '-')
 
-export type Tone = 'blue' | 'violet' | undefined
+export type Tone = 'blue' | 'violet'
 export interface ColDef {
   render: (d: Cell) => string
   border?: boolean
@@ -333,5 +333,5 @@ export const COLS: ColDef[] = [
   { render: (d) => vp(d.catMono, d.cataractPatients) }, // 단초점
 ]
 
-export const toneClass = (t: Tone) =>
+export const toneClass = (t?: Tone) =>
   t === 'blue' ? 'text-blue-700' : t === 'violet' ? 'text-violet-700' : ''
