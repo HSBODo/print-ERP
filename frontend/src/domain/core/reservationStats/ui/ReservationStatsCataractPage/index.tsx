@@ -32,8 +32,8 @@ import {
   SUMMARY_COLUMNS,
 } from '../../utils/reservationStatsCataractData'
 import {
-  isSingleMonthRange,
   defaultStatsRange,
+  isSingleMonthRange,
   validateStatsRange,
 } from '../../utils/reservationStatsDateRange'
 import {

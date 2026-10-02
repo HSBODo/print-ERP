@@ -21,8 +21,8 @@ import {
   type ReservationStatsParity,
 } from '../../type/api'
 import {
-  isSingleMonthRange,
   defaultStatsRange,
+  isSingleMonthRange,
   validateStatsRange,
 } from '../../utils/reservationStatsDateRange'
 import {
