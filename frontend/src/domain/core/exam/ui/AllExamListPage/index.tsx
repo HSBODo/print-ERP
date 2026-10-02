@@ -45,7 +45,7 @@ const sortValue = (
     const age = Number(calcAge(r.birth))
     return Number.isFinite(age) ? age : ''
   }
-  return String((r as Record<string, unknown>)[key] ?? '').trim()
+  return ((r as Record<string, string | undefined>)[key] ?? '').trim()
 }
 
 export function AllExamListPage() {
@@ -304,6 +304,6 @@ export function AllExamListPage() {
 }
 
 const dashCell = (row: AllExamListItem, key: string) => {
-  const v = String((row as Record<string, unknown>)[key] ?? '')
+  const v = (row as Record<string, string | undefined>)[key] ?? ''
   return v.trim() ? v : '—'
 }

@@ -70,6 +70,8 @@ const sharedConfig = {
 
     'sonarjs/cognitive-complexity': ['warn', 10],
     'sonarjs/no-ignored-exceptions': 'off',
+    // props 를 Readonly 로 감싸지 않는다 — 실익보다 표기 소음이 크다
+    'sonarjs/prefer-read-only-props': 'off',
 
     'react-hooks/purity': 'warn',
     'react-hooks/set-state-in-effect': 'warn',
@@ -232,7 +234,6 @@ const testConfig = {
 // 점진 전환 — 도입 시점에 기존 위반이 남아 있어 warn 으로 내린 규칙.
 // 위반을 모두 고치면 목록에서 빼서 원래 등급(error)으로 되돌린다. (eslint 우회 주석은 쓰지 않는다)
 const GRADUAL_RULES = [
-  '@typescript-eslint/no-base-to-string',
   '@typescript-eslint/no-floating-promises',
   '@typescript-eslint/no-unnecessary-type-assertion',
   '@typescript-eslint/no-unsafe-argument',
@@ -245,17 +246,11 @@ const GRADUAL_RULES = [
   '@typescript-eslint/prefer-promise-reject-errors',
   '@typescript-eslint/require-await',
   '@typescript-eslint/restrict-template-expressions',
-  'sonarjs/concise-regex',
   'sonarjs/deprecation',
   'sonarjs/function-return-type',
-  'sonarjs/no-floating-point-equality',
-  'sonarjs/no-inverted-boolean-check',
   'sonarjs/no-nested-conditional',
   'sonarjs/no-nested-functions',
   'sonarjs/no-nested-template-literals',
-  'sonarjs/no-redundant-optional',
-  'sonarjs/prefer-read-only-props',
-  'sonarjs/prefer-specific-assertions',
   'sonarjs/reduce-initial-value',
   'sonarjs/redundant-type-aliases',
   'sonarjs/super-linear-regex',
@@ -273,6 +268,8 @@ export default defineConfig([
     'coverage',
     'public',
     'src/routeTree.gen.ts',
+    // 미구현 목업 — 참고만 하고 확장하지 않는 코드라 lint 대상에서 뺀다 (CLAUDE.md graveyard)
+    'src/routes/_auth/-internal/graveyard',
   ]),
   sharedConfig,
   architectureConfig,

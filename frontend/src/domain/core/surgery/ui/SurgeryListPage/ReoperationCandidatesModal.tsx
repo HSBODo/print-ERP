@@ -109,7 +109,7 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
 
   // 선택(포함)된 행의 수납금액 합계. payment 는 콤마 포함 포맷 문자열이라 숫자만 추출해 합산.
   const parseWon = (s: string) =>
-    s ? Number(s.replace(/[^0-9]/g, '')) || 0 : 0
+    s ? Number(s.replace(/\D/g, '')) || 0 : 0
   const checkedPaymentTotal = keyed
     .filter(isChecked)
     .reduce((sum, c) => sum + parseWon(c.payment), 0)

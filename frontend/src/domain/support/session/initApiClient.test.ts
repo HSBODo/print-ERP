@@ -104,7 +104,7 @@ describe('initApiClient', () => {
     await expect(api.get('/stats/reservation/monthly')).rejects.toThrow(
       '세션이 만료되었습니다. 다시 로그인해주세요.',
     )
-    expect(localStorage.length).toBe(0)
+    expect(localStorage).toHaveLength(0)
   })
 
   it('로그인 401 이면 세션을 건드리지 않는다', async () => {
@@ -116,7 +116,7 @@ describe('initApiClient', () => {
     await expect(
       api.post('/auth/login', { loginId: 'admin', password: 'wrong' }),
     ).rejects.toThrow('아이디 또는 비밀번호가 올바르지 않습니다.')
-    expect(localStorage.length).toBe(2)
+    expect(localStorage).toHaveLength(2)
   })
 
   it('에러 응답의 json message 를 에러 메시지로 쓴다', async () => {

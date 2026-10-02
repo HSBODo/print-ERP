@@ -7,7 +7,7 @@
 
 /** 범위를 1·2·5·10×10ⁿ 중 ~5등분에 가까운 nice step으로 환산. */
 export function niceStep(range: number): number {
-  if (!(range > 0)) return 1
+  if (!Number.isFinite(range) || range <= 0) return 1
   const rough = range / 5
   const mag = Math.pow(10, Math.floor(Math.log10(rough)))
   const norm = rough / mag
@@ -65,7 +65,7 @@ export function niceAxisFor(min: number, max: number): Axis {
  * 눈금 값이 0·5 로 떨어지게 한다(step 20 → 20·40·60, step 25 → 25·50·75, step 50 → 50·100).
  */
 function niceStepFor(range: number, divisions: number): number {
-  if (!(range > 0)) return 1
+  if (!Number.isFinite(range) || range <= 0) return 1
   const rough = range / divisions
   const mag = Math.pow(10, Math.floor(Math.log10(rough)))
   const norm = rough / mag

@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { create } from 'axios'
 
 type QueryValue =
   string | number | boolean | (string | number | boolean)[] | null | undefined
@@ -19,7 +19,7 @@ const serializeParams = (params: Record<string, QueryValue>) => {
 }
 
 /** 앱 공용 axios 인스턴스. interceptor(토큰·401·에러 메시지)는 shared 가 세션을 모르므로 support/session 의 initApiClient 가 붙인다. */
-export const api = axios.create({
+export const api = create({
   baseURL: '/api',
   paramsSerializer: { serialize: serializeParams },
 })

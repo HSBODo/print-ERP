@@ -37,7 +37,7 @@ export function downloadReservationChangeCsv(
   headers.push('최종 예약일', '변경횟수', '전체 변경횟수')
 
   const rows = views.map(({ row, steps, changes, totalChanges, asOfDate }) => {
-    const cells: unknown[] = [
+    const cells: (string | number)[] = [
       row.registeredAt,
       weekTag(row.registeredAt),
       row.registeredTime,
