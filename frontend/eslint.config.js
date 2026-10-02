@@ -234,7 +234,6 @@ const testConfig = {
 // 점진 전환 — 도입 시점에 기존 위반이 남아 있어 warn 으로 내린 규칙.
 // 위반을 모두 고치면 목록에서 빼서 원래 등급(error)으로 되돌린다. (eslint 우회 주석은 쓰지 않는다)
 const GRADUAL_RULES = [
-  '@typescript-eslint/no-base-to-string',
   '@typescript-eslint/no-floating-promises',
   '@typescript-eslint/no-unnecessary-type-assertion',
   '@typescript-eslint/no-unsafe-argument',

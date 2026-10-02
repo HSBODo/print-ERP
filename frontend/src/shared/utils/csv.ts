@@ -10,12 +10,15 @@
 interface TextCell {
   excelText: string
 }
+/** CSV 한 칸에 들어갈 수 있는 값. */
+type CsvValue = string | number | boolean | null | undefined
+
 const asText = (value: string): TextCell => ({ excelText: value })
 const isTextCell = (v: unknown): v is TextCell =>
   typeof v === 'object' && v !== null && 'excelText' in v
 
 /** CSV 한 셀 이스케이프 — 쉼표·따옴표·개행 포함 시 따옴표로 감싸고 내부 따옴표는 중복(""). */
-const escapeCell = (value: unknown): string => {
+const escapeCell = (value: CsvValue | TextCell): string => {
   if (isTextCell(value)) {
     // ="값" 수식(엑셀이 텍스트로 인식). 수식 내부 따옴표 + CSV 따옴표 2중 이스케이프.
     const formula = `="${value.excelText.replace(/"/g, '""')}"`
@@ -26,7 +29,10 @@ const escapeCell = (value: unknown): string => {
 }
 
 /** 헤더 + 행(2차원) → CSV 문자열(BOM 미포함, CRLF 구분). */
-export function toCsv(headers: string[], rows: unknown[][]): string {
+export function toCsv(
+  headers: string[],
+  rows: (CsvValue | TextCell)[][],
+): string {
   return [headers, ...rows]
     .map((cols) => cols.map(escapeCell).join(','))
     .join('\r\n')
@@ -48,7 +54,7 @@ export function columnsToCsv<T>(columns: CsvColumn<T>[], rows: T[]): string {
     columns.map((c) => {
       const v = c.csv
         ? c.csv(row, i + 1)
-        : (row as Record<string, unknown>)[c.key]
+        : (row as Record<string, CsvValue>)[c.key]
       // 텍스트 강제 칼럼은 빈 값이 아닐 때만 ="값"으로 감싼다(빈 칸은 그대로 빈 칸).
       return c.text && v !== null && v !== undefined && v !== ''
         ? asText(String(v))
