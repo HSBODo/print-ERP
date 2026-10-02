@@ -81,7 +81,7 @@ describe('reservationChangeCalendarModel', () => {
   })
 
   it('변경률과 표기', () => {
-    expect(rateOf(3, 14)).toBe(21.4)
+    expect(rateOf(3, 14)).toBeCloseTo(21.4, 6)
     expect(rateOf(0, 0)).toBeNull()
     expect(formatMetric(21.4, 'rate')).toBe('21.4%')
     expect(formatMetric(1234, 'total')).toBe('1,234')

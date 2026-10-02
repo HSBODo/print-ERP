@@ -33,7 +33,7 @@ describe('reservation stats core helpers', () => {
   it('calculates integer and one-decimal percentages with zero-denominator guards', () => {
     expect(pctInt(2, 3)).toBe(67)
     expect(pctInt(1, 0)).toBe(0)
-    expect(pct1(2, 3)).toBe(66.7)
+    expect(pct1(2, 3)).toBeCloseTo(66.7, 6)
     expect(pct1(1, 0)).toBe(0)
   })
 
