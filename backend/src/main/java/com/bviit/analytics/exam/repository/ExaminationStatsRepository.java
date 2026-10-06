@@ -4,6 +4,7 @@ import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.common.util.SqlFragments;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -14,6 +15,14 @@ import java.util.Map;
 
 /**
  * 검사 건수 통계 쿼리 — 시력교정 + 드림렌즈 + 백내장 (docs/db/지표정의.md §1).
+ * ExamReconcileService 전용(파이프라인 밖, 대사용).
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE Fragment 블록)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL + measurements-blank MSSQL fragment (3 SQL에서 사용).</li>
+ *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.* + measurements-blank warehouse fragment.</li>
+ * </ul>
+ *
  *
  * 카테고리별 기준:
  *   시력교정 = EXAM 검사자 리스트 행 (사람) — 드림렌즈 분류 배제
@@ -30,12 +39,18 @@ import java.util.Map;
 public class ExaminationStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final boolean dataPlatformEnabled;
 
-    private static final String FIND_VISION_CORRECTION_MONTHLY_SQL = "sql/softcrm/exam/select-vision-correction-monthly.sql";
-    private static final String FIND_DREAMLENS_MONTHLY_SQL = "sql/softcrm/exam/select-dreamlens-monthly.sql";
-    private static final String FIND_CATARACT_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-monthly.sql";
-    private static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-reservation-rate-monthly.sql";
-    private static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-vision-reservation-rate-monthly.sql";
+    static final String FIND_VISION_CORRECTION_MONTHLY_SQL_MSSQL           = "sql/softcrm/exam/select-vision-correction-monthly.sql";
+    static final String FIND_VISION_CORRECTION_MONTHLY_SQL_WAREHOUSE       = "sql/warehouse/exam/select-vision-correction-monthly.sql";
+    static final String FIND_DREAMLENS_MONTHLY_SQL_MSSQL                   = "sql/softcrm/exam/select-dreamlens-monthly.sql";
+    static final String FIND_DREAMLENS_MONTHLY_SQL_WAREHOUSE               = "sql/warehouse/exam/select-dreamlens-monthly.sql";
+    static final String FIND_CATARACT_MONTHLY_SQL_MSSQL                    = "sql/softcrm/exam/select-cataract-monthly.sql";
+    static final String FIND_CATARACT_MONTHLY_SQL_WAREHOUSE                = "sql/warehouse/exam/select-cataract-monthly.sql";
+    static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL_MSSQL     = "sql/softcrm/exam/select-cataract-reservation-rate-monthly.sql";
+    static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL_WAREHOUSE = "sql/warehouse/exam/select-cataract-reservation-rate-monthly.sql";
+    static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL_MSSQL     = "sql/softcrm/exam/select-vision-reservation-rate-monthly.sql";
+    static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL_WAREHOUSE = "sql/warehouse/exam/select-vision-reservation-rate-monthly.sql";
 
     private final String findVisionCorrectionMonthlySql;
     private final String findDreamlensMonthlySql;
@@ -44,14 +59,27 @@ public class ExaminationStatsRepository {
     private final String findVisionReservationRateMonthlySql;
 
     public ExaminationStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
-        this.findVisionCorrectionMonthlySql = SqlLoader.load(FIND_VISION_CORRECTION_MONTHLY_SQL);
-        this.findDreamlensMonthlySql = SqlLoader.load(FIND_DREAMLENS_MONTHLY_SQL);
-        this.findCataractMonthlySql = SqlLoader.load(FIND_CATARACT_MONTHLY_SQL);
-        this.findCataractReservationRateMonthlySql = SqlLoader.load(FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL);
-        this.findVisionReservationRateMonthlySql = SqlLoader.load(FIND_VISION_RESERVATION_RATE_MONTHLY_SQL);
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        this.dataPlatformEnabled = dataPlatformEnabled;
+        this.findVisionCorrectionMonthlySql = SqlLoader.load(dataPlatformEnabled
+                ? FIND_VISION_CORRECTION_MONTHLY_SQL_WAREHOUSE
+                : FIND_VISION_CORRECTION_MONTHLY_SQL_MSSQL);
+        this.findDreamlensMonthlySql = SqlLoader.load(dataPlatformEnabled
+                ? FIND_DREAMLENS_MONTHLY_SQL_WAREHOUSE
+                : FIND_DREAMLENS_MONTHLY_SQL_MSSQL);
+        this.findCataractMonthlySql = SqlLoader.load(dataPlatformEnabled
+                ? FIND_CATARACT_MONTHLY_SQL_WAREHOUSE
+                : FIND_CATARACT_MONTHLY_SQL_MSSQL);
+        this.findCataractReservationRateMonthlySql = SqlLoader.load(dataPlatformEnabled
+                ? FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL_WAREHOUSE
+                : FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL_MSSQL);
+        this.findVisionReservationRateMonthlySql = SqlLoader.load(dataPlatformEnabled
+                ? FIND_VISION_RESERVATION_RATE_MONTHLY_SQL_WAREHOUSE
+                : FIND_VISION_RESERVATION_RATE_MONTHLY_SQL_MSSQL);
     }
 
     /**
@@ -139,7 +167,7 @@ public class ExaminationStatsRepository {
     private String withExamMeasurementsBlank(String sql) {
         return sql.replace(
                 "__EXAM_MEASUREMENTS_BLANK__",
-                SqlFragments.examMeasurementsBlankPredicate("e")
+                SqlFragments.examMeasurementsBlankPredicate("e", dataPlatformEnabled)
         );
     }
 }
