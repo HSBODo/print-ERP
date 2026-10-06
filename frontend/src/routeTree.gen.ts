@@ -40,6 +40,7 @@ import { Route as AuthStatsexamProcedureExamRouteImport } from './routes/_auth/s
 import { Route as AuthStatsmarketingAccumulatedEyesRouteImport } from './routes/_auth/stats/(marketing)/accumulated-eyes'
 import { Route as AuthStatsmarketingChannelAnalysisRouteImport } from './routes/_auth/stats/(marketing)/channel-analysis'
 import { Route as AuthStatsmarketingChannelProfitRouteImport } from './routes/_auth/stats/(marketing)/channel-profit'
+import { Route as AuthStatsmarketingEventNotesRouteImport } from './routes/_auth/stats/(marketing)/event-notes'
 import { Route as AuthStatsmarketingMarketingRouteImport } from './routes/_auth/stats/(marketing)/marketing'
 import { Route as AuthStatsoutpatientOutpatientCountRouteImport } from './routes/_auth/stats/(outpatient)/outpatient-count'
 import { Route as AuthStatsoutpatientOutpatientListRouteImport } from './routes/_auth/stats/(outpatient)/outpatient-list'
@@ -237,6 +238,12 @@ const AuthStatsmarketingChannelProfitRoute =
     path: '/stats/channel-profit',
     getParentRoute: () => AuthRouteRoute,
   } as any)
+const AuthStatsmarketingEventNotesRoute =
+  AuthStatsmarketingEventNotesRouteImport.update({
+    id: '/stats/(marketing)/event-notes',
+    path: '/stats/event-notes',
+    getParentRoute: () => AuthRouteRoute,
+  } as any)
 const AuthStatsmarketingMarketingRoute =
   AuthStatsmarketingMarketingRouteImport.update({
     id: '/stats/(marketing)/marketing',
@@ -387,6 +394,7 @@ export interface FileRoutesByFullPath {
   '/stats/accumulated-eyes': typeof AuthStatsmarketingAccumulatedEyesRoute
   '/stats/channel-analysis': typeof AuthStatsmarketingChannelAnalysisRoute
   '/stats/channel-profit': typeof AuthStatsmarketingChannelProfitRoute
+  '/stats/event-notes': typeof AuthStatsmarketingEventNotesRoute
   '/stats/marketing': typeof AuthStatsmarketingMarketingRoute
   '/stats/outpatient-count': typeof AuthStatsoutpatientOutpatientCountRoute
   '/stats/outpatient-list': typeof AuthStatsoutpatientOutpatientListRoute
@@ -439,6 +447,7 @@ export interface FileRoutesByTo {
   '/stats/accumulated-eyes': typeof AuthStatsmarketingAccumulatedEyesRoute
   '/stats/channel-analysis': typeof AuthStatsmarketingChannelAnalysisRoute
   '/stats/channel-profit': typeof AuthStatsmarketingChannelProfitRoute
+  '/stats/event-notes': typeof AuthStatsmarketingEventNotesRoute
   '/stats/marketing': typeof AuthStatsmarketingMarketingRoute
   '/stats/outpatient-count': typeof AuthStatsoutpatientOutpatientCountRoute
   '/stats/outpatient-list': typeof AuthStatsoutpatientOutpatientListRoute
@@ -493,6 +502,7 @@ export interface FileRoutesById {
   '/_auth/stats/(marketing)/accumulated-eyes': typeof AuthStatsmarketingAccumulatedEyesRoute
   '/_auth/stats/(marketing)/channel-analysis': typeof AuthStatsmarketingChannelAnalysisRoute
   '/_auth/stats/(marketing)/channel-profit': typeof AuthStatsmarketingChannelProfitRoute
+  '/_auth/stats/(marketing)/event-notes': typeof AuthStatsmarketingEventNotesRoute
   '/_auth/stats/(marketing)/marketing': typeof AuthStatsmarketingMarketingRoute
   '/_auth/stats/(outpatient)/outpatient-count': typeof AuthStatsoutpatientOutpatientCountRoute
   '/_auth/stats/(outpatient)/outpatient-list': typeof AuthStatsoutpatientOutpatientListRoute
@@ -547,6 +557,7 @@ export interface FileRouteTypes {
     | '/stats/accumulated-eyes'
     | '/stats/channel-analysis'
     | '/stats/channel-profit'
+    | '/stats/event-notes'
     | '/stats/marketing'
     | '/stats/outpatient-count'
     | '/stats/outpatient-list'
@@ -599,6 +610,7 @@ export interface FileRouteTypes {
     | '/stats/accumulated-eyes'
     | '/stats/channel-analysis'
     | '/stats/channel-profit'
+    | '/stats/event-notes'
     | '/stats/marketing'
     | '/stats/outpatient-count'
     | '/stats/outpatient-list'
@@ -652,6 +664,7 @@ export interface FileRouteTypes {
     | '/_auth/stats/(marketing)/accumulated-eyes'
     | '/_auth/stats/(marketing)/channel-analysis'
     | '/_auth/stats/(marketing)/channel-profit'
+    | '/_auth/stats/(marketing)/event-notes'
     | '/_auth/stats/(marketing)/marketing'
     | '/_auth/stats/(outpatient)/outpatient-count'
     | '/_auth/stats/(outpatient)/outpatient-list'
@@ -898,6 +911,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthStatsmarketingChannelProfitRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/stats/(marketing)/event-notes': {
+      id: '/_auth/stats/(marketing)/event-notes'
+      path: '/stats/event-notes'
+      fullPath: '/stats/event-notes'
+      preLoaderRoute: typeof AuthStatsmarketingEventNotesRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/stats/(marketing)/marketing': {
       id: '/_auth/stats/(marketing)/marketing'
       path: '/stats/marketing'
@@ -1071,6 +1091,7 @@ interface AuthRouteRouteChildren {
   AuthStatsmarketingAccumulatedEyesRoute: typeof AuthStatsmarketingAccumulatedEyesRoute
   AuthStatsmarketingChannelAnalysisRoute: typeof AuthStatsmarketingChannelAnalysisRoute
   AuthStatsmarketingChannelProfitRoute: typeof AuthStatsmarketingChannelProfitRoute
+  AuthStatsmarketingEventNotesRoute: typeof AuthStatsmarketingEventNotesRoute
   AuthStatsmarketingMarketingRoute: typeof AuthStatsmarketingMarketingRoute
   AuthStatsoutpatientOutpatientCountRoute: typeof AuthStatsoutpatientOutpatientCountRoute
   AuthStatsoutpatientOutpatientListRoute: typeof AuthStatsoutpatientOutpatientListRoute
@@ -1129,6 +1150,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthStatsmarketingChannelAnalysisRoute:
     AuthStatsmarketingChannelAnalysisRoute,
   AuthStatsmarketingChannelProfitRoute: AuthStatsmarketingChannelProfitRoute,
+  AuthStatsmarketingEventNotesRoute: AuthStatsmarketingEventNotesRoute,
   AuthStatsmarketingMarketingRoute: AuthStatsmarketingMarketingRoute,
   AuthStatsoutpatientOutpatientCountRoute:
     AuthStatsoutpatientOutpatientCountRoute,

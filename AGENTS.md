@@ -109,7 +109,7 @@ project-root/
 
 ## 대표 통계 페이지 목록
 
-실제 전체 목록(48종 · 완료 44 · pending 4)의 기준은 `frontend/src/routes/_auth/` 라우트 파일(`staticData.page`)이고, 메뉴 구조는 `frontend/src/routes/_auth/-internal/navigation.ts` `MENU_TREE` 다. 전체 표는 `CLAUDE.md` 「통계 페이지 목록」 참조.
+실제 전체 목록(49종 · 완료 45 · pending 4)의 기준은 `frontend/src/routes/_auth/` 라우트 파일(`staticData.page`)이고, 메뉴 구조는 `frontend/src/routes/_auth/-internal/navigation.ts` `MENU_TREE` 다. 전체 표는 `CLAUDE.md` 「통계 페이지 목록」 참조.
 
 | ID | 이름 | 경로 | 섹션 | 상태 |
 |----|------|------|------|------|
@@ -119,6 +119,7 @@ project-root/
 | channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (MARKETING 부서) |
 | channel-analysis | 채널별 분석 | /stats/channel-analysis | 마케팅 | 완료 (정적 문서 10편, 조회 없음 · MARKETING 부서) |
 | accumulated-eyes | 누적 안수 | /stats/accumulated-eyes | 마케팅 | 완료 (OPERATION_ACCUMULATED_EYE_COUNT 마트 · MARKETING 부서) |
+| event-notes | 이벤트 노트 | /stats/event-notes | 마케팅 | 완료 (`/api/event/notes` CRUD · 서버 페이징 · MARKETING 부서 · DIRECTOR 열람만) |
 | sms | 문자 발송 리스트 | /stats/sms | 마케팅 | 완료 (Solapi · MARKETING 부서 · 편집/[지금 실행]/[실패 재실행]은 ADMIN) |
 | examination | 시술별 | /stats/examination | 검사 | 완료 |
 | consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 (관리자 전용) |
