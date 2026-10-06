@@ -3,14 +3,14 @@ import {
   ChevronsUpDown,
   ChevronUp,
   RotateCcw,
-  Search,
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { Button } from '#shared/ui/Button'
-import { MonthPicker } from '#shared/ui/MonthPicker'
+import { useFilter } from '#shared/hooks/useFilter'
+import { Filter } from '#shared/ui/Filter'
 import { PanelShell } from '#shared/ui/PanelShell'
+import { capToToday, currentMonth, monthRange } from '#shared/utils/date'
 
 import {
   useReservationChannel,
@@ -226,22 +226,9 @@ const TYPE_LABELS: Record<string, { name: string; color: string }> = {
 }
 
 /* ── 기간 헬퍼 (예약자 리스트와 같은 규칙: 진행 중인 달은 오늘까지) ── */
-const pad = (n: number) => String(n).padStart(2, '0')
-const todayIso = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-const currentMonth = () => todayIso().slice(0, 7)
-/** 시작월 1일 ~ 끝월 말일. 역순으로 골라도 바꿔서 계산한다 — 에러 상태를 만들지 않는다. */
-const monthSpan = (a: string, b: string) => {
-  const [start, end] = a <= b ? [a, b] : [b, a]
-  const [y, m] = end.split('-').map(Number)
-  const from = `${start}-01`
-  let to = `${end}-${pad(new Date(y, m, 0).getDate())}`
-  const today = todayIso()
-  if (to > today) to = today
-  return { from, to }
-}
+/** 시작월 1일 ~ 끝월 말일(진행 중인 달은 오늘까지) */
+const monthSpan = (start: string, end: string) =>
+  capToToday({ from: monthRange(start).from, to: monthRange(end).to })
 const monthLabel = (m: string) => `${m.replace('-', '년 ')}월`
 const nf = (n: number) => n.toLocaleString('ko-KR')
 /** 수술 매출 — 억 단위로 줄인다. 원 단위로 찍으면 자릿수가 길어 표가 읽히지 않는다. */
@@ -293,15 +280,18 @@ const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
 }
 
 export function ReservationChannelPage() {
-  // 시작월~끝월 범위 조회. 같은 달로 두면 기존 단일 월 조회와 동일하다.
-  const [draft, setDraft] = useState({
-    start: currentMonth(),
-    end: currentMonth(),
+  // 시작월~끝월 범위 조회([조회] 때 반영). 같은 달로 두면 단일 월 조회와 동일하다.
+  const filter = useFilter({
+    defaults: () => ({ start: currentMonth(), end: currentMonth() }),
+    validate: ({ start, end }) =>
+      start > end ? '시작 월이 끝 월보다 늦습니다.' : null,
+    onReset: () => {
+      setSort({ key: '0', dir: 'desc' })
+      setSel(null)
+      setTypeOpen(true)
+    },
   })
-  const [query, setQuery] = useState({
-    start: currentMonth(),
-    end: currentMonth(),
-  })
+  const query = filter.applied
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
     key: '0',
     dir: 'desc',
@@ -311,11 +301,9 @@ export function ReservationChannelPage() {
   // 기본 열림 — 정보를 먼저 보여주고, 필요 없으면 ✕ 로 닫게 한다.
   const [typeOpen, setTypeOpen] = useState(true)
 
-  const { from, to } = useMemo(() => monthSpan(query.start, query.end), [query])
-  const { rows, isLoading, isFetching, isError } = useReservationChannel(
-    from,
-    to,
-  )
+  const { from, to } = monthSpan(query.start, query.end)
+  const { rows, isLoading, isFetching, isError, refetch } =
+    useReservationChannel(from, to)
   const loading = isLoading || isFetching
 
   /** 합계는 채널 값을 더하지 않고 서버가 준 전체 기준값을 쓴다 —
@@ -366,7 +354,8 @@ export function ReservationChannelPage() {
    * 예약자 리스트의 수술명(OPERATIONDATA·Cataract_Operationdata)에서 분류한 값이라 추정이 아니다.
    * ⚠️ 수술등록이 있어도 아직 수술 전이면 유형이 없다 — 합계가 수술등록 인원보다 적은 게 정상.
    *    (2026-07: 수술등록 735건 중 수술명 574건) */
-  const { rows: opTypeRows } = useReservationChannelOpTypes(from, to)
+  const { rows: opTypeRows, refetch: refetchOpTypes } =
+    useReservationChannelOpTypes(from, to)
   const types = useMemo(() => {
     const scoped = opTypeRows.filter((r) =>
       sel ? r.channel === sel : r.channel == null,
@@ -435,15 +424,6 @@ export function ReservationChannelPage() {
     setSel(null)
   }
 
-  const handleReset = () => {
-    const cur = { start: currentMonth(), end: currentMonth() }
-    setDraft(cur)
-    setQuery(cur)
-    setSort({ key: '0', dir: 'desc' })
-    setSel(null)
-    setTypeOpen(true)
-  }
-
   // 칸 수는 COLS 길이에서 뽑는다 — 칸을 늘렸는데 여기가 고정이면 열이 통째로 어긋난다.
   const gridCols = `104px repeat(${COLS.length}, minmax(0,1fr)) 78px 82px 82px`
 
@@ -464,36 +444,18 @@ export function ReservationChannelPage() {
                 : `${monthLabel(query.start)} ~ ${monthLabel(query.end)}`}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <MonthPicker
-              ariaLabel="시작 월"
-              value={draft.start}
-              onChange={(m) => setDraft((p) => ({ ...p, start: m }))}
-              defaultValue={currentMonth()}
-              className="flex h-[34px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] font-medium text-slate-900 transition-colors hover:border-blue-300"
-            />
-            <span className="text-[13px] font-medium text-slate-400">~</span>
-            <MonthPicker
-              ariaLabel="끝 월"
-              value={draft.end}
-              onChange={(m) => setDraft((p) => ({ ...p, end: m }))}
-              defaultValue={currentMonth()}
-              className="flex h-[34px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] font-medium text-slate-900 transition-colors hover:border-blue-300"
-            />
-            <Button
-              className="h-[34px] gap-1.5 rounded-lg bg-slate-900 px-4 text-[13px] font-semibold hover:bg-slate-800"
-              onClick={() => setQuery(draft)}
-            >
-              <Search className="h-3.5 w-3.5" /> 조회
-            </Button>
-            <Button
-              variant="outline"
-              className="h-[34px] gap-1.5 rounded-lg px-3.5 text-[13px]"
-              onClick={handleReset}
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> 초기화
-            </Button>
-          </div>
+          <Filter.Root
+            filter={filter}
+            isFetching={loading}
+            refetch={() => Promise.all([refetch(), refetchOpTypes()])}
+          >
+            <div className="flex items-center gap-2">
+              <Filter.Month {...filter.field('start')} ariaLabel="시작 월" />
+              <span className="text-[13px] font-medium text-slate-400">~</span>
+              <Filter.Month {...filter.field('end')} ariaLabel="끝 월" />
+              <Filter.Actions />
+            </div>
+          </Filter.Root>
         </div>
 
         {/* ── 퍼널 카드 ── */}

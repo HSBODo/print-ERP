@@ -7,6 +7,9 @@ import type { ReservationChangeItem } from '../../../type/api'
  * 규칙은 디렉팅/예약변경이력 README·기획서 §4·§5·§7 을 그대로 옮겼다.
  */
 
+/** 예약 변경이력 마트가 담고 있는 첫 등록 연도 */
+export const DATA_FROM_YEAR = 2022
+
 export const BRANCH_LABEL: Record<string, string> = {
   M: '시력교정',
   D: '드림렌즈',

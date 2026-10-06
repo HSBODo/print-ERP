@@ -15,45 +15,31 @@ import {
 import { createPortal } from 'react-dom'
 
 import { cn } from '#shared/utils/cn'
-
-export interface DateRange {
-  from: string
-  to: string
-}
+import {
+  addDays,
+  type DateRange as Range,
+  daysBetween,
+  parseIsoDate,
+  toIsoDate,
+} from '#shared/utils/date'
 
 interface Props {
-  from: string
-  to: string
-  onChange: (range: DateRange) => void
-  /** [초기화] 가 되돌릴 기본 범위. 없으면 당월 1일~말일. */
-  defaultRange?: () => DateRange
-  /** 선택 가능한 최대 기간(개월). 초과하면 [적용] 이 잠긴다. */
-  maxMonths?: number
-  minDate?: string
-  maxDate?: string
-  className?: string
-  disabled?: boolean
+  value: Range
+  onChange: (range: Range) => void
+  /** 선택 가능한 최대 일수. 넘으면 [적용] 이 잠긴다 (서버 제한과 맞춘다) */
+  maxDays?: number
+  /** 'YYYY-MM-DD' 선택 가능 범위 */
+  min?: string
+  max?: string
+  ariaLabel?: string
 }
 
-const pad = (value: number) => String(value).padStart(2, '0')
-const toIso = (date: Date) =>
-  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-const fromIso = (iso: string) => {
-  const [y, m, d] = iso.split('-').map(Number)
-  return Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)
-    ? new Date(y, m - 1, d)
-    : new Date()
-}
 const startOfMonth = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), 1)
 const endOfMonth = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth() + 1, 0)
 const addMonths = (date: Date, delta: number) =>
   new Date(date.getFullYear(), date.getMonth() + delta, 1)
-const shiftDays = (date: Date, delta: number) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate() + delta)
-const dayCount = (a: string, b: string) =>
-  Math.round((fromIso(b).getTime() - fromIso(a).getTime()) / 86400000) + 1
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -63,10 +49,10 @@ const buildGrid = (view: Date) => {
   const lead = first.getDay()
   const cells: { date: Date; iso: string; outside: boolean }[] = []
   for (let i = 0; i < 42; i += 1) {
-    const date = shiftDays(first, i - lead)
+    const date = addDays(first, i - lead)
     cells.push({
       date,
-      iso: toIso(date),
+      iso: toIsoDate(date),
       outside: date.getMonth() !== view.getMonth(),
     })
   }
@@ -76,19 +62,20 @@ const buildGrid = (view: Date) => {
   return weeks
 }
 
-export function DateRangePicker({
-  from,
-  to,
+/**
+ * 조회 기간 선택 — 트리거 버튼 + 달력 팝오버.
+ * 팝오버 안에서 고른 값은 [적용]을 눌러야 onChange 로 나간다.
+ */
+export function DateRange({
+  value: { from, to },
   onChange,
-  defaultRange,
-  maxMonths = 12,
-  minDate,
-  maxDate,
-  className,
-  disabled,
+  maxDays,
+  min,
+  max,
+  ariaLabel = '조회 기간',
 }: Props) {
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState(() => startOfMonth(fromIso(from)))
+  const [view, setView] = useState(() => startOfMonth(parseIsoDate(from)))
   const [monthOpen, setMonthOpen] = useState(false)
   const [start, setStart] = useState(from)
   const [end, setEnd] = useState<string | null>(to)
@@ -98,12 +85,7 @@ export function DateRangePicker({
   const panelRef = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
-  const todayIso = toIso(new Date())
-
-  const fallbackDefault = useCallback((): DateRange => {
-    const now = new Date()
-    return { from: toIso(startOfMonth(now)), to: toIso(endOfMonth(now)) }
-  }, [])
+  const todayIso = toIsoDate(new Date())
 
   const close = useCallback(() => {
     setOpen(false)
@@ -165,8 +147,8 @@ export function DateRangePicker({
   const lo = previewEnd && previewEnd < start ? previewEnd : start
   const hi = previewEnd && previewEnd < start ? start : previewEnd
 
-  const spanDays = end ? dayCount(start, end) : 0
-  const overLimit = end ? dayCount(start, end) > maxMonths * 31 : false
+  const spanDays = end ? daysBetween(start, end) : 0
+  const overLimit = Boolean(maxDays && spanDays > maxDays)
   const canApply = Boolean(end) && !overLimit
 
   const pick = (iso: string) => {
@@ -179,46 +161,54 @@ export function DateRangePicker({
     setEnd(null)
   }
 
-  const applyRange = (range: DateRange) => {
+  const applyRange = (range: Range) => {
     setStart(range.from)
     setEnd(range.to)
     setHover(null)
-    setView(startOfMonth(fromIso(range.from)))
+    setView(startOfMonth(parseIsoDate(range.from)))
   }
 
   const now = new Date()
-  const PRESETS: { label: string; range: () => DateRange }[] = [
+  const PRESETS: { label: string; range: () => Range }[] = [
     { label: '오늘', range: () => ({ from: todayIso, to: todayIso }) },
     {
       label: '최근 7일',
-      range: () => ({ from: toIso(shiftDays(now, -6)), to: todayIso }),
+      range: () => ({ from: toIsoDate(addDays(now, -6)), to: todayIso }),
     },
     {
       label: '이번 달',
       range: () => ({
-        from: toIso(startOfMonth(now)),
-        to: toIso(endOfMonth(now)),
+        from: toIsoDate(startOfMonth(now)),
+        to: toIsoDate(endOfMonth(now)),
       }),
     },
     {
       label: '지난 달',
       range: () => ({
-        from: toIso(startOfMonth(addMonths(now, -1))),
-        to: toIso(endOfMonth(addMonths(now, -1))),
+        from: toIsoDate(startOfMonth(addMonths(now, -1))),
+        to: toIsoDate(endOfMonth(addMonths(now, -1))),
       }),
     },
     {
       label: '최근 3개월',
       range: () => ({
-        from: toIso(shiftDays(addMonths(now, -2), now.getDate() - 1)),
+        from: toIsoDate(addDays(addMonths(now, -2), now.getDate() - 1)),
         to: todayIso,
       }),
     },
   ]
-  const activePreset = PRESETS.find((preset) => {
-    const range = preset.range()
-    return range.from === start && range.to === end
-  })?.label
+  // 프리셋도 선택 가능 범위(min·max) 안으로 자른다 — 예: max=오늘이면 '이번 달'은 1일~오늘.
+  const clamp = ({ from: lo, to: hi }: Range): Range => ({
+    from: min && lo < min ? min : lo,
+    to: max && hi > max ? max : hi,
+  })
+  const presetRanges = PRESETS.map((preset) => ({
+    label: preset.label,
+    range: clamp(preset.range()),
+  }))
+  const activePreset = presetRanges.find(
+    ({ range }) => range.from === start && range.to === end,
+  )?.label
 
   const panel = pos && (
     <div
@@ -331,8 +321,7 @@ export function DateRangePicker({
               <div key={week[0].iso} className="grid grid-cols-7">
                 {week.map((cell, index) => {
                   const blocked = Boolean(
-                    (minDate && cell.iso < minDate) ||
-                    (maxDate && cell.iso > maxDate),
+                    (min && cell.iso < min) || (max && cell.iso > max),
                   )
                   const banded =
                     Boolean(hi) && cell.iso >= lo && cell.iso <= (hi as string)
@@ -392,11 +381,11 @@ export function DateRangePicker({
 
       <div className="mt-3 border-t border-gray-100 pt-3">
         <div className="flex flex-wrap gap-1.5">
-          {PRESETS.map((preset) => (
+          {presetRanges.map((preset) => (
             <button
               key={preset.label}
               type="button"
-              onClick={() => applyRange(preset.range())}
+              onClick={() => applyRange(preset.range)}
               className={cn(
                 'rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
                 activePreset === preset.label
@@ -431,18 +420,11 @@ export function DateRangePicker({
 
         {overLimit && (
           <p className="mt-1.5 text-[11px] text-rose-600">
-            최대 {maxMonths}개월까지 조회할 수 있습니다.
+            최대 {maxDays}일까지 조회할 수 있습니다.
           </p>
         )}
 
         <div className="mt-2.5 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => applyRange((defaultRange ?? fallbackDefault)())}
-            className="px-0.5 py-1 text-[11.5px] font-medium text-gray-400 hover:text-gray-600"
-          >
-            초기화
-          </button>
           <button
             type="button"
             onClick={close}
@@ -472,7 +454,7 @@ export function DateRangePicker({
       <button
         ref={triggerRef}
         type="button"
-        disabled={disabled}
+        aria-label={`${ariaLabel} ${from} ~ ${to}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => {
@@ -484,13 +466,12 @@ export function DateRangePicker({
           setEnd(to)
           setHover(null)
           setMonthOpen(false)
-          setView(startOfMonth(fromIso(from)))
+          setView(startOfMonth(parseIsoDate(from)))
           setOpen(true)
         }}
         className={cn(
-          'flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-2.5 text-xs text-gray-800 outline-none transition-colors hover:border-blue-300 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-2.5 text-xs text-gray-800 outline-none transition-colors hover:border-blue-300',
           open && 'border-blue-400 ring-2 ring-blue-100',
-          className,
         )}
       >
         <CalendarDays className="h-3.5 w-3.5 shrink-0 text-gray-400" />

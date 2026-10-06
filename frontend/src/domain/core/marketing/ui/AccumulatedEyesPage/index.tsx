@@ -5,16 +5,17 @@ import {
   ChevronUp,
   Download,
   Info,
-  RotateCcw,
-  Search,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { usePagination } from '#shared/hooks/usePagination'
+import { useFilter } from '#shared/hooks/useFilter'
+import { DEFAULT_PAGE_SIZE, usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
+import { Filter } from '#shared/ui/Filter'
 import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+import { addDays, todayIso, toIsoDate, validateRange } from '#shared/utils/date'
 
 import { useAccumulatedEyes } from '../../hooks/useAccumulatedEyes'
 import type { AccumulatedEyeItem, AccumulatedEyesField } from '../../type/api'
@@ -121,14 +122,17 @@ const computeWeightRules = (opCode: string, opDate: string): WeightRule[] => {
  *   C) 향후 통계 확장은 별도 페이지에서 (마트 재사용).
  */
 
-const today = () => new Date().toISOString().slice(0, 10)
-const daysAgo = (n: number) => {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10)
-}
+/** 기본 조회 기간 = 최근 30일 */
+const defaultRange = () => ({
+  from: toIsoDate(addDays(new Date(), -30)),
+  to: todayIso(),
+})
+/** 서버 제한 — 검색어 없는 무필터 조회는 1년, 검색어가 있으면 10년 (AccumulatedEyeController) */
+const maxDaysOf = (keyword: string) => (keyword.trim() ? 3660 : 366)
 
 type SortKey = keyof AccumulatedEyeItem
+const DEFAULT_SORT_KEY: SortKey = 'accumulatedEyeCount'
+const ALL_FIELDS: AccumulatedEyesField = 'all'
 type SortDir = 'asc' | 'desc'
 
 /** 가상 컬럼 키 — 실제 데이터 필드가 아니라 화면에서 파생해 만드는 컬럼(가중치 등). 정렬 불가. */
@@ -583,17 +587,28 @@ function AccumulatedEyeRulesCard() {
 }
 
 export function AccumulatedEyesPage() {
-  const [draftFrom, setDraftFrom] = useState(daysAgo(30))
-  const [draftTo, setDraftTo] = useState(today())
-  const [draftKeyword, setDraftKeyword] = useState('')
-  const [draftField, setDraftField] = useState<AccumulatedEyesField>('all')
-  const [queryFrom, setQueryFrom] = useState(daysAgo(30))
-  const [queryTo, setQueryTo] = useState(today())
-  const [queryKeyword, setQueryKeyword] = useState('')
-  const [queryField, setQueryField] = useState<AccumulatedEyesField>('all')
+  // 기간·검색 대상·검색어 모두 서버 조회 조건 — [조회]·Enter·F1 때 반영.
+  const filter = useFilter({
+    defaults: () => ({
+      range: defaultRange(),
+      field: ALL_FIELDS,
+      keyword: '',
+    }),
+    validate: ({ range, keyword }) =>
+      validateRange(range, { maxDays: maxDaysOf(keyword) }),
+    onSearch: () => {
+      pagination.resetPage()
+    },
+    onReset: () => {
+      setSortKey(DEFAULT_SORT_KEY)
+      setSortDir('desc')
+      pagination.setPageSize(DEFAULT_PAGE_SIZE)
+    },
+  })
+  const { range, field, keyword } = filter.applied
   // 정렬 상태 — 기본은 누적 안수 내림차순 (최고 누적치 위로).
   //   헤더 다시 클릭 시 토글: desc → asc → 없음(서버 기본: operation_date DESC).
-  const [sortKey, setSortKey] = useState<SortKey | null>('accumulatedEyeCount')
+  const [sortKey, setSortKey] = useState<SortKey | null>(DEFAULT_SORT_KEY)
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const toggleSort = (key: SortKey) => {
@@ -611,11 +626,11 @@ export function AccumulatedEyesPage() {
     setSortDir('asc')
   }
 
-  const { rows, isLoading, isFetching, isError, errorMessage } =
-    useAccumulatedEyes(queryFrom, queryTo, queryKeyword, queryField)
+  const { rows, isLoading, isFetching, isError, errorMessage, refetch } =
+    useAccumulatedEyes(range.from, range.to, keyword.trim(), field)
 
   const currentPlaceholder =
-    FIELD_OPTIONS.find((o) => o.value === draftField)?.placeholder ?? ''
+    FIELD_OPTIONS.find((o) => o.value === filter.draft.field)?.placeholder ?? ''
 
   const sortedRows = useMemo(() => {
     if (!sortKey) return rows
@@ -625,19 +640,6 @@ export function AccumulatedEyesPage() {
 
   const pagination = usePagination(sortedRows)
 
-  const runSearch = () => {
-    setQueryFrom(draftFrom)
-    setQueryTo(draftTo)
-    setQueryKeyword(draftKeyword.trim())
-    setQueryField(draftField)
-    pagination.resetPage()
-  }
-  const reset = () => {
-    setDraftFrom(daysAgo(30))
-    setDraftTo(today())
-    setDraftKeyword('')
-    setDraftField('all')
-  }
   const exportCsv = () => {
     if (!sortedRows.length) return
     const csv = columnsToCsv(
@@ -650,87 +652,46 @@ export function AccumulatedEyesPage() {
       // 화면과 동일한 정렬 순서로 내보낸다.
       sortedRows,
     )
-    downloadCsv(`누적안수_${queryFrom}_${queryTo}.csv`, csv)
+    downloadCsv(`누적안수_${range.from}_${range.to}.csv`, csv)
   }
 
   return (
     <div className="space-y-4">
       <AccumulatedEyeRulesCard />
-      <Card className="border-border/70 shadow-sm">
-        <CardContent className="flex flex-wrap items-end gap-3 py-4">
-          <div className="flex flex-col text-sm">
-            <label className="mb-1 text-xs text-gray-500">기간(수술일)</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={draftFrom}
-                onChange={(e) => setDraftFrom(e.target.value)}
-                className="rounded-md border border-gray-200 px-2 py-1"
-              />
-              <span className="text-gray-400">~</span>
-              <input
-                type="date"
-                value={draftTo}
-                onChange={(e) => setDraftTo(e.target.value)}
-                className="rounded-md border border-gray-200 px-2 py-1"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col text-sm">
-            <label className="mb-1 text-xs text-gray-500">검색</label>
-            <div className="flex items-center gap-1.5">
-              <select
-                value={draftField}
-                onChange={(e) =>
-                  setDraftField(e.target.value as AccumulatedEyesField)
-                }
-                className="rounded-md border border-gray-200 bg-white px-2 py-1 text-sm"
-              >
-                {FIELD_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              <div className="flex items-center gap-1.5 rounded-md border border-gray-200 px-2 py-1">
-                <Search className="h-3.5 w-3.5 text-gray-400" />
-                <input
-                  value={draftKeyword}
-                  onChange={(e) => setDraftKeyword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && runSearch()}
-                  placeholder={currentPlaceholder}
-                  className="w-56 outline-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={reset}>
-              <RotateCcw className="mr-1 h-3.5 w-3.5" />
-              초기화
-            </Button>
+      <Filter.Root filter={filter} isFetching={isFetching} refetch={refetch}>
+        <Filter.Bar>
+          <span className="pl-1 text-muted-foreground">기간(수술일)</span>
+          <Filter.DateRange
+            {...filter.field('range')}
+            maxDays={maxDaysOf(filter.draft.keyword)}
+            ariaLabel="수술일 기간"
+          />
+          <span className="pl-2 text-muted-foreground">검색</span>
+          <Filter.Select
+            {...filter.field('field')}
+            options={FIELD_OPTIONS}
+            ariaLabel="검색 대상"
+          />
+          <Filter.Keyword
+            {...filter.field('keyword')}
+            placeholder={currentPlaceholder}
+            className="w-56"
+          />
+          <Filter.Actions>
             <Button
+              type="button"
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={runSearch}
-            >
-              <Search className="mr-1 h-3.5 w-3.5" />
-              조회
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportCsv}
               disabled={!rows.length}
+              className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+              onClick={exportCsv}
+              title="조회 결과 전체를 CSV로 내려받기"
             >
-              <Download className="mr-1 h-3.5 w-3.5" />
+              <Download className="h-3.5 w-3.5" />
               CSV
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </Filter.Actions>
+        </Filter.Bar>
+      </Filter.Root>
 
       <Card className="border-border/70 shadow-sm">
         <CardContent className="p-0">

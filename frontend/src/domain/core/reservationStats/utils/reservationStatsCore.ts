@@ -14,12 +14,6 @@ export const GRANULARITIES: { key: Granularity; label: string }[] = [
 /** 행 계층 — 전체 보기에서 월/주/일 구간을 색으로 구분한다. */
 export type RowTier = 'month' | 'week' | 'day'
 
-/** 툴바 기본 선택 월(YYYY-MM) — 당월(현재 월). */
-export const DEFAULT_PERIOD = (() => {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-})()
-
 /** '2026-03' -> '3월' */
 export const monthShortLabel = (period: string) =>
   `${Number(period.slice(5, 7))}월`

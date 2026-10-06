@@ -11,7 +11,7 @@ export function useReoperationCandidates(
   to: string,
   enabled = true,
 ) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reoperation-candidates', from, to],
     queryFn: ({ signal }) =>
       surgeryApi.getReoperationCandidates(from, to, signal),
@@ -23,5 +23,6 @@ export function useReoperationCandidates(
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }

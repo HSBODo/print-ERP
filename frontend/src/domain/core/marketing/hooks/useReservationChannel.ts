@@ -11,7 +11,7 @@ export function useReservationChannel(
   to: string,
   enabled = true,
 ) {
-  const { data, isLoading, isFetching, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['reservation-channel', from, to],
     queryFn: ({ signal }) =>
       marketingApi.getReservationChannelFunnel(from, to, signal),
@@ -23,6 +23,7 @@ export function useReservationChannel(
     isLoading,
     isFetching,
     isError,
+    refetch,
   }
 }
 
@@ -32,7 +33,7 @@ export function useReservationChannelOpTypes(
   to: string,
   enabled = true,
 ) {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['reservation-channel-op-types', from, to],
     queryFn: ({ signal }) =>
       marketingApi.getReservationChannelOpTypes(from, to, signal),
@@ -42,5 +43,6 @@ export function useReservationChannelOpTypes(
     rows: data ?? [],
     isLoading,
     isError,
+    refetch,
   }
 }

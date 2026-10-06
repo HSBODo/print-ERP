@@ -81,7 +81,7 @@ function toDataMap(
  * 비는 날은 호출부에서 EMPTY로 보완한다. meta는 출처(MART/LIVE) 표시.
  */
 export function useSurgeryDaily(from: string, to: string, enabled: boolean) {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['surgery-daily', from, to],
     queryFn: ({ signal }) => surgeryApi.getSurgeryDaily(from, to, signal),
     enabled: enabled && Boolean(from) && Boolean(to),
@@ -98,5 +98,5 @@ export function useSurgeryDaily(from: string, to: string, enabled: boolean) {
   )
   const meta: SurgeryDailyMeta = data?.meta
 
-  return { dataMap, meta, latestDate, isLoading, isError }
+  return { dataMap, meta, latestDate, isLoading, isFetching, isError, refetch }
 }

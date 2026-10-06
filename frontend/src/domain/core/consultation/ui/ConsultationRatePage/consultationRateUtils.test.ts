@@ -30,8 +30,8 @@ const baseItem = (
 describe('computeRate', () => {
   it('분모>0이면 소수 1자리 백분율', () => {
     expect(computeRate(50, 200)).toBe(25)
-    expect(computeRate(1, 3)).toBe(33.3)
-    expect(computeRate(2, 3)).toBe(66.7)
+    expect(computeRate(1, 3)).toBeCloseTo(33.3, 6)
+    expect(computeRate(2, 3)).toBeCloseTo(66.7, 6)
   })
 
   it('분모가 0 이하면 0', () => {
@@ -59,7 +59,7 @@ describe('itemToData', () => {
   it('전체 전환율은 (시력교정+백내장 예약)/(시력교정+백내장 검사)로 산정', () => {
     const data = itemToData(baseItem())
     // (60+20) / (100+40) = 80/140 = 57.14… → 57.1
-    expect(data.overallConsultation).toBe(57.1)
+    expect(data.overallConsultation).toBeCloseTo(57.1, 6)
   })
 
   it('세부 전환율·검사수는 그대로 매핑', () => {
@@ -85,10 +85,10 @@ describe('toDataMap', () => {
     ])
     expect(map[2026]).toHaveLength(12)
     // month=3 → index 2 채워짐
-    expect(map[2026][2].overallConsultation).toBe(57.1)
+    expect(map[2026][2].overallConsultation).toBeCloseTo(57.1, 6)
     // 값 없는 달은 0
     expect(map[2026][0].overallConsultation).toBe(0)
     // 다른 연도도 분리
-    expect(map[2025][0].overallConsultation).toBe(57.1)
+    expect(map[2025][0].overallConsultation).toBeCloseTo(57.1, 6)
   })
 })

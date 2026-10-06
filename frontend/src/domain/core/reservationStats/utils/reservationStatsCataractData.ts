@@ -30,7 +30,6 @@ import {
 import { computeSummaryRow, SUMMARY_COLUMNS } from './reservationStatsSummary'
 
 export {
-  DEFAULT_PERIOD,
   GRANULARITIES,
   monthFullLabel,
   monthShortLabel,

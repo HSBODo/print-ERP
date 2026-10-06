@@ -1,19 +1,14 @@
-import {
-  ChevronDown,
-  Download,
-  Radio,
-  RotateCcw,
-  Search,
-  TriangleAlert,
-} from 'lucide-react'
+import { Download, Radio, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { usePagination } from '#shared/hooks/usePagination'
 import { Button } from '#shared/ui/Button'
 import { Card, CardContent } from '#shared/ui/Card'
-import { MonthPicker } from '#shared/ui/MonthPicker'
+import { Filter } from '#shared/ui/Filter'
 import { TablePagination } from '#shared/ui/TablePagination'
 import { columnsToCsv, downloadCsv } from '#shared/utils/csv'
+import { todayIso } from '#shared/utils/date'
 
 import { useReservationListHomepage } from '../../hooks/useReservationListHomepage'
 import {
@@ -24,20 +19,14 @@ import {
 } from './reservationListHomepageColumns'
 import {
   compareSortValue,
-  defaultFrom,
-  defaultTo,
+  defaultRange,
   DEVICE_FILTER_OPTIONS,
-  formatCount,
   getSortValue,
   isRangeBeyondSnapshot,
   matchesSearch,
-  type PeriodMode,
   RESERVE_FILTER_OPTIONS,
   SKELETON_ROWS,
   type SortState,
-  toMonthEnd,
-  toMonthStart,
-  toMonthValue,
 } from './reservationListHomepageUtils'
 
 /** 레거시 nPageSize 기본값(20)에 가장 가까운 공통 선택지. */
@@ -61,12 +50,21 @@ const INITIAL_PAGE_SIZE = 25
  *  - 필터는 레거시의 4블록 폼 대신 다른 리스트 화면과 같은 단일 행 툴바로 그린다.
  */
 export function ReservationListHomepagePage() {
-  // 등록일만 서버 조회 파라미터다 — draft(입력중) / query(조회에 반영됨)를 나눈다.
-  const [draftPeriodMode, setDraftPeriodMode] = useState<PeriodMode>('daily')
-  const [draftFrom, setDraftFrom] = useState(defaultFrom)
-  const [draftTo, setDraftTo] = useState(defaultTo)
-  const [queryFrom, setQueryFrom] = useState(defaultFrom)
-  const [queryTo, setQueryTo] = useState(defaultTo)
+  // 등록일만 서버 조회 파라미터다 — [조회] 때 반영.
+  const filter = useFilter({
+    defaults: () => ({ range: defaultRange() }),
+    onSearch: () => {
+      pagination.resetPage()
+    },
+    onReset: () => {
+      setDevice('전체')
+      setReserve('전체')
+      setKeyword('')
+      pagination.setPageSize(INITIAL_PAGE_SIZE)
+      setSortState(null)
+    },
+  })
+  const { range } = filter.applied
   // 구분·예약구분·검색은 이미 받아온 행을 거르는 클라이언트 필터라 즉시 적용한다.
   // (조회 버튼을 기다리게 하면 눌러도 아무 일이 없는 것처럼 보인다 — 서버 왕복이 필요 없다)
   const [device, setDevice] = useState('전체')
@@ -74,15 +72,15 @@ export function ReservationListHomepagePage() {
   const [keyword, setKeyword] = useState('')
   const [sortState, setSortState] = useState<SortState>(null)
 
-  const { rows, lastRegDate, live, isLoading, isFetching, isError } =
-    useReservationListHomepage(queryFrom, queryTo)
+  const { rows, lastRegDate, live, isLoading, isFetching, isError, refetch } =
+    useReservationListHomepage(range.from, range.to)
   const showSkeleton = isLoading || isFetching
 
   const sourceReady = !showSkeleton && !isError
   // 조회 구간이 스냅샷 범위를 넘으면 건수가 조용히 모자라게 나온다 — 명시적으로 경고.
   // 실시간 소스에는 이 천장이 없다. 그때 같은 비교를 하면 미래 날짜 조회마다 거짓 경고가 뜬다.
   const beyondSnapshot =
-    sourceReady && !live && isRangeBeyondSnapshot(queryTo, lastRegDate)
+    sourceReady && !live && isRangeBeyondSnapshot(range.to, lastRegDate)
   // 실시간이면 경고 대신 신선도를 알린다 — 안 그러면 소스 시점을 알 길이 없어진다.
   const showLiveNote = sourceReady && live && Boolean(lastRegDate)
 
@@ -115,43 +113,10 @@ export function ReservationListHomepagePage() {
     initialPageSize: INITIAL_PAGE_SIZE,
   })
 
-  /** 조회 = 등록일 구간 재조회(서버). 나머지 필터는 이미 즉시 반영돼 있다. */
-  const handleSearch = () => {
-    pagination.resetPage()
-    setQueryFrom(draftFrom)
-    setQueryTo(draftTo)
-  }
-
-  /**
-   * 일별 ↔ 월별 전환. 월별은 단일 월이므로 from·to 를 그 달의 시작·끝으로 맞춘다.
-   * (진행 중인 달이면 toMonthEnd 가 오늘까지만 자른다 — 미래 조회는 의미가 없다)
-   */
-  const handlePeriodModeChange = (mode: PeriodMode) => {
-    setDraftPeriodMode(mode)
-    if (mode === 'monthly') {
-      const month = toMonthValue(draftFrom)
-      setDraftFrom(toMonthStart(month))
-      setDraftTo(toMonthEnd(month))
-    }
-  }
-
-  const handleReset = () => {
-    setDraftPeriodMode('daily')
-    setDraftFrom(defaultFrom())
-    setDraftTo(defaultTo())
-    setQueryFrom(defaultFrom())
-    setQueryTo(defaultTo())
-    setDevice('전체')
-    setReserve('전체')
-    setKeyword('')
-    pagination.setPageSize(INITIAL_PAGE_SIZE)
-    setSortState(null)
-  }
-
   // 현재 조회·필터·정렬 결과 전체(페이지 무관)를 CSV로 — 표에 보이는 칼럼/값 그대로.
   const handleDownloadCsv = () => {
     downloadCsv(
-      `예약자리스트_홈페이지_${queryFrom}_${queryTo}.csv`,
+      `예약자리스트_홈페이지_${range.from}_${range.to}.csv`,
       columnsToCsv(csvColumnsOf(sortedRows.length), sortedRows),
     )
   }
@@ -168,146 +133,60 @@ export function ReservationListHomepagePage() {
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[32rem] flex-col gap-3 overflow-hidden text-xs text-gray-800">
       {/* 필터 바 — 다른 리스트 화면(검사자·수술자·예약자)과 동일한 단일 행 툴바 구성 */}
-      <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border/70 bg-white px-1.5 py-1 text-xs shadow-sm">
-        <div className="flex flex-wrap items-center gap-1 text-xs text-gray-700">
-          <div className="relative">
-            <select
-              aria-label="기간 단위"
-              value={draftPeriodMode}
-              onChange={(e) =>
-                handlePeriodModeChange(e.target.value as PeriodMode)
-              }
-              className="h-8 w-20 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="daily">일별</option>
-              <option value="monthly">월별</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-          </div>
-          {draftPeriodMode === 'monthly' ? (
-            <MonthPicker
-              ariaLabel="등록 기준 월"
-              value={toMonthValue(draftFrom)}
-              max={toMonthValue(defaultTo())}
-              onChange={(v) => {
-                setDraftFrom(toMonthStart(v))
-                setDraftTo(toMonthEnd(v))
-              }}
-            />
-          ) : (
-            <>
-              <input
-                aria-label="등록 시작일"
-                type="date"
-                value={draftFrom}
-                onChange={(e) => setDraftFrom(e.target.value)}
-                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
-              <span className="text-gray-400">~</span>
-              <input
-                aria-label="등록 종료일"
-                type="date"
-                value={draftTo}
-                onChange={(e) => setDraftTo(e.target.value)}
-                className="h-8 w-[8.2rem] rounded-md border border-border/80 bg-white px-2 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
-            </>
-          )}
-        </div>
-        <div className="h-6 w-px bg-border" />
-        <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white">
-          {DEVICE_FILTER_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={device === option.value}
-              className={`min-w-[3.5rem] border-l border-border/70 px-2 text-xs font-medium transition-colors first:border-l-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 ${
-                device === option.value
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'
-              }`}
-              onClick={() => {
-                setDevice(option.value)
-                pagination.resetPage()
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <div className="relative">
-          <select
-            aria-label="예약구분"
-            value={reserve}
-            onChange={(e) => {
-              setReserve(e.target.value)
+      <Filter.Root filter={filter} isFetching={showSkeleton} refetch={refetch}>
+        <Filter.Bar>
+          {/* 진행 중인 달은 오늘까지만 — 미래 구간은 스냅샷 거짓 경고를 낸다 */}
+          <Filter.DateRange
+            {...filter.field('range')}
+            max={todayIso()}
+            ariaLabel="등록 기간"
+          />
+          <Filter.Segment
+            value={device}
+            onChange={(value) => {
+              setDevice(value)
               pagination.resetPage()
             }}
-            className="h-8 w-32 appearance-none rounded-md border border-border/80 bg-white pl-2.5 pr-8 text-xs outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          >
-            {RESERVE_FILTER_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.value === '전체' ? '예약구분 전체' : option.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-        </div>
-        <div className="flex h-8 overflow-hidden rounded-md border border-border/80 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
-          <input
-            type="text"
+            options={DEVICE_FILTER_OPTIONS}
+            ariaLabel="구분"
+          />
+          <Filter.Select
+            value={reserve}
+            onChange={(value) => {
+              setReserve(value)
+              pagination.resetPage()
+            }}
+            options={RESERVE_FILTER_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.value === '전체' ? '예약구분 전체' : option.label,
+            }))}
+            ariaLabel="예약구분"
+            className="w-32"
+          />
+          <Filter.Keyword
             value={keyword}
-            onChange={(e) => {
-              setKeyword(e.target.value)
+            onChange={(value) => {
+              setKeyword(value)
               pagination.resetPage()
             }}
             placeholder="이름 · 휴대폰번호"
-            className="h-full w-[13rem] border-0 bg-white px-3 text-xs outline-none placeholder:text-gray-400"
           />
-        </div>
-        <div
-          className="flex h-8 items-center gap-2 rounded-md border border-border/80 bg-white px-3 text-xs"
-          aria-live="polite"
-        >
-          <span className="text-muted-foreground">조회건수</span>
-          <strong className="tabular-nums text-gray-900">
-            {formatCount(filtered.length)}건
-          </strong>
-        </div>
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            onClick={handleReset}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            초기화
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={isLoading}
-            className="bg-blue-600 text-xs text-white hover:bg-blue-700"
-            onClick={handleSearch}
-          >
-            <Search className="h-3.5 w-3.5" />
-            조회
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={sortedRows.length === 0}
-            className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
-            onClick={handleDownloadCsv}
-            title="조회 결과 전체를 CSV로 내려받기"
-          >
-            <Download className="h-3.5 w-3.5" />
-            CSV
-          </Button>
-        </div>
-      </div>
+          <Filter.Count value={filtered.length} />
+          <Filter.Actions>
+            <Button
+              type="button"
+              size="sm"
+              disabled={sortedRows.length === 0}
+              className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+              onClick={handleDownloadCsv}
+              title="조회 결과 전체를 CSV로 내려받기"
+            >
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+          </Filter.Actions>
+        </Filter.Bar>
+      </Filter.Root>
 
       {beyondSnapshot && (
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">

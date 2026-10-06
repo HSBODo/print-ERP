@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 
 import { CURRENT_YEAR } from '#shared/constants/chart'
+import { useFilter } from '#shared/hooks/useFilter'
 import {
   Card,
   CardContent,
@@ -23,14 +24,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '#shared/ui/Chart'
-import { Select } from '#shared/ui/Select'
+import { Filter } from '#shared/ui/Filter'
 
 import { useStopReasonMonthly } from '../../hooks/useStopReasonMonthly'
 import type { StopReasonMonthlyItem } from '../../type/api'
 
 const YEAR_OPTIONS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1)
-// 공유 Select(예약통계 툴바 기준)용 옵션
 const YEAR_SELECT_OPTIONS = YEAR_OPTIONS.map((y) => ({
   value: y,
   label: `${y}년`,
@@ -95,10 +95,18 @@ const chartConfig: ChartConfig = {
 }
 
 export function StopReasonPage() {
-  const [year, setYear] = useState(CURRENT_YEAR)
+  // 연도는 [조회] 때 반영, 월은 받아온 12개월에서 바로 고른다.
+  const filter = useFilter({
+    defaults: () => ({ year: new Date().getFullYear() }),
+    onReset: () => {
+      setMonth(new Date().getMonth() + 1)
+    },
+  })
+  const { year } = filter.applied
   const [month, setMonth] = useState(new Date().getMonth() + 1)
 
-  const { dataMap, isLoading, isError } = useStopReasonMonthly([year])
+  const { dataMap, isLoading, isFetching, isError, refetch } =
+    useStopReasonMonthly([year])
   const item = dataMap[year]?.[month - 1] ?? null
 
   const chartData = useMemo(() => {
@@ -128,38 +136,39 @@ export function StopReasonPage() {
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[40rem] flex-col gap-4">
-      {/* 예약통계(/reservation-stats) 툴바와 동일 규격: flat white · px-2 py-1.5 · text-xs · 공유 Select(h-8) */}
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-2 py-1.5 text-xs shadow-sm">
-        <Select
-          value={year}
-          onChange={setYear}
-          options={YEAR_SELECT_OPTIONS}
-          title="연도 선택"
-        />
-        <Select
-          value={month}
-          onChange={setMonth}
-          options={MONTH_SELECT_OPTIONS}
-          title="월 선택"
-        />
-        <div className="ml-auto flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-3 w-3 rounded-sm"
-              style={{ backgroundColor: SUSPEND_COLOR }}
-            />
-            잠정 중단 <strong className="tabular-nums">{suspendTotal}</strong>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-3 w-3 rounded-sm"
-              style={{ backgroundColor: IMPOSSIBLE_COLOR }}
-            />
-            수술 불가{' '}
-            <strong className="tabular-nums">{impossibleTotal}</strong>
-          </span>
-        </div>
-      </div>
+      <Filter.Root filter={filter} isFetching={isFetching} refetch={refetch}>
+        <Filter.Bar>
+          <Filter.Select
+            {...filter.field('year')}
+            options={YEAR_SELECT_OPTIONS}
+            ariaLabel="연도 선택"
+          />
+          <Filter.Select
+            value={month}
+            onChange={setMonth}
+            options={MONTH_SELECT_OPTIONS}
+            ariaLabel="월 선택"
+          />
+          <div className="flex items-center gap-4 pl-2">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="h-3 w-3 rounded-sm"
+                style={{ backgroundColor: SUSPEND_COLOR }}
+              />
+              잠정 중단 <strong className="tabular-nums">{suspendTotal}</strong>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span
+                className="h-3 w-3 rounded-sm"
+                style={{ backgroundColor: IMPOSSIBLE_COLOR }}
+              />
+              수술 불가{' '}
+              <strong className="tabular-nums">{impossibleTotal}</strong>
+            </span>
+          </div>
+          <Filter.Actions />
+        </Filter.Bar>
+      </Filter.Root>
 
       <Card className="flex min-h-0 flex-1 flex-col border-border/70 shadow-sm">
         <CardHeader>

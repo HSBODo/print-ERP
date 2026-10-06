@@ -1,4 +1,4 @@
-import axios, { type AxiosResponse } from 'axios'
+import { type AxiosResponse, isAxiosError } from 'axios'
 
 import { api } from '#shared/api/client'
 
@@ -35,7 +35,7 @@ export const initApiClient = () => {
   })
 
   api.interceptors.response.use(undefined, (error: unknown) => {
-    if (!axios.isAxiosError(error) || !error.response) {
+    if (!isAxiosError(error) || !error.response) {
       return Promise.reject(error)
     }
 

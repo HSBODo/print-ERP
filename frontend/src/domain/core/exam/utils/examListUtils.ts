@@ -6,8 +6,6 @@ import { EXAM_COUNT_CLASSES } from './cataractExamListUtils'
  * 컬럼/뱃지 등 JSX 렌더 설정은 examListColumns.tsx 참조.
  */
 
-export type PeriodMode = 'daily' | 'monthly'
-export type QuickRangeKey = '1w' | '2w' | '3w' | '4w' | 'monthly'
 export type SortDirection = 'asc' | 'desc'
 export type SortState = { key: string; direction: SortDirection } | null
 
@@ -38,54 +36,7 @@ export const formatExamType = (value: string) =>
 
 export const EXAM_CATEGORY_OPTIONS = ['전체', '시력교정', '드림렌즈']
 
-/** 기본 조회 기간 = 현재 월 1일 ~ 말일. (상수가 아니라 함수 — 탭을 오래 켜둬도 안 낡는다) */
-export const defaultFrom = () => toMonthStart(toMonthValue(todayIso()))
-export const defaultTo = () => toMonthEnd(toMonthValue(todayIso()))
 export const SKELETON_ROWS = 50
-export const QUICK_RANGES: { key: QuickRangeKey; label: string }[] = [
-  { key: '1w', label: '1주' },
-  { key: '2w', label: '2주' },
-  { key: '3w', label: '3주' },
-  { key: '4w', label: '4주' },
-  { key: 'monthly', label: '월별' },
-]
-
-export const formatCount = (count: number) => count.toLocaleString('ko-KR')
-
-const pad = (n: number) => String(n).padStart(2, '0')
-export const todayIso = () => {
-  const now = new Date()
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-}
-
-export const toMonthValue = (date: string) => date.slice(0, 7)
-
-export const toMonthStart = (month: string) => `${month}-01`
-
-export const toMonthEnd = (month: string) => {
-  const [year, monthNumber] = month.split('-').map(Number)
-  const lastDate = new Date(year, monthNumber, 0).getDate()
-  return `${month}-${pad(lastDate)}`
-}
-
-/** 오늘 기준 전월 'YYYY-MM' (기본 조회 기간용 — 예: 2026-07 이면 '2026-06'). */
-export const previousMonthValue = () => {
-  const now = new Date()
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`
-}
-
-export const toMonthWeekRange = (month: string, week: number) => {
-  const startDay = (week - 1) * 7 + 1
-  const monthEnd = toMonthEnd(month)
-  const lastDay = Number(monthEnd.slice(-2))
-  const endDay = week === 4 ? lastDay : Math.min(startDay + 6, lastDay)
-
-  return {
-    from: `${month}-${String(startDay).padStart(2, '0')}`,
-    to: `${month}-${String(endDay).padStart(2, '0')}`,
-  }
-}
 
 export const getSortValue = (
   row: ExamListItem,

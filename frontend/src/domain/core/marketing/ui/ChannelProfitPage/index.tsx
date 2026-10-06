@@ -1,15 +1,11 @@
-import {
-  ChevronDown,
-  ChevronsUpDown,
-  ChevronUp,
-  Info,
-  Search,
-} from 'lucide-react'
+import { ChevronDown, ChevronsUpDown, ChevronUp, Info } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { Button } from '#shared/ui/Button'
-import { MonthPicker } from '#shared/ui/MonthPicker'
+import { Filter } from '#shared/ui/Filter'
 import { PanelShell } from '#shared/ui/PanelShell'
+import { capToToday, currentMonth, monthRange } from '#shared/utils/date'
 
 import {
   useAdSpend,
@@ -46,22 +42,6 @@ import {
  *
  * ★ 화면은 계산 규칙을 갖지 않는다. 채널 판정은 뷰가, 지표 계산은 channelProfitModel 이 한다.
  */
-
-/* ── 기간 헬퍼 ── 다른 통계 화면과 같은 규칙(진행 중인 달은 오늘까지). */
-const pad = (n: number) => String(n).padStart(2, '0')
-const todayIso = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-const currentMonth = () => todayIso().slice(0, 7)
-const monthRange = (month: string) => {
-  const [y, m] = month.split('-').map(Number)
-  const from = `${month}-01`
-  let to = `${month}-${pad(new Date(y, m, 0).getDate())}`
-  const today = todayIso()
-  if (to > today) to = today
-  return { from, to }
-}
 
 type SortKey = keyof Pick<
   ChannelProfitRow,
@@ -130,8 +110,16 @@ const Kpi = ({
 )
 
 export function ChannelProfitPage() {
-  const [draftMonth, setDraftMonth] = useState(currentMonth())
-  const [queryMonth, setQueryMonth] = useState(currentMonth())
+  // 기준 월은 [조회] 때 반영, 탭·비교 가능 표본·정렬은 받아온 값에 바로 적용한다.
+  const filter = useFilter({
+    defaults: () => ({ month: currentMonth() }),
+    onReset: () => {
+      setTab('profit')
+      setOnlyComparable(false)
+      setSort({ key: 'revenueManwon', dir: 'desc' })
+    },
+  })
+  const queryMonth = filter.applied.month
   const [tab, setTab] = useState<'profit' | 'ads'>('profit')
   const [onlyComparable, setOnlyComparable] = useState(false)
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
@@ -139,7 +127,8 @@ export function ChannelProfitPage() {
     dir: 'desc',
   })
 
-  const { from, to } = useMemo(() => monthRange(queryMonth), [queryMonth])
+  // 진행 중인 달은 오늘까지
+  const { from, to } = capToToday(monthRange(queryMonth))
   const funnel = useReservationChannel(from, to)
   const lens = useChannelLensCost(from, to)
   const ads = useAdSpend(queryMonth)
@@ -253,30 +242,27 @@ export function ChannelProfitPage() {
             <h1 className="text-[22px] font-bold tracking-tight text-slate-900">
               채널별 수익성
             </h1>
-            {/* 선택 즉시 갱신되는 배지 — 조회 전이라도 지금 고른 달이 보인다 */}
+            {/* 조회된 달 — 표·배너와 같은 달을 가리킨다 */}
             <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11.5px] font-semibold tabular-nums text-slate-700">
-              {draftMonth.replace('-', '년 ')}월
+              {queryMonth.replace('-', '년 ')}월
             </span>
           </div>
           <p className="text-[13px] text-slate-700">
             유입채널의 수익성과 광고매체의 투자 효율을 나눠서 봅니다.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <MonthPicker
-            ariaLabel="기준 월"
-            value={draftMonth}
-            onChange={setDraftMonth}
-            defaultValue={currentMonth()}
-          />
-          <Button
-            size="sm"
-            className="h-8 gap-1 px-3 text-xs"
-            onClick={() => setQueryMonth(draftMonth)}
-          >
-            <Search className="h-3.5 w-3.5" /> 조회
-          </Button>
-        </div>
+        <Filter.Root
+          filter={filter}
+          isFetching={loading}
+          refetch={() =>
+            Promise.all([funnel.refetch(), lens.refetch(), ads.refetch()])
+          }
+        >
+          <div className="flex items-center gap-2">
+            <Filter.Month {...filter.field('month')} ariaLabel="기준 월" />
+            <Filter.Actions />
+          </div>
+        </Filter.Root>
       </div>
 
       {/* 코호트 성숙도 — 확정된 달에는 띄우지 않는다. 늘 떠 있으면 아무도 읽지 않는다. */}

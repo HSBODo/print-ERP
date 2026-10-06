@@ -71,7 +71,7 @@ project-root/
 │   │   ├── domain/
 │   │   │   ├── core/<domain>/           # api.ts(<domain>Api 1개) · type/api.ts(zod 스키마 + 타입) · hooks/ · ui/<Screen>/ · utils/
 │   │   │   │                            #   reservation · reservationStats · exam · overall · consultation · surgery · outpatient · report
-│   │   │   │                            #   marketing(예약 퍼널 포함) · overseasMarketing · sms · accounting · b2b · dreamlensLedger · account · batch · auth(로그인)
+│   │   │   │                            #   marketing(예약 퍼널 포함) · eventNote · overseasMarketing · sms · accounting · b2b · dreamlensLedger · account · batch · auth(로그인)
 │   │   │   └── support/session/         # 세션·권한 — store(Zustand) · session(토큰·AuthUser) · initApiClient · utils/access(hasAccess)
 │   │   ├── shared/                      # 도메인 무관 공용 — api/(client·utils) · ui/(shadcn 포함, PascalCase/index.tsx) · hooks/ · utils/ · constants/
 │   │   ├── index.css                    # Tailwind 4 + OKLCH 테마 변수
@@ -109,7 +109,7 @@ project-root/
 - DashboardPage (KPI 카드 4개 + 차트 5개, 하드코딩 목업)
 - ReservationPage (월별/연도별 비교, TanStack Query 기반 API 연동)
 - 인증 라우트 가드 (미인증 시 /login 리다이렉트)
-- 통계 전용 페이지 44종(+ 미완성 목업 4종) + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
+- 통계 전용 페이지 45종(+ 미완성 목업 4종) + MSSQL(prod) 연동 통계 API (검사·수술·전환율·리스트·B2B 등, 아래 표 참조)
 - TanStack 파일 기반 라우트(`src/routes`, 2026-09-28 전환) + 페이지 메타·권한은 라우트 `staticData.page` 에 선언
 - PROD pending 메뉴 숨김 및 직접 URL placeholder 차단 정책 · 권한 없는 페이지는 "접근 권한이 없습니다" 화면
 - 회계 5종 (진료 수납·시력교정 매출 내역·매출 집계·매출 그래프 2종 — 2026-09-15 마트 `list_medical_receipt`·`mart_medical_receipt_monthly`·`list_vision_receipt` + `/api/accounting` 연동 · 배치 도메인 `ACCOUNTING` · 임원(ADMIN·DIRECTOR) 이상 · 2026-09-17)
@@ -124,7 +124,7 @@ project-root/
 
 ## 통계 페이지 목록
 
-라우트 파일 48개(각 `staticData.page.status`)로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API 또는 정적 문서) 44개 / **미구현(pending)** 4개.
+라우트 파일 49개(각 `staticData.page.status`)로 완료/미구현을 관리한다. 상태: **완료**(전용 페이지+API 또는 정적 문서) 45개 / **미구현(pending)** 4개.
 (라우트 없이 정의만 있던 기타 그룹 미구현 7종 — 직원 포인트·PRP 시술율·재수술율·당일OP 비율·지정의 수술 비율·내원동기별 비중·일일 접수/응대 건수 — 은 2026-09-28 파일 라우트 전환 때 삭제. 구현할 때 라우트 파일과 함께 다시 만든다.)
 (시력교정/드림렌즈 검사건수 2종은 `시술별`(examination)에 포함되어 2026-06-22 메뉴 삭제)
 
@@ -161,6 +161,7 @@ project-root/
 | channel-profit | 채널별 수익성 | /stats/channel-profit | 마케팅 | 완료 (2026-08-07 신규 · 탭2: 유입채널 수익성/광고매체 효율 · 광고비·렌즈단가는 화면 입력 · **MARKETING 부서 전용**) |
 | channel-analysis | 채널별 분석 | /stats/channel-analysis | 마케팅 | 완료 (2026-09 신규 · **조회 없음 · 정적 문서 10편** · 채널마다 "누가 오는가 · 객단가가 왜 그런가 · 검증/죽은 가설 · 실측 기간" · 일부 채널만 추세 차트에서 라이브 조회 · MARKETING 부서 전용) |
 | accumulated-eyes | 누적 안수 | /stats/accumulated-eyes | 마케팅 | 완료 (MSSQL `OPERATION_ACCUMULATED_EYE_COUNT` 원천 마트 적재 · 기간 리스트 + 이름·차트·전화·안수 검색 · **MARKETING 부서 전용** · 백엔드는 `surgery/` 도메인) |
+| event-notes | 이벤트 노트 | /stats/event-notes | 마케팅 | 완료 (2026-10-06 신규 · 차트에 겹쳐 볼 사건(프로모션·휴진 등) 등록·수정·삭제 · `/api/event/notes` 서버 페이징 · **MARKETING 부서 전용** · DIRECTOR 는 열람만(API 403)) |
 | sms | 문자 발송 리스트 | /stats/sms | 마케팅 | 완료 (수술 후 안내 1~3차 알림톡·SMS 대상 관리·홀딩·수기 발송 · Solapi 웹훅으로 결과 반영 · **MARKETING 부서 전용** · § SMS 5-2 완화 이후 STAFF 개방 · 편집·[지금 실행]·[실패 재실행]은 ADMIN 만 · `/api/sms-management/**` + `/api/admin/batch/sms/queue/**`) |
 | overseas-marketing-receptions | 접수리스트 | /stats/overseas-marketing/receptions | 해외마케팅 | 완료 (2026-09-09 `2026-08-14` 브랜치에서 이관 · Google Sheet 1회 이관 캐시 `overseas_marketing_sheet` + 수기 입력 · CRM 매칭 3단계(접수/매칭/확인필요) · **OVERSEAS_MARKETING 부서 전용** (2026-09-17 MARKETING 배제)) |
 | overseas-marketing-statistics | 통계 | /stats/overseas-marketing/statistics | 해외마케팅 | 완료 (유입→검사·수술 월별 흐름 · 국가별 수술 · 검사·수술·외래·렌즈 매출 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제) |
@@ -257,6 +258,11 @@ PUT    /api/overseas-marketing/reservation-stats/{date}    # 일간 셀 수정 {
 GET    /api/stats/reservation-channel?from=2026-07&to=2026-07           # 8단계 퍼널 · 사람 수(DISTINCT) · v_reservation_channel
 GET    /api/stats/reservation-channel/op-types?from&to&channel=          # 수술완료 클릭 시 유형별 인원 (smilePro·smile·lasek·icl·lasik·...)
 GET    /api/accumulated-eyes?from=&to=&keyword=&keywordType=name|chart|phone|eye_count
+
+# 이벤트 노트 (조회 = 로그인 전원 · 등록/수정/삭제 = ADMIN·MEDICAL·MARKETING, DIRECTOR·OVERSEAS_MARKETING 403)
+GET    /api/event/notes?from=&to=&page=0&size=20   # 관리 화면 페이징 · 발생일 내림차순 · from·to 둘 다 생략 = 전체
+GET    /api/event/notes/all?from=&to=              # 차트 오버레이 · 발생일 오름차순 · 최대 1,096일
+GET    /api/event/notes/{id}  · POST /api/event/notes · PUT /api/event/notes/{id}(전체 교체) · DELETE /api/event/notes/{id}(소프트 삭제)
 
 # 문자 발송 (MARKETING 부서 조회 · ADMIN 편집/발송/실패 재실행)
 GET    /api/sms-management/targets    · POST /targets    · POST /targets/import   # 대상 조회·수기 추가·CRM 재동기화(임포트)
@@ -406,6 +412,14 @@ session store (Zustand) — 인증: token, user, login/logout (localStorage 연�
 filterStore (Zustand)   — 글로벌 필터: 기간, 부서, 카테고리 (구현 예정)
 TanStack Query          — 서버 데이터 캐싱/갱신
 ```
+
+### 조회 필터 (`useFilter` + `Filter.*`)
+
+- 서버로 요청을 보내는 조건만 `useFilter`(`shared/hooks/useFilter`)에 둔다 — 입력값·적용값 두 벌, [조회]·Enter·F1 때 반영. 받아온 행을 화면에서 거르는 조건(채널·키워드 등)은 화면이 `useState` 로 들고 바로 반영한다.
+- 기본값은 함수로 넘긴다(`defaults: () => ({ range: thisMonthRange() })`). 서버에 기간 제한이 있으면 `validate`(`validateRange(range, { maxDays })`)와 `Filter.DateRange maxDays` 를 같이 건다.
+- 구성: `<Filter.Root filter isFetching refetch>` > `Filter.Bar` > 입력(`DateRange`·`Month`·`Select`·`Segment`·`Keyword`) · `Filter.Count` · `Filter.Actions`(뒤에 CSV 등 화면 버튼). 조회 조건은 `{...filter.field('key')}` 로 연결한다.
+- 날짜 계산은 `#shared/utils/date`(로컬 시간). `toISOString()` 으로 날짜를 만들지 않는다.
+- 예시: `domain/core/overseasMarketing/ui/OverseasMarketingReceptionPage`
 
 ### shadcn 컴포넌트 추가
 

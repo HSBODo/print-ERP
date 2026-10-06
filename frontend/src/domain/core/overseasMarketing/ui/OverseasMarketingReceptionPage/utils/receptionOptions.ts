@@ -1,25 +1,36 @@
+import { type DateRange, thisMonthRange } from '#shared/utils/date'
+
 import type {
   OverseasMarketingDateType,
   OverseasMarketingReceptionParams,
 } from '../../../type/api'
 
-const pad = (value: number) => String(value).padStart(2, '0')
-const toIso = (date: Date) =>
-  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-
-// 기본 조회: 문의일 기준 당월 1일 ~ 말일.
-export const createDefaultParams = (): OverseasMarketingReceptionParams => {
-  const now = new Date()
-  return {
-    from: toIso(new Date(now.getFullYear(), now.getMonth(), 1)),
-    to: toIso(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
-    dateType: 'inquiry_date',
-    dateEnabled: true,
-    status: '',
-    source: 'all',
-    unmatched: false,
-  }
+/** 조회 조건 — [조회]를 눌러야 반영된다. 기본: 문의일 기준 당월 1일 ~ 말일, 상태 전체 */
+export interface ReceptionFilterValues {
+  dateType: OverseasMarketingDateType
+  range: DateRange
+  status: string
 }
+
+export const defaultReceptionFilter = (): ReceptionFilterValues => ({
+  dateType: 'inquiry_date',
+  range: thisMonthRange(),
+  status: '',
+})
+
+/** API 파라미터 — 화면에서 고르지 않는 값(dateEnabled·source·unmatched)은 고정 */
+export const toReceptionParams = ({
+  dateType,
+  range,
+  status,
+}: ReceptionFilterValues): OverseasMarketingReceptionParams => ({
+  ...range,
+  dateType,
+  status,
+  dateEnabled: true,
+  source: 'all',
+  unmatched: false,
+})
 
 export const DATE_TYPES: { value: OverseasMarketingDateType; label: string }[] =
   [

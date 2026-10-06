@@ -142,7 +142,7 @@ export function ModoodocMonthlyFunnelChart() {
                   content={
                     <ChartTooltipContent
                       labelFormatter={(label) =>
-                        `${MODOODOC_FUNNEL_YEAR}년 ${String(label)}`
+                        `${MODOODOC_FUNNEL_YEAR}년 ${label as string}`
                       }
                       valueFormatter={(value) =>
                         `${Number(value).toLocaleString()}건`

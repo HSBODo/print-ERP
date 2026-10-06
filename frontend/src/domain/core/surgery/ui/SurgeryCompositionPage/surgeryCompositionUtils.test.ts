@@ -73,7 +73,7 @@ describe('buildSurgeryRows', () => {
     const tiers = rows.map((r) => r.tier)
     expect(tiers[0]).toBe('month')
     expect(tiers.filter((t) => t === 'week').length).toBeGreaterThan(0)
-    expect(tiers.filter((t) => t === 'day').length).toBe(lastDay)
+    expect(tiers.filter((t) => t === 'day')).toHaveLength(lastDay)
   })
 })
 

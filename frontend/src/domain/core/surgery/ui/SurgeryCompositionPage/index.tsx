@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 
+import { useFilter } from '#shared/hooks/useFilter'
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
-import { MonthPicker } from '#shared/ui/MonthPicker'
+import { Filter } from '#shared/ui/Filter'
+import { currentMonth, yearsDesc } from '#shared/utils/date'
 
 import { useSurgeryDaily } from '../../hooks/useSurgeryDaily'
 import {
   buildSurgeryRows,
   COLS,
-  currentMonthValue,
   GRANULARITIES,
   type Granularity,
   monthRange,
@@ -179,13 +180,25 @@ function DataRow({ row }: { row: SurgeryRow }) {
 }
 
 /** 연도 선택 목록 — 올해부터 4년 전까지. */
-const YEAR_OPTIONS = Array.from(
-  { length: 5 },
-  (_, i) => yearOf(currentMonthValue()) - i,
-)
+const YEAR_OPTIONS = yearsDesc(new Date().getFullYear() - 4).map((y) => ({
+  value: y,
+  label: `${y}년`,
+}))
+const GRANULARITY_OPTIONS = GRANULARITIES.map((g) => ({
+  value: g.key,
+  label: g.label,
+}))
 
 export function SurgeryCompositionPage() {
-  const [month, setMonth] = useState<string>(currentMonthValue)
+  // 조회 월(주차는 연도)은 [조회] 때 반영, 조회 단위는 받아온 일자별 값을 다시 묶는다.
+  // 단 주차는 그 해 전체가 필요해 조회 범위가 연 단위로 바뀐다(적용된 월의 연도 기준).
+  const filter = useFilter({
+    defaults: () => ({ month: currentMonth() }),
+    onReset: () => {
+      setGranularity('day')
+    },
+  })
+  const { month } = filter.applied
   const [granularity, setGranularity] = useState<Granularity>('day')
 
   // 주차(yearWeek)만 그 해 전체(1주차 월요일~마지막 주차 일요일)를 조회한다.
@@ -196,11 +209,8 @@ export function SurgeryCompositionPage() {
     [granularity, month],
   )
   const { lastDay } = useMemo(() => monthRange(month), [month])
-  const { dataMap, meta, latestDate, isLoading, isError } = useSurgeryDaily(
-    from,
-    to,
-    true,
-  )
+  const { dataMap, meta, latestDate, isLoading, isFetching, isError, refetch } =
+    useSurgeryDaily(from, to, true)
 
   const rows = useMemo(
     () => buildSurgeryRows(granularity, dataMap, month, lastDay),
@@ -214,89 +224,75 @@ export function SurgeryCompositionPage() {
   return (
     <div className="space-y-4">
       {/* 조회 영역 — 조회 월(주차는 연도) + 조회 단위(월별/주차/주별/일별/전체) */}
-      <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/70 bg-white px-3 py-2 shadow-sm">
-        <span className="text-sm font-semibold text-foreground">
-          {isYearWeek ? '조회 연도' : '조회 월'}
-        </span>
-        {isYearWeek ? (
-          <select
-            aria-label="조회 연도"
-            value={year}
-            onChange={(e) => setMonth(`${e.target.value}-${month.slice(5, 7)}`)}
-            className="h-9 w-[9rem] rounded-md border border-border/80 bg-white px-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          >
-            {YEAR_OPTIONS.map((y) => (
-              <option key={y} value={y}>
-                {y}년
-              </option>
-            ))}
-          </select>
-        ) : (
-          <MonthPicker
-            ariaLabel="조회 월"
-            value={month}
-            onChange={setMonth}
-            className="flex h-9 items-center gap-1.5 rounded-md border border-border/80 bg-white px-2.5 text-sm text-gray-800 outline-none transition-colors hover:border-blue-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+      <Filter.Root filter={filter} isFetching={isFetching} refetch={refetch}>
+        <Filter.Bar>
+          <span className="pl-1 text-muted-foreground">
+            {isYearWeek ? '조회 연도' : '조회 월'}
+          </span>
+          {isYearWeek ? (
+            <Filter.Select
+              value={yearOf(filter.draft.month)}
+              onChange={(y) =>
+                filter.setDraft({
+                  month: `${y}-${filter.draft.month.slice(5, 7)}`,
+                })
+              }
+              options={YEAR_OPTIONS}
+              ariaLabel="조회 연도"
+              className="w-[7rem]"
+            />
+          ) : (
+            <Filter.Month {...filter.field('month')} ariaLabel="조회 월" />
+          )}
+
+          <div className="h-6 w-px bg-border" />
+
+          <span className="text-muted-foreground">조회 단위</span>
+          <Filter.Segment
+            value={granularity}
+            onChange={setGranularity}
+            options={GRANULARITY_OPTIONS}
+            ariaLabel="조회 단위"
           />
-        )}
 
-        <div className="h-6 w-px bg-border" />
-
-        <span className="text-sm font-semibold text-foreground">조회 단위</span>
-        <div className="flex h-9 gap-1 rounded-md bg-gray-100 p-1">
-          {GRANULARITIES.map((g) => (
-            <button
-              key={g.key}
-              type="button"
-              aria-pressed={granularity === g.key}
-              onClick={() => setGranularity(g.key)}
-              className={`rounded px-3 text-sm font-medium transition-colors ${
-                granularity === g.key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+          {isYearWeek ? (
+            <span
+              className="rounded bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600"
+              title="ISO 8601 주차 — 월요일 시작, 첫 목요일이 든 주가 그 해 01주차. 01주차는 전년 12월을, 마지막 주차는 다음 해 1월을 포함할 수 있습니다."
             >
-              {g.label}
-            </button>
-          ))}
-        </div>
+              ISO 주차 · 월~일 · {from} ~ {to}
+            </span>
+          ) : null}
 
-        {isYearWeek ? (
-          <span
-            className="rounded bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600"
-            title="ISO 8601 주차 — 월요일 시작, 첫 목요일이 든 주가 그 해 01주차. 01주차는 전년 12월을, 마지막 주차는 다음 해 1월을 포함할 수 있습니다."
-          >
-            ISO 주차 · 월~일 · {from} ~ {to}
-          </span>
-        ) : null}
+          {meta?.source === 'MART' ? (
+            <span
+              className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+              title="mart_surgery_daily 조회 — 매일 03:00 배치가 D-1 까지 적재합니다."
+            >
+              마트{latestDate ? ` · 최종 ${latestDate}` : ''}
+            </span>
+          ) : meta?.source === 'LIVE' ? (
+            <span
+              className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700"
+              title="소스 라이브 조회(마트 미적재 폴백)"
+            >
+              라이브
+            </span>
+          ) : null}
 
-        {meta?.source === 'MART' ? (
-          <span
-            className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"
-            title="mart_surgery_daily 조회 — 매일 03:00 배치가 D-1 까지 적재합니다."
-          >
-            마트{latestDate ? ` · 최종 ${latestDate}` : ''}
-          </span>
-        ) : meta?.source === 'LIVE' ? (
-          <span
-            className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700"
-            title="소스 라이브 조회(마트 미적재 폴백)"
-          >
-            라이브
-          </span>
-        ) : null}
-
-        <div className="ml-auto flex items-center gap-3 text-sm">
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-blue-600" />
-            시력교정수술
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-violet-600" />
-            백내장
-          </span>
-        </div>
-      </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-sm bg-blue-600" />
+              시력교정수술
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-sm bg-violet-600" />
+              백내장
+            </span>
+          </div>
+          <Filter.Actions />
+        </Filter.Bar>
+      </Filter.Root>
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>

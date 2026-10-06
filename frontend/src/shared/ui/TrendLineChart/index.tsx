@@ -26,7 +26,9 @@ interface TrendLineChartProps {
   data: Record<string, string | number>[]
   lines: TrendLine[]
   yTickFormatter: (value: number | string) => string
-  tooltipFormatter?: ComponentProps<typeof ChartTooltipContent>['formatter']
+  tooltipFormatter?: NonNullable<
+    ComponentProps<typeof ChartTooltipContent>['formatter']
+  >
   /** x축 dataKey (기본 'month') */
   xKey?: string
   className?: string

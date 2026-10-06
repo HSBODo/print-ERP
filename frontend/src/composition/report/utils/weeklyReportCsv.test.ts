@@ -44,7 +44,7 @@ describe('buildWeeklyReportCsv', () => {
       rows: ROWS,
     })
     const header = csv.split('\r\n')[0].split(',')
-    expect(weeks2026.length).toBe(53)
+    expect(weeks2026).toHaveLength(53)
     expect(header).toHaveLength(4 + 53)
     expect(header[4 + 52]).toBe('53주차')
   })

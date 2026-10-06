@@ -197,15 +197,23 @@ public class SmsDispatchJob {
         picked = batch.size();
 
         for (SmsDispatchQueue row : batch) {
+            // 광고톡 및 알림톡 시간대 가드 — window 밖이면 다음 사이클로 미룬다(상태만 PENDING 으로 되돌림).
+            boolean isAdOrNotification = SmsDispatchQueue.KIND_AD.equals(row.getKind())
+                    || SmsDispatchQueue.KIND_NOTIFICATION.equals(row.getKind());
+
             // 광고톡 시간대 가드 — window 밖이면 다음 사이클로 미룬다(상태만 PENDING 으로 되돌림).
-            if (SmsDispatchQueue.KIND_AD.equals(row.getKind()) && !inAdWindow(now)) {
+            if (isAdOrNotification && !inAdWindow(now)) {
+
+                String kindName = SmsDispatchQueue.KIND_AD.equals(row.getKind()) ? "광고톡" : "알림톡";
                 queueService.markFailed(row.getId(),
-                        "광고톡 발송 시간대 밖 (" + now.getHour() + "시, 허용 " + props.getAdWindowStartHour()
+                        kindName + " 발송 시간대 밖 (" + now.getHour() + "시, 허용 " + props.getAdWindowStartHour()
                                 + ".." + props.getAdWindowEndHour() + "시)",
-                        Integer.MAX_VALUE); // window 밖은 재시도 카운트 소진 안 시킴 — max 크게
+                        Integer.MAX_VALUE);
+
                 outOfWindow++;
                 continue;
             }
+
             DispatchOutcome outcome = dispatchOne(row);
             switch (outcome) {
                 case SUCCESS -> sent++;

@@ -6,53 +6,30 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-/**
- * 공용 월 선택기 — `<input type="month">` 전면 교체용.
- *
- * 네이티브를 버린 이유:
- *   - 브라우저마다 다르다. Safari(맥)는 month 입력을 아예 지원하지 않아 맨 텍스트칸이 된다.
- *   - 팝업 스타일을 제어할 수 없어 대시보드 톤과 어긋난다.
- *   - 미래 월 비활성 같은 규칙을 UI 로 보여줄 수 없다(max 는 막긴 하지만 회색 표시가 안 된다).
- *
- * 동작 (2026-08-07 확정 스펙):
- *   - 달력 아이콘 버튼 → 연도 네비(‹ 2026 ›) + 4×3 월 그리드 팝오버
- *   - 선택 월 = 파랑 채움 · 이번 달 = 파랑 테두리 · 범위 밖(기본: 미래 월) = 비활성
- *   - 하단 삭제(기본 월로 복원) · 이번 달 액션, 바깥 클릭/Esc 로 닫힘
- *   - 월을 고르면 즉시 onChange — 부모의 draft 상태가 갱신되므로 제목 옆 배지 등이 같이 따라온다.
- *     (조회 버튼이 있는 화면은 기존처럼 조회를 눌러야 데이터가 바뀐다.)
- */
+import { currentMonth, pad2 } from '#shared/utils/date'
 
-const pad = (n: number) => String(n).padStart(2, '0')
-const thisMonth = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
-}
-
-interface MonthPickerProps {
+interface Props {
   /** 'YYYY-MM' */
   value: string
   onChange: (value: string) => void
-  /** 삭제(복원) 대상. 없으면 이번 달로 복원한다 */
-  defaultValue?: string
   /** 선택 가능 범위. 기본 2024-01(마트 데이터 시작) ~ 이번 달(미래 월 비활성) */
   min?: string
   max?: string
   ariaLabel?: string
-  id?: string
-  /** 트리거 버튼 클래스 보정(높이 등). 기본 h-8 텍스트 xs */
-  className?: string
 }
 
-export function MonthPicker({
+/**
+ * 월 선택 — 트리거 버튼 + 연도 내비·4×3 월 그리드 팝오버.
+ * 네이티브 `<input type="month">` 는 Safari 가 지원하지 않고 팝업 스타일도 못 바꿔서 쓰지 않는다.
+ * 선택 월 = 파랑 채움 · 이번 달 = 파랑 테두리 · 범위 밖 = 비활성. 고르는 즉시 onChange.
+ */
+export function Month({
   value,
   onChange,
-  defaultValue,
   min = '2024-01',
-  max = thisMonth(),
-  ariaLabel,
-  id,
-  className,
-}: MonthPickerProps) {
+  max = currentMonth(),
+  ariaLabel = '조회 월',
+}: Props) {
   const [open, setOpen] = useState(false)
   const [viewYear, setViewYear] = useState(
     () => Number(value.slice(0, 4)) || new Date().getFullYear(),
@@ -90,7 +67,7 @@ export function MonthPicker({
   }
 
   const [selYear, selMonth] = value.split('-').map(Number)
-  const today = thisMonth()
+  const today = currentMonth()
   const minYear = Number(min.slice(0, 4))
   const maxYear = Number(max.slice(0, 4))
   const label = selYear && selMonth ? `${selYear}년 ${selMonth}월` : value
@@ -99,14 +76,10 @@ export function MonthPicker({
     <div ref={rootRef} className="relative inline-block">
       <button
         type="button"
-        id={id}
         aria-label={ariaLabel}
         aria-expanded={open}
         onClick={toggle}
-        className={
-          className ??
-          'flex h-8 items-center gap-1.5 rounded-md border border-border/80 bg-white px-2.5 text-xs text-gray-800 outline-none transition-colors hover:border-blue-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
-        }
+        className="flex h-8 items-center gap-1.5 rounded-md border border-border/80 bg-white px-2.5 text-xs text-gray-800 outline-none transition-colors hover:border-blue-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
       >
         <CalendarDays className="h-3.5 w-3.5 text-slate-500" />
         <span className="font-medium tabular-nums">{label}</span>
@@ -146,7 +119,7 @@ export function MonthPicker({
           <div className="grid grid-cols-4 gap-1">
             {Array.from({ length: 12 }, (_, i) => {
               const m = i + 1
-              const ym = `${viewYear}-${pad(m)}`
+              const ym = `${viewYear}-${pad2(m)}`
               const disabled = ym < min || ym > max
               const selected = viewYear === selYear && m === selMonth
               const isToday = ym === today
@@ -173,15 +146,7 @@ export function MonthPicker({
           </div>
 
           {/* 하단 액션 */}
-          <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-2">
-            <button
-              type="button"
-              title="기본 월로 복원"
-              onClick={() => pick(defaultValue ?? today)}
-              className="text-[12px] font-medium text-slate-500 transition-colors hover:text-slate-800"
-            >
-              삭제
-            </button>
+          <div className="mt-2 flex items-center justify-end border-t border-border/50 pt-2">
             <button
               type="button"
               onClick={() => pick(today)}

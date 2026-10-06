@@ -110,12 +110,6 @@ export const isEmptyCell = (c: Cell): boolean =>
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 
-/** 'YYYY-MM' → 현재 연/월 문자열(기본 조회월) */
-export function currentMonthValue(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`
-}
-
 /** 'YYYY-MM' → { from, to } 해당 월의 1일~말일 */
 export function monthRange(ym: string): {
   from: string
@@ -268,7 +262,7 @@ const vp = (v: number, base: number) =>
   v > 0 ? `${formatAxisNumber(v)} (${pct(v, base)}%)` : '-'
 const vc = (v: number) => (v > 0 ? formatAxisNumber(v) : '-')
 
-export type Tone = 'blue' | 'violet' | undefined
+export type Tone = 'blue' | 'violet'
 export interface ColDef {
   render: (d: Cell) => string
   border?: boolean
@@ -339,5 +333,5 @@ export const COLS: ColDef[] = [
   { render: (d) => vp(d.catMono, d.cataractPatients) }, // 단초점
 ]
 
-export const toneClass = (t: Tone) =>
+export const toneClass = (t?: Tone) =>
   t === 'blue' ? 'text-blue-700' : t === 'violet' ? 'text-violet-700' : ''

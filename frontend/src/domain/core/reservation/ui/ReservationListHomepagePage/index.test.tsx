@@ -64,17 +64,40 @@ const setRows = (
   })
 }
 
+/** 등록 기간 팝오버에서 from~to 를 골라 [적용] — 달력 표시 월을 그 날짜의 달로 옮긴 뒤 날짜 칸을 누른다. */
+const pickRange = (from: string, to: string) => {
+  fireEvent.click(screen.getByRole('button', { name: /^등록 기간/ }))
+  const dialog = screen.getByRole('dialog', { name: '조회 기간 선택' })
+  const viewMonth = () => {
+    const [y, m] = (
+      /(\d{4})년 (\d{1,2})월/.exec(dialog.textContent ?? '') ?? []
+    )
+      .slice(1)
+      .map(Number)
+    return y * 12 + m
+  }
+  const clickDay = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number)
+    while (viewMonth() > y * 12 + m)
+      fireEvent.click(within(dialog).getByRole('button', { name: '이전 달' }))
+    while (viewMonth() < y * 12 + m)
+      fireEvent.click(within(dialog).getByRole('button', { name: '다음 달' }))
+    // 앞뒤 달 채움 칸(text-gray-300)은 건너뛴다
+    const cell = within(dialog)
+      .getAllByRole('button', { name: String(d) })
+      .find((node) => !node.querySelector('.text-gray-300'))
+    if (!cell) throw new Error(`day ${iso} not found`)
+    fireEvent.click(cell)
+  }
+  clickDay(from)
+  clickDay(to)
+  fireEvent.click(within(dialog).getByRole('button', { name: '적용' }))
+}
+
 const searchWith = async (from?: string, to?: string) => {
   const { ReservationListHomepagePage } = await import('.')
   render(<ReservationListHomepagePage />)
-  if (from)
-    fireEvent.change(screen.getByLabelText('등록 시작일'), {
-      target: { value: from },
-    })
-  if (to)
-    fireEvent.change(screen.getByLabelText('등록 종료일'), {
-      target: { value: to },
-    })
+  if (from && to) pickRange(from, to)
   fireEvent.click(screen.getByRole('button', { name: '조회' }))
 }
 
@@ -143,59 +166,33 @@ describe('CSV 출력', () => {
 })
 
 describe('ReservationListHomepagePage', () => {
-  it('월별을 고르면 월 선택기로 바뀌고, 그 달 전체를 조회한다', async () => {
+  it('고른 등록 기간으로 조회한다', async () => {
     setRows([row()])
-    const { ReservationListHomepagePage } = await import('.')
-    render(<ReservationListHomepagePage />)
-
-    // 일별 모드: 시작일·종료일 두 칸
-    expect(screen.getByLabelText('등록 시작일')).toBeInTheDocument()
-    expect(screen.queryByLabelText('등록 기준 월')).not.toBeInTheDocument()
-
-    fireEvent.change(screen.getByLabelText('기간 단위'), {
-      target: { value: 'monthly' },
-    })
-
-    // 월별 모드: 월 한 칸으로 대체
-    expect(screen.getByLabelText('등록 기준 월')).toBeInTheDocument()
-    expect(screen.queryByLabelText('등록 시작일')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('등록 종료일')).not.toBeInTheDocument()
-
-    // 지난 달을 고르면 1일~말일 전체가 조회 구간이 된다.
-    // MonthPicker 는 input 이 아니라 버튼+월 그리드다 — 열고 5월을 클릭한다.
-    fireEvent.click(screen.getByLabelText('등록 기준 월'))
-    fireEvent.click(screen.getByRole('button', { name: '5' }))
-    fireEvent.click(screen.getByRole('button', { name: '조회' }))
+    await searchWith('2026-05-01', '2026-05-31')
     expect(mockHook).toHaveBeenLastCalledWith('2026-05-01', '2026-05-31')
   })
 
   it('진행 중인 달은 말일이 아니라 오늘까지만 조회한다 (미래 구간 요청 방지)', async () => {
     setRows([row()])
     const { ReservationListHomepagePage } = await import('.')
-    const { todayIso, monthStartOf } =
-      await import('./reservationListHomepageUtils')
+    const { thisMonthRange, todayIso } = await import('#shared/utils/date')
     render(<ReservationListHomepagePage />)
 
-    fireEvent.change(screen.getByLabelText('기간 단위'), {
-      target: { value: 'monthly' },
-    })
-    fireEvent.click(screen.getByLabelText('등록 기준 월'))
+    fireEvent.click(screen.getByRole('button', { name: /^등록 기간/ }))
     fireEvent.click(screen.getByRole('button', { name: '이번 달' }))
+    fireEvent.click(screen.getByRole('button', { name: '적용' }))
     fireEvent.click(screen.getByRole('button', { name: '조회' }))
 
-    expect(mockHook).toHaveBeenLastCalledWith(
-      monthStartOf(todayIso()),
-      todayIso(),
-    )
+    expect(mockHook).toHaveBeenLastCalledWith(thisMonthRange().from, todayIso())
   })
 
   it('진입하자마자 기본 기간(이번 달 1일~오늘)으로 조회한다', async () => {
     const { ReservationListHomepagePage } = await import('.')
-    const { defaultFrom, defaultTo } =
-      await import('./reservationListHomepageUtils')
+    const { defaultRange } = await import('./reservationListHomepageUtils')
     render(<ReservationListHomepagePage />)
 
-    expect(mockHook).toHaveBeenCalledWith(defaultFrom(), defaultTo())
+    const { from, to } = defaultRange()
+    expect(mockHook).toHaveBeenCalledWith(from, to)
   })
 
   it('No 는 총건수에서 1씩 감소한다 (레거시 표시용 행번호)', async () => {
