@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { EventNote, EventNoteRequest } from '../../type/api'
+import type { EventNote, EventNoteRequest } from '../type/api'
 
 /**
  * 등록·수정 폼. 기간형이면 시작일·종료일을 받고 시작일 ≤ 발생일 ≤ 종료일 을 검증한다

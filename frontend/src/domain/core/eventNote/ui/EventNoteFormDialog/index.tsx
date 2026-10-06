@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -13,7 +14,7 @@ import {
   eventNoteFormSchema,
   toFormValues,
   toRequest,
-} from './eventNoteForm'
+} from '../../utils/eventNoteForm'
 
 interface Props {
   /** 없으면 등록, 있으면 수정 */
@@ -24,9 +25,25 @@ interface Props {
 const INPUT_CLASS =
   'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none'
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null
-  return <p className="text-red-500 text-xs mt-1">{message}</p>
+/** 라벨이 입력을 감싸 클릭·스크린리더 연결을 id 없이 한다. */
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string
+  error?: string
+  children: ReactNode
+}) {
+  return (
+    <div>
+      <label className="block">
+        <span className="block text-gray-700 font-medium mb-1">{label}</span>
+        {children}
+      </label>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  )
 }
 
 export function EventNoteFormDialog({ note, onClose }: Props) {
@@ -81,54 +98,29 @@ export function EventNoteFormDialog({ note, onClose }: Props) {
           onSubmit={handleSubmit(onSubmit)}
           className="p-5 space-y-4 text-sm"
         >
-          <div>
-            <label
-              htmlFor="event-note-date"
-              className="block text-gray-700 font-medium mb-1"
-            >
-              발생일
-            </label>
+          <Field label="발생일" error={errors.eventDate?.message}>
             <input
-              id="event-note-date"
               type="date"
               {...register('eventDate')}
               className={INPUT_CLASS}
             />
-            <FieldError message={errors.eventDate?.message} />
-          </div>
-
-          <div>
-            <label
-              htmlFor="event-note-summary"
-              className="block text-gray-700 font-medium mb-1"
-            >
-              요약
-            </label>
+          </Field>
+          <Field label="요약" error={errors.summary?.message}>
             <input
-              id="event-note-summary"
               type="text"
               autoComplete="off"
               {...register('summary')}
               className={INPUT_CLASS}
               placeholder="예: 추석 프로모션 시작"
             />
-            <FieldError message={errors.summary?.message} />
-          </div>
-
-          <div>
-            <label
-              htmlFor="event-note-description"
-              className="block text-gray-700 font-medium mb-1"
-            >
-              설명
-            </label>
+          </Field>
+          <Field label="설명">
             <textarea
-              id="event-note-description"
               rows={3}
               {...register('description')}
               className={`${INPUT_CLASS} resize-y`}
             />
-          </div>
+          </Field>
 
           <div className="space-y-2">
             <label className="inline-flex items-center gap-2 text-gray-700 font-medium">
@@ -144,36 +136,20 @@ export function EventNoteFormDialog({ note, onClose }: Props) {
             </label>
             {isPeriod && (
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor="event-note-start"
-                    className="block text-gray-700 font-medium mb-1"
-                  >
-                    시작일
-                  </label>
+                <Field label="시작일" error={errors.startDate?.message}>
                   <input
-                    id="event-note-start"
                     type="date"
                     {...register('startDate')}
                     className={INPUT_CLASS}
                   />
-                  <FieldError message={errors.startDate?.message} />
-                </div>
-                <div>
-                  <label
-                    htmlFor="event-note-end"
-                    className="block text-gray-700 font-medium mb-1"
-                  >
-                    종료일
-                  </label>
+                </Field>
+                <Field label="종료일" error={errors.endDate?.message}>
                   <input
-                    id="event-note-end"
                     type="date"
                     {...register('endDate')}
                     className={INPUT_CLASS}
                   />
-                  <FieldError message={errors.endDate?.message} />
-                </div>
+                </Field>
               </div>
             )}
           </div>

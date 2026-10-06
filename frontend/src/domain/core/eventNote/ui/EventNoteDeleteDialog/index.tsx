@@ -1,22 +1,33 @@
 import { AlertTriangle, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Button } from '#shared/ui/Button'
 
+import { useDeleteEventNote } from '../../hooks/useDeleteEventNote'
 import type { EventNote } from '../../type/api'
 
 interface Props {
   note: EventNote
-  isSubmitting: boolean
-  onConfirm: () => void
-  onCancel: () => void
+  /** 삭제 성공 후 — 목록 쪽 후처리(빈 페이지면 앞으로) */
+  onDeleted: () => void
+  onClose: () => void
 }
 
-export function DeleteConfirmDialog({
-  note,
-  isSubmitting,
-  onConfirm,
-  onCancel,
-}: Props) {
+export function EventNoteDeleteDialog({ note, onDeleted, onClose }: Props) {
+  const deleteMutation = useDeleteEventNote()
+  const isSubmitting = deleteMutation.isPending
+
+  const handleDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(note.id)
+      toast.success('이벤트 노트를 삭제했습니다')
+      onDeleted()
+      onClose()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '삭제 실패')
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       <div className="w-full max-w-sm rounded-lg bg-white shadow-xl overflow-hidden">
@@ -29,7 +40,7 @@ export function DeleteConfirmDialog({
           </div>
           <button
             type="button"
-            onClick={onCancel}
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-600 p-1 rounded"
             aria-label="닫기"
           >
@@ -48,14 +59,14 @@ export function DeleteConfirmDialog({
           <Button
             type="button"
             variant="outline"
-            onClick={onCancel}
+            onClick={onClose}
             disabled={isSubmitting}
           >
             취소
           </Button>
           <Button
             type="button"
-            onClick={onConfirm}
+            onClick={handleDelete}
             disabled={isSubmitting}
             className="bg-red-600 text-white hover:bg-red-700"
           >
