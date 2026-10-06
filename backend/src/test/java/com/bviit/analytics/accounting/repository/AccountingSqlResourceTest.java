@@ -11,7 +11,7 @@ class AccountingSqlResourceTest {
 
     @Test
     void 의사랑_안쪽_쿼리는_치환_플레이스홀더만_쓰고_바인딩_파라미터를_쓰지_않는다() {
-        String receipts = SqlLoader.load(MedicalReceiptSourceRepository.RECEIPTS_SQL);
+        String receipts = SqlLoader.load(MedicalReceiptSourceRepository.RECEIPTS_SQL_MSSQL);
         assertThat(receipts)
                 .contains("__OQ_FROM__", "__OQ_TO__", "IPLUS.dbo.PAOSUNAB_New", "IPLUS.dbo.PAISUNAB_New", "IPLUS.dbo.PAYTRANS")
                 .contains("AS receiptDate", "AS chartNo", "AS serialNo", "AS revenueType", "AS cashReceipt");
@@ -20,7 +20,7 @@ class AccountingSqlResourceTest {
                 .doesNotContain(":from", ":to", "__OQ_")
                 .containsOnlyOnce("OPENQUERY(");
 
-        String monthly = SqlLoader.load(MedicalReceiptSourceRepository.MONTHLY_SQL);
+        String monthly = SqlLoader.load(MedicalReceiptSourceRepository.MONTHLY_SQL_MSSQL);
         assertThat(monthly)
                 .contains("__OQ_FROM__", "'out'", "'in'", "'pt'", "'pt80'", "'gs'", "2026-01-01",
                         "IPLUS.dbo.PAOSUNAB_New", "IPLUS.dbo.PAISUNAB_New", "IPLUS.dbo.NHICM4AP");
