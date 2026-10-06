@@ -231,6 +231,16 @@ const testConfig = {
   },
 }
 
+// TanStack 파일 라우트는 Route 객체와 페이지 컴포넌트를 한 파일에 둔다.
+// 페이지 컴포넌트는 export 하지 않아야 autoCodeSplitting 이 따로 쪼개고 HMR 도 플러그인이 맡는다.
+const routeConfig = {
+  files: ['src/routes/**/*.tsx'],
+  ignores: ['src/routes/**/-internal/**'],
+  rules: {
+    'react-refresh/only-export-components': 'off',
+  },
+}
+
 // 점진 전환 — 도입 시점에 기존 위반이 남아 있어 warn 으로 내린 규칙.
 // 위반을 모두 고치면 목록에서 빼서 원래 등급(error)으로 되돌린다. (eslint 우회 주석은 쓰지 않는다)
 const GRADUAL_RULES = [
@@ -274,5 +284,6 @@ export default defineConfig([
   sharedConfig,
   architectureConfig,
   testConfig,
+  routeConfig,
   gradualConfig,
 ])

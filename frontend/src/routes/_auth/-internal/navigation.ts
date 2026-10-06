@@ -201,6 +201,7 @@ export const MENU_TREE: MenuNode[] = [
       '/stats/channel-profit',
       '/stats/channel-analysis',
       '/stats/accumulated-eyes',
+      '/stats/event-notes',
       // 문자 발송 관리는 향후 하위 페이지(이력·템플릿 등) 확장을 대비해 그룹으로 감쌈.
       // 편집·[지금 실행]·[실패 재실행] 만 ADMIN (페이지 안 canSystemOp + 백엔드 hasRole('ADMIN')).
       {
