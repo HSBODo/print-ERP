@@ -9,7 +9,7 @@ class ReservationOverallStatsSqlResourceTest {
 
     @Test
     void reservation_overall_monthly_sql은_채널_집계와_제외필터를_보존한다() {
-        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_SQL);
+        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_SQL_MSSQL);
 
         assertThat(sql)
                 .contains(":from", ":to")

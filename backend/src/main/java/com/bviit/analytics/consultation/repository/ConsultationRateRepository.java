@@ -3,6 +3,7 @@ package com.bviit.analytics.consultation.repository;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -12,7 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 상담 전환율 쿼리 (레거시 BCRM 에브리데이 시스템 로직 기반).
+ * 상담 전환율 쿼리 (레거시 BCRM 에브리데이 시스템 로직 기반). ConsultationReconcileService 전용(파이프라인 밖).
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE wave 2)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL.</li>
+ *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.raw_crm_exam/reservation/custom/operationdata.</li>
+ * </ul>
+ *
  *
  * 시력교정 — softcrm/routes/consult-statistics.js 준용
  *   분모: EXAM 테이블 (CANCEL_CD 빈값)
@@ -32,18 +40,24 @@ public class ConsultationRateRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_MONTHLY_VISION_RATES_SQL = "sql/softcrm/consultation/select-monthly-vision-rates.sql";
-    private static final String FIND_MONTHLY_CATARACT_RATES_SQL = "sql/softcrm/consultation/select-monthly-cataract-rates.sql";
+    static final String FIND_MONTHLY_VISION_RATES_SQL_MSSQL       = "sql/softcrm/consultation/select-monthly-vision-rates.sql";
+    static final String FIND_MONTHLY_VISION_RATES_SQL_WAREHOUSE   = "sql/warehouse/consultation/select-monthly-vision-rates.sql";
+    static final String FIND_MONTHLY_CATARACT_RATES_SQL_MSSQL     = "sql/softcrm/consultation/select-monthly-cataract-rates.sql";
+    static final String FIND_MONTHLY_CATARACT_RATES_SQL_WAREHOUSE = "sql/warehouse/consultation/select-monthly-cataract-rates.sql";
 
     private final String findMonthlyVisionRatesSql;
     private final String findMonthlyCataractRatesSql;
 
     public ConsultationRateRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
-        this.findMonthlyVisionRatesSql = SqlLoader.load(FIND_MONTHLY_VISION_RATES_SQL);
-        this.findMonthlyCataractRatesSql = SqlLoader.load(FIND_MONTHLY_CATARACT_RATES_SQL);
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        this.findMonthlyVisionRatesSql   = SqlLoader.load(
+                dataPlatformEnabled ? FIND_MONTHLY_VISION_RATES_SQL_WAREHOUSE   : FIND_MONTHLY_VISION_RATES_SQL_MSSQL);
+        this.findMonthlyCataractRatesSql = SqlLoader.load(
+                dataPlatformEnabled ? FIND_MONTHLY_CATARACT_RATES_SQL_WAREHOUSE : FIND_MONTHLY_CATARACT_RATES_SQL_MSSQL);
     }
 
     /**
