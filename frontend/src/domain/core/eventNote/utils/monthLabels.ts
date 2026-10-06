@@ -8,23 +8,25 @@ export interface EventNoteMonthLabel {
   labels: string[]
 }
 
+/** '2026-09-17' → { year: 2026, monthIndex: 8 } */
+function parseYearMonth(date: string) {
+  const [year, month] = date.split('-').map(Number)
+  return { year, monthIndex: month - 1 }
+}
+
 export function toMonthLabels(notes: EventNote[]): EventNoteMonthLabel[] {
-  const sorted = [...notes].sort((a, b) =>
+  const result: EventNoteMonthLabel[] = []
+  const byDate = notes.toSorted((a, b) =>
     a.eventDate.localeCompare(b.eventDate),
   )
-  const byMonth = new Map<string, EventNoteMonthLabel>()
-  for (const { eventDate, summary } of sorted) {
-    const key = eventDate.slice(0, 7)
-    const found = byMonth.get(key)
-    if (found) {
-      found.labels.push(summary)
-    } else {
-      byMonth.set(key, {
-        year: Number(eventDate.slice(0, 4)),
-        monthIndex: Number(eventDate.slice(5, 7)) - 1,
-        labels: [summary],
-      })
-    }
+
+  for (const note of byDate) {
+    const { year, monthIndex } = parseYearMonth(note.eventDate)
+    const sameMonth = result.find(
+      (item) => item.year === year && item.monthIndex === monthIndex,
+    )
+    if (sameMonth) sameMonth.labels.push(note.summary)
+    else result.push({ year, monthIndex, labels: [note.summary] })
   }
-  return [...byMonth.values()]
+  return result
 }

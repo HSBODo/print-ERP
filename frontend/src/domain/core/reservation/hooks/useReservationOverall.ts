@@ -64,6 +64,7 @@ export function useReservationOverall(
     [series],
   )
 
+  // [{ month: '1월', y2024: 2799, y2025: 2759, y2026: 2425 }, … 12월까지]
   const chartData = useMemo<ReservationOverallRow[]>(
     () =>
       MONTHS.map((month, monthIndex) => {
