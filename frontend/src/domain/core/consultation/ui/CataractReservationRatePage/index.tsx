@@ -56,7 +56,6 @@ export function CataractReservationRatePage() {
         tabs={
           <YearCompare.Tabs value={tab} onChange={setTab} tabs={RATE_TABS} />
         }
-        series={yearCompare.series}
       >
         <YearCompare.Chart {...yearCompare} format="percent" />
         <YearCompare.Table {...yearCompare} format="percent" />

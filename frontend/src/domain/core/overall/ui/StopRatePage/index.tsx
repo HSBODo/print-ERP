@@ -48,7 +48,6 @@ export function StopRatePage() {
         isError={overall.isError}
         title="월별 추이 비교"
         description="중단율 (검사 중단 / 시력교정 검사자). 시력교정 검사자 대비 검사 중단(STOP_YN) 건 비율입니다."
-        series={yearCompare.series}
       >
         <YearCompare.Chart {...yearCompare} format="percent" />
         <YearCompare.Table {...yearCompare} format="percent" />

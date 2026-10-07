@@ -59,7 +59,6 @@ export function ProcedureExamPage() {
             tabs={PROCEDURE_TABS}
           />
         }
-        series={yearCompare.series}
       >
         <YearCompare.Chart {...yearCompare} format="count" />
         <YearCompare.Table {...yearCompare} format="count" />

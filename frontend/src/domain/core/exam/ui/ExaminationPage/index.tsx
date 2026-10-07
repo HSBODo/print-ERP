@@ -41,7 +41,6 @@ export function ExaminationPage() {
         tabs={
           <YearCompare.Tabs value={tab} onChange={setTab} tabs={EXAM_TABS} />
         }
-        series={yearCompare.series}
       >
         <YearCompare.Chart {...yearCompare} format="count" />
         <YearCompare.Table {...yearCompare} format="count" />

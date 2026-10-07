@@ -283,7 +283,6 @@ function YearTrendPanel({
       tabs={
         <YearCompare.Tabs value={tab} onChange={onTabChange} tabs={GROUPS} />
       }
-      series={yearCompare.series}
     >
       <YearCompare.Chart
         {...yearCompare}
