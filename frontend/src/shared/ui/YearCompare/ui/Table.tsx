@@ -1,18 +1,19 @@
 import { MONTHS } from '#shared/constants/chart'
-import { formatAxisNumber } from '#shared/utils/stats'
 
-import type {
-  ReservationOverallRow,
-  ReservationOverallSeries,
-} from '../../hooks/useReservationOverall'
+import { formatValue, summarize, SUMMARY_LABEL } from '../format'
+import type { YearCompareFormat, YearCompareRow, YearSeries } from '../type'
 
 interface Props {
-  chartData: ReservationOverallRow[]
-  series: ReservationOverallSeries[]
+  chartData: YearCompareRow[]
+  series: YearSeries[]
+  format: YearCompareFormat
 }
 
-/** 차트 아래 월별 표 — 연도별 행 + 합계 */
-export function ReservationOverallTable({ chartData, series }: Props) {
+/** 차트 아래 월별 표 — 연도별 행 + 합계(건수) 또는 평균(비율) */
+export function Table({ chartData, series, format }: Props) {
+  const show = (value: number | null) =>
+    value === null ? '' : formatValue(format, value)
+
   return (
     <div className="shrink-0 overflow-x-auto">
       <table className="w-full min-w-[840px] table-fixed border-collapse text-center text-sm">
@@ -31,15 +32,21 @@ export function ReservationOverallTable({ chartData, series }: Props) {
                 {month}
               </th>
             ))}
-            <th className="py-2 font-semibold text-foreground">합계</th>
+            <th className="py-2 font-semibold text-foreground">
+              {SUMMARY_LABEL[format]}
+            </th>
           </tr>
         </thead>
         <tbody>
           {series.map((s) => {
-            const total = chartData.reduce((sum, row) => {
+            const values = chartData.map((row) => {
               const value = row[s.key]
-              return typeof value === 'number' ? sum + value : sum
-            }, 0)
+              return typeof value === 'number' ? value : null
+            })
+            const summary = summarize(
+              format,
+              values.filter((value) => value !== null),
+            )
 
             return (
               <tr key={s.year} className="border-b border-border">
@@ -55,16 +62,13 @@ export function ReservationOverallTable({ chartData, series }: Props) {
                     {s.year}
                   </span>
                 </td>
-                {MONTHS.map((_, monthIndex) => {
-                  const value = chartData[monthIndex][s.key]
-                  return (
-                    <td key={monthIndex} className="py-2 tabular-nums">
-                      {typeof value === 'number' ? formatAxisNumber(value) : ''}
-                    </td>
-                  )
-                })}
+                {values.map((value, monthIndex) => (
+                  <td key={MONTHS[monthIndex]} className="py-2 tabular-nums">
+                    {show(value)}
+                  </td>
+                ))}
                 <td className="py-2 font-semibold tabular-nums">
-                  {total > 0 ? formatAxisNumber(total) : ''}
+                  {show(summary)}
                 </td>
               </tr>
             )
