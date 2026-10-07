@@ -4,6 +4,7 @@ import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.marketing.dto.OverseasMarketingReceptionQuery;
 import com.bviit.analytics.marketing.util.OverseasCustomerKeys;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -16,42 +17,97 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Google Sheet 로컬 캐시와 원본 CRM(SOFTCRM) 직결 조회를 분리한 저장소. */
+/**
+ * Google Sheet 로컬 캐시와 원본 CRM 직결 조회를 분리한 저장소.
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-07 QUERY_DIRECT #2)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate · MSSQL SOFTCRM).</li>
+ *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate · raw.raw_crm_*).</li>
+ * </ul>
+ *
+ * <p>⚠️ customer-details.sql 는 raw.raw_crm_custom_history·raw_crm_lens·raw_crm_lens_cfg 3개를
+ * 참조한다. 운영 전환(data-platform.enabled=true) 전에 3개 적재가 완료돼야 한다
+ * (docs/data-platform/migration-strategy.md §11.7). 적재 전 활성화 시 relation 미존재로 실패.
+ */
 @Repository
 @Profile("postgres-mart")
 public class OverseasMarketingRepository {
 
-    private static final String RECEPTIONS_SQL = SqlLoader.load("sql/mart/marketing/receptions.sql");
-    private static final String OUTPATIENT_SQL = SqlLoader.load("sql/softcrm/marketing/outpatient-enrichment.sql");
-    private static final String PRICE_ITEM_COSTS_SQL = SqlLoader.load("sql/softcrm/marketing/price-item-costs.sql");
-    private static final String FALLBACK_COSTS_SQL = SqlLoader.load("sql/softcrm/marketing/fallback-costs.sql");
-    private static final String CUSTOMER_CANDIDATES_SQL = SqlLoader.load("sql/softcrm/marketing/customer-candidates.sql");
-    private static final String CUSTOMER_DETAILS_SQL = SqlLoader.load("sql/softcrm/marketing/customer-details.sql");
-    private static final String SYNC_INSERT_SQL = SqlLoader.load("sql/mart/marketing/sync-insert.sql");
-    private static final String MANUAL_INSERT_SQL = SqlLoader.load("sql/mart/marketing/manual-insert.sql");
-    private static final String ROW_UPDATE_SQL = SqlLoader.load("sql/mart/marketing/row-update.sql");
-    private static final String SHEET_MONTHLY_SQL = SqlLoader.load("sql/mart/marketing/sheet-monthly.sql");
+    private static final String RECEPTIONS_SQL      = SqlLoader.load("sql/mart/marketing/receptions.sql");
+    private static final String SYNC_INSERT_SQL     = SqlLoader.load("sql/mart/marketing/sync-insert.sql");
+    private static final String MANUAL_INSERT_SQL   = SqlLoader.load("sql/mart/marketing/manual-insert.sql");
+    private static final String ROW_UPDATE_SQL      = SqlLoader.load("sql/mart/marketing/row-update.sql");
+    private static final String SHEET_MONTHLY_SQL   = SqlLoader.load("sql/mart/marketing/sheet-monthly.sql");
     private static final String RSV_STATS_SELECT_SQL = SqlLoader.load("sql/mart/marketing/reservation-stats-select.sql");
     private static final String RSV_STATS_UPSERT_SQL = SqlLoader.load("sql/mart/marketing/reservation-stats-upsert.sql");
     private static final String RSV_STATS_SOURCE_SQL = SqlLoader.load("sql/mart/marketing/reservation-stats-source.sql");
 
+    // CRM 직결 SQL — statsJdbcTemplate / warehouseJdbcTemplate 둘 중 활성 소스로 로딩.
+    static final String OUTPATIENT_SQL_MSSQL             = "sql/softcrm/marketing/outpatient-enrichment.sql";
+    static final String OUTPATIENT_SQL_WAREHOUSE         = "sql/warehouse/marketing/outpatient-enrichment.sql";
+    static final String PRICE_ITEM_COSTS_SQL_MSSQL       = "sql/softcrm/marketing/price-item-costs.sql";
+    static final String PRICE_ITEM_COSTS_SQL_WAREHOUSE   = "sql/warehouse/marketing/price-item-costs.sql";
+    static final String FALLBACK_COSTS_SQL_MSSQL         = "sql/softcrm/marketing/fallback-costs.sql";
+    static final String FALLBACK_COSTS_SQL_WAREHOUSE     = "sql/warehouse/marketing/fallback-costs.sql";
+    static final String CUSTOMER_CANDIDATES_SQL_MSSQL    = "sql/softcrm/marketing/customer-candidates.sql";
+    static final String CUSTOMER_CANDIDATES_SQL_WAREHOUSE = "sql/warehouse/marketing/customer-candidates.sql";
+    static final String CUSTOMER_DETAILS_SQL_MSSQL       = "sql/softcrm/marketing/customer-details.sql";
+    static final String CUSTOMER_DETAILS_SQL_WAREHOUSE   = "sql/warehouse/marketing/customer-details.sql";
+    static final String EXAM_DATE_CANDIDATES_SQL_MSSQL   = "sql/softcrm/marketing/exam-date-candidates.sql";
+    static final String EXAM_DATE_CANDIDATES_SQL_WAREHOUSE = "sql/warehouse/marketing/exam-date-candidates.sql";
+    static final String SURGERY_DATE_CANDIDATES_SQL_MSSQL     = "sql/softcrm/marketing/surgery-date-candidates.sql";
+    static final String SURGERY_DATE_CANDIDATES_SQL_WAREHOUSE = "sql/warehouse/marketing/surgery-date-candidates.sql";
+    static final String CUSTOMER_STREAM_SQL_MSSQL        = "sql/softcrm/marketing/customer-stream.sql";
+    static final String CUSTOMER_STREAM_SQL_WAREHOUSE    = "sql/warehouse/marketing/customer-stream.sql";
+
     // jtds는 네트워크 타임아웃을 지원하지 않아 느린 쿼리가 요청을 무한정 붙잡을 수 있다.
     // 이 저장소의 CRM 조회에만 쿼리 타임아웃을 걸어 동기화가 hang 되지 않게 한다(다른 통계 조회에는 영향 없음).
+    // data-platform 활성 시에도 보수적으로 동일 타임아웃 유지 — raw.raw_crm_custom 전수 스트림이 느릴 수 있음.
     private static final int CRM_QUERY_TIMEOUT_SECONDS = 120;
+
+    private static final int CUSTOMER_STREAM_FETCH_SIZE = 2000;
+
+    // MSSQL prepared statement 파라미터 한도(2,100)를 넘지 않도록 IN 절 값을 나눠 조회한다.
+    // Postgres 는 32,767 로 더 넉넉하지만 동일 청크 유지(캐시 성능·네트워크 왕복 균형).
+    private static final int IN_CLAUSE_CHUNK = 1000;
 
     private final NamedParameterJdbcTemplate martJdbc;
     private final NamedParameterJdbcTemplate crmJdbc;
+    private final boolean dataPlatformEnabled;
+
+    private final String outpatientSql;
+    private final String priceItemCostsSql;
+    private final String fallbackCostsSql;
+    private final String customerCandidatesSql;
+    private final String customerDetailsSql;
+    private final String examDateCandidatesSql;
+    private final String surgeryDateCandidatesSql;
+    private final String customerStreamSql;
 
     public OverseasMarketingRepository(
             @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate martJdbc,
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate crmJdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
         this.martJdbc = martJdbc;
-        org.springframework.jdbc.core.JdbcTemplate timedTemplate =
-                new org.springframework.jdbc.core.JdbcTemplate(
-                        java.util.Objects.requireNonNull(crmJdbc.getJdbcTemplate().getDataSource()));
+        this.dataPlatformEnabled = dataPlatformEnabled;
+
+        NamedParameterJdbcTemplate activeSource = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        JdbcTemplate timedTemplate = new JdbcTemplate(
+                java.util.Objects.requireNonNull(activeSource.getJdbcTemplate().getDataSource()));
         timedTemplate.setQueryTimeout(CRM_QUERY_TIMEOUT_SECONDS);
         this.crmJdbc = new NamedParameterJdbcTemplate(timedTemplate);
+
+        this.outpatientSql            = SqlLoader.load(dataPlatformEnabled ? OUTPATIENT_SQL_WAREHOUSE            : OUTPATIENT_SQL_MSSQL);
+        this.priceItemCostsSql        = SqlLoader.load(dataPlatformEnabled ? PRICE_ITEM_COSTS_SQL_WAREHOUSE      : PRICE_ITEM_COSTS_SQL_MSSQL);
+        this.fallbackCostsSql         = SqlLoader.load(dataPlatformEnabled ? FALLBACK_COSTS_SQL_WAREHOUSE        : FALLBACK_COSTS_SQL_MSSQL);
+        this.customerCandidatesSql    = SqlLoader.load(dataPlatformEnabled ? CUSTOMER_CANDIDATES_SQL_WAREHOUSE   : CUSTOMER_CANDIDATES_SQL_MSSQL);
+        this.customerDetailsSql       = SqlLoader.load(dataPlatformEnabled ? CUSTOMER_DETAILS_SQL_WAREHOUSE      : CUSTOMER_DETAILS_SQL_MSSQL);
+        this.examDateCandidatesSql    = SqlLoader.load(dataPlatformEnabled ? EXAM_DATE_CANDIDATES_SQL_WAREHOUSE  : EXAM_DATE_CANDIDATES_SQL_MSSQL);
+        this.surgeryDateCandidatesSql = SqlLoader.load(dataPlatformEnabled ? SURGERY_DATE_CANDIDATES_SQL_WAREHOUSE : SURGERY_DATE_CANDIDATES_SQL_MSSQL);
+        this.customerStreamSql        = SqlLoader.load(dataPlatformEnabled ? CUSTOMER_STREAM_SQL_WAREHOUSE       : CUSTOMER_STREAM_SQL_MSSQL);
     }
 
     public List<Map<String, Object>> findReceptions(OverseasMarketingReceptionQuery query) {
@@ -89,7 +145,7 @@ public class OverseasMarketingRepository {
         int previousFetchSize = raw.getFetchSize();
         raw.setFetchSize(CUSTOMER_STREAM_FETCH_SIZE);
         try {
-            raw.query(CUSTOMER_STREAM_SQL, rs -> {
+            raw.query(customerStreamSql, rs -> {
                 String customerNo = rs.getString("customerNo");
                 String name = rs.getString("name");
                 String birthDate = rs.getString("birthDate");
@@ -130,38 +186,22 @@ public class OverseasMarketingRepository {
             List<Map<String, Object>> emails
     ) {}
 
-    private static final String CUSTOMER_STREAM_SQL =
-            "SELECT RTRIM(c.CUST_NUM) AS customerNo, "
-                    + "RTRIM(ISNULL(c.CUST_NAME, '')) AS name, "
-                    + "ISNULL(c.BIRTH_DAY, '') AS birthDate, "
-                    + "ISNULL(c.CALL_NUM2, '') AS contact, "
-                    + "ISNULL(c.EMAIL, '') AS email "
-                    + "FROM CUSTOM c WITH(NOLOCK)";
-
-    private static final int CUSTOMER_STREAM_FETCH_SIZE = 2000;
-
-    // MSSQL prepared statement 파라미터 한도(2,100)를 넘지 않도록 IN 절 값을 나눠 조회한다.
-    private static final int IN_CLAUSE_CHUNK = 1000;
-
     public List<Map<String, Object>> findCustomerDetails(List<String> customerNos) {
-        return chunkedQuery(CUSTOMER_DETAILS_SQL, "customerNos", customerNos);
+        return chunkedQuery(customerDetailsSql, "customerNos", customerNos);
     }
 
     private List<Map<String, Object>> findCandidates(String predicate, List<String> values) {
-        return chunkedQuery(CUSTOMER_CANDIDATES_SQL.formatted(predicate), "values", values);
+        return chunkedQuery(customerCandidatesSql.formatted(predicate), "values", values);
     }
-
-    private static final String EXAM_DATE_CANDIDATES_SQL = SqlLoader.load("sql/softcrm/marketing/exam-date-candidates.sql");
-    private static final String SURGERY_DATE_CANDIDATES_SQL = SqlLoader.load("sql/softcrm/marketing/surgery-date-candidates.sql");
 
     /** 해당 날짜들에 검사예약이 있던 고객 — 날짜가 후보군을 좁혀 이름·생일 대조 매칭에 쓴다. */
     public List<Map<String, Object>> findExamDateCandidates(List<String> dates) {
-        return chunkedDateQuery(EXAM_DATE_CANDIDATES_SQL, dates);
+        return chunkedDateQuery(examDateCandidatesSql, dates);
     }
 
     /** 해당 날짜들에 수술 기록이 있는 고객. */
     public List<Map<String, Object>> findSurgeryDateCandidates(List<String> dates) {
-        return chunkedDateQuery(SURGERY_DATE_CANDIDATES_SQL, dates);
+        return chunkedDateQuery(surgeryDateCandidatesSql, dates);
     }
 
     /** 날짜 IN 조회 — 원본 컬럼 범위(:from~:toExclusive)를 함께 걸어 인덱스 스캔을 보장한다. */
@@ -181,15 +221,15 @@ public class OverseasMarketingRepository {
     }
 
     public List<Map<String, Object>> findOutpatientVisits(List<String> customerNos) {
-        return chunkedQuery(OUTPATIENT_SQL, "customerNos", customerNos);
+        return chunkedQuery(outpatientSql, "customerNos", customerNos);
     }
 
     public List<Map<String, Object>> findPriceItemCosts(List<String> customerNos) {
-        return chunkedQuery(PRICE_ITEM_COSTS_SQL, "customerNos", customerNos);
+        return chunkedQuery(priceItemCostsSql, "customerNos", customerNos);
     }
 
     public List<Map<String, Object>> findFallbackCosts(List<String> customerNos) {
-        return chunkedQuery(FALLBACK_COSTS_SQL, "customerNos", customerNos);
+        return chunkedQuery(fallbackCostsSql, "customerNos", customerNos);
     }
 
     private List<Map<String, Object>> chunkedQuery(String sql, String paramName, List<String> values) {
