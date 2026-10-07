@@ -9,7 +9,7 @@ export interface EventNoteMonthLabel {
 }
 
 /** '2026-09-17' → { year: 2026, monthIndex: 8 } */
-function parseYearMonth(date: string) {
+export function parseYearMonth(date: string) {
   const [year, month] = date.split('-').map(Number)
   return { year, monthIndex: month - 1 }
 }
