@@ -48,7 +48,7 @@ interface Props {
   className?: string
 }
 
-/** 월별 연도 비교 선 차트(위에 연도 범례) — 최신 연도는 값 레이블(정점 위·골 아래), annotations 는 점에 깃발 마커 + 툴팁 */
+/** 월별 연도 비교 선 차트(위에 연도 범례) — 최신 연도는 값 레이블(점 아래), annotations 는 점에 깃발 마커 + 툴팁 */
 export function Chart({
   chartConfig,
   chartData,
@@ -62,7 +62,7 @@ export function Chart({
   const formatLabel = (value: unknown) =>
     typeof value === 'number' ? formatValue(format, value, percentDigits) : ''
 
-  // 축·레이블은 chartData 가 바뀔 때만 새로 만든다 — 참조가 바뀌면 Recharts 가 선 애니메이션을
+  // 축·레이블은 데이터·형식이 바뀔 때만 새로 만든다 — 참조가 바뀌면 Recharts 가 선 애니메이션을
   // 다시 시작하고 그동안 값 레이블을 숨긴다(useYearCompare 의 chartData 메모와 같은 이유)
   const yAxis = useMemo(
     () => yAxisFor(format, chartData, series),
@@ -72,15 +72,10 @@ export function Chart({
   const renderLatestLabel = useMemo(
     () =>
       latest &&
-      latestLabel(
-        chartData.map((row) => {
-          const value = row[latest.key]
-          return typeof value === 'number' ? value : null
-        }),
-        latest.color,
-        (value) => formatValue(format, value, percentDigits),
+      latestLabel(latest.color, (value) =>
+        formatValue(format, value, percentDigits),
       ),
-    [chartData, latest, format, percentDigits],
+    [latest, format, percentDigits],
   )
 
   // 범례는 차트와 같은 열에 둔다 — 옆에 패널이 붙어도 차트 기준 가운데
