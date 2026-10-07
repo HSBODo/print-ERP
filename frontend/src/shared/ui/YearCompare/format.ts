@@ -2,9 +2,15 @@ import { formatAxisNumber, formatAxisPercent } from '#shared/utils/stats'
 
 import type { YearCompareFormat } from './type'
 
-/** 레이블·표·툴팁 값 — 비율은 소수 1자리 */
-export const formatValue = (format: YearCompareFormat, value: number) =>
-  format === 'percent' ? `${value.toFixed(1)}%` : formatAxisNumber(value)
+/** 레이블·표·툴팁 값 — 비율은 소수 percentDigits 자리(기본 1) */
+export const formatValue = (
+  format: YearCompareFormat,
+  value: number,
+  percentDigits = 1,
+) =>
+  format === 'percent'
+    ? `${value.toFixed(percentDigits)}%`
+    : formatAxisNumber(value)
 
 /** Y축 눈금 — 차트에 그대로 넘기므로 format 별 고정 함수(참조가 안 바뀌어야 함) */
 export const TICK_FORMATTER: Record<

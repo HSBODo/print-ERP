@@ -32,12 +32,6 @@ export interface ReportItem {
     series: ReportSeriesKey
     /** 기본 3개년(YEARS) 외의 연도 집합을 쓸 때 */
     years?: number[]
-    /**
-     * Y축 고정 범위 — **월간 값 기준으로 잡은 값이다.**
-     * 주차 값은 자릿수가 한 단계 작아(예약 종합: 월 1,000~3,000 vs 주 168~608) 그대로 쓰면
-     * 선이 축 바닥에 깔린다. 주차 레포트는 이 값을 쓰지 않고 데이터 스케일에 맞춘다.
-     */
-    yDomain?: [number, number]
     percentFractionDigits?: number
   }
   node?: ReactNode
@@ -70,7 +64,6 @@ export function buildReportItems(
         title: '예약 종합',
         suffix: '(콜, 온라인)',
         series: 'reservations',
-        yDomain: [800, 3000],
       },
     },
     {
