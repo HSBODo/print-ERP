@@ -50,16 +50,23 @@ export function useYearCompare(
     [series],
   )
 
-  // getValue 는 매 렌더 새 함수라 메모하지 않는다 — 12행 × 연도 수라 비용이 작다
-  const chartData: YearCompareRow[] = MONTHS.map((month, monthIndex) => {
-    const row: YearCompareRow = { month }
-    for (const year of sortedYears) {
-      row[`y${year}`] = isFutureMonth(year, monthIndex)
-        ? null
-        : (getValue(year, monthIndex) ?? null)
-    }
-    return row
-  })
+  // getValue 는 매 렌더 새 함수라 값으로 메모한다. 참조가 바뀌면 Recharts 가 선 애니메이션을
+  // 다시 시작하고 그동안 값 레이블을 숨긴다(호버 때마다 레이블이 사라짐). 12행 × 연도 수라 직렬화 비용이 작다.
+  const rowsKey = JSON.stringify(
+    MONTHS.map((month, monthIndex) => {
+      const row: YearCompareRow = { month }
+      for (const year of sortedYears) {
+        row[`y${year}`] = isFutureMonth(year, monthIndex)
+          ? null
+          : (getValue(year, monthIndex) ?? null)
+      }
+      return row
+    }),
+  )
+  const chartData = useMemo(
+    () => JSON.parse(rowsKey) as YearCompareRow[],
+    [rowsKey],
+  )
 
   return { series, yearColors, chartConfig, chartData }
 }
