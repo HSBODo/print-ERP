@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 
-import { useEventNoteMonthLabels } from '#domain/core/eventNote/hooks/useEventNoteMonthLabels'
+import { useEventNotesByYears } from '#domain/core/eventNote/hooks/useEventNotesByYears'
+import { EventNoteDetailPanel } from '#domain/core/eventNote/ui/EventNoteDetailPanel'
 import { useReservationOverall } from '#domain/core/reservation/hooks/useReservationOverall'
 import { ReservationOverallChart } from '#domain/core/reservation/ui/ReservationOverallChart'
 import { ReservationOverallHeader } from '#domain/core/reservation/ui/ReservationOverallHeader'
@@ -36,7 +37,9 @@ function ReservationOverallPage() {
   ])
   const [tab, setTab] = useState<ReservationOverallTab>('total')
   const overall = useReservationOverall(filter.years, tab)
-  const eventLabels = useEventNoteMonthLabels(filter.years)
+  const eventNotes = useEventNotesByYears(filter.years)
+  /** 마지막으로 가리킨 달 — 차트를 벗어나도 유지해 패널을 읽을 수 있게 한다 */
+  const [activeMonth, setActiveMonth] = useState<number>()
 
   return (
     <div className="flex h-[calc(100vh-5rem)] min-h-[40rem] flex-col gap-6">
@@ -53,16 +56,24 @@ function ReservationOverallPage() {
             onTabChange={setTab}
             series={overall.series}
           />
-          <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-            <ReservationOverallChart
-              chartConfig={overall.chartConfig}
-              chartData={overall.chartData}
-              series={overall.series}
-              annotations={eventLabels}
-            />
-            <ReservationOverallTable
-              chartData={overall.chartData}
-              series={overall.series}
+          <CardContent className="flex min-h-0 flex-1 gap-4">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+              <ReservationOverallChart
+                chartConfig={overall.chartConfig}
+                chartData={overall.chartData}
+                series={overall.series}
+                annotations={eventNotes.monthLabels}
+                onActiveMonthChange={setActiveMonth}
+              />
+              <ReservationOverallTable
+                chartData={overall.chartData}
+                series={overall.series}
+              />
+            </div>
+            <EventNoteDetailPanel
+              notes={eventNotes.notes}
+              monthIndex={activeMonth}
+              yearColors={overall.yearColors}
             />
           </CardContent>
         </Card>

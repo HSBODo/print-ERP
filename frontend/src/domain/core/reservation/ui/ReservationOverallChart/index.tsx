@@ -30,6 +30,8 @@ interface Props {
   series: ReservationOverallSeries[]
   /** 마커는 값이 있는 점에만, 툴팁에는 그 달이면 항상 */
   annotations?: ChartMonthLabel[]
+  /** 가리킨 달(0 = 1월)이 바뀔 때 — 차트 밖 상세 패널용 */
+  onActiveMonthChange?: (monthIndex: number) => void
 }
 
 /** 월별 연도 비교 선 차트 — 최신 연도는 값 레이블(점 아래), annotations 는 점에 깃발 마커 + 툴팁 */
@@ -38,13 +40,21 @@ export function ReservationOverallChart({
   chartData,
   series,
   annotations,
+  onActiveMonthChange,
 }: Props) {
   return (
     <ChartContainer
       config={chartConfig}
       className="aspect-auto min-h-0 w-full flex-1"
     >
-      <LineChart data={chartData} margin={{ top: 24, left: 0, right: 80 }}>
+      <LineChart
+        data={chartData}
+        margin={{ top: 24, left: 0, right: 80 }}
+        onMouseMove={({ activeLabel }) => {
+          const monthIndex = MONTHS.indexOf(String(activeLabel))
+          if (monthIndex >= 0) onActiveMonthChange?.(monthIndex)
+        }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="month"
