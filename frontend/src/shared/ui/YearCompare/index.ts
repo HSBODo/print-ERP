@@ -7,9 +7,9 @@
  * const yc = useYearCompare(filter.years, (year, monthIndex) => dataMap[year]?.[monthIndex]?.count)
  *
  * <FilterBar {...filter} yearOnly yearChipColors={yc.yearColors} />
- * <YearCompare.Card isLoading={isLoading} isError={isError} title="…" description="…" series={yc.series}
+ * <YearCompare.Card isLoading={isLoading} isError={isError} title="…" description="…"
  *   tabs={<YearCompare.Tabs value={tab} onChange={setTab} tabs={TABS} />}>
- *   <YearCompare.Chart {...yc} format="count" />
+ *   <YearCompare.Chart {...yc} format="count" />  // 위에 연도 범례 포함
  *   <YearCompare.Table {...yc} format="count" />
  * </YearCompare.Card>
  * ```
