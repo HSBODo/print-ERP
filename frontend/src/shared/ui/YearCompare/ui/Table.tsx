@@ -7,12 +7,14 @@ interface Props {
   chartData: YearCompareRow[]
   series: YearSeries[]
   format: YearCompareFormat
+  /** 비율 소수 자릿수 (기본 1) */
+  percentDigits?: number
 }
 
 /** 차트 아래 월별 표 — 연도별 행 + 합계(건수) 또는 평균(비율) */
-export function Table({ chartData, series, format }: Props) {
+export function Table({ chartData, series, format, percentDigits = 1 }: Props) {
   const show = (value: number | null) =>
-    value === null ? '' : formatValue(format, value)
+    value === null ? '' : formatValue(format, value, percentDigits)
 
   return (
     <div className="shrink-0 overflow-x-auto">

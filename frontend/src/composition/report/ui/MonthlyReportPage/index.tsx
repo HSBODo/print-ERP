@@ -33,8 +33,7 @@ export function MonthlyReportPage() {
         title={it.chart.title}
         suffix={it.chart.suffix}
         format={it.chart.format}
-        percentFractionDigits={it.chart.percentFractionDigits}
-        yDomain={it.chart.yDomain}
+        percentDigits={it.chart.percentFractionDigits}
         years={it.chart.years ?? YEARS}
         data={charts[it.chart.series]}
       />

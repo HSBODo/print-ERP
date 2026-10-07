@@ -8,9 +8,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '#shared/ui/Chart'
+import { niceAxisFor, tightAxis } from '#shared/utils/niceAxis'
 import { formatAxisNumber } from '#shared/utils/stats'
 
-import { niceAxisFor, tightAxis } from '../../utils/niceAxis'
 import type { ReportWeek } from '../../utils/reportWeeks'
 import { colorOf } from '../../utils/reportYearColors'
 

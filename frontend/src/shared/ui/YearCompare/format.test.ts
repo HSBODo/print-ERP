@@ -6,6 +6,7 @@ describe('formatValue', () => {
   it('건수는 천 단위 쉼표, 비율은 소수 1자리', () => {
     expect(formatValue('count', 1234)).toBe('1,234')
     expect(formatValue('percent', 73.44)).toBe('73.4%')
+    expect(formatValue('percent', 73.44, 0)).toBe('73%')
   })
 })
 

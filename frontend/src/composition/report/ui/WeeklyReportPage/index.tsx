@@ -111,8 +111,6 @@ export function WeeklyReportPage() {
         suffix={it.chart.suffix}
         format={it.chart.format}
         percentFractionDigits={it.chart.percentFractionDigits}
-        /* yDomain 은 월간 값 기준(예약 종합 800~3000)이라 주차(168~608)에는 쓰지 않는다.
-             그대로 넘기면 데이터가 축 하단 밖으로 밀려 선이 바닥에 붙는다 — 자동 스케일로 둔다. */
         years={it.chart.years ?? YEARS}
         weeks={weeks}
         data={weekCharts[it.chart.series] ?? {}}

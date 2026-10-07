@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   CartesianGrid,
   Line,
@@ -16,6 +17,7 @@ import {
 } from '#shared/ui/Chart'
 import { cn } from '#shared/utils/cn'
 
+import { yAxisFor } from '../axis'
 import { formatValue, TICK_FORMATTER } from '../format'
 import type {
   ChartMonthLabel,
@@ -24,23 +26,20 @@ import type {
   YearSeries,
 } from '../type'
 import { EventMarker } from './EventMarker'
+import { latestLabel } from './LatestLabel'
 import { Legend } from './Legend'
 import { MonthWithEvents } from './MonthWithEvents'
 
 /** 축 바닥 아래 여백(px) — 바닥에 붙은 점도 값 레이블(점 아래)이 눈금 글자와 겹치지 않게 */
 const LABEL_SPACE = 28
 
-/** 건수는 0부터(증감 과장 없이), 비율은 데이터 범위에 맞춘다 */
-const Y_DOMAIN = {
-  count: [0, 'auto'],
-  percent: ['auto', 'auto'],
-} as const
-
 interface Props {
   chartConfig: ChartConfig
   chartData: YearCompareRow[]
   series: YearSeries[]
   format: YearCompareFormat
+  /** 비율 소수 자릿수 (기본 1) */
+  percentDigits?: number
   /** 마커는 값이 있는 점에만, 툴팁에는 그 달이면 항상 */
   annotations?: ChartMonthLabel[]
   /** 가리킨 달(0 = 1월)이 바뀔 때 — 차트 밖 상세 패널용 */
@@ -49,18 +48,40 @@ interface Props {
   className?: string
 }
 
-/** 월별 연도 비교 선 차트(위에 연도 범례) — 최신 연도는 값 레이블(점 아래), annotations 는 점에 깃발 마커 + 툴팁 */
+/** 월별 연도 비교 선 차트(위에 연도 범례) — 최신 연도는 값 레이블(정점 위·골 아래), annotations 는 점에 깃발 마커 + 툴팁 */
 export function Chart({
   chartConfig,
   chartData,
   series,
   format,
+  percentDigits = 1,
   annotations,
   onActiveMonthChange,
   className,
 }: Props) {
   const formatLabel = (value: unknown) =>
-    typeof value === 'number' ? formatValue(format, value) : ''
+    typeof value === 'number' ? formatValue(format, value, percentDigits) : ''
+
+  // 축·레이블은 chartData 가 바뀔 때만 새로 만든다 — 참조가 바뀌면 Recharts 가 선 애니메이션을
+  // 다시 시작하고 그동안 값 레이블을 숨긴다(useYearCompare 의 chartData 메모와 같은 이유)
+  const yAxis = useMemo(
+    () => yAxisFor(format, chartData, series),
+    [format, chartData, series],
+  )
+  const latest = series.find((s) => s.isLatest)
+  const renderLatestLabel = useMemo(
+    () =>
+      latest &&
+      latestLabel(
+        chartData.map((row) => {
+          const value = row[latest.key]
+          return typeof value === 'number' ? value : null
+        }),
+        latest.color,
+        (value) => formatValue(format, value, percentDigits),
+      ),
+    [chartData, latest, format, percentDigits],
+  )
 
   // 범례는 차트와 같은 열에 둔다 — 옆에 패널이 붙어도 차트 기준 가운데
   return (
@@ -91,7 +112,8 @@ export function Chart({
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            domain={[...Y_DOMAIN[format]]}
+            domain={yAxis.domain}
+            ticks={yAxis.ticks}
             padding={{ bottom: LABEL_SPACE }}
             // 고정 함수여야 한다 — 렌더마다 새 함수면 Recharts 가 축을 다시 등록해 선 애니메이션을 재시작하고
             // 그동안 값 레이블을 숨긴다(호버로 페이지가 다시 렌더되는 예약 종합에서 레이블이 사라짐)
@@ -121,18 +143,7 @@ export function Chart({
               dot={false}
               connectNulls={false}
               activeDot={{ r: 4 }}
-              label={
-                s.isLatest
-                  ? {
-                      position: 'bottom',
-                      offset: 16,
-                      fill: s.color,
-                      fontSize: 14,
-                      fontWeight: 700,
-                      formatter: formatLabel,
-                    }
-                  : undefined
-              }
+              label={s.isLatest ? renderLatestLabel : undefined}
             />
           ))}
           {annotations?.map(({ year, monthIndex }) => {

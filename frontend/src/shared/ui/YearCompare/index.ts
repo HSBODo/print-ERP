@@ -13,6 +13,7 @@
  *   <YearCompare.Table {...yc} format="count" />
  * </YearCompare.Card>
  * ```
- * format: count = 건수(Y축 0부터 · 표 합계) / percent = 비율(소수 1자리 · Y축 데이터 범위 · 표 평균)
+ * format: count = 건수(Y축 0부터 · 표 합계) / percent = 비율(Y축 데이터 범위 · 표 평균)
+ * percentDigits: 비율 소수 자릿수(기본 1) — Chart·Table 에 같이 넘긴다
  */
 export * as YearCompare from './ui'
