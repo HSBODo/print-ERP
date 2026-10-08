@@ -8,7 +8,7 @@ const FLAG_POLE_OFFSET = 3
 /** 점과 깃발 아래 끝 사이 간격 */
 const FLAG_GAP = 8
 
-/** 이벤트 마커 — 점에 작은 원 + 그 위에 깃발 */
+/** 이벤트 마커 — 점에 작은 원 + 그 위에 깃발. `event-marker` 는 인쇄에서 숨길 때 쓴다 (index.css) */
 export function EventMarker({
   cx = 0,
   cy = 0,
@@ -19,7 +19,7 @@ export function EventMarker({
   color: string
 }) {
   return (
-    <g>
+    <g className="event-marker">
       <circle cx={cx} cy={cy} r={DOT_RADIUS} fill={color} />
       <Flag
         x={cx - FLAG_POLE_OFFSET}

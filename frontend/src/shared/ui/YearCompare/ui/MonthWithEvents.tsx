@@ -2,8 +2,7 @@ import { Fragment } from 'react'
 
 import { MONTHS } from '#shared/constants/chart'
 
-import type { ReservationOverallSeries } from '../../hooks/useReservationOverall'
-import type { ChartMonthLabel } from './type'
+import type { ChartMonthLabel, YearSeries } from '../type'
 
 /** 툴팁 제목 — 월 + 그 달 이벤트(연도 색). 값이 없는 달에도 보인다. */
 export function MonthWithEvents({
@@ -13,7 +12,7 @@ export function MonthWithEvents({
 }: {
   month: string
   annotations?: ChartMonthLabel[]
-  series: ReservationOverallSeries[]
+  series: YearSeries[]
 }) {
   const monthIndex = MONTHS.indexOf(month)
   const events = annotations

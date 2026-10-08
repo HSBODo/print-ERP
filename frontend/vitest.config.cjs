@@ -17,5 +17,6 @@ module.exports = {
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
     pool: 'threads',
+    maxWorkers: 2,
   },
 }

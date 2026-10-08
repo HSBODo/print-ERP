@@ -1,7 +1,10 @@
 import { Download, Printer } from 'lucide-react'
 import { useState } from 'react'
 
+import { useEventNotesByYears } from '#domain/core/eventNote/hooks/useEventNotesByYears'
+import { EventNoteDetailPanel } from '#domain/core/eventNote/ui/EventNoteDetailPanel'
 import { CURRENT_YEAR } from '#shared/constants/chart'
+import { yearColorsOf } from '#shared/ui/YearCompare/useYearCompare'
 
 import { useReportSeries } from '../../hooks/useReportSeries'
 import { buildMonthlyReportCsv } from '../../utils/monthlyReportCsv'
@@ -16,6 +19,9 @@ export function MonthlyReportPage() {
 
   const periodLabel = `${CURRENT_YEAR}년 ${latestMonthIdx + 1}월`
   const [stopReasonMonth, setStopReasonMonth] = useState<number | null>(null)
+  const eventNotes = useEventNotesByYears(YEARS)
+  /** 마지막으로 가리킨 달(어느 도표든) — 오른쪽 이벤트 패널이 보여 준다 */
+  const [activeMonth, setActiveMonth] = useState<number>()
   const activeStopReasonMonth = stopReasonMonth ?? latestMonthIdx + 1
 
   // weeklyOnly 항목(드림렌즈 신규/FU)은 월간 대응 데이터가 없어 여기서 제외한다.
@@ -33,10 +39,11 @@ export function MonthlyReportPage() {
         title={it.chart.title}
         suffix={it.chart.suffix}
         format={it.chart.format}
-        percentFractionDigits={it.chart.percentFractionDigits}
-        yDomain={it.chart.yDomain}
+        percentDigits={it.chart.percentFractionDigits}
         years={it.chart.years ?? YEARS}
         data={charts[it.chart.series]}
+        annotations={eventNotes.monthLabels}
+        onActiveMonthChange={setActiveMonth}
       />
     ) : (
       it.node
@@ -114,6 +121,14 @@ export function MonthlyReportPage() {
         }
         items={shellItems}
         isLoading={series.isLoading}
+        aside={
+          <EventNoteDetailPanel
+            notes={eventNotes.notes}
+            monthIndex={activeMonth}
+            yearColors={yearColorsOf(YEARS)}
+            className="w-full"
+          />
+        }
       />
 
       {csvOpen && (

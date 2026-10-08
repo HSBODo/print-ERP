@@ -197,6 +197,10 @@
   .report-chart:last-child {
     page-break-after: auto;
   }
+  /* 이벤트 노트 깃발은 화면에서만 — PDF 에는 싣지 않는다 */
+  .report-chart .event-marker {
+    display: none;
+  }
   /* 고정폭(1040px)이라 잘림 없음 — 스크롤만 해제 */
   .report-chart .overflow-x-auto {
     overflow: visible !important;
