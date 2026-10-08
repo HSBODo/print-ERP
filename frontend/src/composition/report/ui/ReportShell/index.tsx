@@ -28,6 +28,8 @@ export interface ReportShellProps {
   banner?: ReactNode
   items: ShellReportItem[]
   isLoading?: boolean
+  /** 본문 오른쪽 빈 칸에 고정하는 패널 (예: 이벤트 노트) — 빈 칸이 충분히 넓을 때만 보인다 */
+  aside?: ReactNode
 }
 
 export function ReportShell({
@@ -37,6 +39,7 @@ export function ReportShell({
   banner,
   items,
   isLoading,
+  aside,
 }: ReportShellProps) {
   const done = items.filter((it) => Boolean(it.node))
 
@@ -116,8 +119,15 @@ export function ReportShell({
         )}
       </div>
 
-      {/* 우측 spacer: 좌측 목차와 동일 폭으로 본문을 정중앙에 고정 */}
-      <div className="hidden w-0 flex-1 min-[1520px]:block" aria-hidden />
+      {/* 우측 spacer: 좌측 목차와 동일 폭으로 본문을 정중앙에 고정.
+          aside 는 이 칸이 240px 이상(창 1840px 이상)일 때만 — 더 좁으면 내용을 읽을 수 없다 */}
+      <div className="hidden w-0 flex-1 min-[1520px]:block">
+        {aside && (
+          <div className="report-no-print sticky top-3 hidden h-[calc(100vh-6rem)] min-[1840px]:flex">
+            {aside}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

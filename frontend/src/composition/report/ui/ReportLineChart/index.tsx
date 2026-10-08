@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '#shared/ui/Card'
 import { YearCompare } from '#shared/ui/YearCompare'
+import type { ChartMonthLabel } from '#shared/ui/YearCompare/type'
 import { useYearCompare } from '#shared/ui/YearCompare/useYearCompare'
 
 export interface ReportLineChartProps {
@@ -12,6 +13,10 @@ export interface ReportLineChartProps {
   format?: 'percent'
   /** 비율 소수 자릿수 — 레포트는 정수가 기본 (월간보고 PDF 와 같게) */
   percentDigits?: number
+  /** 이벤트 노트 깃발·툴팁 */
+  annotations?: ChartMonthLabel[]
+  /** 가리킨 달(0 = 1월) — 레포트 옆 이벤트 패널용 */
+  onActiveMonthChange?: (monthIndex: number) => void
 }
 
 /**
@@ -25,6 +30,8 @@ export function ReportLineChart({
   data,
   format,
   percentDigits = 0,
+  annotations,
+  onActiveMonthChange,
 }: ReportLineChartProps) {
   const yearCompare = useYearCompare(
     years,
@@ -50,6 +57,8 @@ export function ReportLineChart({
           {...yearCompare}
           format={chartFormat}
           percentDigits={percentDigits}
+          annotations={annotations}
+          onActiveMonthChange={onActiveMonthChange}
           className="h-128 flex-none"
         />
         <YearCompare.Table

@@ -13,6 +13,25 @@ const isFutureMonth = (year: number, monthIndex: number) =>
   year > now.getFullYear() ||
   (year === now.getFullYear() && monthIndex > now.getMonth())
 
+/** 연도마다 선 하나 — 최신 연도일수록 진한 색 */
+function toYearSeries(sortedYears: number[]): YearSeries[] {
+  return sortedYears.map((year, index) => {
+    const recency = sortedYears.length - 1 - index
+    return {
+      year,
+      key: `y${year}`,
+      color: RECENCY_COLORS[Math.min(recency, RECENCY_COLORS.length - 1)],
+      isLatest: recency === 0,
+    }
+  })
+}
+
+/** 연도 → 선 색 — 차트 밖(이벤트 패널 등)에서 차트와 같은 색을 쓸 때 */
+export const yearColorsOf = (years: number[]): Record<number, string> =>
+  Object.fromEntries(
+    toYearSeries(years.toSorted((a, b) => a - b)).map((s) => [s.year, s.color]),
+  )
+
 /**
  * 연도 비교 차트·표 데이터 — 연도별 선(최신 연도일수록 진한 색) · 차트 설정 · 월별 행.
  * 미래 월은 getValue 를 부르지 않고 null 이라 선이 이번 달에서 끊긴다.
@@ -23,19 +42,7 @@ export function useYearCompare(
 ) {
   const sortedYears = useMemo(() => years.toSorted((a, b) => a - b), [years])
 
-  const series = useMemo<YearSeries[]>(
-    () =>
-      sortedYears.map((year, index) => {
-        const recency = sortedYears.length - 1 - index
-        return {
-          year,
-          key: `y${year}`,
-          color: RECENCY_COLORS[Math.min(recency, RECENCY_COLORS.length - 1)],
-          isLatest: recency === 0,
-        }
-      }),
-    [sortedYears],
-  )
+  const series = useMemo(() => toYearSeries(sortedYears), [sortedYears])
 
   const yearColors = useMemo(
     () => Object.fromEntries(series.map((s) => [s.year, s.color])),
