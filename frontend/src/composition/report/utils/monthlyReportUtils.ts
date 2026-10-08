@@ -1,6 +1,6 @@
 import { CURRENT_YEAR } from '#shared/constants/chart'
 
-/** 월간 레포트 공통 상수/로직 (렌더 무관). 차트 서브컴포넌트는 MonthlyReportCharts.tsx. */
+/** 월간 레포트 공통 상수/로직 (렌더 무관). 도표 컴포넌트는 ui/ 의 도표별 폴더. */
 
 // 월간 레포트는 항상 3개년 비교: 전전년도 · 전년도 · 당해연도(=기준연도)
 export const YEARS = [CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR]

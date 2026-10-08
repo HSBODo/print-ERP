@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react'
 
-import { ReportChartSkeleton } from './MonthlyReportCharts'
+import { ReportChartSkeleton } from './ReportChartSkeleton'
 
 /**
  * 레포트 화면 골격 — 좌측 목차 + 정중앙 본문(인쇄 영역).

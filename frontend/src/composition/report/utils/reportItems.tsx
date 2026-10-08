@@ -6,12 +6,10 @@ import type {
   ReportSeriesKey,
   ReportSeriesResult,
 } from '../hooks/useReportSeries'
-import {
-  ReportExamByClassChart,
-  ReportSuccessRateChart,
-  ReportSurgeryTable,
-  StopReasonBar,
-} from '../ui/ReportShell/MonthlyReportCharts'
+import { ReportExamByClassChart } from '../ui/ReportExamByClassChart'
+import { ReportSuccessRateChart } from '../ui/ReportSuccessRateChart'
+import { ReportSurgeryTable } from '../ui/ReportSurgeryTable'
+import { StopReasonBar } from '../ui/StopReasonBar'
 import { MONTHLY_CHART_LABELS } from './monthlyReportUtils'
 
 /**
