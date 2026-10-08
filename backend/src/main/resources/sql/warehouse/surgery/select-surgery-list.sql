@@ -85,10 +85,32 @@ rows_cte AS (
     LIMIT 1
   ) ex ON true
   WHERE op.operation_date >= :from AND op.operation_date <= :to
-    AND NOT EXISTS (
-      SELECT 1
-      FROM raw.raw_crm_cataract_operationdata cod
-      WHERE cod.cust_num = op.cust_num
+    -- 시력교정 갈래 포함 조건 (옵션 B+ · 2026-10-08 재검토, docs/점검/수술자리스트-백내장우선룰-재검토_2026-10-08.md)
+    -- 세 가지 중 하나라도 참이면 포함:
+    --   ① 백내장 환자 아님 (Cataract_Operationdata 레코드 없음)
+    --   ② 백내장 환자여도 "제거 수술" 패턴이면 포함
+    --      예: 2231981 윤경미 (다른 병원 ICL → B&VIIT 에서 ICL 제거 + 백내장 IOL 전환)
+    --      - 10코드 재검토 문서(§6.3) CRM 입력 혼선과 같은 패턴
+    --   ③ 과거 백내장 + 지금 다른 날 시력교정 재수술 (미래 대비, 2026-10 시점 발생 0건)
+    --      같은 날 Cataract 가 없으면 "별개 수술" 로 간주.
+    --      운영 혼선(같은 수술을 다른 날짜로 입력) 발생 시 중복 집계 리스크 — 월간 모니터링 필요.
+    AND (
+      NOT EXISTS (
+        SELECT 1
+        FROM raw.raw_crm_cataract_operationdata cod
+        WHERE cod.cust_num = op.cust_num
+      )
+      OR op.operationr LIKE 'remo%' OR op.operationl LIKE 'remo%'
+      OR op.operationr LIKE '%제거%' OR op.operationl LIKE '%제거%'
+      OR op.operationr LIKE 'ICL explant%' OR op.operationl LIKE 'ICL explant%'
+      OR op.operationr LIKE '%removal%' OR op.operationl LIKE '%removal%'
+      OR NOT EXISTS (
+        SELECT 1
+        FROM raw.raw_crm_cataract_operationdata cod
+        WHERE cod.cust_num = op.cust_num
+          AND (cod.operationr_date = op.operation_date
+               OR cod.operationl_date = op.operation_date)
+      )
     )
     AND (
       (COALESCE(op.operationr, '') <> '' AND op.operationr NOT IN ('X','OP불가','모든수술가능','op x','Strabismus','TEST-TEST'))
