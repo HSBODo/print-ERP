@@ -120,7 +120,13 @@ public class OverseasMarketingRepository {
     }
 
     public List<Map<String, Object>> findCandidatesByNames(List<String> names) {
-        return findCandidates("c.CUST_NAME IN (:values)", names);
+        // ⚠️ TRIM 좌변 — warehouse 경로에서만. MSSQL 2014 는 TRIM() 함수 미지원이라 분기.
+        // raw_crm_custom.cust_name 저장 패딩 일관성 없음 ('이지은               ' len=17 vs '염준영' len=3).
+        // 운영 전환 시 이름 매칭 miss 방지. docs/data-platform/varchar-padding-trim-audit.md §6.2 #13
+        String predicate = dataPlatformEnabled
+                ? "TRIM(c.CUST_NAME) IN (:values)"
+                : "c.CUST_NAME IN (:values)";
+        return findCandidates(predicate, names);
     }
 
     /**
@@ -332,8 +338,14 @@ public class OverseasMarketingRepository {
 
     /** CRM 고객번호 단건 조회 — 수동 매칭 팝업의 미리보기·검증용. */
     public List<Map<String, Object>> findCustomerByNo(String customerNo) {
-        // CUST_NUM 고정 13자리 — RTRIM 없이 인덱스를 탄다(docs/db/tables/CUSTOM.md).
-        return findCandidates("c.CUST_NUM IN (:values)", List.of(customerNo));
+        // ⚠️ TRIM 좌변 — warehouse 경로에서만. MSSQL 2014 는 TRIM() 함수 미지원이라 분기.
+        // warehouse raw_crm_custom.cust_num(varchar 13) 공백 패딩, 넘기는 customerNo 는 trimmed.
+        // (MSSQL 경로는 char(13) padding-insensitive 비교라 TRIM 없이도 매칭 OK)
+        // docs/data-platform/varchar-padding-trim-audit.md §6.2 #16
+        String predicate = dataPlatformEnabled
+                ? "TRIM(c.CUST_NUM) IN (:values)"
+                : "c.CUST_NUM IN (:values)";
+        return findCandidates(predicate, List.of(customerNo));
     }
 
     public int deleteManualRow(long rowNumber) {

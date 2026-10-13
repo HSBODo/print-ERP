@@ -23,7 +23,10 @@
                         mo.recommender01
                     FROM raw.raw_crm_cataract_exam ex
                     JOIN raw.raw_crm_custom c ON c.cust_num = ex.cust_num
-                    JOIN raw.raw_crm_motive_new01 mo ON mo.cust_num = ex.cust_num
+                    -- ⚠️ TRIM 양쪽: motive_new01.cust_num(varchar 23) vs cataract_exam(13) 공백 패딩 길이 차이
+                    -- 양쪽 TRIM + raw 쪽 ((TRIM(cust_num))) 표현식 인덱스로 index scan.
+                    -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #1
+                    JOIN raw.raw_crm_motive_new01 mo ON TRIM(mo.cust_num) = TRIM(ex.cust_num)
                     WHERE ex.exam_date >= :from AND ex.exam_date <= :to
                       AND (
                           mo.motive01 LIKE '%B2B(기업)%'

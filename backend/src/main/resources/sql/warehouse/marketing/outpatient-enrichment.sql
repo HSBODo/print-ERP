@@ -13,7 +13,9 @@ WITH visit_dates AS (
     FROM raw.raw_crm_reservation r
     WHERE r.reserve_flag IN ('F', 'D')
       AND r.reserve_state <> 'C'
-      AND r.cust_num IN (:customerNos)
+      -- ⚠️ TRIM 좌변: reservation.cust_num(13) 공백 패딩, Java 쪽 :customerNos 는 trimmed.
+      -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #11
+      AND TRIM(r.cust_num) IN (:customerNos)
       AND NOT EXISTS (
           SELECT 1
           FROM raw.raw_crm_operationdata o

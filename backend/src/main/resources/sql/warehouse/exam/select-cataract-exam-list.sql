@@ -182,7 +182,9 @@ LEFT JOIN LATERAL (
     COALESCE(m2.section::text, '') AS section
   FROM raw.raw_crm_motive_new02 m2
   LEFT JOIN raw.raw_crm_motive_new01 m1 ON m2.fkey = m1.pkey
-  WHERE m2.cust_num = CH.cust_num AND m2.idx = '1'
+  -- ⚠️ TRIM 양쪽: motive_new02.cust_num(varchar 23) vs cataract_exam.cust_num(varchar 13) 공백 패딩 길이 차이.
+  -- 양쪽 TRIM + raw 표현식 인덱스로 index scan. docs/data-platform/index-request.md.
+  WHERE TRIM(m2.cust_num) = TRIM(CH.cust_num) AND m2.idx = '1'
   ORDER BY m2.pkey DESC
   LIMIT 1
 ) motive ON true

@@ -26,7 +26,9 @@
                     JOIN raw.raw_crm_custom c ON c.cust_num = op.cust_num
                     LEFT JOIN (
                 __MOTIVE_SUBQUERY__
-                    ) mo ON mo.cust_num = op.cust_num
+                    -- ⚠️ TRIM 양쪽: motive subquery(23) vs operationdata(13).
+                    -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #15
+                    ) mo ON TRIM(mo.cust_num) = TRIM(op.cust_num)
                     WHERE op.operation_date >= :from AND op.operation_date <= :to
                       AND co.cust_num IS NULL
                 ) zz

@@ -15,7 +15,9 @@ FROM raw.raw_crm_costprice cp
 JOIN raw.raw_crm_prcitmlst pr
   ON cp.cust_num = pr.prccusnum
  AND cp.seq      = pr.prcseq
-WHERE cp.cust_num IN (:customerNos)
+-- ⚠️ TRIM 좌변: costprice.cust_num(13) 공백 패딩, Java 쪽 :customerNos 는 trimmed.
+-- docs/data-platform/varchar-padding-trim-audit.md §6.2 #9
+WHERE TRIM(cp.cust_num) IN (:customerNos)
   AND pr.prcitmprc <> 0
   AND cp.paystt <> 'a'
 GROUP BY cp.cust_num,

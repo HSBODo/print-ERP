@@ -17,7 +17,9 @@ __EXAM_SESSION_SOURCE__
                 LEFT JOIN LATERAL (
                     SELECT COALESCE(m2.category01_name, '') AS motiveL
                     FROM raw.raw_crm_motive_new02 m2
-                    WHERE m2.cust_num = s.cn AND m2.idx = '1'
+                    -- ⚠️ TRIM 양쪽: motive_new02(23) vs fragment s.cn(exam/custom 13).
+                    -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #3
+                    WHERE TRIM(m2.cust_num) = TRIM(s.cn) AND m2.idx = '1'
                     ORDER BY m2.pkey DESC
                     LIMIT 1
                 ) mv ON true

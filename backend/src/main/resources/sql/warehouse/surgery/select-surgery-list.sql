@@ -236,7 +236,9 @@ LEFT JOIN LATERAL (
     COALESCE(m2.section::text, '') AS section
   FROM raw.raw_crm_motive_new02 m2
   LEFT JOIN raw.raw_crm_motive_new01 m1 ON m2.fkey = m1.pkey
-  WHERE m2.cust_num = rows_cte.cust_num AND m2.idx = '1'
+  -- ⚠️ TRIM 양쪽: motive_new02(23) vs rows_cte(operationdata 13 뿌리).
+  -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #7
+  WHERE TRIM(m2.cust_num) = TRIM(rows_cte.cust_num) AND m2.idx = '1'
   ORDER BY m2.pkey DESC
   LIMIT 1
 ) motive ON true

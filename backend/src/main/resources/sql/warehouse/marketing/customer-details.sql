@@ -35,7 +35,9 @@ LEFT JOIN raw.raw_crm_nationcustom_cfg n ON c.nation_code = n.code
 LEFT JOIN LATERAL (
     SELECT MIN(reg_date) AS "registeredDate"
     FROM raw.raw_crm_custom_history
-    WHERE cust_num = c.cust_num
+    -- ⚠️ TRIM 양쪽: custom_history.cust_num(varchar 20) vs custom(13) 공백 패딩 길이 차이.
+    -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #8
+    WHERE TRIM(cust_num) = TRIM(c.cust_num)
 ) ch ON TRUE
 LEFT JOIN LATERAL (
     SELECT CASE reserve_flag
@@ -78,4 +80,6 @@ LEFT JOIN LATERAL (
     WHERE l.cust_num = c.cust_num AND l.seq = 1
     LIMIT 1
 ) lens ON TRUE
-WHERE c.cust_num IN (:customerNos)
+-- ⚠️ TRIM 좌변: custom.cust_num(13) 저장은 공백 패딩, Java 쪽 :customerNos 는 trimmed.
+-- docs/data-platform/varchar-padding-trim-audit.md §6.2 #10
+WHERE TRIM(c.cust_num) IN (:customerNos)

@@ -15,7 +15,9 @@ WITH classified AS (
            ) THEN 'surgery' ELSE 'exam' END AS "category",
            cp.cost_price
     FROM raw.raw_crm_costprice cp
-    WHERE cp.cust_num IN (:customerNos)
+    -- ⚠️ TRIM 좌변: costprice.cust_num(13) 공백 패딩, Java 쪽 :customerNos 는 trimmed.
+    -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #12
+    WHERE TRIM(cp.cust_num) IN (:customerNos)
       AND cp.cost_price > 0
 )
 SELECT "customerNo", "category", SUM(cost_price) AS "total"

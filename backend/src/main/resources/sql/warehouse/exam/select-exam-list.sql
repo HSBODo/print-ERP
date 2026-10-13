@@ -177,7 +177,11 @@ LEFT JOIN LATERAL (
     COALESCE(m2.section::text, '') AS section
   FROM raw.raw_crm_motive_new02 m2
   LEFT JOIN raw.raw_crm_motive_new01 m1 ON m2.fkey = m1.pkey
-  WHERE m2.cust_num = e.cust_num AND m2.idx = '1'
+  -- ⚠️ TRIM 양쪽: motive_new02.cust_num(varchar 23) vs exam.cust_num(varchar 13) 는 공백 패딩
+  -- 길이가 달라 raw 비교 시 매칭 실패(motive_l 가 빈 값으로 적재 → "일반" 오분류).
+  -- 양쪽 TRIM 걸고 raw 쪽에 ((TRIM(cust_num))) 표현식 인덱스가 있어야 index scan.
+  -- docs/data-platform/index-request.md 참고. 2026-10-13 발견.
+  WHERE TRIM(m2.cust_num) = TRIM(e.cust_num) AND m2.idx = '1'
   ORDER BY m2.pkey DESC
   LIMIT 1
 ) motive ON true

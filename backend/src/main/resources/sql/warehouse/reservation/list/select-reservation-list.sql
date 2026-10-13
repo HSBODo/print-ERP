@@ -131,7 +131,9 @@ LEFT JOIN LATERAL (
   SELECT COALESCE(m2.category01_name, '') AS "motiveL",
          COALESCE(m2.category02_name, '') AS "motiveM"
   FROM raw.raw_crm_motive_new02 m2
-  WHERE m2.cust_num = r.cust_num AND m2.idx = '1'
+  -- ⚠️ TRIM 양쪽: motive_new02(23) vs reservation(13).
+  -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #6
+  WHERE TRIM(m2.cust_num) = TRIM(r.cust_num) AND m2.idx = '1'
   ORDER BY m2.pkey DESC
   LIMIT 1
 ) mv ON true

@@ -116,7 +116,9 @@
                      COALESCE(m2.category02_name, '') AS motiveM,
                      COALESCE(m2.category03_name, '') AS motiveS
               FROM raw.raw_crm_motive_new02 m2
-              WHERE m2.cust_num = src.cn AND m2.idx = '1'
+              -- ⚠️ TRIM 양쪽: motive_new02(23) vs fragment src.cn(exam/custom 13).
+              -- docs/data-platform/varchar-padding-trim-audit.md §6.2 #2
+              WHERE TRIM(m2.cust_num) = TRIM(src.cn) AND m2.idx = '1'
               ORDER BY m2.pkey DESC
               LIMIT 1
             ) mv ON true
