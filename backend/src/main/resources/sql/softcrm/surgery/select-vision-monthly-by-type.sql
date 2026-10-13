@@ -51,6 +51,8 @@
                          OR o.OPERATIONR LIKE '%SMILE PRO%' THEN 'smilePro'
                     WHEN o.OPERATIONR LIKE '%SMILE%' THEN 'smile'
                     WHEN o.OPERATIONR LIKE '%VIVA%' THEN 'viva'
+                    -- ⚠️ remo/제거 패턴은 ICL 집계에서 분리 (2026-10-13, warehouse + V47 함수와 동일 규칙)
+                    WHEN o.OPERATIONR LIKE '%remo%' OR o.OPERATIONR LIKE N'%제거%' THEN 'other'
                     WHEN o.OPERATIONR LIKE '%T-ICL%' OR o.OPERATIONR LIKE '%T-IPCL%'
                          OR o.OPERATIONR LIKE '%T-GLAZE%' OR o.OPERATIONR LIKE '%T-ECHO%' THEN 'tIcl'
                     WHEN o.OPERATIONR LIKE '%ICL%' OR o.OPERATIONR LIKE '%IPCL%'
@@ -96,6 +98,8 @@
                          OR o.OPERATIONL LIKE '%SMILE PRO%' THEN 'smilePro'
                     WHEN o.OPERATIONL LIKE '%SMILE%' THEN 'smile'
                     WHEN o.OPERATIONL LIKE '%VIVA%' THEN 'viva'
+                    -- ⚠️ remo/제거 패턴은 ICL 집계에서 분리 (2026-10-13, warehouse + V47 함수와 동일 규칙)
+                    WHEN o.OPERATIONL LIKE '%remo%' OR o.OPERATIONL LIKE N'%제거%' THEN 'other'
                     WHEN o.OPERATIONL LIKE '%T-ICL%' OR o.OPERATIONL LIKE '%T-IPCL%'
                          OR o.OPERATIONL LIKE '%T-GLAZE%' OR o.OPERATIONL LIKE '%T-ECHO%' THEN 'tIcl'
                     WHEN o.OPERATIONL LIKE '%ICL%' OR o.OPERATIONL LIKE '%IPCL%'

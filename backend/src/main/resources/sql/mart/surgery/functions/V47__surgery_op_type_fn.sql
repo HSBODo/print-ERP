@@ -15,8 +15,13 @@
 --    catEdof 대신 catMono 로 떨어졌다(2026-07 EDOF 22→21).
 --    시술명은 사람이 손으로 입력해 대소문자가 제각각이므로 CI 가 맞다.
 --
--- ⚠️ CASE 순서가 곧 우선순위다. 'Mono+PRESBYOND' 는 노안, 'T-ICL' 은 tIcl(ICL 보다 먼저).
+-- ⚠️ CASE 순서가 곧 우선순위다. 'Mono+PRESBYOND' 는 노안, 'T-ICL' 은 tIcl(ICL 보다 먼저),
+--    'remo+ICL' 은 other(ICL 보다 먼저).
 --    순서를 바꾸면 분류가 통째로 달라진다.
+--
+-- 변경 이력:
+--   2026-10-13: remo/제거 패턴을 ICL 매칭 전에 가로채 'other' 로 분리.
+--     운영 월간 레포트 "시술별 ICL" 수치와 맞춤. 2026년 발견 패턴: 'remo+ICL'·'remo+ARF' (2건).
 --
 -- IMMUTABLE — 같은 입력이면 항상 같은 값이라 인덱스·플래너가 활용할 수 있다.
 -- =========================================================
@@ -51,6 +56,10 @@ AS $$
           OR op_name ILIKE '%SMILE PRO%' THEN 'smilePro'
         WHEN op_name ILIKE '%SMILE%' THEN 'smile'
         WHEN op_name ILIKE '%VIVA%' THEN 'viva'
+        -- ⚠️ remo/제거 패턴 (ICL 제거 등) 은 ICL 집계에서 분리 — 2026-10-13 추가.
+        -- 운영과 ICL 수치 맞춤. ICL 계열에만 나타난다는 전제라 ICL/T-ICL 매칭 직전에 둔다.
+        -- 다른 수술과 조합되는 패턴 ('remo+SMILE' 등) 이 향후 발견되면 CASE 재검토 필요.
+        WHEN op_name ILIKE '%remo%' OR op_name ILIKE '%제거%' THEN 'other'
         WHEN op_name ILIKE '%T-ICL%' OR op_name ILIKE '%T-IPCL%'
           OR op_name ILIKE '%T-GLAZE%' OR op_name ILIKE '%T-ECHO%' THEN 'tIcl'
         WHEN op_name ILIKE '%ICL%' OR op_name ILIKE '%IPCL%'
