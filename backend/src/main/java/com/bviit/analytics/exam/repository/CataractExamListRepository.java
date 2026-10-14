@@ -3,6 +3,7 @@ package com.bviit.analytics.exam.repository;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -24,27 +25,37 @@ import java.util.Map;
  *   - 적절한수술방법·수술방법 = IOL 렌즈명
  *
  * READ-ONLY · MSSQL 2014 호환(LTRIM/RTRIM). 날짜는 char(10) 'YYYY-MM-DD'.
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + SQL {@link #SQL_MSSQL}.</li>
+ *   <li>data-platform 활성: 데이터 플랫폼 (warehouseJdbcTemplate) + SQL {@link #SQL_WAREHOUSE}.</li>
+ * </ul>
+ *
+ * <p>정본 전략: {@code docs/data-platform/migration-strategy.md}. 이관 이력: 2026-09-30 A5-1.
  */
 @Repository
 @Profile("postgres-mart")
 public class CataractExamListRepository {
 
+    static final String SQL_MSSQL = "sql/softcrm/exam/select-cataract-exam-list.sql";
+    static final String SQL_WAREHOUSE = "sql/warehouse/exam/select-cataract-exam-list.sql";
+
     private final NamedParameterJdbcTemplate jdbc;
-
-    private static final String FIND_CATARACT_EXAM_LIST_SQL = "sql/softcrm/exam/select-cataract-exam-list.sql";
-
     private final String findCataractExamListSql;
 
     public CataractExamListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
-        this.findCataractExamListSql = SqlLoader.load(FIND_CATARACT_EXAM_LIST_SQL);
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        this.findCataractExamListSql = SqlLoader.load(
+                dataPlatformEnabled ? SQL_WAREHOUSE : SQL_MSSQL);
     }
 
     public List<Map<String, Object>> findCataractExamList(String from, String to) {
-        String sql = findCataractExamListSql;
-        return jdbc.queryForList(sql, new MapSqlParameterSource()
+        return jdbc.queryForList(findCataractExamListSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

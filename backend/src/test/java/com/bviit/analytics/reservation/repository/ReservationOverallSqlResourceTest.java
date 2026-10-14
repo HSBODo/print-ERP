@@ -23,7 +23,7 @@ class ReservationOverallSqlResourceTest {
 
     @Test
     void 네이버_sql은_RSS_기준을_보존한다() {
-        String sql = sqlBody(ReservationOverallStatsRepository.MONTHLY_NAVER_SQL);
+        String sql = sqlBody(ReservationOverallStatsRepository.MONTHLY_NAVER_SQL_MSSQL);
 
         assertThat(sql)
                 .contains(":from", ":to")
@@ -41,7 +41,7 @@ class ReservationOverallSqlResourceTest {
 
     @Test
     void 카카오_sql은_해피톡_신환_기준을_보존한다() {
-        String sql = sqlBody(ReservationOverallStatsRepository.MONTHLY_KAKAO_SQL);
+        String sql = sqlBody(ReservationOverallStatsRepository.MONTHLY_KAKAO_SQL_MSSQL);
 
         assertThat(sql)
                 .contains(":from", ":to")
@@ -58,7 +58,7 @@ class ReservationOverallSqlResourceTest {
     @Test
     void 종합_sql은_기존_공식을_유지한다() {
         // 2026-05 이전은 이 공식을 그대로 쓴다(과거 값이 흔들리면 안 된다).
-        String sql = sqlBody(ReservationOverallStatsRepository.MONTHLY_SQL);
+        String sql = sqlBody(ReservationOverallStatsRepository.MONTHLY_SQL_MSSQL);
 
         assertThat(sql)
                 .contains("r.RESERVE_PATH IN ('ONLINE', 'APP', 'NAVER')")

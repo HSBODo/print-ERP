@@ -4,6 +4,7 @@ import com.bviit.analytics.common.util.SqlFragments;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -13,7 +14,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 시술별 검사 건수("검사수") 통계 쿼리.
+ * 시술별 검사 건수("검사수") 통계 쿼리. ExamReconcileService 전용(파이프라인 밖).
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE Fragment 블록)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL + session-source MSSQL fragment (total 쿼리에만).</li>
+ *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.* + session-source warehouse fragment.</li>
+ * </ul>
+ *
  *
  * 검사수 = 검사자 리스트(all-exam-list)와 동일 모집단 — sql/softcrm/fragments/fragment-exam-session-source.sql 공유.
  * 시력교정·드림렌즈는 EXAM 행(테스트고객·백내장스텁·순수외래 제외),
@@ -31,19 +39,28 @@ public class ProcedureExamStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL = "sql/softcrm/exam/select-total-exam-count-monthly.sql";
-    private static final String FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL = "sql/softcrm/exam/select-one-day-exam-count-monthly.sql";
+    static final String FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL_MSSQL       = "sql/softcrm/exam/select-total-exam-count-monthly.sql";
+    static final String FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL_WAREHOUSE   = "sql/warehouse/exam/select-total-exam-count-monthly.sql";
+    static final String FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL_MSSQL     = "sql/softcrm/exam/select-one-day-exam-count-monthly.sql";
+    static final String FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL_WAREHOUSE = "sql/warehouse/exam/select-one-day-exam-count-monthly.sql";
 
     private final String findTotalExamCountMonthlySql;
     private final String findOneDayExamCountMonthlySql;
 
     public ProcedureExamStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
-        this.findTotalExamCountMonthlySql = SqlLoader.load(FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL)
-                .replace("__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource());
-        this.findOneDayExamCountMonthlySql = SqlLoader.load(FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL);
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        String totalBase = SqlLoader.load(dataPlatformEnabled
+                ? FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL_WAREHOUSE
+                : FIND_TOTAL_EXAM_COUNT_MONTHLY_SQL_MSSQL);
+        this.findTotalExamCountMonthlySql = totalBase.replace(
+                "__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource(dataPlatformEnabled));
+        this.findOneDayExamCountMonthlySql = SqlLoader.load(dataPlatformEnabled
+                ? FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL_WAREHOUSE
+                : FIND_ONE_DAY_EXAM_COUNT_MONTHLY_SQL_MSSQL);
     }
 
     /**

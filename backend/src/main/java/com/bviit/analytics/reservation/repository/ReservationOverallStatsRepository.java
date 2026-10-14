@@ -2,6 +2,7 @@ package com.bviit.analytics.reservation.repository;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -11,7 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 예약 종합(콜, 온라인) 통계 쿼리.
+ * 예약 종합(콜, 온라인) 통계 쿼리. ReservationReconcileService 전용(파이프라인 밖, 대사용).
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE wave 2)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL.</li>
+ *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.raw_crm_reservation + raw.raw_crm_happytalk_*.</li>
+ * </ul>
+ *
  *
  * ⚠️ 레거시 BCRM '문의통계(RSS)' 종합값(콜+홈페이지+네이버+카톡, 등록일 기준, 콜센터 MySQL·네이버·해피톡
  * 다중 소스)은 운영 MSSQL 단독으로 재현 불가. 여기서는 **추정치**로, 검사예약(RESERVATION
@@ -28,9 +36,12 @@ import java.util.Map;
 @Profile("postgres-mart")
 public class ReservationOverallStatsRepository {
 
-    static final String MONTHLY_SQL = "sql/softcrm/reservation/overall/select-monthly.sql";
-    static final String MONTHLY_NAVER_SQL = "sql/softcrm/reservation/overall/select-monthly-naver.sql";
-    static final String MONTHLY_KAKAO_SQL = "sql/softcrm/reservation/overall/select-monthly-kakao.sql";
+    static final String MONTHLY_SQL_MSSQL           = "sql/softcrm/reservation/overall/select-monthly.sql";
+    static final String MONTHLY_SQL_WAREHOUSE       = "sql/warehouse/reservation/overall/select-monthly.sql";
+    static final String MONTHLY_NAVER_SQL_MSSQL     = "sql/softcrm/reservation/overall/select-monthly-naver.sql";
+    static final String MONTHLY_NAVER_SQL_WAREHOUSE = "sql/warehouse/reservation/overall/select-monthly-naver.sql";
+    static final String MONTHLY_KAKAO_SQL_MSSQL     = "sql/softcrm/reservation/overall/select-monthly-kakao.sql";
+    static final String MONTHLY_KAKAO_SQL_WAREHOUSE = "sql/warehouse/reservation/overall/select-monthly-kakao.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String monthlySql;
@@ -38,12 +49,14 @@ public class ReservationOverallStatsRepository {
     private final String monthlyKakaoSql;
 
     public ReservationOverallStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
-        this.monthlySql = SqlLoader.load(MONTHLY_SQL);
-        this.monthlyNaverSql = SqlLoader.load(MONTHLY_NAVER_SQL);
-        this.monthlyKakaoSql = SqlLoader.load(MONTHLY_KAKAO_SQL);
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        this.monthlySql      = SqlLoader.load(dataPlatformEnabled ? MONTHLY_SQL_WAREHOUSE       : MONTHLY_SQL_MSSQL);
+        this.monthlyNaverSql = SqlLoader.load(dataPlatformEnabled ? MONTHLY_NAVER_SQL_WAREHOUSE : MONTHLY_NAVER_SQL_MSSQL);
+        this.monthlyKakaoSql = SqlLoader.load(dataPlatformEnabled ? MONTHLY_KAKAO_SQL_WAREHOUSE : MONTHLY_KAKAO_SQL_MSSQL);
     }
 
     /**

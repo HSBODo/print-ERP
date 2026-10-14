@@ -4,6 +4,7 @@ import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.common.util.SqlFragments;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -14,6 +15,14 @@ import java.util.Map;
 
 /**
  * 전체 검사자 리스트 — 시력교정(EXAM) + 백내장(Cataract_Exam) 통합 행 목록.
+ * superseded (`@Primary AllExamListMartQueryService` 로 대체 · 실 프로덕션 미호출) · 대사 소스로만 유지.
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE Fragment 블록)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL + measurements-blank MSSQL fragment.</li>
+ *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.* + measurements-blank warehouse fragment.</li>
+ * </ul>
+ *
  *
  * ⚠️ 시력교정(EXAM)·백내장 모두 **사람 단위**다.
  * - 시력교정(EXAM): 리포트 findVisionCorrectionMonthly와 1:1(테스트·백내장스텁 제외), EXAM_DATE 기준.
@@ -36,21 +45,28 @@ public class AllExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_ALL_EXAM_LIST_SQL = "sql/softcrm/exam/select-all-exam-list.sql";
+    static final String FIND_ALL_EXAM_LIST_SQL_MSSQL     = "sql/softcrm/exam/select-all-exam-list.sql";
+    static final String FIND_ALL_EXAM_LIST_SQL_WAREHOUSE = "sql/warehouse/exam/select-all-exam-list.sql";
 
     private final String findAllExamListSql;
+    private final boolean dataPlatformEnabled;
 
     public AllExamListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
-        this.findAllExamListSql = SqlLoader.load(FIND_ALL_EXAM_LIST_SQL);
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        this.dataPlatformEnabled = dataPlatformEnabled;
+        this.findAllExamListSql = SqlLoader.load(dataPlatformEnabled
+                ? FIND_ALL_EXAM_LIST_SQL_WAREHOUSE
+                : FIND_ALL_EXAM_LIST_SQL_MSSQL);
     }
 
     public List<Map<String, Object>> findAllExamList(String from, String to) {
         String sql = findAllExamListSql.replace(
                 "__EXAM_MEASUREMENTS_BLANK__",
-                SqlFragments.examMeasurementsBlankPredicate("e")
+                SqlFragments.examMeasurementsBlankPredicate("e", dataPlatformEnabled)
         );
         return jdbc.queryForList(sql, new MapSqlParameterSource()
                 .addValue("from", from)

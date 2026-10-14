@@ -85,6 +85,8 @@ typed AS (
                       OR e.op_name ILIKE '%SMILE PRO%' THEN 'smilePro'
                     WHEN e.op_name ILIKE '%SMILE%' THEN 'smile'
                     WHEN e.op_name ILIKE '%VIVA%' THEN 'viva'
+                    -- ⚠️ remo/제거 패턴은 ICL 집계에서 분리 (2026-10-13, V47 함수와 동일 규칙)
+                    WHEN e.op_name ILIKE '%remo%' OR e.op_name ILIKE '%제거%' THEN 'other'
                     WHEN e.op_name ILIKE '%T-ICL%' OR e.op_name ILIKE '%T-IPCL%'
                       OR e.op_name ILIKE '%T-GLAZE%' OR e.op_name ILIKE '%T-ECHO%' THEN 'tIcl'
                     WHEN e.op_name ILIKE '%ICL%' OR e.op_name ILIKE '%IPCL%'

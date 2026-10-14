@@ -2,6 +2,7 @@ package com.bviit.analytics.reservation.repository;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -24,24 +25,39 @@ import java.util.Map;
  * 행 1개 = RESERVE_NUM 1개(PK). **명단 행 합계 = 예약 종합 월 값**(둘 다 카카오 미포함).
  *
  * READ-ONLY · MSSQL 2014 호환(TRIM 금지). 날짜 범위는 등록일(InsertedDateTime) 기준.
+ *
+ * <p><b>소스 라우팅 (data-platform 프로파일)</b>
+ * <ul>
+ *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + SQL {@link #SQL_MSSQL} · {@link #SQL_ALL_MSSQL}.</li>
+ *   <li>data-platform 활성: 데이터 플랫폼 (warehouseJdbcTemplate) + SQL {@link #SQL_WAREHOUSE} · {@link #SQL_ALL_WAREHOUSE}.</li>
+ * </ul>
+ *
+ * <p>정본 전략: {@code docs/data-platform/migration-strategy.md}. 이관 이력: 2026-09-30 A6.
+ * 메인 SQL 은 15+ LATERAL + CHARINDEX 메모 파싱 체인 — POSITION/SUBSTRING 조합 등 방언 대량 변환.
  */
 @Repository
 @Profile("postgres-mart")
 public class ReservationListRepository {
 
-    static final String RESERVATION_LIST_SQL = "sql/softcrm/reservation/list/select-reservation-list.sql";
-    static final String RESERVATION_LIST_ALL_SQL = "sql/softcrm/reservation/list/select-reservation-list-all.sql";
+    static final String SQL_MSSQL = "sql/softcrm/reservation/list/select-reservation-list.sql";
+    static final String SQL_WAREHOUSE = "sql/warehouse/reservation/list/select-reservation-list.sql";
+    static final String SQL_ALL_MSSQL = "sql/softcrm/reservation/list/select-reservation-list-all.sql";
+    static final String SQL_ALL_WAREHOUSE = "sql/warehouse/reservation/list/select-reservation-list-all.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String reservationListSql;
     private final String reservationListAllSql;
 
     public ReservationListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
-        this.reservationListSql = SqlLoader.load(RESERVATION_LIST_SQL);
-        this.reservationListAllSql = SqlLoader.load(RESERVATION_LIST_ALL_SQL);
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+        this.reservationListSql = SqlLoader.load(
+                dataPlatformEnabled ? SQL_WAREHOUSE : SQL_MSSQL);
+        this.reservationListAllSql = SqlLoader.load(
+                dataPlatformEnabled ? SQL_ALL_WAREHOUSE : SQL_ALL_MSSQL);
     }
 
     public List<Map<String, Object>> findReservationList(String from, String to) {

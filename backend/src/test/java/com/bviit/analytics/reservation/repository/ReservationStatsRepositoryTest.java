@@ -21,27 +21,37 @@ import static org.mockito.Mockito.when;
 class ReservationStatsRepositoryTest {
 
     @Mock
-    private NamedParameterJdbcTemplate jdbc;
+    private NamedParameterJdbcTemplate statsJdbc;
 
-    private ReservationStatsRepository repository;
-
-    @BeforeEach
-    void setUp() {
-        repository = new ReservationStatsRepository(jdbc);
-    }
+    @Mock
+    private NamedParameterJdbcTemplate warehouseJdbc;
 
     @Test
-    void findMonthlyByType는_sql_리소스와_연도_범위_파라미터를_사용한다() {
-        when(jdbc.queryForList(any(String.class), any(MapSqlParameterSource.class))).thenReturn(List.of());
+    void findMonthlyByType는_mssql_sql_리소스와_연도_범위_파라미터를_사용한다() {
+        when(statsJdbc.queryForList(any(String.class), any(MapSqlParameterSource.class))).thenReturn(List.of());
+        ReservationStatsRepository repository = new ReservationStatsRepository(statsJdbc, warehouseJdbc, false);
 
         repository.findMonthlyByType(List.of(2026, 2024));
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MapSqlParameterSource> paramsCaptor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
-        verify(jdbc).queryForList(sqlCaptor.capture(), paramsCaptor.capture());
+        verify(statsJdbc).queryForList(sqlCaptor.capture(), paramsCaptor.capture());
 
-        assertThat(sqlCaptor.getValue()).isEqualTo(SqlLoader.load(ReservationStatsRepository.MONTHLY_BY_TYPE_SQL));
+        assertThat(sqlCaptor.getValue()).isEqualTo(SqlLoader.load(ReservationStatsRepository.MONTHLY_BY_TYPE_SQL_MSSQL));
         assertThat(paramsCaptor.getValue().getValue("from")).isEqualTo("2024-01-01");
         assertThat(paramsCaptor.getValue().getValue("to")).isEqualTo("2026-12-31");
+    }
+
+    @Test
+    void findMonthlyByType는_data_platform_활성시_warehouse_sql과_warehouseJdbc를_사용한다() {
+        when(warehouseJdbc.queryForList(any(String.class), any(MapSqlParameterSource.class))).thenReturn(List.of());
+        ReservationStatsRepository repository = new ReservationStatsRepository(statsJdbc, warehouseJdbc, true);
+
+        repository.findMonthlyByType(List.of(2026, 2024));
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(warehouseJdbc).queryForList(sqlCaptor.capture(), any(MapSqlParameterSource.class));
+
+        assertThat(sqlCaptor.getValue()).isEqualTo(SqlLoader.load(ReservationStatsRepository.MONTHLY_BY_TYPE_SQL_WAREHOUSE));
     }
 }

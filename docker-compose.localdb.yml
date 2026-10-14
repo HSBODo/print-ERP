@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# 로컬 자립형 compose — 앱 + 로컬 Postgres 를 한 스택으로 실행한다.
+# 로컬 자립형 compose — 앱 + 로컬 Postgres(마트) + 데이터 플랫폼(RDS) 라우팅.
 #
 # 사용법:
 #   DOCKER_BUILDKIT=1 docker compose -f docker-compose.localdb.yml up -d --build
@@ -7,12 +7,20 @@
 #   docker compose -f docker-compose.localdb.yml down -v    # DB 데이터까지 삭제
 #
 # docker-compose.local.yml 과의 차이:
-#   1) postgres 서비스 포함 (postgres:16-alpine, 데이터는 볼륨에 유지)
-#   2) 앱의 POSTGRES_* 는 backend/.env 대신 로컬 컨테이너로 강제 오버라이드
-#   3) analytics 는 postgres healthcheck 통과 후 기동
+#   1) postgres 서비스 포함 (postgres:16-alpine, 데이터는 볼륨에 유지 — 마트 DB)
+#   2) env_file 는 backend/.env-local — 외부 의존을 RDS warehouse 하나로 압축한 안전 사본.
+#      원본 backend/.env 는 CRM MSSQL · 홈페이지 MariaDB · Solapi 실키 · Slack webhook ·
+#      Google Sheets Sync 활성 등 외부 접근이 가득 → 로컬 수치 정합성 검증에는 부적합.
+#   3) 앱의 POSTGRES_* 는 .env-local 과 동일하게 로컬 컨테이너로 강제 오버라이드
+#   4) analytics 는 postgres healthcheck 통과 후 기동
+#   5) SPRING_PROFILES_ACTIVE 기본값이 `local,data-platform` — 이관 완료된 리포지토리는
+#      CRM MSSQL 대신 신규 데이터 플랫폼(RDS Postgres bnviit_datawarehouse) 로 조회.
+#      이관 안 된 리포는 statsJdbcTemplate 를 쓰지만, 현재 29/29 전부 dual routing 완료 상태라
+#      실제 CRM 접근은 발생하지 않는다 (grep 전수 검증 완료).
+#      필요 env: WAREHOUSE_HOST, WAREHOUSE_PORT, WAREHOUSE_DB, WAREHOUSE_USERNAME, WAREHOUSE_PASSWORD (backend/.env-local).
+#      정본: docs/data-platform/migration-strategy.md.
 #
-# 원격 사내 Postgres(192.168.x) 에 붙어 개발하려면 이 파일 대신 docker-compose.local.yml 사용.
-# CRM(MSSQL) 등 다른 원격 데이터소스는 여전히 backend/.env 에서 조달한다.
+# 원격 사내 Postgres(192.168.x) · 운영 CRM 에 붙어 개발하려면 docker-compose.local.yml 사용.
 # ─────────────────────────────────────────────────────────────
 services:
   postgres:
@@ -49,19 +57,26 @@ services:
     ports:
       - "${APP_PORT:-18080}:18080"
     env_file:
-      - backend/.env
+      - backend/.env-local
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local,data-platform}
       SERVER_PORT: "18080"
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:18080}
       STATS_CACHE_DIR: /app/.cache/stats
       # ── POSTGRES_* 는 로컬 postgres 컨테이너로 강제 오버라이드 ──
       # backend/.env 의 사내 원격 Postgres 값을 덮어써서 이 스택이 자립 실행되도록 한다.
-      # 나머지 도메인 env(HOMEPAGE_DATASOURCE_URL, STATS_DB_* 등)는 backend/.env 그대로 사용.
+      # 나머지 도메인 env(STATS_DB_* 등)는 backend/.env 그대로 사용.
       POSTGRES_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-analytics}
       POSTGRES_DB: ${POSTGRES_DB:-analytics}
       POSTGRES_USER: ${POSTGRES_USER:-analytics}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-analytics}
+      # ── HOMEPAGE_DATASOURCE_URL: dummy in-memory SQLite ──
+      # 2026-10-06 Homepage dual routing 완료 후 실쿼리는 warehouse 로 감(sql/warehouse/homepage/*.sql).
+      # 하지만 ReservationListHomepageRepository 가 아직 HomepageDataSourceConfig 활성 조건
+      # (homepage.datasource.url 비면 skip) 을 공유해서, URL 이 없으면 Repository bean 자체가 안 뜬다.
+      # 네트워크/파일 I/O 없는 메모리 SQLite 로 bean 만 띄우고 실쿼리는 warehouse 로 라우팅.
+      # (운영 전환 때 HomepageDataSourceConfig 자체를 떼는 리팩터링과 함께 이 라인도 제거.)
+      HOMEPAGE_DATASOURCE_URL: ${HOMEPAGE_DATASOURCE_URL:-jdbc:sqlite::memory:?open_mode=1}
     volumes:
       - analytics-cache-localdb:/app/.cache
 

@@ -27,7 +27,8 @@ class B2bRevenueStatsRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        repository = new B2bRevenueStatsRepository(jdbc);
+        // 기본(비활성): statsJdbcTemplate(MSSQL) 경로로 라우팅.
+        repository = new B2bRevenueStatsRepository(jdbc, jdbc, false);
     }
 
     @Test
@@ -49,5 +50,31 @@ class B2bRevenueStatsRepositoryTest {
                 .contains("Cataract_Exam")
                 .contains("COUNT(*) AS caseCount")
                 .contains("SUM(x.op_cost) AS opCost");
+    }
+
+    @Test
+    void dataPlatform_활성이면_웨어하우스_SQL과_Postgres_방언을_사용한다() {
+        NamedParameterJdbcTemplate warehouseJdbc = org.mockito.Mockito.mock(NamedParameterJdbcTemplate.class);
+        B2bRevenueStatsRepository warehouseRepo = new B2bRevenueStatsRepository(jdbc, warehouseJdbc, true);
+        when(warehouseJdbc.queryForList(anyString(), any(MapSqlParameterSource.class))).thenReturn(List.of());
+
+        warehouseRepo.findMonthlyRevenue(List.of(2026));
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(warehouseJdbc).queryForList(sqlCaptor.capture(), any(MapSqlParameterSource.class));
+        // statsJdbc 는 호출되지 않는다.
+        org.mockito.Mockito.verifyNoInteractions(jdbc);
+
+        String sql = sqlCaptor.getValue();
+        assertThat(sql)
+                .contains("WITH b2b_rows AS")
+                .contains("raw.raw_crm_operationdata")
+                .contains("raw.raw_crm_cataract_operationdata")
+                .contains("raw.raw_crm_cataract_exam")
+                .contains("raw.raw_crm_motive_new01")
+                .contains("EXTRACT(YEAR FROM CAST(x.operation_date AS date))")
+                .doesNotContain("WITH(NOLOCK)")
+                .doesNotContain("ISNULL(")
+                .doesNotContain("[Level]");
     }
 }

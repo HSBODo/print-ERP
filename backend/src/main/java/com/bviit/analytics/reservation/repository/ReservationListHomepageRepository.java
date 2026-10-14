@@ -4,6 +4,7 @@ import com.bviit.analytics.common.config.HomepageDataSourceConfig;
 import com.bviit.analytics.common.config.HomepageSourceDialect;
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -15,18 +16,23 @@ import java.util.Map;
 /**
  * 예약자 리스트_홈페이지 — 레거시 홈페이지 온라인 예약 소스 조회 (읽기 전용).
  *
- * <p>소스는 대시보드 DB 가 아니라 레거시 홈페이지 데이터다 → {@code homepageJdbcTemplate}.
- * {@code homepage.datasource.url} 이 없으면 DataSource 자체가 없으므로 이 빈도 함께 사라진다
- * (HomepageDataSourceConfig 와 동일 조건). 그 경우 컨트롤러가 503 을 준다.
+ * <p><b>소스 라우팅</b>
+ * <ul>
+ *   <li>기본: {@code homepageJdbcTemplate} + {@link HomepageSourceDialect} (URL 로 mariadb/sqlite 판별).
+ *       {@code homepage.datasource.url} 이 없으면 DataSource 자체가 사라져 이 빈도 함께 비활성
+ *       (HomepageDataSourceConfig 와 동일 조건). 그 경우 컨트롤러가 503 을 준다.</li>
+ *   <li><b>data-platform 활성 (2026-10-06 Homepage 선제 이관)</b>: {@code warehouseJdbcTemplate} +
+ *       {@code sql/warehouse/homepage/*.sql} (raw.raw_homepage_tbl_counsel 직접 조회 · Postgres 방언).
+ *       SSH 터널·MariaDB 의존 제거.</li>
+ * </ul>
  *
  * <p><b>제약</b>
  * <ul>
  *   <li>READ-ONLY — 이 소스에 쓰기를 하지 않는다(레거시 운영계 원본이다).
- *   <li>소스가 둘이라 <b>SQL 세트도 둘</b>이다 — {@link HomepageSourceDialect} 가 URL 로 판별해 고른다.
- *       같은 데이터인데 스키마가 다르다(캐시가 원본을 snake_case 로 개명해 적재했다):
- *       스냅샷은 {@code consultations.legacy_no}, 운영 DB 는 {@code TBL_COUNSEL.C_NO} 다.
- *       한쪽 SQL 을 다른 쪽에 그대로 쓰면 'no such column' 이 난다.
- *   <li>두 세트의 <b>결과 별칭 계약은 동일</b>해야 한다(프론트 zod 와 1:1). 한쪽만 고치지 말 것.
+ *   <li>소스별 <b>SQL 세트가 셋</b>이다 (mariadb · sqlite · warehouse). 같은 데이터인데 스키마가 다르다:
+ *       스냅샷은 {@code consultations.legacy_no}, 운영 DB 는 {@code TBL_COUNSEL.C_NO},
+ *       warehouse 는 {@code raw.raw_homepage_tbl_counsel.c_no} (소문자).</li>
+ *   <li>세 세트의 <b>결과 별칭 계약은 동일</b>해야 한다(프론트 zod 와 1:1). 한쪽만 고치지 말 것.</li>
  * </ul>
  */
 @Repository
@@ -34,6 +40,7 @@ import java.util.Map;
 public class ReservationListHomepageRepository implements HomepageOverallSource {
 
     private static final String SQL_BASE = "sql/homepage/";
+    private static final String WAREHOUSE_SQL_BASE = "sql/warehouse/homepage/";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final HomepageSourceDialect dialect;
@@ -43,15 +50,25 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     private final String dailyListRawSql;
 
     public ReservationListHomepageRepository(
-            @Qualifier("homepageJdbcTemplate") NamedParameterJdbcTemplate jdbc,
-            @Qualifier("homepageSourceDialect") HomepageSourceDialect dialect
+            @Qualifier("homepageJdbcTemplate") NamedParameterJdbcTemplate homepageJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
+            @Qualifier("homepageSourceDialect") HomepageSourceDialect dialect,
+            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
     ) {
-        this.jdbc = jdbc;
+        this.jdbc = dataPlatformEnabled ? warehouseJdbc : homepageJdbc;
         this.dialect = dialect;
-        this.listSql = SqlLoader.load(sqlPath(dialect, "select-reservation-list-homepage.sql"));
-        this.lastRegDateSql = SqlLoader.load(sqlPath(dialect, "select-last-reg-date.sql"));
-        this.monthlyListRawSql = SqlLoader.load(sqlPath(dialect, "select-monthly-list-raw.sql"));
-        this.dailyListRawSql = SqlLoader.load(sqlPath(dialect, "select-daily-list-raw.sql"));
+        this.listSql          = SqlLoader.load(resolveSqlPath(dialect, dataPlatformEnabled, "select-reservation-list-homepage.sql"));
+        this.lastRegDateSql   = SqlLoader.load(resolveSqlPath(dialect, dataPlatformEnabled, "select-last-reg-date.sql"));
+        this.monthlyListRawSql = SqlLoader.load(resolveSqlPath(dialect, dataPlatformEnabled, "select-monthly-list-raw.sql"));
+        this.dailyListRawSql  = SqlLoader.load(resolveSqlPath(dialect, dataPlatformEnabled, "select-daily-list-raw.sql"));
+    }
+
+    /** data-platform 활성 → sql/warehouse/homepage/, 아니면 sql/homepage/{sqlite|mariadb}/. */
+    static String resolveSqlPath(HomepageSourceDialect dialect, boolean dataPlatformEnabled, String fileName) {
+        if (dataPlatformEnabled) {
+            return WAREHOUSE_SQL_BASE + fileName;
+        }
+        return sqlPath(dialect, fileName);
     }
 
     /** sql/homepage/{sqlite|mariadb}/{fileName} */
