@@ -54,9 +54,9 @@ stats:
 # STATS(MSSQL SOFTCRM) 원본과 병행 운영, warehouseJdbcTemplate 빈으로 주입.
 warehouse:
   datasource:
-    url: ${WAREHOUSE_URL:jdbc:postgresql://${RDS_HOST:localhost}:${RDS_PORT:5432}/${RDS_DB:dummy}}
-    username: ${RDS_USER:}
-    password: ${RDS_PASSWORD:}
+    url: ${WAREHOUSE_URL:jdbc:postgresql://${WAREHOUSE_HOST:localhost}:${WAREHOUSE_PORT:5432}/${WAREHOUSE_DB:dummy}}
+    username: ${WAREHOUSE_USERNAME:}
+    password: ${WAREHOUSE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 3
