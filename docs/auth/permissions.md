@@ -7,7 +7,7 @@
 > 📌 관련 문서
 > - SMS 관리자 권한 정책: `docs/sms/strategy.md` § 5-2
 > - 배치 관리자 API: `docs/databatch/strategy.md`
-> - 페이지 정의: `frontend/src/config/statsPages.ts` · `frontend/src/config/navigation.ts`
+> - 페이지 정의: 각 라우트 파일의 `staticData.page` (`frontend/src/routes/_auth/**`) · 판정 `frontend/src/config/pageAccess.ts` `canAccess` · 메뉴 `frontend/src/config/navigation.ts`
 > - 보안 매처: `backend/src/main/java/com/bviit/analytics/auth/config/SecurityConfig.java`
 
 ---
@@ -113,23 +113,23 @@
 
 ## 4. 페이지·API 매핑
 
-### 4-1. 페이지 부서 매핑 (`getPageDepartments`)
+### 4-1. 페이지 부서 매핑 (라우트 `staticData.page.access`)
 
-판정은 `navigation.ts` 의 `MARKETING_ONLY_PAGE_IDS` Set 하나로 갈린다. 마케팅 전용이 아닌 페이지는 모두 `MEDICAL` 기본값. ADMIN·DIRECTOR (`department='ALL'`) 는 부서 gate 를 우회한다.
+각 페이지의 접근 조건은 그 라우트 파일의 `staticData.page.access` 에 `{ role: 'ADMIN' }` · `{ role: 'EXECUTIVE' }` · `{ department }` 중 하나로 선언하고, `config/pageAccess.ts` 의 `canAccess` 하나로 판정한다(라우트 차단·사이드바 공용, 2026-09-28 파일 라우트 전환). ADMIN·DIRECTOR (`department='ALL'`) 는 부서 gate 를 우회한다.
 
 | 그룹 | 페이지 | department |
 |---|---|---|
 | — | 홈화면 `/` | 스코프 없음 (통계 페이지 아님) |
 | **마케팅** | reservation-channel · channel-profit · channel-analysis · accumulated-eyes · marketing · **sms** | **MARKETING** (MEDICAL 도 접근 X) |
-| **해외마케팅** | overseas-marketing-receptions · overseas-marketing-statistics · overseas-reservation-stats (2026-09-09 이관 · 별도 최상위 섹션) | **MARKETING · OVERSEAS_MARKETING** (2026-09-11 두 부서 개방 · MEDICAL 은 접근 X) |
+| **해외마케팅** | overseas-marketing-receptions · overseas-marketing-statistics · overseas-reservation-stats (2026-09-09 이관 · 별도 최상위 섹션) | **OVERSEAS_MARKETING** (2026-09-17 MARKETING 배제 · MEDICAL 도 접근 X) |
 | 예약 | reservation-list · reservation-overall · reservation-stats-system · reservation-stats-cataract · reservation-list-homepage · (reservation) | MEDICAL |
 | 검사 | overall-exam · overall-exam-weekly · exam-list · cataract-exam-list · all-exam-list · eoeis-checkup · examination · procedure-exam | MEDICAL |
 | 전환&성공률 | consultation-rate · cataract-reservation-rate · stop-rate · stop-reason | MEDICAL |
 | 수술 | surgery-list · surgery · surgery-ratio · surgery-composition | MEDICAL |
 | 외래 | outpatient-list · outpatient-count | MEDICAL |
 | Report | weekly-report · monthly-report | MEDICAL |
-| 기타 | dreamlens-revenue · b2b-revenue · (그 외 미구현 8종) | MEDICAL |
-| **회계** (2026-09-11 신설) | accounting-medical · accounting-vision · accounting-vision-summary · accounting-vision-chart · accounting-medical-chart | **임원 이상(ADMIN·DIRECTOR) 전용** — 매출·수납 민감 데이터 · MANAGER·STAFF 는 부서 무관 차단. 현재 상태 `frontend-only` (합성 목업 · 백엔드 미구현). |
+| 기타 | dreamlens-revenue · b2b-revenue | MEDICAL |
+| **회계** (2026-09-11 신설) | accounting-medical · accounting-vision · accounting-vision-summary · accounting-vision-chart · accounting-medical-chart | **임원 이상(ADMIN·DIRECTOR) 전용** — 매출·수납 민감 데이터 · MANAGER·STAFF 는 부서 무관 차단. 2026-09-15 마트·`/api/accounting` 연동 완료(`complete`). |
 | 관리자 | batch-management · **account-management** | ADMIN 전용 (부서 무관 · 개발자 전용) — DIRECTOR 도 진입 불가 |
 
 **SMS 는 § 5-2 완화 후 MARKETING 부서 전용**(2026-09-03 사용자 결정) — 조회·홀딩·수신거부·연락처 수정·수동 대상 추가는 MARKETING STAFF 가능. 편집·[지금 실행]·[실패 재실행]·실제 발송·대량 sync/import 는 여전히 ADMIN.
@@ -148,6 +148,8 @@
 | SMS [실패·취소 재실행] (POST `/queue/retry`) | MANAGER (MARKETING 부서) | **2026-09-07 완화** — 실무 판단(오래된 취소를 다시 보낼지)이 필요하나 실 발송 트리거는 아니라 매니저 이상 상시 노출. STAFF 는 여전히 불가. |
 | SMS [지금 실행] (POST `/queue/run`) · 배치 재실행 · 원데이 소급 보정 | ADMIN | 지금과 동일 · DIRECTOR 도 불가 |
 | 사용자 계정 CRUD (계정 관리 페이지) | ADMIN | `/admin/accounts` · `/api/admin/users/**` · 자기 롤·부서 변경 X · 자기 삭제 X · 마지막 ADMIN 삭제 X |
+| 이벤트 노트 조회 (GET `/api/event/**`) | 로그인 사용자 전원 (부서 무관) | 차트 오버레이용 · 2026-09-23 |
+| 이벤트 노트 등록·수정·삭제 (POST·PUT·DELETE `/api/event/**`) | ADMIN · MEDICAL·MARKETING 부서 (MANAGER·STAFF) | **예외 — DIRECTOR 제외** (§2-1 의 "STAFF 수준 조작" 과 다르게 사용자 결정으로 임원은 열람만) · OVERSEAS_MARKETING 제외 · 매처 `hasAnyAuthority("ROLE_ADMIN","DEPT_MEDICAL","DEPT_MARKETING")` (`DEPT_ALL` 을 넣지 않는 것이 DIRECTOR 제외 장치) · 2026-09-23 |
 
 **MANAGER 실권한 분화**·**SMS 완화 실행**·**드림렌즈/B2B 등 재정 조작 롤 조정** 은 모두 다음 사이클에서 별도 문서/티켓으로 다룬다.
 
@@ -318,3 +320,4 @@ ALTER TABLE users ADD CONSTRAINT users_role_department_scope_ck CHECK (
 | 2026-09-03 | 계정 관리 페이지 (사용자 CRUD) | | 사용자 결정 (경로 `/admin/accounts` · 자기 롤·부서 변경 X · 편집 폼에 비밀번호 포함 · 삭제 확정 모달). **백엔드**: `UserAdminController`/`UserAdminService`/`UserRow`/`UserCreateRequest`/`UserUpdateRequest`/`User` 상태 변경 메서드 (`updateProfile`·`changeRoleAndDepartment`·`changePassword`·`isValidCombination`) · `UserRepository` 확장 (existsBy·countByRole·findAllByOrderByLoginIdAsc) · `GlobalExceptionHandler` 에 `ResponseStatusException` 404 처리 추가. **안전장치**: 자기 롤·부서 변경 400 · 자기 삭제 400 · 마지막 ADMIN 삭제 400 · 이메일·로그인아이디 중복 400 · 롤/부서 조합 강제 400. **프론트**: `statsPages.ts` 에 `account-management` 등록 · `ADMIN_ONLY_PAGE_IDS` 추가 · `api/admin/users.ts` · `hooks/admin/useUsers.ts` · `AccountManagementPage`/`UserFormDialog`/`DeleteConfirmDialog` (신규 3파일) · 롤/부서 셀렉트 상호 정규화 · 자기 자신 배지/버튼 비활성. 신규 백엔드 테스트 10 케이스 (권한·CRUD·자기 편집/삭제·조합 검증). **backend 273/273 · frontend 294/294 · lint(경고 1)/build 통과.** |
 | 2026-09-03 | 3차 감사 · Q1 SMS 큐 조회 부서 개방 | | 심층 재조사에서 발견: `SmsManagementPage` 가 MARKETING STAFF 에게 열려 있는데 무조건 렌더되는 `SmsQueueStatusCard` 가 `/api/admin/batch/sms/queue/{status,rows,statuses}` 를 자동 조회 → 403 으로 카드가 깨짐. **수정**: `SecurityConfig` 에서 이 GET 3종 매처를 `/api/admin/**` 앞에 두고 `hasAnyAuthority("DEPT_MARKETING","DEPT_ALL")` 로 개방. POST `/run`·`/retry` 는 그대로 ADMIN. 회귀 방지 테스트 4 케이스 추가 (MARKETING 조회 통과 · MEDICAL 조회 403 · MARKETING run/retry 403). 문서 § 4-2 · § 5-1 갱신. |
 | 2026-09-07 | SMS [실패·취소 재실행] 매니저 이상 완화 | | 사용자 결정: 이 버튼은 실무 판단(오래된 취소를 다시 보낼지)이 필요하나 실 발송 트리거가 아니라(폴러가 잡음) 매니저에게도 열어야 한다. **수정**: `SecurityConfig` 에서 `POST /api/admin/batch/sms/queue/retry` 매처를 `/api/admin/**` 앞에 두고 `WebExpressionAuthorizationManager` 로 `(DEPT_MARKETING or DEPT_ALL) and hasAnyRole('ADMIN','DIRECTOR','MANAGER')` 지정. 프론트 `auth-session.ts` 에 `canManagerOp(user)` 헬퍼 신설 (`ADMIN/DIRECTOR/MANAGER`). `SmsQueueStatusCard` 의 재실행 버튼은 이제 카운트 조건 없이 매니저 이상에게 상시 노출(라벨은 실패/취소 카운트에 따라 3분기), 배지는 "관리자" → "매니저↑". [지금 실행] 은 그대로 ADMIN. 통합 테스트 3 케이스 추가 (MARKETING MANAGER 통과 · MEDICAL MANAGER 403 · DIRECTOR 통과) + 기존 STAFF 403 케이스 유지. |
+| 2026-09-23 | 이벤트 노트 권한 | | 신규 `/api/event/**` (docs/event-note/design.md). 조회는 로그인 사용자 전원, 등록·수정·삭제는 ADMIN + MEDICAL·MARKETING 부서. **DIRECTOR 는 쓰기 제외** — §2-1 은 DIRECTOR 에 STAFF 수준 조작을 허용하지만 이 기능은 사용자 결정으로 예외 처리(임원 열람 전용). OVERSEAS_MARKETING 도 제외. `SecurityConfig` 에 GET 매처 → 쓰기 매처 순으로 추가 · 통합 테스트 `EventNoteControllerIntegrationTest` (401 · DIRECTOR/해외마케팅 403 · MEDICAL/MARKETING/ADMIN 200). |

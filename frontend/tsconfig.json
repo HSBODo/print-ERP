@@ -1,12 +1,18 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "#composition/*": ["./src/composition/*"],
+      "#domain/*": ["./src/domain/*"],
+      "#entity/*": ["./src/entity/*"],
+      "#page/*": ["./src/routes/*"],
+      "#shared/*": ["./src/shared/*"]
     }
   },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.test.json" },
     { "path": "./tsconfig.node.json" }
   ]
 }
