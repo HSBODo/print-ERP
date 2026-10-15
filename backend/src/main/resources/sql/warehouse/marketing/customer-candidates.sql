@@ -5,7 +5,7 @@
 -- 방언 변환:
 --   CUSTOM → raw.raw_crm_custom · WITH(NOLOCK) 제거 · ISNULL → COALESCE · RTRIM → TRIM
 --
--- %s 는 Repository.findCandidates(predicate) 가 치환 (예: c.CUST_NUM IN (:values)).
+-- WHERE 절의 포맷 자리는 Repository.findCandidates(predicate) 가 치환 (예: c.CUST_NUM IN (:values)).
 --   Postgres 는 unquoted 식별자를 lowercase 로 폴딩하므로 CUST_NUM/CUST_NAME 그대로 두어도 매칭.
 SELECT TRIM(c.cust_num)                 AS "customerNo",
        TRIM(COALESCE(c.cust_name, ''))  AS "name",
