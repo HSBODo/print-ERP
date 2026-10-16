@@ -1,5 +1,5 @@
 import type { CsvColumn } from '#shared/utils/csv'
-import { type DateRange, todayIso, toIsoDate } from '#shared/utils/date'
+import { capToToday, type DateRange, thisMonthRange } from '#shared/utils/date'
 import { maskAddress, maskName } from '#shared/utils/mask'
 
 import type { DreamlensLedgerRow } from '../../type/api'
@@ -45,14 +45,8 @@ export const compareSortValue = (
 
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
 
-/** 기본 조회 구간 — 지난달 1일 ~ 오늘(장부는 최근 것을 주로 본다). */
-export const defaultRange = (): DateRange => {
-  const now = new Date()
-  return {
-    from: toIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
-    to: todayIso(),
-  }
-}
+/** 기본 조회 구간 — 이번 달 1일 ~ 오늘. */
+export const defaultRange = (): DateRange => capToToday(thisMonthRange())
 
 /** 백엔드 DreamlensLedgerService 조회 구간 제한(양 끝 포함 92일)과 같다. */
 export const LEDGER_MAX_DAYS = 92
