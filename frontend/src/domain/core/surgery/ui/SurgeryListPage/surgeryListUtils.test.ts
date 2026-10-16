@@ -69,19 +69,18 @@ describe('classifyReoperation', () => {
   })
 })
 
-describe('필터 판정 — 좌·우 중 한쪽만 맞아도 해당', () => {
-  it('시력교정: 양안에 다른 수술을 해도 각각 걸린다', () => {
-    const r = row('EVOp ICL', 'SMILE')
-    expect(matchesSurgeryType(r, 'ICL')).toBe(true)
-    expect(matchesSurgeryType(r, '스마일')).toBe(true)
-    expect(matchesSurgeryType(r, '라식계')).toBe(false)
-  })
-
-  it('양안 혼합 환자는 두 유형 모두에서 잡힌다 (비중 표의 대표유형과 다른 지점)', () => {
+describe('필터 판정 — 양안이면 우안, 단안이면 수술한 쪽', () => {
+  it('양안: 우안 수술로만 판정한다 (비중 표의 대표유형과 같은 기준)', () => {
     const r = row('EVOp ICL', 'EVOp T-ICL')
     expect(matchesSurgeryType(r, 'ICL')).toBe(true)
-    expect(matchesSurgeryType(r, 'T-ICL')).toBe(true)
+    expect(matchesSurgeryType(r, 'T-ICL')).toBe(false)
     expect(matchesSurgeryType(r, 'KPL')).toBe(false)
+  })
+
+  it('단안: 수술한 쪽으로 판정한다', () => {
+    expect(matchesSurgeryType(row('', 'SMILE'), '스마일')).toBe(true)
+    expect(matchesSurgeryType(row('SMILE', ''), '스마일')).toBe(true)
+    expect(matchesCataract(row('', 'K-flex'), '단초점')).toBe(true)
   })
 
   it('옵션: 모노는 앞부분이 MONO 로 시작할 때만', () => {

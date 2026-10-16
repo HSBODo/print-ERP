@@ -274,12 +274,21 @@ export interface SurgeryFilterRow {
   surgeryL: string
 }
 
-/** 좌·우 중 한쪽이라도 만족하면 그 행은 해당한다(양안에 다른 수술을 하는 경우가 흔하다). */
-const eitherEye = (row: SurgeryFilterRow, ok: (raw: string) => boolean) =>
-  ok(row.surgeryR ?? '') || ok(row.surgeryL ?? '')
-
 /** 값이 빈 눈은 수술하지 않은 눈이라 분류 대상에서 뺀다(빈 문자열이 단초점·레이저로 떨어지는 걸 막는다). */
 const filled = (raw: string) => Boolean(raw && raw.trim())
+
+const isBothEyes = ({ surgeryR, surgeryL }: SurgeryFilterRow) =>
+  filled(surgeryR) && filled(surgeryL)
+
+/** 단안 — 수술한 쪽 수술명. */
+const singleEyeSurgery = ({ surgeryR, surgeryL }: SurgeryFilterRow) =>
+  filled(surgeryR) ? surgeryR : surgeryL
+
+/** 필터가 보는 대표 수술명 — 양안이면 우안, 단안이면 수술한 쪽. 수술별 비중 표의 대표유형(우안 우선)과 같은 기준. */
+const representativeSurgery = (row: SurgeryFilterRow) => {
+  if (isBothEyes(row)) return row.surgeryR
+  return singleEyeSurgery(row)
+}
 
 export function matchesSurgeryType(
   row: SurgeryFilterRow,
@@ -288,14 +297,14 @@ export function matchesSurgeryType(
   if (filter === '전체') return true
   const type = VISION_BY_LABEL[filter]
   if (!type) return true
-  return eitherEye(row, (raw) => classifyVision(raw) === type)
+  return classifyVision(representativeSurgery(row)) === type
 }
 
 export function matchesOption(row: SurgeryFilterRow, filter: string): boolean {
   if (filter === '전체') return true
   const ok = OPTION_BY_LABEL[filter]
   if (!ok) return true
-  return eitherEye(row, ok)
+  return ok(representativeSurgery(row))
 }
 
 export function matchesCataract(
@@ -305,7 +314,8 @@ export function matchesCataract(
   if (filter === '전체') return true
   const type = CATARACT_BY_LABEL[filter]
   if (!type) return true
-  return eitherEye(row, (raw) => filled(raw) && classifyCataract(raw) === type)
+  const raw = representativeSurgery(row)
+  return filled(raw) && classifyCataract(raw) === type
 }
 
 export function matchesReoperation(
@@ -314,10 +324,8 @@ export function matchesReoperation(
 ): boolean {
   if (filter === '전체') return true
   const want = filter === '렌즈' ? 'reopLens' : 'reopLaser'
-  return eitherEye(
-    row,
-    (raw) => filled(raw) && classifyReoperation(raw) === want,
-  )
+  const raw = representativeSurgery(row)
+  return filled(raw) && classifyReoperation(raw) === want
 }
 
 export const compareSortValue = (
