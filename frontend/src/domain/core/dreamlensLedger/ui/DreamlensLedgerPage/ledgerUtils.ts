@@ -66,6 +66,35 @@ export const matchesKeyword = (row: DreamlensLedgerRow, keyword: string) => {
   )
 }
 
+/** 진료구분이 빈 행은 선택지·필터에서 이 값으로 묶는다. */
+export const EMPTY_VISIT_TYPE = '(미입력)'
+
+export const visitTypeOf = (row: DreamlensLedgerRow) => {
+  const value = (row.visitType ?? '').trim()
+  return value === '' ? EMPTY_VISIT_TYPE : value
+}
+
+/** 가나다순, (미입력)은 맨 끝 */
+const byVisitTypeName = (a: string, b: string) => {
+  if (a === EMPTY_VISIT_TYPE) return 1
+  if (b === EMPTY_VISIT_TYPE) return -1
+  return a.localeCompare(b, 'ko-KR')
+}
+
+/**
+ * 진료구분 선택지 — 조회된 행에 있는 값, 가나다순.
+ * 배치가 CRM 진료구분을 옮겨 적고(미지 유형은 원문 그대로) 사람도 손으로 고치므로 고정 목록을 두지 않는다.
+ */
+export const visitTypeOptions = (
+  rows: DreamlensLedgerRow[],
+  selected: string,
+) => {
+  const types = new Set(rows.map(visitTypeOf))
+  // 고른 값이 재조회·삭제로 사라져도 버튼은 남긴다 — 없으면 아무 버튼도 안 눌린 채 필터만 걸려 있게 된다.
+  if (selected !== '전체') types.add(selected)
+  return [...types].sort(byVisitTypeName)
+}
+
 /** 구매·배송 구분으로 볼 수 있는 값인지 — 정규화 규칙과 같은 키워드를 쓴다(주소는 하나도 걸리지 않음을 전수 확인). */
 const PURCHASE_KEYWORD = /용품|대여|택배|텍배|본원\s*수령|재고|구매|배송/
 const isPurchaseTypeValue = (value: string) => PURCHASE_KEYWORD.test(value)

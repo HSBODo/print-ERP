@@ -35,6 +35,8 @@ import {
   LEDGER_MAX_DAYS,
   matchesKeyword,
   type SortState,
+  visitTypeOf,
+  visitTypeOptions,
 } from './ledgerUtils'
 
 const won = (value: number) =>
@@ -60,6 +62,7 @@ export function DreamlensLedgerPage() {
       pagination.resetPage()
     },
     onReset: () => {
+      setVisitType('전체')
       setExaminer('전체')
       setKeyword('')
       setSelected(new Set())
@@ -68,7 +71,8 @@ export function DreamlensLedgerPage() {
     },
   })
   const { from: queryFrom, to: queryTo } = filter.applied.range
-  // 검사자·검색은 받아온 행을 거르는 클라이언트 필터라 즉시 반영한다(서버 왕복 불필요).
+  // 진료구분·검사자·검색은 받아온 행을 거르는 클라이언트 필터라 즉시 반영한다(서버 왕복 불필요).
+  const [visitType, setVisitType] = useState('전체')
   const [examiner, setExaminer] = useState('전체')
   const [keyword, setKeyword] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -88,11 +92,16 @@ export function DreamlensLedgerPage() {
   })
 
   const rows = useMemo(() => data ?? [], [data])
+  const visitTypes = useMemo(
+    () => visitTypeOptions(rows, visitType),
+    [rows, visitType],
+  )
   const filtered = useMemo(
     () =>
       rows
         .filter(
           (row) =>
+            (visitType === '전체' || visitTypeOf(row) === visitType) &&
             (examiner === '전체' || (row.examiner ?? '') === examiner) &&
             matchesKeyword(row, keyword),
         )
@@ -105,7 +114,7 @@ export function DreamlensLedgerPage() {
               ? -1
               : 1,
         ),
-    [rows, examiner, keyword],
+    [rows, visitType, examiner, keyword],
   )
 
   /** 헤더를 눌러 고른 정렬. 고르지 않았으면 기본 순서(최신 날짜 위)를 그대로 쓴다. */
@@ -366,6 +375,21 @@ export function DreamlensLedgerPage() {
           </Filter.Actions>
         </Filter.Bar>
       </Filter.Root>
+
+      {/* 진료구분 — 조회된 행을 바로 거르는 내부 필터. 수술자 리스트와 같이 툴바 아래 한 줄. */}
+      <Filter.Bar className="gap-x-2 gap-y-2 border-border/60 bg-gray-50/70 px-2.5 py-2">
+        <div title="진료구분 — 조회된 행에 있는 값, 가나다순">
+          <Filter.Segment
+            value={visitType}
+            onChange={(value) => {
+              setVisitType(value)
+              pagination.resetPage()
+            }}
+            options={['전체', ...visitTypes]}
+            ariaLabel="진료구분"
+          />
+        </div>
+      </Filter.Bar>
 
       <Card className="min-h-0 flex-1 border-border/70 py-0 shadow-sm">
         <CardContent className="flex h-full min-h-0 flex-col px-0">
