@@ -35,8 +35,4 @@ volumes:
   analytics-cache:
 networks:
   bnviit_dashboard_network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: "172.31.0.192/28"
-          gateway: "172.31.0.193"
+    external: true
