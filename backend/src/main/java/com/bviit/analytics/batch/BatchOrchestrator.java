@@ -95,8 +95,29 @@ public class BatchOrchestrator {
     private int minYear;
 
     /**
-     * 매일 03:00 — 어제(D-1) 하루치 append.
-     * cron="-"이면 스케줄러가 등록되지 않음(관리자 수동 실행만 사용하고 싶을 때).
+     * 매일 03:00 — <b>SMS 제외</b> 전체 도메인은 <b>D-1 이 속한 달의 1일부터 D-1 까지</b> Rolling 재실행,
+     * <b>SMS 는 D-1 하루</b>만 처리.
+     *
+     * <p>Rolling 로 바꾼 이유: D-1 only 적재는 과거 날짜에 뒤늦게 반영된 수정·취소분을
+     * 월간 reconcile 전까지 영원히 놓친다. 당월 전체를 매일 upsert 하면 소급 변동이 다음날 반영된다.
+     * 설계 패턴은 월간 reconcile({@link #runMonthlyReconcile()}) 과 동일 — 범위만 당월로 바뀐 것.
+     *
+     * <p>SMS 가 D-1 로 분리된 이유: 2026-10-01 사고 재발 방지
+     * ({@code docs/sms/incidents/2026-10-01-reconcile-bulk-dispatch.md}). 일배치가 과거 날짜로
+     * 넓어지면 뒤늦게 발견된 수술자의 과거-예정 T1~T3 알림톡이 enqueue 시 clamp 되어 몇 분 안에
+     * 몰려 발송된다. SMS 는 반드시 D-1 하루만 처리.
+     *
+     * <p>안전 근거 (SMS 외 도메인):
+     * <ul>
+     *   <li>upsert 멱등 — 매일 돌아도 결과 동일.
+     *   <li>수기 수정 보호 — dreamlens(source=MANUAL skip), 예약통계 override(별도 overlay),
+     *       해외마케팅(origin='manual'/locked_at/updated_by 보존) 모두 Rolling 과 무관하게 보존.
+     *   <li>범위가 당월 한정 — 확정된 과거 월은 애초에 범위 밖.
+     * </ul>
+     *
+     * <p>트레이드오프: MSSQL 원본 조회량이 월 중순 15일치, 월말 30일치로 증가. 03:00 윈도우 모니터링 필요.
+     *
+     * <p>cron="-"이면 스케줄러가 등록되지 않음(관리자 수동 실행만 사용하고 싶을 때).
      * D-1의 연도가 min-year 미만이면 skip (년말·년초 경계 안전).
      */
     @Scheduled(cron = "${batch.mart.daily-cron:0 0 3 * * *}", zone = "Asia/Seoul")
@@ -110,14 +131,35 @@ public class BatchOrchestrator {
             log.info("Batch skip daily — target year {} < min-year {}", yesterday.getYear(), minYear);
             return;
         }
-        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday, ALL_DOMAINS,
-                () -> runAllDomains(yesterday, yesterday));
+        LocalDate from = yesterday.withDayOfMonth(1);
+        // SMS 제외 전체 도메인 — Rolling (월초~D-1)
+        runWithLog(BatchRunLog.RunType.DAILY, from, yesterday, MANUAL_ALL_DOMAINS,
+                () -> runDomains(from, yesterday, MANUAL_ALL_DOMAINS));
+        // SMS 전용 — D-1 하루 유지 (2026-10-01 사고 재발 방지)
+        Set<Domain> smsOnly = EnumSet.of(Domain.SMS);
+        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday, smsOnly,
+                () -> runDomains(yesterday, yesterday, smsOnly));
     }
 
     /**
-     * 매일 10:00 — 예약통계(시력교정·백내장) 일별 마트만 D-1 재실행.
-     * 새벽 03:00 배치 이후 늦게 반영된 콜센터 데이터/수정분 흡수용. upsert 안전.
-     * run_type=DAILY 로 기록되므로 `useBatchLastSuccess` 표시가 자연스럽게 갱신된다.
+     * 매일 10:00 — 예약통계(시력교정·백내장) 일별 마트를 <b>D-1 이 속한 달의 1일부터 D-1 까지</b>
+     * Rolling 재실행. 03:00 D-1 only 배치 이후 **과거 날짜에 뒤늦게 반영된** 콜센터 수정·취소분을
+     * 당일 중 흡수한다 (03:00 은 D-1 하루만 다시 봐서 과거 날짜 소급 변동을 놓침).
+     *
+     * <p>안전 근거:
+     * <ul>
+     *   <li>upsert(ON CONFLICT DO UPDATE) 로 멱등 — 매일 돌아도 결과 동일.
+     *   <li>셀 수기 보정은 {@code reservation_stats_override} 에 별도 저장되고 조회 시
+     *       {@code COALESCE} 로 얹히므로 Rolling upsert 가 덮지 않는다.
+     *   <li>범위가 당월(D-1 기준)로 한정 — 확정된 과거 월은 애초에 범위 밖이라
+     *       {@code reservation_stats_period_lock} 트리거 안 함.
+     *   <li>월초(1일) 호출 시엔 yesterday 가 전월 말일 → 전월 1일~말일 Rolling 이 된다.
+     *       같은 날 03:30 월간 reconcile 과 겹치지만 upsert 라 안전.
+     * </ul>
+     *
+     * <p>트레이드오프: MSSQL 원본 조회량이 월 중순 15일치, 월말 30일치로 증가 (하루 1회).
+     *
+     * <p>run_type=DAILY 로 기록되므로 `useBatchLastSuccess` 표시가 자연스럽게 갱신된다.
      * jobName 은 `orchestrator[RESERVATION_STATS_INTRADAY]` 로 구분.
      */
     @Scheduled(cron = "${batch.mart.reservation-stats-intraday-cron:0 0 10 * * *}", zone = "Asia/Seoul")
@@ -132,9 +174,10 @@ public class BatchOrchestrator {
                     yesterday.getYear(), minYear);
             return;
         }
-        runWithLog(BatchRunLog.RunType.DAILY, yesterday, yesterday,
+        LocalDate from = yesterday.withDayOfMonth(1);
+        runWithLog(BatchRunLog.RunType.DAILY, from, yesterday,
                 ORCHESTRATOR_JOB_PREFIX + "[RESERVATION_STATS_INTRADAY]",
-                () -> reservationStatsDailyMartJob.run(yesterday, yesterday));
+                () -> reservationStatsDailyMartJob.run(from, yesterday));
     }
 
     /**
@@ -275,11 +318,6 @@ public class BatchOrchestrator {
         if (targets.contains(Domain.SMS))           stats.putAll(smsImportJob.run(from, to));
         // 모든 도메인 마트 완료. 후속은 스냅샷 파일→마트 이관(strategy.md §7).
         return stats;
-    }
-
-    /** 스케줄러(전체 도메인) 진입점 — 기존 시그니처 유지. */
-    private Map<String, Integer> runAllDomains(LocalDate from, LocalDate to) {
-        return runDomains(from, to, EnumSet.allOf(Domain.class));
     }
 
     private void runWithLog(BatchRunLog.RunType type, LocalDate from, LocalDate to,
