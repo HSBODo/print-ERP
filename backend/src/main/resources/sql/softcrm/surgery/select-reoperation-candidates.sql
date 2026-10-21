@@ -29,6 +29,7 @@
                     ISNULL(r.AGAIN_R, '') AS againR,
                     ISNULL(r.AGAIN_L, '') AS againL,
                     RTRIM(ISNULL(r.REASON_CD, '')) AS reasonCd,
+                    RTRIM(ISNULL(r.REOP_REASON, '')) AS reopReason,
                     -- 재수술 판정(행 단위) — find-reoperation-monthly.sql 과 동일한 규칙.
                     --   01 Irrigation(세척) · 07 Lens Reposition(재위치) · 10 CATARACT(백내장) 은 재수술 아님
                     --   시술명이 Irrigation 이면 사유코드 오입력(02 ENHANCE)이라 함께 제외
@@ -57,13 +58,15 @@
                 againR,
                 againL,
                 autoIncluded,
-                -- 제외 사유 — 추측이 아니라 RE_OPERATION.REASON_CD/REOP_REASON 실제 값으로 표기.
-                -- 프론트(ReoperationCandidatesModal)가 이 문자열로 그룹핑하므로 값 종류를 고정한다.
+                -- 사유 라벨 — RE_OPERATION.REOP_REASON 원천 그대로 (하드코딩 매핑 대신).
+                -- 담당자가 CRM 과 같은 명칭(Lens Exchange·ENHANCE·Irrigation 등)으로 재수술 판정을 내릴 수 있다.
+                -- 새 reason_cd 가 생겨도 자동 반영 — docs/점검/재수술-분류_2026-01~07.md 공식 권고
+                -- ("REOP_REASON 을 그대로 쓰면 된다").
+                -- 적재 테이블 list_reoperation.exclude_reason 재활용 (리네임은 별도 작업).
+                -- reop_reason 이 비면 특수 케이스(Irrigation 오입력·시술명 없음·기타)로 보강.
+                -- 프론트(ReoperationCandidatesModal)가 제외 섹션의 그룹 키로 쓰므로 값은 CRM 입력 그대로 전달.
                 CASE
-                    WHEN autoIncluded = 1 THEN ''
-                    WHEN reasonCd = '01' THEN N'세척(Irrigation)'
-                    WHEN reasonCd = '07' THEN N'재위치(Lens Reposition)'
-                    WHEN reasonCd = '10' THEN N'백내장(CATARACT)'
+                    WHEN reopReason <> '' THEN reopReason
                     WHEN (againR LIKE 'Irrigation%' OR againL LIKE 'Irrigation%')
                         THEN N'세척(Irrigation) · 사유코드 오입력'
                     WHEN RTRIM(againR) = '' AND RTRIM(againL) = '' THEN N'시술명 없음'
