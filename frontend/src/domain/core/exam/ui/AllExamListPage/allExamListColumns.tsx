@@ -94,6 +94,13 @@ export const COLUMNS: Column[] = [
   },
   { key: 'examDate', label: '검사일', align: 'center', min: '5.5rem' },
   {
+    key: 'surgeryReserveDate',
+    label: '수술예약일',
+    align: 'center',
+    min: '6rem',
+    render: (r) => dash(r.surgeryReserveDate),
+  },
+  {
     key: 'examGroup',
     label: '검사구분',
     align: 'center',
