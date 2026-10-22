@@ -134,9 +134,14 @@
                           ELSE '' END AS regDate
             ) rsvReg
             OUTER APPLY (
+              -- "이 검사 이후" 수술 예약만 매칭 — 환자 전체 이력 중 "최근 생성" 1건을 뽑으면
+              -- 과거 완료된 수술 예약(예: 수년 전 레이저 수술)이 검사일보다 이전 날짜로 뜨는
+              -- 함정이 생긴다. 백내장은 양안 분산·장기 재방문 패턴에서 2026-01~10 중
+              -- 49건(11.6%) 발생. 시력교정은 측정 결과 0건이지만 일관성 위해 동일 조건 적용.
               SELECT TOP 1 f.*
               FROM RESERVATION f WITH(NOLOCK)
               WHERE f.CUST_NUM = e.CUST_NUM AND f.RESERVE_FLAG = 'O' AND f.RESERVE_STATE <> 'C'
+                AND f.RESERVE_DATE >= e.EXAM_DATE
               ORDER BY f.RESERVE_NUM DESC
             ) opRsv
             OUTER APPLY (

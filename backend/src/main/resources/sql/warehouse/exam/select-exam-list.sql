@@ -155,9 +155,13 @@ CROSS JOIN LATERAL (
               ELSE '' END AS "regDate"
 ) rsvReg
 LEFT JOIN LATERAL (
+  -- "이 검사 이후" 수술 예약만 매칭 — 환자 전체 이력 중 "최근 생성" 1건을 뽑으면
+  -- 과거 완료된 수술 예약(수년 전 레이저 등)이 검사일보다 이전 날짜로 뜨는 함정 발생.
+  -- softcrm 미러 (sql/softcrm/exam/select-exam-list.sql opRsv 조건과 동일).
   SELECT f.*
   FROM raw.raw_crm_reservation f
   WHERE f.cust_num = e.cust_num AND f.reserve_flag = 'O' AND f.reserve_state <> 'C'
+    AND f.reserve_date >= e.exam_date
   ORDER BY f.reserve_num DESC
   LIMIT 1
 ) opRsv ON true
