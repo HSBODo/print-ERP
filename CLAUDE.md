@@ -12,7 +12,7 @@
 - **HTTP**: axios (`shared/api/client.ts` 인스턴스 1개)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
-- **DB**: H2 (개발, 기본) / PostgreSQL 마트 (운영, `application-postgres-mart.yml`)
+- **DB**: PostgreSQL (primary 마트 + warehouse RDS) — 프로파일 필수(local/dev/prod), H2 는 테스트 전용
 - **인증**: Spring Security + JWT (jjwt, HMAC-SHA256)
 - **언어**: 한국어 UI
 
@@ -45,9 +45,9 @@ project-root/
 │   #   surgery/controller/AccumulatedEyeController              → /api/accumulated-eyes (OPERATION_ACCUMULATED_EYE_COUNT 원천 마트 적재)
 │   ├── src/main/resources/
 │   │   ├── application.yml                     # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
-│   │   ├── application-local.yml               # 로컬 개발 (H2 인메모리, 배치 비활성)
-│   │   ├── application-dev.yml                 # 개발 서버 (Postgres 마트 + MSSQL 배치)
-│   │   ├── application-prod.yml                # 운영 (Postgres 마트 + MSSQL 배치 + Slack 알림)
+│   │   ├── application-local.yml               # 로컬 개발 (로컬 Docker Postgres, 배치 비활성)
+│   │   ├── application-dev.yml                 # 개발 서버 (Dev Postgres + warehouse)
+│   │   ├── application-prod.yml                # 운영 (Prod Postgres + warehouse + Slack 알림)
 │   │   ├── application-postgres-mart.yml       # 마트 인프라 (batch DataSource·스케줄러) — 위 셋에 group include
 │   │   └── sql/                                # 도메인별 .sql 리소스 (SqlLoader 로딩)
 │   └── build.gradle
@@ -437,7 +437,7 @@ docker compose -f docker-compose.local.yml down
 # 운영/Jenkins용 docker-compose.yml · Dockerfile 은 명시적으로 요청받은 경우에만 사용
 
 # 로컬 개별 실행 (개발용)
-cd backend && ./gradlew bootRun          # Backend (H2 인메모리 기본, 프로파일 SPRING_PROFILES_ACTIVE 로 조정)
+cd backend && ./gradlew bootRun --args='--spring.profiles.active=local'   # Backend (프로파일 필수 — 미지정 시 기동 실패)
 cd frontend && npm run dev               # Frontend (Vite dev server)
 
 # 빌드/테스트

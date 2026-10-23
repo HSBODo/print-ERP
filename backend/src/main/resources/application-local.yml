@@ -38,10 +38,6 @@ spring:
       hibernate:
         format_sql: true
 
-  h2:
-    console:
-      enabled: false
-
 # --- Batch scheduling (OFF) ---
 batch:
   mart:

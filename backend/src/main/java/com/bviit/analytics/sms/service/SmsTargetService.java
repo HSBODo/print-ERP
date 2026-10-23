@@ -52,7 +52,7 @@ public class SmsTargetService {
     private final SmsSendLogRepository logRepository;
     /**
      * 큐 조회 — target 리스트 응답에 tier 별 최신 큐 상태를 실어보내려고 사용.
-     * ObjectProvider 로 감싸 sms 미로딩·H2 로컬 등 큐 테이블이 없는 환경에서도 안전.
+     * ObjectProvider 로 감싸 sms 미로딩 등 큐 테이블이 없는 환경에서도 안전.
      */
     private final ObjectProvider<SmsDispatchQueueRepository> queueRepositoryProvider;
     /** 수신거부 목록 — 적재 때 새 행을 처음부터 홀딩으로 만들고, 화면 표시에도 쓴다. */

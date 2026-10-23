@@ -38,10 +38,6 @@ spring:
       hibernate:
         format_sql: false
 
-  h2:
-    console:
-      enabled: false
-
 app:
   seed:
     enabled: false
