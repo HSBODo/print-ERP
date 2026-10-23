@@ -35,6 +35,10 @@ app:
 # --- Data warehouse (Postgres RDS, read-only) ---
 # 데이터 플랫폼(2026-09-23 도입 · 2026-10-23 단독 소스화) — bnviit_datawarehouse.
 # 모든 통계 리포지토리가 warehouseJdbcTemplate 하나만 주입받아 raw.* / mart 를 조회한다.
+#
+# ⚠ fail-fast 설정 — WAREHOUSE_* 미설정 시 침묵실패(첫 조회 때 발견) 를 막기 위해 startup 시 커넥션 강제 획득.
+#   minimum-idle=1: pool 생성 즉시 1개 커넥션 유지 → 미설정 시 pool init 자체가 실패.
+#   initialization-fail-timeout=10000: 10초 안에 커넥션 못 얻으면 PoolInitializationException → startup 중단.
 warehouse:
   datasource:
     url: ${WAREHOUSE_URL:jdbc:postgresql://${WAREHOUSE_HOST:localhost}:${WAREHOUSE_PORT:5432}/${WAREHOUSE_DB:dummy}}
@@ -43,8 +47,10 @@ warehouse:
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 3
+      minimum-idle: 1
       read-only: true
       connection-timeout: 10000
+      initialization-fail-timeout: 10000
 
 # --- Batch scheduling ---
 batch:

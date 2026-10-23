@@ -55,8 +55,10 @@ public class MartDataSourceConfig {
             @Value("${warehouse.datasource.password}") String password,
             @Value("${warehouse.datasource.driver-class-name}") String driverClassName,
             @Value("${warehouse.datasource.hikari.maximum-pool-size:3}") int maxPoolSize,
+            @Value("${warehouse.datasource.hikari.minimum-idle:1}") int minimumIdle,
             @Value("${warehouse.datasource.hikari.read-only:true}") boolean readOnly,
-            @Value("${warehouse.datasource.hikari.connection-timeout:10000}") long connectionTimeout
+            @Value("${warehouse.datasource.hikari.connection-timeout:10000}") long connectionTimeout,
+            @Value("${warehouse.datasource.hikari.initialization-fail-timeout:10000}") long initializationFailTimeout
     ) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(url);
@@ -64,8 +66,11 @@ public class MartDataSourceConfig {
         ds.setPassword(password);
         ds.setDriverClassName(driverClassName);
         ds.setMaximumPoolSize(maxPoolSize);
+        ds.setMinimumIdle(minimumIdle);
         ds.setReadOnly(readOnly);
         ds.setConnectionTimeout(connectionTimeout);
+        // fail-fast — WAREHOUSE_* 미설정 시 침묵실패 방지 (minimum-idle=1 과 함께 startup 시 커넥션 강제 획득 → 실패하면 PoolInitializationException 으로 startup 중단).
+        ds.setInitializationFailTimeout(initializationFailTimeout);
         ds.setPoolName("warehouse-postgres");
         ds.setConnectionTestQuery("SELECT 1");
         return ds;
