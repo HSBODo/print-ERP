@@ -8,22 +8,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VisionReceiptSqlResourcesTest {
 
     @Test
-    void mssql_vision_payments_sql은_MSSQL_방언과_컬럼을_보존한다() {
-        String sql = SqlLoader.load(VisionReceiptSourceRepository.PAYMENTS_MSSQL);
-
-        assertThat(sql)
-                .contains(":from", ":to")
-                .contains("FROM CstPrcSub s WITH(NOLOCK)")
-                .contains("LEFT JOIN COSTPRICE c  WITH(NOLOCK)")
-                .contains("LEFT JOIN CUSTOM   cu  WITH(NOLOCK)")
-                .contains("CONVERT(varchar(19), s.CstRegDte, 120)")
-                .contains("ISNULL(cu.[Level], '')")
-                .contains("s.CstDte >= :from AND s.CstDte <= :to");
-    }
-
-    @Test
     void warehouse_vision_payments_sql은_Postgres_방언과_raw_스키마를_사용한다() {
-        String sql = SqlLoader.load(VisionReceiptSourceRepository.PAYMENTS_WAREHOUSE);
+        String sql = SqlLoader.load(VisionReceiptSourceRepository.PAYMENTS_SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")
@@ -41,7 +27,7 @@ class VisionReceiptSqlResourcesTest {
 
     @Test
     void warehouse_vision_item_details_sql은_prcitmdtl_raw_참조() {
-        String sql = SqlLoader.load(VisionReceiptSourceRepository.ITEM_DETAILS_WAREHOUSE);
+        String sql = SqlLoader.load(VisionReceiptSourceRepository.ITEM_DETAILS_SQL);
 
         assertThat(sql)
                 .contains("FROM raw.raw_crm_prcitmdtl d")
@@ -53,7 +39,7 @@ class VisionReceiptSqlResourcesTest {
 
     @Test
     void warehouse_vision_items_sql은_prcitmlst_raw_참조() {
-        String sql = SqlLoader.load(VisionReceiptSourceRepository.ITEMS_WAREHOUSE);
+        String sql = SqlLoader.load(VisionReceiptSourceRepository.ITEMS_SQL);
 
         assertThat(sql)
                 .contains("FROM raw.raw_crm_prcitmlst p")
@@ -63,7 +49,7 @@ class VisionReceiptSqlResourcesTest {
 
     @Test
     void warehouse_vision_operations_sql은_operationdata_raw_참조() {
-        String sql = SqlLoader.load(VisionReceiptSourceRepository.OPERATIONS_WAREHOUSE);
+        String sql = SqlLoader.load(VisionReceiptSourceRepository.OPERATIONS_SQL);
 
         assertThat(sql)
                 .contains("FROM raw.raw_crm_operationdata o")

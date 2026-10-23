@@ -10,7 +10,7 @@ class ReservationOverallWarehouseSqlResourceTest {
 
     @Test
     void warehouse_종합_sql은_raw_스키마와_Postgres_방언을_사용한다() {
-        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_SQL_WAREHOUSE);
+        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")
@@ -28,7 +28,7 @@ class ReservationOverallWarehouseSqlResourceTest {
 
     @Test
     void warehouse_네이버_sql은_취소제외와_Postgres_방언을_사용한다() {
-        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_NAVER_SQL_WAREHOUSE);
+        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_NAVER_SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")
@@ -44,7 +44,7 @@ class ReservationOverallWarehouseSqlResourceTest {
 
     @Test
     void warehouse_카카오_sql은_해피톡_신환과_Postgres_방언을_사용한다() {
-        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_KAKAO_SQL_WAREHOUSE);
+        String sql = SqlLoader.load(ReservationOverallStatsRepository.MONTHLY_KAKAO_SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")

@@ -4,7 +4,6 @@ import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.common.util.SqlFragments;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -17,39 +16,24 @@ import java.util.Map;
  * 검사자 종합표 주간 집계 쿼리 — 일자별로 집계한 뒤 서비스에서 주(월~일)로 버킷팅한다.
  * OverallReconcileService 전용(파이프라인 밖, 대사용).
  *
- * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE Fragment 블록)</b>
- * <ul>
- *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL + session-source MSSQL (demographics 에만) + measurements-blank (vision·dreamlens).</li>
- *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.* + warehouse fragments.</li>
- * </ul>
- *
- *
  * 모든 쿼리는 EXAM_DATE(또는 OPERATION_DATE) 일자별 GROUP BY로 결과를 돌려준다.
  * 주 경계(월~일, 월 클립) 계산은 {@code OverallExamWeeklyService}에서 자바로 처리한다.
  * SQL 본문은 §1.3~1.10·§6의 검증된 월별 쿼리와 동일하며 집계 단위만 일자로 바꿨다.
  *
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
- * MSSQL 2014 호환: STRING_AGG/TRIM 미사용 (LTRIM/RTRIM 사용).
  */
 @Repository
 @Profile("postgres-mart")
 public class OverallExamWeeklyRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
-    private final boolean dataPlatformEnabled;
 
-    static final String FIND_DEMOGRAPHICS_DAILY_SQL_MSSQL     = "sql/softcrm/overall/select-demographics-daily.sql";
-    static final String FIND_DEMOGRAPHICS_DAILY_SQL_WAREHOUSE = "sql/warehouse/overall/select-demographics-daily.sql";
-    static final String FIND_VISION_DAILY_SQL_MSSQL           = "sql/softcrm/overall/select-vision-daily.sql";
-    static final String FIND_VISION_DAILY_SQL_WAREHOUSE       = "sql/warehouse/overall/select-vision-daily.sql";
-    static final String FIND_CATARACT_DAILY_SQL_MSSQL         = "sql/softcrm/overall/select-cataract-daily.sql";
-    static final String FIND_CATARACT_DAILY_SQL_WAREHOUSE     = "sql/warehouse/overall/select-cataract-daily.sql";
-    static final String FIND_DREAMLENS_DAILY_SQL_MSSQL        = "sql/softcrm/overall/select-dreamlens-daily.sql";
-    static final String FIND_DREAMLENS_DAILY_SQL_WAREHOUSE    = "sql/warehouse/overall/select-dreamlens-daily.sql";
-    static final String FIND_STOP_COUNT_DAILY_SQL_MSSQL       = "sql/softcrm/overall/select-stop-count-daily.sql";
-    static final String FIND_STOP_COUNT_DAILY_SQL_WAREHOUSE   = "sql/warehouse/overall/select-stop-count-daily.sql";
-    static final String FIND_ONE_DAY_DAILY_SQL_MSSQL          = "sql/softcrm/overall/select-one-day-daily.sql";
-    static final String FIND_ONE_DAY_DAILY_SQL_WAREHOUSE      = "sql/warehouse/overall/select-one-day-daily.sql";
+    static final String FIND_DEMOGRAPHICS_DAILY_SQL = "sql/warehouse/overall/select-demographics-daily.sql";
+    static final String FIND_VISION_DAILY_SQL       = "sql/warehouse/overall/select-vision-daily.sql";
+    static final String FIND_CATARACT_DAILY_SQL     = "sql/warehouse/overall/select-cataract-daily.sql";
+    static final String FIND_DREAMLENS_DAILY_SQL    = "sql/warehouse/overall/select-dreamlens-daily.sql";
+    static final String FIND_STOP_COUNT_DAILY_SQL   = "sql/warehouse/overall/select-stop-count-daily.sql";
+    static final String FIND_ONE_DAY_DAILY_SQL      = "sql/warehouse/overall/select-one-day-daily.sql";
 
     private final String findDemographicsDailySql;
     private final String findVisionDailySql;
@@ -59,21 +43,16 @@ public class OverallExamWeeklyRepository {
     private final String findOneDayDailySql;
 
     public OverallExamWeeklyRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
-            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
-        this.dataPlatformEnabled = dataPlatformEnabled;
-        this.findDemographicsDailySql = SqlLoader.load(dataPlatformEnabled
-                ? FIND_DEMOGRAPHICS_DAILY_SQL_WAREHOUSE
-                : FIND_DEMOGRAPHICS_DAILY_SQL_MSSQL)
-                .replace("__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource(dataPlatformEnabled));
-        this.findVisionDailySql = SqlLoader.load(dataPlatformEnabled ? FIND_VISION_DAILY_SQL_WAREHOUSE : FIND_VISION_DAILY_SQL_MSSQL);
-        this.findCataractDailySql = SqlLoader.load(dataPlatformEnabled ? FIND_CATARACT_DAILY_SQL_WAREHOUSE : FIND_CATARACT_DAILY_SQL_MSSQL);
-        this.findDreamlensDailySql = SqlLoader.load(dataPlatformEnabled ? FIND_DREAMLENS_DAILY_SQL_WAREHOUSE : FIND_DREAMLENS_DAILY_SQL_MSSQL);
-        this.findStopCountDailySql = SqlLoader.load(dataPlatformEnabled ? FIND_STOP_COUNT_DAILY_SQL_WAREHOUSE : FIND_STOP_COUNT_DAILY_SQL_MSSQL);
-        this.findOneDayDailySql = SqlLoader.load(dataPlatformEnabled ? FIND_ONE_DAY_DAILY_SQL_WAREHOUSE : FIND_ONE_DAY_DAILY_SQL_MSSQL);
+        this.jdbc = warehouseJdbc;
+        this.findDemographicsDailySql = SqlLoader.load(FIND_DEMOGRAPHICS_DAILY_SQL)
+                .replace("__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource());
+        this.findVisionDailySql = SqlLoader.load(FIND_VISION_DAILY_SQL);
+        this.findCataractDailySql = SqlLoader.load(FIND_CATARACT_DAILY_SQL);
+        this.findDreamlensDailySql = SqlLoader.load(FIND_DREAMLENS_DAILY_SQL);
+        this.findStopCountDailySql = SqlLoader.load(FIND_STOP_COUNT_DAILY_SQL);
+        this.findOneDayDailySql = SqlLoader.load(FIND_ONE_DAY_DAILY_SQL);
     }
 
     /**
@@ -142,7 +121,7 @@ public class OverallExamWeeklyRepository {
     private String withExamMeasurementsBlank(String sql) {
         return sql.replace(
                 "__EXAM_MEASUREMENTS_BLANK__",
-                SqlFragments.examMeasurementsBlankPredicate("e", dataPlatformEnabled)
+                SqlFragments.examMeasurementsBlankPredicate("e")
         );
     }
 }

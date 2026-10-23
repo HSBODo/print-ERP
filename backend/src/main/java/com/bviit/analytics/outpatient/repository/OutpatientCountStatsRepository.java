@@ -3,7 +3,6 @@ package com.bviit.analytics.outpatient.repository;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,12 +17,6 @@ import java.util.Map;
  * 운영 기준(레거시 차트와 최근접): 외래 예약(`RESERVE_FLAG='F'`) 중 내원/퇴원 처리된
  * (`RESERVE_STATE IN ('I','H')`) 행 수. 사람 단위가 아니라 **행 수**(`COUNT(*)`).
  *
- * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE wave)</b>
- * <ul>
- *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL.</li>
- *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.raw_crm_reservation + raw.raw_crm_custom.</li>
- * </ul>
- *
  * READ-ONLY — SELECT 만 실행. 날짜 컬럼은 varchar(YYYY-MM-DD).
  */
 @Repository
@@ -32,19 +25,15 @@ public class OutpatientCountStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL_MSSQL     = "sql/softcrm/outpatient/select-outpatient-count-monthly.sql";
-    static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL_WAREHOUSE = "sql/warehouse/outpatient/select-outpatient-count-monthly.sql";
+    static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL = "sql/warehouse/outpatient/select-outpatient-count-monthly.sql";
 
     private final String findOutpatientCountMonthlySql;
 
     public OutpatientCountStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
-            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
-        this.findOutpatientCountMonthlySql = SqlLoader.load(
-                dataPlatformEnabled ? FIND_OUTPATIENT_COUNT_MONTHLY_SQL_WAREHOUSE : FIND_OUTPATIENT_COUNT_MONTHLY_SQL_MSSQL);
+        this.jdbc = warehouseJdbc;
+        this.findOutpatientCountMonthlySql = SqlLoader.load(FIND_OUTPATIENT_COUNT_MONTHLY_SQL);
     }
 
     /** 월별 외래수 = RESERVATION F + 내원/퇴원(I/H) 행 수. */

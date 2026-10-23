@@ -8,23 +8,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ExamListSqlResourcesTest {
 
     @Test
-    void mssql_select_exam_list_는_MSSQL_방언과_30컬럼_체크를_보존한다() {
-        String sql = SqlLoader.load(ExamListRepository.SQL_MSSQL);
-
-        assertThat(sql)
-                .contains(":from", ":to")
-                .contains("FROM EXAM e WITH(NOLOCK)")
-                .contains("JOIN CUSTOM cu WITH(NOLOCK)")
-                .contains("OUTER APPLY")
-                .contains("SELECT TOP 1")
-                .contains("e.RIGHT01")
-                .contains("e.LEFT30")
-                .contains("CONVERT(money");
-    }
-
-    @Test
     void warehouse_select_exam_list_는_Postgres_방언과_raw_스키마를_사용한다() {
-        String sql = SqlLoader.load(ExamListRepository.SQL_WAREHOUSE);
+        String sql = SqlLoader.load(ExamListRepository.SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")

@@ -21,49 +21,27 @@ import static org.mockito.Mockito.when;
 class B2bRevenueStatsRepositoryTest {
 
     @Mock
-    private NamedParameterJdbcTemplate jdbc;
+    private NamedParameterJdbcTemplate warehouseJdbc;
 
     private B2bRevenueStatsRepository repository;
 
     @BeforeEach
     void setUp() {
-        // 기본(비활성): statsJdbcTemplate(MSSQL) 경로로 라우팅.
-        repository = new B2bRevenueStatsRepository(jdbc, jdbc, false);
+        repository = new B2bRevenueStatsRepository(warehouseJdbc);
     }
 
     @Test
-    void findMonthlyRevenueBuildsExpectedQueryAndYearRange() {
-        when(jdbc.queryForList(anyString(), any(MapSqlParameterSource.class))).thenReturn(List.of());
+    void findMonthlyRevenue는_warehouse_SQL과_연도_범위_파라미터를_사용한다() {
+        when(warehouseJdbc.queryForList(anyString(), any(MapSqlParameterSource.class))).thenReturn(List.of());
 
         repository.findMonthlyRevenue(List.of(2026, 2024));
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MapSqlParameterSource> paramsCaptor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
-        verify(jdbc).queryForList(sqlCaptor.capture(), paramsCaptor.capture());
+        verify(warehouseJdbc).queryForList(sqlCaptor.capture(), paramsCaptor.capture());
 
         assertThat(paramsCaptor.getValue().getValue("from")).isEqualTo("2024-01-01");
         assertThat(paramsCaptor.getValue().getValue("to")).isEqualTo("2026-12-31");
-        assertThat(sqlCaptor.getValue())
-                .contains("WITH b2b_rows AS")
-                .contains("N'시력교정'")
-                .contains("Cataract_Operationdata")
-                .contains("Cataract_Exam")
-                .contains("COUNT(*) AS caseCount")
-                .contains("SUM(x.op_cost) AS opCost");
-    }
-
-    @Test
-    void dataPlatform_활성이면_웨어하우스_SQL과_Postgres_방언을_사용한다() {
-        NamedParameterJdbcTemplate warehouseJdbc = org.mockito.Mockito.mock(NamedParameterJdbcTemplate.class);
-        B2bRevenueStatsRepository warehouseRepo = new B2bRevenueStatsRepository(jdbc, warehouseJdbc, true);
-        when(warehouseJdbc.queryForList(anyString(), any(MapSqlParameterSource.class))).thenReturn(List.of());
-
-        warehouseRepo.findMonthlyRevenue(List.of(2026));
-
-        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(warehouseJdbc).queryForList(sqlCaptor.capture(), any(MapSqlParameterSource.class));
-        // statsJdbc 는 호출되지 않는다.
-        org.mockito.Mockito.verifyNoInteractions(jdbc);
 
         String sql = sqlCaptor.getValue();
         assertThat(sql)

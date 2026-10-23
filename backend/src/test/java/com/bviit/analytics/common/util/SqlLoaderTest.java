@@ -8,8 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SqlLoaderTest {
 
-    private static final String SYSTEM_SQL = "sql/softcrm/reservation/stats/select-system-daily-counts.sql";
-    private static final String CATARACT_SQL = "sql/softcrm/reservation/stats/select-cataract-daily-counts.sql";
+    private static final String SYSTEM_SQL = "sql/warehouse/reservation/stats/select-system-daily-counts.sql";
+    private static final String CATARACT_SQL = "sql/warehouse/reservation/stats/select-cataract-daily-counts.sql";
 
     @Test
     void 존재하는_sql_리소스를_utf8로_읽는다() {
@@ -17,9 +17,9 @@ class SqlLoaderTest {
 
         assertThat(sql)
                 .isNotEmpty()
-                .contains("SET NOCOUNT ON")
-                .contains("예약날짜", "인입콜", "응대콜");
-        assertThat(SqlLoader.load(CATARACT_SQL)).contains("백내장_내원");
+                .contains("WITH")
+                .contains("예약통계_시력교정");
+        assertThat(SqlLoader.load(CATARACT_SQL)).contains("예약통계_백내장");
     }
 
     @Test
@@ -33,7 +33,7 @@ class SqlLoaderTest {
     void sql을_trim하지_않고_끝까지_읽는다() {
         String sql = SqlLoader.load(SYSTEM_SQL).replace("\r\n", "\n");
 
-        assertThat(sql).startsWith("SET NOCOUNT ON;");
-        assertThat(sql).endsWith("ORDER BY Z.RESERVE_DATE\n");
+        assertThat(sql).startsWith("-- 예약통계_시력교정");
+        assertThat(sql).endsWith("ORDER BY Z.reserve_date\n");
     }
 }
