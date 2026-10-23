@@ -62,9 +62,6 @@ RUN --mount=type=secret,id=nexus_id \
 FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
 
-# 레거시 MSSQL(jtds) 등 TLSv1/1.1 만 지원하는 원격지 대비 — Jenkins 파이프라인과 동일 정책.
-RUN sed -i 's/TLSv1, TLSv1.1,//g' $JAVA_HOME/conf/security/java.security
-
 # 레거시 홈페이지 MariaDB SSH 터널 (계정+패스워드 인증) — SSH_HOST 가 설정된 경우 entrypoint 가
 # 컨테이너 안에서 sshpass 로 터널을 연다. 사이드카 컨테이너·서버측 systemd 없이 자립 동작.
 # openssh-client / sshpass / netcat-openbsd 세 패키지 합쳐 약 ~2MB.

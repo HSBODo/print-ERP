@@ -62,7 +62,7 @@ stats:
     examination:
       enabled: ${STATS_CACHE_EXAMINATION_ENABLED:true}
 
-# 해외마케팅 시트는 Postgres(마트)에 보관하고 CRM 정보는 기존 STATS_DB_* 원본 연결로 직접 조회한다.
+# 해외마케팅 시트는 Postgres(마트)에 보관하고 CRM 정보는 warehouse(raw.raw_crm_*) 에서 동기화 때 조회한다.
 overseas:
   google-sheets:
     # true일 때 Google Sheet 전체를 마트 캐시에 갱신하는 API(POST /api/overseas-marketing/sync-sheet)를 등록한다.

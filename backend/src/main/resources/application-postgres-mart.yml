@@ -2,11 +2,11 @@
 # Postgres Mart Profile
 # Profile: postgres-mart (또는 local/dev/prod 그룹을 통해 자동 활성)
 #
-# 아키텍처:
-#   Postgres (@Primary) → JPA + 마트 조회 (mart_*, list_*) + User
-#   MSSQL (stats)        → 배치 전용 (읽기) — 매일 03:00 D-1 append
+# 아키텍처 (2026-10-23 PR#2 이후):
+#   Postgres (@Primary)       → JPA + 마트 조회 (mart_*, list_*) + User
+#   warehouse (Postgres RDS)  → raw.* 직접 조회 + 배치 적재 입력 (읽기)
 #
-# 관련 문서: docs/databatch/strategy.md
+# 관련 문서: docs/databatch/strategy.md · docs/data-platform/external-db-decommission.md
 # ========================================
 
 spring:
@@ -36,22 +36,9 @@ app:
   seed:
     enabled: false
 
-# --- Batch source (MSSQL, read-only) ---
-# 배치가 하루 1회 CRM MSSQL을 읽어 Postgres 마트에 적재. 다른 시점에는 접근 없음.
-stats:
-  datasource:
-    url: ${STATS_DB_URL:}
-    username: ${STATS_DB_USERNAME:}
-    password: ${STATS_DB_PASSWORD:}
-    driver-class-name: net.sourceforge.jtds.jdbc.Driver
-    hikari:
-      maximum-pool-size: 3
-      read-only: true
-      connection-timeout: 10000
-
 # --- Data warehouse (Postgres RDS, read-only) ---
-# 신규 데이터 플랫폼(2026-09-23~) — bnviit_datawarehouse.
-# STATS(MSSQL SOFTCRM) 원본과 병행 운영, warehouseJdbcTemplate 빈으로 주입.
+# 데이터 플랫폼(2026-09-23 도입 · 2026-10-23 단독 소스화) — bnviit_datawarehouse.
+# 모든 통계 리포지토리가 warehouseJdbcTemplate 하나만 주입받아 raw.* / mart 를 조회한다.
 warehouse:
   datasource:
     url: ${WAREHOUSE_URL:jdbc:postgresql://${WAREHOUSE_HOST:localhost}:${WAREHOUSE_PORT:5432}/${WAREHOUSE_DB:dummy}}
