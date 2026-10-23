@@ -44,11 +44,10 @@ project-root/
 │   #   reservation/controller/ReservationChannelController      → /api/stats/reservation-channel · v_reservation_channel 뷰
 │   #   surgery/controller/AccumulatedEyeController              → /api/accumulated-eyes (OPERATION_ACCUMULATED_EYE_COUNT 원천 마트 적재)
 │   ├── src/main/resources/
-│   │   ├── application.yml                     # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
+│   │   ├── application.yml                     # 공통 — datasource(primary·warehouse)·JPA·배치 기본값·프로파일 그룹({local|dev|prod} → postgres-mart)
 │   │   ├── application-local.yml               # 로컬 개발 (로컬 Docker Postgres, 배치 비활성)
 │   │   ├── application-dev.yml                 # 개발 서버 (Dev Postgres + warehouse)
 │   │   ├── application-prod.yml                # 운영 (Prod Postgres + warehouse + Slack 알림)
-│   │   ├── application-postgres-mart.yml       # 마트 인프라 (batch DataSource·스케줄러) — 위 셋에 group include
 │   │   └── sql/                                # 도메인별 .sql 리소스 (SqlLoader 로딩)
 │   └── build.gradle
 │
