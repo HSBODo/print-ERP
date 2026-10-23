@@ -62,12 +62,9 @@ RUN --mount=type=secret,id=nexus_id \
 FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
 
-# 레거시 홈페이지 MariaDB SSH 터널 (계정+패스워드 인증) — SSH_HOST 가 설정된 경우 entrypoint 가
-# 컨테이너 안에서 sshpass 로 터널을 연다. 사이드카 컨테이너·서버측 systemd 없이 자립 동작.
-# openssh-client / sshpass / netcat-openbsd 세 패키지 합쳐 약 ~2MB.
+# Infisical CLI 설치 (운영 시크릿 조달용).
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends openssh-client sshpass netcat-openbsd \
-    curl ca-certificates gnupg && \
+    apt-get install -y --no-install-recommends curl ca-certificates gnupg && \
     curl -1sLf 'https://artifacts-cli.infisical.com/setup.deb.sh' | bash && \
     apt-get update && apt-get install -y infisical && \
     rm -rf /var/lib/apt/lists/*

@@ -1,14 +1,10 @@
--- 데이터 플랫폼(bnviit_datawarehouse) 버전 — data-platform 프로파일에서 사용.
--- MSSQL 원본: sql/softcrm/marketing/customer-details.sql
+-- 데이터 플랫폼(bnviit_datawarehouse) 버전.
 -- 이관: 2026-10-07 QUERY_DIRECT #2 (OverseasMarketing)
 --
--- ⚠️ 선결 요건 (데이터 플랫폼 팀 요청 완료 · 적재 대기 중):
---   docs/data-platform/migration-strategy.md §11.7 참조
---   - raw.raw_crm_custom_history  (CUSTOM_HISTORY — 고객 최초 등록일)
---   - raw.raw_crm_lens            (LENS — 드림렌즈 처방 이력)
---   - raw.raw_crm_lens_cfg        (LENS_CFG — 드림렌즈 종류명)
---   위 3개가 raw 에 적재되기 전에 data-platform.enabled=true 로 실행하면
---   relation does not exist 로 실패한다 — 운영 전환 전 적재 확인 필수.
+-- 참조 raw 테이블:
+--   raw.raw_crm_custom_history  (CUSTOM_HISTORY — 고객 최초 등록일)
+--   raw.raw_crm_lens            (LENS — 드림렌즈 처방 이력)
+--   raw.raw_crm_lens_cfg        (LENS_CFG — 드림렌즈 종류명)
 --
 -- 방언 변환:
 --   CUSTOM·NationCustom_CFG·RESERVATION·OPERATIONDATA → raw.raw_crm_<lower>

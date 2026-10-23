@@ -9,12 +9,12 @@ import java.util.Map;
  * <p>온라인 예약 공식 = 네이버 + 카카오톡 + <b>홈페이지(리스트 화면 raw 건수)</b>. 이 인터페이스가
  * '홈페이지' 몫을 제공한다({@link com.bviit.analytics.reservation.service.ReservationOverallStatsService}).
  *
- * <p>두 구현이 있다:
+ * <p>두 구현이 있다 (둘 다 {@code postgres-mart} 프로파일 · warehouse Postgres 조회):
  * <ul>
- *   <li>{@link ReservationListHomepageRepository} — 레거시 소스(SQLite/MariaDB) 직결.
- *       {@code homepage.datasource.url} 이 설정된 경우에만 빈으로 등록된다.
+ *   <li>{@link ReservationListHomepageRepository} — warehouse {@code raw.raw_homepage_tbl_counsel}
+ *       직접 조회. 배치({@link com.bviit.analytics.batch.job.ReservationListHomepageMartJob}) 가 사용.
  *   <li>{@link ReservationListHomepageMartRepository} — {@code mart_list_reservation_homepage} 마트 조회.
- *       {@code postgres-mart} 프로파일에서 {@code @Primary} — Optional 이 마트 쪽으로 해결된다.
+ *       {@code @Primary} — Optional 이 마트 쪽으로 해결된다 (앱 조회 경로).
  * </ul>
  *
  * <p><b>배치 순서 결합</b> — postgres-mart 에서 마트를 읽으므로, 이 인터페이스 사용 잡보다

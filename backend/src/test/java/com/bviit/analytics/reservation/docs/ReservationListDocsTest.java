@@ -138,9 +138,9 @@ class ReservationListDocsTest {
                                 .tag("Reservation")
                                 .summary("예약자 리스트_홈페이지 (레거시)")
                                 .description("counsel/online_list.php(SCR-39) 목록. 조회 전용 — 레거시 화면의 쓰기 액션(삭제·"
-                                        + "공개여부 토글·완료처리)은 옮기지 않는다. HOMEPAGE_DATASOURCE_URL 미설정 시 503. "
-                                        + "live=false 스냅샷이면 lastRegDate 를 화면이 '천장'으로 해석해 이후 구간 경고를 띄움. "
-                                        + "MEDICAL·ALL 부서.")
+                                        + "공개여부 토글·완료처리)은 옮기지 않는다. warehouse mart_list_reservation_homepage 조회. "
+                                        + "live=false (마트는 배치 이후까지만 담아 스냅샷 의미). "
+                                        + "lastRegDate 를 화면이 '천장'으로 해석해 이후 구간 경고를 띄움. MEDICAL·ALL 부서.")
                                 .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — MEDICAL·ALL 부서"))
                                 .queryParameters(
                                         parameterWithName("from").description("등록일 시작 (YYYY-MM-DD)"),

@@ -134,7 +134,7 @@ project-root/
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
 | reservation-list | 예약자 리스트 | /stats/reservation-list | 예약 | 완료 (메뉴 순서: 예약 종합보다 앞) |
-| reservation-list-homepage | 예약자 리스트_홈페이지 | /stats/reservation-list-homepage | 예약 | 완료 (레거시 홈페이지 소스 · `HOMEPAGE_DATASOURCE_URL` 미설정 시 503) |
+| reservation-list-homepage | 예약자 리스트_홈페이지 | /stats/reservation-list-homepage | 예약 | 완료 (warehouse `raw.raw_homepage_tbl_counsel` 조회 · 2026-10-23 Phase 3 로 레거시 MariaDB/SQLite 직결 제거) |
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
