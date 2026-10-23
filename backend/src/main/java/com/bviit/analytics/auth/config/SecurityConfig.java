@@ -165,7 +165,7 @@ public class SecurityConfig {
                 auth.requestMatchers("/api/report/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/exam-list/**", "/api/cataract-exam-list/**",
-                                "/api/all-exam-list/**", "/api/eoeis-checkup/**")
+                                "/api/all-exam-list/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/surgery-list/**", "/api/reoperation-decisions/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");

@@ -1,13 +1,10 @@
 import { api } from '#shared/api/client'
-import { apiResponseOf } from '#shared/api/utils'
 
 import {
   type AllExamListItem,
   allExamListResponseSchema,
   type CataractExamListItem,
   cataractExamListResponseSchema,
-  type EoeisCheckupResult,
-  eoeisCheckupResultSchema,
   examCountByClassResponseSchema,
   type ExamCountByClassRow,
   examinationResponseSchema,
@@ -76,17 +73,6 @@ export const examApi = {
       signal,
     })
     return cataractExamListResponseSchema.parse(data).data
-  },
-  getEoeisCheckupStats: async (
-    from: string,
-    to: string,
-    signal?: AbortSignal,
-  ): Promise<EoeisCheckupResult> => {
-    const { data } = await api.get<unknown>('/eoeis-checkup', {
-      params: { from, to },
-      signal,
-    })
-    return apiResponseOf(eoeisCheckupResultSchema).parse(data).data
   },
   getExamCountByClass: async (
     year: number,

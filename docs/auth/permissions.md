@@ -123,7 +123,7 @@
 | **마케팅** | reservation-channel · channel-profit · channel-analysis · accumulated-eyes · marketing · **sms** | **MARKETING** (MEDICAL 도 접근 X) |
 | **해외마케팅** | overseas-marketing-receptions · overseas-marketing-statistics · overseas-reservation-stats (2026-09-09 이관 · 별도 최상위 섹션) | **OVERSEAS_MARKETING** (2026-09-17 MARKETING 배제 · MEDICAL 도 접근 X) |
 | 예약 | reservation-list · reservation-overall · reservation-stats-system · reservation-stats-cataract · reservation-list-homepage · (reservation) | MEDICAL |
-| 검사 | overall-exam · overall-exam-weekly · exam-list · cataract-exam-list · all-exam-list · eoeis-checkup · examination · procedure-exam | MEDICAL |
+| 검사 | overall-exam · overall-exam-weekly · exam-list · cataract-exam-list · all-exam-list · examination · procedure-exam | MEDICAL |
 | 전환&성공률 | consultation-rate · cataract-reservation-rate · stop-rate · stop-reason | MEDICAL |
 | 수술 | surgery-list · surgery · surgery-ratio · surgery-composition | MEDICAL |
 | 외래 | outpatient-list · outpatient-count | MEDICAL |
@@ -197,7 +197,7 @@ ALTER TABLE users ADD CONSTRAINT users_role_department_scope_ck CHECK (
 - **MARKETING 전용** — `/api/stats/reservation-channel/**`, `/api/stats/channel-profit/**`, `/api/stats/marketing/**`, `/api/accumulated-eyes/**`, `/api/sms-management/**` (조회·홀딩·수신거부·수동 추가 등)
 - **MARKETING·OVERSEAS_MARKETING 개방** (2026-09-11): `/api/overseas-marketing/**` (해외마케팅 조회·수기 입력·수동 매칭 · **단 `POST /sync-sheet`·`/sync-crm` 은 ADMIN 만**)
 - **홈(대시보드) 요약 KPI — 전 부서 개방** (§ 5-1 "홈화면" 규정 이행 · 2026-09-07 · 2026-09-11 OVERSEAS_MARKETING 추가): `GET /api/stats/reservation-overall/monthly` · `GET /api/stats/procedure-exam/monthly` · `GET /api/stats/surgery/panel/trend` (KPI·월별 추이·시술별 비중 공용) · `GET /api/stats/outpatient-count/monthly` · `GET /api/stats/reservation-stats-system` (base 경로만 · 하위 `/cell`·`/diagnostics/**` 는 MEDICAL 유지)
-- **MEDICAL 전용** — `/api/stats/**` (그 외), `/api/report/**`, `/api/exam-list/**`, `/api/cataract-exam-list/**`, `/api/all-exam-list/**`, `/api/eoeis-checkup/**`, `/api/surgery-list/**`, `/api/reoperation-decisions/**`, `/api/outpatient-list/**`, `/api/reservation-list/**`, `/api/reservation-list-homepage/**`, `/api/dreamlens-ledger/**`
+- **MEDICAL 전용** — `/api/stats/**` (그 외), `/api/report/**`, `/api/exam-list/**`, `/api/cataract-exam-list/**`, `/api/all-exam-list/**`, `/api/surgery-list/**`, `/api/reoperation-decisions/**`, `/api/outpatient-list/**`, `/api/reservation-list/**`, `/api/reservation-list-homepage/**`, `/api/dreamlens-ledger/**`
 - **ADMIN 전용** — `/api/admin/**`, `PUT /api/sms-management/offsets`, `POST /api/sms-management/{send,sync,targets/import}`, `POST /api/overseas-marketing/{sync-sheet,sync-crm}` (**2026-09-11 강화**: 해외마케팅 두 동기화 잡은 무거운 외부 조회를 켜므로 ADMIN 만) (예외 두 건: `GET /api/admin/batch/sms/queue/{status,rows,statuses}` 3종은 MARKETING 개방 · SMS 페이지 진입 시 자동 조회 / `POST /api/admin/batch/sms/queue/retry` 는 MANAGER 이상 + MARKETING 부서 개방 · 2026-09-07 완화)
 
 `DEPT_ALL` 이 항상 허용 목록에 들어가 있어 ADMIN·DIRECTOR 는 자동 통과.

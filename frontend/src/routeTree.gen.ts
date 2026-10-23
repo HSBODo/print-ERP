@@ -31,7 +31,6 @@ import { Route as AuthStatsetcB2bRevenueRouteImport } from './routes/_auth/stats
 import { Route as AuthStatsetcDreamlensRevenueRouteImport } from './routes/_auth/stats/(etc)/dreamlens-revenue'
 import { Route as AuthStatsexamAllExamListRouteImport } from './routes/_auth/stats/(exam)/all-exam-list'
 import { Route as AuthStatsexamCataractExamListRouteImport } from './routes/_auth/stats/(exam)/cataract-exam-list'
-import { Route as AuthStatsexamEoeisCheckupRouteImport } from './routes/_auth/stats/(exam)/eoeis-checkup'
 import { Route as AuthStatsexamExamListRouteImport } from './routes/_auth/stats/(exam)/exam-list'
 import { Route as AuthStatsexamExaminationRouteImport } from './routes/_auth/stats/(exam)/examination'
 import { Route as AuthStatsexamOverallExamRouteImport } from './routes/_auth/stats/(exam)/overall-exam'
@@ -183,12 +182,6 @@ const AuthStatsexamCataractExamListRoute =
   AuthStatsexamCataractExamListRouteImport.update({
     id: '/stats/(exam)/cataract-exam-list',
     path: '/stats/cataract-exam-list',
-    getParentRoute: () => AuthRouteRoute,
-  } as any)
-const AuthStatsexamEoeisCheckupRoute =
-  AuthStatsexamEoeisCheckupRouteImport.update({
-    id: '/stats/(exam)/eoeis-checkup',
-    path: '/stats/eoeis-checkup',
     getParentRoute: () => AuthRouteRoute,
   } as any)
 const AuthStatsexamExamListRoute = AuthStatsexamExamListRouteImport.update({
@@ -385,7 +378,6 @@ export interface FileRoutesByFullPath {
   '/stats/dreamlens-revenue': typeof AuthStatsetcDreamlensRevenueRoute
   '/stats/all-exam-list': typeof AuthStatsexamAllExamListRoute
   '/stats/cataract-exam-list': typeof AuthStatsexamCataractExamListRoute
-  '/stats/eoeis-checkup': typeof AuthStatsexamEoeisCheckupRoute
   '/stats/exam-list': typeof AuthStatsexamExamListRoute
   '/stats/examination': typeof AuthStatsexamExaminationRoute
   '/stats/overall-exam': typeof AuthStatsexamOverallExamRoute
@@ -438,7 +430,6 @@ export interface FileRoutesByTo {
   '/stats/dreamlens-revenue': typeof AuthStatsetcDreamlensRevenueRoute
   '/stats/all-exam-list': typeof AuthStatsexamAllExamListRoute
   '/stats/cataract-exam-list': typeof AuthStatsexamCataractExamListRoute
-  '/stats/eoeis-checkup': typeof AuthStatsexamEoeisCheckupRoute
   '/stats/exam-list': typeof AuthStatsexamExamListRoute
   '/stats/examination': typeof AuthStatsexamExaminationRoute
   '/stats/overall-exam': typeof AuthStatsexamOverallExamRoute
@@ -493,7 +484,6 @@ export interface FileRoutesById {
   '/_auth/stats/(etc)/dreamlens-revenue': typeof AuthStatsetcDreamlensRevenueRoute
   '/_auth/stats/(exam)/all-exam-list': typeof AuthStatsexamAllExamListRoute
   '/_auth/stats/(exam)/cataract-exam-list': typeof AuthStatsexamCataractExamListRoute
-  '/_auth/stats/(exam)/eoeis-checkup': typeof AuthStatsexamEoeisCheckupRoute
   '/_auth/stats/(exam)/exam-list': typeof AuthStatsexamExamListRoute
   '/_auth/stats/(exam)/examination': typeof AuthStatsexamExaminationRoute
   '/_auth/stats/(exam)/overall-exam': typeof AuthStatsexamOverallExamRoute
@@ -548,7 +538,6 @@ export interface FileRouteTypes {
     | '/stats/dreamlens-revenue'
     | '/stats/all-exam-list'
     | '/stats/cataract-exam-list'
-    | '/stats/eoeis-checkup'
     | '/stats/exam-list'
     | '/stats/examination'
     | '/stats/overall-exam'
@@ -601,7 +590,6 @@ export interface FileRouteTypes {
     | '/stats/dreamlens-revenue'
     | '/stats/all-exam-list'
     | '/stats/cataract-exam-list'
-    | '/stats/eoeis-checkup'
     | '/stats/exam-list'
     | '/stats/examination'
     | '/stats/overall-exam'
@@ -655,7 +643,6 @@ export interface FileRouteTypes {
     | '/_auth/stats/(etc)/dreamlens-revenue'
     | '/_auth/stats/(exam)/all-exam-list'
     | '/_auth/stats/(exam)/cataract-exam-list'
-    | '/_auth/stats/(exam)/eoeis-checkup'
     | '/_auth/stats/(exam)/exam-list'
     | '/_auth/stats/(exam)/examination'
     | '/_auth/stats/(exam)/overall-exam'
@@ -846,13 +833,6 @@ declare module '@tanstack/react-router' {
       path: '/stats/cataract-exam-list'
       fullPath: '/stats/cataract-exam-list'
       preLoaderRoute: typeof AuthStatsexamCataractExamListRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/stats/(exam)/eoeis-checkup': {
-      id: '/_auth/stats/(exam)/eoeis-checkup'
-      path: '/stats/eoeis-checkup'
-      fullPath: '/stats/eoeis-checkup'
-      preLoaderRoute: typeof AuthStatsexamEoeisCheckupRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/stats/(exam)/exam-list': {
@@ -1082,7 +1062,6 @@ interface AuthRouteRouteChildren {
   AuthStatsetcDreamlensRevenueRoute: typeof AuthStatsetcDreamlensRevenueRoute
   AuthStatsexamAllExamListRoute: typeof AuthStatsexamAllExamListRoute
   AuthStatsexamCataractExamListRoute: typeof AuthStatsexamCataractExamListRoute
-  AuthStatsexamEoeisCheckupRoute: typeof AuthStatsexamEoeisCheckupRoute
   AuthStatsexamExamListRoute: typeof AuthStatsexamExamListRoute
   AuthStatsexamExaminationRoute: typeof AuthStatsexamExaminationRoute
   AuthStatsexamOverallExamRoute: typeof AuthStatsexamOverallExamRoute
@@ -1139,7 +1118,6 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthStatsetcDreamlensRevenueRoute: AuthStatsetcDreamlensRevenueRoute,
   AuthStatsexamAllExamListRoute: AuthStatsexamAllExamListRoute,
   AuthStatsexamCataractExamListRoute: AuthStatsexamCataractExamListRoute,
-  AuthStatsexamEoeisCheckupRoute: AuthStatsexamEoeisCheckupRoute,
   AuthStatsexamExamListRoute: AuthStatsexamExamListRoute,
   AuthStatsexamExaminationRoute: AuthStatsexamExaminationRoute,
   AuthStatsexamOverallExamRoute: AuthStatsexamOverallExamRoute,

@@ -144,7 +144,6 @@ project-root/
 | exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 (**관리자 전용**) |
 | cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 (**관리자 전용**) |
 | all-exam-list | 전체 검사자 리스트 | /stats/all-exam-list | 검사 | 완료 (시력교정+백내장 통합, 종합지표 정합) |
-| eoeis-checkup | 아이리더 검사통계 | /stats/eoeis-checkup | 검사 | 완료 (**관리자 전용** · 2026-08-05 신규 · 검사자×장비/기간 피벗 · `EOEIS_DATASOURCE_URL` 미설정 시 503) |
 | examination | 시술별 | /stats/examination | 검사 | 완료 |
 | procedure-exam | 검사건수 | /stats/procedure-exam | 검사 | 완료 |
 | consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 (**관리자 전용**) |

@@ -151,21 +151,6 @@ export const cataractExamListResponseSchema = apiResponseOf(
   z.array(cataractExamListItemSchema),
 )
 
-const eoeisCheckupRowSchema = z.object({
-  operatorName: z.string(),
-  deviceName: z.string(),
-  date: z.string(),
-  count: z.number(),
-})
-
-export const eoeisCheckupResultSchema = z.object({
-  rows: z.array(eoeisCheckupRowSchema),
-  scores: z.record(z.string(), z.number()),
-})
-
-export type EoeisCheckupRow = z.infer<typeof eoeisCheckupRowSchema>
-export type EoeisCheckupResult = z.infer<typeof eoeisCheckupResultSchema>
-
 /**
  * 고객분류별 검사수(월간 레포트 도표 #7) — 한 해의 (월 × 내원동기(레포트)) 건수.
  * 백엔드: GET /api/stats/exam-count/by-class?year → ApiResponse<List<{month,motiveReport,cnt}>>.
