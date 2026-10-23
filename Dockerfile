@@ -1,21 +1,12 @@
 # ─────────────────────────────────────────────────────────────
-# Stage 1. Frontend build (Vite → frontend/dist)
-# ─────────────────────────────────────────────────────────────
-FROM node:20-alpine AS frontend-builder
-WORKDIR /workspace/frontend
-
-COPY frontend/package.json frontend/package-lock.json ./
-# npm 캐시를 레이어 밖에 둔다 — package-lock 이 바뀌어도 받아 둔 tarball 을 재사용한다.
-RUN --mount=type=cache,target=/root/.npm,sharing=locked \
-    npm ci
-
-COPY frontend/ ./
-RUN npm run build
-
-# ─────────────────────────────────────────────────────────────
-# Stage 2. Backend build (Gradle bootJar)
-#   - build.gradle 의 processResources 가 ../frontend/dist 를
-#     백엔드 static/ 으로 복사하므로 디렉터리 구조를 동일하게 유지한다.
+# Stage 1. Backend build (Gradle bootJar) — 운영은 프론트와 분리 배포.
+#   - 프론트는 별도 파이프라인(nginx·CDN 등)에서 서빙하므로
+#     이미지에 프론트 자산을 넣지 않는다. (배포 시간·이미지 크기 감소)
+#   - build.gradle 의 processResources 는 frontend/dist 를 Gradle Copy spec 으로
+#     from() 하지만, 디렉토리가 없으면 Gradle 이 자동으로 건너뛴다 →
+#     backend 만 복사해도 빌드 정상 동작.
+#   - Swagger UI 정적 자산(src/main/resources/static/docs/) 은 backend 소스에
+#     이미 있으므로 영향 없음. openapi3 산출물도 그대로 임베드된다.
 #   - Nexus(사내 라이브러리) 인증은 BuildKit secret 으로 주입.
 #     Jenkins 파이프라인의 secret id 규칙과 동일: nexus_id / nexus_pw
 #
@@ -24,6 +15,8 @@ RUN npm run build
 #         --secret id=nexus_id,env=NEXUS_USERNAME \
 #         --secret id=nexus_pw,env=NEXUS_PASSWORD \
 #         -t analytics .
+#
+#   ⚠ 로컬 개발 (프론트 포함) 용은 Dockerfile.local 을 쓴다.
 # ─────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jdk-jammy AS backend-builder
 WORKDIR /workspace/backend
@@ -56,7 +49,6 @@ RUN --mount=type=secret,id=nexus_id \
 #      지운 산출물을 캐시에서 되살려 주므로 전체 재컴파일이 일어나지 않는다.
 #    관련: docs/api-docs-strategy.md
 COPY backend/ ./
-COPY --from=frontend-builder /workspace/frontend/dist /workspace/frontend/dist
 RUN --mount=type=secret,id=nexus_id \
     --mount=type=secret,id=nexus_pw \
     --mount=type=cache,target=/root/.gradle,sharing=locked \
@@ -65,7 +57,7 @@ RUN --mount=type=secret,id=nexus_id \
         -PnexusPassword="$(cat /run/secrets/nexus_pw 2>/dev/null || true)"
 
 # ─────────────────────────────────────────────────────────────
-# Stage 3. Runtime
+# Stage 2. Runtime
 # ─────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
