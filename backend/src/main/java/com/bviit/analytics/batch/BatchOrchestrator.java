@@ -142,45 +142,6 @@ public class BatchOrchestrator {
     }
 
     /**
-     * 매일 10:00 — 예약통계(시력교정·백내장) 일별 마트를 <b>D-1 이 속한 달의 1일부터 D-1 까지</b>
-     * Rolling 재실행. 03:00 D-1 only 배치 이후 **과거 날짜에 뒤늦게 반영된** 콜센터 수정·취소분을
-     * 당일 중 흡수한다 (03:00 은 D-1 하루만 다시 봐서 과거 날짜 소급 변동을 놓침).
-     *
-     * <p>안전 근거:
-     * <ul>
-     *   <li>upsert(ON CONFLICT DO UPDATE) 로 멱등 — 매일 돌아도 결과 동일.
-     *   <li>셀 수기 보정은 {@code reservation_stats_override} 에 별도 저장되고 조회 시
-     *       {@code COALESCE} 로 얹히므로 Rolling upsert 가 덮지 않는다.
-     *   <li>범위가 당월(D-1 기준)로 한정 — 확정된 과거 월은 애초에 범위 밖이라
-     *       {@code reservation_stats_period_lock} 트리거 안 함.
-     *   <li>월초(1일) 호출 시엔 yesterday 가 전월 말일 → 전월 1일~말일 Rolling 이 된다.
-     *       같은 날 03:30 월간 reconcile 과 겹치지만 upsert 라 안전.
-     * </ul>
-     *
-     * <p>트레이드오프: MSSQL 원본 조회량이 월 중순 15일치, 월말 30일치로 증가 (하루 1회).
-     *
-     * <p>run_type=DAILY 로 기록되므로 `useBatchLastSuccess` 표시가 자연스럽게 갱신된다.
-     * jobName 은 `orchestrator[RESERVATION_STATS_INTRADAY]` 로 구분.
-     */
-    @Scheduled(cron = "${batch.mart.reservation-stats-intraday-cron:0 0 10 * * *}", zone = "Asia/Seoul")
-    public void runReservationStatsIntraday() {
-        if (!enabled) {
-            log.info("Batch disabled — skip reservation-stats intraday run");
-            return;
-        }
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        if (yesterday.getYear() < minYear) {
-            log.info("Batch skip reservation-stats intraday — target year {} < min-year {}",
-                    yesterday.getYear(), minYear);
-            return;
-        }
-        LocalDate from = yesterday.withDayOfMonth(1);
-        runWithLog(BatchRunLog.RunType.DAILY, from, yesterday,
-                ORCHESTRATOR_JOB_PREFIX + "[RESERVATION_STATS_INTRADAY]",
-                () -> reservationStatsDailyMartJob.run(from, yesterday));
-    }
-
-    /**
      * 매월 1일 03:30 — 전월 전체 재계산 (소급 수정 흡수).
      * 전월의 연도가 min-year 미만이면 skip.
      *

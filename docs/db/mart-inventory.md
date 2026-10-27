@@ -325,7 +325,7 @@ Postgres 마트끼리 SUM 해서 다른 마트를 만드는 케이스. list 를 
 
 ## 배치 · 시드 요약
 
-- **자동 배치**: `BatchOrchestrator.runDaily` (매일 03:00 D-1) + `runReservationStatsIntraday` (매일 10:00 D-1) + `runMonthlyReconcile` (매월 1일 03:30 전월).
+- **자동 배치**: `BatchOrchestrator.runDaily` (매일 03:00 · 당월 Rolling, SMS 는 D-1 하루) + `runMonthlyReconcile` (매월 1일 03:30 전월).
 - **min-year 가드**: `batch.mart.min-year=2026` — 24·25 시드 보호. 각 도메인 잡이 이 이하 write 차단.
 - **골든 시드** (담당자 확정값 · 배치가 덮지 않는 구간):
   - `mart_overall_exam_monthly` — V14 (24·25) + V16 (26 cataract) + V27 (26-01~05)
