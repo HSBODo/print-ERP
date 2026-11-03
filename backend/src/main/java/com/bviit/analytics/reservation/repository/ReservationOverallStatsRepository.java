@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 예약 종합(콜, 온라인) 통계 쿼리.
+ * 예약 종합(콜, 온라인) 통계 쿼리. ReservationReconcileService 전용(파이프라인 밖, 대사용).
  *
  * ⚠️ 레거시 BCRM '문의통계(RSS)' 종합값(콜+홈페이지+네이버+카톡, 등록일 기준, 콜센터 MySQL·네이버·해피톡
  * 다중 소스)은 운영 MSSQL 단독으로 재현 불가. 여기서는 **추정치**로, 검사예약(RESERVATION
@@ -28,9 +28,9 @@ import java.util.Map;
 @Profile("postgres-mart")
 public class ReservationOverallStatsRepository {
 
-    static final String MONTHLY_SQL = "sql/softcrm/reservation/overall/select-monthly.sql";
-    static final String MONTHLY_NAVER_SQL = "sql/softcrm/reservation/overall/select-monthly-naver.sql";
-    static final String MONTHLY_KAKAO_SQL = "sql/softcrm/reservation/overall/select-monthly-kakao.sql";
+    static final String MONTHLY_SQL       = "sql/warehouse/reservation/overall/select-monthly.sql";
+    static final String MONTHLY_NAVER_SQL = "sql/warehouse/reservation/overall/select-monthly-naver.sql";
+    static final String MONTHLY_KAKAO_SQL = "sql/warehouse/reservation/overall/select-monthly-kakao.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String monthlySql;
@@ -38,10 +38,10 @@ public class ReservationOverallStatsRepository {
     private final String monthlyKakaoSql;
 
     public ReservationOverallStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.monthlySql = SqlLoader.load(MONTHLY_SQL);
+        this.jdbc = warehouseJdbc;
+        this.monthlySql      = SqlLoader.load(MONTHLY_SQL);
         this.monthlyNaverSql = SqlLoader.load(MONTHLY_NAVER_SQL);
         this.monthlyKakaoSql = SqlLoader.load(MONTHLY_KAKAO_SQL);
     }

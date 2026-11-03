@@ -27,14 +27,12 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final List<String> allowedOrigins;
-    private final boolean h2ConsoleEnabled;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             JwtAuthenticationEntryPoint authenticationEntryPoint,
             CustomAccessDeniedHandler accessDeniedHandler,
-            @Value("${app.cors.allowed-origins:http://localhost:15173}") String allowedOrigins,
-            @Value("${spring.h2.console.enabled:false}") boolean h2ConsoleEnabled
+            @Value("${app.cors.allowed-origins:http://localhost:15173}") String allowedOrigins
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
@@ -43,7 +41,6 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
                 .toList();
-        this.h2ConsoleEnabled = h2ConsoleEnabled;
     }
 
     @Bean
@@ -82,9 +79,6 @@ public class SecurityConfig {
                 auth.requestMatchers("/api/auth/**").permitAll();
                 // 헬스체크 — Docker HEALTHCHECK·LB·업타임 모니터가 인증 없이 호출.
                 auth.requestMatchers(HttpMethod.GET, "/api/health").permitAll();
-                if (h2ConsoleEnabled) {
-                    auth.requestMatchers("/h2-console/**").permitAll();
-                }
                 // 솔라피 웹훅 — 외부(솔라피 서버)가 JWT 없이 POST 로 결과를 던져 준다.
                 // 인증 대체는 X-Solapi-Secret 헤더 서명 검증(SmsWebhookController).
                 // 반드시 sms-management 매처보다 앞에 둔다 — 뒤에 두면 규칙이 뒤덮인다.
@@ -165,7 +159,7 @@ public class SecurityConfig {
                 auth.requestMatchers("/api/report/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/exam-list/**", "/api/cataract-exam-list/**",
-                                "/api/all-exam-list/**", "/api/eoeis-checkup/**")
+                                "/api/all-exam-list/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");
                 auth.requestMatchers("/api/surgery-list/**", "/api/reoperation-decisions/**")
                         .hasAnyAuthority("DEPT_MEDICAL", "DEPT_ALL");

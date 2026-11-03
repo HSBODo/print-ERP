@@ -18,6 +18,10 @@
 --   V34 → 기본 파생 컬럼 (검사구분·유입·직업 등)
 --   V52 → + stop_yn · stop_reason_bucket 파생 (아래 stop_reason 규칙 참조)
 --   V56 → + surgery_reserve_date · surgery_date · cataract_eye_count
+--   V56 (2026-10-22 보완) → intro_type CASE 에 'VIP고객관리팀' 포함
+--     motive_report 는 'VIP고객관리팀' 을 '소개고객' 으로 묶는데 intro_type 은 '일반' 으로
+--     흘려보내 "검사자 리스트 소개구분" 과 "레포트 유입채널" 숫자가 어긋나는 문제가 있었다.
+--     담당자 결정(motive_report 의 넓은 정의 기준) 을 intro_type 에도 반영 — 두 지표 일관성 확보.
 --   ⚠️ V56 이 완전 재정의라 V34·V52 는 MartSchemaInitializer 에서 제외됨.
 --
 -- 배치 정합성: mart_overall_exam_* 이관 이후 이 뷰 하나가 검사 도메인 파생 규칙의 SSOT.
@@ -76,9 +80,10 @@ SELECT
     CASE WHEN one_day = 'Y' THEN '원데이' ELSE '일반' END AS exam_type,
     COALESCE(classification, '') AS cataract_class,
     COALESCE(patient_type, '')   AS patient_type,
+    -- 소개구분(intro_type) — 2026-10-22 'VIP고객관리팀' 포함 (motive_report 와 정합).
     CASE
-        WHEN motive_l IN ('소개고객', '소개미확인') THEN '고객소개'
-        WHEN motive_l = '소개직원'                  THEN '직원소개'
+        WHEN motive_l IN ('소개고객', '소개미확인', 'VIP고객관리팀') THEN '고객소개'
+        WHEN motive_l = '소개직원'                                 THEN '직원소개'
         ELSE '일반'
     END                          AS intro_type,
     -- 내원동기(레포트): 내원동기(대) → 레포트 9계열 매핑 (2026-07-30 담당자 엑셀 기준).

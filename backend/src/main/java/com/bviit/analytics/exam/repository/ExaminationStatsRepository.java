@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * 검사 건수 통계 쿼리 — 시력교정 + 드림렌즈 + 백내장 (docs/db/지표정의.md §1).
+ * ExamReconcileService 전용(파이프라인 밖, 대사용).
  *
  * 카테고리별 기준:
  *   시력교정 = EXAM 검사자 리스트 행 (사람) — 드림렌즈 분류 배제
@@ -22,7 +23,6 @@ import java.util.Map;
  *
  * 시력교정 + 드림렌즈 = 검사자 리스트 월별 건수와 일치해야 한다.
  *
- * MSSQL 2014 호환: STRING_AGG, TRIM 등 사용 금지 (LTRIM/RTRIM 사용).
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
  */
 @Repository
@@ -31,11 +31,11 @@ public class ExaminationStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_VISION_CORRECTION_MONTHLY_SQL = "sql/softcrm/exam/select-vision-correction-monthly.sql";
-    private static final String FIND_DREAMLENS_MONTHLY_SQL = "sql/softcrm/exam/select-dreamlens-monthly.sql";
-    private static final String FIND_CATARACT_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-monthly.sql";
-    private static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-cataract-reservation-rate-monthly.sql";
-    private static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL = "sql/softcrm/exam/select-vision-reservation-rate-monthly.sql";
+    static final String FIND_VISION_CORRECTION_MONTHLY_SQL        = "sql/warehouse/exam/select-vision-correction-monthly.sql";
+    static final String FIND_DREAMLENS_MONTHLY_SQL                = "sql/warehouse/exam/select-dreamlens-monthly.sql";
+    static final String FIND_CATARACT_MONTHLY_SQL                 = "sql/warehouse/exam/select-cataract-monthly.sql";
+    static final String FIND_CATARACT_RESERVATION_RATE_MONTHLY_SQL = "sql/warehouse/exam/select-cataract-reservation-rate-monthly.sql";
+    static final String FIND_VISION_RESERVATION_RATE_MONTHLY_SQL  = "sql/warehouse/exam/select-vision-reservation-rate-monthly.sql";
 
     private final String findVisionCorrectionMonthlySql;
     private final String findDreamlensMonthlySql;
@@ -44,9 +44,9 @@ public class ExaminationStatsRepository {
     private final String findVisionReservationRateMonthlySql;
 
     public ExaminationStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
+        this.jdbc = warehouseJdbc;
         this.findVisionCorrectionMonthlySql = SqlLoader.load(FIND_VISION_CORRECTION_MONTHLY_SQL);
         this.findDreamlensMonthlySql = SqlLoader.load(FIND_DREAMLENS_MONTHLY_SQL);
         this.findCataractMonthlySql = SqlLoader.load(FIND_CATARACT_MONTHLY_SQL);

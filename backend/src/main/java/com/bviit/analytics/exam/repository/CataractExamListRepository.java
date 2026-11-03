@@ -23,28 +23,26 @@ import java.util.Map;
  *   - 견적가/집도의/수술일 = 좌/우(OP_ESTIMATE_R/L, OperationR/L_Doc, OperationR/L_Date) 통합
  *   - 적절한수술방법·수술방법 = IOL 렌즈명
  *
- * READ-ONLY · MSSQL 2014 호환(LTRIM/RTRIM). 날짜는 char(10) 'YYYY-MM-DD'.
+ * READ-ONLY. 날짜는 char(10) 'YYYY-MM-DD'.
  */
 @Repository
 @Profile("postgres-mart")
 public class CataractExamListRepository {
 
+    static final String SQL = "sql/warehouse/exam/select-cataract-exam-list.sql";
+
     private final NamedParameterJdbcTemplate jdbc;
-
-    private static final String FIND_CATARACT_EXAM_LIST_SQL = "sql/softcrm/exam/select-cataract-exam-list.sql";
-
     private final String findCataractExamListSql;
 
     public CataractExamListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.findCataractExamListSql = SqlLoader.load(FIND_CATARACT_EXAM_LIST_SQL);
+        this.jdbc = warehouseJdbc;
+        this.findCataractExamListSql = SqlLoader.load(SQL);
     }
 
     public List<Map<String, Object>> findCataractExamList(String from, String to) {
-        String sql = findCataractExamListSql;
-        return jdbc.queryForList(sql, new MapSqlParameterSource()
+        return jdbc.queryForList(findCataractExamListSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

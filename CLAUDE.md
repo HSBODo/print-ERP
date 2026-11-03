@@ -12,7 +12,7 @@
 - **HTTP**: axios (`shared/api/client.ts` 인스턴스 1개)
 - **라우팅**: TanStack Router
 - **폼**: react-hook-form + Zod
-- **DB**: H2 (개발, 기본) / PostgreSQL 마트 (운영, `application-postgres-mart.yml`)
+- **DB**: PostgreSQL (primary 마트 + warehouse RDS) — 프로파일 필수(local/dev/prod), H2 는 테스트 전용
 - **인증**: Spring Security + JWT (jjwt, HMAC-SHA256)
 - **언어**: 한국어 UI
 
@@ -35,7 +35,7 @@ project-root/
 │   │   ├── report/                      # 주차 레포트 (ISO 주차 집계 API, 마트 경유 조회)
 │   │   ├── marketing/                   # 채널별 수익성(ChannelProfitController) · 해외마케팅(접수리스트 시트캐시+수기입력·CRM 매칭·통계·예약통계 — /api/overseas-marketing)
 │   │   ├── sms/                         # 문자 발송 — 대상(target) 관리·홀딩·수기 발송·오프셋·수신동의(opt-out)·Solapi 웹훅 · MARKETING 부서(조회) + ADMIN(편집·[지금 실행]·[실패 재실행])
-│   │   ├── accounting/                  # 회계 — 진료 수납(의사랑 IPLUS 링크드서버 OPENQUERY)·시력교정 매출(SOFTCRM 비급여 수납) 마트 조회 /api/accounting · 임원(ADMIN·DIRECTOR)
+│   │   ├── accounting/                  # 회계 — 진료 수납(의사랑 raw_emr_*)·시력교정 매출(raw_crm_*) 마트 조회 /api/accounting · 임원(ADMIN·DIRECTOR)
 │   │   ├── etc/                         # B2B 매출 · 드림렌즈 장부(entity+CRUD) — init/ 하위에 초기 시더 배치
 │   │   └── batch/                       # 배치 인프라 — job(*MartJob·*MartWriter) · admin(reconcile·admin/controller) · controller(BatchStatusController) · repository · dto
 │   │
@@ -44,11 +44,10 @@ project-root/
 │   #   reservation/controller/ReservationChannelController      → /api/stats/reservation-channel · v_reservation_channel 뷰
 │   #   surgery/controller/AccumulatedEyeController              → /api/accumulated-eyes (OPERATION_ACCUMULATED_EYE_COUNT 원천 마트 적재)
 │   ├── src/main/resources/
-│   │   ├── application.yml                     # 공통 + 프로파일 그룹 ({local|dev|prod} → postgres-mart 포함)
-│   │   ├── application-local.yml               # 로컬 개발 (H2 인메모리, 배치 비활성)
-│   │   ├── application-dev.yml                 # 개발 서버 (Postgres 마트 + MSSQL 배치)
-│   │   ├── application-prod.yml                # 운영 (Postgres 마트 + MSSQL 배치 + Slack 알림)
-│   │   ├── application-postgres-mart.yml       # 마트 인프라 (batch DataSource·스케줄러) — 위 셋에 group include
+│   │   ├── application.yml                     # 공통 — datasource(primary·warehouse)·JPA·배치 기본값·프로파일 그룹({local|dev|prod} → postgres-mart)
+│   │   ├── application-local.yml               # 로컬 개발 (로컬 Docker Postgres, 배치 비활성)
+│   │   ├── application-dev.yml                 # 개발 서버 (Dev Postgres + warehouse)
+│   │   ├── application-prod.yml                # 운영 (Prod Postgres + warehouse + Slack 알림)
 │   │   └── sql/                                # 도메인별 .sql 리소스 (SqlLoader 로딩)
 │   └── build.gradle
 │
@@ -134,7 +133,7 @@ project-root/
 | monthly-report | 월간 레포트 | /report/monthly | Report | 완료 |
 | reservation | 예약 건수 | /stats/reservation | 예약 | 완료 (메뉴 숨김·라우트 유지) |
 | reservation-list | 예약자 리스트 | /stats/reservation-list | 예약 | 완료 (메뉴 순서: 예약 종합보다 앞) |
-| reservation-list-homepage | 예약자 리스트_홈페이지 | /stats/reservation-list-homepage | 예약 | 완료 (레거시 홈페이지 소스 · `HOMEPAGE_DATASOURCE_URL` 미설정 시 503) |
+| reservation-list-homepage | 예약자 리스트_홈페이지 | /stats/reservation-list-homepage | 예약 | 완료 (warehouse `raw.raw_homepage_tbl_counsel` 조회 · 2026-10-23 Phase 3 로 레거시 MariaDB/SQLite 직결 제거) |
 | reservation-overall | 예약 종합 | /stats/reservation-overall | 예약 | 완료 (3탭: 종합/온라인/콜, 지표정의 §5.1) |
 | reservation-stats-system | 예약통계_시력교정 | /stats/reservation-stats-system | 예약 | 완료 (주차별 채널 분해, RSS 스냅샷+라이브) |
 | reservation-stats-cataract | 예약통계_백내장 | /stats/reservation-stats-cataract | 예약 | 완료 (스냅샷 전용) |
@@ -144,7 +143,6 @@ project-root/
 | exam-list | 검사자 리스트 | /stats/exam-list | 검사 | 완료 (**관리자 전용**) |
 | cataract-exam-list | 백내장 검사자 리스트 | /stats/cataract-exam-list | 검사 | 완료 (**관리자 전용**) |
 | all-exam-list | 전체 검사자 리스트 | /stats/all-exam-list | 검사 | 완료 (시력교정+백내장 통합, 종합지표 정합) |
-| eoeis-checkup | 아이리더 검사통계 | /stats/eoeis-checkup | 검사 | 완료 (**관리자 전용** · 2026-08-05 신규 · 검사자×장비/기간 피벗 · `EOEIS_DATASOURCE_URL` 미설정 시 503) |
 | examination | 시술별 | /stats/examination | 검사 | 완료 |
 | procedure-exam | 검사건수 | /stats/procedure-exam | 검사 | 완료 |
 | consultation-rate | 전환율 | /stats/consultation-rate | 전환&성공률 | 완료 (**관리자 전용**) |
@@ -170,8 +168,8 @@ project-root/
 | cancel-rate | 예약취소율 | /stats/cancel-rate | 취소&부도 | 미구현 |
 | no-show-rate | 부도율 | /stats/no-show-rate | 취소&부도 | 미구현 |
 | unit-price | 객단가 | /stats/unit-price | 객단가 | 미구현 |
-| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 완료 (**임원 이상** · 2026-09-15 · 의사랑 `PAOSUNAB_New`/`PAISUNAB_New` 원장 → `list_medical_receipt` 2026~ · 링크드서버 OPENQUERY) |
-| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 완료 (**임원 이상** · SOFTCRM `CstPrcSub`+`PrcItmDtl` → `list_vision_receipt` 2023~ · 취소행 음수 상계) |
+| accounting-medical | 진료 수납 | /accounting/medical-receipts | 회계 | 완료 (**임원 이상** · 2026-09-15 · 의사랑 `raw_emr_pa_osunab_new`/`raw_emr_pa_isunab_new` 원장 → `list_medical_receipt` 2026~) |
+| accounting-vision | 시력교정 매출 내역 | /accounting/vision-revenue | 회계 | 완료 (**임원 이상** · `raw_crm_cstprcsub`+`raw_crm_prcitmdtl` → `list_vision_receipt` 2023~ · 취소행 음수 상계) |
 | accounting-vision-summary | 시력교정 매출 집계 | /accounting/vision-revenue-summary | 회계 | 완료 (**임원 이상** · 한울회계법인 피벗(매입사×진료명) · `list_vision_receipt` 를 화면에서 접음) |
 | accounting-vision-chart | 시력교정 매출 그래프 | /accounting/vision-revenue-chart | 회계 | 완료 (**임원 이상** · `list_vision_receipt` 월별 GROUP BY) |
 | accounting-medical-chart | 진료 매출 그래프 | /accounting/medical-revenue-chart | 회계 | 완료 (**임원 이상** · 행 연도(2026~)는 `list_medical_receipt` 재집계+구분 필터 · 그 전은 `mart_medical_receipt_monthly` 레거시 순액) |
@@ -241,7 +239,7 @@ POST   /api/dreamlens-ledger                          # 행 추가
 PUT    /api/dreamlens-ledger/{id}                     # 행 수정 (전체 필드 교체)
 DELETE /api/dreamlens-ledger/{id}                     # 행 삭제
 
-# 해외마케팅 (마트 overseas_marketing_sheet 조회 + 수기 CRUD · CRM(MSSQL) 은 동기화 시에만 직결 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제)
+# 해외마케팅 (마트 overseas_marketing_sheet 조회 + 수기 CRUD · CRM 매칭은 warehouse raw_crm_* 를 동기화 때만 조회 · OVERSEAS_MARKETING 부서 전용 · 2026-09-17 MARKETING 배제)
 GET    /api/overseas-marketing/receptions?from=&to=&dateType=inquiry_date&dateEnabled=true&status=&source=all&unmatched=false
 POST   /api/overseas-marketing/receptions                  # 수기 행 추가 (origin='manual')
 PUT    /api/overseas-marketing/receptions/{rowNumber}      # 시트 원본 컬럼 수정
@@ -291,7 +289,7 @@ DELETE /api/admin/users/{id}                # 삭제 (본인·마지막 ADMIN 40
 >   수기 행은 `origin='manual'` + 추가자(`created_by`=로그인 ID), 수정은 시트 원본 컬럼에 한정.
 >   **조회는 마트만 읽는다**(`sql/mart/marketing/receptions.sql`): CRM 매칭은 `customer_no`/`matched_at`, 파생값(상태·수술정보·비용·외래)은
 >   `crm_snapshot`(JSON) 으로 저장돼 있고, 갱신은 화면의 [CRM 동기화] 버튼(`POST /sync-crm`, 백그라운드 잡)으로만 수행한다.
->   CRM 조회 SQL(MSSQL)은 `sql/softcrm/marketing/`(customer-candidates·customer-details·exam/surgery-date-candidates·비용·외래) 에 둔다.
+>   CRM 조회 SQL 은 `sql/warehouse/marketing/`(customer-candidates·customer-details·exam/surgery-date-candidates·비용·외래 — raw.raw_crm_* 참조) 에 둔다.
 >   **매칭 3단계**: 매칭(`customer_no` 존재) / 확인필요(`candidate_customer_no`만 존재, **또는 미매칭인데
 >   `exam_date` 에 실제 날짜(YYYY-MM-DD)가 있는 행** — 내원 이력이 있으므로 조회 시점에 승격, `receptions.sql` 파생) / 접수(둘 다 없음).
 >   동기화 매칭 규칙 — 이름+생일(월일 스왑 허용) 유일 일치, 또는 전화 뒷8자리·이메일 유일 후보 + 생일 일치·스왑이면
@@ -304,12 +302,11 @@ DELETE /api/admin/users/{id}                # 삭제 (본인·마지막 ADMIN 40
 > - `해외마케팅 예약통계`(`overseas_reservation_stats` · V65 + 시드 V66): ~2026-08-23 은 레거시 시트 시드, 이후는 접수리스트 자동 집계이며
 >   일간 화면에서 수정한 셀(`source='manual'`)이 있으면 그 값이 우선한다(`PUT /reservation-stats/{date}`).
 
-> 🔌 **화면은 마트를 읽는다.** 통계 API 는 배치가 적재한 Postgres 마트를 조회하고, MSSQL 직결은
-> 배치(적재) 시간대에만 쓴다. 그래서 SSH 터널·VPN 이 끊겨도 화면은 마지막 적재분으로 동작한다.
-> 신규 통계 API 를 만들 때 `statsJdbcTemplate`(MSSQL) 로 화면을 직접 붙이지 말 것 —
-> 마트 테이블 + `@Primary` 마트 QueryService + 배치 Job 을 함께 만든다(예: `report` 도메인).
-> 의사랑(IPLUS) 원천은 링크드서버 `[220.85.109.240]` OPENQUERY 로만 닿는다 — 안쪽 쿼리는 `sql/iplus/<domain>/*-inner.sql`(주석 가능) 에 두고
-> `common/util/OpenQuerySql` 이 주석 제거·8,000자 검증·`__OQ_FROM__/__OQ_TO__` 치환·따옴표 이스케이프 후 감싼다. 원격 장애 대비 REQUIRES_NEW 로 격리한다(`accounting`·`etc` 참조).
+> 🔌 **DataSource 는 두 개뿐 — primary (마트 Postgres) + warehouse (RDS Postgres).**
+> 통계 API 는 **primary 의 마트 테이블** 또는 **warehouse 의 `raw.*` 테이블** 을 조회한다.
+> 리포지토리는 `martJdbcTemplate` 또는 `warehouseJdbcTemplate` 하나만 주입받는다 —
+> MSSQL 직결(statsJdbc)·의사랑 IPLUS OPENQUERY 는 2026-10-23 PR#2 로 전면 제거됐다.
+> Homepage(MariaDB)·EOEIS 등 별도 외부 소스는 모두 deprecated — 신규 통계는 warehouse `raw.*` 로 접근한다.
 
 > 📅 **주차 개념 3종 주의** — 이름이 비슷하지만 버킷 규칙이 다르다.
 > - **ISO 연간 주차**(`shared/utils/isoWeek.ts` · `WeeklyReportService`): 월~일, 첫 목요일이 든 주가 1주차, 한 해 52/53주. 주차 레포트·예약통계·수술별 비중 '주차' 탭이 쓴다.
@@ -439,7 +436,7 @@ docker compose -f docker-compose.local.yml down
 # 운영/Jenkins용 docker-compose.yml · Dockerfile 은 명시적으로 요청받은 경우에만 사용
 
 # 로컬 개별 실행 (개발용)
-cd backend && ./gradlew bootRun          # Backend (H2 인메모리 기본, 프로파일 SPRING_PROFILES_ACTIVE 로 조정)
+cd backend && ./gradlew bootRun --args='--spring.profiles.active=local'   # Backend (프로파일 필수 — 미지정 시 기동 실패)
 cd frontend && npm run dev               # Frontend (Vite dev server)
 
 # 빌드/테스트

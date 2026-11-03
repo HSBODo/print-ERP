@@ -16,15 +16,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 배치 하이브리드 브릿지 — Postgres primary 리스트에서 뽑은 chart_no 셋의 O 예약·수술 요약을 MSSQL 에서 조회.
+ * 배치 하이브리드 브릿지 — Postgres primary 리스트에서 뽑은 chart_no 셋의 O 예약·수술 요약을 실시간 조회.
  *
  * 왜 이게 필요한가. list_reservation_all·list_surgery 는 배치 target range 로 잘려 담겨
  * 예약률·상담성공률 계산에 필요한 range 밖(특히 미래) 예약을 못 본다. 이 브릿지는
- * ConsultationMartJob 이 배치 실행 시점에 MSSQL 을 실시간 조회해 정확한 값을 얻게 한다.
+ * ConsultationMartJob 이 배치 실행 시점에 원천을 실시간 조회해 정확한 값을 얻게 한다.
  *
  * 다른 지표(예약 건수·외래수·중단사유)는 range 밖 데이터가 불필요해 이 브릿지를 쓰지 않는다.
  *
- * MSSQL IN 절 파라미터 한계(SQL Server 2100)를 피하려 chart_no 셋은 청크 단위로 조회한다.
+ * IN 절 파라미터는 보수적으로 청크 단위로 조회한다.
  */
 @Repository
 @Profile("postgres-mart")
@@ -32,19 +32,19 @@ public class ConsultationRateBridgeRepository {
 
     private static final int CHUNK_SIZE = 1000;
 
-    private static final String O_RESERVATION_SUMMARY_SQL = "sql/softcrm/consultation/select-o-reservation-summary-by-charts.sql";
-    private static final String OP_SUMMARY_SQL            = "sql/softcrm/consultation/select-op-summary-by-charts.sql";
+    static final String O_RESERVATION_SUMMARY_SQL = "sql/warehouse/consultation/select-o-reservation-summary-by-charts.sql";
+    static final String OP_SUMMARY_SQL            = "sql/warehouse/consultation/select-op-summary-by-charts.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String oReservationSummarySql;
     private final String opSummarySql;
 
     public ConsultationRateBridgeRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
+        this.jdbc = warehouseJdbc;
         this.oReservationSummarySql = SqlLoader.load(O_RESERVATION_SUMMARY_SQL);
-        this.opSummarySql            = SqlLoader.load(OP_SUMMARY_SQL);
+        this.opSummarySql           = SqlLoader.load(OP_SUMMARY_SQL);
     }
 
     /** chart_no 별 O 예약 요약. 결과에 없는 chart_no 는 "O 예약 없음"으로 간주. */

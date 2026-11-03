@@ -18,25 +18,24 @@ import java.util.stream.Collectors;
  *
  * 레거시 BCRM routes/b2b-corp-settlement.js를 기준으로
  * B2B(기업) 관련 시력교정, 백내장 수술/검사 데이터를 월별로 합산한다.
- *
- * 매출 정의:
+ * * 매출 정의:
  *   수술비 + 검사비 + DNA + PRP + 기타/약 + 노안 + 병원물품
  *
- * MSSQL 2014 / JTDS 호환을 위해 최신 함수 사용 금지.
- * READ-ONLY — SELECT만 실행.
+ * READ-ONLY — SELECT 만 실행.
  */
 @Repository
 @Profile("postgres-mart")
 public class B2bRevenueStatsRepository {
 
-    private static final String MONTHLY_REVENUE_SQL = "sql/softcrm/etc/select-b2b-monthly-revenue.sql";
-    private static final String VISION_SURGERY_ROWS_SQL = "sql/softcrm/etc/select-b2b-vision-surgery-rows.sql";
-    private static final String CATARACT_SURGERY_ROWS_SQL = "sql/softcrm/etc/select-b2b-cataract-surgery-rows.sql";
-    private static final String CATARACT_EXAM_ROWS_SQL = "sql/softcrm/etc/select-b2b-cataract-exam-rows.sql";
-    private static final String MOTIVE_SUBQUERY_SQL = "sql/softcrm/etc/select-b2b-motive-subquery.sql";
-    private static final String LATEST_COST_SUBQUERY_SQL = "sql/softcrm/etc/select-b2b-latest-cost-subquery.sql";
-    private static final String ACCUMULATED_COST_SUBQUERY_SQL = "sql/softcrm/etc/select-b2b-accumulated-cost-subquery.sql";
-    private static final String LATEST_COST_DATE_CONDITION_SQL = "sql/softcrm/etc/select-b2b-latest-cost-date-condition.sql";
+    static final String MONTHLY_REVENUE_SQL          = "sql/warehouse/etc/select-b2b-monthly-revenue.sql";
+    static final String VISION_SURGERY_ROWS_SQL      = "sql/warehouse/etc/select-b2b-vision-surgery-rows.sql";
+    static final String CATARACT_SURGERY_ROWS_SQL    = "sql/warehouse/etc/select-b2b-cataract-surgery-rows.sql";
+    static final String CATARACT_EXAM_ROWS_SQL       = "sql/warehouse/etc/select-b2b-cataract-exam-rows.sql";
+    static final String MOTIVE_SUBQUERY_SQL          = "sql/warehouse/etc/select-b2b-motive-subquery.sql";
+    static final String LATEST_COST_SUBQUERY_SQL     = "sql/warehouse/etc/select-b2b-latest-cost-subquery.sql";
+    static final String ACCUMULATED_COST_SUBQUERY_SQL = "sql/warehouse/etc/select-b2b-accumulated-cost-subquery.sql";
+    static final String LATEST_COST_DATE_CONDITION_SQL = "sql/warehouse/etc/select-b2b-latest-cost-date-condition.sql";
+
     private static final String TOTAL_REVENUE_EXPRESSION =
             "(x.op_cost + x.exam_cost + x.dna_cost + x.prp_cost + x.etc_cost"
                     + " + x.presbyopia_cost + x.hospital_supply_cost)";
@@ -62,22 +61,22 @@ public class B2bRevenueStatsRepository {
     private final String latestCostDateConditionSql;
 
     public B2bRevenueStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.monthlyRevenueSql = SqlLoader.load(MONTHLY_REVENUE_SQL);
-        this.visionSurgeryRowsSql = SqlLoader.load(VISION_SURGERY_ROWS_SQL);
-        this.cataractSurgeryRowsSql = SqlLoader.load(CATARACT_SURGERY_ROWS_SQL);
-        this.cataractExamRowsSql = SqlLoader.load(CATARACT_EXAM_ROWS_SQL);
-        this.motiveSubquerySql = SqlLoader.load(MOTIVE_SUBQUERY_SQL);
-        this.latestCostSubquerySql = SqlLoader.load(LATEST_COST_SUBQUERY_SQL);
+        this.jdbc = warehouseJdbc;
+        this.monthlyRevenueSql          = SqlLoader.load(MONTHLY_REVENUE_SQL);
+        this.visionSurgeryRowsSql       = SqlLoader.load(VISION_SURGERY_ROWS_SQL);
+        this.cataractSurgeryRowsSql     = SqlLoader.load(CATARACT_SURGERY_ROWS_SQL);
+        this.cataractExamRowsSql        = SqlLoader.load(CATARACT_EXAM_ROWS_SQL);
+        this.motiveSubquerySql          = SqlLoader.load(MOTIVE_SUBQUERY_SQL);
+        this.latestCostSubquerySql      = SqlLoader.load(LATEST_COST_SUBQUERY_SQL);
         this.accumulatedCostSubquerySql = SqlLoader.load(ACCUMULATED_COST_SUBQUERY_SQL);
         this.latestCostDateConditionSql = SqlLoader.load(LATEST_COST_DATE_CONDITION_SQL);
     }
 
     public List<Map<String, Object>> findMonthlyRevenue(List<Integer> years) {
-        String operationCostSelect = buildLatestCostSelect("op.CUST_NUM", "op.OPERATION_DATE");
-        String examCostSelect = buildAccumulatedCostSelect("ex.CUST_NUM");
+        String operationCostSelect = buildLatestCostSelect("op.cust_num", "op.operation_date");
+        String examCostSelect = buildAccumulatedCostSelect("ex.cust_num");
         String sql = buildMonthlyRevenueQuery(operationCostSelect, examCostSelect);
 
         return jdbc.queryForList(sql, createYearRangeParams(years));

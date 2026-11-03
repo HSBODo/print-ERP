@@ -6,7 +6,7 @@
 #      → 로컬은 backend/.env 로 값이 이미 컨테이너에 주입되므로 불필요.
 #        (Jenkins 는 사내 vault 에서 값을 조달해야 해서 infisical run 이 필요.)
 #   2) ENTRYPOINT 를 entrypoint.sh 직접 호출로 단순화.
-#   3) 나머지(3-stage 빌드·Nexus BuildKit secret·TLS 완화·SSH sshpass 도구)는 동일.
+#   3) 나머지(3-stage 빌드·Nexus BuildKit secret)는 동일.
 #
 # 사용법 (docker-compose.local.yml 참고):
 #   DOCKER_BUILDKIT=1 docker compose -f docker-compose.local.yml up -d --build
@@ -66,14 +66,6 @@ RUN --mount=type=secret,id=nexus_id \
 # ─────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
-
-# 레거시 MSSQL(jtds) 등 TLSv1/1.1 만 지원하는 원격지 대비.
-RUN sed -i 's/TLSv1, TLSv1.1,//g' $JAVA_HOME/conf/security/java.security
-
-# 레거시 홈페이지 MariaDB SSH 터널용 도구만 설치 (infisical·curl·gnupg 제거).
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends openssh-client sshpass netcat-openbsd && \
-    rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system app && useradd --system --gid app --home /app app \
  && mkdir -p /app/.cache/stats \

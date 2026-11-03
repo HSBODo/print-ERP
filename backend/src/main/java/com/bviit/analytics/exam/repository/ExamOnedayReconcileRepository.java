@@ -17,12 +17,14 @@ import java.util.Map;
  *
  * <h3>흐름</h3>
  * <ol>
- *   <li>{@link #findLaterReexamCandidates(LocalDate, LocalDate)} — MSSQL 원본에서
+ *   <li>{@link #findLaterReexamCandidates(LocalDate, LocalDate)} — CRM 원본에서
  *       "검사일 이후 재검사(RESERVE_FLAG='M' · RESERVE_JINRYO='2') 예약이 등록된"
  *       (chart_no, exam_date) 쌍 목록 조회.</li>
  *   <li>{@link #markOnedayAsNormal(List)} — Postgres list_exam.one_day='Y' 인 행을 'N' 으로 UPDATE.
- *       조건: MSSQL 결과 쌍에 매칭 + 현재 'Y'. 이미 'N' 인 행은 조용히 skip.</li>
+ *       조건: CRM 결과 쌍에 매칭 + 현재 'Y'. 이미 'N' 인 행은 조용히 skip.</li>
  * </ol>
+ *
+ * <p>CRM 읽기 (findLaterReexamCandidates) 는 warehouseJdbcTemplate, mart UPDATE (markOnedayAsNormal) 는 martJdbcTemplate.
  *
  * <p>SQL 인라인 대신 리소스 파일로 관리 — CLAUDE.md 규약대로.
  */
@@ -30,22 +32,21 @@ import java.util.Map;
 @Profile("postgres-mart")
 public class ExamOnedayReconcileRepository {
 
-    private static final String FIND_CANDIDATES_SQL =
-            "sql/softcrm/exam/select-onedays-with-later-reexam.sql";
+    static final String SQL = "sql/warehouse/exam/select-onedays-with-later-reexam.sql";
     private static final String UPDATE_ONEDAY_SQL =
             "sql/mart/exam/update-list-exam-oneday-to-normal.sql";
 
-    private final NamedParameterJdbcTemplate statsJdbc;
+    private final NamedParameterJdbcTemplate crmJdbc;
     private final NamedParameterJdbcTemplate martJdbc;
     private final String findCandidatesSql;
     private final String updateOnedaySql;
 
     public ExamOnedayReconcileRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
             @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate martJdbc) {
-        this.statsJdbc = statsJdbc;
+        this.crmJdbc = warehouseJdbc;
         this.martJdbc = martJdbc;
-        this.findCandidatesSql = SqlLoader.load(FIND_CANDIDATES_SQL);
+        this.findCandidatesSql = SqlLoader.load(SQL);
         this.updateOnedaySql = SqlLoader.load(UPDATE_ONEDAY_SQL);
     }
 
@@ -57,7 +58,7 @@ public class ExamOnedayReconcileRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("from", from.toString())
                 .addValue("to", to.toString());
-        return statsJdbc.query(findCandidatesSql, params, (rs, i) ->
+        return crmJdbc.query(findCandidatesSql, params, (rs, i) ->
                 new ChartDate(rs.getString("chartNo"), rs.getString("examDate")));
     }
 
@@ -78,6 +79,6 @@ public class ExamOnedayReconcileRepository {
                 new ChartDate(rs.getString("chart_no"), rs.getString("exam_date")));
     }
 
-    /** (차트번호, 검사일) 쌍. examDate 는 'YYYY-MM-DD' 문자열 (MSSQL SELECT 결과 형식). */
-    public record ChartDate(String chartNo, String examDate) { }
+    /** (chart_no, exam_date) 쌍 — 원데이 후보 · 갱신 결과에서 재사용. */
+    public record ChartDate(String chartNo, String examDate) {}
 }

@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 외래수 통계 쿼리.
+ * 외래수 통계 쿼리. OutpatientReconcileService 전용(파이프라인 밖, 대사용).
  *
  * 운영 기준(레거시 차트와 최근접): 외래 예약(`RESERVE_FLAG='F'`) 중 내원/퇴원 처리된
  * (`RESERVE_STATE IN ('I','H')`) 행 수. 사람 단위가 아니라 **행 수**(`COUNT(*)`).
  *
- * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
+ * READ-ONLY — SELECT 만 실행. 날짜 컬럼은 varchar(YYYY-MM-DD).
  */
 @Repository
 @Profile("postgres-mart")
@@ -25,14 +25,14 @@ public class OutpatientCountStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL = "sql/softcrm/outpatient/select-outpatient-count-monthly.sql";
+    static final String FIND_OUTPATIENT_COUNT_MONTHLY_SQL = "sql/warehouse/outpatient/select-outpatient-count-monthly.sql";
 
     private final String findOutpatientCountMonthlySql;
 
     public OutpatientCountStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
+        this.jdbc = warehouseJdbc;
         this.findOutpatientCountMonthlySql = SqlLoader.load(FIND_OUTPATIENT_COUNT_MONTHLY_SQL);
     }
 

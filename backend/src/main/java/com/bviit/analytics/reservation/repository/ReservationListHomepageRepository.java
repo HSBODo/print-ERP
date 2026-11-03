@@ -1,10 +1,8 @@
 package com.bviit.analytics.reservation.repository;
 
-import com.bviit.analytics.common.config.HomepageDataSourceConfig;
-import com.bviit.analytics.common.config.HomepageSourceDialect;
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -13,55 +11,39 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 예약자 리스트_홈페이지 — 레거시 홈페이지 온라인 예약 소스 조회 (읽기 전용).
+ * 예약자 리스트_홈페이지 — warehouse(raw.raw_homepage_tbl_counsel) 조회 (읽기 전용).
  *
- * <p>소스는 대시보드 DB 가 아니라 레거시 홈페이지 데이터다 → {@code homepageJdbcTemplate}.
- * {@code homepage.datasource.url} 이 없으면 DataSource 자체가 없으므로 이 빈도 함께 사라진다
- * (HomepageDataSourceConfig 와 동일 조건). 그 경우 컨트롤러가 503 을 준다.
+ * <p>Phase 3 (2026-10-23) 로 레거시 홈페이지 MariaDB/SQLite 직결을 전면 제거하고
+ * 데이터 플랫폼의 warehouse 하나만 조회한다. SSH 터널·MariaDB·SQLite 의존 없음.
+ * SQL 은 전부 {@code sql/warehouse/homepage/*.sql} (Postgres 방언) 에서 로드한다.
  *
  * <p><b>제약</b>
  * <ul>
- *   <li>READ-ONLY — 이 소스에 쓰기를 하지 않는다(레거시 운영계 원본이다).
- *   <li>소스가 둘이라 <b>SQL 세트도 둘</b>이다 — {@link HomepageSourceDialect} 가 URL 로 판별해 고른다.
- *       같은 데이터인데 스키마가 다르다(캐시가 원본을 snake_case 로 개명해 적재했다):
- *       스냅샷은 {@code consultations.legacy_no}, 운영 DB 는 {@code TBL_COUNSEL.C_NO} 다.
- *       한쪽 SQL 을 다른 쪽에 그대로 쓰면 'no such column' 이 난다.
- *   <li>두 세트의 <b>결과 별칭 계약은 동일</b>해야 한다(프론트 zod 와 1:1). 한쪽만 고치지 말 것.
+ *   <li>READ-ONLY — raw 테이블에 쓰기 없음.
+ *   <li>결과 별칭 계약은 마트판({@link ReservationListHomepageMartRepository}) 과 동일해야 한다
+ *       — 프론트 zod 와 1:1. 한쪽만 고치지 말 것.
  * </ul>
  */
 @Repository
-@ConditionalOnExpression(HomepageDataSourceConfig.ENABLED_EXPRESSION)
+@Profile("postgres-mart")
 public class ReservationListHomepageRepository implements HomepageOverallSource {
 
-    private static final String SQL_BASE = "sql/homepage/";
+    private static final String SQL_BASE = "sql/warehouse/homepage/";
 
     private final NamedParameterJdbcTemplate jdbc;
-    private final HomepageSourceDialect dialect;
     private final String listSql;
     private final String lastRegDateSql;
     private final String monthlyListRawSql;
     private final String dailyListRawSql;
 
     public ReservationListHomepageRepository(
-            @Qualifier("homepageJdbcTemplate") NamedParameterJdbcTemplate jdbc,
-            @Qualifier("homepageSourceDialect") HomepageSourceDialect dialect
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.dialect = dialect;
-        this.listSql = SqlLoader.load(sqlPath(dialect, "select-reservation-list-homepage.sql"));
-        this.lastRegDateSql = SqlLoader.load(sqlPath(dialect, "select-last-reg-date.sql"));
-        this.monthlyListRawSql = SqlLoader.load(sqlPath(dialect, "select-monthly-list-raw.sql"));
-        this.dailyListRawSql = SqlLoader.load(sqlPath(dialect, "select-daily-list-raw.sql"));
-    }
-
-    /** sql/homepage/{sqlite|mariadb}/{fileName} */
-    static String sqlPath(HomepageSourceDialect dialect, String fileName) {
-        return SQL_BASE + dialect.sqlDir() + "/" + fileName;
-    }
-
-    /** 현재 소스의 방언 — Service 가 live 여부(경고 배너 on/off)를 판단하는 데 쓴다. */
-    public HomepageSourceDialect dialect() {
-        return dialect;
+        this.jdbc = warehouseJdbc;
+        this.listSql           = SqlLoader.load(SQL_BASE + "select-reservation-list-homepage.sql");
+        this.lastRegDateSql    = SqlLoader.load(SQL_BASE + "select-last-reg-date.sql");
+        this.monthlyListRawSql = SqlLoader.load(SQL_BASE + "select-monthly-list-raw.sql");
+        this.dailyListRawSql   = SqlLoader.load(SQL_BASE + "select-daily-list-raw.sql");
     }
 
     /** 등록일 from~to(양끝 포함) 구간의 온라인 예약 목록. */
@@ -102,8 +84,8 @@ public class ReservationListHomepageRepository implements HomepageOverallSource 
     /**
      * 소스가 담고 있는 마지막 등록일시. 값이 없으면 빈 문자열.
      *
-     * <p>스냅샷이면 이 값이 곧 '천장'이다(이후 구간은 조용히 빈다). 실시간이면 그냥 최신 등록건
-     * 시각이다 — 의미가 갈리므로 호출부는 {@link #dialect()}{@code .live()} 를 함께 봐야 한다.
+     * <p>warehouse 는 CDC 로 적재되므로 이 값이 '천장' — 그 이후 구간은 조용히 비어 나온다.
+     * 화면이 조회 종료일과 비교해 경고 배너를 띄운다.
      */
     @Override
     public String findLastRegDate() {

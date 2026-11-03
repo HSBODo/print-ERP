@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 상담 전환율 쿼리 (레거시 BCRM 에브리데이 시스템 로직 기반).
+ * 상담 전환율 쿼리 (레거시 BCRM 에브리데이 시스템 로직 기반). ConsultationReconcileService 전용(파이프라인 밖).
  *
  * 시력교정 — softcrm/routes/consult-statistics.js 준용
  *   분모: EXAM 테이블 (CANCEL_CD 빈값)
@@ -32,17 +32,17 @@ public class ConsultationRateRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_MONTHLY_VISION_RATES_SQL = "sql/softcrm/consultation/select-monthly-vision-rates.sql";
-    private static final String FIND_MONTHLY_CATARACT_RATES_SQL = "sql/softcrm/consultation/select-monthly-cataract-rates.sql";
+    static final String FIND_MONTHLY_VISION_RATES_SQL   = "sql/warehouse/consultation/select-monthly-vision-rates.sql";
+    static final String FIND_MONTHLY_CATARACT_RATES_SQL = "sql/warehouse/consultation/select-monthly-cataract-rates.sql";
 
     private final String findMonthlyVisionRatesSql;
     private final String findMonthlyCataractRatesSql;
 
     public ConsultationRateRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.findMonthlyVisionRatesSql = SqlLoader.load(FIND_MONTHLY_VISION_RATES_SQL);
+        this.jdbc = warehouseJdbc;
+        this.findMonthlyVisionRatesSql   = SqlLoader.load(FIND_MONTHLY_VISION_RATES_SQL);
         this.findMonthlyCataractRatesSql = SqlLoader.load(FIND_MONTHLY_CATARACT_RATES_SQL);
     }
 

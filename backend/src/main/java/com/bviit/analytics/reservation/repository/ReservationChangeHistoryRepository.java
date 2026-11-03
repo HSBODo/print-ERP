@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * 예약 변경이력 원천(MSSQL RESERVE_HISTORY) 읽기 — 배치 전용.
+ * 예약 변경이력 원천(RESERVE_HISTORY) 읽기 — {@code ReservationChangeMartJob} 의 배치 read-side.
  *
  * <p>행이 RESERVE_NUM 순으로 오므로 스트리밍하며 예약 1건씩 묶어 consumer 에 넘긴다.
  * 초기 백필(2022~)은 이력 수십만 행이라 List 로 다 받으면 메모리가 위험하다.
@@ -27,13 +27,15 @@ import java.util.function.Consumer;
 @Profile("postgres-mart")
 public class ReservationChangeHistoryRepository {
 
-    static final String SQL = "sql/softcrm/reservation/history/select-reservation-change-history.sql";
+    static final String SQL = "sql/warehouse/reservation/history/select-reservation-change-history.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String sql;
 
-    public ReservationChangeHistoryRepository(@Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public ReservationChangeHistoryRepository(
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
+    ) {
+        this.jdbc = warehouseJdbc;
         this.sql = SqlLoader.load(SQL);
     }
 

@@ -14,6 +14,8 @@ interface SurgeryData {
   kpl: number
   tKpl: number
   viva: number
+  presbyond: number
+  piolPatients: number
   catMulti: number
   catMono: number
   catEdof: number
@@ -42,6 +44,8 @@ const EMPTY: SurgeryData = {
   kpl: 0,
   tKpl: 0,
   viva: 0,
+  presbyond: 0,
+  piolPatients: 0,
   catMulti: 0,
   catMono: 0,
   catEdof: 0,
@@ -75,6 +79,10 @@ function toDataMap(items: SurgeryMonthlyItem[]): Record<number, SurgeryData[]> {
       kpl: item.kpl,
       tKpl: item.tKpl,
       viva: item.viva,
+      // presbyond·piolPatients 는 SurgeryMonthlyItem 스키마에서 optional (V33 신설 이후 추가).
+      // 매핑 누락되면 ReportSurgeryTable 의 '프레스비욘드'·'PIOL' 컬럼이 항상 0 으로 표시된다 (2026-10-13 발견).
+      presbyond: item.presbyond ?? 0,
+      piolPatients: item.piolPatients ?? 0,
       catMulti: item.catMulti,
       catMono: item.catMono,
       catEdof: item.catEdof,

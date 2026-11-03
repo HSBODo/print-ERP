@@ -17,10 +17,10 @@ import javax.sql.DataSource;
  * 듀얼 DataSource — postgres-mart 프로파일 전용.
  *
  *   Postgres (@Primary) → JPA + 마트 조회 (mart_*, list_*) + User
- *   MSSQL (stats)        → 배치 전용 (읽기) — CRM 원본에서 D-1 데이터 추출
+ *   warehouse (Postgres RDS) → 데이터 플랫폼 bnviit_datawarehouse (raw.* 직결 조회)
  *
- * 배치는 stats(MSSQL)에서 읽어 Postgres 마트로 upsert/append. 클라이언트 조회는 Postgres만.
- * 관련 문서: docs/databatch/strategy.md
+ * 통계 리포지토리는 warehouseJdbcTemplate 하나만 주입받아 조회한다.
+ * 관련 문서: docs/databatch/strategy.md · docs/data-platform/migration-strategy.md
  */
 @Configuration
 @Profile("postgres-mart")
@@ -48,15 +48,17 @@ public class MartDataSourceConfig {
         return new NamedParameterJdbcTemplate(dataSource);
     }
 
-    @Bean("statsDataSource")
-    public DataSource statsDataSource(
-            @Value("${stats.datasource.url}") String url,
-            @Value("${stats.datasource.username}") String username,
-            @Value("${stats.datasource.password}") String password,
-            @Value("${stats.datasource.driver-class-name}") String driverClassName,
-            @Value("${stats.datasource.hikari.maximum-pool-size:3}") int maxPoolSize,
-            @Value("${stats.datasource.hikari.read-only:true}") boolean readOnly,
-            @Value("${stats.datasource.hikari.connection-timeout:10000}") long connectionTimeout
+    @Bean("warehouseDataSource")
+    public DataSource warehouseDataSource(
+            @Value("${warehouse.datasource.url}") String url,
+            @Value("${warehouse.datasource.username}") String username,
+            @Value("${warehouse.datasource.password}") String password,
+            @Value("${warehouse.datasource.driver-class-name}") String driverClassName,
+            @Value("${warehouse.datasource.hikari.maximum-pool-size:3}") int maxPoolSize,
+            @Value("${warehouse.datasource.hikari.minimum-idle:1}") int minimumIdle,
+            @Value("${warehouse.datasource.hikari.read-only:true}") boolean readOnly,
+            @Value("${warehouse.datasource.hikari.connection-timeout:10000}") long connectionTimeout,
+            @Value("${warehouse.datasource.hikari.initialization-fail-timeout:10000}") long initializationFailTimeout
     ) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(url);
@@ -64,17 +66,20 @@ public class MartDataSourceConfig {
         ds.setPassword(password);
         ds.setDriverClassName(driverClassName);
         ds.setMaximumPoolSize(maxPoolSize);
+        ds.setMinimumIdle(minimumIdle);
         ds.setReadOnly(readOnly);
         ds.setConnectionTimeout(connectionTimeout);
-        ds.setPoolName("stats-mssql");
+        // fail-fast — WAREHOUSE_* 미설정 시 침묵실패 방지 (minimum-idle=1 과 함께 startup 시 커넥션 강제 획득 → 실패하면 PoolInitializationException 으로 startup 중단).
+        ds.setInitializationFailTimeout(initializationFailTimeout);
+        ds.setPoolName("warehouse-postgres");
         ds.setConnectionTestQuery("SELECT 1");
         return ds;
     }
 
-    @Bean("statsJdbcTemplate")
-    public NamedParameterJdbcTemplate statsJdbcTemplate(
-            @Qualifier("statsDataSource") DataSource statsDataSource
+    @Bean("warehouseJdbcTemplate")
+    public NamedParameterJdbcTemplate warehouseJdbcTemplate(
+            @Qualifier("warehouseDataSource") DataSource warehouseDataSource
     ) {
-        return new NamedParameterJdbcTemplate(statsDataSource);
+        return new NamedParameterJdbcTemplate(warehouseDataSource);
     }
 }

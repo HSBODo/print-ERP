@@ -14,13 +14,13 @@ import java.util.Map;
 
 /**
  * 검사자 종합표 주간 집계 쿼리 — 일자별로 집계한 뒤 서비스에서 주(월~일)로 버킷팅한다.
+ * OverallReconcileService 전용(파이프라인 밖, 대사용).
  *
  * 모든 쿼리는 EXAM_DATE(또는 OPERATION_DATE) 일자별 GROUP BY로 결과를 돌려준다.
  * 주 경계(월~일, 월 클립) 계산은 {@code OverallExamWeeklyService}에서 자바로 처리한다.
  * SQL 본문은 §1.3~1.10·§6의 검증된 월별 쿼리와 동일하며 집계 단위만 일자로 바꿨다.
  *
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
- * MSSQL 2014 호환: STRING_AGG/TRIM 미사용 (LTRIM/RTRIM 사용).
  */
 @Repository
 @Profile("postgres-mart")
@@ -28,12 +28,12 @@ public class OverallExamWeeklyRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_DEMOGRAPHICS_DAILY_SQL = "sql/softcrm/overall/select-demographics-daily.sql";
-    private static final String FIND_VISION_DAILY_SQL = "sql/softcrm/overall/select-vision-daily.sql";
-    private static final String FIND_CATARACT_DAILY_SQL = "sql/softcrm/overall/select-cataract-daily.sql";
-    private static final String FIND_DREAMLENS_DAILY_SQL = "sql/softcrm/overall/select-dreamlens-daily.sql";
-    private static final String FIND_STOP_COUNT_DAILY_SQL = "sql/softcrm/overall/select-stop-count-daily.sql";
-    private static final String FIND_ONE_DAY_DAILY_SQL = "sql/softcrm/overall/select-one-day-daily.sql";
+    static final String FIND_DEMOGRAPHICS_DAILY_SQL = "sql/warehouse/overall/select-demographics-daily.sql";
+    static final String FIND_VISION_DAILY_SQL       = "sql/warehouse/overall/select-vision-daily.sql";
+    static final String FIND_CATARACT_DAILY_SQL     = "sql/warehouse/overall/select-cataract-daily.sql";
+    static final String FIND_DREAMLENS_DAILY_SQL    = "sql/warehouse/overall/select-dreamlens-daily.sql";
+    static final String FIND_STOP_COUNT_DAILY_SQL   = "sql/warehouse/overall/select-stop-count-daily.sql";
+    static final String FIND_ONE_DAY_DAILY_SQL      = "sql/warehouse/overall/select-one-day-daily.sql";
 
     private final String findDemographicsDailySql;
     private final String findVisionDailySql;
@@ -43,9 +43,9 @@ public class OverallExamWeeklyRepository {
     private final String findOneDayDailySql;
 
     public OverallExamWeeklyRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
+        this.jdbc = warehouseJdbc;
         this.findDemographicsDailySql = SqlLoader.load(FIND_DEMOGRAPHICS_DAILY_SQL)
                 .replace("__EXAM_SESSION_SOURCE__", SqlFragments.examSessionSource());
         this.findVisionDailySql = SqlLoader.load(FIND_VISION_DAILY_SQL);

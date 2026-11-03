@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * 전체 검사자 리스트 — 시력교정(EXAM) + 백내장(Cataract_Exam) 통합 행 목록.
+ * superseded (`@Primary AllExamListMartQueryService` 로 대체 · 실 프로덕션 미호출) · 대사 소스로만 유지.
  *
  * ⚠️ 시력교정(EXAM)·백내장 모두 **사람 단위**다.
  * - 시력교정(EXAM): 리포트 findVisionCorrectionMonthly와 1:1(테스트·백내장스텁 제외), EXAM_DATE 기준.
@@ -28,7 +29,7 @@ import java.util.Map;
  *   - jobBucket  : 직장인 / 학생 / 기타 — CUSTOM.JOB 기준(종합지표와 동일 CASE, 정합 위해 동기화 유지)
  *
  * 견적·수납·수술상세 등 타입별 상세 컬럼은 기존 개별 리스트(검사자/백내장 검사자 리스트)에 유지.
- * READ-ONLY · MSSQL 2014 호환. EMPLOYEE 조인은 EMP_NUM 중복 시 행 증식 방지로 OUTER APPLY TOP 1.
+ * READ-ONLY. EMPLOYEE 조인은 EMP_NUM 중복 시 행 증식 방지로 OUTER APPLY TOP 1.
  */
 @Repository
 @Profile("postgres-mart")
@@ -36,14 +37,14 @@ public class AllExamListRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_ALL_EXAM_LIST_SQL = "sql/softcrm/exam/select-all-exam-list.sql";
+    static final String FIND_ALL_EXAM_LIST_SQL = "sql/warehouse/exam/select-all-exam-list.sql";
 
     private final String findAllExamListSql;
 
     public AllExamListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
+        this.jdbc = warehouseJdbc;
         this.findAllExamListSql = SqlLoader.load(FIND_ALL_EXAM_LIST_SQL);
     }
 

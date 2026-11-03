@@ -18,23 +18,21 @@ import java.util.Map;
  * SurgeryStatsService 의 재수술 카운트 원천이자, 재수술 검토 모달의 조회 소스.
  * laser/lens 분류는 자바(ReoperationOverlay) 에서 시술명 패턴으로 담당한다.
  *
- * MSSQL 2014 호환: STRING_AGG, TRIM 사용 금지.
  */
 @Repository
 @Profile("postgres-mart")
 public class ReoperationCandidateRepository {
 
+    static final String SQL = "sql/warehouse/surgery/select-reoperation-candidates.sql";
+
     private final NamedParameterJdbcTemplate jdbc;
-
-    private static final String FIND_REOPERATION_CANDIDATES_SQL = "sql/softcrm/surgery/select-reoperation-candidates.sql";
-
     private final String findReoperationCandidatesSql;
 
     public ReoperationCandidateRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.findReoperationCandidatesSql = SqlLoader.load(FIND_REOPERATION_CANDIDATES_SQL);
+        this.jdbc = warehouseJdbc;
+        this.findReoperationCandidatesSql = SqlLoader.load(SQL);
     }
 
     public List<Map<String, Object>> findCandidates(String from, String to) {

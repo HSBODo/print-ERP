@@ -16,42 +16,72 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Google Sheet 로컬 캐시와 원본 CRM(SOFTCRM) 직결 조회를 분리한 저장소. */
+/**
+ * Google Sheet 로컬 캐시와 웨어하우스 CRM 조회를 분리한 저장소 (raw.raw_crm_*).
+ */
 @Repository
 @Profile("postgres-mart")
 public class OverseasMarketingRepository {
 
-    private static final String RECEPTIONS_SQL = SqlLoader.load("sql/mart/marketing/receptions.sql");
-    private static final String OUTPATIENT_SQL = SqlLoader.load("sql/softcrm/marketing/outpatient-enrichment.sql");
-    private static final String PRICE_ITEM_COSTS_SQL = SqlLoader.load("sql/softcrm/marketing/price-item-costs.sql");
-    private static final String FALLBACK_COSTS_SQL = SqlLoader.load("sql/softcrm/marketing/fallback-costs.sql");
-    private static final String CUSTOMER_CANDIDATES_SQL = SqlLoader.load("sql/softcrm/marketing/customer-candidates.sql");
-    private static final String CUSTOMER_DETAILS_SQL = SqlLoader.load("sql/softcrm/marketing/customer-details.sql");
-    private static final String SYNC_INSERT_SQL = SqlLoader.load("sql/mart/marketing/sync-insert.sql");
-    private static final String MANUAL_INSERT_SQL = SqlLoader.load("sql/mart/marketing/manual-insert.sql");
-    private static final String ROW_UPDATE_SQL = SqlLoader.load("sql/mart/marketing/row-update.sql");
-    private static final String SHEET_MONTHLY_SQL = SqlLoader.load("sql/mart/marketing/sheet-monthly.sql");
+    private static final String RECEPTIONS_SQL      = SqlLoader.load("sql/mart/marketing/receptions.sql");
+    private static final String SYNC_INSERT_SQL     = SqlLoader.load("sql/mart/marketing/sync-insert.sql");
+    private static final String MANUAL_INSERT_SQL   = SqlLoader.load("sql/mart/marketing/manual-insert.sql");
+    private static final String ROW_UPDATE_SQL      = SqlLoader.load("sql/mart/marketing/row-update.sql");
+    private static final String SHEET_MONTHLY_SQL   = SqlLoader.load("sql/mart/marketing/sheet-monthly.sql");
     private static final String RSV_STATS_SELECT_SQL = SqlLoader.load("sql/mart/marketing/reservation-stats-select.sql");
     private static final String RSV_STATS_UPSERT_SQL = SqlLoader.load("sql/mart/marketing/reservation-stats-upsert.sql");
     private static final String RSV_STATS_SOURCE_SQL = SqlLoader.load("sql/mart/marketing/reservation-stats-source.sql");
 
-    // jtds는 네트워크 타임아웃을 지원하지 않아 느린 쿼리가 요청을 무한정 붙잡을 수 있다.
-    // 이 저장소의 CRM 조회에만 쿼리 타임아웃을 걸어 동기화가 hang 되지 않게 한다(다른 통계 조회에는 영향 없음).
+    // 웨어하우스(raw.raw_crm_*) CRM 조회 SQL.
+    static final String OUTPATIENT_SQL             = "sql/warehouse/marketing/outpatient-enrichment.sql";
+    static final String PRICE_ITEM_COSTS_SQL       = "sql/warehouse/marketing/price-item-costs.sql";
+    static final String FALLBACK_COSTS_SQL         = "sql/warehouse/marketing/fallback-costs.sql";
+    static final String CUSTOMER_CANDIDATES_SQL    = "sql/warehouse/marketing/customer-candidates.sql";
+    static final String CUSTOMER_DETAILS_SQL       = "sql/warehouse/marketing/customer-details.sql";
+    static final String EXAM_DATE_CANDIDATES_SQL   = "sql/warehouse/marketing/exam-date-candidates.sql";
+    static final String SURGERY_DATE_CANDIDATES_SQL = "sql/warehouse/marketing/surgery-date-candidates.sql";
+    static final String CUSTOMER_STREAM_SQL        = "sql/warehouse/marketing/customer-stream.sql";
+
+    // 느린 쿼리가 요청을 무한정 붙잡지 않도록 CRM 조회에만 쿼리 타임아웃을 건다
+    // (raw.raw_crm_custom 전수 스트림이 느릴 수 있음).
     private static final int CRM_QUERY_TIMEOUT_SECONDS = 120;
+
+    private static final int CUSTOMER_STREAM_FETCH_SIZE = 2000;
+
+    // IN 절 파라미터는 보수적 청크로 나눠 조회한다 (캐시 성능·네트워크 왕복 균형).
+    private static final int IN_CLAUSE_CHUNK = 1000;
 
     private final NamedParameterJdbcTemplate martJdbc;
     private final NamedParameterJdbcTemplate crmJdbc;
 
+    private final String outpatientSql;
+    private final String priceItemCostsSql;
+    private final String fallbackCostsSql;
+    private final String customerCandidatesSql;
+    private final String customerDetailsSql;
+    private final String examDateCandidatesSql;
+    private final String surgeryDateCandidatesSql;
+    private final String customerStreamSql;
+
     public OverseasMarketingRepository(
             @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate martJdbc,
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate crmJdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
         this.martJdbc = martJdbc;
-        org.springframework.jdbc.core.JdbcTemplate timedTemplate =
-                new org.springframework.jdbc.core.JdbcTemplate(
-                        java.util.Objects.requireNonNull(crmJdbc.getJdbcTemplate().getDataSource()));
+
+        JdbcTemplate timedTemplate = new JdbcTemplate(
+                java.util.Objects.requireNonNull(warehouseJdbc.getJdbcTemplate().getDataSource()));
         timedTemplate.setQueryTimeout(CRM_QUERY_TIMEOUT_SECONDS);
         this.crmJdbc = new NamedParameterJdbcTemplate(timedTemplate);
+
+        this.outpatientSql            = SqlLoader.load(OUTPATIENT_SQL);
+        this.priceItemCostsSql        = SqlLoader.load(PRICE_ITEM_COSTS_SQL);
+        this.fallbackCostsSql         = SqlLoader.load(FALLBACK_COSTS_SQL);
+        this.customerCandidatesSql    = SqlLoader.load(CUSTOMER_CANDIDATES_SQL);
+        this.customerDetailsSql       = SqlLoader.load(CUSTOMER_DETAILS_SQL);
+        this.examDateCandidatesSql    = SqlLoader.load(EXAM_DATE_CANDIDATES_SQL);
+        this.surgeryDateCandidatesSql = SqlLoader.load(SURGERY_DATE_CANDIDATES_SQL);
+        this.customerStreamSql        = SqlLoader.load(CUSTOMER_STREAM_SQL);
     }
 
     public List<Map<String, Object>> findReceptions(OverseasMarketingReceptionQuery query) {
@@ -64,7 +94,10 @@ public class OverseasMarketingRepository {
     }
 
     public List<Map<String, Object>> findCandidatesByNames(List<String> names) {
-        return findCandidates("c.CUST_NAME IN (:values)", names);
+        // ⚠️ TRIM 좌변 — raw_crm_custom.cust_name 저장 패딩 일관성 없음
+        // ('이지은               ' len=17 vs '염준영' len=3) 이라 이름 매칭 miss 방지.
+        // docs/data-platform/varchar-padding-trim-audit.md §6.2 #13
+        return findCandidates("TRIM(c.CUST_NAME) IN (:values)", names);
     }
 
     /**
@@ -89,7 +122,7 @@ public class OverseasMarketingRepository {
         int previousFetchSize = raw.getFetchSize();
         raw.setFetchSize(CUSTOMER_STREAM_FETCH_SIZE);
         try {
-            raw.query(CUSTOMER_STREAM_SQL, rs -> {
+            raw.query(customerStreamSql, rs -> {
                 String customerNo = rs.getString("customerNo");
                 String name = rs.getString("name");
                 String birthDate = rs.getString("birthDate");
@@ -130,38 +163,22 @@ public class OverseasMarketingRepository {
             List<Map<String, Object>> emails
     ) {}
 
-    private static final String CUSTOMER_STREAM_SQL =
-            "SELECT RTRIM(c.CUST_NUM) AS customerNo, "
-                    + "RTRIM(ISNULL(c.CUST_NAME, '')) AS name, "
-                    + "ISNULL(c.BIRTH_DAY, '') AS birthDate, "
-                    + "ISNULL(c.CALL_NUM2, '') AS contact, "
-                    + "ISNULL(c.EMAIL, '') AS email "
-                    + "FROM CUSTOM c WITH(NOLOCK)";
-
-    private static final int CUSTOMER_STREAM_FETCH_SIZE = 2000;
-
-    // MSSQL prepared statement 파라미터 한도(2,100)를 넘지 않도록 IN 절 값을 나눠 조회한다.
-    private static final int IN_CLAUSE_CHUNK = 1000;
-
     public List<Map<String, Object>> findCustomerDetails(List<String> customerNos) {
-        return chunkedQuery(CUSTOMER_DETAILS_SQL, "customerNos", customerNos);
+        return chunkedQuery(customerDetailsSql, "customerNos", customerNos);
     }
 
     private List<Map<String, Object>> findCandidates(String predicate, List<String> values) {
-        return chunkedQuery(CUSTOMER_CANDIDATES_SQL.formatted(predicate), "values", values);
+        return chunkedQuery(customerCandidatesSql.formatted(predicate), "values", values);
     }
-
-    private static final String EXAM_DATE_CANDIDATES_SQL = SqlLoader.load("sql/softcrm/marketing/exam-date-candidates.sql");
-    private static final String SURGERY_DATE_CANDIDATES_SQL = SqlLoader.load("sql/softcrm/marketing/surgery-date-candidates.sql");
 
     /** 해당 날짜들에 검사예약이 있던 고객 — 날짜가 후보군을 좁혀 이름·생일 대조 매칭에 쓴다. */
     public List<Map<String, Object>> findExamDateCandidates(List<String> dates) {
-        return chunkedDateQuery(EXAM_DATE_CANDIDATES_SQL, dates);
+        return chunkedDateQuery(examDateCandidatesSql, dates);
     }
 
     /** 해당 날짜들에 수술 기록이 있는 고객. */
     public List<Map<String, Object>> findSurgeryDateCandidates(List<String> dates) {
-        return chunkedDateQuery(SURGERY_DATE_CANDIDATES_SQL, dates);
+        return chunkedDateQuery(surgeryDateCandidatesSql, dates);
     }
 
     /** 날짜 IN 조회 — 원본 컬럼 범위(:from~:toExclusive)를 함께 걸어 인덱스 스캔을 보장한다. */
@@ -181,15 +198,15 @@ public class OverseasMarketingRepository {
     }
 
     public List<Map<String, Object>> findOutpatientVisits(List<String> customerNos) {
-        return chunkedQuery(OUTPATIENT_SQL, "customerNos", customerNos);
+        return chunkedQuery(outpatientSql, "customerNos", customerNos);
     }
 
     public List<Map<String, Object>> findPriceItemCosts(List<String> customerNos) {
-        return chunkedQuery(PRICE_ITEM_COSTS_SQL, "customerNos", customerNos);
+        return chunkedQuery(priceItemCostsSql, "customerNos", customerNos);
     }
 
     public List<Map<String, Object>> findFallbackCosts(List<String> customerNos) {
-        return chunkedQuery(FALLBACK_COSTS_SQL, "customerNos", customerNos);
+        return chunkedQuery(fallbackCostsSql, "customerNos", customerNos);
     }
 
     private List<Map<String, Object>> chunkedQuery(String sql, String paramName, List<String> values) {
@@ -292,8 +309,9 @@ public class OverseasMarketingRepository {
 
     /** CRM 고객번호 단건 조회 — 수동 매칭 팝업의 미리보기·검증용. */
     public List<Map<String, Object>> findCustomerByNo(String customerNo) {
-        // CUST_NUM 고정 13자리 — RTRIM 없이 인덱스를 탄다(docs/db/tables/CUSTOM.md).
-        return findCandidates("c.CUST_NUM IN (:values)", List.of(customerNo));
+        // ⚠️ TRIM 좌변 — raw_crm_custom.cust_num(varchar 13) 공백 패딩, 넘기는 customerNo 는 trimmed.
+        // docs/data-platform/varchar-padding-trim-audit.md §6.2 #16
+        return findCandidates("TRIM(c.CUST_NUM) IN (:values)", List.of(customerNo));
     }
 
     public int deleteManualRow(long rowNumber) {

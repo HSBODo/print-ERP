@@ -12,17 +12,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 시력교정 매출 원천 조회 — SOFTCRM 비급여 수납 (CstPrcSub · PrcItmDtl · PrcItmLst · OPERATIONDATA).
- * 네 조회를 따로 읽고 VisionReceiptAssembler 가 합친다. READ-ONLY · MSSQL 2014 / jTDS 호환.
+ * 시력교정 매출 원천 조회 — raw.raw_crm_* 비급여 수납 (CstPrcSub · PrcItmDtl · PrcItmLst · OPERATIONDATA).
+ * 네 조회를 따로 읽고 VisionReceiptAssembler 가 합친다. READ-ONLY.
  */
 @Repository
 @Profile("postgres-mart")
 public class VisionReceiptSourceRepository {
 
-    static final String PAYMENTS_SQL = "sql/softcrm/accounting/select-vision-payments.sql";
-    static final String ITEM_DETAILS_SQL = "sql/softcrm/accounting/select-vision-item-details.sql";
-    static final String ITEMS_SQL = "sql/softcrm/accounting/select-vision-items.sql";
-    static final String OPERATIONS_SQL = "sql/softcrm/accounting/select-vision-operations.sql";
+    static final String PAYMENTS_SQL     = "sql/warehouse/accounting/select-vision-payments.sql";
+    static final String ITEM_DETAILS_SQL = "sql/warehouse/accounting/select-vision-item-details.sql";
+    static final String ITEMS_SQL        = "sql/warehouse/accounting/select-vision-items.sql";
+    static final String OPERATIONS_SQL   = "sql/warehouse/accounting/select-vision-operations.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String paymentsSql;
@@ -30,12 +30,13 @@ public class VisionReceiptSourceRepository {
     private final String itemsSql;
     private final String operationsSql;
 
-    public VisionReceiptSourceRepository(@Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-        this.paymentsSql = SqlLoader.load(PAYMENTS_SQL);
+    public VisionReceiptSourceRepository(
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc) {
+        this.jdbc = warehouseJdbc;
+        this.paymentsSql    = SqlLoader.load(PAYMENTS_SQL);
         this.itemDetailsSql = SqlLoader.load(ITEM_DETAILS_SQL);
-        this.itemsSql = SqlLoader.load(ITEMS_SQL);
-        this.operationsSql = SqlLoader.load(OPERATIONS_SQL);
+        this.itemsSql       = SqlLoader.load(ITEMS_SQL);
+        this.operationsSql  = SqlLoader.load(OPERATIONS_SQL);
     }
 
     public List<Map<String, Object>> findPayments(LocalDate from, LocalDate to) {

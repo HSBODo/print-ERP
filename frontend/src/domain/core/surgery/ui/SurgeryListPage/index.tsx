@@ -352,7 +352,7 @@ export function SurgeryListPage() {
             SURGERY_TYPE_FILTERS,
             typeFilter,
             setTypeFilter,
-            '시력교정 수술 유형. ICL·T-ICL·KPL·T-KPL·VIVA 는 그 렌즈를 받은 사람을 고른다 — 수술별 비중 표는 환자당 대표유형(우안 우선) 하나만 세므로 건수가 다를 수 있다.',
+            '시력교정 수술 유형. 양안이면 우안, 단안이면 수술한 쪽 수술명으로 판정한다 — 수술별 비중 표의 대표유형(우안 우선)과 같은 기준.',
           )}
         {showVisionFilters && <div className="h-5 w-px bg-border" />}
         {showVisionFilters &&

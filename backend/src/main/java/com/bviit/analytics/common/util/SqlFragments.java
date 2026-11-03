@@ -7,32 +7,35 @@ import java.util.stream.IntStream;
 public final class SqlFragments {
 
     private static final Pattern SAFE_ALIAS = Pattern.compile("[A-Za-z][A-Za-z0-9_]*");
-    private static final String EXAM_MEASUREMENTS_BLANK =
-            SqlLoader.load("sql/softcrm/fragments/fragment-exam-measurements-blank.sql");
-    private static final String EXAM_SESSION_SOURCE =
-            SqlLoader.load("sql/softcrm/fragments/fragment-exam-session-source.sql");
+
+    private static final String EXAM_MEASUREMENTS_BLANK_WAREHOUSE =
+            SqlLoader.load("sql/warehouse/fragments/fragment-exam-measurements-blank.sql");
+
+    private static final String EXAM_SESSION_SOURCE_WAREHOUSE =
+            SqlLoader.load("sql/warehouse/fragments/fragment-exam-session-source.sql");
 
     private SqlFragments() {
     }
 
     /**
-     * 검사 세션 모집단(cn · d · isCat) — 검사자 리스트와 동일 기준.
+     * 검사 세션 모집단(cn · d · isCat) — 검사자 리스트와 동일 기준 (웨어하우스 Postgres 방언).
      * 조각 안의 {@code __EXAM_MEASUREMENTS_BLANK__} 는 EXAM 별칭 {@code e} 로 미리 치환해 돌려준다.
      *
      * @see #examMeasurementsBlankPredicate(String)
      */
     public static String examSessionSource() {
-        return EXAM_SESSION_SOURCE.replace(
+        return EXAM_SESSION_SOURCE_WAREHOUSE.replace(
                 "__EXAM_MEASUREMENTS_BLANK__",
                 examMeasurementsBlankPredicate("e")
         );
     }
 
+    /** 웨어하우스 Postgres 방언(소문자 컬럼 + TRIM/COALESCE) 조각을 돌려준다. */
     public static String examMeasurementsBlankPredicate(String alias) {
         if (alias == null || !SAFE_ALIAS.matcher(alias).matches()) {
             throw new IllegalArgumentException("SQL alias is not safe: " + alias);
         }
-        String sql = EXAM_MEASUREMENTS_BLANK.replace("__ALIAS__", alias);
+        String sql = EXAM_MEASUREMENTS_BLANK_WAREHOUSE.replace("__ALIAS__", alias);
         String[] lines = sql.replace("\r\n", "\n").split("\n");
         return IntStream.range(0, lines.length)
                 .mapToObj(i -> normalizePredicateLine(lines[i], i == 0))

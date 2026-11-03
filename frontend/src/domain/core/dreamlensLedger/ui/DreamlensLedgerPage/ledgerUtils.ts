@@ -1,5 +1,5 @@
 import type { CsvColumn } from '#shared/utils/csv'
-import { type DateRange, todayIso, toIsoDate } from '#shared/utils/date'
+import { capToToday, type DateRange, thisMonthRange } from '#shared/utils/date'
 import { maskAddress, maskName } from '#shared/utils/mask'
 
 import type { DreamlensLedgerRow } from '../../type/api'
@@ -45,14 +45,8 @@ export const compareSortValue = (
 
 export const formatCount = (count: number) => count.toLocaleString('ko-KR')
 
-/** 기본 조회 구간 — 지난달 1일 ~ 오늘(장부는 최근 것을 주로 본다). */
-export const defaultRange = (): DateRange => {
-  const now = new Date()
-  return {
-    from: toIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
-    to: todayIso(),
-  }
-}
+/** 기본 조회 구간 — 이번 달 1일 ~ 오늘. */
+export const defaultRange = (): DateRange => capToToday(thisMonthRange())
 
 /** 백엔드 DreamlensLedgerService 조회 구간 제한(양 끝 포함 92일)과 같다. */
 export const LEDGER_MAX_DAYS = 92
@@ -64,6 +58,35 @@ export const matchesKeyword = (row: DreamlensLedgerRow, keyword: string) => {
   return [row.customerName, row.customerNo, row.examiner].some((value) =>
     (value ?? '').toLowerCase().includes(needle),
   )
+}
+
+/** 진료구분이 빈 행은 선택지·필터에서 이 값으로 묶는다. */
+export const EMPTY_VISIT_TYPE = '(미입력)'
+
+export const visitTypeOf = (row: DreamlensLedgerRow) => {
+  const value = (row.visitType ?? '').trim()
+  return value === '' ? EMPTY_VISIT_TYPE : value
+}
+
+/** 가나다순, (미입력)은 맨 끝 */
+const byVisitTypeName = (a: string, b: string) => {
+  if (a === EMPTY_VISIT_TYPE) return 1
+  if (b === EMPTY_VISIT_TYPE) return -1
+  return a.localeCompare(b, 'ko-KR')
+}
+
+/**
+ * 진료구분 선택지 — 조회된 행에 있는 값, 가나다순.
+ * 배치가 CRM 진료구분을 옮겨 적고(미지 유형은 원문 그대로) 사람도 손으로 고치므로 고정 목록을 두지 않는다.
+ */
+export const visitTypeOptions = (
+  rows: DreamlensLedgerRow[],
+  selected: string,
+) => {
+  const types = new Set(rows.map(visitTypeOf))
+  // 고른 값이 재조회·삭제로 사라져도 버튼은 남긴다 — 없으면 아무 버튼도 안 눌린 채 필터만 걸려 있게 된다.
+  if (selected !== '전체') types.add(selected)
+  return [...types].sort(byVisitTypeName)
 }
 
 /** 구매·배송 구분으로 볼 수 있는 값인지 — 정규화 규칙과 같은 키워드를 쓴다(주소는 하나도 걸리지 않음을 전수 확인). */

@@ -11,7 +11,7 @@ class SqlFragmentsTest {
     void 검사측정값_공백조건은_각_줄을_and로_연결한다() {
         String sql = SqlFragments.examMeasurementsBlankPredicate("e");
 
-        assertThat(sql).contains("e.RIGHT01", "e.LEFT30");
+        assertThat(sql).contains("e.right01", "e.left30");
         assertThat(sql.lines().skip(1))
                 .allSatisfy(line -> assertThat(line).startsWith("AND "));
     }

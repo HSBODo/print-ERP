@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 검사 중단 사유 통계 쿼리.
+ * 검사 중단 사유 통계 쿼리. ConsultationReconcileService 전용(파이프라인 밖, 대사용).
  *
- * 검사 중단(EXAM.STOP_YN='Y') 건을 상담사가 드롭다운에서 고른 정형 코드 EXAM.CANCEL_CD(char(3))로
+ * 검사 중단(raw_crm_exam.STOP_YN='Y') 건을 상담사가 드롭다운에서 고른 정형 코드 CANCEL_CD(char(3))로
  * 분류한 월별 사유별 건수. 코드 마스터는 CANCEL_CFG.
  *
  * 매핑 — 코드군이 두 벌이다: 1xx(검사 중단) / 3xx(동일 라벨 세트). 새 코드 추가 시 짝이 있는지 확인할 것.
@@ -34,7 +34,7 @@ import java.util.Map;
  * ⚠️ CANCEL_CD 는 이름과 달리 '취소 플래그'가 아니라 '중단 사유 코드'다. 다른 쿼리들은 같은 컬럼을
  *   취소 판정(ISNULL(e.CANCEL_CD,'') = '')에 쓴다 — 같은 컬럼, 두 용도.
  *
- * 분류 규칙 본체는 sql/softcrm/consultation/select-stop-reason-monthly.sql 의 CASE 문 한 곳.
+ * 분류 규칙 본체는 sql/warehouse/consultation/select-stop-reason-monthly.sql 의 CASE 문 한 곳.
  * 매핑 변경 절차·검증 쿼리·함정은 docs/db/중단사유-분류-정의.md 참조.
  *
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
@@ -45,14 +45,14 @@ public class StopReasonStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_STOP_REASON_MONTHLY_SQL = "sql/softcrm/consultation/select-stop-reason-monthly.sql";
+    static final String FIND_STOP_REASON_MONTHLY_SQL = "sql/warehouse/consultation/select-stop-reason-monthly.sql";
 
     private final String findStopReasonMonthlySql;
 
     public StopReasonStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
+        this.jdbc = warehouseJdbc;
         this.findStopReasonMonthlySql = SqlLoader.load(FIND_STOP_REASON_MONTHLY_SQL);
     }
 

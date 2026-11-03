@@ -47,6 +47,7 @@ const allExamListItemSchema = z.object({
   chartNo: z.string(),
   name: z.string(),
   examDate: z.string(),
+  surgeryReserveDate: z.string(),
   examGroup: z.string(),
   // 원데이/일반 이진값 — 빈칸 없음(2026-08-05).
   //   시력교정 = 같은날 검사OP(M/5) 예약 내원 / 백내장 = 진료구분 C_원데이·C_노안원데이 / 드림렌즈 = 항상 일반
@@ -149,21 +150,6 @@ export type CataractExamListItem = z.infer<typeof cataractExamListItemSchema>
 export const cataractExamListResponseSchema = apiResponseOf(
   z.array(cataractExamListItemSchema),
 )
-
-const eoeisCheckupRowSchema = z.object({
-  operatorName: z.string(),
-  deviceName: z.string(),
-  date: z.string(),
-  count: z.number(),
-})
-
-export const eoeisCheckupResultSchema = z.object({
-  rows: z.array(eoeisCheckupRowSchema),
-  scores: z.record(z.string(), z.number()),
-})
-
-export type EoeisCheckupRow = z.infer<typeof eoeisCheckupRowSchema>
-export type EoeisCheckupResult = z.infer<typeof eoeisCheckupResultSchema>
 
 /**
  * 고객분류별 검사수(월간 레포트 도표 #7) — 한 해의 (월 × 내원동기(레포트)) 건수.

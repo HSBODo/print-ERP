@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 수술 통계 쿼리 (레거시 stats-weekly-report.js 준용).
+ * 수술 통계 쿼리 (레거시 stats-weekly-report.js 준용). SurgeryReconcileService 전용(파이프라인 밖, 대사용).
  *
  * 핵심 원칙:
  *   1) 시력교정: OPERATIONDATA에서 CUST_NUM이 Cataract_Operationdata에 있으면 제외 (중복 방지)
@@ -20,7 +20,6 @@ import java.util.Map;
  *   3) 테스트 고객 제외 (CUST_NAME LIKE '%TEST%' OR '%테스트%')
  *   4) 수술 코드 제외 (X, OP불가, 모든수술가능, op x, Strabismus, TEST-TEST)
  *
- * MSSQL 2014 호환: STRING_AGG, TRIM 등 사용 금지.
  * READ-ONLY — SELECT만 실행.
  */
 @Repository
@@ -29,10 +28,10 @@ public class SurgeryStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String FIND_VISION_MONTHLY_BY_TYPE_SQL = "sql/softcrm/surgery/select-vision-monthly-by-type.sql";
-    private static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL = "sql/softcrm/surgery/select-cataract-monthly-by-type.sql";
-    private static final String FIND_VISION_DAILY_BY_TYPE_SQL = "sql/softcrm/surgery/select-vision-daily-by-type.sql";
-    private static final String FIND_CATARACT_DAILY_BY_TYPE_SQL = "sql/softcrm/surgery/select-cataract-daily-by-type.sql";
+    static final String FIND_VISION_MONTHLY_BY_TYPE_SQL   = "sql/warehouse/surgery/select-vision-monthly-by-type.sql";
+    static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL = "sql/warehouse/surgery/select-cataract-monthly-by-type.sql";
+    static final String FIND_VISION_DAILY_BY_TYPE_SQL     = "sql/warehouse/surgery/select-vision-daily-by-type.sql";
+    static final String FIND_CATARACT_DAILY_BY_TYPE_SQL   = "sql/warehouse/surgery/select-cataract-daily-by-type.sql";
 
     private final String findVisionMonthlyByTypeSql;
     private final String findCataractMonthlyByTypeSql;
@@ -40,13 +39,13 @@ public class SurgeryStatsRepository {
     private final String findCataractDailyByTypeSql;
 
     public SurgeryStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.findVisionMonthlyByTypeSql = SqlLoader.load(FIND_VISION_MONTHLY_BY_TYPE_SQL);
+        this.jdbc = warehouseJdbc;
+        this.findVisionMonthlyByTypeSql   = SqlLoader.load(FIND_VISION_MONTHLY_BY_TYPE_SQL);
         this.findCataractMonthlyByTypeSql = SqlLoader.load(FIND_CATARACT_MONTHLY_BY_TYPE_SQL);
-        this.findVisionDailyByTypeSql = SqlLoader.load(FIND_VISION_DAILY_BY_TYPE_SQL);
-        this.findCataractDailyByTypeSql = SqlLoader.load(FIND_CATARACT_DAILY_BY_TYPE_SQL);
+        this.findVisionDailyByTypeSql     = SqlLoader.load(FIND_VISION_DAILY_BY_TYPE_SQL);
+        this.findCataractDailyByTypeSql   = SqlLoader.load(FIND_CATARACT_DAILY_BY_TYPE_SQL);
     }
 
     /**

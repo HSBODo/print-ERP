@@ -23,25 +23,25 @@ import java.util.Map;
  *   - 상태(RESERVE_STATE) 필터 없음 — 종합은 등록 시점 기준이라 사후 취소도 포함.
  * 행 1개 = RESERVE_NUM 1개(PK). **명단 행 합계 = 예약 종합 월 값**(둘 다 카카오 미포함).
  *
- * READ-ONLY · MSSQL 2014 호환(TRIM 금지). 날짜 범위는 등록일(InsertedDateTime) 기준.
+ * READ-ONLY · 날짜 범위는 등록일(InsertedDateTime) 기준.
  */
 @Repository
 @Profile("postgres-mart")
 public class ReservationListRepository {
 
-    static final String RESERVATION_LIST_SQL = "sql/softcrm/reservation/list/select-reservation-list.sql";
-    static final String RESERVATION_LIST_ALL_SQL = "sql/softcrm/reservation/list/select-reservation-list-all.sql";
+    static final String SQL = "sql/warehouse/reservation/list/select-reservation-list.sql";
+    static final String SQL_ALL = "sql/warehouse/reservation/list/select-reservation-list-all.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String reservationListSql;
     private final String reservationListAllSql;
 
     public ReservationListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.reservationListSql = SqlLoader.load(RESERVATION_LIST_SQL);
-        this.reservationListAllSql = SqlLoader.load(RESERVATION_LIST_ALL_SQL);
+        this.jdbc = warehouseJdbc;
+        this.reservationListSql = SqlLoader.load(SQL);
+        this.reservationListAllSql = SqlLoader.load(SQL_ALL);
     }
 
     public List<Map<String, Object>> findReservationList(String from, String to) {

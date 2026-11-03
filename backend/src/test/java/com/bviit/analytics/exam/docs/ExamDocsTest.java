@@ -3,13 +3,10 @@ package com.bviit.analytics.exam.docs;
 import com.bviit.analytics.auth.config.JwtUtil;
 import com.bviit.analytics.auth.entity.Department;
 import com.bviit.analytics.auth.entity.Role;
-import com.bviit.analytics.exam.dto.EoeisCheckupResult;
-import com.bviit.analytics.exam.dto.EoeisCheckupRow;
 import com.bviit.analytics.exam.dto.ExaminationMonthlyItem;
 import com.bviit.analytics.exam.dto.ProcedureExamMonthlyItem;
 import com.bviit.analytics.exam.service.AllExamListReader;
 import com.bviit.analytics.exam.service.CataractExamListReader;
-import com.bviit.analytics.exam.service.EoeisCheckupService;
 import com.bviit.analytics.exam.service.ExamCountReader;
 import com.bviit.analytics.exam.service.ExamListReader;
 import com.bviit.analytics.exam.service.ExaminationStatsReader;
@@ -27,14 +24,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -50,7 +45,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * exam 도메인 10개 엔드포인트 문서화 — 검사자 리스트 3종 + 아이리더 + 검사수 + Examination Panel/Stats + ProcedureExam.
+ * exam 도메인 9개 엔드포인트 문서화 — 검사자 리스트 3종 + 검사수 + Examination Panel/Stats + ProcedureExam.
  *
  * 모두 MEDICAL/ALL 부서. procedure-exam/monthly 는 홈 대시보드 개방(부서 무관).
  */
@@ -70,7 +65,6 @@ class ExamDocsTest {
     @MockitoBean ExamListReader examListReader;
     @MockitoBean AllExamListReader allExamListReader;
     @MockitoBean CataractExamListReader cataractExamListReader;
-    @MockitoBean EoeisCheckupService eoeisCheckupService;
     @MockitoBean ExamCountReader examCountReader;
     @MockitoBean ExaminationStatsReader examinationStatsReader;
     @MockitoBean ProcedureExamStatsReader procedureExamStatsReader;
@@ -92,10 +86,6 @@ class ExamDocsTest {
         when(examListReader.getExamList(anyString(), anyString())).thenReturn(List.of(row));
         when(allExamListReader.getAllExamList(anyString(), anyString())).thenReturn(List.of(row));
         when(cataractExamListReader.getCataractExamList(anyString(), anyString())).thenReturn(List.of(row));
-
-        EoeisCheckupRow eoeisRow = new EoeisCheckupRow("김검사", "IOL-master", LocalDate.of(2026, 8, 14), 42L);
-        when(eoeisCheckupService.getStats(any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(new EoeisCheckupResult(List.of(eoeisRow), Map.of("IOL-master", 300)));
 
         Map<String, Object> classRow = new LinkedHashMap<>();
         classRow.put("month", 7);
@@ -137,36 +127,6 @@ class ExamDocsTest {
         docListEndpoint("/api/cataract-exam-list", "cataract-exam-list",
                 "백내장 검사자 리스트",
                 "검사자 리스트와 동일 계약(camelCase). postgres-mart 마트 조회. 최대 366일.");
-    }
-
-    @Test
-    void eoeis_checkup_문서화() throws Exception {
-        mockMvc.perform(get("/api/eoeis-checkup")
-                        .param("from", "2026-07-01").param("to", "2026-07-31")
-                        .header(HttpHeaders.AUTHORIZATION, bearer()))
-                .andExpect(status().isOk())
-                .andDo(document("eoeis-checkup",
-                        preprocessRequest(modifyUris().host("analytics.bnviit.com").removePort(), prettyPrint()),
-                        preprocessResponse(prettyPrint()),
-                        resource(ResourceSnippetParameters.builder()
-                                .tag("Exam")
-                                .summary("아이리더 검사통계 (검사자×장비×일자)")
-                                .description("피벗 화면 재료. 2026-07-01 이전은 400. 최대 366일. "
-                                        + "EOEIS_DATASOURCE_URL 미설정 시 503. MEDICAL/ALL.")
-                                .requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {token} — MEDICAL/ALL"))
-                                .queryParameters(
-                                        parameterWithName("from").description("시작일 (YYYY-MM-DD, ≥ 2026-07-01)"),
-                                        parameterWithName("to").description("종료일 (YYYY-MM-DD, 최대 366일)"))
-                                .responseFields(
-                                        fieldWithPath("success").description("요청 성공 여부"),
-                                        fieldWithPath("data.rows[].operatorName").description("검사자 이름"),
-                                        fieldWithPath("data.rows[].deviceName").description("장비 이름"),
-                                        fieldWithPath("data.rows[].date").description("일자 YYYY-MM-DD"),
-                                        fieldWithPath("data.rows[].count").description("건수 (long)"),
-                                        subsectionWithPath("data.scores").description("팀 공용 장비 점수 맵 (장비명 → 점수)"),
-                                        subsectionWithPath("meta").description("응답 메타 (source=LIVE)"))
-                                .responseSchema(Schema.schema("EoeisCheckupResponse"))
-                                .build())));
     }
 
     // ─── /api/stats/exam-count/by-class ────────────────────────

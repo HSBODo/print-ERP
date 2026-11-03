@@ -15,21 +15,16 @@ import java.util.List;
  * 예약통계시스템 — BCRM RSS 컨택통계 일자별 원시 카운트(CH01~CH24).
  *
  * 운영 BCRM RSS 쿼리를 단일 SELECT(임시테이블 → CTE)로 재구성한 것. 7개 채널 소스를 PK+예약날짜로
- * LEFT JOIN해 일자별 카운트를 낸다. 검사 인입/응대콜은 EICN_MySQL 링크드서버를 OPENQUERY로 조회한다.
+ * LEFT JOIN해 일자별 카운트를 낸다. 검사 인입/응대콜은 raw.raw_eicn_stat_user_inbound_bseye 직접 조회.
  *
- * 날짜 바인딩:
- *   - MSSQL 측 술어는 모두 :from / :to 네임드 파라미터(등록일 ≥ from, &lt; to+1일).
- *   - OPENQUERY 내부(MySQL 문자열 리터럴)는 파라미터 바인딩이 불가하므로, 컨트롤러에서
- *     LocalDate로 검증된 ISO 날짜(yyyy-MM-dd)만 치환한다(아래 ISO 형식 재검증 후 replace).
- *
- * READ-ONLY · MSSQL 2014 호환(TRIM 금지, WITH(NOLOCK)).
+ * READ-ONLY · 네임드 파라미터 :from / :to / :date.
  */
 @Repository
 @Profile("postgres-mart")
 public class ReservationStatsSystemRepository {
 
-    private static final String SQL_LOCATION = "sql/softcrm/reservation/stats/select-system-daily-counts.sql";
-    private static final String DRILL_DOWN_SQL_LOCATION = "sql/softcrm/reservation/stats/select-system-drill-down.sql";
+    static final String SQL            = "sql/warehouse/reservation/stats/select-system-daily-counts.sql";
+    static final String DRILL_DOWN_SQL = "sql/warehouse/reservation/stats/select-system-drill-down.sql";
     private static final String ISO_DATE = "\\d{4}-\\d{2}-\\d{2}";
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -37,11 +32,11 @@ public class ReservationStatsSystemRepository {
     private final String drillDownSql;
 
     public ReservationStatsSystemRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.sql = SqlLoader.load(SQL_LOCATION);
-        this.drillDownSql = SqlLoader.load(DRILL_DOWN_SQL_LOCATION);
+        this.jdbc = warehouseJdbc;
+        this.sql          = SqlLoader.load(SQL);
+        this.drillDownSql = SqlLoader.load(DRILL_DOWN_SQL);
     }
 
     public List<ReservationStatsDailyRow> findDailyCounts(String from, String to) {

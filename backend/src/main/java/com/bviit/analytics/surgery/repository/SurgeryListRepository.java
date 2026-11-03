@@ -17,29 +17,25 @@ import java.util.Map;
  * 기준일: 수술일자(OPERATIONDATA.OPERATION_DATE, Cataract_Operationdata R/L 수술일)
  * 보조일: 검사일자(EXAM.EXAM_DATE, Cataract_Exam.EXAM_DATE)
  *
- * MSSQL 2014 호환: STRING_AGG, TRIM 사용 금지.
  */
 @Repository
 @Profile("postgres-mart")
 public class SurgeryListRepository {
 
+    static final String SQL = "sql/warehouse/surgery/select-surgery-list.sql";
+
     private final NamedParameterJdbcTemplate jdbc;
-
-    private static final String FIND_SURGERY_LIST_SQL = "sql/softcrm/surgery/select-surgery-list.sql";
-
     private final String findSurgeryListSql;
 
     public SurgeryListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.findSurgeryListSql = SqlLoader.load(FIND_SURGERY_LIST_SQL);
+        this.jdbc = warehouseJdbc;
+        this.findSurgeryListSql = SqlLoader.load(SQL);
     }
 
     public List<Map<String, Object>> findSurgeryList(String from, String to) {
-        String sql = findSurgeryListSql;
-
-        return jdbc.queryForList(sql, new MapSqlParameterSource()
+        return jdbc.queryForList(findSurgeryListSql, new MapSqlParameterSource()
                 .addValue("from", from)
                 .addValue("to", to));
     }

@@ -19,25 +19,24 @@ import java.util.Map;
  * + MEDICAL_SUB_CFG + MOTIVE_NEW02 등을 JOIN한 비측정 행.
  *
  * 컬럼 별칭(camelCase)이 그대로 JSON 키가 되어 프론트 Zod 스키마와 1:1 매칭된다 — DTO 불필요.
- * 모든 컬럼은 ISNULL(...,'')로 감싸 항상 문자열을 보장한다.
+ * 모든 컬럼은 COALESCE(...,'')로 감싸 항상 문자열을 보장한다.
  *
- * READ-ONLY · MSSQL 2014 호환(TRIM 금지 → LTRIM/RTRIM). 날짜는 char(10) 'YYYY-MM-DD'.
+ * READ-ONLY · Postgres · 날짜는 char(10) 'YYYY-MM-DD'.
  */
 @Repository
 @Profile("postgres-mart")
 public class OutpatientListRepository {
 
+    static final String SQL = "sql/warehouse/outpatient/select-outpatient-list.sql";
+
     private final NamedParameterJdbcTemplate jdbc;
-
-    private static final String FIND_OUTPATIENT_LIST_SQL = "sql/softcrm/outpatient/select-outpatient-list.sql";
-
     private final String findOutpatientListSql;
 
     public OutpatientListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate jdbc
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = jdbc;
-        this.findOutpatientListSql = SqlLoader.load(FIND_OUTPATIENT_LIST_SQL);
+        this.jdbc = warehouseJdbc;
+        this.findOutpatientListSql = SqlLoader.load(SQL);
     }
 
     public List<Map<String, Object>> findOutpatientList(String from, String to) {
