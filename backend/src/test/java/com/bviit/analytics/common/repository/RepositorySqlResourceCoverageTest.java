@@ -97,7 +97,7 @@ class RepositorySqlResourceCoverageTest {
 
     @Test
     void b2b_동적_템플릿은_최종_sql에_placeholder를_남기지_않는다() throws Exception {
-        B2bRevenueStatsRepository repository = new B2bRevenueStatsRepository(null, null, false);
+        B2bRevenueStatsRepository repository = new B2bRevenueStatsRepository(null);
         Method method = B2bRevenueStatsRepository.class.getDeclaredMethod(
                 "buildMonthlyRevenueQuery",
                 String.class,

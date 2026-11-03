@@ -3,7 +3,6 @@ package com.bviit.analytics.consultation.repository;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -15,14 +14,7 @@ import java.util.Map;
 /**
  * 검사 중단 사유 통계 쿼리. ConsultationReconcileService 전용(파이프라인 밖, 대사용).
  *
- * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE wave)</b>
- * <ul>
- *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL.</li>
- *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.raw_crm_exam.</li>
- * </ul>
- *
- *
- * 검사 중단(EXAM.STOP_YN='Y') 건을 상담사가 드롭다운에서 고른 정형 코드 EXAM.CANCEL_CD(char(3))로
+ * 검사 중단(raw_crm_exam.STOP_YN='Y') 건을 상담사가 드롭다운에서 고른 정형 코드 CANCEL_CD(char(3))로
  * 분류한 월별 사유별 건수. 코드 마스터는 CANCEL_CFG.
  *
  * 매핑 — 코드군이 두 벌이다: 1xx(검사 중단) / 3xx(동일 라벨 세트). 새 코드 추가 시 짝이 있는지 확인할 것.
@@ -42,7 +34,7 @@ import java.util.Map;
  * ⚠️ CANCEL_CD 는 이름과 달리 '취소 플래그'가 아니라 '중단 사유 코드'다. 다른 쿼리들은 같은 컬럼을
  *   취소 판정(ISNULL(e.CANCEL_CD,'') = '')에 쓴다 — 같은 컬럼, 두 용도.
  *
- * 분류 규칙 본체는 sql/softcrm/consultation/select-stop-reason-monthly.sql 의 CASE 문 한 곳.
+ * 분류 규칙 본체는 sql/warehouse/consultation/select-stop-reason-monthly.sql 의 CASE 문 한 곳.
  * 매핑 변경 절차·검증 쿼리·함정은 docs/db/중단사유-분류-정의.md 참조.
  *
  * READ-ONLY — SELECT만 실행. 날짜 컬럼은 char(10) 'YYYY-MM-DD'.
@@ -53,19 +45,15 @@ public class StopReasonStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    static final String FIND_STOP_REASON_MONTHLY_SQL_MSSQL     = "sql/softcrm/consultation/select-stop-reason-monthly.sql";
-    static final String FIND_STOP_REASON_MONTHLY_SQL_WAREHOUSE = "sql/warehouse/consultation/select-stop-reason-monthly.sql";
+    static final String FIND_STOP_REASON_MONTHLY_SQL = "sql/warehouse/consultation/select-stop-reason-monthly.sql";
 
     private final String findStopReasonMonthlySql;
 
     public StopReasonStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
-            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
-        this.findStopReasonMonthlySql = SqlLoader.load(
-                dataPlatformEnabled ? FIND_STOP_REASON_MONTHLY_SQL_WAREHOUSE : FIND_STOP_REASON_MONTHLY_SQL_MSSQL);
+        this.jdbc = warehouseJdbc;
+        this.findStopReasonMonthlySql = SqlLoader.load(FIND_STOP_REASON_MONTHLY_SQL);
     }
 
     /** 월별 중단 사유 분류 건수. */

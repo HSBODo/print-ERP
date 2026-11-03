@@ -3,7 +3,6 @@ package com.bviit.analytics.outpatient.repository;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -20,36 +19,24 @@ import java.util.Map;
  * + MEDICAL_SUB_CFG + MOTIVE_NEW02 등을 JOIN한 비측정 행.
  *
  * 컬럼 별칭(camelCase)이 그대로 JSON 키가 되어 프론트 Zod 스키마와 1:1 매칭된다 — DTO 불필요.
- * 모든 컬럼은 ISNULL(...,'')로 감싸 항상 문자열을 보장한다.
+ * 모든 컬럼은 COALESCE(...,'')로 감싸 항상 문자열을 보장한다.
  *
- * READ-ONLY · MSSQL 2014 호환(TRIM 금지 → LTRIM/RTRIM). 날짜는 char(10) 'YYYY-MM-DD'.
- *
- * <p><b>소스 라우팅 (data-platform 프로파일)</b>
- * <ul>
- *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + SQL {@link #SQL_MSSQL}.</li>
- *   <li>data-platform 활성: 데이터 플랫폼 (warehouseJdbcTemplate) + SQL {@link #SQL_WAREHOUSE}. Postgres 방언 (OUTER APPLY → LATERAL, ISNULL → COALESCE, alias double-quoted).</li>
- * </ul>
- *
- * <p>정본 전략: {@code docs/data-platform/migration-strategy.md}. 이관 이력: 2026-09-29 A3-2.
+ * READ-ONLY · Postgres · 날짜는 char(10) 'YYYY-MM-DD'.
  */
 @Repository
 @Profile("postgres-mart")
 public class OutpatientListRepository {
 
-    static final String SQL_MSSQL = "sql/softcrm/outpatient/select-outpatient-list.sql";
-    static final String SQL_WAREHOUSE = "sql/warehouse/outpatient/select-outpatient-list.sql";
+    static final String SQL = "sql/warehouse/outpatient/select-outpatient-list.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String findOutpatientListSql;
 
     public OutpatientListRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
-            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
-        this.findOutpatientListSql = SqlLoader.load(
-                dataPlatformEnabled ? SQL_WAREHOUSE : SQL_MSSQL);
+        this.jdbc = warehouseJdbc;
+        this.findOutpatientListSql = SqlLoader.load(SQL);
     }
 
     public List<Map<String, Object>> findOutpatientList(String from, String to) {

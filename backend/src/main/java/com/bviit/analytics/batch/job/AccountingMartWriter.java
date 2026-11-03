@@ -138,7 +138,7 @@ public class AccountingMartWriter {
                 .addValue("to", to, Types.DATE);
     }
 
-    /** jTDS 는 BIGINT 합계를 Long, money 를 BigDecimal 로 준다 — 어느 쪽이든 원 단위 long 으로. */
+    /** warehouse(Postgres) BIGINT/NUMERIC 합계를 어느 수치형이든 원 단위 long 으로 정규화. */
     static long toLong(Object v) {
         if (v == null) return 0L;
         if (v instanceof Number n) return Math.round(n.doubleValue());

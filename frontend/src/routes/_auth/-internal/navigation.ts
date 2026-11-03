@@ -143,7 +143,6 @@ export const MENU_TREE: MenuNode[] = [
           '/stats/exam-list',
           '/stats/cataract-exam-list',
           '/stats/all-exam-list',
-          '/stats/eoeis-checkup',
           '/stats/examination',
           '/stats/procedure-exam',
         ],

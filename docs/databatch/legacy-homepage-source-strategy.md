@@ -254,7 +254,7 @@ CREATE INDEX idx_mart_list_reservation_homepage_reg_date
 **신규 배치 잡** (`batch/job/ReservationListHomepageMartJob.java`)
 - 리스트형 마트 패턴 (`list_reservation` · `list_cataract_exam` 참고): `DELETE ... WHERE reg_date BETWEEN :from AND :to` → `INSERT`.
 - 소스: `HomepageCounselRepository` (b61ff05 의 mariadb SQL 을 재활용).
-- 스케줄: `BatchOrchestrator.runDaily` · `runReservationStatsIntraday` 에 배선.
+- 스케줄: `BatchOrchestrator.runDaily` 에 배선.
 
 **앱 조회 경로 리팩터**
 - `ReservationListHomepageRepository` — Postgres 마트에서 조회하도록 재작성.

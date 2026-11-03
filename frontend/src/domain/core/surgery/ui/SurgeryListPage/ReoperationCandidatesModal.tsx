@@ -242,6 +242,7 @@ export function ReoperationCandidatesModal({ from, to, onClose }: Props) {
                 <span className="w-20 shrink-0">고객명</span>
                 <span className="min-w-0 flex-1">수술방법 R</span>
                 <span className="min-w-0 flex-1">수술방법 L</span>
+                <span className="w-36 shrink-0">사유</span>
                 <span className="w-24 shrink-0 text-right">수납금액</span>
               </div>
 
@@ -401,6 +402,19 @@ function RowItem({
       </span>
       <span className="min-w-0 flex-1 truncate text-gray-600" title={c.againL}>
         {dash(c.againL)}
+      </span>
+      {/* 사유 배지 — RE_OPERATION.REASON_CD 라벨(추가교정·렌즈 교환·세척 등).
+          적재 SQL 에서 모든 행에 사유를 채우므로 라벨은 항상 excludeReason.
+          색상만 autoIncluded 기준 분기(포함 emerald / 제외 amber) — 섹션 색상과 통일. */}
+      <span
+        className={`w-36 shrink-0 truncate rounded px-1.5 py-0.5 text-[10px] font-medium ${
+          c.autoIncluded === 1
+            ? 'bg-emerald-100 text-emerald-700'
+            : 'bg-amber-100 text-amber-700'
+        }`}
+        title={c.excludeReason}
+      >
+        {c.excludeReason}
       </span>
       <span className="w-24 shrink-0 text-right tabular-nums text-gray-700">
         {c.payment ? `${c.payment}원` : '—'}

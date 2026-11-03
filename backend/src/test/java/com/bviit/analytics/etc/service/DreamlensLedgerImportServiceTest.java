@@ -1,6 +1,5 @@
 package com.bviit.analytics.etc.service;
 
-import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.etc.entity.DreamlensLedgerEntry;
 import com.bviit.analytics.etc.repository.DreamlensLedgerDraftRepository;
 import com.bviit.analytics.etc.repository.DreamlensLedgerRepository;
@@ -163,23 +162,6 @@ class DreamlensLedgerImportServiceTest {
 
         Map<String, Integer> stats = service.importRange(day, day);
         assertThat(stats).containsEntry("inserted", 1);
-    }
-
-    @Test
-    void 초안_SQL_리소스는_필수_별칭과_소스를_담고_있다() {
-        String sql = SqlLoader.load("sql/softcrm/etc/select-dreamlens-ledger-draft.sql");
-        // ImportService 가 읽는 결과 별칭 — 하나라도 빠지면 초안 값이 조용히 0/null 이 된다.
-        assertThat(sql)
-                .contains("AS entryDate").contains("AS customerNo").contains("AS customerName")
-                .contains("AS visitTypeRaw").contains("AS examiner")
-                .contains("AS lensRevenue").contains("AS lensListPrice").contains("AS treatmentRevenue");
-        // 검증된 소스 고정 — 바꾸면 시드 장부 대조가 깨진다.
-        assertThat(sql)
-                .contains("RESERVE_FLAG = 'D'")
-                .contains("MRID1")                                    // 검안사 = AssignList.MRID1 (실측)
-                .contains("[220.85.109.240].IPLUS.dbo.PAOSUNAB")      // 진료비 원천
-                .contains("PrcSumPrc")                                // 정가 아닌 실수납 (이중계상 방지)
-                .contains("NOT IN ('a', 'A')");                       // CS 컬레이션 — 'a' 만으로는 'A' 못 거름
     }
 
     @Test

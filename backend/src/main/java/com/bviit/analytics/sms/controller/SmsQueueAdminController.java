@@ -31,8 +31,7 @@ import java.util.Map;
  *   <li>POST /run — 5분 폴러를 즉시 한 번 실행 (ADMIN 전용)</li>
  * </ul>
  *
- * <p>{@code postgres-mart} 프로파일 전용 — 큐 테이블은 마트 환경에만 있다.
- * 로컬(H2)에서도 JPA ddl-auto=update 로 표는 생기지만, 관리자 액션은 마트 활성 환경에서만.
+ * <p>{@code postgres-mart} 프로파일 전용 — 큐 테이블은 마트 환경에만 있다 (local/dev/prod 그룹이 자동 포함).
  */
 @RestController
 @RequestMapping("/api/admin/batch/sms/queue")

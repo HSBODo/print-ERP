@@ -4,7 +4,6 @@ import com.bviit.analytics.common.util.SqlLoader;
 import com.bviit.analytics.reservation.service.ReservationChangeChainBuilder.HistoryStep;
 import com.bviit.analytics.reservation.service.ReservationChangeChainBuilder.Source;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -23,35 +22,21 @@ import java.util.function.Consumer;
  * 초기 백필(2022~)은 이력 수십만 행이라 List 로 다 받으면 메모리가 위험하다.
  *
  * <p>READ-ONLY · 범위는 "이력이 저장된 기간"(HISTORY_TIME) — 등록일이 아니다(SQL 주석 참조).
- *
- * <p><b>소스 라우팅 (data-platform 프로파일)</b>
- * <ul>
- *   <li>기본: CRM 직접연결 (statsJdbcTemplate, MSSQL SOFTCRM.RESERVATION + RESERVE_HISTORY)
- *       + SQL {@link #SQL_MSSQL}. MSSQL 2014 호환 (STRING_AGG·TRY_CONVERT·TRIM 금지).</li>
- *   <li>data-platform 프로파일 활성: 데이터 플랫폼 (warehouseJdbcTemplate, bnviit_datawarehouse.raw_crm_reservation
- *       + raw_crm_reserve_history) + SQL {@link #SQL_WAREHOUSE}. Postgres 방언.</li>
- * </ul>
- *
- * <p>정본 전략: {@code docs/data-platform/migration-strategy.md}.
- * 이관 이력: 2026-09-29 Wave 1 — 배치 파이프라인이 웨어하우스 → 마트로 첫 스위치.
  */
 @Repository
 @Profile("postgres-mart")
 public class ReservationChangeHistoryRepository {
 
-    static final String SQL_MSSQL = "sql/softcrm/reservation/history/select-reservation-change-history.sql";
-    static final String SQL_WAREHOUSE = "sql/warehouse/reservation/history/select-reservation-change-history.sql";
+    static final String SQL = "sql/warehouse/reservation/history/select-reservation-change-history.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String sql;
 
     public ReservationChangeHistoryRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
-            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
-        this.sql = SqlLoader.load(dataPlatformEnabled ? SQL_WAREHOUSE : SQL_MSSQL);
+        this.jdbc = warehouseJdbc;
+        this.sql = SqlLoader.load(SQL);
     }
 
     /**

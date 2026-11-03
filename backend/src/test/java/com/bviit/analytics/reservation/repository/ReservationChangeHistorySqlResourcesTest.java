@@ -8,26 +8,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ReservationChangeHistorySqlResourcesTest {
 
     @Test
-    void mssql_select_reservation_change_history_는_MSSQL_방언과_필터를_보존한다() {
-        String sql = SqlLoader.load(ReservationChangeHistoryRepository.SQL_MSSQL);
-
-        assertThat(sql)
-                .contains(":from", ":to")
-                .contains("FROM RESERVATION r WITH(NOLOCK)")
-                .contains("JOIN RESERVE_HISTORY h WITH(NOLOCK)")
-                .contains("r.RESERVE_FLAG IN ('M', 'D', 'H')")
-                .contains("CONVERT(datetime, :from)")
-                .contains("DATEADD(DAY, 1, CONVERT(datetime, :to))")
-                .contains("LIKE '%테스트%'")
-                .contains("LIKE '%TEST%'")
-                .contains("NOT LIKE '8888%'")
-                .contains("NOT LIKE '9999%'")
-                .contains("ORDER BY r.RESERVE_NUM, h.HISTORY_NUM");
-    }
-
-    @Test
-    void warehouse_select_reservation_change_history_는_Postgres_방언으로_동일_필터를_보존한다() {
-        String sql = SqlLoader.load(ReservationChangeHistoryRepository.SQL_WAREHOUSE);
+    void warehouse_select_reservation_change_history_는_Postgres_방언으로_필터를_보존한다() {
+        String sql = SqlLoader.load(ReservationChangeHistoryRepository.SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")

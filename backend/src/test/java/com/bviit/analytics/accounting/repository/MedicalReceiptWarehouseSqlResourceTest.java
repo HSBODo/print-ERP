@@ -10,7 +10,7 @@ class MedicalReceiptWarehouseSqlResourceTest {
 
     @Test
     void warehouse_receipts_sql은_raw_스키마와_네임드_바인딩을_사용한다() {
-        String sql = SqlLoader.load(MedicalReceiptSourceRepository.RECEIPTS_SQL_WAREHOUSE);
+        String sql = SqlLoader.load(MedicalReceiptSourceRepository.RECEIPTS_SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")
@@ -33,7 +33,7 @@ class MedicalReceiptWarehouseSqlResourceTest {
 
     @Test
     void warehouse_monthly_sql은_raw_스키마와_7개_UNION을_유지한다() {
-        String sql = SqlLoader.load(MedicalReceiptSourceRepository.MONTHLY_SQL_WAREHOUSE);
+        String sql = SqlLoader.load(MedicalReceiptSourceRepository.MONTHLY_SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")

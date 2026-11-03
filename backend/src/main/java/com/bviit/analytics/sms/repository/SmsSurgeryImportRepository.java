@@ -14,8 +14,7 @@ import java.util.Optional;
 
 /**
  * 발송 대상 자동 등록 소스 — 마트 수술자 리스트(list_surgery) 조회.
- * postgres-mart 프로파일에서만 뜬다. H2 개발 프로파일에서는 빈이 없어
- * 자동 등록 API 가 503(미연결)으로 응답한다(SmsTargetService 의 ObjectProvider 처리).
+ * postgres-mart 프로파일에서만 뜬다 (local/dev/prod 그룹이 자동 포함).
  */
 @Repository
 @Profile("postgres-mart")

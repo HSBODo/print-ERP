@@ -14,29 +14,13 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import javax.sql.DataSource;
 
 /**
- * 트리플 DataSource — postgres-mart 프로파일 전용.
+ * 듀얼 DataSource — postgres-mart 프로파일 전용.
  *
  *   Postgres (@Primary) → JPA + 마트 조회 (mart_*, list_*) + User
- *   stats  (MSSQL)      → CRM SOFTCRM 직접연결 (배치 읽기)
- *   warehouse (Postgres RDS) → 신규 데이터 플랫폼 bnviit_datawarehouse (2026-09-23~)
+ *   warehouse (Postgres RDS) → 데이터 플랫폼 bnviit_datawarehouse (raw.* 직결 조회)
  *
- * 이관 방침 — CRM 직접연결(stats) → 데이터 플랫폼(warehouse) 리포지토리 단위 점진 스위치.
- * 데이터 플랫폼이 미완성이라 전면 전환은 위험하므로 두 소스를 병렬 유지한다.
- *
- * 이관 대상 리포지토리는 두 JdbcTemplate 을 모두 주입받고
- *   dataPlatformEnabled ? warehouseJdbcTemplate : statsJdbcTemplate
- * 로 라우팅한다. 활성화는 `SPRING_PROFILES_ACTIVE=dev,data-platform`
- * (application-data-platform.yml 이 data-platform.enabled=true 를 켠다).
- *
- * SQL 도 두 개를 병렬 유지: sql/softcrm/<domain>/*.sql (MSSQL 원본) ·
- * sql/warehouse/<domain>/*.sql (Postgres 거울). 파일명 동일.
- *
- * 전 리포지토리가 이 이중 패턴으로 확보되고 데이터 플랫폼이 검증되면,
- * stats 빈·yml `stats.datasource.*`·env `STATS_DB_*`·jTDS 의존을 일괄 제거한다.
- * 정본 전략: docs/data-platform/migration-strategy.md.
- *
- * 배치는 stats 에서 읽어 Postgres 마트로 upsert/append. 클라이언트 조회는 Postgres만.
- * 관련 문서: docs/databatch/strategy.md
+ * 통계 리포지토리는 warehouseJdbcTemplate 하나만 주입받아 조회한다.
+ * 관련 문서: docs/databatch/strategy.md · docs/data-platform/migration-strategy.md
  */
 @Configuration
 @Profile("postgres-mart")
@@ -64,36 +48,6 @@ public class MartDataSourceConfig {
         return new NamedParameterJdbcTemplate(dataSource);
     }
 
-    @Bean("statsDataSource")
-    public DataSource statsDataSource(
-            @Value("${stats.datasource.url}") String url,
-            @Value("${stats.datasource.username}") String username,
-            @Value("${stats.datasource.password}") String password,
-            @Value("${stats.datasource.driver-class-name}") String driverClassName,
-            @Value("${stats.datasource.hikari.maximum-pool-size:3}") int maxPoolSize,
-            @Value("${stats.datasource.hikari.read-only:true}") boolean readOnly,
-            @Value("${stats.datasource.hikari.connection-timeout:10000}") long connectionTimeout
-    ) {
-        HikariDataSource ds = new HikariDataSource();
-        ds.setJdbcUrl(url);
-        ds.setUsername(username);
-        ds.setPassword(password);
-        ds.setDriverClassName(driverClassName);
-        ds.setMaximumPoolSize(maxPoolSize);
-        ds.setReadOnly(readOnly);
-        ds.setConnectionTimeout(connectionTimeout);
-        ds.setPoolName("stats-mssql");
-        ds.setConnectionTestQuery("SELECT 1");
-        return ds;
-    }
-
-    @Bean("statsJdbcTemplate")
-    public NamedParameterJdbcTemplate statsJdbcTemplate(
-            @Qualifier("statsDataSource") DataSource statsDataSource
-    ) {
-        return new NamedParameterJdbcTemplate(statsDataSource);
-    }
-
     @Bean("warehouseDataSource")
     public DataSource warehouseDataSource(
             @Value("${warehouse.datasource.url}") String url,
@@ -101,8 +55,10 @@ public class MartDataSourceConfig {
             @Value("${warehouse.datasource.password}") String password,
             @Value("${warehouse.datasource.driver-class-name}") String driverClassName,
             @Value("${warehouse.datasource.hikari.maximum-pool-size:3}") int maxPoolSize,
+            @Value("${warehouse.datasource.hikari.minimum-idle:1}") int minimumIdle,
             @Value("${warehouse.datasource.hikari.read-only:true}") boolean readOnly,
-            @Value("${warehouse.datasource.hikari.connection-timeout:10000}") long connectionTimeout
+            @Value("${warehouse.datasource.hikari.connection-timeout:10000}") long connectionTimeout,
+            @Value("${warehouse.datasource.hikari.initialization-fail-timeout:10000}") long initializationFailTimeout
     ) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(url);
@@ -110,8 +66,11 @@ public class MartDataSourceConfig {
         ds.setPassword(password);
         ds.setDriverClassName(driverClassName);
         ds.setMaximumPoolSize(maxPoolSize);
+        ds.setMinimumIdle(minimumIdle);
         ds.setReadOnly(readOnly);
         ds.setConnectionTimeout(connectionTimeout);
+        // fail-fast — WAREHOUSE_* 미설정 시 침묵실패 방지 (minimum-idle=1 과 함께 startup 시 커넥션 강제 획득 → 실패하면 PoolInitializationException 으로 startup 중단).
+        ds.setInitializationFailTimeout(initializationFailTimeout);
         ds.setPoolName("warehouse-postgres");
         ds.setConnectionTestQuery("SELECT 1");
         return ds;

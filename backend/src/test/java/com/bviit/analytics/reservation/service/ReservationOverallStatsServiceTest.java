@@ -115,14 +115,14 @@ class ReservationOverallStatsServiceTest {
     }
 
     @Test
-    void 레거시_소스가_없으면_조용히_계산하지_않고_실패한다() {
+    void 홈페이지_소스가_없으면_조용히_계산하지_않고_실패한다() {
         ReservationOverallStatsService noHomepage =
                 new ReservationOverallStatsService(repository, Optional.empty());
 
         // 홈페이지 몫(202)이 빠진 62 를 마트에 적재하는 게 최악이다 — 차라리 터뜨린다.
         assertThatThrownBy(() -> noHomepage.getMonthlyStats(List.of(2026)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("homepage.datasource.url");
+                .hasMessageContaining("mart_list_reservation_homepage");
     }
 
     @Test
@@ -131,9 +131,8 @@ class ReservationOverallStatsServiceTest {
 
         // MSSQL 소스: InsertedDateTime <= :to → 그날 마지막 시각까지 포함해야 한다.
         verify(repository).findReservationOverallMonthly("2026-01-01", "2026-12-31 23:59:59");
-        // 레거시 홈페이지 소스: reg_date < (:to + 1일) 반개구간 → '날짜'여야 한다.
-        // 시각이 붙은 값을 넘기면 MariaDB 는 < (2027-01-01 23:59:59) 가 되어 다음 해 1/1 이 딸려오고,
-        // SQLite 는 date() 가 시각을 버려 안 딸려온다 — 같은 입력에 소스별로 결과가 갈린다.
+        // warehouse 홈페이지 소스: reg_date < (CAST(:to AS date) + INTERVAL '1 day') 반개구간 → '날짜'여야 한다.
+        // 시각이 붙은 값을 넘기면 CAST 가 실패하거나 다음 해 1/1 이 딸려오므로 날짜만 분리해 넘긴다.
         verify(homepageRepository).findMonthlyListRawCounts("2026-01-01", "2026-12-31");
     }
 

@@ -31,8 +31,6 @@ services:
   # 애플리케이션
   # 실행: docker compose up -d
   #
-  # SSH 터널: 컨테이너 자체가 entrypoint.sh 에서 sshpass 로 터널을 연다(사이드카 없음).
-  # SSH_HOST 가 설정된 경우에만 활성 — 미설정 시 홈페이지 API 만 503, 앱 기동엔 영향 없음.
   # 자세한 env 는 backend/.env.example 참고.
   # ─────────────────────────────────────────────────────────────
   analytics:
@@ -64,20 +62,10 @@ services:
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:18080}
       STATS_CACHE_DIR: /app/.cache/stats
       POSTGRES_URL: ${POSTGRES_URL}
-      # 아이리더 검사기록 MSSQL 값은 위 env_file(backend/.env)에서 주입한다.
+      # 그 외 env (WAREHOUSE_*, SOLAPI_* 등) 는 위 env_file(backend/.env)에서 주입한다.
       # 여기서 ${...:-}로 다시 선언하면 Compose 보간 단계의 빈 값이 env_file 값을 덮어쓴다.
-      # 레거시 홈페이지 온라인 예약 소스. 값 유무로 관련 빈이 켜지는 스위치.
-      #   - 미설정(빈값): 관련 빈 미기동 → /api/reservation-list-homepage 만 503.
-      #   - MariaDB 직결(컨테이너 내부 SSH 터널 경유): jdbc:mariadb://127.0.0.1:13306/bseyecom_db
-      #     함께 BASTION_SSH_HOST/PORT/USER/PASSWORD 도 세팅 필요. entrypoint.sh 가 터널을 연다.
-      #   - SQLite 스냅샷 마운트: jdbc:sqlite:/app/legacy/legacy-consultations.sqlite?open_mode=1
-      #     (아래 volumes 의 HOMEPAGE_CACHE_FILE 마운트 주석 해제 필요)
-      HOMEPAGE_DATASOURCE_URL: ${HOMEPAGE_DATASOURCE_URL:-}
     volumes:
       - analytics-cache:/app/.cache
-      # 레거시 온라인 예약 스냅샷을 읽기 전용으로 마운트할 때 사용(MariaDB 대신 SQLite 를 쓸 때).
-      # 호스트 경로는 각자 다르므로 backend/.env 에 HOMEPAGE_CACHE_FILE 을 정의해 쓸 것.
-      # - ${HOMEPAGE_CACHE_FILE}:/app/legacy/legacy-consultations.sqlite:ro
 
 volumes:
   analytics-cache:

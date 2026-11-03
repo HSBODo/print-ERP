@@ -40,11 +40,12 @@ import static com.bviit.analytics.reservation.service.OverallOnlineFormula.cover
  * </pre>
  * 종합 = 콜 + 온라인 이므로 종합도 2026-06 부터 같이 움직인다.
  *
- * <p><b>왜 자바에서 합치나</b> — 네이버·카카오는 MSSQL, 홈페이지는 레거시 홈페이지(별도 DB)라
- * SQL 한 방으로 조인할 수 없다. 그래서 세 쿼리를 각각 읽어 여기서 더한다.
+ * <p><b>왜 자바에서 합치나</b> — 네이버·카카오·홈페이지는 각각 다른 테이블(마트/raw)에서
+ * 읽어오는 집계라 SQL 한 방으로 조인할 비용이 더 크다. 그래서 세 쿼리를 각각 읽어 여기서 더한다.
  *
- * <p><b>레거시 소스가 없으면 실패시킨다</b> — 홈페이지 몫이 빠진 채로 조용히 작은 값을 마트에
- * 적재하면 아무도 눈치채지 못한다. 운영에도 {@code homepage.datasource.url} 이 설정돼 있어야 한다.
+ * <p><b>홈페이지 소스가 없으면 실패시킨다</b> — 홈페이지 몫이 빠진 채로 조용히 작은 값을 마트에
+ * 적재하면 아무도 눈치채지 못한다. postgres-mart 프로파일에서는 {@code mart_list_reservation_homepage}
+ * 마트가 채워져 있어야 한다({@link com.bviit.analytics.batch.job.ReservationListHomepageMartJob} 선행).
  *
  * ⚠️ 등록일(InsertedDateTime) 기준 집계. 미래월은 자연히 행이 없어 null.
  */
@@ -57,15 +58,16 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
     /**
      * 홈페이지 몫 소스. postgres-mart 에서는 {@code ReservationListHomepageMartRepository}
      * ({@code @Primary}) 가 마트 테이블 {@code mart_list_reservation_homepage} 를 읽고,
-     * 그 외 프로파일에서는 레거시 소스판({@code ReservationListHomepageRepository}) 이
-     * {@code homepage.datasource.url} 이 설정된 경우에만 후보로 들어온다.
+     * 그 외 프로파일에서는 warehouse 소스판({@code ReservationListHomepageRepository}) 이
+     * raw.raw_homepage_tbl_counsel 을 직접 읽는다 (Phase 3 이후 둘 다 postgres-mart 전용).
      *
      * <p><b>배치 순서 결합</b> — postgres-mart 에서 마트를 읽으므로,
      * {@code ReservationListHomepageMartJob} 이 이 서비스를 호출하는 {@code ReservationMartJob}
      * 보다 먼저 실행돼야 한다({@code BatchOrchestrator.runDomains} 참조).
      *
-     * <p>미설정 환경(마트도 없고 레거시 URL 도 없음)에서는 비어 있다 — 컷오버(2026-06) 이후 달을
-     * 계산할 때만 필수라 그 이전 구간(2024·2025, 2026-01~05 V24 시드)은 이 값 없이도 정상 동작한다.
+     * <p>미설정 환경(마트가 없고 postgres-mart 프로파일이 아닌 환경)에서는 비어 있다 —
+     * 컷오버(2026-06) 이후 달을 계산할 때만 필수라 그 이전 구간(2024·2025, 2026-01~05 V24 시드)은
+     * 이 값 없이도 정상 동작한다.
      */
     private final Optional<HomepageOverallSource> homepageRepository;
 
@@ -78,9 +80,9 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
         String from = minYear + "-01-01";
         // MSSQL 소스(종합·네이버·카카오)는 InsertedDateTime <= :to 라 상한에 시각이 필요하다.
         String to = maxYear + "-12-31 23:59:59";
-        // 레거시 홈페이지 소스는 규약이 다르다 — reg_date < (:to + 1일) 반개구간이라 '날짜'를 기대한다.
-        // 위 to 를 그대로 넘기면 MariaDB 에서 < (다음해 1/1 23:59:59) 가 되어 다음 해 1/1 이 딸려오고,
-        // SQLite 는 date() 가 시각을 버려 딸려오지 않는다 — 같은 입력에 소스별로 결과가 갈린다.
+        // warehouse 홈페이지 소스는 규약이 다르다 — reg_date < (CAST(:to AS date) + INTERVAL '1 day')
+        // 반개구간이라 '날짜(YYYY-MM-DD)'를 기대한다. MSSQL 소스용 'YYYY-MM-DD 23:59:59' 을 그대로
+        // 넘기면 CAST 가 실패하거나 다음 해 1/1 이 딸려오므로 날짜만 분리해 넘긴다.
         String homepageTo = maxYear + "-12-31";
 
         List<Map<String, Object>> rows = repository.findReservationOverallMonthly(from, to);
@@ -108,8 +110,8 @@ public class ReservationOverallStatsService implements ReservationOverallStatsRe
             HomepageOverallSource homepageRepo = homepageRepository.orElseThrow(() ->
                     new IllegalStateException(
                             "온라인 예약(2026-06~)은 홈페이지 소스가 필요합니다. "
-                            + "postgres-mart 에서는 mart_list_reservation_homepage 마트가 채워져 있어야 하고, "
-                            + "그 외 프로파일에서는 homepage.datasource.url 을 설정하세요. "
+                            + "mart_list_reservation_homepage 마트가 채워져 있어야 합니다 "
+                            + "(ReservationListHomepageMartJob 선행). "
                             + "(미설정 상태로 계산하면 홈페이지 몫이 빠진 값이 조용히 적재됩니다)"));
 
             homepage = countsByMonth(homepageRepo.findMonthlyListRawCounts(from, homepageTo), "cnt");

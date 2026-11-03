@@ -158,11 +158,15 @@ CROSS JOIN LATERAL (
               ELSE '' END AS "regDate"
 ) rsvReg
 LEFT JOIN LATERAL (
+  -- "이 검사 이후" 수술 예약만 매칭 — 양안 분산 수술·장기 재방문 패턴에서
+  -- 과거 완료 수술 예약이 검사일보다 이전 날짜로 뜨는 함정 발생 (2026-01~10 중 49건).
+  -- softcrm 미러 (sql/softcrm/exam/select-cataract-exam-list.sql opRsv 조건과 동일).
   SELECT f.reserve_date, f.reserve_num
   FROM raw.raw_crm_reservation f
   WHERE f.cust_num = CH.cust_num AND f.reserve_flag = 'O'
     AND f.reserve_jinryo = '4'            -- 백내장 수술만(레거시 기준). 미지정 시 시력교정 수술예약이 섞임
     AND f.reserve_state <> 'C'
+    AND f.reserve_date >= CH."examDate"
   ORDER BY f.reserve_num DESC
   LIMIT 1
 ) opRsv ON true

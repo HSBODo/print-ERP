@@ -2,7 +2,6 @@ package com.bviit.analytics.exam.repository;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -25,21 +24,15 @@ import java.util.Map;
  *       조건: CRM 결과 쌍에 매칭 + 현재 'Y'. 이미 'N' 인 행은 조용히 skip.</li>
  * </ol>
  *
- * <p><b>Dual JdbcTemplate 특수 케이스 — data-platform 프로파일</b>
- * <ul>
- *   <li>CRM 읽기 (findLaterReexamCandidates): 기본 statsJdbcTemplate → data-platform 활성 시 warehouseJdbcTemplate</li>
- *   <li>mart UPDATE (markOnedayAsNormal): 항상 martJdbcTemplate (변경 없음)</li>
- * </ul>
+ * <p>CRM 읽기 (findLaterReexamCandidates) 는 warehouseJdbcTemplate, mart UPDATE (markOnedayAsNormal) 는 martJdbcTemplate.
  *
  * <p>SQL 인라인 대신 리소스 파일로 관리 — CLAUDE.md 규약대로.
- * 정본 전략: {@code docs/data-platform/migration-strategy.md}. 이관 이력: 2026-09-30 A5-3.
  */
 @Repository
 @Profile("postgres-mart")
 public class ExamOnedayReconcileRepository {
 
-    static final String SQL_MSSQL = "sql/softcrm/exam/select-onedays-with-later-reexam.sql";
-    static final String SQL_WAREHOUSE = "sql/warehouse/exam/select-onedays-with-later-reexam.sql";
+    static final String SQL = "sql/warehouse/exam/select-onedays-with-later-reexam.sql";
     private static final String UPDATE_ONEDAY_SQL =
             "sql/mart/exam/update-list-exam-oneday-to-normal.sql";
 
@@ -49,14 +42,11 @@ public class ExamOnedayReconcileRepository {
     private final String updateOnedaySql;
 
     public ExamOnedayReconcileRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
             @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate martJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled) {
-        this.crmJdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
+            @Qualifier("martJdbcTemplate") NamedParameterJdbcTemplate martJdbc) {
+        this.crmJdbc = warehouseJdbc;
         this.martJdbc = martJdbc;
-        this.findCandidatesSql = SqlLoader.load(
-                dataPlatformEnabled ? SQL_WAREHOUSE : SQL_MSSQL);
+        this.findCandidatesSql = SqlLoader.load(SQL);
         this.updateOnedaySql = SqlLoader.load(UPDATE_ONEDAY_SQL);
     }
 

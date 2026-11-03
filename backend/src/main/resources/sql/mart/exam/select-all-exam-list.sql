@@ -13,6 +13,12 @@ SELECT
     chart_no                         AS "chartNo",
     name                             AS "name",
     TO_CHAR(exam_date, 'YYYY-MM-DD') AS "examDate",
+    -- 수술 예약일 — "검사 → 수술예약" 흐름을 한 행에서 확인할 수 있게 노출.
+    -- 뷰 V56 가 list_exam/list_cataract_exam 양쪽에서 가져온 값을 '' 로 정규화해 둠.
+    -- 수술 실시일(surgery_date) 은 환자 과거 수술 이력이 섞여(백내장 1차→경과검사→2차 패턴)
+    -- 시간 순서가 뒤집히는 혼란을 유발하므로 노출하지 않는다. 필요 시 조인 조건에
+    -- `OPERATION_DATE >= EXAM_DATE` 를 걸어 "이 검사 이후 수술만" 매칭 후 재검토.
+    surgery_reserve_date             AS "surgeryReserveDate",
     exam_group                       AS "examGroup",
     exam_type                        AS "examType",
     cataract_class                   AS "cataractClass",

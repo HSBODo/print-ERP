@@ -2,7 +2,6 @@ package com.bviit.analytics.consultation.repository;
 
 import com.bviit.analytics.common.util.SqlLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -25,14 +24,7 @@ import java.util.Set;
  *
  * 다른 지표(예약 건수·외래수·중단사유)는 range 밖 데이터가 불필요해 이 브릿지를 쓰지 않는다.
  *
- * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-09-30 Phase 2)</b>
- * <ul>
- *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + sql/softcrm/consultation/*.sql</li>
- *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + sql/warehouse/consultation/*.sql</li>
- * </ul>
- *
- * IN 절 파라미터 한계(SQL Server 2100) 를 피하려 chart_no 셋은 청크 단위로 조회한다.
- * Postgres 는 한계가 더 높지만 동일 청크 크기로 두 방언 모두 안전 커버.
+ * IN 절 파라미터는 보수적으로 청크 단위로 조회한다.
  */
 @Repository
 @Profile("postgres-mart")
@@ -40,23 +32,19 @@ public class ConsultationRateBridgeRepository {
 
     private static final int CHUNK_SIZE = 1000;
 
-    static final String O_RESERVATION_SUMMARY_MSSQL     = "sql/softcrm/consultation/select-o-reservation-summary-by-charts.sql";
-    static final String O_RESERVATION_SUMMARY_WAREHOUSE = "sql/warehouse/consultation/select-o-reservation-summary-by-charts.sql";
-    static final String OP_SUMMARY_MSSQL                = "sql/softcrm/consultation/select-op-summary-by-charts.sql";
-    static final String OP_SUMMARY_WAREHOUSE            = "sql/warehouse/consultation/select-op-summary-by-charts.sql";
+    static final String O_RESERVATION_SUMMARY_SQL = "sql/warehouse/consultation/select-o-reservation-summary-by-charts.sql";
+    static final String OP_SUMMARY_SQL            = "sql/warehouse/consultation/select-op-summary-by-charts.sql";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final String oReservationSummarySql;
     private final String opSummarySql;
 
     public ConsultationRateBridgeRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
-            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
-        this.oReservationSummarySql = SqlLoader.load(dataPlatformEnabled ? O_RESERVATION_SUMMARY_WAREHOUSE : O_RESERVATION_SUMMARY_MSSQL);
-        this.opSummarySql           = SqlLoader.load(dataPlatformEnabled ? OP_SUMMARY_WAREHOUSE            : OP_SUMMARY_MSSQL);
+        this.jdbc = warehouseJdbc;
+        this.oReservationSummarySql = SqlLoader.load(O_RESERVATION_SUMMARY_SQL);
+        this.opSummarySql           = SqlLoader.load(OP_SUMMARY_SQL);
     }
 
     /** chart_no 별 O 예약 요약. 결과에 없는 chart_no 는 "O 예약 없음"으로 간주. */

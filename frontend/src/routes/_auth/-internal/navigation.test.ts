@@ -47,7 +47,7 @@ describe('navigation menu', () => {
     expect(HIDDEN_PAGE_PATHS.filter((path) => paths.includes(path))).toEqual([])
   })
 
-  it('숨기지 않은 핵심 메뉴는 그대로 노출된다(레포트·예약·아이리더 검사통계·해외마케팅·회계)', () => {
+  it('숨기지 않은 핵심 메뉴는 그대로 노출된다(레포트·예약·해외마케팅·회계)', () => {
     const paths = collectPaths(fullMenu())
 
     expect(paths).toContain('/report/monthly')
@@ -55,7 +55,6 @@ describe('navigation menu', () => {
     expect(paths).toContain('/stats/reservation-list')
     expect(paths).toContain('/stats/reservation-overall')
     expect(paths).toContain('/stats/reservation-change')
-    expect(paths).toContain('/stats/eoeis-checkup')
     expect(paths).toContain('/stats/overseas-marketing/receptions')
     expect(paths).toContain('/stats/overseas-marketing/statistics')
     expect(paths).toContain('/stats/overseas-marketing/reservation-stats')

@@ -3,7 +3,6 @@ package com.bviit.analytics.surgery.repository;
 import com.bviit.analytics.common.util.SqlLoader;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -15,20 +14,12 @@ import java.util.Map;
 /**
  * 수술 통계 쿼리 (레거시 stats-weekly-report.js 준용). SurgeryReconcileService 전용(파이프라인 밖, 대사용).
  *
- * <p><b>소스 라우팅 (data-platform 프로파일 · 2026-10-06 RECONCILE wave 2)</b>
- * <ul>
- *   <li>기본: CRM 직접연결 (statsJdbcTemplate) + MSSQL.</li>
- *   <li>data-platform 활성: 웨어하우스 (warehouseJdbcTemplate) + raw.raw_crm_operationdata/cataract_operationdata/custom.</li>
- * </ul>
- *
- *
  * 핵심 원칙:
  *   1) 시력교정: OPERATIONDATA에서 CUST_NUM이 Cataract_Operationdata에 있으면 제외 (중복 방지)
  *   2) 시력교정은 환자 수 기준, 백내장은 눈(안) 기준(CUST_NUM+OPERATION_DATE+R/L)
  *   3) 테스트 고객 제외 (CUST_NAME LIKE '%TEST%' OR '%테스트%')
  *   4) 수술 코드 제외 (X, OP불가, 모든수술가능, op x, Strabismus, TEST-TEST)
  *
- * MSSQL 2014 호환: STRING_AGG, TRIM 등 사용 금지.
  * READ-ONLY — SELECT만 실행.
  */
 @Repository
@@ -37,14 +28,10 @@ public class SurgeryStatsRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    static final String FIND_VISION_MONTHLY_BY_TYPE_SQL_MSSQL       = "sql/softcrm/surgery/select-vision-monthly-by-type.sql";
-    static final String FIND_VISION_MONTHLY_BY_TYPE_SQL_WAREHOUSE   = "sql/warehouse/surgery/select-vision-monthly-by-type.sql";
-    static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL_MSSQL     = "sql/softcrm/surgery/select-cataract-monthly-by-type.sql";
-    static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL_WAREHOUSE = "sql/warehouse/surgery/select-cataract-monthly-by-type.sql";
-    static final String FIND_VISION_DAILY_BY_TYPE_SQL_MSSQL         = "sql/softcrm/surgery/select-vision-daily-by-type.sql";
-    static final String FIND_VISION_DAILY_BY_TYPE_SQL_WAREHOUSE     = "sql/warehouse/surgery/select-vision-daily-by-type.sql";
-    static final String FIND_CATARACT_DAILY_BY_TYPE_SQL_MSSQL       = "sql/softcrm/surgery/select-cataract-daily-by-type.sql";
-    static final String FIND_CATARACT_DAILY_BY_TYPE_SQL_WAREHOUSE   = "sql/warehouse/surgery/select-cataract-daily-by-type.sql";
+    static final String FIND_VISION_MONTHLY_BY_TYPE_SQL   = "sql/warehouse/surgery/select-vision-monthly-by-type.sql";
+    static final String FIND_CATARACT_MONTHLY_BY_TYPE_SQL = "sql/warehouse/surgery/select-cataract-monthly-by-type.sql";
+    static final String FIND_VISION_DAILY_BY_TYPE_SQL     = "sql/warehouse/surgery/select-vision-daily-by-type.sql";
+    static final String FIND_CATARACT_DAILY_BY_TYPE_SQL   = "sql/warehouse/surgery/select-cataract-daily-by-type.sql";
 
     private final String findVisionMonthlyByTypeSql;
     private final String findCataractMonthlyByTypeSql;
@@ -52,19 +39,13 @@ public class SurgeryStatsRepository {
     private final String findCataractDailyByTypeSql;
 
     public SurgeryStatsRepository(
-            @Qualifier("statsJdbcTemplate") NamedParameterJdbcTemplate statsJdbc,
-            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc,
-            @Value("${data-platform.enabled:false}") boolean dataPlatformEnabled
+            @Qualifier("warehouseJdbcTemplate") NamedParameterJdbcTemplate warehouseJdbc
     ) {
-        this.jdbc = dataPlatformEnabled ? warehouseJdbc : statsJdbc;
-        this.findVisionMonthlyByTypeSql   = SqlLoader.load(
-                dataPlatformEnabled ? FIND_VISION_MONTHLY_BY_TYPE_SQL_WAREHOUSE   : FIND_VISION_MONTHLY_BY_TYPE_SQL_MSSQL);
-        this.findCataractMonthlyByTypeSql = SqlLoader.load(
-                dataPlatformEnabled ? FIND_CATARACT_MONTHLY_BY_TYPE_SQL_WAREHOUSE : FIND_CATARACT_MONTHLY_BY_TYPE_SQL_MSSQL);
-        this.findVisionDailyByTypeSql     = SqlLoader.load(
-                dataPlatformEnabled ? FIND_VISION_DAILY_BY_TYPE_SQL_WAREHOUSE     : FIND_VISION_DAILY_BY_TYPE_SQL_MSSQL);
-        this.findCataractDailyByTypeSql   = SqlLoader.load(
-                dataPlatformEnabled ? FIND_CATARACT_DAILY_BY_TYPE_SQL_WAREHOUSE   : FIND_CATARACT_DAILY_BY_TYPE_SQL_MSSQL);
+        this.jdbc = warehouseJdbc;
+        this.findVisionMonthlyByTypeSql   = SqlLoader.load(FIND_VISION_MONTHLY_BY_TYPE_SQL);
+        this.findCataractMonthlyByTypeSql = SqlLoader.load(FIND_CATARACT_MONTHLY_BY_TYPE_SQL);
+        this.findVisionDailyByTypeSql     = SqlLoader.load(FIND_VISION_DAILY_BY_TYPE_SQL);
+        this.findCataractDailyByTypeSql   = SqlLoader.load(FIND_CATARACT_DAILY_BY_TYPE_SQL);
     }
 
     /**

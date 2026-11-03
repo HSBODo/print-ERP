@@ -8,26 +8,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CataractExamListSqlResourcesTest {
 
     @Test
-    void mssql_select_cataract_exam_list_는_MSSQL_방언과_분류_로직을_보존한다() {
-        String sql = SqlLoader.load(CataractExamListRepository.SQL_MSSQL);
-
-        assertThat(sql)
-                .contains(":from", ":to")
-                .contains("FROM CUSTOM B WITH(NOLOCK)")
-                .contains("JOIN RESERVATION D WITH(NOLOCK)")
-                .contains("CROSS APPLY")
-                .contains("OUTER APPLY")
-                .contains("SELECT TOP 1")
-                .contains("D.RESERVE_FLAG = 'H'")
-                .contains("D.RESERVE_STATE NOT IN ('C', 'Y')")
-                .contains("N'중단'")
-                .contains("N'백내장'")
-                .contains("CONVERT(money");
-    }
-
-    @Test
     void warehouse_select_cataract_exam_list_는_Postgres_방언과_raw_스키마를_사용한다() {
-        String sql = SqlLoader.load(CataractExamListRepository.SQL_WAREHOUSE);
+        String sql = SqlLoader.load(CataractExamListRepository.SQL);
 
         assertThat(sql)
                 .contains(":from", ":to")
