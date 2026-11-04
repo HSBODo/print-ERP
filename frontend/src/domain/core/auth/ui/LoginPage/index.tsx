@@ -5,6 +5,11 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useAuthStore } from '#domain/support/session/store'
+import {
+  APP_COPYRIGHT_OWNER,
+  APP_INITIAL,
+  APP_NAME,
+} from '#shared/constants/app'
 
 import { authApi } from '../../api'
 
@@ -55,23 +60,23 @@ export function LoginPage() {
         />
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center font-bold text-sm">
-            B
+            {APP_INITIAL}
           </div>
-          <span className="text-xl font-semibold">B&VIIT Analytics</span>
+          <span className="text-xl font-semibold">{APP_NAME}</span>
         </div>
         <div className="relative z-10 max-w-md">
           <h2 className="text-4xl font-bold leading-tight mb-6">
             데이터로 보는
             <br />
-            <span className="text-cyan-300">병원 경영 인사이트</span>
+            <span className="text-cyan-300">업무 인사이트</span>
           </h2>
           <p className="text-blue-200 text-lg leading-relaxed">
-            수술 실적, 매출, 예약 트렌드를 한눈에 파악하고 데이터 기반의
-            의사결정을 지원합니다.
+            핵심 지표를 한눈에 파악하고 데이터 기반의 의사결정을 지원합니다.
           </p>
         </div>
         <div className="relative z-10 text-blue-300 text-sm">
-          &copy; 2026 B&VIIT Group. All rights reserved.
+          &copy; {new Date().getFullYear()} {APP_COPYRIGHT_OWNER}. All rights
+          reserved.
         </div>
       </div>
 
@@ -80,16 +85,14 @@ export function LoginPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-500 text-white mb-4 font-bold text-xl">
-              B
+              {APP_INITIAL}
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              B&VIIT Analytics
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">{APP_NAME}</h1>
           </div>
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
-            <p className="text-gray-500 mt-2">통계 대시보드에 접속합니다.</p>
+            <p className="text-gray-500 mt-2">서비스에 접속합니다.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -144,7 +147,7 @@ export function LoginPage() {
           </form>
 
           <div className="mt-8 text-center text-sm text-gray-400">
-            B&VIIT Analytics v1.0
+            {APP_NAME} v1.0
           </div>
         </div>
       </div>

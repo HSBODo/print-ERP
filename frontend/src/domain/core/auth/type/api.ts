@@ -13,13 +13,8 @@ const loginUserSchema = z.object({
   email: z.string(),
   name: z.string(),
   role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
-  /** ADMIN·DIRECTOR 는 'ALL' (docs/auth/permissions.md § 2-3). */
-  department: z.enum([
-    'ALL',
-    'MEDICAL',
-    'MARKETING',
-    'OVERSEAS_MARKETING',
-  ] as const),
+  /** ADMIN·DIRECTOR 는 'ALL'. */
+  department: z.enum(['ALL', 'TEAM_A', 'TEAM_B'] as const),
 })
 
 export type LoginUser = z.infer<typeof loginUserSchema>

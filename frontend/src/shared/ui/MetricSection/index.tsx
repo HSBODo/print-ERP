@@ -15,7 +15,7 @@ export interface MetricDef<T> {
 /**
  * 기간 비교 지표 카드 묶음 (첫 기간이 기준, 나머지는 증감률 배지).
  *
- * B2B 매출·드림렌즈 매출 등 "기간별 비교" 형태의 통계 페이지 공용.
+ * "기간별 비교" 형태의 통계 페이지 공용.
  */
 export function MetricSection<T>({
   title,

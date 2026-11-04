@@ -95,12 +95,12 @@ export const 한_페이지: Story = { args: { total: 12 } }
 export const 빈_결과: Story = { args: { total: 0 } }
 
 export const 초기_25행: Story = {
-  name: '초기 25행 (계정 관리 · 예약자 리스트_홈페이지)',
+  name: '초기 25행 (계정 관리)',
   args: { total: 180, initialPageSize: 25 },
 }
 
-export const 회계_행수: Story = {
-  name: '회계 행 수 (50·100·200·500)',
+export const 대용량_행수: Story = {
+  name: '대용량 행 수 (50·100·200·500)',
   args: { total: 3_210, pageSizeOptions: [50, 100, 200, 500] },
 }
 

@@ -1,19 +1,21 @@
 spring:
   application:
-    name: BNVIIT-ANALYTICS-DASHBOARD
+    name: app-template
 
-  # ── Primary datasource (Postgres mart) ─────────────────────────────
-  # JPA + 마트 조회(mart_*·list_*) + User 엔티티. 각 프로파일에서 POSTGRES_* 환경변수로 호스트·계정 지정.
-  # driver-class-name·dialect 는 Spring Boot/Hibernate 가 URL 접두사로 자동 감지 — 테스트는 jdbc:h2:mem:...
-  # URL 로 오버라이드하면 H2 드라이버·방언이 자동 적용되어 운영/테스트 모두 지원.
+  # ── Datasource (PostgreSQL) ─────────────────────────────────────────
+  # 각 프로파일에서 POSTGRES_* 환경변수로 호스트·계정을 지정한다.
+  # 테스트는 spring.datasource.url=jdbc:h2:mem:... 로 오버라이드 (H2 는 testRuntimeOnly).
   datasource:
-    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/${POSTGRES_DB:analytics}}
-    username: ${POSTGRES_USER:analytics}
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/${POSTGRES_DB:app}}
+    username: ${POSTGRES_USER:app}
     password: ${POSTGRES_PASSWORD:}
 
+  # 스키마는 Flyway(db/migration/V*.sql)가 만들고, Hibernate 는 엔티티와 일치하는지 검증만 한다.
+  # 새 엔티티·컬럼을 추가하면 V{n}__설명.sql 을 함께 추가할 것.
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
+    open-in-view: false
     show-sql: false
     properties:
       hibernate:
@@ -22,232 +24,21 @@ spring:
   jackson:
     time-zone: Asia/Seoul
 
-  # ── 프로파일 그룹 ─────────────────────────────────────────────────
-  # 사용자는 --spring.profiles.active={local|dev|prod} 하나만 지정.
-  # 그룹이 postgres-mart 를 자동 포함 → 마트 인프라 빈(@Profile("postgres-mart"))이 활성화된다.
-  # 각 프로파일별 세부 설정: application-{local|dev|prod}.yml
-  #
-  # ⚠ 프로파일 미지정 시 postgres-mart 가 활성되지 않아 DataSource 빈이 안 뜨고 기동 실패 —
-  # 운영에서 프로파일 설정 누락을 조기 발견하기 위한 의도적 설계.
-  # 테스트는 각자 spring.datasource.url=jdbc:h2:mem:... 로 명시한다 (testRuntimeOnly H2 유지).
-  profiles:
-    group:
-      local: postgres-mart
-      dev: postgres-mart
-      prod: postgres-mart
-
-# ── Data warehouse (Postgres RDS, read-only) ───────────────────────
-# 데이터 플랫폼(2026-09-23 도입 · 2026-10-23 단독 소스화) — bnviit_datawarehouse.
-# 모든 통계 리포지토리가 warehouseJdbcTemplate 하나만 주입받아 raw.* / mart 를 조회한다.
-#
-# ⚠ fail-fast — WAREHOUSE_* 미설정 시 침묵실패(첫 조회 때 발견) 를 막기 위해 startup 시 커넥션 강제 획득.
-#   minimum-idle=1: pool 생성 즉시 1개 커넥션 유지 → 미설정 시 pool init 자체가 실패.
-#   initialization-fail-timeout=10000: 10초 안에 커넥션 못 얻으면 PoolInitializationException → startup 중단.
-warehouse:
-  datasource:
-    url: ${WAREHOUSE_URL:jdbc:postgresql://${WAREHOUSE_HOST:localhost}:${WAREHOUSE_PORT:5432}/${WAREHOUSE_DB:dummy}}
-    username: ${WAREHOUSE_USERNAME:}
-    password: ${WAREHOUSE_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 3
-      minimum-idle: 1
-      read-only: true
-      connection-timeout: 10000
-      initialization-fail-timeout: 10000
-
-# ── Batch scheduling (기본값 — 각 프로파일에서 enabled·cron 오버라이드) ──
-batch:
-  mart:
-    # 매일 03:00 — 어제(D-1) 하루치 append
-    enabled: ${BATCH_MART_ENABLED:true}
-    daily-cron: ${BATCH_MART_DAILY_CRON:0 0 3 * * *}
-    # 매월 1일 03:30 — 전월 전체 재계산(소급 수정 흡수).
-    # list_reservation 은 등록일 기준이라 며칠 지나 상태(취소·수정)가 바뀐 예약을 매일 배치가 놓친다.
-    # 이 월 재계산이 그 소급 변동을 흡수한다. "-" 로 두면 스케줄러 등록 자체가 안 된다.
-    monthly-reconcile-cron: ${BATCH_MART_MONTHLY_RECONCILE_CRON:0 30 3 1 * *}
-    # 스케줄러가 덮어쓰지 않는 연도 하한. 이 값 미만 연도(2024·2025 등)는 mart 값이 "확정"으로 간주된다.
-    # 매일/매월 자동 배치는 이 가드를 따르지만, 관리자 수동 배치(runManual)는 초기 backfill/보정을 위해
-    # 이 가드를 우회한다. 24·25 값 수정은 mart SQL UPDATE로 처리하는 워크플로우를 위한 안전장치.
-    min-year: ${BATCH_MART_MIN_YEAR:2026}
-
 # Server
 server:
   port: ${SERVER_PORT:18080}
 
-# JWT
-# No production-unsafe fallback. Local launch scripts or environment files must provide APP_JWT_SECRET.
 app:
+  # JWT — 운영용 기본값 없음. APP_JWT_SECRET(32자 이상)을 반드시 주입한다.
   jwt:
     secret: ${APP_JWT_SECRET:}
     expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:15173}
+  # 최초 관리자 계정 시드 — users 테이블이 비어 있을 때만 1회 생성.
   seed:
     enabled: ${APP_SEED_ENABLED:false}
     admin-login-id: ${APP_SEED_ADMIN_LOGIN_ID:admin}
-    admin-email: ${APP_SEED_ADMIN_EMAIL:admin@bviit.com}
+    admin-email: ${APP_SEED_ADMIN_EMAIL:admin@example.com}
     admin-password: ${APP_SEED_ADMIN_PASSWORD:}
     admin-name: ${APP_SEED_ADMIN_NAME:관리자}
-
-# Local JSON cache for heavy stats queries
-stats:
-  cache:
-    dir: ${STATS_CACHE_DIR:.cache/stats}
-    examination:
-      enabled: ${STATS_CACHE_EXAMINATION_ENABLED:true}
-
-# 해외마케팅 시트는 Postgres(마트)에 보관하고 CRM 정보는 warehouse(raw.raw_crm_*) 에서 동기화 때 조회한다.
-overseas:
-  google-sheets:
-    # true일 때 Google Sheet 전체를 마트 캐시에 갱신하는 API(POST /api/overseas-marketing/sync-sheet)를 등록한다.
-    sync-enabled: ${OVERSEAS_GOOGLE_SHEETS_SYNC_ENABLED:false}
-    credentials-base64: ${OVERSEAS_GOOGLE_CREDENTIALS_BASE64:}
-    credentials-file: ${OVERSEAS_GOOGLE_CREDENTIALS_FILE:}
-    spreadsheet-id: ${OVERSEAS_GOOGLE_SPREADSHEET_ID:1IaVjs1priY7ccqS9SwZ1X4wmwyN7_aDlonD7dEL-p8A}
-    range: ${OVERSEAS_GOOGLE_RANGE:2026!A5:V}
-  # CRM 매칭 자동 스케줄러 — 매일 새벽 3시에 sync-crm 잡 트리거 (기본 OFF).
-  # 켜면 새 접수가 자동으로 매칭·스냅샷 병합됨. 담당자가 [동기화] 를 매일 안 눌러도 됨.
-  # 문제 발생 시 OVERSEAS_CRM_SYNC_SCHEDULER_ENABLED=false 로 즉시 중단.
-  crm-sync:
-    scheduler-enabled: ${OVERSEAS_CRM_SYNC_SCHEDULER_ENABLED:false}
-    cron: ${OVERSEAS_CRM_SYNC_CRON:0 0 3 * * *}
-
-# 예약 변경이력 배치 — 시각 미상 로그 샘플 최대 건수(기본 5). 백필·이관 시 20~50 으로 늘려 원본 형식 조사.
-reservation-change:
-  time-lost-log-samples: ${RESERVATION_CHANGE_TIME_LOST_LOG_SAMPLES:5}
-
-# Slack 로그 알림 (com.visuworks.lib:slack-logger)
-# 지정된 level 이상 로그를 Slack 웹훅으로 전송. 배치 실패 등 log.error 자동 감지.
-# webhook URL 은 커밋 금지 — LOGGING_SLACK_WEBHOOK_URL 환경변수로 주입.
-# 프로파일별 enabled: local(false), dev(true), prod(true). application-{profile}.yml 참조.
-logging:
-  slack:
-    webhook-url: ${LOGGING_SLACK_WEBHOOK_URL:}
-    level: ${LOGGING_SLACK_LEVEL:ERROR}
-    enabled: ${LOGGING_SLACK_ENABLED:false}
-
-sms:
-  dispatch:
-    # 자동 발송 배치 스위치. 기본 false — 관리자가 화면에서 [발송] 버튼 누르는 Phase 1 흐름 유지.
-    # 운영 활성화 순서: (1) SMS_DISPATCH_ENABLED=true → 스케줄러 활성 (2) SOLAPI_DRY_RUN=false → 실 API 호출.
-    enabled: ${SMS_DISPATCH_ENABLED:false}
-    # 폴링 주기 — 매 5분. 기본이면 하루 288회 폴링.
-    cron: ${SMS_DISPATCH_CRON:0 */5 * * * *}
-    # 한 사이클에 잡는 큐 최대 개수 (FOR UPDATE SKIP LOCKED LIMIT).
-    batch-size: ${SMS_DISPATCH_BATCH_SIZE:50}
-    # 하루 최대 DONE 카운트. 초과 시 사이클 skip + Slack 임계치 알림.
-    daily-limit: ${SMS_DISPATCH_DAILY_LIMIT:500}
-    # 큐 행당 재시도 상한. 도달 시 status=FAILED 로 굳고 관리자 재실행 API 로만 되살아남.
-    max-attempts: ${SMS_DISPATCH_MAX_ATTEMPTS:3}
-    # 광고톡 발송 허용 시(hour) — 정보통신망법상 광고성 21~08 금지. 알림톡은 시간 제한 없음.
-    ad-window-start-hour: ${SMS_DISPATCH_AD_START_HOUR:8}
-    ad-window-end-hour: ${SMS_DISPATCH_AD_END_HOUR:20}
-    # FAILED 큐 누적 카운트가 이 값 이상이면 Slack 경고 (상승 엣지에서만). 0 이하면 비활성.
-    failed-alert-threshold: ${SMS_DISPATCH_FAILED_ALERT_THRESHOLD:10}
-
-solapi:
-  # ⚠️ Dry-run 안전장치 — 기본 true(개발단계). 실제 알림톡·문자를 나가게 하려면 SOLAPI_DRY_RUN=false 로 명시 해제.
-  # true 일 때: SolapiSendService 가 실제 API 호출 없이 SUCCESS 반환. sms_send_log 에 messageType=DRY_RUN 로 남는다.
-  dry-run: ${SOLAPI_DRY_RUN:true}
-  # 수신자 강제 대체 — dry-run=true 안에서만 유효. 값이 있으면 실 솔라피 API 호출하되 수신자를 이 번호로만 보낸다
-  # ("내 폰으로만 나가게" 패턴). 로컬·dev 에서 실 흐름 검증할 때 사용. dry-run=false 이면 무시.
-  override-to: ${SOLAPI_OVERRIDE_TO:}
-  api-key: ${SOLAPI_API_KEY:}
-  api-secret: ${SOLAPI_API_SECRET:}
-  from: ${SOLAPI_FROM:}
-  pf-id: ${SOLAPI_PFID:}
-  # 웹훅(SINGLE-REPORT) 서명 검증용 — 콘솔 웹훅 등록 시 넣은 secret 과 동일해야 한다.
-  # 비어 있으면 서명 검증 skip (로컬 부트스트랩용). 운영은 반드시 채울 것.
-  webhook-secret: ${SOLAPI_WEBHOOK_SECRET:}
-  # fallback 동기화 스케줄 — 웹훅 유실·비활성 대비. 하루 1회 최근 2일 재확인.
-  # 웹훅이 정상이면 갱신 0건이 정상이다. cron="-" 이면 스케줄 비활성.
-  sync-cron: ${SOLAPI_SYNC_CRON:0 30 3 * * *}
-  templates:
-    # 차수 라벨 — 화면 컬럼명. 오프셋은 수술 그룹마다 달라 SurgeryGroup 이 갖는다.
-    t1:
-      label: ${SOLAPI_TPL1_LABEL:수술 후 안내 1차}
-    t2:
-      label: ${SOLAPI_TPL2_LABEL:수술 후 안내 2차}
-    t3:
-      label: ${SOLAPI_TPL3_LABEL:수술 후 안내 3차}
-    # ── 그룹 × 차수 = 15 슬롯 ──
-    # 2·3차에는 sms-text-delayed 가 하나 더 붙는다 — 기준일이 재조정된 대상에게 나가는,
-    # 경과 선언("수술 후 일주일이 지났습니다")을 뺀 문자 본문이다(1차는 그 문장이 없어 불필요).
-    # 수술마다 회복 속도가 달라 1차 시점과 문구가 다르다(고객케어 TF 확정안 v5).
-    # 알림톡 ID 나 문자 본문 중 하나 이상을 채워야 그 슬롯이 발송된다.
-    # 스마일수술 — 스마일프로·스마일라식 공용 (D+1·7·14)
-    smile:
-      t1:
-        template-id: ${SOLAPI_TPL_SMILE_1_ID:}
-        sms-text: ${SOLAPI_TPL_SMILE_1_SMS:}
-      t2:
-        template-id: ${SOLAPI_TPL_SMILE_2_ID:}
-        sms-text: ${SOLAPI_TPL_SMILE_2_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_SMILE_2_SMS_DELAYED:}
-      t3:
-        template-id: ${SOLAPI_TPL_SMILE_3_ID:}
-        sms-text: ${SOLAPI_TPL_SMILE_3_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_SMILE_3_SMS_DELAYED:}
-    # 라식 (D+1·7·14)
-    lasik:
-      t1:
-        template-id: ${SOLAPI_TPL_LASIK_1_ID:}
-        sms-text: ${SOLAPI_TPL_LASIK_1_SMS:}
-      t2:
-        template-id: ${SOLAPI_TPL_LASIK_2_ID:}
-        sms-text: ${SOLAPI_TPL_LASIK_2_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_LASIK_2_SMS_DELAYED:}
-      t3:
-        template-id: ${SOLAPI_TPL_LASIK_3_ID:}
-        sms-text: ${SOLAPI_TPL_LASIK_3_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_LASIK_3_SMS_DELAYED:}
-    # 라섹 — 렌즈 제거 후라 1차가 가장 늦다 (D+5·7·14)
-    lasek:
-      t1:
-        template-id: ${SOLAPI_TPL_LASEK_1_ID:}
-        sms-text: ${SOLAPI_TPL_LASEK_1_SMS:}
-      t2:
-        template-id: ${SOLAPI_TPL_LASEK_2_ID:}
-        sms-text: ${SOLAPI_TPL_LASEK_2_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_LASEK_2_SMS_DELAYED:}
-      t3:
-        template-id: ${SOLAPI_TPL_LASEK_3_ID:}
-        sms-text: ${SOLAPI_TPL_LASEK_3_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_LASEK_3_SMS_DELAYED:}
-    # 렌즈삽입 — ICL·KPL·VIVA (D+3·7·14)
-    icl:
-      t1:
-        template-id: ${SOLAPI_TPL_ICL_1_ID:}
-        sms-text: ${SOLAPI_TPL_ICL_1_SMS:}
-      t2:
-        template-id: ${SOLAPI_TPL_ICL_2_ID:}
-        sms-text: ${SOLAPI_TPL_ICL_2_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_ICL_2_SMS_DELAYED:}
-      t3:
-        template-id: ${SOLAPI_TPL_ICL_3_ID:}
-        sms-text: ${SOLAPI_TPL_ICL_3_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_ICL_3_SMS_DELAYED:}
-    # 기타 — 백내장·재수술·분류 실패분. 비워 두면 발송되지 않는다 (D+1·7·14)
-    etc:
-      t1:
-        template-id: ${SOLAPI_TPL_ETC_1_ID:}
-        sms-text: ${SOLAPI_TPL_ETC_1_SMS:}
-      t2:
-        template-id: ${SOLAPI_TPL_ETC_2_ID:}
-        sms-text: ${SOLAPI_TPL_ETC_2_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_ETC_2_SMS_DELAYED:}
-      t3:
-        template-id: ${SOLAPI_TPL_ETC_3_ID:}
-        sms-text: ${SOLAPI_TPL_ETC_3_SMS:}
-        # 지연 발송용 — "수술 후 N주가 지났습니다"를 뺀 본문(기준일 재조정 건)
-        sms-text-delayed: ${SOLAPI_TPL_ETC_3_SMS_DELAYED:}

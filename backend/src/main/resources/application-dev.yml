@@ -1,54 +1,11 @@
 # ========================================
 # DEV — 팀 공용 개발서버
 # ========================================
-# - Primary DB: Dev 전용 Postgres (외부 인스턴스, prod와 분리)
-# - CRM MSSQL: Admin 트리거 시에만 접근 (읽기)
-# - 배치 스케줄러: ON (매일 03:00 D-1 적재 + 매월 1일 03:30 전월 소급 재계산)
-# - 배치 트리거(Admin API): ON — POST /api/admin/batch/rerun
-#
 # 실행: SPRING_PROFILES_ACTIVE=dev java -jar app.jar
-# 배포 환경변수 필수: POSTGRES_*, WAREHOUSE_*
-#
-# ─── 프로파일 비교 (local vs dev vs prod) ────────────────────────
-# 항목                     | local                        | dev                     | prod
-# 용도                     | 개인 개발 머신               | 팀 공용 개발서버        | 운영
-# Primary DB (Postgres)    | 로컬 Docker(localhost:5432)  | Dev 외부 인스턴스       | Prod 외부 인스턴스
-# warehouse (Postgres RDS)  | 외부 Dev warehouse(설정 시) | Dev warehouse           | Prod warehouse
-# Hikari(warehouse) pool    | 2 / 10s                      | 3 / 10s                 | 3 / 10s
-# ddl-auto                 | update                       | update                  | none
-# 배치 스케줄러            | OFF                          | ON(03:00 D-1 + 월 1일 03:30 재계산) | ON(03:00 D-1, 월간재계산 OFF)
-# Admin 수동 배치          | OFF(CRM 없음)                | ON                      | ON
-# app.seed.enabled         | 상위 기본값(false)           | 상위 기본값             | 명시적 false
-# 필수 env                 | POSTGRES_* (기본값 가능)     | POSTGRES_*, WAREHOUSE_* | POSTGRES_*, WAREHOUSE_*, APP_JWT_SECRET
-# ================================================================
+# 필수 env: POSTGRES_URL · POSTGRES_USER · POSTGRES_PASSWORD · APP_JWT_SECRET
 
 spring:
-  # --- Primary (Dev Postgres, 별도 인스턴스) ---
   datasource:
     url: ${POSTGRES_URL:}
     username: ${POSTGRES_USER:}
     password: ${POSTGRES_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-
-# --- Batch scheduling (ON) ---
-# min-year=2026 가드로 D-1 이 2026 미만이면 자동 skip. min-year 는 postgres-mart.yml 에서 상속.
-batch:
-  mart:
-    enabled: true
-    daily-cron: ${BATCH_MART_DAILY_CRON:0 0 3 * * *}
-    # 매월 1일 03:30 — 전월 전체 재계산(소급 수정 흡수). 필요 시 환경변수로 오버라이드.
-    monthly-reconcile-cron: ${BATCH_MART_MONTHLY_RECONCILE_CRON:0 30 3 1 * *}
-
-# --- Slack 로그 알림 (ON) ---
-# LOGGING_SLACK_WEBHOOK_URL 환경변수 필수(deploy 스크립트 주입). 미주입 시 라이브러리가 스킵.
-logging:
-  slack:
-    enabled: true

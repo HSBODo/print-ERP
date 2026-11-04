@@ -111,7 +111,7 @@ export function Chart({
             ticks={yAxis.ticks}
             padding={{ bottom: LABEL_SPACE }}
             // 고정 함수여야 한다 — 렌더마다 새 함수면 Recharts 가 축을 다시 등록해 선 애니메이션을 재시작하고
-            // 그동안 값 레이블을 숨긴다(호버로 페이지가 다시 렌더되는 예약 종합에서 레이블이 사라짐)
+            // 그동안 값 레이블을 숨긴다(호버로 페이지가 다시 렌더되면 레이블이 사라진다)
             tickFormatter={TICK_FORMATTER[format]}
           />
           <ChartTooltip

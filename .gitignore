@@ -1,17 +1,12 @@
 .vscode/
-.frontend-git-backup/
-frontend/.git.frontend-backup/
 *.bundle
 frontend/.env
 .env
 *.log
-.omx/
 .cache/
 backend/.cache/
 
-# Gradle 로컬 설정 — Nexus 계정(nexusUsername/nexusPassword)이 들어가는 파일이다. 커밋 금지.
-# 계정은 리포 밖(~/.gradle/gradle.properties)에 두는 게 원칙 — 리포 안에는 만들지 말 것.
-# 이 패턴은 방어용이다(실수로 리포에 만들어도 스테이징되지 않게).
+# Gradle 로컬 설정 — 개인 계정·토큰이 들어갈 수 있어 커밋 금지.
 gradle.properties
 
 # docker compose 로컬 오버라이드 — 호스트 경로·개인 설정이 들어간다(머신마다 다름).
@@ -21,16 +16,12 @@ docker-compose.override.yml
 *.xlsx
 ~$*
 
-# (2026-08-26 삭제) backend/data/ 예약통계 스냅샷 JSON 12개 · MonthlySnapshotStore 정리 —
-#   V19/V20 시드가 마트 SSOT 로 이관됨. 관련 예외 규칙 제거.
-
 # 운영 자격증명이 남을 수 있는 .env 백업
 .env.bak*
 
-# D/L 장부 스프레드시트 원본 export — 환자 실명·고객번호가 들어 있어 커밋 금지.
-# (docs/databatch/*.csv 는 집계값이라 추적 대상이므로 *.csv 로 싸잡지 않는다)
-/D_L 장부들*.csv
-
 # API 문서 스펙 — ./gradlew test openapi3 가 매 빌드마다 새로 만드는 산출물.
-# 배포 파이프라인·전략은 docs/api-docs-strategy.md 참조.
 backend/src/main/resources/static/docs/openapi3.yaml
+
+# 개인 IDE·에이전트 설정 — 템플릿 사용자마다 다르다
+.idea/
+.claude/settings.local.json

@@ -12,28 +12,19 @@ import { useCreateUser, useUpdateUser } from '../../hooks/useUsers'
 import type { UserRow } from '../../type/api'
 
 /**
- * ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING 조합 강제
- * (백엔드 CHECK 제약과 동일 · docs/auth/permissions.md § 2-3).
+ * ADMIN·DIRECTOR ↔ ALL · MANAGER·STAFF ↔ ALL 이외의 부서 조합 강제
+ * (백엔드 User.isValidCombination 과 동일).
  */
 const isValidCombination = (role: UserRole, department: UserDepartment) => {
   if (role === 'ADMIN' || role === 'DIRECTOR') return department === 'ALL'
-  return (
-    department === 'MEDICAL' ||
-    department === 'MARKETING' ||
-    department === 'OVERSEAS_MARKETING'
-  )
+  return department !== 'ALL'
 }
 
 const baseFields = {
   email: z.string().trim().email('이메일 형식이 올바르지 않습니다'),
   name: z.string().trim().min(1, '이름을 입력하세요').max(100),
   role: z.enum(['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF'] as const),
-  department: z.enum([
-    'ALL',
-    'MEDICAL',
-    'MARKETING',
-    'OVERSEAS_MARKETING',
-  ] as const),
+  department: z.enum(['ALL', 'TEAM_A', 'TEAM_B'] as const),
 }
 
 const createSchema = z
@@ -50,7 +41,7 @@ const createSchema = z
   })
   .refine((v) => isValidCombination(v.role, v.department), {
     message:
-      '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ MEDICAL/MARKETING/OVERSEAS_MARKETING)',
+      '권한·부서 조합이 유효하지 않습니다 (ADMIN/DIRECTOR ↔ ALL · MANAGER/STAFF ↔ 부서 지정)',
     path: ['department'],
   })
 
@@ -101,7 +92,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
             email: '',
             name: '',
             role: 'STAFF' as UserRole,
-            department: 'MEDICAL' as UserDepartment,
+            department: 'TEAM_A' as UserDepartment,
             password: '',
           },
   })
@@ -109,13 +100,13 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
   const { register, handleSubmit, watch, setValue, formState } = form
   const currentRole = watch('role')
 
-  // 권한 변경 시 부서 자동 정규화 (ADMIN/DIRECTOR → ALL, MANAGER/STAFF → MEDICAL 기본).
+  // 권한 변경 시 부서 자동 정규화 (ADMIN/DIRECTOR → ALL, MANAGER/STAFF → TEAM_A 기본).
   useEffect(() => {
     if (currentRole === 'ADMIN' || currentRole === 'DIRECTOR') {
       setValue('department', 'ALL')
     } else {
       const currentDept = form.getValues('department')
-      if (currentDept === 'ALL') setValue('department', 'MEDICAL')
+      if (currentDept === 'ALL') setValue('department', 'TEAM_A')
     }
   }, [currentRole, setValue, form])
 
@@ -245,7 +236,7 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
               >
                 <option value="ADMIN">ADMIN(관리자)</option>
                 <option value="DIRECTOR">DIRECTOR (임원)</option>
-                <option value="MANAGER">MANAGER (실장·팀장)</option>
+                <option value="MANAGER">MANAGER (매니저)</option>
                 <option value="STAFF">STAFF (실무자)</option>
               </select>
             </div>
@@ -266,11 +257,8 @@ export function UserFormDialog({ mode, user, isSelf, onClose }: Props) {
                   <option value="ALL">ALL</option>
                 ) : (
                   <>
-                    <option value="MEDICAL">MEDICAL</option>
-                    <option value="MARKETING">MARKETING</option>
-                    <option value="OVERSEAS_MARKETING">
-                      OVERSEAS_MARKETING (해외마케팅 전담)
-                    </option>
+                    <option value="TEAM_A">TEAM_A</option>
+                    <option value="TEAM_B">TEAM_B</option>
                   </>
                 )}
               </select>

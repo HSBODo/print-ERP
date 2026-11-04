@@ -67,7 +67,7 @@ describe('LoginPage', () => {
     const user = {
       id: 1,
       loginId: 'admin',
-      email: 'admin@bviit.com',
+      email: 'admin@example.com',
       name: '관리자',
       role: 'ADMIN' as const,
       department: 'ALL' as const,

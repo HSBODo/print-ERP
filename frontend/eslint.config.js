@@ -278,8 +278,6 @@ export default defineConfig([
     'coverage',
     'public',
     'src/routeTree.gen.ts',
-    // 미구현 목업 — 참고만 하고 확장하지 않는 코드라 lint 대상에서 뺀다 (CLAUDE.md graveyard)
-    'src/routes/_auth/-internal/graveyard',
   ]),
   sharedConfig,
   architectureConfig,

@@ -1,6 +1,7 @@
 import { Menu, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 
+import { APP_NAME } from '#shared/constants/app'
 import { useIsMobile } from '#shared/hooks/useIsMobile'
 
 import { Sidebar } from '../Sidebar'
@@ -25,7 +26,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Menu className="h-5 w-5 text-gray-700" />
           </button>
           <span className="ml-3 text-sm font-bold text-gray-900">
-            Analytics &amp; KPI
+            {APP_NAME}
           </span>
         </header>
 

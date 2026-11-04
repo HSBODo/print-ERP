@@ -90,7 +90,7 @@ export function StatsPlaceholderPage({
                 1. 필터 UI 추가
               </p>
               <p className="mt-1 text-sm text-gray-600">
-                기간, 채널, 수술 종류 같은 조회 조건을 페이지 상단에 배치합니다.
+                기간, 분류, 상태 같은 조회 조건을 페이지 상단에 배치합니다.
               </p>
             </div>
             <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">

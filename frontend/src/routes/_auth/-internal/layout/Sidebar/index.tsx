@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { useAuthStore } from '#domain/support/session/store'
+import { APP_COPYRIGHT_OWNER, APP_NAME } from '#shared/constants/app'
 
 import {
   buildMenu,
@@ -66,7 +67,7 @@ function ExecutiveBadge() {
  * 배지 종류 결정:
  *  - kind='section' (섹션 자체) 또는 adminReal(관리자 섹션 트리 안 항목) → "관리자"
  *  - 그 외 adminOnly 항목 → "개발중"
- *  - executiveOnly (adminOnly 는 아님) → "임원↑" (violet · 회계 그룹)
+ *  - executiveOnly (adminOnly 는 아님) → "임원↑" (violet)
  *  - 셋 다 아니면 배지 없음
  */
 function ItemBadge({ item }: { item: MenuItem }) {
@@ -183,9 +184,7 @@ export function Sidebar({
         className={`h-14 min-h-14 flex items-center border-b border-gray-200 px-3 flex-shrink-0 ${collapsed ? 'justify-center' : 'justify-between'}`}
       >
         {!collapsed && (
-          <span className="text-base font-bold text-gray-900">
-            Analytics &amp; KPI
-          </span>
+          <span className="text-base font-bold text-gray-900">{APP_NAME}</span>
         )}
         <button
           type="button"
@@ -229,7 +228,7 @@ export function Sidebar({
       </nav>
 
       <div className="p-4 border-t border-gray-100 text-xs text-gray-400">
-        {!collapsed && <span>&copy; 2026 B&VIIT Group</span>}
+        {!collapsed && <span>&copy; {APP_COPYRIGHT_OWNER}</span>}
       </div>
     </aside>
   )

@@ -3,13 +3,12 @@ plugins {
 	id 'org.springframework.boot' version '3.5.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	// API 문서화 — 테스트가 캡처한 요청/응답 → OpenAPI 3 스펙(build/api-spec/openapi3.yaml).
-	// 관련 설계: docs/api-docs-strategy.md
 	id 'com.epages.restdocs-api-spec' version '0.19.4'
 }
 
-group = 'com.bviit'
+group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-description = 'B&VIIT Analytics Dashboard'
+description = 'Spring Boot + React App Template'
 
 java {
 	toolchain {
@@ -24,31 +23,18 @@ tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
 }
 
+// 테스트 JVM 기본 charset 도 UTF-8 로 고정 — 한글 요청 본문을 다루는 REST Docs 테스트가 Windows(MS949)에서 깨지지 않게.
+tasks.withType(Test).configureEach {
+	defaultCharacterEncoding = 'UTF-8'
+}
+
 repositories {
     mavenCentral()
-    // 1. 우리 회사의 넥서스 주소 추가 (중요: allowInsecureProtocol도 필요함)
-    maven {
-        url "https://nexus.loocusiol.com/repository/maven-public/"
-        allowInsecureProtocol = true
-
-        // Credential 우선순위: -P gradle property > env(nexusUsername) > env(NEXUS_USERNAME).
-        // Docker 빌드 시 BuildKit secret 또는 --build-arg 로 주입.
-        credentials {
-            username = project.findProperty('nexusUsername')
-                    ?: System.getenv('nexusUsername')
-                    ?: System.getenv('NEXUS_USERNAME')
-            password = project.findProperty('nexusPassword')
-                    ?: System.getenv('nexusPassword')
-                    ?: System.getenv('NEXUS_PASSWORD')
-        }
-    }
 }
 
 def frontendDistDir = file("${projectDir}/../frontend/dist")
 
 dependencies {
-	// 솔라피(SOLAPI) 문자·알림톡 발송 SDK — 문자 발송 관리(sms 도메인) 전용.
-	implementation 'com.solapi:sdk:1.0.3'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -58,6 +44,9 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
+	// DB 마이그레이션 — src/main/resources/db/migration/V*.sql 이 스키마의 정본이다.
+	implementation 'org.flywaydb:flyway-core'
+	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	// Swagger UI 정적 자산 — /webjars/swagger-ui-dist/5.20.0/* 로 Spring Boot 가 자동 서빙.
 	// src/main/resources/static/docs/index.html 이 이 자산으로 /docs/openapi3.yaml 을 렌더한다.
@@ -66,7 +55,6 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	// REST Docs (MockMvc) + restdocs-api-spec — 테스트가 실제 요청/응답을 캡처해 OpenAPI 스펙으로 생성.
-	// 관련 설계: docs/api-docs-strategy.md
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 	testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.19.4'
 	testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
@@ -75,7 +63,6 @@ dependencies {
 	testRuntimeOnly 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
-    implementation 'com.visuworks.lib:slack-logger:1.0.0'
 }
 
 // REST Docs 스니펫 출력 위치 — openapi3 태스크가 이 디렉토리를 읽어 스펙을 만든다.
@@ -109,29 +96,25 @@ tasks.named('processResources') {
 	}
 }
 
-// ─── API 문서화 (docs/api-docs-strategy.md) ────────────────────────────────
+// ─── API 문서화 ────────────────────────────────────────────────────────────
 // openapi3 산출물(build/api-spec/openapi3.yaml)을 static 리소스로 끌어와 /docs/openapi3.yaml 로 서빙한다.
 // - 로컬: ./gradlew test openapi3 실행 시 finalizedBy 로 자동 복사.
-// - Docker(Dockerfile/Dockerfile.local): 이미지 빌드 안에서 `./gradlew clean openapi3 bootJar` 를 돌린다.
-//   Jenkins 파이프라인이 별도 test 스테이지를 갖고 있어도 스펙은 도커 빌드에서 자체 생성돼 이미지에 포함된다.
+// - Docker(Dockerfile): 이미지 빌드 안에서 `./gradlew clean openapi3 bootJar` 를 돌린다.
 // - 파일은 .gitignore 로 배제 — 매 빌드마다 새로 만든다.
 openapi3 {
 	servers = [
-		{ url = 'https://dashboard.bnviit-ai.com'; description = 'Production' },
-		{ url = 'http://192.168.6.102:5000';       description = 'Development' },
-		{ url = 'http://localhost:18080';          description = 'Local' }
+		{ url = 'http://localhost:18080'; description = 'Local' }
 	]
-	title = 'B&VIIT Analytics API'
+	title = 'App Template API'
 	version = project.version
 	format = 'yaml'
-	description = '안과(B&VIIT) KPI 대시보드 API — 세부 규칙은 CLAUDE.md · AGENTS.md 참조.'
+	description = 'App Template API — 세부 규칙은 CLAUDE.md · AGENTS.md 참조.'
 }
 
 // bootJar 가 openapi3.yaml 을 직접 포함한다.
 //   - src/main/resources 로 복사하면 processResources 가 이미 지나간 뒤라 반영 안 됨
 //   - build/resources/main 으로 복사하면 resolveMainClassName 등 다른 컨슈머와 암시적 의존 충돌
 //   - bootJar 에 from() 으로 파일을 직접 붙이면 위 둘을 모두 우회
-// 관련 설계: docs/api-docs-strategy.md
 afterEvaluate {
 	tasks.named('openapi3') {
 		// restdocs-api-spec 플러그인의 `servers` 입력이 swagger-core `Server`(Serializable 아님)라
@@ -147,10 +130,16 @@ afterEvaluate {
 	}
 }
 
-tasks.register('local', Task) {
-    doLast {
-        tasks.named('bootRun').configure {
-            systemProperty 'spring.profiles.active', 'local'
-        }
-    }
+// bootRun 시 backend/.env (KEY=VALUE) 를 환경변수로 주입한다 — 로컬 개발 편의.
+tasks.named('bootRun') {
+	def envFile = file('.env')
+	if (envFile.exists()) {
+		envFile.eachLine { line ->
+			def trimmed = line.trim()
+			if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+				def parts = trimmed.split('=', 2)
+				environment parts[0].trim(), parts[1].trim()
+			}
+		}
+	}
 }

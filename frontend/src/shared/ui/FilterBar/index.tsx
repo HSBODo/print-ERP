@@ -63,7 +63,7 @@ export function FilterBar({
   }
 
   return (
-    // 예약통계(/reservation-stats) 툴바와 동일 규격: flat white · px-2 py-1.5 · text-xs · 공유 Select(h-8)
+    // 툴바 규격: flat white · px-2 py-1.5 · text-xs · 공유 Select(h-8)
     <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-white px-2 py-1.5 text-xs shadow-sm">
       {/* 모드 토글 (yearOnly 페이지는 연도 비교만 지원) */}
       {!yearOnly && (

@@ -51,7 +51,7 @@ describe('auth session storage', () => {
   const user: AuthUser = {
     id: 1,
     loginId: 'admin',
-    email: 'admin@bviit.com',
+    email: 'admin@example.com',
     name: '관리자',
     role: 'ADMIN',
     department: 'ALL',
@@ -115,7 +115,7 @@ describe('auth session storage', () => {
         email: '',
         name: 'viewer',
         role: 'STAFF',
-        department: 'MEDICAL',
+        department: 'TEAM_A',
       },
       isAuthenticated: true,
     })
@@ -132,7 +132,7 @@ describe('auth session storage', () => {
       'auth-user',
       JSON.stringify({
         id: 1,
-        email: 'admin@bviit.com',
+        email: 'admin@example.com',
         name: '관리자',
         role: 'ADMIN',
       }),
@@ -157,7 +157,7 @@ describe('auth session storage', () => {
       JSON.stringify({
         id: 1,
         loginId: 'admin',
-        email: 'admin@bviit.com',
+        email: 'admin@example.com',
         name: 'ê´ë¦¬ì',
         role: 'ADMIN',
       }),

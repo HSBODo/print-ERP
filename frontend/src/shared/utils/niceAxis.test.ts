@@ -4,10 +4,10 @@ import { niceAxis, niceAxisFor, niceStep, tightAxis } from './niceAxis'
 
 describe('niceStep', () => {
   it('범위를 1·2·5·10×10ⁿ nice step으로 환산', () => {
-    expect(niceStep(61)).toBe(20) // 백내장 수술 범위
+    expect(niceStep(61)).toBe(20) // 작은 카운트 범위
     expect(niceStep(2057)).toBe(500) // 외래수 범위
     expect(niceStep(4)).toBe(1) // 중단율 범위(%)
-    expect(niceStep(31)).toBe(10) // 백내장 예약률 범위(%)
+    expect(niceStep(31)).toBe(10) // 작은 비율 범위(%)
   })
 
   it('0 이하 범위는 1', () => {
@@ -17,7 +17,7 @@ describe('niceStep', () => {
 })
 
 describe('niceAxis', () => {
-  it('작은 카운트(백내장 수술)는 0~120으로 떨어진다', () => {
+  it('작은 카운트는 0~120으로 떨어진다', () => {
     const { domain, ticks } = niceAxis([90, 67, 69, 42, 61, 36, 97])
     expect(domain).toEqual([0, 120])
     expect(ticks).toEqual([0, 20, 40, 60, 80, 100, 120])
@@ -34,7 +34,7 @@ describe('niceAxis', () => {
     expect(domain[1]).toBe(9)
   })
 
-  it('높고 촘촘한 비율(백내장 예약률)은 음수 없이 baseline 상향', () => {
+  it('높고 촘촘한 비율은 음수 없이 baseline 상향', () => {
     const { domain } = niceAxis([49, 80, 64, 56, 55])
     expect(domain[0]).toBeGreaterThanOrEqual(0)
     expect(domain[0]).toBeLessThan(50)
@@ -57,7 +57,7 @@ describe('tightAxis (주차 레포트 — 변동 폭 강조)', () => {
   const endsInZeroOrFive = (ticks: number[]) =>
     ticks.every((t) => Number.isInteger(t) && (t % 10 === 0 || t % 10 === 5))
 
-  it('주차 콜예약(88~470): niceAxis 0~600 대비 축을 좁혀 데이터 비중을 높인다', () => {
+  it('좁은 범위(88~470): niceAxis 0~600 대비 축을 좁혀 데이터 비중을 높인다', () => {
     const values = [88, 470, 300, 250, 160, 200, 240]
     const loose = niceAxis(values)
     const tight = tightAxis(values)
@@ -109,7 +109,7 @@ describe('tightAxis (주차 레포트 — 변동 폭 강조)', () => {
 })
 
 describe('niceAxisFor (명시 범위 고정)', () => {
-  it('예약종합 [800,3000] → 끝값은 그대로, 사이는 1000·1500·…·3000', () => {
+  it('고정 범위 [800,3000] → 끝값은 그대로, 사이는 1000·1500·…·3000', () => {
     const { domain, ticks } = niceAxisFor(800, 3000)
     expect(domain).toEqual([800, 3000])
     expect(ticks).toEqual([1000, 1500, 2000, 2500, 3000]) // 3500 없음

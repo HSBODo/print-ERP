@@ -15,7 +15,7 @@ import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { UserFormDialog } from './UserFormDialog'
 
 /**
- * 계정 관리 페이지 — ADMIN 전용 (SecurityConfig + pageRegistry 이중 방어).
+ * 계정 관리 페이지 — ADMIN 전용 (SecurityConfig + 라우트 staticData.page.access 이중 방어).
  *
  * <p>기능:
  * <ul>
@@ -29,7 +29,7 @@ import { UserFormDialog } from './UserFormDialog'
 /** 예전 기본 20행에 가장 가까운 공통 선택지. */
 const INITIAL_PAGE_SIZE = 25
 const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF']
-const DEPARTMENT_OPTIONS: UserDepartment[] = ['ALL', 'MEDICAL', 'MARKETING']
+const DEPARTMENT_OPTIONS: UserDepartment[] = ['ALL', 'TEAM_A', 'TEAM_B']
 
 /** 권한별 배지 색 — 위계에 따라 warm→cool 로 자연스럽게 내려간다 (ADMIN 이 가장 눈에 띄게). */
 const ROLE_BADGE: Record<UserRole, string> = {
@@ -39,13 +39,11 @@ const ROLE_BADGE: Record<UserRole, string> = {
   STAFF: 'bg-gray-50 text-gray-700 border-gray-200',
 }
 
-/** 부서 배지 색 — ALL 은 중립, MEDICAL/MARKETING 은 대비되는 색으로. */
+/** 부서 배지 색 — ALL 은 중립, 부서끼리는 대비되는 색으로. */
 const DEPT_BADGE: Record<UserDepartment, string> = {
   ALL: 'bg-slate-50 text-slate-700 border-slate-200',
-  MEDICAL: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  MARKETING: 'bg-amber-50 text-amber-700 border-amber-200',
-  // 해외마케팅 — MARKETING 계열이지만 좁은 스코프라 다른 톤(rose) 로 구분 (Topbar 배지와 통일).
-  OVERSEAS_MARKETING: 'bg-rose-50 text-rose-700 border-rose-200',
+  TEAM_A: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  TEAM_B: 'bg-amber-50 text-amber-700 border-amber-200',
 }
 
 export function AccountManagementPage() {

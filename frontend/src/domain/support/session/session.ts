@@ -1,23 +1,19 @@
 /**
- * 4단 롤 (docs/auth/permissions.md § 2-1).
- * - ADMIN    : 개발자 전용. 시스템 조작(배치·SMS·오프셋·사용자 부여) 가능.
- * - DIRECTOR : 임원·경영진. 두 그룹 전부 열람, 시스템 조작 불가.
- * - MANAGER  : 조직 의사결정 (지금은 STAFF 와 동일 권한).
- * - STAFF    : 실무 조작.
+ * 4단 롤 (백엔드 Role enum 과 동일).
+ * - ADMIN    : 시스템 관리 (계정 관리 등).
+ * - DIRECTOR : 임원. 모든 부서 데이터 열람, 시스템 조작 불가.
+ * - MANAGER  : 부서 관리자.
+ * - STAFF    : 실무자.
  */
 export type UserRole = 'ADMIN' | 'DIRECTOR' | 'MANAGER' | 'STAFF'
 
 /**
- * 사용자 부서 (docs/auth/permissions.md § 2-2).
- * - ALL              : ADMIN·DIRECTOR 전용. 부서 gate 우회.
- * - MEDICAL          : 진료·수술 부서 (원장·실장·상담사·간호사 등).
- * - MARKETING        : 마케팅 부서 (채널·SMS·해외마케팅 포함).
- * - OVERSEAS_MARKETING: 해외마케팅 전담 부서 (2026-09-11 신설 · 홈 + 해외마케팅 3종만).
- *
- * 이 축은 "부서(department)" 다. 향후 "소속(회사·법인)" 축이 별도로 추가될 수 있다.
+ * 사용자 부서 (백엔드 Department enum 과 동일).
+ * - ALL    : ADMIN·DIRECTOR 전용. 부서 gate 우회.
+ * - TEAM_A : 예시 부서 A — 프로젝트에 맞게 이름을 바꿀 것.
+ * - TEAM_B : 예시 부서 B
  */
-export type UserDepartment =
-  'ALL' | 'MEDICAL' | 'MARKETING' | 'OVERSEAS_MARKETING'
+export type UserDepartment = 'ALL' | 'TEAM_A' | 'TEAM_B'
 
 export interface AuthUser {
   id: number
@@ -45,12 +41,7 @@ const TOKEN_STORAGE_KEY = 'token'
 const USER_STORAGE_KEY = 'auth-user'
 
 const KNOWN_ROLES: UserRole[] = ['ADMIN', 'DIRECTOR', 'MANAGER', 'STAFF']
-const KNOWN_DEPARTMENTS: UserDepartment[] = [
-  'ALL',
-  'MEDICAL',
-  'MARKETING',
-  'OVERSEAS_MARKETING',
-]
+const KNOWN_DEPARTMENTS: UserDepartment[] = ['ALL', 'TEAM_A', 'TEAM_B']
 
 const emptySession = (): StoredAuthSession => ({
   token: null,
@@ -120,7 +111,7 @@ const deriveLoginId = (value: string) => {
 
 /**
  * 알 수 없는 롤은 STAFF 로 강등 (안전 기본값). 예전 'USER' 클레임도 STAFF 로 매핑됨.
- * 백엔드 JWT 는 grace 없이 알 수 없는 role 이면 401 을 던지지만 (docs/auth/permissions.md § 6-3),
+ * 백엔드 JWT 는 grace 없이 알 수 없는 role 이면 401 을 던지지만,
  * 프론트는 저장된 사용자 캐시가 이전 스키마일 수 있어 방어적으로 정규화한다.
  */
 const normalizeRole = (value: unknown): UserRole => {
@@ -131,8 +122,8 @@ const normalizeRole = (value: unknown): UserRole => {
 }
 
 /**
- * ADMIN·DIRECTOR 는 항상 ALL. 그 외에는 알려진 값(MEDICAL·MARKETING)이 있어야 하고,
- * 값이 없거나 잘못됐으면 MEDICAL 로 강등한다.
+ * ADMIN·DIRECTOR 는 항상 ALL. 그 외에는 ALL 이 아닌 알려진 부서여야 하고,
+ * 값이 없거나 잘못됐으면 기본 부서(TEAM_A)로 강등한다.
  */
 const normalizeDepartment = (
   value: unknown,
@@ -145,9 +136,9 @@ const normalizeDepartment = (
     typeof value === 'string' &&
     (KNOWN_DEPARTMENTS as string[]).includes(value)
   ) {
-    return value === 'ALL' ? 'MEDICAL' : (value as UserDepartment)
+    return value === 'ALL' ? 'TEAM_A' : (value as UserDepartment)
   }
-  return 'MEDICAL'
+  return 'TEAM_A'
 }
 
 export const normalizeAuthUser = (user: AuthUser): AuthUser => {
@@ -312,16 +303,15 @@ export const readStoredAuthSession = (): StoredAuthSession => {
   }
 }
 
-// ─── Role/Department 판정 헬퍼 (docs/auth/permissions.md § 3, § 5-2) ─────────────
+// ─── Role/Department 판정 헬퍼 ─────────────
 
-/** 시스템 조작(배치·SMS·오프셋·사용자 부여) 권한 — ADMIN 만. DIRECTOR 는 불가. */
+/** 시스템 조작(계정 관리 등) 권한 — ADMIN 만. DIRECTOR 는 불가. */
 export const canSystemOp = (
   user: Pick<AuthUser, 'role'> | null | undefined,
 ): boolean => user?.role === 'ADMIN'
 
 /**
  * 매니저 이상 (ADMIN·DIRECTOR·MANAGER). STAFF 만 제외.
- * SMS 큐 [실패·취소 재실행] 처럼 실무 판단이 필요하지만 실 발송·정책 조작은 아닌 액션에 쓴다.
  * 부서 gate 는 별도 — 이 헬퍼는 롤 축만 본다.
  */
 export const canManagerOp = (

@@ -1,4 +1,0 @@
-{
-  "repoRoot": "c:/workspace/dashboard_new/bnviit-dashboard-spring-6/bnviit-dashboard-spring",
-  "_comment": "scan.mjs 가 코드를 훑을 레포 경로. 레포를 옮기거나 다른 PC 에서 돌릴 때 여기만 고친다. 환경변수 DASHBOARD_REPO 가 있으면 그쪽이 우선한다."
-}

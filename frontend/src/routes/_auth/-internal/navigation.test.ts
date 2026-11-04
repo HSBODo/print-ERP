@@ -47,42 +47,8 @@ describe('navigation menu', () => {
     expect(HIDDEN_PAGE_PATHS.filter((path) => paths.includes(path))).toEqual([])
   })
 
-  it('숨기지 않은 핵심 메뉴는 그대로 노출된다(레포트·예약·해외마케팅·회계)', () => {
-    const paths = collectPaths(fullMenu())
-
-    expect(paths).toContain('/report/monthly')
-    expect(paths).toContain('/report/weekly')
-    expect(paths).toContain('/stats/reservation-list')
-    expect(paths).toContain('/stats/reservation-overall')
-    expect(paths).toContain('/stats/reservation-change')
-    expect(paths).toContain('/stats/overseas-marketing/receptions')
-    expect(paths).toContain('/stats/overseas-marketing/statistics')
-    expect(paths).toContain('/stats/overseas-marketing/reservation-stats')
-    expect(paths).toContain('/accounting/medical-receipts')
-    expect(paths).toContain('/accounting/vision-revenue')
-    expect(paths).toContain('/accounting/vision-revenue-summary')
-    expect(paths).toContain('/accounting/vision-revenue-chart')
-    expect(paths).toContain('/accounting/medical-revenue-chart')
-  })
-
-  it('해외마케팅은 독립 최상위 섹션이며 접수리스트·통계·예약통계가 순서대로 배치된다', () => {
-    const menu = fullMenu()
-    const marketing = menu.find((item) => item.id === 'marketing-section')
-    const overseas = menu.find(
-      (item) => item.id === 'overseas-marketing-section',
-    )
-
-    expect(
-      marketing?.children?.some(
-        (item) => item.id === 'overseas-marketing-section',
-      ),
-    ).toBe(false)
-    expect(overseas?.kind).toBe('section')
-    expect(overseas?.children?.map((item) => item.id)).toEqual([
-      'overseas-marketing-receptions',
-      'overseas-marketing-statistics',
-      'overseas-reservation-stats',
-    ])
+  it('관리자 메뉴(계정 관리)는 메뉴에 노출된다', () => {
+    expect(collectPaths(fullMenu())).toContain('/admin/accounts')
   })
 
   it('메뉴 잎 경로는 중복이 없어야 한다', () => {

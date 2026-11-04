@@ -1,58 +1,20 @@
 # ========================================
 # PROD — 운영
 # ========================================
-# - Primary DB: Prod Postgres (외부 인스턴스)
-# - CRM MSSQL: 실 CRM (SOFTCRM 등), 배치가 읽기
-# - 배치 스케줄러: ON — 매일 03:00 D-1 append, 매월 1일 03:30 전월 재계산
-# - 배치 트리거(Admin API): ON
-#
 # 실행: SPRING_PROFILES_ACTIVE=prod java -jar app.jar
-# 배포 환경변수 필수: POSTGRES_*, WAREHOUSE_*, APP_JWT_SECRET
+# 필수 env: POSTGRES_URL · POSTGRES_USER · POSTGRES_PASSWORD · APP_JWT_SECRET
 #
-# ─── 프로파일 비교 (local vs dev vs prod) ────────────────────────
-# 항목                     | local                        | dev                     | prod
-# 용도                     | 개인 개발 머신               | 팀 공용 개발서버        | 운영
-# Primary DB (Postgres)    | 로컬 Docker(localhost:5432)  | Dev 외부 인스턴스       | Prod 외부 인스턴스
-# warehouse (Postgres RDS)  | 외부 Dev warehouse(설정 시) | Dev warehouse           | Prod warehouse
-# Hikari(warehouse) pool    | 2 / 10s                      | 3 / 10s                 | 3 / 10s
-# ddl-auto                 | update                       | update                  | none
-# 배치 스케줄러            | OFF                          | OFF                     | ON(03:00 D-1, 매월 1일 03:30)
-# Admin 수동 배치          | OFF(CRM 없음)                | ON                      | ON
-# app.seed.enabled         | 상위 기본값(false)           | 상위 기본값             | 명시적 false
-# 필수 env                 | POSTGRES_* (기본값 가능)     | POSTGRES_*, WAREHOUSE_* | POSTGRES_*, WAREHOUSE_*, APP_JWT_SECRET
-# ================================================================
+# 스키마는 기동 시 Flyway 가 db/migration/V*.sql 로 생성·갱신한다.
+# 최초 배포 때만 APP_SEED_ENABLED=true + APP_SEED_ADMIN_PASSWORD 로 첫 관리자를 만들고, 이후 false 로 되돌린다
+# (users 테이블이 비어 있을 때만 생성하므로 켜 둬도 덮어쓰지는 않는다).
 
 spring:
-  # --- Primary (Prod Postgres) ---
   datasource:
     url: ${POSTGRES_URL:}
     username: ${POSTGRES_USER:}
     password: ${POSTGRES_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
 
   jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: false
     properties:
       hibernate:
         format_sql: false
-
-app:
-  seed:
-    enabled: false
-
-# --- Batch scheduling (ON) ---
-batch:
-  mart:
-    enabled: true
-    daily-cron: ${BATCH_MART_DAILY_CRON:0 0 3 * * *}
-    # 매월 1일 03:30 — 전월 전체 재계산(소급 수정 흡수). 등록일 기준 daily 배치가 놓치는
-    # 상태 변경(취소·수정)을 월 단위로 흡수한다. 필요 시 환경변수로 오버라이드.
-    monthly-reconcile-cron: ${BATCH_MART_MONTHLY_RECONCILE_CRON:0 30 3 1 * *}
-
-# --- Slack 로그 알림 (ON) ---
-# 운영에서 배치 실패·에러 즉시 감지. LOGGING_SLACK_WEBHOOK_URL 환경변수 필수(배포 스크립트 주입).
-logging:
-  slack:
-    enabled: true

@@ -5,9 +5,9 @@ import {
 } from '../session'
 
 /**
- * 페이지 접근 조건 (docs/auth/permissions.md). 셋 중 하나만 지정한다.
- *   role 'ADMIN'     — ADMIN 롤 전용 (시스템 조작 · 관리자 통계)
- *   role 'EXECUTIVE' — ADMIN·DIRECTOR (임원 이상) 전용 (회계)
+ * 페이지 접근 조건. 셋 중 하나만 지정한다.
+ *   role 'ADMIN'     — ADMIN 롤 전용 (시스템 조작)
+ *   role 'EXECUTIVE' — ADMIN·DIRECTOR (임원 이상) 전용
  *   department       — 해당 부서만. ADMIN·DIRECTOR (department='ALL') 는 항상 통과
  * 롤 조건이 붙은 페이지는 department='ALL' 인 사용자만 통과하므로 부서 조건을 따로 두지 않는다.
  */

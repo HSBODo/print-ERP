@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { createRouter } from '@tanstack/react-router'
+import { Folder } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 
 import { routeTree } from '@/routeTree.gen'
@@ -11,19 +12,16 @@ import {
   type MenuItem,
   type PagePath,
 } from '../../navigation'
+import type { PageMeta } from '../../pageAccess'
 
 /**
- * 사이드바 노출 규칙 (docs/auth/permissions.md § 2-2, § 3).
- * Sidebar 컴포넌트 전체 렌더 대신, Sidebar 가 쓰는 buildMenu 를 실제 라우트 staticData 로 검증해 회귀를 잡는다.
+ * 사이드바 노출 규칙.
+ * Sidebar 컴포넌트 전체 렌더 대신, Sidebar 가 쓰는 buildMenu 를 검증해 회귀를 잡는다.
  */
 
 type MenuUser = Pick<AuthUser, 'role' | 'department'>
-const asMedicalStaff: MenuUser = { role: 'STAFF', department: 'MEDICAL' }
-const asMarketingStaff: MenuUser = { role: 'STAFF', department: 'MARKETING' }
-const asOverseasMarketingStaff: MenuUser = {
-  role: 'STAFF',
-  department: 'OVERSEAS_MARKETING',
-}
+const asTeamAStaff: MenuUser = { role: 'STAFF', department: 'TEAM_A' }
+const asTeamBStaff: MenuUser = { role: 'STAFF', department: 'TEAM_B' }
 const asAdmin: MenuUser = { role: 'ADMIN', department: 'ALL' }
 const asDirector: MenuUser = { role: 'DIRECTOR', department: 'ALL' }
 
@@ -51,138 +49,93 @@ const collectLeafIds = (items: MenuItem[]): string[] =>
     item.children ? collectLeafIds(item.children) : [item.id],
   )
 
-const ACCOUNTING_IDS = [
-  'accounting-medical',
-  'accounting-vision',
-  'accounting-vision-summary',
-  'accounting-vision-chart',
-  'accounting-medical-chart',
-]
+// ─── 가상 페이지로 부서·임원 gate 검증 (실제 라우트와 무관) ───────────────
+const fakePage = (
+  id: string,
+  access: PageMeta['access'],
+  status: PageMeta['status'] = 'complete',
+): PageMeta => ({ id, label: id, section: '테스트', status, access })
+
+// buildMenu 는 경로 문자열로 getPage 를 호출한다 — 가상 경로는 타입만 맞춰 넘긴다.
+const fakePath = (id: string) => `/fake/${id}` as unknown as PagePath
+const FAKE_PAGES: Record<string, PageMeta> = {
+  '/fake/team-a': fakePage('team-a', { department: 'TEAM_A' }),
+  '/fake/team-b': fakePage('team-b', { department: 'TEAM_B' }),
+  '/fake/executive': fakePage('executive', { role: 'EXECUTIVE' }),
+}
+const fakeGetPage = (path: PagePath) => FAKE_PAGES[path as string]
+const FAKE_TREE = [
+  {
+    id: 'team-a-section',
+    label: 'A',
+    icon: Folder,
+    kind: 'section' as const,
+    children: [fakePath('team-a')],
+  },
+  {
+    id: 'team-b-section',
+    label: 'B',
+    icon: Folder,
+    kind: 'section' as const,
+    children: [fakePath('team-b')],
+  },
+  {
+    id: 'executive-section',
+    label: 'E',
+    icon: Folder,
+    kind: 'section' as const,
+    badge: 'executive' as const,
+    children: [fakePath('executive')],
+  },
+] as unknown as Parameters<typeof buildMenu>[0]
+
+const fakeMenuFor = (user: MenuUser | null) =>
+  buildMenu(FAKE_TREE, fakeGetPage, user, false)
 
 describe('buildMenu · 사이드바 권한·부서 gate', () => {
-  it('ADMIN·DIRECTOR (department=ALL) 는 홈·비앤빛·마케팅 섹션을 모두 본다', () => {
+  it('ADMIN·DIRECTOR (department=ALL) 는 모든 부서 섹션을 본다', () => {
     for (const user of [asAdmin, asDirector]) {
-      const menu = menuFor(user)
-      expect(findById(menu, 'home')).toBeDefined()
-      expect(findById(menu, 'bnviit-section')).toBeDefined()
-      expect(findById(menu, 'marketing-section')).toBeDefined()
+      expect(collectLeafIds(fakeMenuFor(user))).toEqual([
+        'team-a',
+        'team-b',
+        'executive',
+      ])
     }
   })
 
-  it('MEDICAL 부서 STAFF: 홈·비앤빛 유지 · 마케팅 섹션은 자식 모두 필터링돼 통째로 제거', () => {
-    // § SMS 5-2 완화(2026-09-03) 이후 sms 도 MARKETING 전용이 됐다 →
-    // marketing-section 의 잎이 모두 MARKETING 이라 MEDICAL STAFF 에겐 섹션 통째로 사라진다.
-    const menu = menuFor(asMedicalStaff)
-    expect(findById(menu, 'home')).toBeDefined()
-    expect(findById(menu, 'bnviit-section')).toBeDefined()
-    expect(findById(menu, 'marketing-section')).toBeUndefined()
+  it('부서 STAFF 는 자기 부서 섹션만 보고, 자식이 빈 섹션은 통째로 제거된다', () => {
+    const menuA = fakeMenuFor(asTeamAStaff)
+    expect(collectLeafIds(menuA)).toEqual(['team-a'])
+    expect(findById(menuA, 'team-b-section')).toBeUndefined()
+
+    const menuB = fakeMenuFor(asTeamBStaff)
+    expect(collectLeafIds(menuB)).toEqual(['team-b'])
+    expect(findById(menuB, 'team-a-section')).toBeUndefined()
   })
 
-  it('MARKETING 부서 STAFF: 홈 유지 · 마케팅 섹션 유지 · 비앤빛 섹션은 자식 모두 사라져 통째로 제거', () => {
-    const menu = menuFor(asMarketingStaff)
-    expect(findById(menu, 'home')).toBeDefined()
-    expect(findById(menu, 'marketing-section')).toBeDefined()
-    expect(findById(menu, 'bnviit-section')).toBeUndefined()
-  })
-
-  it('MEDICAL 부서 STAFF: 잎 중 마케팅 전용 페이지들은 사라지고, 메디컬 페이지들은 남는다', () => {
-    const leafIds = collectLeafIds(menuFor(asMedicalStaff))
-
-    // 홈은 권한 조건이 없는 링크 → 항상 통과
-    expect(leafIds).toContain('home')
-
-    expect(leafIds).not.toContain('channel-profit')
-    expect(leafIds).not.toContain('reservation-channel')
-    expect(leafIds).not.toContain('accumulated-eyes')
-
-    expect(leafIds).toContain('monthly-report')
-    expect(leafIds).toContain('reservation-list')
-  })
-
-  it('MARKETING 부서 STAFF: 잎 중 메디컬 전용 페이지들은 사라지고, 마케팅 페이지들은 남는다', () => {
-    const leafIds = collectLeafIds(menuFor(asMarketingStaff))
-
-    expect(leafIds).toContain('home')
-    expect(leafIds).toContain('channel-profit')
-
-    expect(leafIds).not.toContain('monthly-report')
-    expect(leafIds).not.toContain('reservation-list')
-    expect(leafIds).not.toContain('exam-list')
-  })
-
-  it('OVERSEAS_MARKETING 부서 STAFF: 홈 + 해외마케팅 3종만 유지 · 그 외 섹션 모두 제거', () => {
-    const menu = menuFor(asOverseasMarketingStaff)
-    const leafIds = collectLeafIds(menu)
-
-    expect(leafIds).toEqual([
-      'home',
-      'overseas-marketing-receptions',
-      'overseas-marketing-statistics',
-      'overseas-reservation-stats',
-    ])
-    expect(findById(menu, 'bnviit-section')).toBeUndefined()
-    expect(findById(menu, 'marketing-section')).toBeUndefined()
-    expect(findById(menu, 'overseas-marketing-section')).toBeDefined()
-  })
-
-  it('MARKETING 부서 STAFF 는 해외마케팅 섹션 접근 불가 (2026-09-17 스코프 분리)', () => {
-    const menu = menuFor(asMarketingStaff)
-    const leafIds = collectLeafIds(menu)
-    expect(leafIds).not.toContain('overseas-marketing-receptions')
-    expect(leafIds).not.toContain('overseas-marketing-statistics')
-    expect(leafIds).not.toContain('overseas-reservation-stats')
-    expect(findById(menu, 'overseas-marketing-section')).toBeUndefined()
-  })
-
-  it('임원 gate: MANAGER·STAFF 는 회계 5종 제거, ADMIN·DIRECTOR 는 통과 (2026-09-17)', () => {
-    // 백엔드 /api/accounting/** 매처는 hasAnyRole("ADMIN","DIRECTOR") 로 대칭.
-    for (const user of [asAdmin, asDirector]) {
-      const ids = collectLeafIds(menuFor(user))
-      for (const id of ACCOUNTING_IDS) expect(ids).toContain(id)
-    }
-    for (const role of ['MANAGER', 'STAFF'] as const) {
-      const menu = menuFor({ role, department: 'MEDICAL' })
-      const ids = collectLeafIds(menu)
-      for (const id of ACCOUNTING_IDS) expect(ids).not.toContain(id)
-      expect(findById(menu, 'accounting-section')).toBeUndefined()
-    }
-  })
-
-  it('회계 섹션과 잎은 "임원↑" 배지 대상이다 (executiveOnly · adminOnly 아님)', () => {
-    const menu = menuFor(asAdmin)
-    const section = findById(menu, 'accounting-section')
+  it('임원 섹션과 잎은 "임원↑" 배지 대상이다 (executiveOnly · adminOnly 아님)', () => {
+    const menu = fakeMenuFor(asAdmin)
+    const section = findById(menu, 'executive-section')
     expect(section?.executiveOnly).toBe(true)
     expect(section?.adminOnly).toBeFalsy()
-    for (const id of ACCOUNTING_IDS) {
-      const leaf = findById(menu, id)
-      expect(leaf?.executiveOnly).toBe(true)
-      expect(leaf?.adminOnly).toBeFalsy()
-    }
+    expect(findById(menu, 'executive')?.executiveOnly).toBe(true)
   })
 
   it('관리자 섹션은 ADMIN 에게만 보이고, 하위 잎은 "관리자" 배지(adminReal) 대상이다', () => {
     const adminMenu = menuFor(asAdmin)
     expect(
       collectLeafIds(findById(adminMenu, 'admin-section')?.children ?? []),
-    ).toEqual(['batch-management', 'account-management', 'guide', 'api-docs'])
-    expect(findById(adminMenu, 'batch-management')?.adminReal).toBe(true)
-    expect(findById(adminMenu, 'guide')?.adminReal).toBe(true)
-    // 관리자 섹션 밖의 ADMIN 전용 페이지는 "개발중" 배지 (adminReal 아님)
-    expect(findById(adminMenu, 'exam-list')?.adminOnly).toBe(true)
-    expect(findById(adminMenu, 'exam-list')?.adminReal).toBeFalsy()
+    ).toEqual(['account-management', 'api-docs'])
+    expect(findById(adminMenu, 'account-management')?.adminReal).toBe(true)
+    expect(findById(adminMenu, 'api-docs')?.adminReal).toBe(true)
 
     expect(findById(menuFor(asDirector), 'admin-section')).toBeUndefined()
+    expect(findById(menuFor(asTeamAStaff), 'admin-section')).toBeUndefined()
   })
 
   it('운영(PROD)에서는 pending 페이지가 메뉴에서 빠지고, 개발에서는 남는다', () => {
-    const pendingPage = {
-      id: 'wip',
-      label: 'WIP',
-      section: '테스트',
-      status: 'pending' as const,
-      access: { department: 'MEDICAL' as const },
-    }
-    const tree = ['/stats/marketing' as const]
+    const pendingPage = fakePage('wip', { department: 'TEAM_A' }, 'pending')
+    const tree = [fakePath('wip')]
     expect(buildMenu(tree, () => pendingPage, asAdmin, true)).toEqual([])
     expect(
       buildMenu(tree, () => pendingPage, asAdmin, false).map((i) => i.status),

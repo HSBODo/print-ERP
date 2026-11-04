@@ -52,7 +52,7 @@ export function niceAxis(values: (number | null | undefined)[]): Axis {
 }
 
 /**
- * 명시한 [min, max] 범위로 축을 고정한다(예약종합처럼 범위가 안정적인 차트용).
+ * 명시한 [min, max] 범위로 축을 고정한다(범위가 안정적인 차트용).
  * 도메인 끝은 그대로 두고 그 사이를 nice step 눈금으로 채운다(예: [800,3000] → 1000·1500·…·3000).
  */
 export function niceAxisFor(min: number, max: number): Axis {
@@ -81,7 +81,7 @@ function niceStepFor(range: number, divisions: number): number {
  *   - 여백 15% → 8% (위아래 빈 공간 축소)
  *   - 5등분 → 8등분 (눈금 간격을 촘촘하게)
  *   - 하한을 0 으로 스냅하는 조건을 좁힘 — 데이터가 0 에서 한 칸 넘게 떨어져 있으면
- *     0 부터 그리지 않는다. (주차 예약: 88~470 인데 축이 0~600 이라 36% 가 빈 공간이던 문제)
+ *     0 부터 그리지 않는다. (예: 88~470 인데 축이 0~600 이면 36% 가 빈 공간)
  *
  * 음수 하한은 여전히 금지(카운트·비율 모두 ≥0).
  */

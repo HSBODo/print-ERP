@@ -1,52 +1,8 @@
 # ========================================
-# LOCAL — 개인 개발 머신 (docker compose --profile mart)
+# LOCAL — 개인 개발 머신
 # ========================================
-# - Primary DB: 로컬 Docker Postgres (docker-compose.yml 의 postgres 서비스)
-# - CRM MSSQL: 미접속 (더미 값)
-# - 배치 스케줄러: OFF
-# - 배치 트리거(Admin API): OFF (CRM 없이는 데이터 소스 없음)
+# DB:   docker compose up -d postgres          (로컬 Postgres)
+# 실행: cd backend && ./gradlew bootRun --args='--spring.profiles.active=local'
+#       → bootRun 이 backend/.env (gitignored) 를 환경변수로 자동 주입한다.
 #
-# 실행: docker compose --profile mart up -d
-# 또는: cd backend && ./gradlew bootRun --args='--spring.profiles.active=local'
-#
-# ─── 프로파일 비교 (local vs dev vs prod) ────────────────────────
-# 항목                     | local                        | dev                     | prod
-# 용도                     | 개인 개발 머신               | 팀 공용 개발서버        | 운영
-# Primary DB (Postgres)    | 로컬 Docker(localhost:5432)  | Dev 외부 인스턴스       | Prod 외부 인스턴스
-# warehouse (Postgres RDS)  | 외부 Dev warehouse(설정 시) | Dev warehouse           | Prod warehouse
-# Hikari(warehouse) pool    | 2 / 10s                      | 3 / 10s                 | 3 / 10s
-# ddl-auto                 | update                       | update                  | none
-# 배치 스케줄러            | OFF                          | OFF                     | ON(03:00 D-1, 매월 1일 03:30)
-# Admin 수동 배치          | OFF(CRM 없음)                | ON                      | ON
-# app.seed.enabled         | 상위 기본값(false)           | 상위 기본값             | 명시적 false
-# 필수 env                 | POSTGRES_* (기본값 가능)     | POSTGRES_*, WAREHOUSE_* | POSTGRES_*, WAREHOUSE_*, APP_JWT_SECRET
-# ================================================================
-
-spring:
-  # --- Primary (로컬 Docker Postgres) ---
-  datasource:
-    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/${POSTGRES_DB:analytics}}
-    username: ${POSTGRES_USER:analytics}
-    password: ${POSTGRES_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-
-# --- Batch scheduling (OFF) ---
-batch:
-  mart:
-    enabled: false
-    daily-cron: "-"
-    monthly-reconcile-cron: "-"
-
-# --- Slack 로그 알림 (OFF) ---
-# 로컬 개발 시 Slack 채널로 노이즈 방지. 필요시 LOGGING_SLACK_ENABLED=true 로 개별 오버라이드.
-logging:
-  slack:
-    enabled: true
+# 공통 설정(application.yml)을 그대로 쓴다. 로컬 전용 값이 필요하면 아래에 추가.

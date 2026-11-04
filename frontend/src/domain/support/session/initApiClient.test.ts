@@ -74,7 +74,7 @@ describe('initApiClient', () => {
       JSON.stringify({
         id: 1,
         loginId: 'admin',
-        email: 'admin@bviit.com',
+        email: 'admin@example.com',
         name: '관리자',
       }),
     )
