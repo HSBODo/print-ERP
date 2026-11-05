@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────
+# 단일 EC2 운영 — DB·앱 모두 컨테이너, 외부 AWS 서비스 없음
+#
+# 전제:
+#   - EC2 1대에 Docker + Compose 설치
+#   - Postgres 는 같은 compose 의 컨테이너 (볼륨에 데이터 영속)
+#   - 이미지는 EC2 에서 git pull 후 직접 빌드 (ECR 없음)
+#   - HTTP 만 (HTTPS 필요하면 nginx+certbot 추가)
+#
+# EC2 최초 1회:
+#   sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 git
+#   sudo usermod -aG docker $USER && newgrp docker
+#   git clone <repo> && cd <repo>
+#   cp backend/.env.prod.example backend/.env.prod
+#   chmod 600 backend/.env.prod && vi backend/.env.prod   # 실제 값 채움
+#
+# 최초 배포:
+#   docker compose -f docker-compose.prod.yml --env-file backend/.env.prod up -d --build
+#   docker compose -f docker-compose.prod.yml logs -f app
+#
+# 업데이트:
+#   git pull
+#   docker compose -f docker-compose.prod.yml --env-file backend/.env.prod up -d --build
+#
+# 중지 / 데이터 초기화:
+#   docker compose -f docker-compose.prod.yml down          # 중지 (DB 데이터 유지)
+#   docker compose -f docker-compose.prod.yml down -v       # 볼륨까지 삭제 (완전 초기화)
+#
+# DB 백업 / 복원:
+#   docker compose -f docker-compose.prod.yml exec postgres pg_dump -U $POSTGRES_USER $POSTGRES_DB > backup.sql
+#   cat backup.sql | docker compose -f docker-compose.prod.yml exec -T postgres psql -U $POSTGRES_USER $POSTGRES_DB
+#
+# ⚠️ 보안 체크리스트:
+#   - EC2 보안그룹: :80 (또는 :443) inbound 만 허용. :5432 는 절대 외부 노출 금지
+#   - backend/.env.prod 는 chmod 600, gitignored
+#   - APP_SEED_ENABLED 첫 배포 때만 true, 이후 false 재배포
+#   - APP_JWT_SECRET 은 운영 전용 랜덤값 (로컬과 공유 금지)
+# ─────────────────────────────────────────────────────────────
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # ports 는 두지 않는다 — app 컨테이너만 내부 네트워크로 접근
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: app-template:${IMAGE_TAG:-prod}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - backend/.env.prod
+    environment:
+      SERVER_PORT: "18080"
+      # 컨테이너 내부에선 postgres 서비스명으로 접속 (env_file 의 POSTGRES_URL 을 덮어쓴다)
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    ports:
+      - "80:18080"   # EC2 :80 → 컨테이너 :18080 (SG 에서 :80 inbound 허용)
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/18080 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres-data:

@@ -22,12 +22,12 @@ Spring Boot + React 관리자형 웹앱 템플릿. 로그인·JWT·롤×부서 �
 
 1. 이름 바꾸기
    - 백엔드 패키지 `com.example.app` → 프로젝트 패키지 (폴더 이동 + `package`/`import` 일괄 치환)
-   - `backend/settings.gradle` `rootProject.name`, `build.gradle` `group`·`description`·`openapi3.title`
+   - 루트 `settings.gradle` `rootProject.name`, `backend/build.gradle` `group`·`description`·`openapi3.title`
    - `application.yml` `spring.application.name`
    - 프론트 `frontend/src/shared/constants/app.ts` (`APP_NAME`·`APP_INITIAL`·`APP_COPYRIGHT_OWNER`), `frontend/index.html` `<title>`
    - `docker-compose.yml` 이미지 이름
 2. 부서 정의 — 예시 값 `TEAM_A`·`TEAM_B` 를 실제 부서로 교체 (아래 "권한" 참고)
-3. `cp backend/.env.example backend/.env` 후 JWT 시크릿·DB·관리자 시드 값 설정
+3. `cp backend/.env.local.example backend/.env.local` 후 JWT 시크릿·DB·관리자 시드 값 설정 (배포 환경은 `.env.dev`·`.env.prod` 추가)
 4. 운영 첫 배포: `APP_SEED_ENABLED=true` + `APP_SEED_ADMIN_PASSWORD`(8자 이상)로 첫 관리자를 만들고, 이후 `false` 로 되돌린다
 
 ## 디렉토리 구조
@@ -60,6 +60,7 @@ project-root/
 │   │   │   └── support/session/       # 세션·권한 — store(Zustand) · session · initApiClient · utils/access(hasAccess)
 │   │   └── shared/                    # 도메인 무관 공용 — api · ui(shadcn 포함) · hooks · utils · constants
 │   └── vite.config.ts                 # 프록시: /api·/docs → localhost:18080
+├── settings.gradle                    # 루트 Gradle — :backend 서브프로젝트 include (IntelliJ 가 루트를 열면 멀티프로젝트로 인식)
 ├── docker/entrypoint.sh
 ├── Dockerfile                         # 프론트+백엔드 한 이미지
 └── docker-compose.yml                 # app + postgres
@@ -168,30 +169,40 @@ cd frontend && npx shadcn@latest add <component-name>
 
 ## 실행 명령어
 
+프로필별로 compose 파일·env 파일이 완전히 분리되어 있다 (local/dev/prod). 명령은 항상 `-f` 로 명시한다.
+
 ```bash
-# 전체 (app + postgres) — http://localhost:18080
-cp backend/.env.example backend/.env
-docker compose up -d --build
+# ── 로컬 (local) — 전체 스택 ─────────────────────────────────────
+cp backend/.env.local.example backend/.env.local                           # 최초 1회
+docker compose -f docker-compose.local.yml --env-file backend/.env.local up -d --build   # http://localhost:18080
 
-# 개발
-docker compose up -d postgres                                              # DB 만
-cd backend && ./gradlew bootRun --args='--spring.profiles.active=local'     # Backend :18080 (bootRun 이 backend/.env 를 자동 주입)
-cd frontend && npm run dev                                                  # Frontend :15173 (Node 20+)
+# ── 로컬 — DB 만, 앱은 호스트에서 bootRun (핫리로드·디버거) ────
+docker compose -f docker-compose.local.yml --env-file backend/.env.local up -d postgres  # :15432
+./gradlew :backend:bootRun --args='--spring.profiles.active=local'         # Backend :18080 (bootRun 이 backend/.env.local 을 자동 주입)
+cd frontend && npm run dev                                                 # Frontend :15173 (Node 20+)
 
-# 빌드/테스트
-cd backend && ./gradlew test                 # 백엔드 테스트
-cd backend && ./gradlew test openapi3        # + OpenAPI 스펙 생성
+# ── 개발서버 (dev, EC2) ─────────────────────────────────────────
+docker compose -f docker-compose.dev.yml --env-file backend/.env.dev up -d --build
+
+# ── 운영 (prod, EC2) ────────────────────────────────────────────
+docker compose -f docker-compose.prod.yml --env-file backend/.env.prod up -d --build
+
+# ── 빌드/테스트 ──────────────────────────────────────────────────
+./gradlew :backend:test                      # 백엔드 테스트
+./gradlew :backend:test :backend:openapi3    # + OpenAPI 스펙 생성
 cd frontend && npm run build                 # 프로덕션 빌드
 cd frontend && npm run lint                  # ESLint (레이어 경계 포함)
 cd frontend && npm run test                  # Vitest
 cd frontend && npm run storybook             # Storybook
 ```
 
+> `bootRun` 은 `SPRING_PROFILES_ACTIVE` 환경변수에 따라 `backend/.env.<profile>` 를 자동 로드한다 (기본값 `local`). `build.gradle` 의 `bootRun` 블록 참고.
+
 ## 공통 규칙
 
 - 커밋: `feat: 주문 목록 화면 구현`, `fix: 합계 소수점 오류`
 - **KISS · DRY · YAGNI**, 파일 500줄 · 함수 50줄 이하 유지
-- 하드코딩된 비밀번호/키 금지 — 시크릿은 `backend/.env`(gitignored) 또는 배포 환경변수
+- 하드코딩된 비밀번호/키 금지 — 시크릿은 `backend/.env.<profile>`(gitignored) 또는 배포 환경변수
 - 사용자 입력 검증 필수 (`@Valid`, Zod) · SQL 파라미터 바인딩 필수
 - 스키마 변경은 Flyway 마이그레이션으로만 — 이미 적용된 V 파일은 수정하지 말고 새 버전을 추가한다
 - 프론트 환경변수는 `VITE_` 접두사

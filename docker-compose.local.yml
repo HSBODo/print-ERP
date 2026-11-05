@@ -1,0 +1,68 @@
+# ─────────────────────────────────────────────────────────────
+# LOCAL — 개인 개발 머신
+#
+# 용도: 노트북/PC 에서 운영과 같은 스택을 통째로 띄워 기능 확인.
+# 특징:
+#   - Dockerfile 로컬 빌드
+#   - Postgres 는 호스트에 :15432 로 노출 (DB 클라이언트 접속·디버깅 편의)
+#   - backend/.env.local 에서 환경변수 로드
+#   - 로그는 로테이션 없이 그대로 (디버깅)
+#
+# 최초 1회:
+#   cp backend/.env.local.example backend/.env.local
+#   openssl rand -base64 48            # → APP_JWT_SECRET 에 붙이기
+#   vi backend/.env.local              # 관리자 비밀번호 등 채움
+#
+# 전체 스택:
+#   docker compose -f docker-compose.local.yml --env-file backend/.env.local up -d --build
+#   docker compose -f docker-compose.local.yml logs -f app
+#   docker compose -f docker-compose.local.yml down          # 중지
+#   docker compose -f docker-compose.local.yml down -v       # DB 볼륨까지 삭제
+#
+# DB 만 (앱은 호스트에서 bootRun 해 디버거 붙이고 핫리로드):
+#   docker compose -f docker-compose.local.yml --env-file backend/.env.local up -d postgres
+#   ./gradlew :backend:bootRun --args='--spring.profiles.active=local'
+#   cd frontend && npm run dev     # :15173 (vite 가 /api·/docs 를 18080 으로 프록시)
+#
+# 포트 충돌 (호스트에 이미 Postgres 가 5432 쓰고 있을 때):
+#   backend/.env.local 의 POSTGRES_PORT 를 15432 등으로 바꾼다 (기본값).
+# ─────────────────────────────────────────────────────────────
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-15432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: app-template:local
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-18080}:18080"
+    env_file:
+      - backend/.env.local
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SERVER_PORT: "18080"
+      # 컨테이너 내부에선 postgres 서비스명으로 접속 (env_file 의 POSTGRES_URL 을 덮어쓴다)
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-app}
+
+volumes:
+  postgres-data:

@@ -17,21 +17,23 @@ RUN npm run build
 
 # Stage 2. Backend build (Gradle bootJar)
 FROM eclipse-temurin:21-jdk-jammy AS backend-builder
-WORKDIR /workspace/backend
+WORKDIR /workspace
 
 # 1) 의존성 해석 — build.gradle 이 안 바뀌면 이 레이어는 캐시된다.
-COPY backend/build.gradle backend/settings.gradle* backend/gradlew ./
-COPY backend/gradle ./gradle
+#    Gradle wrapper 와 settings.gradle 은 루트에 있고 :backend 서브프로젝트를 include 한다.
+COPY settings.gradle gradlew ./
+COPY gradle ./gradle
+COPY backend/build.gradle backend/
 RUN chmod +x gradlew
 RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
-    ./gradlew --no-daemon dependencies || true
+    ./gradlew --no-daemon :backend:dependencies || true
 
 # 2) 소스 복사 후 openapi3(문서 테스트 → OpenAPI 스펙) → bootJar.
 #    processResources 가 frontend/dist 를 static/ 으로 끌어온다.
-COPY backend/ ./
+COPY backend/ ./backend/
 COPY --from=frontend-builder /workspace/frontend/dist /workspace/frontend/dist
 RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
-    ./gradlew --no-daemon --build-cache clean openapi3 bootJar
+    ./gradlew --no-daemon --build-cache clean :backend:openapi3 :backend:bootJar
 
 # Stage 3. Runtime
 FROM eclipse-temurin:21-jre-jammy AS runtime

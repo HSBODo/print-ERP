@@ -1,0 +1,79 @@
+# ─────────────────────────────────────────────────────────────
+# DEV — 팀 공용 개발서버 (EC2)
+#
+# 용도: 운영 반영 전 팀원들이 함께 확인하는 환경. 데이터는 유지하되 자유롭게 초기화.
+# 특징:
+#   - EC2 에서 git pull 후 build (local 과 동일, prod 와 유사)
+#   - Postgres 는 외부 노출 안 함 (내부 네트워크만)
+#   - backend/.env.dev 에서 환경변수 로드
+#   - 로그 넉넉히 보관 (100MB × 10, 디버깅용)
+#
+# EC2 최초 셋업:
+#   sudo apt-get install -y docker.io docker-compose-v2 git
+#   sudo usermod -aG docker $USER && newgrp docker
+#   git clone <repo> && cd <repo>
+#   git checkout develop                                 # dev 는 보통 develop 브랜치
+#   cp backend/.env.dev.example backend/.env.dev
+#   chmod 600 backend/.env.dev && vi backend/.env.dev
+#
+# 배포:
+#   git pull
+#   docker compose -f docker-compose.dev.yml --env-file backend/.env.dev up -d --build
+#   docker compose -f docker-compose.dev.yml logs -f app
+#
+# 중지 / 데이터 초기화:
+#   docker compose -f docker-compose.dev.yml down          # 중지
+#   docker compose -f docker-compose.dev.yml down -v       # DB 볼륨까지 삭제
+#
+# ⚠️ 보안:
+#   - EC2 SG: 팀 대역 또는 사내 VPN 에서만 :80 inbound 허용 (0.0.0.0/0 금지)
+#   - APP_JWT_SECRET 은 dev 전용 값 (local·prod 와 공유 금지)
+# ─────────────────────────────────────────────────────────────
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # 외부 노출 안 함 — app 컨테이너만 내부 네트워크로 접근
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: app-template:dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - backend/.env.dev
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: "18080"
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    ports:
+      - "80:18080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/18080 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres-data:

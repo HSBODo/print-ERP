@@ -2,9 +2,17 @@
 *.bundle
 frontend/.env
 .env
+# 프로필별 환경변수 파일 (local/dev/prod 공통) — 시크릿 포함, 절대 커밋 금지
+backend/.env.local
+backend/.env.dev
+backend/.env.prod
 *.log
 .cache/
 backend/.cache/
+
+# Gradle 산출물 — 루트에 `settings.gradle` 이 있어 `./backend/gradlew` 실행 시 루트에도 생성됨.
+.gradle/
+build/
 
 # Gradle 로컬 설정 — 개인 계정·토큰이 들어갈 수 있어 커밋 금지.
 gradle.properties

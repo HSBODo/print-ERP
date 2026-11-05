@@ -130,9 +130,12 @@ afterEvaluate {
 	}
 }
 
-// bootRun 시 backend/.env (KEY=VALUE) 를 환경변수로 주입한다 — 로컬 개발 편의.
+// bootRun 시 backend/.env.<profile> (KEY=VALUE) 를 환경변수로 주입한다 — 로컬 개발 편의.
+// SPRING_PROFILES_ACTIVE 환경변수가 있으면 그 프로필을, 없으면 .env.local 을 읽는다.
+// 예: ./gradlew :backend:bootRun --args='--spring.profiles.active=local' → backend/.env.local 로드
 tasks.named('bootRun') {
-	def envFile = file('.env')
+	def profile = System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+	def envFile = file(".env.${profile}")
 	if (envFile.exists()) {
 		envFile.eachLine { line ->
 			def trimmed = line.trim()
