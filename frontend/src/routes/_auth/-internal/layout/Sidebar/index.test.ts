@@ -11,6 +11,7 @@ import {
   MENU_TREE,
   type MenuItem,
   type PagePath,
+  resolvePageMeta,
 } from '../../navigation'
 import type { PageMeta } from '../../pageAccess'
 
@@ -26,8 +27,7 @@ const asAdmin: MenuUser = { role: 'ADMIN', department: 'ALL' }
 const asDirector: MenuUser = { role: 'DIRECTOR', department: 'ALL' }
 
 const router = createRouter({ routeTree })
-const getPage = (path: PagePath) =>
-  router.routesByPath[path]?.options.staticData?.page
+const getPage = (path: PagePath) => resolvePageMeta(router.routesByPath, path)
 const menuFor = (user: MenuUser | null, isProd = false) =>
   buildMenu(MENU_TREE, getPage, user, isProd)
 

@@ -8,10 +8,10 @@ import {
   MENU_TREE,
   type MenuItem,
   type PagePath,
+  resolvePageMeta,
 } from './navigation'
 
-const getPage = (path: PagePath) =>
-  router.routesByPath[path]?.options.staticData?.page
+const getPage = (path: PagePath) => resolvePageMeta(router.routesByPath, path)
 
 // ADMIN · 개발 환경 = 필터가 가장 적은 메뉴
 const fullMenu = () =>
