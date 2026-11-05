@@ -1,5 +1,11 @@
 import type { LucideIcon } from 'lucide-react'
-import { FileText, Home, Wrench } from 'lucide-react'
+import {
+  ClipboardList,
+  FileText,
+  Home,
+  Workflow,
+  Wrench,
+} from 'lucide-react'
 
 import type { FileRouteTypes } from '@/routeTree.gen'
 import type { AuthUser } from '#domain/support/session/session'
@@ -68,7 +74,31 @@ export interface MenuItem {
  * 사이드바에서 뺀 페이지 — 라우트는 유지되어 직접 URL 접근은 가능하다 (권한·pending 차단은 그대로 적용).
  * 메뉴 트리에도 이 목록에도 없는 페이지 라우트는 테스트가 막는다 (메뉴 추가 누락 방지).
  */
-export const HIDDEN_PAGE_PATHS: readonly PagePath[] = []
+export const HIDDEN_PAGE_PATHS: readonly PagePath[] = [
+  // 수주 상세·수정은 사이드바에 노출하지 않는다 (목록에서 진입).
+  '/orders/$orderId',
+]
+
+/**
+ * TanStack Router 의 `routesByPath` 는 index 라우트의 trailing slash 를 벗겨서 저장한다 (`/orders/` → key `/orders`).
+ * 반면 `FileRouteTypes['fullPaths']`(= `PagePath`) 에는 trailing slash 가 포함된다.
+ * 이 헬퍼로 두 경로 표기 모두에서 staticData.page 를 찾는다.
+ */
+interface RouteWithStaticData {
+  options: { staticData?: { page?: PageMeta } }
+}
+export const resolvePageMeta = (
+  routesByPath: object,
+  path: PagePath,
+): PageMeta | undefined => {
+  const lookup = routesByPath as Record<string, RouteWithStaticData | undefined>
+  const direct = lookup[path]?.options.staticData?.page
+  if (direct) return direct
+  if (path.length > 1 && path.endsWith('/')) {
+    return lookup[path.slice(0, -1)]?.options.staticData?.page
+  }
+  return undefined
+}
 
 /**
  * 사이드바 3단 구조.
@@ -88,6 +118,20 @@ export const HIDDEN_PAGE_PATHS: readonly PagePath[] = []
  */
 export const MENU_TREE: MenuNode[] = [
   { id: 'home', label: 'HOME', href: '/', icon: Home },
+  {
+    id: 'orders-section',
+    label: '수주 관리',
+    icon: ClipboardList,
+    kind: 'section',
+    children: ['/orders/', '/orders/new'],
+  },
+  {
+    id: 'workorders-section',
+    label: '공정 작업',
+    icon: Workflow,
+    kind: 'section',
+    children: ['/workorders/'],
+  },
   {
     id: 'admin-section',
     label: '관리자',

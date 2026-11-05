@@ -10,6 +10,7 @@ import {
   MENU_TREE,
   type MenuItem,
   type PagePath,
+  resolvePageMeta,
 } from '../../navigation'
 import type { MenuStatus } from '../../pageAccess'
 
@@ -127,7 +128,7 @@ export function Sidebar({
     () =>
       buildMenu(
         MENU_TREE,
-        (path: PagePath) => router.routesByPath[path]?.options.staticData?.page,
+        (path: PagePath) => resolvePageMeta(router.routesByPath, path),
         user,
         isProd,
       ),
